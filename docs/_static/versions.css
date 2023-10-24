@@ -1,0 +1,9 @@
+
+.versions {
+	text-align: right;
+}
+
+.versions > .label {
+	font-weight: bold;
+	margin-right: 20px;
+}

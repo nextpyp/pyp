@@ -1,0 +1,18 @@
+
+/*
+	Make the main navigation bar stick to the top of the view,
+	like the sidebars do.
+*/
+
+#site-navigation {
+	position: fixed;
+}
+
+/* wide screen, checking hides nav */
+@media (min-width: 768px) {
+
+	/* if not checked, nav is showing over the main, so add the margin */
+	input#__navigation:not(:checked) ~ main.bd-content {
+		margin-left: 280px;
+	}
+}

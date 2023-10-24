@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- NBF setup file -->
+<config>
+	<!-- Set general options -->
+	<general>
+		
+		<volumes>DEFAULT_PATTERN_volumes_pre_centered_clean_1.txt</volumes>
+		
+		<pattern>DEFAULT_PATTERN</pattern>
+		
+		<current_iteration>4</current_iteration>
+
+		<!-- center = 0, class = 1, refine = 2, mra = 3. -->
+		<mode>2</mode>
+
+		<image_geometry>
+			<volume_size>100</volume_size>
+			<volume_cut_offset>-4</volume_cut_offset>
+		</image_geometry>
+		
+		<image_operations>
+			<padding_size>1</padding_size>
+			<!-- Gaussian filter in image space (0 - don't apply, sigma - apply). -->
+			<gaussian_filter>0</gaussian_filter>
+		</image_operations>
+		
+		<!-- Set metric configuration -->
+		<metric>
+			<!-- Number of peaks resulting from spherical harmonics computation to evaluate in the search for optimal candidate. 
+			Default: 25. More peaks may give more accurate alignments but longer computing time. -->
+			<number_of_candidate_peaks_to_search>25</number_of_candidate_peaks_to_search>
+			<!-- How many alignment candidates to consider. Alignment may yield multiple rotations 
+			with similar correlation scores, this allows to consider more than one rotation simltanoeusly. -->
+			<number_of_alignment_candidates>1</number_of_alignment_candidates>
+			<use_mutual_correlation>1</use_mutual_correlation>
+			<use_missing_wedge>1</use_missing_wedge>
+			<use_wedge_overlap_normalization>1</use_wedge_overlap_normalization>
+			<!-- mode 0 = global rotation and translation search, mode 1 = rotation and translation refinement only, mode 2 = translation only -->
+			<alignment_mode>0</alignment_mode>
+		</metric>
+		
+	</general>
+	
+	<center>
+		<!-- Number of centering iterations using the global average as reference. -->
+		<loop_iterations>1</loop_iterations>
+		<!-- Use rotationally symmetrized global average as reference. -->
+		<apply_rotational_symmetry>1</apply_rotational_symmetry>
+		<!-- Enable computation of variance map (this is a time consuming operation). -->
+		<compute_variance_map>0</compute_variance_map>
+	</center>
+	
+	<class>
+		<class_number_of_classes>10</class_number_of_classes>
+		<class_cutoff_percentage_pre>.9</class_cutoff_percentage_pre>
+		<class_cutoff_percentage>.9</class_cutoff_percentage>
+		<class_cutoff_selection>.8</class_cutoff_selection>
+		<class_binning_factor>2</class_binning_factor>
+
+		<!-- Use symmetrization of references (0,1 = no symmetrization). -->
+		<class_use_symmetrization>1</class_use_symmetrization>
+
+		<!-- image window x,y,z size and apodization -->
+		<class_image_window_x>25</class_image_window_x>
+		<class_image_window_y>25</class_image_window_y>
+		<class_image_window_z>18</class_image_window_z>
+		<class_image_window_sigma>0</class_image_window_sigma>
+
+		<!-- external image window. -->
+		<class_file_image_window></class_file_image_window>
+		<class_file_image_threshold>0.252</class_file_image_threshold>
+		
+		<!-- frequency filter -->
+		<class_high_pass_cutoff>.05</class_high_pass_cutoff>
+		<class_high_pass_decay>.01</class_high_pass_decay>
+		<class_low_pass_cutoff>0.25</class_low_pass_cutoff>
+		<class_low_pass_decay>.05</class_low_pass_decay>		
+		
+		<!-- Exponential BFactor (0 - do not apply) -->
+		<class_bfactor>0</class_bfactor>		
+	</class>
+
+	<refine>
+		<!-- Use symmetrization of references (0,1 = no symmetrization). -->
+		<refine_use_symmetrization>3</refine_use_symmetrization>
+		<!-- Use local search only (0 = global search). -->
+		<refinement_iterations>3</refinement_iterations>
+
+		<!-- generate half-averages for FSC computation -->
+		<refinement_fsc>0</refinement_fsc>
+
+		<!-- image window x,y,z size and apodization -->
+		<refine_image_window_x>32</refine_image_window_x>
+		<refine_image_window_y>32</refine_image_window_y>
+		<refine_image_window_z>32</refine_image_window_z>
+		<refine_image_window_sigma>4</refine_image_window_sigma>
+
+		<!-- external image window. -->
+		<refine_file_image_window></refine_file_image_window>
+		<refine_file_image_threshold>1.67</refine_file_image_threshold>
+		
+		<!-- frequency filter -->
+		<refine_high_pass_cutoff>.05</refine_high_pass_cutoff>
+		<refine_high_pass_decay>.01</refine_high_pass_decay>
+		<refine_low_pass_cutoff>0.125</refine_low_pass_cutoff>
+		<refine_low_pass_decay>.05</refine_low_pass_decay>		
+
+		<!-- Exponential BFactor (0 - do not apply) -->
+		<refine_bfactor>0</refine_bfactor>		
+
+		<refine_out_of_plane_search_range>0.0</refine_out_of_plane_search_range>
+		<refine_shifts_tolerance>10.0</refine_shifts_tolerance>
+	</refine>
+	
+	<mra>
+		<!-- Specify file with external references. -->
+		<mra_initial_classes></mra_initial_classes>
+
+		<!-- image window x,y,z size and apodization -->
+		<mra_axis_correction_x>0</mra_axis_correction_x>
+		<mra_axis_correction_y>0</mra_axis_correction_y>
+		<mra_axis_correction_z>0</mra_axis_correction_z>
+
+		<!-- Specify whether to reset initial alignments or make incremental adjustments from most recent run. -->
+		<mra_reset_initial_alignments>1</mra_reset_initial_alignments>
+
+		<!-- Use symmetrization of references (0,1 = no symmetrization). -->
+		<mra_use_symmetrization>3</mra_use_symmetrization>
+
+		<!-- image window x,y,z size and apodization -->
+		<mra_image_window_x>32</mra_image_window_x>
+		<mra_image_window_y>32</mra_image_window_y>
+		<mra_image_window_z>32</mra_image_window_z>
+		<mra_image_window_sigma>4</mra_image_window_sigma>
+
+		<mra_raw_square_window_size>5</mra_raw_square_window_size>
+
+		<!-- external image window. -->
+		<mra_file_image_window></mra_file_image_window>
+		<mra_file_image_threshold>0.473</mra_file_image_threshold>
+		
+		<!-- frequency filter -->
+		<mra_high_pass_cutoff>.05</mra_high_pass_cutoff>
+		<mra_high_pass_decay>.01</mra_high_pass_decay>
+		<mra_low_pass_cutoff>0.125</mra_low_pass_cutoff>
+		<mra_low_pass_decay>.05</mra_low_pass_decay>		
+
+		<!-- Exponential BFactor (0 - do not apply) -->
+		<mra_bfactor>0</mra_bfactor>		
+
+		<mra_out_of_plane_search_range>10.0</mra_out_of_plane_search_range>
+		<mra_shifts_tolerance>10.0</mra_shifts_tolerance>
+	</mra>
+</config>

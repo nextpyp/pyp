@@ -1,0 +1,414 @@
+# sprswarm
+
+[sprswarm]
+
+_help = "Pre-process micrograph"
+
+[sprswarm.file]
+help = "micrograph to process"
+type = "str"
+
+[sprswarm.path]
+help = "project root directory"
+type = "str"
+default = ".."
+
+[sprswarm.skip]
+help = "do not retrieve existing results"
+type = "bool"
+default = false
+
+[sprswarm.keep]
+help = "Do not remove results from local scratch"
+type = "bool"
+default = false
+
+[sprswarm.debug]
+help = "Do not save results to project directory"
+type = "bool"
+default = false
+
+# tomoswarm
+
+[tomoswarm]
+
+_help = "Process tilt-series"
+
+[tomoswarm.file]
+help = "Tilt-series to process"
+type = "str"
+
+[tomoswarm.path]
+help = "Path to main project"
+type = "str"
+default = ".."
+
+[tomoswarm.skip]
+help = "Do not retrieve existing results"
+type = "bool"
+default = false
+
+[tomoswarm.keep]
+help = "Do not remove results from scratch"
+type = "bool"
+default = false
+
+[tomoswarm.debug]
+help = "Do not save results to project directory"
+type = "bool"
+default = false
+
+# tomoedit
+
+[tomoedit]
+
+_help = "Interactive TOMO mode"
+
+[tomoedit.raw]
+help = "Show raw data"
+type = "bool"
+default = false
+
+[tomoedit.ali]
+help = "Show aligned tilt-series"
+type = "bool"
+default = false
+
+[tomoedit.rec]
+help = "Show 3D reconstruction with virion model"
+type = "bool"
+default = false
+
+[tomoedit.vir]
+help = "Show virions with segmentation threshold model"
+type = "bool"
+default = false
+
+[tomoedit.seg]
+help = "Non-spherical virion segmentation"
+type = "bool"
+default = false
+
+[tomoedit.reg]
+help = "Show tomogram with selected regions of interest"
+type = "bool"
+default = false
+
+[tomoedit.spk]
+help = "Show tomogram with selected spike for reconstruction"
+type = "bool"
+default = false
+
+[tomoedit.skip]
+help = "Skip tilt-series selection (only open one after the other)"
+type = "bool"
+default = false
+
+[tomoedit.clean]
+help = "Skip tilt-series selection (only open one after the other)"
+type = "bool"
+default = false
+
+[tomoedit.parx]
+help = "Parx file used for computing scores for sub-volumes. This should be used with -clean"
+type = "str"
+default = ""
+
+[tomoedit.dist]
+help = "Sort out bad particles based on their distances in 3D and scores. This should be used with -clean"
+type = "int"
+default = 0
+
+[tomoedit.discard]
+help = "Remove unwanted particles in parx and allboxes files. This should be used with -clean and -parx"
+type = "bool"
+default = false
+
+[tomoedit.startat]
+help = "Start at given tilt-series name"
+type = "str"
+default = ""
+
+# boxedit
+
+[boxedit]
+
+_help = "Edit boxes manually"
+
+[boxedit.skip]
+help = "Skip"
+type = "bool"
+default = false
+
+[boxedit.startat]
+help = "Start at given index"
+type = "int"
+default = 0
+
+# csp_local_merge
+
+[csp_local_merge]
+
+_help = "CSP local merge"
+
+[csp_local_merge.stacks_files]
+help = "path to list of particle stacks file"
+type = "str"
+
+[csp_local_merge.par_files]
+help = "path to list of par files"
+type = "str"
+
+[csp_local_merge.ordering_file]
+help = "path to list of the absolute ordering according to .films"
+type = "str"
+
+[csp_local_merge.output_basename]
+help = "basename of output file"
+type = "str"
+
+[csp_local_merge.path]
+help = "Path file"
+type = "str"
+# "os.path.join("/scratch", os.environ["SLURM_JOB_ID"])"
+default = ""
+
+[csp_local_merge.project_path_file]
+help = "path to file that contains the original project dir"
+type = "str"
+
+[csp_local_merge.save_stacks]
+help = "Save stacks"
+type = "bool"
+default = false
+
+# cspswarm
+
+[cspswarm]
+
+_help = "CSP swarm"
+
+[cspswarm.file]
+help = "series to process"
+type = "str"
+
+[cspswarm.path]
+help = "path to main project"
+type = "str"
+default = ".."
+
+[cspswarm.skip]
+help = "Do not retrieve existing results"
+type = "bool"
+default = false
+
+[cspswarm.debug]
+help = "Do not save results to project directory"
+type = "bool"
+default = false
+
+[cspswarm.iter]
+help = "Refinement iteration"
+type = "int"
+default = 2
+
+# cryolo3d
+
+[cryolo3d]
+
+_help = ""
+
+[cryolo3d.boxsize]
+help = "particle diameter in pixels"
+type = 'int'
+
+[cryolo3d.flipyz]
+help = "Whether need to flip the .rec to set the z as slices"
+type = "bool"
+default = true
+
+[cryolo3d.recdir]
+help = "the directory that store the .rec files"
+type = 'str'
+default = "mrc"
+
+[cryolo3d.a]
+help = "same as cryolo, network name used for training"
+type = "enum"
+enum = { phosaurusnet="PhosaurusNet", yolo="YOLO", cryolo="crYOLO" }
+default = "crYOLO"
+
+[cryolo3d.inputsize]
+help = "same as cryolo, .rec x or y dimension"
+type = "int"
+default = 512
+
+[cryolo3d.lpcutoff]
+help = "lowpass cutoff used for training, {0-0.5}"
+type = "float"
+default = 0.4
+
+[cryolo3d.thr]
+help = "picking threhold for cryolo prediction, {0.1-1}"
+type = "float"
+default = 0.3
+
+[cryolo3d.tsr]
+help = "tracing search range; Two picked boxes in separate slices are considered to belong to the same particle when they are within range. recommend as 1/3 of boxsize"
+type = "str"
+
+[cryolo3d.tmem]
+help = "Boxes belong to one particle through slices are not further apart than this value"
+type = "str"
+
+[cryolo3d.tmin]
+help = "Traces that contain less boxes than this value are considered as false positive and are removed"
+type = "str"
+
+[cryolo3d.skip]
+help = "skip cryolo config and train, only try new parameters for prediction"
+type = "bool"
+default = false
+
+[editboxfiles]
+
+_help = "Particle selection based on results of classification"
+
+[editboxfiles.parfile]
+help = "File with GOOD particles produce by e2evalparticles.py"
+type = "path"
+
+[editboxfiles.metadatapth]
+help = "folder path where can access pickle files"
+type = "path"
+
+[editboxfiles.extract_cls]
+help = "Classification pass"
+type = "int"
+default = 0 
+
+[editboxfiles.threshold]
+help = "Threshold value for scores used for particle selection"
+type = "float"
+default = 0
+
+[editboxfiles.occupancy]
+help = "Threshold value for occupancy used for particle selection"
+type = "float"
+default = 0.0
+
+[editboxfiles.shifts]
+help = "Reset particle shifts (FREALIGN ONLY)"
+type = "bool"
+default = false
+
+[editboxfiles.phases]
+help = "Parameters contain phase residuals instead of scores (FREALIGN ONLY)"
+type = "bool"
+default = false
+
+[editboxfiles.frealignx]
+help = "Input par file was generated using frealignx"
+type = "bool"
+default = false
+
+[editboxfiles.debug]
+help = "Do not write .boxx files"
+type = "bool"
+default = false
+
+[postprocessing]
+
+_help = "Post-processing"
+
+[postprocessing.input]
+help = "Input file name"
+type = "path"
+
+[postprocessing.bfactor]
+help = "Bfactor to apply (usually a negative number). Use -bfactor='-50,4,3' for bsoft variant"
+type = "str"
+default = ""
+
+[postprocessing.lowpass]
+help = "Resolution of low pass filter to apply (0-1)"
+type = "float"
+default = 1
+
+[postprocessing.sigma]
+help = "Gaussian sigma (0-.5)"
+type = "float"
+default = 0
+
+[postprocessing.blowpass]
+help = "Resolution bfactor low pass filter to apply (2)"
+type = "float"
+default = 0
+
+[postprocessing.threshold]
+help = "Threshold used for shape masking"
+type = "float"
+default = 0
+
+[postprocessing.upsample]
+help = "Upsampling factor"
+type = "int"
+default = 1
+
+[postprocessing.radius]
+help = "Radius of complex used for cropping the volume (in A)"
+type = "float"
+default = 0
+
+[postprocessing.apix]
+help = "Pixel size (A)"
+type = "float"
+default = 0
+
+[postprocessing.sym]
+help = "Apply symmetry"
+type = "str"
+default = "C1"
+
+[postprocessing.keep]
+help = "Do not delete mask files used for FSC computations"
+type = "bool"
+default = false
+
+[postprocessing.embfactor]
+help = "Use EM-Bfactor for sharpening"
+type = "float"
+default = 0
+
+[postprocessing.pdb]
+help = "Apply structure factor from pdb file"
+type = "path"
+default = ""
+
+[postprocessing.iters]
+help = "Iterative sharping"
+type = "int"
+default = 1
+
+[postprocessing.local]
+help = "Bfactor, Levels and Number of bins used for local correction"
+type = "str"
+default = "0,2,4,3"
+
+
+[kselection]
+
+_help = "Class selection and merge"
+
+[kselection.selection]
+help = "Class want to selected to merge (1, 3, 4)"
+type = "str"
+
+[kselection.iteration]
+help = "Iteration that want to select from"
+type = "int"
+
+[kselection.merge_alignment]
+help = "Whether want to merge alignment paramerters from different selected par files"
+type = "bool"
+default = false

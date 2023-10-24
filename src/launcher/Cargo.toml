@@ -1,0 +1,10 @@
+
+[package]
+name = "launcher"
+version = "0.1.0"
+authors = ["Jeff Martin <jmartin@cs.duke.edu>"]
+edition = "2021"
+
+[dependencies]
+thiserror = "1.0.38" # MIT (or Apache 2)
+toml = "0.7.2" # MIT (or Apache 2)

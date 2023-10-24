@@ -1,0 +1,261 @@
+=======================
+Classification tutorial
+=======================
+
+This tutorial shows how to process tilt-series from the `E. coli. ribosomes (EMPIAR-10304) <https://www.ebi.ac.uk/empiar/EMPIAR-10304/>`_ dataset
+
+
+We first use the command below to download and decompress a zip file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
+
+.. code-block:: bash
+    # cd to a location in the shared file system and run:
+
+    wget https://nextpyp.app/files/data/nextpyp_class_tutorial.tbz
+    tar xfz nextpyp_class_tutorial.tbz
+    source download_10304.sh
+
+1 Create a new project
+======================
+
+.. code-block:: bash
+
+    mkdir EMPIAR-10304
+    cd EMPIAR-10304
+
+2 Pre-processing
+================
+
+Data pre-processing consists of movie frame alignment, tilt-series alignment, tomogram reconstruction, CTF estimation:
+
+.. code-block:: bash
+
+    # launch pre-processing
+    pyp -data_path="/path_to_raw_data/tilt*.mrc"    \
+        -scope_pixel 2.1                            \
+        -scope_voltage 300                          \
+        -scope_tilt_axis 0.0                        \
+        -movie_no_frames                            \
+        -ctf_max_res 5.0                            \
+        -tomo_rec_binning 12                        \
+        -tomo_rec_thickness 3072                    \
+        -no-tomo_rec_format                         \
+        -tomo_rec_erase_fiducials                   \
+        -slurm_tasks 42                             \
+        -slurm_memory 420
+
+
+.. note::
+    Nominal tilt angles (``*.rawtlt``) and acquisition order (``*.order``) for each tilt-series need to be provided with the raw data.
+
+
+3 Particle detection
+=================
+
+Detect spikes using the membrane values selected above:
+
+.. code-block:: bash
+
+    pyp -tomo_spk_method "auto"             \
+        -tomo_spk_rad 80                    \
+        -tomo_spk_stdtimes_cont_3d 2.0      \
+        -tomo_spk_min_size_3d 60            \
+        -tomo_spk_dilation_3d 100           \
+        -tomo_spk_radiustimes_3d 2.0        \
+        -tomo_spk_inhibit_3d                \
+        -tomo_spk_stdtimes_filt_3d 2.0      \
+        -tomo_spk_detection_width_3d 40.0
+
+
+4 Reference-based refinement
+==============================
+
+If a 3D reference is available, ``csp`` can align the particle projections using constrained refinement.
+
+.. code-block:: bash
+
+    # launch coarse refinement
+    csp -refine_parfile "/path_to_particle.txt"         \
+        -refine_model "EMPIAR-10304_init_ref.mrc"       \
+        -particle_mw 2000                               \
+        -particle_rad 150                               \
+        -extract_box 64                                 \
+        -extract_bin 4                                  \
+        -refine_skip                                    \
+        -refine_rhref "22.0"                            \
+        -refine_fboost                                  \
+        -reconstruct_mintilt -50                        \
+        -reconstruct_maxtilt 50                         \
+        -csp_ctf_handedness                             \
+        -csp_refine_particles                           \
+        -csp_UseImagesForRefinementMin 15               \
+        -csp_UseImagesForRefinementMax 25               \
+        -csp_NumberOfRandomIterations 5000000           \
+        -csp_ToleranceParticlesPhi 180.0                \
+        -csp_ToleranceParticlesTheta 180.0              \
+        -csp_ToleranceParticlesPsi 180.0                \
+        -csp_ToleranceParticlesShifts 50.0
+
+
+.. tip::
+    To only search one angle (i.e. psi), please set the tolerance of other refined rotations to zero (i.e. ``csp_ToleranceParticlesPhi``, ``csp_ToleranceParticlesTheta``).
+
+
+5 Filter particles
+===============================
+
+Rename ``frealign/maps`` to ``frealign/reference_based`` and create a new ``frealign/maps``
+
+.. code-block:: bash
+
+    pcl -clean_parfile "frealign/reference_based/*_r01_02.par.bz2"      \
+        -clean_threshold 15.0                                           \
+        -clean_dist 20.0                                                \
+        -clean_mintilt -7.0                                             \
+        -clean_maxtilt 7.0                                              \
+        -clean_min_num_projections 1                                    \
+        -clean_check_reconstruction
+
+6  (optional): Permanently remove bad particles
+================
+
+.. code-block:: bash
+
+    pcl -clean_discard
+
+
+7 Fully constrained refinement
+===============================================================
+
+CSP can also use initial alignments from other software packages such as Relion or EMAN sub-volume averaging. You may find :doc:`Tomo import/export <tomo_import_export>` useful to perform sub-volume averaging in Relion. 
+
+
+Rename ``frealign/maps`` to ``frealign/particle_filter`` and create a new ``frealign/maps``
+
+.. code-block:: bash
+
+    # launch coarse refinement
+
+    csp -refine_parfile "$(pwd)/frealign/particle_filter/*_r01_02_clean.par.bz2"    \
+        -refine_model "$(pwd)/frealign/particle_filter/*_r01_02.mrc"                \
+        -extract_box 256                                                            \
+        -extract_bin 1                                                              \
+        -refine_skip                                                                \
+        -refine_iter 2                                                              \
+        -refine_maxiter 3                                                           \
+        -refine_rhref "18:14"                                                       \
+        -csp_refine_micrographs                                                     \
+        -csp_OptimizerStepLength 100.0                                              \
+        -csp_UseImagesForRefinementMin 15                                           \
+        -csp_UseImagesForRefinementMax 25                                           \
+        -csp_NumberOfRandomIterations 0                                             \
+        -csp_ToleranceParticlesPsi 30.0                                             \
+        -csp_ToleranceParticlesPhi 30.0                                             \
+        -csp_ToleranceParticlesTheta 30.0                                           \
+        -csp_ToleranceParticlesShifts 30.0                                          \
+        -dose_weighting_enable                                                      \
+        -dose_weighting_fraction 4                                                  \
+        -dose_weighting_global
+
+All results from 3D refinement are saved in ``frealign/maps`` and include png files for each refinement iteration for visual inspection.
+
+8 Create shape mask
+====================================
+
+Rename ``frealign/maps`` to ``frealign/fully_constrained`` and create a new ``frealign/maps``
+
+.. code-block:: bash
+
+    pmk -mask_model "$(pwd)/frealign/fully_constrained/*_r01_03.mrc"   \
+        -mask_threshold 0.4                                            \
+        -mask_normalized                                               \
+        -mask_edge_width 8
+
+
+9 Region-based local refinement before masking
+==================
+
+Rename ``frealign/maps`` to ``frealign/mask`` and create a new ``frealign/maps``
+
+.. code-block:: bash
+
+    csp -refine_parfile "$(pwd)/frealign/fully_constrained/*_r01_03.par.bz2"        \
+        -refine_model "$(pwd)/frealign/fully_constrained/*_r01_03.mrc"              \
+        -refine_maskth "$(pwd)/frealign/mask/mask.mrc"                              \
+        -refine_iter 2                                                              \
+        -refine_maxiter 6                                                           \
+        -refine_rhref "12:10:8:6:5"                                                 \
+        -csp_UseImagesForRefinementMin 18                                           \
+        -csp_UseImagesForRefinementMax 22                                           \
+        -csp_ToleranceMicrographTiltAngles 5.0                                      \
+        -csp_ToleranceMicrographTiltAxisAngles 5.0                                  \
+        -csp_ToleranceParticlesPsi 5.0                                              \
+        -csp_ToleranceParticlesPhi 5.0                                              \
+        -csp_ToleranceParticlesTheta 5.0                                            \
+        -csp_ToleranceParticlesShifts 20.0                                          \
+        -csp_Grid "8,8,2"
+
+
+10 Particle-based CTF refinement
+==================
+
+Rename ``frealign/maps`` to ``frealign/region_based`` and create a new ``frealign/maps``
+
+.. code-block:: bash
+
+    csp -refine_parfile "$(pwd)/frealign/region_based/*_r01_06.par.bz2" \
+        -refine_model "$(pwd)/frealign/region_based/*_r01_06.mrc"       \
+        -refine_iter 2                                                  \
+        -refine_maxiter 2                                               \
+        -refine_rhref "4.5"                                             \
+        -no-csp_refine_particles                                        \
+        -no-csp_refine_micrographs                                      \
+        -csp_refine_ctf                                                 \
+        -csp_UseImagesForRefinementMin 15                               \
+        -csp_UseImagesForRefinementMax 25                               \
+        -csp_ToleranceMicrographDefocus1 2000                           \
+        -csp_ToleranceMicrographDefocus2 2000
+
+
+
+11 Region-based refinement after particle-based CTF refinement
+==================
+
+Rename ``frealign/maps`` to ``frealign/ctf_refine`` and create a new ``frealign/maps``
+
+.. code-block:: bash
+
+    csp -refine_parfile "$(pwd)/frealign/ctf_refine/*_r01_02.par.bz2"   \
+        -refine_model "$(pwd)/frealign/ctf_refine/*_r01_02.mrc"         \
+        -refine_iter 2                                                  \
+        -refine_maxiter 4                                               \
+        -refine_rhref "6:5:4.5"                                         \
+        -csp_refine_particles                                           \
+        -csp_refine_micrographs                                         \
+        -no-csp_refine_ctf                                              \
+        -csp_OptimizerStepLength 20.0                                   \
+        -csp_UseImagesForRefinementMin 18                               \
+        -csp_UseImagesForRefinementMax 22                               \
+        -csp_ToleranceMicrographShifts 20.0                             \
+        -csp_Grid "16,16,4"                                             \
+        -dose_weighting_fraction 2
+
+
+12 3D classification
+==================
+
+Rename ``frealign/maps`` to ``frealign/region_based_2`` and create a new ``frealign/maps``
+
+.. code-block:: bash
+
+    csp -refine_parfile "$(pwd)/frealign/region_based_2/*_r01_04.par.bz2"   \
+        -refine_model "$(pwd)/frealign/region_based_2/*_r01_04.mrc"         \
+        -refine_iter 2                                                      \
+        -refine_maxiter 20                                                  \
+        -no-refine_skip                                                     \
+        -refine_rhref "8"                                                   \
+        -no-csp_refine_particles                                            \
+        -no-csp_refine_micrographs                                          \
+        -class_num 8                                                        \
+        -class_rhcls 8.0                                                    \
+        -dose_weighting_weights "$(pwd)/frealign/weights/global_weights.txt"
+

@@ -1,0 +1,3597 @@
+##############################
+# Block and Tabs definitions #
+##############################
+
+[blocks]
+_name = "Blocks"
+_description = "Block types for web UI"
+
+# Single-particle
+
+[blocks.spr_import_raw]
+name = "SPA import raw"
+description = "Data Import for SPA"
+tabs = [ "data", "gain", "scope" ]
+
+[blocks.spr_import]
+name = "SPA import"
+description = "CLI Import for SPA"
+tabs = [ "data", "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
+
+[blocks.spr_import_star]
+name = "SPA Star Import"
+description = "Star data import for SPA"
+tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
+
+[blocks.spr_pre_process]
+name = "SPA pre-processing"
+description = "Micrograph pre-processing"
+tabs = [ "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
+
+[blocks.spr_coarse_refine]
+name = "SPA Coarse Refinement"
+description = "Coarse refinement for SPA"
+tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "export", "slurm" ]
+
+[blocks.spr_fine_refine]
+name = "SPA Fine Refinement"
+description = "Fine refinement for SPA"
+tabs = [ "extract", "refine", "reconstruct", "class", "denoise", "export", "slurm" ]
+
+[blocks.spr_flexible_refine]
+name = "SPA Frame Refinement"
+description = "Movie frame refinement"
+tabs = [ "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
+
+[blocks.spr_map_clean]
+name = "Particle Filtering"
+description = "Filter particles based on scores or by class"
+tabs = [ "clean", "particle", "extract", "refine", "csp", "reconstruct", "dose_weighting", "export", "slurm" ]
+
+# Tomography 
+
+[blocks.tomo_import_raw]
+name = "TOMO import"
+description = "Data Import for TOMO"
+tabs = [ "data", "gain", "scope" ]
+
+[blocks.tomo_import]
+name = "TOMO import"
+description = "CLI Import for TOMO"
+tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+
+[blocks.tomo_import_star]
+name = "TOMO Star Import"
+description = "Star data import for TOMO"
+tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+
+[blocks.tomo_pre_process]
+name = "TOMO Pre-processing"
+description = "Alignment, CTF and particle picking"
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+
+[blocks.tomo_coarse_refine]
+name = "TOMO Coarse Refinement"
+description = "Constrained particle alignment"
+tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "dose_weighting", "denoise", "export", "slurm" ]
+
+[blocks.tomo_clean]
+name = "TOMO Particle Cleaning"
+description = "Cleaning particles for TOMO"
+tabs = [ "clean", "slurm" ]
+
+[blocks.tomo_mask]
+name = "TOMO Mask Generation"
+description = "Mask generation for TOMO"
+tabs = [ "mask", "slurm" ]
+
+[blocks.tomo_flexible_refine]
+name = "TOMO Frame Refinement"
+description = "Constrained  movie frame alignment"
+tabs = [ "extract", "particle", "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
+
+[blocks.tomo_map_clean]
+name = "Particle Filtering"
+description = "Select particles by score/distance/class"
+tabs = [ "clean", "particle", "extract", "refine", "csp", "reconstruct", "dose_weighting", "export", "slurm" ]
+
+# common blocks
+
+[blocks.spr_tomo_map_mask]
+name = "Mask Creation"
+description = "Create shape mask from map"
+tabs = [ "mask", "slurm" ]
+
+[blocks.spr_tomo_map_clean]
+name = "Particle Filtering"
+description = "Select particles by score/distance/class"
+tabs = [ "clean", "particle", "extract", "refine", "csp", "reconstruct", "dose_weighting", "export", "slurm" ]
+
+[blocks.spr_tomo_post_process]
+name = "Post-processing"
+description = "Map sharpening"
+tabs = [ "sharpen", "slurm" ]
+
+# streamPYP
+
+[blocks.stream_spr]
+name= "Single-particle Streaming"
+description = "Data streaming mode for single-particle sessions"
+tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "detect", "detect_nn2d", "class2d", "slurm" ]
+
+[blocks.stream_tomo]
+name= "Tomography Streaming"
+description = "Data streaming mode for tomography sessions"
+tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "slurm" ]
+
+########
+# Tabs #
+########
+
+[tabs]
+_name = "Parameter groups to use as tabs in web UI and for PYP CLI parameter definition"
+_description = "Data analysis parameters grouped according to their function"
+_help = "PYP - Cryo-EM/ET image analysis"
+
+# Miroscope parameters
+
+[tabs.scope]
+_name = "Microscope parameters"
+_description = "Parameters of microscope used to acquire the data"
+
+[tabs.scope.pixel]
+name = "Pixel size (A)"
+description = "Pixel size of the detector"
+type = "float"
+required = true
+
+[tabs.scope.voltage]
+name = "Acceleration voltage (kV)"
+description = "Voltage used for imaging"
+type = "float"
+required = true
+
+[tabs.scope.mag]
+name = "Magnification"
+description = "Magnification used for imaging (deprecated)"
+type = "int"
+default = 10000
+hidden = true
+
+[tabs.scope.cs]
+name = "Spherical aberration"
+description = "Spherial aberration of the microscope (Cs)"
+type = "float"
+default = 2.7
+advanced = true
+
+[tabs.scope.wgh]
+name = "Amplitude contrast"
+description = "Amplitude contrast of the microscope"
+type = "float"
+default = 0.07
+advanced = true
+
+[tabs.scope.dose_rate]
+name = "Dose rate (e^-/A^2)"
+description = "Number of electrons per unit area used during imaging"
+type = "float"
+default = 1.0
+advanced = true
+
+[tabs.scope.beam_tilt_x]
+name = "Beam tilt in X"
+description = "Beam tilt in X (mRad)"
+type = "float"
+default = 0.0
+hidden = true
+
+[tabs.scope.beam_tilt_y]
+name = "Beam tilt in Y"
+description = "Beam tilt in Y (mRad)"
+type = "float"
+default = 0.0
+hidden = true
+
+[tabs.scope.image_shift_x]
+name = "Image shift in X"
+description = "Image shift in X (mRad)"
+type = "float"
+default = 0.0
+hidden = true
+
+[tabs.scope.image_shift_y]
+name = "Image shift in Y"
+description = "Image shift in Y (mRad)"
+type = "float"
+default = 0.0
+hidden = true
+
+[tabs.scope.tilt_axis]
+name = "Tilt-axis angle (degrees)"
+description = "Approximate orientation of tilt-axis with respect to the y-axis"
+type = "float"
+default = 0.0
+hidden = [ "spr_import_raw", "spr_import_star", "stream_spr" ]
+
+# Data parameters
+
+[tabs.data]
+_name = "Raw data"
+_description = "Sample"
+_hidden = [ "spr_flexible_refine", "tomo_flexible_refine" ]
+
+[tabs.data.set]
+name = "data_set"
+description = "Name of project"
+type = "str"
+hidden = true
+
+[tabs.data.path]
+name = "Location"
+description = "Location of files containing the raw data"
+type = "path"
+path = { type="files", glob=true }
+required = true
+hidden = ["spr_import", "tomo_import"]
+
+[tabs.data.parent]
+name = "Path to existing CLI project"
+description = "Path to existing CLI project"
+type = "path"
+path = { type="folders" }
+hidden = ["spr_import_star", "tomo_import_star", "spr_import_raw", "tomo_import_raw", "stream_spr", "stream_tomo" ]
+
+[tabs.data.import]
+name = "Import data"
+description = "Import data from exisitng pyp session"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.data.retrieve]
+name = "Use metadata"
+description = "Retrieve metadata from mdoc files (if available)"
+type = "bool"
+default = false
+hidden = ["spr_import", "tomo_import", "stream_tomo", "stream_spr"]
+
+[tabs.data.mode]
+name = "data_mode"
+description = "Type of data"
+type = "enum"
+enum = { spr="Single-Particle", tomo="Tomography" }
+required = true
+hidden = true
+
+[tabs.data.bin]
+name = "Binning"
+description = "Factor to downsample data before processing"
+type = "int"
+default = 1
+hidden = true
+
+[tabs.data.invert] 
+name = "Invert contrast"
+description = "Invert image contrast"
+type = "bool"
+default = false
+hidden = ["spr_import", "tomo_import"]
+advanced = true
+
+[tabs.data.auto]
+name = "data_auto"
+description = "Enable automated data streamming"
+type = "bool"
+default = false
+hidden = true
+
+# Gain-Reference Parameters
+
+[tabs.gain]
+_name = "Gain reference"
+_description = "Gain reference parameters"
+
+[tabs.gain.reference]
+name = "Location"
+description = "Path to gain reference"
+type = "path"
+path = { type="files" }
+
+[tabs.gain.rotation]
+name = "Clockwise rotation (multiple of 90 degrees)"
+description = "Rotate gain reference by this angle to match the orientation of the data"
+type = "int"
+default = 0
+
+[tabs.gain.fliph]
+name = "Flip horizontally"
+description = "Flip gain reference along the horizontal dimension"
+type = "bool"
+default = false
+
+[tabs.gain.flipv]
+name = "Flip vertically"
+description = "Flip gain reference along the vertical dimension"
+type = "bool"
+default = false
+
+[tabs.gain.remove_hot_pixels]
+name = "Remove hot pixels"
+description = "Remove high intensity pixels before doing gain correction"
+type = "bool"
+default = false
+advanced = true
+
+# Movie parameters
+
+[tabs.movie]
+_name = "Frame alignment"
+_description = "Movie frame parameters"
+
+[tabs.movie.no_frames]
+name = "Single-file tilt-series"
+description = "Select this option if all tilts are in a single file"
+type = "bool"
+default = false
+hidden = ["spr_pre_process", "spr_import_star", "spr_import", "stream_spr" ]
+
+[tabs.movie.pattern]
+name = "Frame pattern"
+description = "Pattern to describe frame data (tilt-series name, acquisition order, and tilt-angle)"
+type = "str"
+default = "TILTSERIES_SCANORD_ANGLE.tif"
+hidden = ["spr_pre_process", "spr_import_star", "spr_import", "stream_spr" ]
+
+[tabs.movie.mdoc]
+name = "Read metadata from mdoc files"
+description = "Extract parameters from mdoc files (tilt angles, tilt axis rotation angles and scan order) if available"
+type = "bool"
+default = false
+
+[tabs.movie.eer_reduce]
+name = "EER SR reduction factor"
+description = "Amount of super-resolution information to retain (1=none, 2=2x, 4=4x)"
+type = "int"
+default = 1
+
+[tabs.movie.eer_frames]
+name = "EER frames to average"
+description = "Successive frames to average when reading EER files"
+type = "int"
+default = 1
+
+[tabs.movie.force]
+name = "Force recalculation"
+description = "Force recalculation of movie frame alignment"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.movie.ali]
+name = "Alignment method"
+description = "Method used for frame alignment"
+type = "enum"
+enum = { unblur="unblur", skip="no alignment" }
+default = "unblur"
+hidden = ["spr_import_star","tomo_import_star"]
+
+[tabs.movie.first]
+name = "First frame"
+description = "Discard frames lower than this value (0=do not discard early frames)"
+type = "int"
+default = 0
+
+[tabs.movie.last]
+name = "Last frame"
+description = "Discard frames higher than this value (-1=do not discard late frames)"
+type = "int"
+default = -1
+
+[tabs.movie.group]
+name = "Frame grouping"
+description = "Number of frames to average together (1=no averaging)"
+type = "int"
+default = 1
+hidden = ["spr_import_star","tomo_import_star"]
+advanced = true
+
+[tabs.movie.bin]
+name = "Binning"
+description = "Binning factor to use during frame alignment"
+type = "int"
+default = 2
+hidden = ["spr_import_star","tomo_import_star"]
+
+[tabs.movie.iters]
+name = "Iterations"
+description = "Number of iterations used during frame alignment (if applicable)"
+type = "int"
+default = 5
+hidden = true
+
+[tabs.movie.pbc]
+#XD: is there a full name for this?
+name = "PBC factor"
+description = "PBC parameter for frame weighting"
+type = "float"
+default = 0.5
+hidden = true
+
+[tabs.movie.boff]
+#XD: is there a full name for this?
+name = "BOFF factor"
+description = "BOFF for frame weighting"
+type = "float"
+default = 0.5
+hidden = true
+
+[tabs.movie.bfactor]
+name = "Bfactor for alignment"
+description = "Bfactor to use during frame alignment (use larger values for noisier data)"
+type = "float"
+default = 1500
+
+[tabs.movie.patch]
+name = "Patches"
+description = "Number of patches to use during frame alignment (relion method only, 1=no patches)"
+type = "int"
+default = 1
+hidden = true
+
+[tabs.movie.force_integer]
+name = "Force integer shifts"
+description = "Force integer shifts to preserve high-resolution information"
+type = "bool"
+default = false
+
+[tabs.movie.weights]
+name = "Exposure weighting"
+description = "Produce exposure-weighted frame averages (if frames are available)"
+type = "bool"
+default = false
+hidden = ["spr_import_star","spr_import","tomo_import_star","tomo_import","stream_tomo"]
+
+# Contrast transfer function parameters
+
+[tabs.ctf]
+_name = "CTF determination"
+_description = "Settings for contrast transfer function (CTF)"
+
+[tabs.ctf.force]
+name = "Force recalculation"
+description = "Force recalculation of CTF parameters"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.ctf.min_res]
+name = "Min resolution (A)"
+description = "Minimum resolution used during CTF estimation"
+type = "float"
+default = 50.0
+
+[tabs.ctf.max_res]
+name = "Max resolution (A)"
+description = "Maximum resolution used during CTF estimation"
+type = "float"
+default = 3.5
+
+[tabs.ctf.min_def]
+name = "Min defocus (A)"
+description = "Minimum allowable defocus"
+type = "float"
+default = 3500.0
+
+[tabs.ctf.max_def]
+name = "Max defocus (A)"
+description = "Maximum allowable defocus"
+type = "float"
+default = 50000.0
+
+[tabs.ctf.use_ast]
+name = "Estimate astigmatism"
+description = "Estimate astigmatism angle"
+type = "bool"
+default = true
+
+[tabs.ctf.use_phs]
+name = "Estimate phase shift"
+description = "Estimate phase shift"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.ctf.tile]
+name = "Tile size"
+description = "Tile size used for periodogram averaging"
+type = "int"
+default = 512
+
+[tabs.ctf.fstep]
+name = "Defocus step size (A)"
+description = "Step size used during defocus search"
+type = "float"
+default = 250.0
+
+[tabs.ctf.dast]
+name = "Astigmatism step size (A)"
+description = "Step size used during astigmatism search"
+type = "float"
+default = 2500.0
+
+[tabs.ctf.use_lcl]
+name = "Estimate local CTF"
+description = "Use local defocus estimation"
+type = "bool"
+default = false
+hidden = true
+
+# Particle detection parameters
+
+[tabs.detect]
+_name = "Particle detection"
+_description = "Settings for particle detection"
+
+[tabs.detect.files]
+name = "Import particle coordinates"
+description = "Location of files containing particle coordinates to import (*.box, *.spk)"
+type = "path"
+path = { type="folders" }
+hidden = ["stream_spa", "stream_tomo", "stream_spr"]
+
+[tabs.detect.rad]
+name = "Particle radius (A)"
+description = "Radius to use for picking"
+type = "float"
+
+[tabs.detect.force]
+name = "Force particle detection"
+description = "Force particle detection"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.detect.method]
+name = "Detection method"
+description = "Strategy to use for particle picking"
+type = "enum"
+enum = { none="none", auto="auto", all="all", nn-train="nn-train (list of positions required)", nn-eval="nn-eval (trained model required)" }
+default = "none"
+
+[tabs.detect.ref]
+name = "Template for reference-based picking"
+description = "Path to 3D template (*.mrc)"
+type = "path"
+path = { type="files" }
+hidden = [ "stream_tomo", "stream_spr", "spr_pre_process" ]
+
+[tabs.detect.dist]
+name = "Min distance (pixels)"
+description = "Minimum distance between detected particles (smaller values produce more particles)"
+type = "int"
+default = 20
+
+[tabs.detect.thre]
+name = "Min correlation (auto mode only)"
+description = "Minimum correlation value used for detection (larger values produce fewer particles)"
+type = "float"
+default = 0.2
+
+[tabs.detect.ignore_contamination]
+name = "Ignore contamination"
+description = "Skip generation of binary contamination mask"
+type = "bool"
+default = false
+
+[tabs.detect.offset]
+name = "Height offset for 3D picking (binned voxels)"
+description = "Offset particle postions above membrane by this amount. Useful when the segmentation is not located at the base of the particles"
+type = "int"
+default = 0
+hidden = [ "spr_pre_process", "stream_spr" ]
+
+[tabs.detect.rand]
+name = "Randomize in-plane particle rotation"
+description = "Randomize particle orientations around surface normal to reduce missing wegde effects"
+type = "bool"
+default = true
+hidden = [ "spr_pre_process", "stream_spr" ]
+
+[tabs.detect_nn2d]
+_name = "Training/Evaluation"
+_description = "Settings for particle detection using neural networks"
+
+[tabs.detect_nn2d.ref]
+name = "Trained model"
+description = "Path to trained model (*.training)"
+type = "path"
+path = { type="files" }
+input = { type="trainedModel2D" }
+
+[tabs.detect_nn2d.iterations]
+name = "Iterations"
+description = "Number of iterations to use for NN training" 
+type = "int"
+default = 120000
+hidden = ["tomo_pre_process", "stream_spr"]
+
+[tabs.detect_nn2d.alpha]
+name = "Alpha"
+description = "Weighting coefficient to use for loss function" 
+type = "float"
+default = 0.95
+hidden = ["tomo_pre_process", "stream_spr"]
+
+[tabs.detect_nn2d.batch_size]
+name = "Batch size"
+description = "Batch size used during training" 
+type = "int"
+default = 32
+hidden = ["tomo_pre_process", "stream_spr"]
+
+[tabs.detect_nn2d.algorithm]
+name = "Training algorithm"
+description = "Algorithm used for training" 
+type = "str"
+default = "ssdn"
+hidden = ["tomo_pre_process", "stream_spr"]
+advanced = true
+
+[tabs.detect_nn2d.noise_value]
+name = "Noise estimation"
+description = "Whether the noise value should be estimated" 
+type = "str"
+default = "var"
+hidden = ["tomo_pre_process", "stream_spr"]
+advanced = true
+
+[tabs.detect_nn2d.num]
+name = "Evaluation samples"
+description = "Number of eval samples during training" 
+type = "int"
+default = 1
+hidden = ["tomo_pre_process", "stream_spr"]
+advanced = true
+
+[tabs.detect_nn2d.tau]
+name = "Percentage of positives"
+description = "Value for positive unlabeled learning (Tau)" 
+type = "float"
+default = 0.08
+hidden = ["tomo_pre_process", "stream_spr"]
+
+[tabs.detect_nn2d.noise_style]
+name = "Noise model"
+description = "Noise model using a string configuration in the format: {noise_type}{args} where {args} are the arguments passed to the noise function"
+type = "str"
+default = "gaussian"
+hidden = ["tomo_pre_process", "stream_spr"]
+advanced = true
+
+[tabs.detect_nn2d.patch_size]
+name = "Patch size"
+description = "Patch size to use during training"
+type = "int"
+default = 64
+hidden = ["tomo_pre_process", "stream_spr"]
+
+[tabs.detect_nn2d.bb]
+name = "Double b"
+description = "Parameter used during training"
+type = "int"
+default = 28
+hidden = ["tomo_pre_process", "stream_spr"]
+advanced = true
+
+[tabs.detect_nn2d.debug]
+name = "Debug mode"
+description = "Save intermediate results to output folder"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.detect_nn3d]
+_name = "Training/Evaluation"
+_description = "Settings for particle detection using neural networks"
+
+[tabs.detect_nn3d.ref]
+name = "Trained model"
+description = "Path to trained model (*.pth)"
+type = "path"
+path = { type="files" }
+input = { type="trainedModel3D" }
+hidden = [ "tomo_import" ]
+
+[tabs.detect_nn3d.down_ratio]
+name = "Downsample"
+description = "Down ratio for output"
+type = "int"
+default = 2
+hidden = true
+
+[tabs.detect_nn3d.num_epochs]
+name = "Epochs"
+description = "Number of epochs used during training"
+type = "int"
+default = 600
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_nn3d.bbox]
+name = "Bounding box"
+description = "Box size for particles, used to generate Guassian kernel during training"
+type = "int"
+default = 16
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_nn3d.val_interval]
+name = "Interval to perform validation"
+description = "Run validation within this interval"
+type = "int"
+default = 100
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+advanced = true
+
+[tabs.detect_nn3d.thresh]
+name = "Threshold for soft/hard positives"
+description = "Threshold for soft/hard positives"
+type = "float"
+default = 0.8
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_nn3d.cr_weight]
+name = "Contrastive regularization weight"
+description = "Weight for contrastive regularization module"
+type = "float"
+default = 0.1
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_nn3d.temp]
+name = "inforNCE temperature"
+description = "inforNCE temperature"
+type = "float"
+default = 0.07
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+advanced = true
+
+[tabs.detect_nn3d.tau]
+name = "Class prior probability"
+description = "Class prior probability"
+type = "float"
+default = 0.4
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+advanced = true
+
+[tabs.detect_nn3d.max_objects]
+name = "Max number of particles"
+description = "Limit number of particles per tomogram"
+type = "int"
+default = 200
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_nn3d.lr]
+name = "Learning rate"
+description = "Rate to use during training"
+type = "float"
+default = 0.001
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_nn3d.debug]
+name = "Debug mode"
+description = "Save intermediate results to output folder train/"
+type = "bool"
+default = false
+advanced = true
+
+# Particle parameters
+
+[tabs.particle]
+_name = "Sample"
+_description = "Specify particle parameters"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.particle.mw]
+name = "Molecular weight (kDa)"
+description = "Molecular weight of particle of interest"
+type = "float"
+# not actually required all the time, need to find a way to express that somehow?
+required = true
+
+[tabs.particle.rad]
+name = "Particle radius (A)"
+description = "Approximate radius of particle of interest used for display purposes"
+type = "float"
+# not actually required all the time, need to find a way to express that somehow?
+required = true
+
+[tabs.particle.sym]
+# TODO: what kind of input validation to do here? the rules are non-trivial
+#  see: https://blake.bcm.edu/emanwiki/EMAN2/Symmetry
+name = "Symmetry"
+description = "Particle symmetry"
+type = "str"
+default = "C1"
+
+# Particle Extraction
+
+[tabs.extract]
+_name = "Extraction"
+_description = "Settings for particle detection"
+_hidden = [ "spr_map_clean", "tomo_map_clean", "spr_flexible_refine", "tomo_flexible_refine" ]
+
+[tabs.extract.box]
+name = "Box size (pixels)"
+description = "Box size used for particle extraction"
+type = "int"
+default = 0
+required = true
+
+[tabs.extract.bnd]
+name = "Max box size"
+description = "Maximum size of extracted particles"
+type = "int"
+default = { ref="box" }
+hidden = true
+
+[tabs.extract.bin]
+name = "Image binning"
+description = "Binning used for particle extraction"
+type = "int"
+default = 1
+
+[tabs.extract.gold]
+name = "Skip gold fiducials"
+description = "Skip particle positions that are too close to gold fiducials"
+type = "bool"
+default = true
+hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "stream_spa",  "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean"]
+
+[tabs.extract.method]
+name = "Interpolation"
+description = "Interpolation algorithm used for binning"
+type = "enum"
+enum = { imod="imod", fft="fft", resample="resample" }
+default = "imod"
+hidden = true
+
+[tabs.extract.fmt]
+name = "Format"
+description = "Format to extract particles"
+type = "enum"
+enum = { frealign="Frealign", frealign_local="Frealign local", relion="Relion", eman="EMAN" }
+default = "frealign"
+#XD: there's more than just these methods
+#e.g., for unblur we have: -movie_ali frealign_spline -particle_fmt frealign_local 
+hidden = true
+
+[tabs.extract.use_clean]
+name = "Use only clean particles"
+description = "Only extract clean particles for processing"
+type = "bool"
+default = false
+hidden = [ "spr_coarse_refine", "spr_flexible_refine", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "stream_spa", "stream_tomo", "spr_map_clean", "tomo_map_clean"]
+
+[tabs.extract.cls]
+name = "Clean only"
+description = "Only extract clean particles"
+type = "int"
+default = 0
+hidden = true
+
+[tabs.extract.wgh]
+name = "Moving Average"
+description = "Moving average when extracting frames (0=disabled, typical=0.4)"
+type = "float"
+default = 0.0
+hidden = true
+
+[tabs.extract.stacks]
+name = "Stacks"
+description = "Produce particle and micrographs sub-stacks (legacy)"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.extract.using_frames]
+name = "Using frames"
+description = "Perform csp using frame refinement method (legacy)"
+type = "bool"
+default = false
+hidden = true
+
+# Virion and Spike picking (TOMO)
+
+[tabs.tomo_ali]
+_name = "Tilt-series alignment"
+_description = "Parameters for tilt-series alignment"
+
+[tabs.tomo_ali.patch_based]
+name = "Skip fiducial-based alignment"
+description = "Do patch-based alignment instead"
+type = "bool"
+default = false
+
+[tabs.tomo_ali.fiducial]
+name = "Fiducial diameter (A)"
+description = "Diameter of gold fiducials"
+type = "float"
+default = 100.0
+
+[tabs.tomo_ali.fiducial_number]
+name = "Number of fiducials"
+description = "Average number of gold fiducials per tilt-series (-1=auto)"
+type = "int"
+default = -1
+
+[tabs.tomo_ali.patches]
+name = "Number of patches (fiducial-less alignment)"
+description = "Numer of patches in x and y to use for tilt-series alignment"
+type = "int"
+default = 10
+
+[tabs.tomo_ali.force]
+name = "Force re-calculation"
+description = "Force re-calculation of tilt-series alignment"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.tomo_ali.auto_bin]
+name = "Auto binning"
+description = "Determine binning factor for tilt-series alignment automatically"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.tomo_ali.binning]
+name = "Binning for titl-series alignment"
+description = "Bin tilt-series by this factor before alignment"
+type = "int"
+default = 8
+advanced = true
+
+[tabs.tomo_rec]
+_name = "Tomogram reconstruction"
+_description = "Parameters for tomographic reconstruction"
+
+[tabs.tomo_rec.force]
+name = "Force re-calculation"
+description = "Force re-calculation of tomograms"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.tomo_rec.dose_weighting]
+name = "Apply dose weighting instead of bandpass filter"
+description = "Filter tilt-series prior to reconstruction according to dose settings"
+type = "bool"
+default = false
+
+[tabs.tomo_rec.mtfilter_cutoff]
+name = "Lowpass cutoff (tilt-series filtering)"
+description = "Lowpass cutoff to filter tilt-series prior to reconstruction"
+type = "float"
+default = 0.15
+
+[tabs.tomo_rec.mtfilter_falloff]
+name = "Lowpass falloff (tilt-series filtering)"
+description = "Lowpass falloff to filter tilt-series prior to reconstruction"
+type = "float"
+default = 0.05
+
+[tabs.tomo_rec.lpradial_cutoff]
+name = "Lowpass cutoff (radial weighting)"
+description = "Lowpass filtering using IMOD radial weighting function (use 0.35 for less filtering)"
+type = "float"
+default = 0.25
+
+[tabs.tomo_rec.lpradial_falloff]
+name = "Lowpass falloff (radial weighting)"
+description = "Lowpass filtering with IMOD radial weighting function (use 0.05 for less filtering)"
+type = "float"
+default = 0.15
+
+[tabs.tomo_rec.erase_fiducials]
+name = "Erase fiducials"
+description = "Erase fiducials from aligned tilt-series prior to reconstruction"
+type = "bool"
+default = false
+
+[tabs.tomo_rec.erase_factor]
+name = "Fiducials radius factor"
+description = "Radius factor to determine the erasing radius"
+type = "float"
+default = 1.0
+advanced = true
+
+[tabs.tomo_rec.binning]
+name = "Binning factor for reconstruction"
+description = "Produce binned tomograms during tomographic reconstruction (applies to dimensions x, y and z)"
+type = "int"
+default = 8
+
+[tabs.tomo_rec.thickness]
+name = "Thickness of reconstruction (unbinned voxels)"
+description = "Height of tomograms (z-dimension) to use during tomographic reconstruction"
+type = "int"
+default = 2048
+advanced = true
+
+[tabs.tomo_rec.square]
+name = "Reshape tilt-images into squares"
+description = "Tilt images will be reshaped into squares before processing"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.tomo_rec.format]
+name = "Resize squares to closest multiple of 512"
+description = "Tilt images will be reshaped into squares using the closest multiple of 512 as size"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.tomo_vir]
+_name = "Virion/spike detection"
+_description = "Virion and spike detection parameters"
+
+[tabs.tomo_vir.method]
+name = "Virion detection method"
+description = "Strategy for virion detection"
+type = "enum"
+enum = { none="none", auto="auto", manual="manual (list of positions required)", nn-train="nn-train (list of positions required)", nn-eval="nn-eval (trained model required)" }
+default = "none"
+
+[tabs.tomo_vir.rad]
+name = "Virion radius (A)"
+description = "Approximate virion radius to use for detection"
+type = "float"
+default = 0
+
+[tabs.tomo_vir.det_tol]
+name = "Tolerance for virion radius during detection"
+description = "Allow virion radius variations within this tolerance (percentage)"
+type = "float"
+default = 20.0
+advanced = true
+
+[tabs.tomo_vir.seg_tol]
+name = "Tolerance for virion radius during segmentation"
+description = "Allow virion radius variations within this tolerance (percentage)"
+type = "float"
+default = 20.0
+advanced = true
+
+[tabs.tomo_vir.number]
+name = "Max number of virions per tomogram"
+description = "Limit the number of virions during detection"
+type = "int"
+default = 25
+
+[tabs.tomo_vir.iterations]
+name = "Denoising iterations before virion detection"
+description = "Number denoising iterations (anisotropic diffusion)"
+type = "int"
+default = 25
+advanced = true
+
+[tabs.tomo_vir.canny_low]
+name = "Low threshold for Canny edge detector"
+description = "Allows to control the performance of virion detection"
+type = "float"
+default = 0.2
+advanced = true
+
+[tabs.tomo_vir.canny_high]
+name = "High threshold for Canny edge detector"
+description = "Allows to control the performance of virion detection"
+type = "float"
+default = 0.5
+advanced = true
+
+[tabs.tomo_vir.binn]
+name = "Virion additional binning"
+description = "Increase binning to speed up virion detection and reduce noise"
+type = "int"
+default = 2
+
+[tabs.tomo_vir.detect_method]
+name = "Spike detection method"
+description = "Strategy to use for spike detection"
+type = "enum"
+enum = { none="none", template="template search (template file required)", mesh="uniform" }
+default = "none"
+
+[tabs.tomo_vir.detect_ref]
+name = "Template for spike search (*.mrc)"
+description = "Path to file containing the template (dimensions must match the binned tomograms)"
+type = "path"
+path = { type="files" }
+
+[tabs.tomo_vir.detect_thre]
+name = "Spike correlation threshold"
+description = "Minimum correlation value to use for spike detection (lower values, more spikes)"
+type = "float"
+default = 0.2
+
+[tabs.tomo_vir.detect_dist]
+name = "Minimum distance between spikes (voxels)"
+description = "Minimum distance between neighboring spikes"
+type = "int"
+default = 10
+
+[tabs.tomo_vir.detect_band]
+name = "Size of equatorial band to restrict spike picking (A)"
+description = "Only pick spikes within a band centered around the virion equator"
+type = "int"
+default = 100
+
+[tabs.tomo_vir.detect_offset]
+name = "Spike height offset (A)"
+description = "Cut particles above membrane surface by this amount"
+type = "int"
+default = 0
+advanced = true
+
+[tabs.tomo_vir.detect_rand]
+name = "Randomize in-plane spike rotations"
+description = "Randomize spike rotations (around direction normal to virion surface) to reduce missing wedge effects"
+type = "bool"
+default = true
+
+[tabs.tomo_vir.force]
+name = "Force recalculation of parameters"
+description = "Force recalculation of virion parameters"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.tomo_spk]
+_name = "Particle detection"
+_description = "Sub-tomogram detection parameters"
+
+[tabs.tomo_spk.method]
+name = "Detection method"
+description = "Strategy to use for particle detection"
+type = "enum"
+enum = { none="none", auto="auto", import="import", manual="manual (list of positions required)", nn-train="nn-train (list of positions required)", nn-eval="nn-eval (trained model required)" }
+default = "none"
+
+[tabs.tomo_spk.files]
+name = "Import particle coordinates"
+description = "Folder containing files with particle coordinates (*.box, *.spk)"
+type = "path"
+path = { type="folders" }
+
+[tabs.tomo_spk.rad]
+name = "Detection radius (A)"
+description = "Size to use for particle detection"
+type = "float"
+default = 0
+
+[tabs.tomo_spk.contract_times_3d]
+name = "Binning factor"
+description = "Reduce size of tomograms before contamination detection to speed up processing"
+type = "int"
+default = 1
+
+[tabs.tomo_spk.gaussian_3d]
+name = "Apply Gaussian filter"
+description = "Filter tomograms using a Gaussian filter before contamination detection"
+type = "bool"
+default=false
+advanced = true
+
+[tabs.tomo_spk.sigma_3d]
+name = "Sigma for Gaussian filter"
+description = "Sigma used for the Gaussian filter"
+type = "int"
+default = 15
+advanced = true
+
+[tabs.tomo_spk.stdtimes_cont_3d]
+name = "Threshold for contamination detection"
+description = "Number of standard deviations below mean used for contamination detection"
+type = "float"
+default = 1
+
+[tabs.tomo_spk.min_size_3d]
+name = "Minimum contamination size (voxels)"
+description = "Groups of voxels smaller than this value will not be considered as contamination"
+type = "int"
+default = 125
+
+[tabs.tomo_spk.dilation_3d]
+name = "Contamination mask dilation (voxels)"
+description = "Dilate contamination mask to avoid picking too close to contaminants"
+type = "float"
+default = 100
+
+[tabs.tomo_spk.radiustimes_3d]
+name = "Minimum distance between particles"
+description = "Discard particles that are closer than this threshold (in multiple of the particle radius)"
+type = "float"
+default = 4
+
+[tabs.tomo_spk.inhibit_3d]
+name = "Local refinement"
+description = "Use iterative criteria to detect particle candidates (select this option to get more particles)"
+type = "bool"
+default = false
+
+[tabs.tomo_spk.detection_width_3d]
+name = "Z-axis detection range (binned voxels)"
+description = "Restrict particle picking around the central slice of the tomogram)"
+type = "float"
+default=128
+advanced = true
+
+[tabs.tomo_spk.stdtimes_filt_3d]
+name = "Particle detection threshold"
+description = "Only keep candidate positions within this number of standard deviations above the mean (higher numbers give fewer particles)"
+type = "float"
+default = 1
+
+[tabs.tomo_spk.remove_edge_3d]
+name = "Filter positions by relative contrast"
+description = "Reject particle positions that have higher foreground variance than the background"
+type = "bool"
+default = false
+
+[tabs.tomo_spk.rand]
+name = "Randomize particle rotations"
+description = "Randomize particle orientations during extraction to reduce mising wegde effects"
+type = "bool"
+default = true
+
+[tabs.tomo_ext]
+_name = "Sub-tomogram extraction"
+_description = "Sub-tomogram extraction parameters"
+
+[tabs.tomo_ext.fmt]
+name = "Extraction format"
+description = "Format to use for sub-tomogram extraction"
+type = "enum"
+enum = { none="none", eman="eman", 3DAVG="3DAVG" }
+default = "none"
+
+[tabs.tomo_ext.size]
+name = "Sub-tomogram size (voxels)"
+description = "Size to use for sub-tomgram extraction"
+type = "int"
+default = 128
+
+[tabs.tomo_ext.padd]
+name = "Sub-tomogram padding"
+description = "Padding factor for sub-tomograms (voxels)"
+type = "int"
+default = 1
+hidden = true
+
+[tabs.tomo_ext.binn]
+name = "Sub-tomogram binning"
+description = "Binning factor used to extract sub-tomgrams"
+type = "int"
+default = 1
+
+# 2D classification parameters
+
+[tabs.class2d]
+_name = "2D classification"
+_description = "Settings for particle classification"
+
+[tabs.class2d.min]
+name = "Minimum particles for 2D classification"
+description = "Minimum number of particles required for 2D classification"
+type = "int"
+default = 5000
+
+[tabs.class2d.inc]
+name = "Incremental particles for 2D classification"
+description = "Incremental number of particles required for 2D classification"
+type = "int"
+default = 5000
+
+[tabs.class2d.num]
+name = "Number of classes"
+description = "Number of classes to use during classification"
+type = "int"
+default = 20
+
+[tabs.class2d.fraction]
+name = "Fraction of particles to use"
+description = "What fraction of particles to use for classification"
+type = "float"
+default = 0.5
+advanced = true
+
+[tabs.class2d.rlref]
+name = "Min resolution (A)"
+description = "Minimum resolution used during refinement"
+type = "float"
+default = 100.0
+advanced = true
+
+[tabs.class2d.rhini]
+name = "Starting high-resolution"
+description = "Resolution limit for first refinement iteration"
+type = "float"
+default = 40.0
+advanced = true
+
+[tabs.class2d.rhref]
+name = "Max resolution (A)"
+description = "Maximum resolution used during refinement"
+type = "float"
+default = 8.0
+advanced = true
+
+[tabs.class2d.iters_init]
+name = "Number of iterations for ab-initio"
+description = "Iterations for ab-initio refinement"
+type = "int"
+default = 15
+advanced = true
+
+[tabs.class2d.iters_seed]
+name = "Number of iterations for seeded-startup"
+description = "Iterations for seeded-startup refinement"
+type = "int"
+default = 10
+advanced = true
+
+[tabs.class2d.iters_refine]
+name = "Number of iterations during refinement"
+description = "Iterations for refinement"
+type = "int"
+default = 3
+advanced = true
+
+[tabs.class2d.box]
+name = "Box size (pixels)"
+description = "Box size used for extraction"
+type = "int"
+hidden = ["spr_flexible_refine", "tomo_flexible_refine"]
+default = 96
+
+[tabs.class2d.bin]
+name = "Image binning"
+description = "Binning used during particle extraction"
+type = "int"
+default = 4
+
+[tabs.class2d.max_ab_initio]
+name = "Max particles for ab-initio"
+description = "Max number of particles to use during ab-initio"
+type = "int"
+default = 10000
+advanced = true
+
+[tabs.class2d.max_seeded]
+name = "Max particles for seeded startup"
+description = "Max number of particles to use during seeded startup"
+type = "int"
+default = 50000
+advanced = true
+
+[tabs.class2d.max_refinement]
+name = "Max particles for refinement"
+description = "Max number of particles to use during refinement"
+type = "int"
+default = 100000
+advanced = true
+
+[tabs.class2d.ctf_min_res]
+name = "Exclude low resolution micrographs"
+description = "Only use micrographs with information beyond this resolution"
+type = "float"
+default = 10.0
+
+# Classification parameters
+
+[tabs.class]
+_name = "Classification"
+_description = "Settings for particle classification"
+
+[tabs.class.num]
+name = "Number of classes"
+description = "Number of classes to use during classification"
+type = "int"
+default = 1
+
+[tabs.class.rhcls]
+name = "Max resolution (A)"
+description = "Highest resolution used during classification"
+type = "float"
+default = 8.0
+
+[tabs.class.force_init]
+name = "Force initialization"
+description = "Force class initialization"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.class.bin]
+name = "Binning"
+description = "Additional binning used during classification"
+type = "int"
+default = 2
+hidden = true
+
+[tabs.class.refineeulers]
+name = "Angle refinement interval"
+description = "Refine Euler angles every this many iterations"
+type = "int"
+default = 3
+hidden = true
+
+[tabs.class.refineshifts]
+name = "Translation refinement interval"
+description = "Refine translations every this many iterations"
+type = "int"
+default = 2
+hidden = true
+
+# Search parameters
+
+[tabs.refine]
+_name = "Refinement"
+_description = "Parameters for 3D refinement"
+
+[tabs.refine.dataset]
+name = "Refinement name"
+description = "Name of refinement"
+type = "str"
+hidden = true
+
+[tabs.refine.model]
+name = "Initial model"
+description = "Initial model used for refinement (*.mrc)"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+required = true
+copyToNewBlock = false
+
+[tabs.refine.parfile]
+name = "Input parameter file"
+description = "Parameter file to initialize refinement (*.par.bz2)"
+type = "path"
+path = { type="files" }
+input = { type="parfile" }
+copyToNewBlock = false
+
+[tabs.refine.parfile_compress]
+name = "Compress par files"
+description = "Store all metadata in compressed format"
+type = "bool"
+default = true
+hidden = true
+copyToNewBlock = false
+advanced = true
+
+[tabs.refine.updateallparx]
+name = "Update parameter files"
+description = "Update all metadata in csp allparx"
+type = "bool"
+default = true
+hidden = true
+
+[tabs.refine.parfile_tomo]
+name = "Initial sub-volume alignments"
+description = "Parameter file to initialize refinement (*.txt)"
+type = "path"
+path = { type="files" }
+input = { type="txtfile" }
+hidden = true
+
+[tabs.refine.resume]
+name = "Resume refinement"
+description = "Resume refinement from most recent iteration"
+type = "bool"
+default = true
+copyToNewBlock = false
+
+[tabs.refine.first_iter]
+name = "First iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+
+[tabs.refine.iter]
+name = "Starting iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+hidden = true
+copyToNewBlock = false
+
+[tabs.refine.maxiter]
+name = "Last iteration"
+description = "Number of last refinement iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+
+[tabs.refine.skip]
+name = "Skip refinement"
+description = "Skip refinement step, only do reconstruction"
+type = "bool"
+default = false
+copyToNewBlock = false
+
+[tabs.refine.metric]
+name = "Search metric"
+description = "Version of Frealign used for alignment"
+type = "enum"
+enum = { new="new", frealignx="frealignx" }
+default = "frealignx"
+hidden = true
+
+[tabs.refine.mode]
+name = "Search mode"
+description = "Search strategy used during alignment"
+type = "enum"
+enum = { 0="global", 1="local" }
+default = "0"
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine"]
+
+[tabs.refine.rlref]
+name = "Min resolution (A)"
+description = "Minimum resolution used during refinement"
+type = "float"
+default = 100.0
+
+[tabs.refine.rhref]
+name = "Max resolution (A)"
+description = "Maximum resolution used during refinement (per iteration, colon separated)"
+type = "str"
+default = "10"
+
+[tabs.refine.fboost]
+name = "Use signed correlation"
+description = "May increase the chance of overfitting"
+type = "bool"
+default = false
+
+[tabs.refine.fboostlim]
+name = "Resolution limit for signed correlation"
+description = "Resolution limit to use for signed correlation coefficient (0=no limit)"
+type = "float"
+default = 0.0
+
+[tabs.refine.priors]
+name = "Use alignment priors"
+description = "Using priors during refinement as constraints may decrease the chance of overfitting"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.refine.beamtilt]
+name = "Refine beam-tilt"
+description = "Use beam tilt refinement"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.refine.adjust]
+name = "TBA"
+description = "TBA"
+type = "str"
+default = "true"
+hidden = true
+
+[tabs.refine.boff]
+name = "Frealign BOFF (legacy)"
+description = "Average phase residual: 60.0, approximate average phase residual of all particles, used in calculating weights for contributions of different particles to 3D map"
+type = "str"
+default = "0.0"
+hidden = true
+
+[tabs.refine.bsc]
+name = "BSC"
+description = "Frealign BSC"
+type = "str"
+default = "2.0"
+hidden = true
+
+[tabs.refine.crop]
+name = "Crop"
+description = "Cropping"
+type = "str"
+default = "false"
+hidden = true
+
+[tabs.refine.daemon]
+name = "Daemon"
+description = "Re-launch refinement when particle number reaches specified coma separated values"
+type = "str"
+default = "5000,25000,5000,2000"
+hidden = true
+
+[tabs.refine.dang]
+name = "Angular sampling step (degrees)"
+description = "There is a program default value calculated taking resolution into account, but if this input value is non-zero, the program value is overridden"
+type = "str"
+default = "20.0"
+advanced = true
+
+[tabs.refine.debug]
+name = "Debug"
+description = "Enable debug mode"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.refine.dfsig]
+name = "DFSIG (legacy)"
+description = "Defocus uncertainty (A), e.g. 200.0. This will restrain the change in defocus when refining defocus values for individual particles"
+type = "str"
+default = "150.0"
+hidden = true
+
+[tabs.refine.fastig]
+name = "FASTIG (legacy)"
+description = "Astigmatism refinement - if F, then DF1 and DF2 are coupled"
+type = "str"
+default = "false"
+hidden = true
+
+[tabs.refine.fdef]
+name = "FDEF (legacy)"
+description = "Defocus refinement, DF1 and DF2 coupled/uncoupled if FASTIG=F/T"
+type = "str"
+default = "false"
+hidden = true
+
+[tabs.refine.fmag]
+name = "FMAG"
+description = "Magnification refinement - one number is calculated for each new film. The orientation parameters must already be available in the input parameter file and should preferably have been determined using a different 3D reference model than that used for the magnification refinement"
+type = "str"
+default = "false"
+hidden = true
+
+[tabs.refine.fmatch]
+name = "FMATCH"
+description = "Write out matching projections obtained after refinement (for diagnostic purposes)"
+type = "str"
+default = "false"
+hidden = true
+
+[tabs.refine.focusmask]
+name = "Mask for focused refinement (A)"
+description = "Four numbers describing a spherical mask (X, Y, Z for mask center and R for mask radius)"
+type = "str"
+default = "0,0,0,0"
+advanced = true
+
+[tabs.refine.fpart]
+name = "FPART"
+description = "Defocus refinement for individual particles if FPART=T, otherwise defocus change is constrained to be the same for all particles in one image"
+type = "str"
+default = "false"
+hidden = true
+
+[tabs.refine.fssnr]
+name = "Use SSNR table"
+description = "Use SSNR table during evaluation of refinement metric"
+type = "bool"
+default = true
+
+[tabs.refine.iblow]
+name = "IBLOW"
+description = "Padding factor for reference structure"
+type = "str"
+default = "1"
+hidden = true
+
+[tabs.refine.imem]
+name = "IMEM"
+description = "Memory usage and padding factor for reference structure (frealign v9 only)"
+type = "enum"
+enum = { 0="0", 1="1", 2="2", 3="3" }
+default = "0"
+hidden = true
+
+[tabs.refine.interp]
+name = "Interpolation algorithm"
+description = "Interpolation scheme used for 3D reconstruction (frealign v9 only)"
+type = "enum"
+enum = { 0="nearest", 1="linear" }
+default = "1"
+hidden = true
+
+[tabs.refine.invert]
+name = "Invert image contrast"
+description = "Set to true if particles are dark on bright background, otherwise set to false"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.refine.ipmax]
+name = "IPMAX"
+description = "Number of potential matches in a search that should be tested further in a subsequent local refinement"
+type = "int"
+default = 10
+hidden = true
+
+[tabs.refine.itmax]
+name = "Random search cycles"
+description = "Number of cycles of randomised search used during global search"
+type = "int"
+default = 50
+advanced = true
+
+[tabs.refine.mask]
+name = "MASK"
+description = "Binary mask to include/exclude parameters from refinement (phi,theta,psi,sx,sy)"
+type = "str"
+default = "1,1,1,1,1"
+hidden = true
+
+[tabs.refine.refine_angle_phi]
+name = "Refine Phi angle"
+description = "Refine angle parameter Phi"
+type = "bool"
+default = true
+
+[tabs.refine.refine_angle_theta]
+name = "Refine Theta angle"
+description = "Refine angle parameter Theta"
+type = "bool"
+default = true
+
+[tabs.refine.refine_angle_psi]
+name = "Refine Psi angle"
+description = "Refine angle parameter Psi"
+type = "bool"
+default = true
+
+[tabs.refine.refine_shiftx]
+name = "Refine X shifts"
+description = "Refine translation in the x dimension"
+type = "bool"
+default = true
+
+[tabs.refine.refine_shifty]
+name = "Refine Y shifts"
+description = "Refine translation in the y dimension"
+type = "bool"
+default = true
+
+[tabs.refine.searchx]
+name = "Search range in X (A)"
+description = "Search range in the X-axis (0.0=mask radius)"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.refine.searchy]
+name = "Search range in Y (A)"
+description = "Search range in the Y-axis (0.0=mask radius)"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.refine.srad]
+name = "Mask radius (A)"
+description = "Radius of spherical mask applied during global search"
+type = "float"
+default =  0.0
+
+[tabs.refine.maskth]
+name = "Shape mask"
+description = "Shape mask to use during refinement (*.mrc)"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+
+[tabs.refine.merge_normalize]
+name = "Frame normalization"
+description = "Normalize the voxel and CTF in merge3d by the number of frames"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.refine.pbc]
+name = "PBC"
+description = "Phase residual / pseudo-B-factor conversion Constant: 5.0. Automatic weighting is applied to each particle: a pseudo-temperature (B) factor is applied to each particle according to its relative phase residual against the reference. The weight is calculated as W = exp (-DELTAP/PBC * R^2) with DELTAP = relative phase residual (actual phase residual minus BOFF), PBC = conversion constant (5.0 in the example), and R^2 the squared resolution in Fourier units (R = 0.0 ... 0.5). A large value for PBC (e.g. 100.0) gives equal weighting to each particle"
+type = "str"
+default = "100.0"
+hidden = true
+
+[tabs.refine.xstd]
+name = "XSTD"
+description = "Number of standard deviations above mean for masking of input low-pass filtered 3D model - note this 3D masking does not use RI - if positive, calculates mask with subroutine D3MASK, equiv to solvent flattening with 5-pixel-cosine-bell smoothed mask boundary. The mask is then used to multiply the input 3D map, which is then used for all parameter refinement and subsequent calculations. - if negative, calculates mask with subroutine D2MASK resulting in a sharp binary (0/1) mask boundary for which is used for both parameter refinement and reconstruction, and to mask and output the matching projections.  Each matching particle image is also always masked with a cosine bell edged function of radius RI"
+type = "str"
+default = "0"
+hidden = true
+
+[tabs.refine.rbfact]
+name = "RBFACT"
+description = "B-factor to apply to particle image projections before orientation determination or refinement. This allows inclusion of high resolution data but with a reduced (or increased if negative) weight. WGH and RBFAC can be manipulated in particle parameter refinement as if they were low pass and high pass filters. WGH and the CTF are used to correct the density in the final map, whereas RBFAC is not. NOTE: This option should be used with great care as amplification of noisy high-resolution terms can lead to over-fitting and artificially high values in the FSC curve (se publication #2 above). FREALIGN uses an automatic weighting scheme and RBFACT should normally be set to 0.0"
+type = "str"
+default = "0.0"
+hidden = true
+
+[tabs.refine.ref_par]
+name = "Reference par file"
+description = "Reference par file used for regularization (par format)"
+type = "path"
+path = { type="files" }
+hidden = true
+
+[tabs.refine.same_ref]
+name = "Persistent reference"
+description = "Use the same reference for refinement (do not update with the most current reference)"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.refine.target]
+name = "TARGET"
+description = "Target phase residual (for resolution between RMAX1 and RMAX2) during parameter saerch and refinement, below which the search and/or refinement is terminated.  This is normally set low (e.g. THRESH=10.0). This will give excellent determination of particle orientations"
+type = "str"
+default = "90.0"
+hidden = true
+
+[tabs.refine.score_weighting]
+name = "Score weighting"
+description = "Use score weighting during refinement (higher score, stronger contribution)"
+type = "bool"
+default = false
+advanced = true
+
+# 3D reconstruction parameters
+
+[tabs.reconstruct]
+_name = "Reconstruction"
+_description = "Parameters used for 3D reconstruction"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.reconstruct.optimal_cutoff]
+name = "Value of automatic threshold"
+description = "Store value of automatically determined threshold"
+type = "float"
+default = 0.0
+hidden = true
+
+[tabs.reconstruct.cutoff]
+name = "Fraction of particles"
+description = "Use subset of particles for reconstruction (0:automatic,<=1:percentage,>1:number of particles)"
+type = "str"
+default = "1"
+hidden = ["spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine"]
+copyToNewBlock = false
+
+[tabs.reconstruct.min_occ]
+name = "Min occupancy"
+description = "Minimum occupancy to use during reconstruction"
+type = "int"
+default = 50
+advanced = true
+
+[tabs.reconstruct.ffilt]
+name = "Apply Wiener filter"
+description = "Apply single particle Wiener filter to final reconstruction"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.reconstruct.rrec]
+name = "Resolution limit"
+description = "Maximum resolution used during reconstruction (0=Nyquist)"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.reconstruct.apply_symmetry]
+name = "Apply symmetry"
+description = "Apply symmetry during reconstruction"
+type = "bool"
+default = true
+
+[tabs.reconstruct.norm]
+name = "Normalize images"
+description = "Normalize input particle images before reconstruction"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.reconstruct.fbfact]
+name = "Apply B-factor (fbfact)"
+description = "Determine and apply B-factor to final reconstruction"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.reconstruct.minazh]
+name = "Min azhimut"
+description = "Minimum azhimut-angle used for reconstruction"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.reconstruct.maxazh]
+name = "Max azhimut"
+description = "Maximum azhimut-angle used for reconstruction"
+type = "float"
+default = 180.0
+advanced = true
+
+[tabs.reconstruct.mindef]
+name = "Min defocus"
+description = "Minimum defocus used for reconstruction"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.reconstruct.maxdef]
+name = "Max defocus"
+description = "Maximum defocus used for reconstruction"
+type = "float"
+default = 100000.0
+advanced = true
+
+[tabs.reconstruct.minscore]
+name = "Min score"
+description = "Ignore particles with scores lower than Min"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.reconstruct.maxscore]
+name = "Max score"
+description = "Ignore particles with scores higher than Max"
+type = "float"
+default = 1.0
+advanced = true
+
+[tabs.reconstruct.maxtilt]
+name = "Max tilt-angle"
+description = "Maximum tilt-angle used for reconstruction"
+type = "float"
+default = 90.0
+hidden = [ 'spr_import_raw', 'spr_import_star', 'stream_spr' ]
+advanced = true
+
+[tabs.reconstruct.mintilt]
+name = "Min tilt-angle"
+description = "Minimum tilt-angle used for reconstruction"
+type = "float"
+default = -90.0
+advanced = true
+
+[tabs.reconstruct.firstframe]
+name = "First frame"
+description = "First frame used for reconstruction"
+type = "int"
+default = 0
+advanced = true
+
+[tabs.reconstruct.lastframe]
+name = "Last frame"
+description = "Last frame used for reconstruction (-1=all frames)"
+type = "int"
+default = -1
+advanced = true
+
+[tabs.reconstruct.iewald]
+name = "Ewald sphere correction"
+description = "Ewald sphere correction"
+type = "enum"
+enum = { 0="0", 1="1", 2="2", -1="-1", -2="-2" }
+default = "0"
+advanced = true
+
+[tabs.reconstruct.lblur]
+name = "Likelihood blurring"
+description = "Use likelihood blurring during reconstruction"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.reconstruct.lblur_nrot]
+name = "Rotations for blurring"
+description = "Number of rotations used during likelihood blurring"
+type = "int"
+default = 21
+advanced = true
+
+[tabs.reconstruct.lblur_range]
+name = "LogP range for blurring"
+description = "LogP range used during likelihood blurring"
+type = "int"
+default = 20
+advanced = true
+
+[tabs.reconstruct.lblur_start]
+name = "Starting angle for blurring"
+description = "Starting angle used for blurring with respect to the optimal orientation in degrees"
+type = "int"
+default = -10
+advanced = true
+
+[tabs.reconstruct.lblur_step]
+name = "Angular sampling step"
+description = "Step size of angular sampling to use for blurring (degrees)"
+type = "int"
+default = 1
+advanced = true
+
+[tabs.reconstruct.agroups]
+name = "Angular groups"
+description = "Number of angular groups used for particle sorting by score value"
+type = "int"
+default = 1
+advanced = true
+
+[tabs.reconstruct.dgroups]
+name = "Defocus groups"
+description = "Number of defocus groups used for particle sorting by score value"
+type = "int"
+default = 1
+advanced = true
+
+[tabs.reconstruct.num_frames]
+name = "Frames per movie"
+description = "Number of frames per movie (per frame reconstruction only)"
+type = "int"
+default = 1
+advanced = true
+
+[tabs.reconstruct.per_particle_splitting]
+name = "Per-particle FSC splitting"
+description = "Force frames/tilts from each particle to be in same half map"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.reconstruct.radrec]
+name = "Reconstruction radius"
+description = "Limit radius of reconstruction (A, 0=no mansking)"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.reconstruct.saveplots]
+name = "Produce angular plots"
+description = "Produce plots to visualize angular trajectories on unit sphere"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.reconstruct.shapr]
+name = "Shape scores"
+description = "Advanced options for shaping scores before reconstruction"
+type = "enum"
+enum = { none="none", -reverse="reverse", -consistency="consistency" }
+default = "none"
+advanced = true
+
+[tabs.reconstruct.scratch_copy_stack]
+name = "threc"
+description = "Phase residual threshold used for reconstruction"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.reconstruct.threc]
+name = "threc"
+description = "Phase residual threshold used for reconstruction"
+type = "float"
+default = 0.0
+hidden = true
+
+[tabs.reconstruct.weights]
+name = "Use weights"
+description = "Use multiple weights"
+type = "bool"
+default = false
+hidden = true
+
+# Post-processing and denoising Options
+
+[tabs.denoise]
+_name = "Denoising"
+_description = "Denoise reconstruction after each iteration"
+
+[tabs.denoise.enable]
+name = "Denoise reconstruction"
+description = "Denoise reconstruction after each iteration using anisotropic diffusion"
+type = "bool"
+default = false
+
+[tabs.denoise.method]
+name = "Denoising method"
+description = "Method to use for denosing"
+type = "enum"
+enum = { bm4d="bm4d", nad="imod-nad" }
+default = "bm4d"
+
+[tabs.denoise.iters]
+name = "Number of iterations"
+description = "The higher the number of iterations, the smoother the result"
+type = "int"
+default = 1
+
+[tabs.denoise.nsearch]
+name = "Neighborhood size"
+description = "Size of area to search for similar patches (voxels)"
+type = "int"
+default = 11
+hidden = true
+
+[tabs.denoise.patch_size]
+name = "Patch size"
+description = "Patch size used for denoising (must be power of 2, voxels)"
+type = "int"
+default = 4
+hidden = true
+
+[tabs.denoise.sigma]
+name = "Noise sigma"
+description = "Noise sigma estimation, higher values mean more denoising"
+type = "float"
+default = 0.25
+
+# Dose-Weighting Options
+
+[tabs.dose_weighting]
+_name = "Exposure weighting"
+_description = "Control dose weighting"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.dose_weighting.enable]
+name = "Dose weighting"
+description = "Enable dose weighting during reconstruction"
+type = "bool"
+default = false
+
+[tabs.dose_weighting.global]
+name = "Global weights"
+description = "Compute global weights using the entire dataset for dose weighting (rather than local weights inferred from a bundle)"
+type = "bool"
+default = false
+
+[tabs.dose_weighting.weights]
+name = "External weights"
+description = "External weights for dose weighting (rather than weights inferred from current parfile)"
+type = "path"
+path = { type="files" }
+
+[tabs.dose_weighting.fraction]
+name = "Frame weight fraction"
+description = "Using larger values contributes fewer frames to high-resolution, and vice versa"
+type = "int"
+default = 4
+
+[tabs.dose_weighting.transition]
+name = "Frame weight transition"
+description = "Weight transition (for per-frame reconstruction)"
+type = "float"
+default = 0.75
+
+[tabs.dose_weighting.multiply]
+name = "Multiply by number of frames"
+description = "Multiply dose weighting parameters by the number of frames"
+type = "bool"
+default = true
+
+# Atomic-Model Fit Options
+
+[tabs.model]
+_name = "Model fitting"
+_description = "Fit a set of pdb coordinates after each reinement iteration"
+
+[tabs.model.fit]
+name = "Model"
+description = "Model to use for evaluating fit (pdb format)"
+type = "path"
+path = { type="files" }
+
+[tabs.model.clip]
+name = "Clip"
+description = "Clip model to this size for fit evaluation (pixels)"
+type = "int"
+default = 384
+
+[tabs.model.flip]
+name = "Flip"
+description = "Flip model handedness before fit evaluation"
+type = "bool"
+default = false
+
+[tabs.model.pixel]
+name = "Pixel size (A)"
+description = "Unbinned calibrated pixel size"
+type = "float"
+default = 0.0
+
+[tabs.model.res]
+name = "Max resolution (A)"
+description = "Filter model to this resolution before evaluating the fit"
+type = "float"
+default = 3.0
+
+[tabs.model.scale]
+name = "Scale"
+description = "Scale reconstruction by this factor before fit evaluation"
+type = "int"
+default = 1
+
+# Constrained refinement
+
+[tabs.csp]
+_name = "Constrained refinement"
+_description = "Settings for constrained single particle (CSP) refinement"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.csp.UseImagesForRefinementMin]
+name = "First exposure for refinement"
+description = "First exposure index to use during refinement"
+type = "int"
+default = 0
+hidden = [ 'spr_coarse_refine' ]
+
+[tabs.csp.UseImagesForRefinementMax]
+name = "Last exposure for refinement"
+description = "Last exposure index to use during refinement"
+type = "int"
+default = 20
+hidden = [ 'spr_coarse_refine' ]
+
+[tabs.csp.Grid_spr]
+name = "Number of regions"
+description = "Number of regions in x, y (default is global refinement with x=1, y=1)"
+type = "str"
+default = "1,1"
+hidden = [ 'tomo_coarse_refine', 'tomo_flexible_refine' ]
+
+[tabs.csp.Grid]
+name = "Number of regions"
+description = "Number of regions in x, y, z (default is global refinement with x=1, y=1, z=1)"
+type = "str"
+default = "1,1,1"
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.RefineProjectionCutoff]
+name = "Min number of projections for refinement"
+description = "Only refine particles that have at least this number of projections (0=all)"
+type = "int"
+default = 0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.NumberOfRandomIterations]
+name = "Optimizer - Exhaustive search points"
+description = "Number of points to evalaute during reference-based exhaustive search"
+type = "int"
+default = 0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'tomo_flexible_refine' ]
+copyToNewBlock = false
+
+[tabs.csp.OptimizerMaxIter]
+name = "Optimizer - Number of iterations"
+description = "Max number of iterations to use in Powell optimization"
+type = "int"
+default = 5
+advanced = true
+
+[tabs.csp.OptimizerStepLength]
+name = "Optimizer - Max step length"
+description = "Max step length to use in Powell optimization"
+type = "float"
+default = 20.0
+advanced = true
+
+[tabs.csp.OptimizerStepTolerance]
+name = "Optimizer - Step tolerance"
+description = "Step tolerance to use in Powell optimization"
+type = "float"
+default = 0.01
+advanced = true
+
+[tabs.csp.OptimizerValueTolerance]
+name = "Optimizer - Tolerance value"
+description = "Tolerance value to use in Powell optimization"
+type = "float"
+default = 0.0001
+advanced = true
+
+[tabs.csp.refine_micrographs]
+name = "Refine tilt-geometry"
+description = "Optimize tilt-axis orientation and position for each tilt-image"
+type = "bool"
+default = false
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.ToleranceMicrographShifts]
+name = "Micrograph translation range (pixels)"
+description = "Tolerance to use for translations"
+type = "float"
+default = 100.0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.ToleranceMicrographTiltAngles]
+name = "Micrograph tilt-angle range (degrees)"
+description = "Tolerance to use for micrograph tilt-angles"
+type = "float"
+default = 1.5
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.ToleranceMicrographTiltAxisAngles]
+name = "Micrograph tilt-axis range (degrees)"
+description = "Tolerance to use for micrograph tilt-axis angles"
+type = "float"
+default = 1.0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.refine_particles]
+name = "Refine particle alignments"
+description = "Optimize sub-tomogram orientations and translations in 3D"
+type = "bool"
+default = false
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.ToleranceParticlesPhi]
+name = "Particle Phi range (degrees)"
+description = "Tolerance to use for particle Phi angle"
+type = "float"
+default = 30.0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.ToleranceParticlesPsi]
+name = "Particle Psi range (degrees)"
+description = "Tolerance to use for particle Psi angle"
+type = "float"
+default = 30.0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.ToleranceParticlesTheta]
+name = "Particle Theta range (degrees)"
+description = "Tolerance to use for particle Theta angle"
+type = "float"
+default = 30.0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.ToleranceParticlesShifts]
+name = "Particle translation range (voxels)"
+description = "Tolerance to use for micrograph shifts"
+type = "float"
+default = 20.0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.frame_refinement]
+name = "Movie frame refinement"
+description = "Optimize particle position across frames"
+type = "bool"
+default = false
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+
+[tabs.csp.transreg]
+name = "Regularize translations"
+description = "Regularize translational parameters"
+type = "bool"
+default = false
+advanced = true
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+
+[tabs.csp.spatial_sigma]
+name = "Spatial sigma"
+description = "Sigma to use for spatial regularization (pixels)"
+type = "float"
+default = 500.0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+
+[tabs.csp.time_sigma]
+name = "Time sigma"
+description = "Sigma to use for time regularization (number of frames)"
+type = "int"
+default = 21
+advanced = true
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+
+[tabs.csp.transreg_method]
+name = "Translation regularization method"
+description = "Choice of translational regularization method"
+type = "enum"
+enum = { AB="Option 1", XD="Option 2", spline="Spline" }
+default = "spline"
+hidden = true
+
+[tabs.csp.rotreg]
+name = "Rotational regularization"
+description = "Regularize rotational parameters"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp.rotreg_method]
+name = "Rotational regularization method"
+description = "Choice of rotational regularization method"
+type = "enum"
+enum = { AB1="AB1", AB2="AB2", XD="XD" }
+default = "AB2"
+hidden = true
+
+[tabs.csp.particle_blur_sigma]
+name = "Sigma for Gaussian regularization of trajectories"
+description = "Apply gaussian blur to particle images for alignment"
+type = "float"
+default = -1.0
+advanced = true
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+
+[tabs.csp.produce_running_average]
+name = "Use running frame averages"
+description = "This is currently only for testing classification"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp.refine_ctf]
+name = "Refine CTF per-particle"
+description = "Optimize defocus and astigmatism parameters per-tilt"
+type = "bool"
+default = false
+
+[tabs.csp.ctf_handedness]
+name = "Invert CTF handedness"
+description = "Use reverse CTF handedness"
+type = "bool"
+default = false
+advanced = true
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+
+[tabs.csp.ToleranceMicrographAstigmatism]
+name = "Astigmatism range (degrees)"
+description = "Tolerance to use for micrograph astigmatism"
+type = "float"
+default = 90.0
+advanced = true
+
+[tabs.csp.ToleranceMicrographDefocus1]
+name = "Defocus 1 range (A)"
+description = "Tolerance to use for micrograph defocus 1"
+type = "float"
+default = 750.0
+advanced = true
+
+[tabs.csp.ToleranceMicrographDefocus2]
+name = "Defocus 2 range (A)"
+description = "Tolerance to use for micrograph defocus 2"
+type = "float"
+default = 750.0
+advanced = true
+
+[tabs.csp.thresh]
+name = "Thresh option"
+description = "CSP thresh option"
+type = "float"
+default = 0.0
+hidden = true
+
+[tabs.csp.stacks]
+name = "Stacks option"
+description = "CSP stacks option"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp.parx_only]
+name = "Parx only"
+description = "Produce parx file only (legacy)"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp.no_stacks]
+name = "CSP"
+description = "Using temporary stacks for CSP"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp.DebugBasic]
+name = "Basic debug"
+description = "Output basic debug"
+type = "bool"
+default = true
+hidden = true
+
+[tabs.csp.DebugData]
+name = "Data debug"
+description = "Output debug data"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp.DebugFull]
+name = "Full debug"
+description = "Output full debug info"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp.DebugInfo]
+name = "Info debug"
+description = "Output debug info"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp.DebugNone]
+name = "None debug"
+description = "Output none debug info"
+type = "bool"
+default = false
+hidden = true
+
+# Sub-Volume Averaging
+
+[tabs.sva]
+_name = "Sub-tomogram averaging"
+_description = "Settings for sub-tomogram averaging using 3DAVG"
+
+[tabs.sva.mode]
+name = ""
+description = ""
+type = "enum"
+enum = { 0="", 1="", 2="", 3="" }
+default = "0"
+
+[tabs.sva.iter]
+name = ""
+description = ""
+type = "int"
+default = 1
+
+[tabs.sva.mask]
+name = ""
+description = ""
+type = "str"
+default = "25,25,25"
+
+[tabs.sva.tol_shifts]
+name = ""
+description = ""
+type = "float"
+default = 10.0
+
+[tabs.sva.tol_angle]
+name = ""
+description = ""
+type = "int"
+default = 10
+
+[tabs.sva.zcorr]
+name = ""
+description = ""
+type = "int"
+default = 10
+
+[tabs.sva.highpass]
+name = ""
+description = ""
+type = "str"
+default = "0.05,0.01"
+
+[tabs.sva.lowpass]
+name = ""
+description = ""
+type = "str"
+default = "0.25,0.05"
+
+[tabs.sva.cpu]
+name = ""
+description = ""
+type = "int"
+default = 320
+
+[tabs.sva.filter_map]
+name = ""
+description = ""
+type = "str"
+
+[tabs.sva.plot]
+name = ""
+description = ""
+type = "bool"
+default = false
+
+# Post-processing Parameters (relion_postprocess)
+
+# +++ RELION: command line arguments (with defaults for optional ones between parantheses) +++
+
+[tabs.sharpen]
+_name = "Post-processing"
+_description = "Parameters for map sharpening"
+
+[tabs.sharpen.input_map]
+name = "First half map"
+description = "Input map (*_half1.mrc)"
+type = "path"
+path = { type="files" }
+input = { type="halfMap" }
+required = true
+
+# Input mask file name [mask.mrc]                    :
+
+[tabs.sharpen.mask]
+name = "Shape mask"
+description = "Apply shape mask during post-processing (*.mrc)"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+
+# Auto mask 
+[tabs.sharpen.automask_lp]
+name = "Automask lowpass filter (A)"
+description = "Low-pass filter for auto-masking purposes"
+type = "float"
+default = 14.0
+
+[tabs.sharpen.automask_threshold]
+name = "Automask threshold"
+description = "Absolute threshold to generate the initial binary mask (this has precedence over automask fraction and sigma)"
+type = "float"
+default = 0.0
+
+[tabs.sharpen.automask_fraction]
+name = "Automask fraction"
+description = "Use fraction of voxels with highest density to determine threshold for masking"
+type = "float"
+default = 0.0
+
+[tabs.sharpen.automask_sigma]
+name = "Automask sigma"
+description = "Use number of standard deviations above the mean density to determine threshold for masking"
+type = "float"
+default = 1.0
+
+# filter final maps
+[tabs.sharpen.gaussian]
+name = "Apply Gaussian filter"
+description = "Apply gaussian filter to final map"
+type = "bool"
+default = false
+
+[tabs.sharpen.lowpass]
+name = "Lowpass cutoff (A)"
+description = "Low-pass filter cutoff"
+type = "str"
+default = "auto"
+
+[tabs.sharpen.highpass]
+name = "Highpass cutoff (A)"
+description = "High-pass filter cutoff"
+type = "str"
+default = "-1.0"
+
+# fsc filter
+[tabs.sharpen.skip_fsc_weighting]
+name = "Skip FSC weighting"
+description = "Do not apply FSC weighting"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.sharpen.apply_fsc2]
+name = "Apply FSC square filter"
+description = "Apply the square of the FSC curve as a filter"
+type = "bool"
+default = false
+advanced = true
+
+# bfactor
+[tabs.sharpen.auto_bfac]
+name = "Auto B-factor resolution range (A)"
+description = "Estimate B-factor automatically using information in this resolution range (lowres,highres)"
+type = "str"
+default = "10.0,0.0"
+
+[tabs.sharpen.adhoc_bfac]
+name = "Adhoc B-factor (A^2)"
+description = "Apply an ad-hoc B-factor to the map (positive=smoothing, negative=sharpening)"
+type = "int"
+default = 0
+
+[tabs.sharpen.randomize_below_fsc]
+name = "Randomize phases (FSC threshold)"
+description = "Randomize phases beyond the point where the FSC drops below this value"
+type = "float"
+default = 1
+advanced = true
+
+[tabs.sharpen.randomize_beyond]
+name = "Randomize phases (resolution limit, A)"
+description = "Randomize phases beyond this resolution"
+type = "float"
+default = 10
+advanced = true
+
+[tabs.sharpen.flip_z]
+name = "Invert handedness"
+description = "Invert handedness of input volume along the z-axis"
+type = "bool"
+default = false
+
+[tabs.sharpen.mtf]
+name = "MTF file"
+description = "File containing the detector MTF"
+type = "path"
+path = { type="files" }
+hidden = true
+
+[tabs.sharpen.plot_rhref]
+name = "Plot refinement resolution"
+description = "Resolution limit in Angstroems used during the refinement, to be displayed on the FSC plots."
+type = "bool"
+default = false
+hidden = true
+
+# Input reconstruction statistics
+# [statistics_r01.txt]                               :
+
+[tabs.sharpen_cistem]
+_name = "Post-processing using cistem"
+_description = "Parameters for map sharpening"
+
+[tabs.sharpen_cistem.input_map]
+name = "Input half1 map"
+description = "Input map (half1 mrc file)"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+required = true
+
+[tabs.sharpen_cistem.statistics]
+name = "Input reconstruction statistics"
+description = "The table listing FSC, Part_FSC, Part_SSNR and Rec_SSNR"
+type = "path"
+path = { type="files" }
+
+# Use statistics [Yes]                               :
+
+[tabs.sharpen_cistem.use_statistics]
+name = "Use statistics"
+description = "Whether statistics should be used"
+type = "bool"
+default = false
+
+# Inner mask radius (A) [0.0]                        :
+
+[tabs.sharpen_cistem.inner_mask_radius]
+name = "Inner mask radius (A)"
+description = "Inner radius of mask to be applied to the input map"
+type = "float"
+default = 0.0
+
+# Outer mask radius (A) [100.0]                      :
+
+[tabs.sharpen_cistem.outer_mask_radius]
+name = "Outer mask radius (A)"
+description = "Outer radius of mask to be applied to the input map"
+type = "float"
+default  = 100.0
+
+# Low-res B-Factor (A^2) [0.0]                       :
+
+[tabs.sharpen_cistem.low_res_bfactor]
+name = "Low resolution B-factor"
+description = "B-factor to be applied to the non-flattened part of the amplitude spectrum (A^2)"
+type = "float"
+default = 0.0
+
+# High-res B-Factor (A^2) [0.0]                      :
+
+[tabs.sharpen_cistem.high_res_bfactor]
+name = "High resolution B-factor"
+description = "B-factor to be applied to the flattened part of the amplitude spectrum (A^2)"
+type = "float"
+default = 0.0
+
+# Low resolution limit for spectral flattening (A)[8.0]:
+
+[tabs.sharpen_cistem.low_res_flattening]
+name = "Low-resolution limit (A)"
+description = "Resolution of low-pass filter applied to final output maps"
+type = "float"
+default = 8.0
+
+# High resolution limit (A) [3.0]                    :
+
+[tabs.sharpen_cistem.high_res_limit]
+name = "High-resolution limit (A)"
+description = "Resolution of low-pass filter applied to final output maps"
+type = "float"
+default = 3.0
+
+# Filter edge width (A) [20.0]                       :
+
+[tabs.sharpen_cistem.filter_edge_width]
+name = "Filter edge width (A)"
+description = "Cosine edge used with the low-pass filter"
+type = "float"
+default = 20.0
+
+# Part_SSNR scale factor [1.0]                       :
+
+[tabs.sharpen_cistem.part_ssnr_scale]
+name = "Part_SSNR scale factor"
+description = "Scale the Part_SSNR curve to account for disordered regions in the map"
+type = "float"
+default = 1.0
+
+# Use 3D mask [No]                                   :
+
+[tabs.sharpen_cistem.use_mask]
+name = "Use 3D mask"
+description = "Should the 3D mask be used to mask the input map before sharpening?"
+type = "bool"
+default = false
+
+# Invert handedness [No]                             :
+
+[tabs.sharpen_cistem.invert_handedness]
+name = "Invert handedness"
+description = "Should the map handedness be inverted?"
+type = "bool"
+default = false
+
+# Post-processing Parameters (relion_postprocess)
+
+# +++ RELION: command line arguments (with defaults for optional ones between parantheses) +++
+
+[tabs.sharpen_relion]
+_name = "Post-processing"
+_description = "Parameters for map sharpening"
+
+# ====== General options =====
+#                                 --i : Input name of half1, e.g. run_half1_class001_unfil.mrc
+#                             --i2 () : Input name of half2, (default replaces half1 from --i with half2)
+#                   --o (postprocess) : Output rootname
+#                       --angpix (-1) : Pixel size in Angstroms
+#                 --half_maps (false) : Write post-processed half maps for validation
+#                  --mtf_angpix (-1.) : Pixel size in the original micrographs/movies (in Angstroms)
+#                    --molweight (-1) : Molecular weight (in kDa) of ordered protein mass
+
+[tabs.sharpen_relion.first_half]
+name = "Half-map 1"
+description = "First half-map (mrc file)"
+type = "path"
+path = { type="files" }
+required = true
+
+[tabs.sharpen_relion.second_half]
+name = "Half-map 2"
+description = "Second half-map (mrc file)"
+type = "path"
+path = { type="files" }
+required = true
+
+# ====== Masking options =====
+#                 --auto_mask (false) : Perform automated masking, based on a density threshold
+#          --inimask_threshold (0.02) : Density at which to threshold the map for the initial seed mask
+#               --extend_inimask (3.) : Number of pixels to extend the initial seed mask
+#              --width_mask_edge (6.) : Width for the raised cosine soft mask edge (in pixels)
+#                           --mask () : Filename of a user-provided mask (1=protein, 0=solvent, all values in range [0,1])
+#                --force_mask (false) : Use the mask even when the masked resolution is worse than the unmasked resolution
+
+[tabs.sharpen_relion.auto_mask]
+name = "Calculate mask from map"
+description = "Relion auto-mask"
+type = "bool"
+default = false
+
+[tabs.sharpen_relion.inimask_threshold]
+name = "inimask_threshold"
+description = "Perform automated masking, based on a density threshold"
+type = "float"
+default = 0.02
+
+[tabs.sharpen_relion.extend_inimask]
+name = "extend_inimask"
+description = "Number of pixels to extend the initial seed mask"
+type = "int"
+default = 3
+
+[tabs.sharpen_relion.width_mask_edge]
+name = "width_mask_edge"
+description = "Width for the raised cosine soft mask edge (pixels)"
+type = "int"
+default = 6
+
+[tabs.sharpen_relion.mask]
+name = "mask"
+description = "Filename of a user-provided mask (1=protein, 0=solvent, all values in range [0,1])"
+type = "path"
+path = { type="files" }
+
+[tabs.sharpen_relion.force_mask]
+name = "force_mask"
+description = "Use the mask even when the masked resolution is worse than the unmasked resolution"
+type = "bool"
+default = false
+
+# ====== Sharpening options =====
+#                            --mtf () : User-provided STAR-file with the MTF-curve of the detector
+#                 --auto_bfac (false) : Perform automated B-factor determination (Rosenthal and Henderson, 2003)
+#                --autob_lowres (10.) : Lowest resolution (in A) to include in fitting of the B-factor
+#                --autob_highres (0.) : Highest resolution (in A) to include in fitting of the B-factor
+#                   --adhoc_bfac (0.) : User-provided B-factor (in A^2) for map sharpening, e.g. -400
+
+[tabs.sharpen_relion.mtf]
+name = "MTF curve"
+description = "User-provided STAR-file with the MTF-curve of the detector"
+type = "path"
+path = { type="files" }
+
+[tabs.sharpen_relion.auto_bfac]
+name = "auto_bfac"
+description = "Perform automated B-factor determination (Rosenthal and Henderson, 2003)"
+type = "bool"
+default = false
+
+[tabs.sharpen_relion.autob_lowres]
+name = "autob_lowres (A)"
+description = "Lowest resolution to include in fitting of the B-factor"
+type = "float"
+default = 10
+
+[tabs.sharpen_relion.autob_highres]
+name = "autob_highres (A)"
+description = "Highest resolution to include in fitting of the B-factor"
+type = "float"
+default = 0
+
+[tabs.sharpen_relion.adhoc_bfac]
+name = "adhoc_bfac"
+description = "User-provided B-factor (A^2) for map sharpening, e.g. -400"
+type = "float"
+
+# ====== Filtering options =====
+#        --skip_fsc_weighting (false) : Do not use FSC-weighting (Rosenthal and Henderson, 2003) in the sharpening process
+#                      --low_pass (0) : Resolution (in Angstroms) at which to low-pass filter the final map (0: disable, negative: resolution at FSC=0.143)
+
+[tabs.sharpen_relion.skip_fsc_weighting]
+name = "skip_fsc_weighting"
+description = "Do not use FSC-weighting (Rosenthal and Henderson, 2003) in the sharpening process"
+type = "bool"
+default = false
+
+[tabs.sharpen_relion.low_pass]
+name = "low_pass (A)"
+description = "Resolution at which to low-pass filter the final map (0: disable, negative: resolution at FSC=0.143)"
+type = "float"
+default = 0
+
+# ====== Local-resolution options =====
+#                    --locres (false) : Perform local resolution estimation
+#             --locres_sampling (25.) : Sampling rate (in Angstroms) with which to sample the local-resolution map
+#               --locres_maskrad (-1) : Radius (in A) of spherical mask for local-resolution map (default = 0.5*sampling)
+#              --locres_edgwidth (-1) : Width of soft edge (in A) on masks for local-resolution map (default = sampling)
+#         --locres_randomize_at (25.) : Randomize phases from this resolution (in A)
+#               --locres_minres (50.) : Lowest local resolution allowed (in A)
+
+[tabs.sharpen_relion.locres]
+name = "locres"
+description = "Perform local resolution estimation"
+type = "bool"
+default = false
+
+[tabs.sharpen_relion.locres_sampling]
+name = "locres_sampling (A)"
+description = "Sampling rate with which to sample the local-resolution map"
+type = "float"
+default = 25
+
+[tabs.sharpen_relion.locres_maskrad]
+name = "locres_maskrad (A)"
+description = "Radius of spherical mask for local-resolution map (default = 0.5*sampling)"
+type = "float"
+default = -1
+
+[tabs.sharpen_relion.locres_edgwidth]
+name = "locres_edgewidth (A)"
+description = "Width of soft edge on masks for local-resolution map (default = sampling)"
+type = "float"
+default = -1
+
+[tabs.sharpen_relion.locres_randomize_at]
+name = "locres_randomize_at (A)"
+description = "Randomize phases from this resolution"
+type = "float"
+default = 25
+
+[tabs.sharpen_relion.locres_minres]
+name = "locres_minres (A)"
+description = "Lowest local resolution allowed"
+type = "float"
+default = 50
+
+# ====== Expert options =====
+#                 --ampl_corr (false) : Perform amplitude correlation and DPR, also re-normalize amplitudes for non-uniform angular distributions
+#            --randomize_at_fsc (0.8) : Randomize phases from the resolution where FSC drops below this value
+#               --randomize_at_A (-1) : Randomize phases from this resolution (in A) onwards (if positive)
+#             --filter_edge_width (2) : Width of the raised cosine on the low-pass filter edge (in resolution shells)
+#                          --verb (1) : Verbosity
+#                   --random_seed (0) : Seed for random number generator (negative value for truly random)
+#                           --version : Print RELION version and exit
+
+[tabs.sharpen_relion.ampl_corr]
+name = "ampl_corr"
+description = "Perform amplitude correlation and DPR, also re-normalize amplitudes for non-uniform angular distributions"
+type = "bool"
+default = false
+
+[tabs.sharpen_relion.randomize_at_fsc]
+name = "randomize_at_fsc"
+description = "Randomize phases from the resolution where FSC drops below this value"
+type = "float"
+default = 0.8
+
+[tabs.sharpen_relion.randomize_at_A]
+name = "randomize_at_A (A)"
+description = "Randomize phases from this resolution onwards (if positive)"
+type = "float"
+default = -1
+
+[tabs.sharpen_relion.filter_edge_width]
+name = "filter_edge_width"
+description = "Width of the raised cosine on the low-pass filter edge (resolution shells)"
+type = "int"
+default = 2
+
+[tabs.sharpen_relion.random_seed]
+name = "random_seed"
+description = "Seed for random number generator (negative value for truly random)"
+type = "float"
+default = 0
+
+####################
+# Mask parameters
+####################
+
+[tabs.mask]
+_name = "Masking"
+_description = "Parameters for generating shape mask"
+
+[tabs.mask.model]
+name = "Input map"
+description = "Map used to generate shape mask (*.mrc)"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+required = true
+
+[tabs.mask.threshold]
+name = "Threshold for binarization"
+description = "Binarization threshold to create shape mask"
+type = "float"
+required = true
+
+[tabs.mask.normalized]
+name = "Use normalized threshold"
+description = "Threshold value is in range [0,1] (in terms of min and max density values)"
+type = "bool"
+default = true
+
+[tabs.mask.lowpass]
+name = "Low-pass cutoff (A)"
+description = "Apply low-pass filter before creating shape mask"
+type = "float"
+default = 10.0
+
+[tabs.mask.edge_width]
+name = "Width of cosine edge (pixels)"
+description = "Width of the smooth edge to add to the mask"
+type = "int"
+default = 4
+
+[tabs.mask.outside_weight]
+name = "Density weight outside mask"
+description = "Weight applied to area outside mask (0=no contribution, 1=no masking)"
+type = "float"
+default = 0.0
+
+#####################
+# Cleaning parameters
+#####################
+
+[tabs.clean]
+_name = "Particle filtering"
+_description = "Parameters for cleaning/filtering particles"
+
+[tabs.clean.spr_auto]
+name = "Automatic score threshold"
+description = "Automatically determine score threshold based on bimodal distribution of scores"
+type = "bool"
+default = false
+required = false
+hidden = ["tomo_coarse_refine"]
+copyToNewBlock = false
+
+[tabs.clean.threshold]
+name = "Score threshold"
+description = "Remove particles with scores lower than this threshold"
+type = "float"
+default = 0.0
+copyToNewBlock = false
+
+[tabs.clean.dist]
+name = "Min distance between particles (pixel)"
+description = "Distance cutoff to remove neighboring particles"
+type = "float"
+default = 0.0
+hidden = ["spr_fine_refine", "spr_coarse_refine"]
+copyToNewBlock = false
+
+[tabs.clean.parfile]
+name = "Input parameter file"
+description = "Parfile used to compute average scores per particle (*.par.bz2)"
+type = "path"
+path = { type="files" }
+input = { type="parfile" }
+required = true
+copyToNewBlock = false
+
+[tabs.clean.discard]
+name = "Permanently remove particles"
+description = "Permanently remove particles (WARNING: this cannot be undone!)"
+type = "bool"
+default = false
+copyToNewBlock = false
+
+[tabs.clean.mintilt]
+name = "Lowest tilt-angle"
+description = "Only keep projections with tilt-angles above this limit (degrees)"
+type = "float"
+default = -90.0
+hidden = ["spr_map_clean", "spr_coarse_refine"]
+copyToNewBlock = false
+
+[tabs.clean.maxtilt]
+name = "Highest tilt-angle"
+description = "Only keep projections with tilt-angles below this limit (degrees)"
+type = "float"
+default = 90.0
+hidden = ["spr_map_clean", "spr_coarse_refine"]
+copyToNewBlock = false
+
+[tabs.clean.min_num_projections]
+name = "Min number of projections per particle"
+description = "Remove particles that do not have enough valid projections"
+type = "int"
+default = 1
+hidden = ["spr_map_clean", "spr_coarse_refine"]
+copyToNewBlock = false
+
+[tabs.clean.class_selection]
+name = "Classes to keep"
+description = "Coma separated list of classes to keep"
+type = "str"
+default = ""
+required = false
+copyToNewBlock = false
+
+[tabs.clean.class_merge_alignment]
+name = "Use best alignments during merging"
+description = "When merging multiple classes, use alignment parameters from class with largest occupancy"
+type = "bool"
+default = false
+required = false
+copyToNewBlock = false
+
+[tabs.clean.check_reconstruction]
+name = "Generate reconstruction after filtering"
+description = "Calculate reconstruction using only clean particles"
+type = "bool"
+default = false
+copyToNewBlock = false
+
+###################
+# Daemon parameters
+###################
+
+[tabs.stream]
+_name = "Session settings"
+_description = "Parameters to control the processing daemon"
+
+[tabs.stream.session_name]
+name = "Session name"
+description="Name of session"
+type = "str"
+required = false
+hidden = true
+
+[tabs.stream.session_group]
+name = "Group name"
+description="Name of group"
+type = "str"
+required = false
+hidden = true
+
+[tabs.stream.session_timeout]
+name = "Session timeout (days)"
+description="How long should the session run for"
+type = "int"
+default = 5
+
+[tabs.stream.scope_profile]
+name = "Scope profile"
+description="Name of scope profile to use from configuration file"
+type = "str"
+default = "None"
+hidden = true
+
+[tabs.stream.camera_profile]
+name = "Camera profile"
+description="Name of camera profile to use from configuration file"
+type = "str"
+default = "None"
+hidden = true
+
+[tabs.stream.file]
+name = "File name to process"
+description="Name of file to process"
+type = "str"
+default = "None"
+hidden = true
+
+[tabs.stream.transfer_fileset]
+name = "Additional files to transfer"
+description = "Coma separated list of additional files to tranfer (e.g., *.txt,*.mdoc)"
+type = "str"
+default = ""
+required = false
+
+[tabs.stream.num_tilts]
+name = "Number of tilts"
+description="Total number of tilts in series"
+type = "int"
+default = 1
+required = false
+hidden = ["stream_spr"]
+
+[tabs.stream.tilt_angles]
+name = "Tilt-angles"
+description="Coma separated list of tilt-angles"
+type = "str"
+default = ""
+hidden = ["stream_spr"]
+
+[tabs.stream.tilt_order]
+name = "Tilt-order"
+description="Coma separated list of tilt-order"
+type = "str"
+default = ""
+hidden = ["stream_spr"]
+
+[tabs.stream.transfer_local]
+name = "Skip pre-processing (raw data transfer only)"
+description="Run data transfer only (do not start the pre-processing daemon)"
+type = "bool"
+default = false
+
+[tabs.stream.transfer_target]
+name = "Target directory"
+description="Directory where all the output will be saved"
+type = "path"
+path = { type="folders" }
+required = false
+hidden = true
+
+[tabs.stream.compress]
+name = "Movie data compression"
+description="Select format to compress movie data"
+type = "enum"
+enum = { none="none", tif="tif", tbz="tbz" }
+default = "none"
+advanced = true
+
+[tabs.stream.transfer_remote]
+name = "Clean after transfer"
+description="Remove files after successful transfer (including all redundant files)"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.stream.transfer_operation]
+name = "Raw data transfer"
+description="Whether to move, copy or link the raw data from the original destination to the session folder"
+type = "enum"
+enum = { move="move", copy="copy", link="link" }
+default = "move"
+
+[tabs.stream.transfer_all]
+name = "Transfer additional files"
+description="Also transfer additional files to the session folder"
+type = "bool"
+default = false
+
+[tabs.stream.transfer_restart]
+name = "Restart transfer"
+description="Clear history of transferred files"
+type = "bool"
+default = false
+
+[tabs.stream.transfer_age]
+name = "Minimum file age (minutes)"
+description="Only transfer files that are older than given age"
+type = "int"
+default = 2
+advanced = true
+
+[tabs.stream.process_format]
+name = "Output format"
+description="Image file format to save frame averages (mrc,tif)"
+type = "enum"
+enum = { mrc="mrc", tif="tif" }
+default = "tif"
+hidden = true
+
+#####################
+# Export parameters #
+#####################
+
+[tabs.export]
+_name = "Export"
+_description = "Export results to other packages"
+
+[tabs.export.enable]
+name = "Export metadata"
+description = "Export metadata after finishing processing"
+type = "bool"
+default = false
+
+[tabs.export.format]
+name = "Output format"
+description = "Format used to export the metadata"
+type = "enum"
+enum = { relion="Star" }
+default = "relion"
+
+[tabs.export.parfile]
+name = "Input parfile"
+description = "Parfile input for the alignment parameters"
+type = "path"
+path = { type="files" }
+
+[tabs.export.location]
+name = "Output folder"
+description = "Specify location for output files"
+type = "path"
+path = { type="folders" }
+
+#####################
+# Import parameters #
+#####################
+
+[tabs.import]
+_name = "Import parameters"
+_description = "Parameters for importing star files"
+
+[tabs.import.mode]
+name = "Metadata source type"
+description = "Single Particle Analysis or Tomography metadata to be converted (SPA_PAR, SPA_STAR, TOMO_PAR, TOMO_STAR)"
+type = "str"
+default = "SPA_STAR"
+hidden = true
+
+[tabs.import.enable]
+name = "Convert par to star"
+description ="Do the conversion from PYP to RELION"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.import.read_star]
+name = "Get metadata from star"
+description = "Read metadata from RELION star to PYP"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.import.refine_star]
+name = "Relion refinement star file"
+description = "Star file from RELION refine3d job"
+type = "path"
+path = { type="files" }
+required = false
+
+[tabs.import.tomo_star]
+name = "Relion tomogram star file"
+description = "Star from RELION ImportTomo job"
+type = "path"
+path = { type="files" }
+hidden = [ "spr_import_star" ]
+required = false
+
+[tabs.import.motion_star]
+name = "Relion motioncorr star file"
+description = "Star from RELION motion correction job, with image names and motion metadata names"
+type = "path"
+path = { type="files" }
+hidden = [ "tomo_import_star" ]
+required = false
+
+[tabs.import.relion_path]
+name = "Relion project path"
+description = "Path to the relion main project where all the jobs were running"
+type = "path"
+path = { type="folders" }
+required = false
+
+##################
+# Slurm parameters
+##################
+
+[tabs.slurm]
+_name = "Resources"
+_description = "Parameters to control jobs submission using the SLURM scheduler"
+
+[tabs.slurm.verbose]
+name = "Verbose mode"
+description = "Provide more information when running jobs"
+type = "bool"
+default = false
+
+[tabs.slurm.tasks]
+name = "Threads per task"
+description = "Number of threads used for processing each micrograph/tilt-series"
+type = "int"
+default = 1
+
+[tabs.slurm.max_cpus]
+name = "Max number of tasks"
+description = "Limit the number of tasks that can run simultaneously (0=follow slurm limits)"
+type = "int"
+default = 0
+hidden = [ "map_post_process", "stream_spr", "stream_tomo" ]
+advanced = true
+
+[tabs.slurm.memory]
+name = "Memory per task"
+description = "Amount of memory to request per task (GB)"
+type = "int"
+default = 4
+
+[tabs.slurm.walltime]
+name = "Walltime per task"
+description = "Limit running time for each task (dd-hh:mm:ss)"
+type = "str"
+default = "2:00:00"
+
+[tabs.slurm.bundle_size]
+name = "Bundle size"
+description = "Number of micrographs/tilt-series to process sequentially in a batch"
+type = "int"
+default = 1
+hidden = [ "map_post_process", "stream_spr", "stream_tomo" ]
+
+[tabs.slurm.queue]
+name = "CPU partition"
+description = "SLURM partition to submit CPU jobs"
+type = "str"
+input = { type="slurmQueue", group="cpu" }
+
+[tabs.slurm.queue_gpu]
+name = "GPU partition"
+description = "SLURM partition to submit GPU jobs"
+type = "str"
+input = { type="slurmQueue", group="gpu" }
+hidden = [ "map_post_process", "stream_spr", "stream_tomo" ]
+
+[tabs.slurm.merge_tasks]
+name = "Threads (merge task)"
+description = "Number of threads used during merging"
+type = "int"
+default = 1
+hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr"]
+
+[tabs.slurm.merge_memory]
+name = "Memory (merge task)"
+description = "Amount of memory used during merging (GB)"
+type = "int"
+default = 4
+hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr"]
+
+[tabs.slurm.merge_walltime]
+name = "Walltime (merge task)"
+description = "Max running time for merging task (dd-hh:mm:ss)"
+type = "str"
+default = "4:00:00"
+hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr"]
+
+[tabs.slurm.merge_queue]
+name = "Partition (merge task)"
+description = "SLURM partition to submit merge jobs"
+type = "str"
+input = { type="slurmQueue", group="cpu" }
+# partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
+hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr"]
+
+[tabs.slurm.daemon_tasks]
+name = "Threads per task (pre-processing daemon)"
+description = "Number of CPUs used during pre-processing"
+type = "int"
+default = 1
+hidden = ["spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process" ]
+
+[tabs.slurm.daemon_memory]
+name = "Memory per task (pre-processing daemon)"
+description = "Amount of memory used for pre-processing daemon (GB)"
+type = "int"
+default = 2
+hidden = ["spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+
+[tabs.slurm.daemon_walltime]
+name = "Walltime per task (pre-processing daemon)"
+description = "Max running time for pre-processing task (dd-hh:mm:ss)"
+type = "str"
+default = "5-00:00:00"
+hidden = ["spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+
+[tabs.slurm.daemon_queue]
+name = "CPU partition (pre-processing daemon)"
+description = "SLURM partition to use for pre-processing jobs"
+type = "str"
+input = { type="slurmQueue", group="cpu" }
+# partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
+hidden = ["spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+
+[tabs.slurm.class2d_tasks]
+name = "Threads per task (refinement daemon)"
+description = "Number of CPUs used during 2D/3D refinement"
+type = "int"
+default = 1
+hidden = ["spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo" ]
+
+[tabs.slurm.class2d_memory]
+name = "Memory per task (refinement daemon)"
+description = "Amount of memory used for 2D/3D refinement daemon (GB)"
+type = "int"
+default = 4
+hidden = ["spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo" ]
+
+[tabs.slurm.class2d_walltime]
+name = "Walltime (refinement daemon)"
+description = "Max running time for 2D/3D refinement daemon (dd-hh:mm:ss)"
+type = "str"
+default = "5-00:00:00"
+hidden = ["spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo" ]
+
+[tabs.slurm.class2d_queue]
+name = "Partition (refinement daemon)"
+description = "SLURM partition to use for 2D/3D refinement jobs"
+type = "str"
+input = { type="slurmQueue", group="cpu" }
+# partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
+hidden = ["spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo" ]
+
+[tabs.slurm.profile]
+name = "Save profiling information"
+description = "Store diagram as pdf file"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.slurm.merge_only]
+name = "Only run the merge job"
+description = "Only run the merge job"
+type = "bool"
+default = false
+hidden = true
