@@ -1,0 +1,35 @@
+image: python:3.8.8
+
+# container:
+#   tags:
+#     - singularity
+#   image:
+#     name: quay.io/singularity/singularity:v3.8.4
+#     entrypoint: ["/bin/sh", "-c"]
+#   only:
+#     changes:
+#       - singularity/pyp.def
+#     refs:
+#       - singularity
+#   script:
+#      - sudo /bin/bash singularity/build.sh singularity/pyp.def
+
+docs:
+  script:
+    - pip install -r docs/requirements_docs.txt
+    - sphinx-apidoc src/ -f -o docs/
+    - cd docs/
+    - sphinx-build -d _build/doctrees . _build/html
+    - rm _build/html/index.html
+    - cp _build/html/introduction.html _build/html/index.html
+    - cd ..
+    - mv docs/_build/html public
+  artifacts:
+    paths:
+      - public
+  only:
+    # only run this CI pipeline on master
+    refs:
+      - master
+    #changes:
+    #  - docs/**/*
