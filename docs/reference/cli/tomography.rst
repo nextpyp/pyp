@@ -91,7 +91,7 @@ If a 3D reference is available, ``csp`` can align the particle projections using
         -refine_skip                                \
         -refine_fboost                              \
         -refine_maxiter 2                           \
-        -refine_rhref 8.0                           \
+        -refine_rhref "8.0"                         \
         -csp_UseImagesForRefinementMax 10           \
         -csp_refine_particles                       \
         -csp_NumberOfRandomIterations 50000         \
@@ -118,7 +118,7 @@ CSP can also use initial alignments from other software packages such as Relion 
     # launch coarse refinement
 
     csp -refine_maxiter 5                           \
-        -refine_rhref 8:10:8:6                      \
+        -refine_rhref "8:10:8:6"                    \
         -csp_OptimizerStepLength 100.0              \
         -csp_NumberOfRandomIterations 0             \
         -csp_ToleranceParticlesShifts 20            \
@@ -174,7 +174,7 @@ Rename ``frealign/maps`` to ``frealign/filter_particles`` and create a new ``fre
         -extract_bin 1                                                          \
         -refine_iter 2                                                          \
         -refine_maxiter 3                                                       \
-        -refine_rhref 6:5                                                       \
+        -refine_rhref "6:5"                                                     \
         -csp_UseImagesForRefinementMax 4                                        \
         -csp_refine_particles                                                   \
         -csp_refine_micrographs                                                 \
@@ -190,8 +190,9 @@ Rename ``frealign/maps`` to ``frealign/region_refine`` and create a new ``freali
 .. code-block:: bash
 
     pmk -mask_model "frealign/region_refine/*_r01_03.mrc"   \
-        -mask_threshold 0.45                                \
-        -mask_normalized
+        -mask_threshold 0.42                                \
+        -mask_normalized                                    \
+        -mask_edge_width 8
 
 
 11 Region-based local refinement
@@ -202,7 +203,7 @@ Rename ``frealign/maps`` to ``frealign/mask`` and rename ``frealign/region_refin
 .. code-block:: bash
 
     csp -refine_maxiter 6                                                       \
-        -refine_rhref 6:5:5:4:3.5                                               \
+        -refine_rhref "6:5:5:4:3.5"                                             \
         -refine_maskth "frealign/mask/mask.mrc"
 
 
@@ -212,7 +213,7 @@ Rename ``frealign/maps`` to ``frealign/mask`` and rename ``frealign/region_refin
 .. code-block:: bash
 
     csp -refine_maxiter 7                                                       \
-        -refine_rhref 3.1                                                       \
+        -refine_rhref "3.1"                                                     \
         -no-csp_refine_micrographs                                              \
         -no-csp_refine_particles                                                \
         -csp_refine_ctf                                                         \
@@ -232,7 +233,7 @@ Rename ``frealign/maps`` to ``frealign/ctf_refine`` and create a new ``frealign/
         -extract_fmt frealign_local                             \
         -refine_iter 2                                          \
         -refine_maxiter 2                                       \
-        -refine_rhref 3.2                                       \
+        -refine_rhref "3.2"                                     \
         -refine_spatial_sigma 200.0                             \
         -refine_transreg                                        \
         -no-csp_refine_ctf                                      \
@@ -245,7 +246,8 @@ Rename ``frealign/maps`` to ``frealign/ctf_refine`` and create a new ``frealign/
 
 .. code-block:: bash
 
-    csp -refine_rhref 3.3                           \
+    csp -refine_maxiter 3                           \
+        -refine_rhref "3.3"                         \
         -csp_refine_micrographs                     \
         -csp_refine_particles                       \
         -no-csp_frame_refinement                    \

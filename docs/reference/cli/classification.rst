@@ -31,6 +31,7 @@ Data pre-processing consists of movie frame alignment, tilt-series alignment, to
 
     # launch pre-processing
     pyp -data_path="/path_to_raw_data/tilt*.mrc"    \
+        -data_mode tomo                             \
         -scope_pixel 2.1                            \
         -scope_voltage 300                          \
         -scope_tilt_axis 0.0                        \
@@ -81,6 +82,7 @@ If a 3D reference is available, ``csp`` can align the particle projections using
         -extract_box 64                                 \
         -extract_bin 4                                  \
         -refine_skip                                    \
+        -extract_fmt frealign                           \
         -refine_rhref "22.0"                            \
         -refine_fboost                                  \
         -reconstruct_mintilt -50                        \
@@ -252,6 +254,7 @@ Rename ``frealign/maps`` to ``frealign/region_based_2`` and create a new ``freal
         -refine_iter 2                                                      \
         -refine_maxiter 20                                                  \
         -no-refine_skip                                                     \
+        -refine_fboost                                                      \
         -refine_rhref "8"                                                   \
         -no-csp_refine_particles                                            \
         -no-csp_refine_micrographs                                          \
