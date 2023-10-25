@@ -70,10 +70,9 @@ This step runs coarse 3D refinement to assign particle orientations using an ext
         -extract_box 128              \
         -extract_bin 4                \
         -extract_fmt frealign         \
-        -refine_metric frealignx      \
         -refine_mode 0                \
-        -refine_maxiter 5             \
-        -refine_rhref  "8:7:6"        \
+        -refine_maxiter 4             \
+        -refine_rhref "8:7:6"         \
         -refine_fboost                \
         -reconstruct_cutoff "0"       \
         -refine_model PATH_TO/spr_tutorial/initial_model.mrc
@@ -149,7 +148,6 @@ The next step is to do local alignments using a lower level of binning and only 
     csp -extract_box 256                                                            \
         -extract_bin 2                                                              \
         -refine_mode 1                                                              \
-        -refine_metric new                                                          \
         -reconstruct_cutoff="1"                                                     \
         -refine_iter 2                                                              \
         -refine_rhref "6:4:3"                                                       \
@@ -173,7 +171,7 @@ The next step is to do local alignments using a lower level of binning and only 
 .. code-block:: bash
 
     csp -refine_iter 7                               \
-        -refine_maxiter 7                            \
+        -refine_maxiter 8                            \
         -refine_fboost                               \
         -refine_maskth `pwd`/frealign/maps/mask.mrc
 
@@ -183,9 +181,9 @@ The next step is to do local alignments using a lower level of binning and only 
 
 .. code-block:: bash
 
-    csp -refine_maxiter 8       \
-        -refine_csp_refine_ctf  \
-        -refine_csp_Grid "8,8"
+    csp -refine_maxiter 9       \
+        -csp_refine_ctf         \
+        -csp_Grid_spr "8,8"
 
 
 10 Movie frame refinement
@@ -206,18 +204,17 @@ The step is to perform particle frame refinement that refines particle trajector
     # launch frame refinement
 
     csp -extract_fmt frealign_local                                             \
-        -refine_rhref 3.0                                                       \
+        -refine_rhref "3.0"                                                     \
         -refine_iter 2                                                          \
         -refine_maxiter 3                                                       \
         -refine_skip                                                            \
         -csp_frame_refinement                                                   \
-        -no-refine_rotreg                                                       \
-        -refine_transreg                                                        \
-        -refine_transreg_method spline                                          \
-        -refine_spatial_sigma 15.0                                              \
+        -csp_UseImagesForRefinementMax 60                                       \
+        -csp_transreg                                                           \
+        -csp_spatial_sigma 15.0                                                 \
         -refine_parfile  `pwd`/frealign/maps_refine/TS_20S_clean_r01_07.par.bz2 \
         -refine_model `pwd`/frealign/maps_refine/TS_20S_clean_r01_07.mrc        \
-        -no-csp_refine_ctf
+        -no-csp_refine_ctf                                                      
 
 
 .. note::
@@ -239,14 +236,11 @@ The step is to perform dose-weighting reconstruction that maximizes the contribu
     # launch dose-weighting reconstruction
 
     csp -extract_fmt frealign_local     \
-        -refine_metric new              \
         -dose_weighting_enable          \
         -dose_weighting_fraction 4      \
         -dose_weighting_transition 0.75 \
-        -reconstruct_num_frames 38      \
         -refine_iter 4                  \
         -refine_maxiter 4               \
-        -refine_skip                    \
         -no-csp_frame_refinement
 
 
@@ -260,12 +254,9 @@ The step is to refine particle rotation and translation on refined particle fram
 
     # launch frame refinement
 
-    csp -extract_fmt frealign_local     \
-        -refine_rhref 3.0               \
-        -refine_iter 5                  \
+    csp -refine_iter 5                  \
         -refine_maxiter 5               \
         -no-refine_skip                 \
-        -no-csp_frame_refinement
 
 .. note::
     After this step is done, repeating step 9 and step 11 for multiple iterations until convergence is encouraged. Please always enable dose weighting reconstruction to ensure the reference used for refinement is as high resolution as possible. 
