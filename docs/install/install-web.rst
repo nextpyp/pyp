@@ -160,7 +160,7 @@ a few comments to describe the settings configured there, but you can find more 
   In this mode, the web server and the data processing are all run locally.
   Although the default options should serve you well in standalone mode, if you want to customize anything,
   you can add the ``[standalone]`` section to your config file.
-  `See the full documentation for standalone mode configuration <../reference/config.html#standalone-section>`.
+  `See the full documentation for standalone mode configuration <../reference/config.html#standalone-section>`_.
 
 
 Step 5 (recommended): Configure access to system resources
