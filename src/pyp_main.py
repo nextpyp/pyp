@@ -3816,8 +3816,12 @@ if __name__ == "__main__":
                         null = [os.mkdir(f) for f in folders if not os.path.exists(f)]
 
                         if parameters["refine_iter"] == 2:
-                            latest_parfile, latest_reference = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
-
+                            
+                            latest_parfile, latest_reference = None, None
+                            # data_parent is None if running CLI
+                            if "data_parent" in parameters and parameters["data_parent"] is not None:
+                                latest_parfile, latest_reference = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+                            
                             parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
 
                             # NOTE: spr does not really require a parfile first time we run csp
