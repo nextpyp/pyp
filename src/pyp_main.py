@@ -4273,8 +4273,11 @@ if __name__ == "__main__":
 
                 os.makedirs("frealign/maps", exist_ok=True)
 
-                name = os.path.split(os.getcwd())[-1]
-                name += "_r01_02"
+                if Web.exists:
+                    name = os.path.split(os.getcwd())[-1]
+                    name += "_r01_02"
+                else:
+                    name = Path(reference).stem + "_masked"
                 masked_map =  os.path.join( "frealign", "maps", name + ".mrc" )
 
                 cistem_mask_create(parameters, reference, masked_map)
@@ -4340,7 +4343,10 @@ if __name__ == "__main__":
                 name = os.path.split(os.getcwd())[-1]
                 name += "_r01_02"
 
-                output =  name
+                if Web.exists:
+                    output =  name
+                else:
+                    output = name + "_postprocessing"
                 output_map = output + "-masked.mrc"
                 project_params.save_parameters(parameters)
 
@@ -4462,7 +4468,7 @@ if __name__ == "__main__":
                     / float(parameters["scope_pixel"])
                 )
 
-                output_png = name + "_map.png"
+                output_png = output + "_map.png"
                 lim = frealign.build_map_montage( output_map, radius, output_png )
 
                 output_path = Path(current_path) / "frealign" / "maps"
@@ -4498,22 +4504,22 @@ EOF
                 shutil.copy( output + "_data.fsc", os.path.join( output_path, output + "_fsc.txt") )
 
                 # send sharpened map to website
-                output = {}
-                output["def_rot_histogram"] = [[0]]
-                output["def_rot_scores"] = [[0]]
+                plots = {}
+                plots["def_rot_histogram"] = [[0]]
+                plots["def_rot_scores"] = [[0]]
 
-                output["rot_hist"] = {}
-                output["rot_hist"]["n"] = output["rot_hist"]["bins"] = [[0]]
-                output["def_hist"] = {}
-                output["def_hist"]["n"] = output["def_hist"]["bins"] = [[0]]
-                output["scores_hist"] = {}
-                output["scores_hist"]["n"] = output["scores_hist"]["bins"] = [[0]]
-                output["occ_hist"] = {}
-                output["occ_hist"]["n"] = output["occ_hist"]["bins"] = [[0]]
-                output["logp_hist"] = {}
-                output["logp_hist"]["n"] = output["logp_hist"]["bins"] = [[0]]
-                output["sigma_hist"] = {}
-                output["sigma_hist"]["n"] = output["sigma_hist"]["bins"] = [[0]]
+                plots["rot_hist"] = {}
+                plots["rot_hist"]["n"] = plots["rot_hist"]["bins"] = [[0]]
+                plots["def_hist"] = {}
+                plots["def_hist"]["n"] = plots["def_hist"]["bins"] = [[0]]
+                plots["scores_hist"] = {}
+                plots["scores_hist"]["n"] = plots["scores_hist"]["bins"] = [[0]]
+                plots["occ_hist"] = {}
+                plots["occ_hist"]["n"] = plots["occ_hist"]["bins"] = [[0]]
+                plots["logp_hist"] = {}
+                plots["logp_hist"]["n"] = plots["logp_hist"]["bins"] = [[0]]
+                plots["sigma_hist"] = {}
+                plots["sigma_hist"]["n"] = plots["sigma_hist"]["bins"] = [[0]]
 
                 metadata = {}
                 metadata["particles_total"] = metadata["particles_used"] = metadata["phase_residual"] = 0
@@ -4524,12 +4530,12 @@ EOF
                 part_fsc = np.transpose( np.atleast_2d( np.append( 1, np.loadtxt( part_fsc_file, comments="C" )[:,4] ) ) )
 
                 # only use frequency and FSC curves from fsc file
-                masked_fsc = np.loadtxt(name + '_data.fsc', comments="#")[:,[0,2,3,4,5]]
-                fsc = np.hstack( (masked_fsc, part_fsc ) )
+                masked_fsc = np.loadtxt(output + '_data.fsc', comments="#")[:,[0,2,3,4,5]]
 
                 cutoff = fsc_cutoff(masked_fsc[:,[0,-1]], 0.143)
                 logger.info(f"FINAL RESOLUTION (after mask correction) = {1/cutoff:.1f} A ({1/cutoff:.3f} A)")
 
+                save_reconstruction_to_website( name, masked_fsc, plots, metadata )
 
                 if not Web.exists:
                     # plot all curves
