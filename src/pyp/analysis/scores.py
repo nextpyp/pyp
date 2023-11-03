@@ -331,6 +331,14 @@ def shape_phase_residuals(
     )
     input = par_obj.data
 
+    # figure out tomo or spr by check tilt angles
+    tltanlge = 17
+    ptlindex = 16
+    if np.any(input[:, tltanlge] != 0 ):
+        is_tomo = True
+    else:
+        is_tomo = False
+
     import matplotlib as mpl
 
     mpl.use("Agg")
@@ -488,40 +496,43 @@ def shape_phase_residuals(
             if scores or frealignx:
                 # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), np.nan, input[:,field] )
                 # input[:,occ] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), 0, input[:,occ] )
-                input[:, occ] = np.where(
-                    np.logical_and(
-                        np.logical_and(angular_group == g, defocus_group == f),
-                        np.logical_or(
+                if not is_tomo:
+                    input[:, occ] = np.where(
+                        np.logical_and(
+                            np.logical_and(angular_group == g, defocus_group == f),
                             np.logical_or(
-                                input[:, field] < thresholds[g, f],
-                                input[:, field] < min_scores[g, f],
+                                np.logical_or(
+                                    input[:, field] < thresholds[g, f],
+                                    input[:, field] < min_scores[g, f],
+                                ),
+                                input[:, field] > max_scores[g, f],
                             ),
-                            input[:, field] > max_scores[g, f],
                         ),
-                    ),
-                    0,
-                    input[:, occ],
-                )
-                number = input[input[:, occ]==0].shape[0]
-                logger.info(f"Number of particles with OCC = 0 is {number:,}")
-            """
-            else:
-                # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] > thresholds[g,f] ), np.nan, input[:,field] )
-                input[:, field] = np.where(
-                    np.logical_and(
-                        np.logical_and(angular_group == g, defocus_group == f),
-                        np.logical_or(
-                            np.logical_or(
-                                input[:, field] > thresholds[g, f],
-                                input[:, field] < min_scores[g, f],
+                        0,
+                        input[:, occ],
+                    )
+                    number = input[input[:, occ]==0].shape[0]
+                    logger.info(f"Number of particles with OCC = 0 is {number:,}")
+                else:
+                    ptl_index = np.unique(input[:, ptlindex])
+                    for i in ptl_index:
+                        field_array = input[input[:, ptlindex] == i, field]
+                        tltangle_array = input[input[:, ptlindex] == i, tltanlge]
+                        input[input[:, ptlindex] == i, occ] = np.where(
+                            np.logical_and(
+                                np.logical_and(angular_group == g, defocus_group == f),
+                                np.logical_or(
+                                    np.logical_or(
+                                np.mean(field_array[np.abs(tltangle_array) < 10]) < thresholds[g, f],
+                                np.mean(field_array[np.abs(tltangle_array) < 10]) < min_scores[g, f],
+                                    ),
+                                np.mean(field_array[np.abs(tltangle_array) < 10]) > max_scores[g, f],
+                                ),
                             ),
-                            input[:, field] > max_scores[g, f],
-                        ),
-                    ),
-                    np.nan,
-                    input[:, field],
-                )
-            """
+                        0,
+                        input[input[:, ptlindex] == i, occ],
+                        )
+                    
 
     if os.path.exists(fmatch_stack):
         logger.info(
