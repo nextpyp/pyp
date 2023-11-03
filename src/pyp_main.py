@@ -4530,7 +4530,29 @@ EOF
                 cutoff = fsc_cutoff(masked_fsc[:,[0,-1]], 0.143)
                 logger.info(f"FINAL RESOLUTION (after mask correction) = {1/cutoff:.1f} A ({1/cutoff:.3f} A)")
 
-                save_reconstruction_to_website( name, masked_fsc, output, metadata )
+
+                if not Web.exists:
+                    # plot all curves
+                    import matplotlib.pyplot as plt
+
+                    fig, ax = plt.subplots(figsize=(10, 6))
+
+                    ax.plot(1./masked_fsc[:, 0], masked_fsc[:, 1], label="Unmasked")
+                    ax.plot(1./masked_fsc[:, 0], masked_fsc[:, 2], label="Masked")
+                    ax.plot(1./masked_fsc[:, 0], masked_fsc[:, 3], label="Phase-randomized")
+                    ax.plot(1./masked_fsc[:, 0], masked_fsc[:, 4], label="Corrected")
+
+                    ax.plot(1./masked_fsc[:, 0], 0.143 * np.ones(masked_fsc[:, 1].shape), "k:")
+                    ax.plot(1./masked_fsc[:, 0], 0.5 * np.ones(masked_fsc[:, 1].shape), "k:")
+                    ax.plot(1./masked_fsc[:, 0], np.zeros(masked_fsc[:, 1].shape), "k")
+
+                    legend = ax.legend(loc="upper right", shadow=True, fontsize=10)
+                    ax.set_ylim(( min(-0.01, masked_fsc[:, 4].min()), 1.01))
+                    ax.set_xlim((1./masked_fsc[0, 0], 1 * 1./masked_fsc[-1, 0]))
+                    plt.title(f"FSC for {name}, Final resolution = {1/cutoff:.1f} A ({1/cutoff:.3f} A)")
+                    plt.xlabel("Frequency (1/" + "\u00c5" + ")")
+                    plt.ylabel("FSC")
+                    plt.savefig( os.path.join( output_path, output + "_postprocessing.pdf") )
 
                 shutil.rmtree(working_path)
 
