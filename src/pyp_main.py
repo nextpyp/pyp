@@ -4340,12 +4340,11 @@ if __name__ == "__main__":
                 if not os.path.exists("frealign/maps"):
                     os.mkdir("frealign/maps")
 
-                name = os.path.split(os.getcwd())[-1]
-                name += "_r01_02"
-
                 if Web.exists:
-                    output =  name
+                    name = os.path.split(os.getcwd())[-1]
+                    output =  name + "_r01_02"
                 else:
+                    name = Path(project_params.resolve_path(parameters["sharpen_input_map"])).stem.replace("_half1","")
                     output = name + "_postprocessing"
                 output_map = output + "-masked.mrc"
                 project_params.save_parameters(parameters)
@@ -4526,8 +4525,8 @@ EOF
                 metadata["occ"] = metadata["logp"] = metadata["sigma"] = 0
 
                 # retrieve Part_FSC curve from cisTEM
-                part_fsc_file = glob.glob( os.path.join( project_params.resolve_path(parameters["data_parent"]), "frealign", "maps", "*_" + name.split("_")[-1] + "_statistics.txt") )[-1]
-                part_fsc = np.transpose( np.atleast_2d( np.append( 1, np.loadtxt( part_fsc_file, comments="C" )[:,4] ) ) )
+                # part_fsc_file = glob.glob( os.path.join( project_params.resolve_path(parameters["data_parent"]), "frealign", "maps", "*_" + name.split("_")[-1] + "_statistics.txt") )[-1]
+                # part_fsc = np.transpose( np.atleast_2d( np.append( 1, np.loadtxt( part_fsc_file, comments="C" )[:,4] ) ) )
 
                 # only use frequency and FSC curves from fsc file
                 masked_fsc = np.loadtxt(output + '_data.fsc', comments="#")[:,[0,2,3,4,5]]
@@ -4558,7 +4557,7 @@ EOF
                     plt.title(f"FSC for {name}, Final resolution = {1/cutoff:.1f} A ({1/cutoff:.3f} A)")
                     plt.xlabel("Frequency (1/" + "\u00c5" + ")")
                     plt.ylabel("FSC")
-                    plt.savefig( os.path.join( output_path, output + "_postprocessing.pdf") )
+                    plt.savefig( os.path.join( output_path, output + ".pdf") )
 
                 shutil.rmtree(working_path)
 
