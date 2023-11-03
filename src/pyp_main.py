@@ -1262,8 +1262,8 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
     "tomo_swarm", text="Total time in tomo_swarm {} seconds", logger=logger.info
 )
 def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False ):
-    """Main workhorse function for TOMO. Performs preprocessing (includes frame alignment), 
-    tilt-series alignment, ctf estimation & correction, TOMO reconstruction, 
+    """Main workhorse function for TOMO. Performs preprocessing (includes frame alignment),
+    tilt-series alignment, ctf estimation & correction, TOMO reconstruction,
     particle detection and extraction.
 
     Pseudo code
@@ -1782,13 +1782,13 @@ def csp_split(parameters, iteration):
                 os.unlink("./csp/micrograph_particle.index")
             except:
                 pass
-        if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)): 
+        if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)):
             get_image_particle_index(parameters, parfile, path="./csp")
 
-        
+
         if parameters["dose_weighting_enable"] and ref == 0:
 
-            # create weights folder for storing weights.txt     
+            # create weights folder for storing weights.txt
             weights_folder = Path.cwd() / "frealign" / "weights"
             if not weights_folder.exists():
                 os.mkdir(weights_folder)
@@ -1801,17 +1801,17 @@ def csp_split(parameters, iteration):
 
                 parameters["dose_weighting_weights"] = global_weight_file
                 project_params.save_pyp_parameters(parameters=parameters, path=".")
-            
+
             elif "dose_weighting_weights" in parameters and parameters["dose_weighting_weights"] is not None and project_params.resolve_path(parameters["dose_weighting_weights"]) == "auto":
                 weight_file = project_params.get_weight_from_projects(weight_folder=weights_folder, parameters=parameters)
                 if weight_file is not None:
                     parameters["dose_weighting_weights"] = weight_file
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
-            
+
         if (classes > 1
         and iteration > 2
-        and not os.path.isfile("./csp/particle_tilt.index") 
-        and "tomo" in parameters["data_mode"] 
+        and not os.path.isfile("./csp/particle_tilt.index")
+        and "tomo" in parameters["data_mode"]
         and ref == 0
         ):
             get_particles_tilt_index(parfile, path="./csp")
@@ -3346,6 +3346,13 @@ if __name__ == "__main__":
         # if pyp was launched by the webserver, do some additional initialization
         if Web.exists:
             Web.init_env()
+        else:
+            # keep track of issued commands
+            with open(".pyp_history", "a") as f:
+                timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
+                    "%Y/%m/%d %H:%M:%S "
+                )
+                f.write(timestamp + " ".join(sys.argv) + "\n")
 
         # daemon
         if "pypdaemon" in os.environ:
@@ -4570,12 +4577,6 @@ EOF
                 shutil.copy(os.environ["PBS_NODEFILE"], machinefile)
 
             logger.info(f"Running on directory {os.getcwd()}")
-            # keep track of issued commands
-            with open(".pyp_history", "a") as f:
-                timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
-                    "%Y/%m/%d %H:%M:%S "
-                )
-                f.write(timestamp + " ".join(sys.argv) + "\n")
 
             parameters = parse_arguments("pre_process")
 
