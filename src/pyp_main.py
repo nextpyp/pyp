@@ -435,7 +435,7 @@ def parse_arguments(block):
                 mfiles = dict()
                 mfiles["raw"] = ".xml .rawtlt .order"
                 if "data_retrieve" in parameters.keys() and parameters["data_retrieve"]:
-                    if not parameters["movie_ali"]:
+                    if "movie_ali" in parameters and not parameters["movie_ali"]:
                         mfiles["ali"] = ".xf .tlt .fid.txt _tiltalignScript.txt"
                         mfiles["ctf"] = ".def .param .ctf _CTFprof.txt _avgrot.txt"
                     mfiles["box"] = ".box .boxx"
@@ -2884,13 +2884,16 @@ def tomo_edit(startat, raw, ali, rec, reg, seg, vir, spk, skip, clean):
         # if os.path.exists( 'mod/{0}_exclude_virions.mod'.format(f) ):
         if vir:
             # HF: add -E 1,2 to enable model mode by deault
-            if not os.path.isfile("mod/{0}_exclude_virions.mod".format(f)):
+            if not os.path.isfile("next/{0}_exclude_virions.mod".format(f)):
                 shutil.copy2(
                     "{0}/xclude_virions.mod".format(get_parameter_files_path()),
-                    "mod/%s_exclude_virions.mod" % f,
+                    "next/%s_exclude_virions.mod" % f,
                 )
+            [ local_run.run_shell_command("convert %s %s" % (vir_img, vir_img.replace(".webp", ".png"))) 
+                for vir_img in glob.glob(f"webp/{f}_vir????_binned_nad.webp") ]
+
             local_run.run_shell_command(
-                "{0}/bin/3dmod -E 1,2 `ls data/{1}_vir????_binned_nad.png` mod/{1}_exclude_virions.mod".format(
+                "{0}/bin/3dmod -E 1,2 `ls webp/{1}_vir????_binned_nad.png` next/{1}_exclude_virions.mod".format(
                     get_imod_path(), f
                 )
             )

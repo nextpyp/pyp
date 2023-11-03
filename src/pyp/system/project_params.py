@@ -247,7 +247,7 @@ def create_micrographs_list(parameters):
         mdocs = list(data_folder.glob("*.mdoc"))
 
         if parameters["data_mode"] == "tomo": 
-            if len(parameters["movie_pattern"]) > 0 and len(glob.glob("raw/*" + movie_extension)) > 0:
+            if not parameters["movie_mdoc"] and len(parameters["movie_pattern"]) > 0 and len(glob.glob("raw/*" + movie_extension)) > 0:
                 regex = movie2regex(parameters["movie_pattern"], filename="*")
                 r = re.compile(regex)
                 match_files = [
@@ -257,10 +257,12 @@ def create_micrographs_list(parameters):
                 files = [m.group(1) for m in match_files if m != None]
                 logger.info("Create micrograph list using movie patterns")
 
-            elif len(mdocs) > 0:
+            elif parameters["movie_mdoc"] and len(mdocs) > 0:
                 files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
                 logger.info("Create micrograph list using mdocs files")
                 # NOTE: one mdoc for one tilt-series (rather than one tilt)    
+            else:
+                logger.info("Create micrograph list using detected files (one mrc per tilt-series)")
 
         files = sorted(list(set(files)))
         logger.info("Found {} unique file(s) for processing".format(len(files)))

@@ -2310,7 +2310,7 @@ default = false
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
 
 [tabs.csp.ToleranceMicrographShifts]
-name = "Micrograph translation range (pixels)"
+name = "Micrograph translation range (A)"
 description = "Tolerance to use for translations"
 type = "float"
 default = 100.0
@@ -2365,7 +2365,7 @@ advanced = true
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
 
 [tabs.csp.ToleranceParticlesShifts]
-name = "Particle translation range (voxels)"
+name = "Particle translation range (A)"
 description = "Tolerance to use for micrograph shifts"
 type = "float"
 default = 20.0

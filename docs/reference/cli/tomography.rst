@@ -138,16 +138,16 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
 7 Filter particles
 ===============================
 
-Rename ``frealign/maps`` to ``frealign/fully_constrained`` and create a new ``frealign/maps``
-
 .. code-block:: bash
+    
+    mv frealign/maps frealign/fully_constrained && mkdir frealign/maps
 
-    pcl -clean_parfile "frealign/fully_constrained/*_r01_05.par.bz2"    \
-        -clean_threshold 2.5                                            \
-        -clean_dist 10.0                                                \
-        -clean_mintilt -15.0                                            \
-        -clean_maxtilt 15.0                                             \
-        -clean_min_num_projections 1                                    \
+    pcl -clean_parfile `pwd`/frealign/fully_constrained/EMPIAR-10164_r01_05.par.bz2     \
+        -clean_threshold 2.5                                                            \
+        -clean_dist 10.0                                                                \
+        -clean_mintilt -15.0                                                            \
+        -clean_maxtilt 15.0                                                             \
+        -clean_min_num_projections 1                                                    \
         -clean_check_reconstruction
 
 
@@ -163,48 +163,48 @@ Rename ``frealign/maps`` to ``frealign/fully_constrained`` and create a new ``fr
 9 Region-based local refinement before masking
 ==================
 
-Rename ``frealign/maps`` to ``frealign/filter_particles`` and create a new ``frealign/maps``
-
 .. code-block:: bash
+    
+    mv frealign/maps frealign/filter_particles && mkdir frealign/maps
 
-    csp -refine_parfile="frealign/filter_particles/*_r01_02_clean.par.bz2"      \
-        -refine_model="frealign/filter_particles/*_r01_02.mrc"                  \
-        -particle_rad 100.0                                                     \
-        -extract_box 384                                                        \
-        -extract_bin 1                                                          \
-        -refine_iter 2                                                          \
-        -refine_maxiter 3                                                       \
-        -refine_rhref "6:5"                                                     \
-        -csp_UseImagesForRefinementMax 4                                        \
-        -csp_refine_particles                                                   \
-        -csp_refine_micrographs                                                 \
-        -csp_ToleranceParticlesShifts 20.0                                      \
+    csp -refine_parfile `pwd`/frealign/filter_particles/EMPIAR-10164_r01_02_clean.par.bz2   \
+        -refine_model `pwd`/frealign/filter_particles/EMPIAR-10164_r01_02.mrc"              \
+        -particle_rad 100.0                                                                 \
+        -extract_box 384                                                                    \
+        -extract_bin 1                                                                      \
+        -refine_iter 2                                                                      \
+        -refine_maxiter 3                                                                   \
+        -refine_rhref "6:5"                                                                 \
+        -csp_UseImagesForRefinementMax 4                                                    \
+        -csp_refine_particles                                                               \
+        -csp_refine_micrographs                                                             \
+        -csp_ToleranceParticlesShifts 20.0                                                  \
         -csp_Grid "8,8,2"
 
 
 10 Create shape mask
 ====================================
 
-Rename ``frealign/maps`` to ``frealign/region_refine`` and create a new ``frealign/maps``
-
 .. code-block:: bash
+    
+    mv frealign/maps frealign/region_refine && mkdir frealign/maps
 
-    pmk -mask_model "frealign/region_refine/*_r01_03.mrc"   \
-        -mask_threshold 0.42                                \
-        -mask_normalized                                    \
+    pmk -mask_model `pwd`/frealign/region_refine/EMPIAR-10164_r01_03.mrc    \
+        -mask_threshold 0.42                                                \
+        -mask_normalized                                                    \
         -mask_edge_width 8
 
 
 11 Region-based local refinement
 ==================
 
-Rename ``frealign/maps`` to ``frealign/mask`` and rename ``frealign/region_refine`` back to ``frealign/maps``
-
 .. code-block:: bash
 
-    csp -refine_maxiter 6                                                       \
-        -refine_rhref "6:5:5:4:3.5"                                             \
-        -refine_maskth "frealign/mask/mask.mrc"
+    mv frealign/maps frealign/mask && mv frealign/region_refine frealign/maps
+
+    csp -refine_maxiter 6                               \
+        -refine_rhref "6:5:5:4:3.5"                     \
+        -refine_maskth `pwd`/frealign/mask/mask.mrc"
 
 
 12 Particle-based CTF refinement
@@ -223,21 +223,21 @@ Rename ``frealign/maps`` to ``frealign/mask`` and rename ``frealign/region_refin
 13 Movie frame refinement
 ==================
 
-Rename ``frealign/maps`` to ``frealign/ctf_refine`` and create a new ``frealign/maps``
-
 .. code-block:: bash
+    
+    mv frealign/maps frealign/ctf_refine && mkdir frealign/maps
 
-    csp -refine_parfile="frealign/ctf_refine/*_r01_07.par.bz2"  \
-        -refine_model="frealign/ctf_refine/*_r01_07.mrc"        \
-        -particle_rad 80.0                                      \
-        -extract_fmt frealign_local                             \
-        -refine_iter 2                                          \
-        -refine_maxiter 2                                       \
-        -refine_rhref "3.2"                                     \
-        -refine_spatial_sigma 200.0                             \
-        -refine_transreg                                        \
-        -no-csp_refine_ctf                                      \
-        -csp_frame_refinement                                   \
+    csp -refine_parfile `pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.par.bz2   \
+        -refine_model `pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.mrc         \
+        -particle_rad 80.0                                                      \
+        -extract_fmt frealign_local                                             \
+        -refine_iter 2                                                          \
+        -refine_maxiter 2                                                       \
+        -refine_rhref "3.2"                                                     \
+        -refine_spatial_sigma 200.0                                             \
+        -refine_transreg                                                        \
+        -no-csp_refine_ctf                                                      \
+        -csp_frame_refinement                                                   \
         -csp_UseImagesForRefinementMax 4
 
 
@@ -264,10 +264,10 @@ Rename ``frealign/maps`` to ``frealign/ctf_refine`` and create a new ``frealign/
 15 Map sharpening
 ==================
 
-Rename ``frealign/maps`` to ``frealign/frame_refine`` and create a new ``frealign/maps``
-
 .. code-block:: bash
+    
+    mv frealign/maps frealign/frame_refine && mkdir frealign/maps
 
-    psp -sharpen_input_map "frealign/frame_refine/*_r01_half1.mrc"      \
-        -sharpen_automask_threshold 0.35                                \
+    psp -sharpen_input_map `pwd`/frealign/frame_refine/EMPIAR-10164_r01_half1.mrc   \
+        -sharpen_automask_threshold 0.35                                            \
         -sharpen_adhoc_bfac -50
