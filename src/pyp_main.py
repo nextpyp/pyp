@@ -1262,8 +1262,8 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
     "tomo_swarm", text="Total time in tomo_swarm {} seconds", logger=logger.info
 )
 def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False ):
-    """Main workhorse function for TOMO. Performs preprocessing (includes frame alignment), 
-    tilt-series alignment, ctf estimation & correction, TOMO reconstruction, 
+    """Main workhorse function for TOMO. Performs preprocessing (includes frame alignment),
+    tilt-series alignment, ctf estimation & correction, TOMO reconstruction,
     particle detection and extraction.
 
     Pseudo code
@@ -1782,13 +1782,13 @@ def csp_split(parameters, iteration):
                 os.unlink("./csp/micrograph_particle.index")
             except:
                 pass
-        if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)): 
+        if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)):
             get_image_particle_index(parameters, parfile, path="./csp")
 
-        
+
         if parameters["dose_weighting_enable"] and ref == 0:
 
-            # create weights folder for storing weights.txt     
+            # create weights folder for storing weights.txt
             weights_folder = Path.cwd() / "frealign" / "weights"
             if not weights_folder.exists():
                 os.mkdir(weights_folder)
@@ -1801,17 +1801,17 @@ def csp_split(parameters, iteration):
 
                 parameters["dose_weighting_weights"] = global_weight_file
                 project_params.save_pyp_parameters(parameters=parameters, path=".")
-            
+
             elif "dose_weighting_weights" in parameters and parameters["dose_weighting_weights"] is not None and project_params.resolve_path(parameters["dose_weighting_weights"]) == "auto":
                 weight_file = project_params.get_weight_from_projects(weight_folder=weights_folder, parameters=parameters)
                 if weight_file is not None:
                     parameters["dose_weighting_weights"] = weight_file
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
-            
+
         if (classes > 1
         and iteration > 2
-        and not os.path.isfile("./csp/particle_tilt.index") 
-        and "tomo" in parameters["data_mode"] 
+        and not os.path.isfile("./csp/particle_tilt.index")
+        and "tomo" in parameters["data_mode"]
         and ref == 0
         ):
             get_particles_tilt_index(parfile, path="./csp")
@@ -3349,6 +3349,13 @@ if __name__ == "__main__":
         # if pyp was launched by the webserver, do some additional initialization
         if Web.exists:
             Web.init_env()
+        else:
+            # keep track of issued commands
+            with open(".pyp_history", "a") as f:
+                timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
+                    "%Y/%m/%d %H:%M:%S "
+                )
+                f.write(timestamp + " ".join(sys.argv) + "\n")
 
         # daemon
         if "pypdaemon" in os.environ:
@@ -4269,8 +4276,11 @@ if __name__ == "__main__":
 
                 os.makedirs("frealign/maps", exist_ok=True)
 
-                name = os.path.split(os.getcwd())[-1]
-                name += "_r01_02"
+                if Web.exists:
+                    name = os.path.split(os.getcwd())[-1]
+                    name += "_r01_02"
+                else:
+                    name = Path(reference).stem + "_masked"
                 masked_map =  os.path.join( "frealign", "maps", name + ".mrc" )
 
                 cistem_mask_create(parameters, reference, masked_map)
@@ -4333,10 +4343,12 @@ if __name__ == "__main__":
                 if not os.path.exists("frealign/maps"):
                     os.mkdir("frealign/maps")
 
-                name = os.path.split(os.getcwd())[-1]
-                name += "_r01_02"
-
-                output =  name
+                if Web.exists:
+                    name = os.path.split(os.getcwd())[-1]
+                    output =  name + "_r01_02"
+                else:
+                    name = Path(project_params.resolve_path(parameters["sharpen_input_map"])).stem.replace("_half1","")
+                    output = name + "_postprocessing"
                 output_map = output + "-masked.mrc"
                 project_params.save_parameters(parameters)
 
@@ -4458,7 +4470,7 @@ if __name__ == "__main__":
                     / float(parameters["scope_pixel"])
                 )
 
-                output_png = name + "_map.png"
+                output_png = output + "_map.png"
                 lim = frealign.build_map_montage( output_map, radius, output_png )
 
                 output_path = Path(current_path) / "frealign" / "maps"
@@ -4494,39 +4506,61 @@ EOF
                 shutil.copy( output + "_data.fsc", os.path.join( output_path, output + "_fsc.txt") )
 
                 # send sharpened map to website
-                output = {}
-                output["def_rot_histogram"] = [[0]]
-                output["def_rot_scores"] = [[0]]
+                plots = {}
+                plots["def_rot_histogram"] = [[0]]
+                plots["def_rot_scores"] = [[0]]
 
-                output["rot_hist"] = {}
-                output["rot_hist"]["n"] = output["rot_hist"]["bins"] = [[0]]
-                output["def_hist"] = {}
-                output["def_hist"]["n"] = output["def_hist"]["bins"] = [[0]]
-                output["scores_hist"] = {}
-                output["scores_hist"]["n"] = output["scores_hist"]["bins"] = [[0]]
-                output["occ_hist"] = {}
-                output["occ_hist"]["n"] = output["occ_hist"]["bins"] = [[0]]
-                output["logp_hist"] = {}
-                output["logp_hist"]["n"] = output["logp_hist"]["bins"] = [[0]]
-                output["sigma_hist"] = {}
-                output["sigma_hist"]["n"] = output["sigma_hist"]["bins"] = [[0]]
+                plots["rot_hist"] = {}
+                plots["rot_hist"]["n"] = plots["rot_hist"]["bins"] = [[0]]
+                plots["def_hist"] = {}
+                plots["def_hist"]["n"] = plots["def_hist"]["bins"] = [[0]]
+                plots["scores_hist"] = {}
+                plots["scores_hist"]["n"] = plots["scores_hist"]["bins"] = [[0]]
+                plots["occ_hist"] = {}
+                plots["occ_hist"]["n"] = plots["occ_hist"]["bins"] = [[0]]
+                plots["logp_hist"] = {}
+                plots["logp_hist"]["n"] = plots["logp_hist"]["bins"] = [[0]]
+                plots["sigma_hist"] = {}
+                plots["sigma_hist"]["n"] = plots["sigma_hist"]["bins"] = [[0]]
 
                 metadata = {}
                 metadata["particles_total"] = metadata["particles_used"] = metadata["phase_residual"] = 0
                 metadata["occ"] = metadata["logp"] = metadata["sigma"] = 0
 
                 # retrieve Part_FSC curve from cisTEM
-                part_fsc_file = glob.glob( os.path.join( project_params.resolve_path(parameters["data_parent"]), "frealign", "maps", "*_" + name.split("_")[-1] + "_statistics.txt") )[-1]
-                part_fsc = np.transpose( np.atleast_2d( np.append( 1, np.loadtxt( part_fsc_file, comments="C" )[:,4] ) ) )
+                # part_fsc_file = glob.glob( os.path.join( project_params.resolve_path(parameters["data_parent"]), "frealign", "maps", "*_" + name.split("_")[-1] + "_statistics.txt") )[-1]
+                # part_fsc = np.transpose( np.atleast_2d( np.append( 1, np.loadtxt( part_fsc_file, comments="C" )[:,4] ) ) )
 
                 # only use frequency and FSC curves from fsc file
-                masked_fsc = np.loadtxt(name + '_data.fsc', comments="#")[:,[0,2,3,4,5]]
-                fsc = np.hstack( (masked_fsc, part_fsc ) )
+                masked_fsc = np.loadtxt(output + '_data.fsc', comments="#")[:,[0,2,3,4,5]]
 
                 cutoff = fsc_cutoff(masked_fsc[:,[0,-1]], 0.143)
                 logger.info(f"FINAL RESOLUTION (after mask correction) = {1/cutoff:.1f} A ({1/cutoff:.3f} A)")
 
-                save_reconstruction_to_website( name, masked_fsc, output, metadata )
+                save_reconstruction_to_website( name, masked_fsc, plots, metadata )
+
+                if not Web.exists:
+                    # plot all curves
+                    import matplotlib.pyplot as plt
+
+                    fig, ax = plt.subplots(figsize=(10, 6))
+
+                    ax.plot(1./masked_fsc[:, 0], masked_fsc[:, 1], label="Unmasked")
+                    ax.plot(1./masked_fsc[:, 0], masked_fsc[:, 2], label="Masked")
+                    ax.plot(1./masked_fsc[:, 0], masked_fsc[:, 3], label="Phase-randomized")
+                    ax.plot(1./masked_fsc[:, 0], masked_fsc[:, 4], label="Corrected")
+
+                    ax.plot(1./masked_fsc[:, 0], 0.143 * np.ones(masked_fsc[:, 1].shape), "k:")
+                    ax.plot(1./masked_fsc[:, 0], 0.5 * np.ones(masked_fsc[:, 1].shape), "k:")
+                    ax.plot(1./masked_fsc[:, 0], np.zeros(masked_fsc[:, 1].shape), "k")
+
+                    legend = ax.legend(loc="upper right", shadow=True, fontsize=10)
+                    ax.set_ylim(( min(-0.01, masked_fsc[:, 4].min()), 1.01))
+                    ax.set_xlim((1./masked_fsc[0, 0], 1 * 1./masked_fsc[-1, 0]))
+                    plt.title(f"FSC for {name}, Final resolution = {1/cutoff:.1f} A ({1/cutoff:.3f} A)")
+                    plt.xlabel("Frequency (1/" + "\u00c5" + ")")
+                    plt.ylabel("FSC")
+                    plt.savefig( os.path.join( output_path, output + ".pdf") )
 
                 shutil.rmtree(working_path)
 
@@ -4573,12 +4607,6 @@ EOF
                 shutil.copy(os.environ["PBS_NODEFILE"], machinefile)
 
             logger.info(f"Running on directory {os.getcwd()}")
-            # keep track of issued commands
-            with open(".pyp_history", "a") as f:
-                timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
-                    "%Y/%m/%d %H:%M:%S "
-                )
-                f.write(timestamp + " ".join(sys.argv) + "\n")
 
             parameters = parse_arguments("pre_process")
 

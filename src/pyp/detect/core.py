@@ -9,6 +9,7 @@ from pyp.analysis import plot
 from pyp.detect import joint
 from pyp.inout.image import mrc, writepng
 from pyp.inout.metadata import frealign_parfile
+from pyp.streampyp.web import Web
 from pyp.system import local_run, project_params
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, get_parameter_files_path
@@ -1101,6 +1102,7 @@ def pick_particles(
             else:
                 display_bin = 8.0
             display_bin = image.shape[0] / 512.0
+            display_bin = 8
             # TODO: revisit this, why do we need to reset data_bin when > 1
             data_bin = 1
             for i in range(boxes.shape[0]):
@@ -1128,90 +1130,91 @@ def pick_particles(
                     )
 
             # only do this if we have the webp file
-            if os.path.exists(name+".webp"):
-                command = "{0}/convert {1}.webp -fill none -stroke green1 {2} {1}_tmp.webp".format(
+            if not Web.exists and os.path.exists(name+".webp"):
+                command = "{0}/convert {1}.webp -flip -fill none -stroke green1 {2} {1}_tmp.webp".format(
                     os.environ["IMAGICDIR"], name, options
                 )
                 local_run.run_shell_command(command, verbose=False)
 
-                command = "{0}/convert {1}_tmp.webp -fill none -stroke red {2} {1}_boxed.webp".format(
+                command = "{0}/convert {1}_tmp.webp -flip -fill none -stroke red {2} {1}_boxed.webp".format(
                     os.environ["IMAGICDIR"], name, newoptions
                 )
                 local_run.run_shell_command(command, verbose=False)
 
             # pythonesque way
-            import matplotlib.pyplot as plt
-            from matplotlib import cm
+            if False:
+                import matplotlib.pyplot as plt
+                from matplotlib import cm
 
-            fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-            # use bin12 micrograph in frealign folder if available
-            binned_micrograph = "frealign/%s.mrc" % name
-            auto_binning = 12
-            if not os.path.exists(binned_micrograph):
-                # micrograph binning for performing search
-                com = "{0}/bin/newstack {1}.avg {1}_binned.mrc -bin {2}".format(
-                    get_imod_path(), name, auto_binning
+                fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+                # use bin12 micrograph in frealign folder if available
+                binned_micrograph = "frealign/%s.mrc" % name
+                auto_binning = 12
+                if not os.path.exists(binned_micrograph):
+                    # micrograph binning for performing search
+                    com = "{0}/bin/newstack {1}.avg {1}_binned.mrc -bin {2}".format(
+                        get_imod_path(), name, auto_binning
+                    )
+                    local_run.run_shell_command(com)
+                    binned_micrograph = f"{name}_binned.mrc"
+                micrograph = mrc.read(binned_micrograph)
+                mparameters = project_params.load_pyp_parameters()
+
+                """
+                ctffile = name + ".ctf"
+                ctf = np.loadtxt(ctffile)
+                if mparameters["scope_pixel"] == 0:
+                    mparameters["scope_pixel"] = ctf[9]
+                if mparameters["scope_voltage"] == 0:
+                    mparameters["scope_voltage"] = ctf[10]
+                if mparameters["scope_mag"] == 0:
+                    mparameters["scope_mag"] = ctf[11]
+                """
+
+                msize = int(
+                    float(mparameters["detect_rad"])
+                    / float(mparameters["scope_pixel"])
+                    / auto_binning
                 )
-                local_run.run_shell_command(com)
-                binned_micrograph = f"{name}_binned.mrc"
-            micrograph = mrc.read(binned_micrograph)
-            mparameters = project_params.load_pyp_parameters()
-            
-            """
-            ctffile = name + ".ctf"
-            ctf = np.loadtxt(ctffile)
-            if mparameters["scope_pixel"] == 0:
-                mparameters["scope_pixel"] = ctf[9]
-            if mparameters["scope_voltage"] == 0:
-                mparameters["scope_voltage"] = ctf[10]
-            if mparameters["scope_mag"] == 0:
-                mparameters["scope_mag"] = ctf[11]
-            """
+                tilesize = int(3 * msize)
+                msize *= msize
+                msize *= 3
+                from scipy import ndimage
 
-            msize = int(
-                float(mparameters["detect_rad"])
-                / float(mparameters["scope_pixel"])
-                / auto_binning
-            )
-            tilesize = int(3 * msize)
-            msize *= msize
-            msize *= 3
-            from scipy import ndimage
-
-            mmean = micrograph.mean()
-            mstd = 2.0 * micrograph.std()
-            ax.imshow(micrograph, cmap=cm.Greys_r, vmin=mmean - mstd, vmax=mmean + mstd)
-            ax.axis("off")
-            for i in range(boxes.shape[0]):
-                if boxxs[i, 4] == 1 and boxxs[i, 5] >= int(classification_pass):
-                    ax.scatter(
-                        (np.array(boxxs)[i, 0] + boxxs[i, 2] / 2) / auto_binning,
-                        (np.array(boxxs)[i, 1] + boxxs[i, 3] / 2) / auto_binning,
-                        s=msize / 3,
-                        facecolor="none",
-                        edgecolor="lime",
-                        marker="o",
-                        lw=2,
-                    )
-                else:
-                    ax.scatter(
-                        (np.array(boxxs)[i, 0] + boxxs[i, 2] / 2) / auto_binning,
-                        (np.array(boxxs)[i, 1] + boxxs[i, 3] / 2) / auto_binning,
-                        s=msize / 3,
-                        facecolor="none",
-                        edgecolor="red",
-                        marker="o",
-                        lw=0.75,
-                    )
-            plt.savefig("{0}_boxs.pdf".format(name), bbox_inches="tight")
-            plt.close()
-            # done
+                mmean = micrograph.mean()
+                mstd = 2.0 * micrograph.std()
+                ax.imshow(micrograph, cmap=cm.Greys_r, vmin=mmean - mstd, vmax=mmean + mstd)
+                ax.axis("off")
+                for i in range(boxes.shape[0]):
+                    if boxxs[i, 4] == 1 and boxxs[i, 5] >= int(classification_pass):
+                        ax.scatter(
+                            (np.array(boxxs)[i, 0] + boxxs[i, 2] / 2) / auto_binning,
+                            (np.array(boxxs)[i, 1] + boxxs[i, 3] / 2) / auto_binning,
+                            s=msize / 3,
+                            facecolor="none",
+                            edgecolor="lime",
+                            marker="o",
+                            lw=2,
+                        )
+                    else:
+                        ax.scatter(
+                            (np.array(boxxs)[i, 0] + boxxs[i, 2] / 2) / auto_binning,
+                            (np.array(boxxs)[i, 1] + boxxs[i, 3] / 2) / auto_binning,
+                            s=msize / 3,
+                            facecolor="none",
+                            edgecolor="red",
+                            marker="o",
+                            lw=0.75,
+                        )
+                plt.savefig("{0}_boxs.pdf".format(name), bbox_inches="tight")
+                plt.close()
+                # done
 
             boxsize *= binning
             boundsize *= binning
 
             # extract particles
-            if boxsize > 0:
+            if False and boxsize > 0:
 
                 # use boxx coordinates if available
                 if os.path.isfile("{}.boxx".format(name)):
@@ -1236,24 +1239,18 @@ def pick_particles(
                         and boxes[i, 1] >= difference
                         and boxes[i, 1] + boxsize + difference < image.shape[-2]
                     )
-                    # if os.path.isfile( '{}.boxx'.format(name) ) or inside:
                     if inside:
                         boxxs[i, 4] = 1
                     else:
                         boxxs[i, 4] = 0
-                        # print boxes[i,:2], image.shape
-                        # print 'WARNING - Particle out of bounds', boxxs[i,:]
-                # boxs = boxxs[ boxxs[:,4] + boxxs[:,5] == 2 ]
                 boxs = boxxs[
                     np.logical_and(
                         boxxs[:, 4] == 1, boxxs[:, 5] >= int(classification_pass)
                     )
                 ]
-                # this was creating an issue with backwards compatibility (the line above was used before)
-                # boxs = boxxs[ boxxs[:,5] >= int(classification_pass) ]
 
                 if len(boxs) > 0:
-                    
+
                     from pyp import extract
 
                     particles = extract.extract_particles_old(

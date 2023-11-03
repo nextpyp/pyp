@@ -31,7 +31,6 @@ IncludeCmd: no
 %post
 	# remove .git directory to save space
 	rm -rf /opt/pyp/.git
-
 	# install packages required by ETTK
 	yum -y update
 	yum install -y which openssh gcc-4.8.5 gcc-c++-4.8.5 libXt-devel freeglut-devel git make vim nano bzip2 bzip2-libs bzip2-devel numactl-devel libjpeg ImageMagick wget epel-release graphviz fftw_devel
@@ -51,13 +50,6 @@ IncludeCmd: no
         rm -rf $NAME
 	rm $TARFILE
 	
-	# install potrace (needed by ImageMagic to manipulate svg files)
-	cd /opt
-	wget https://potrace.sourceforge.net/download/1.16/potrace-1.16.linux-x86_64.tar.gz
-	tar xvfz potrace-1.16.linux-x86_64.tar.gz
-	rm -f potrace-1.16.linux-x86_64.tar.gz
-	cd -
-
 	# NOTE: the shell here is apparently /bin/sh = dash
 
 	# make in/out folders we can mount to
@@ -67,13 +59,17 @@ IncludeCmd: no
 	mkdir /var/out
 	mkdir /var/scratch
 
-	# load external packages (these need to be made public for this to work)
-	cd /opt
-	git clone https://gitlab.cs.duke.edu/bartesaghilab/joint.git --depth 1
-	rm -rf /opt/joint/.git
-	git clone https://gitlab.cs.duke.edu/bartesaghilab/jointsparse3d.git --depth 1
-	rm -rf /opt/jointsparse3d/.git
+	# load external packages
+	cd /opt/pyp/external
+	git clone https://github.com/nextpyp/spr_pick.git --depth 1
+	rm -rf /opt/spr_pick/.git
+	git clone https://github.com/nextpyp/cet_pick.git --depth 1
+	rm -rf /opt/cet_pick/.git
+	git clone https://github.com/nextpyp/postprocessing.git --depth 1
+	rm -rf /opt/postprocessing/.git
 	cd -
+
+	# install IMOD
 	wget https://bio3d.colorado.edu/imod/AMD64-RHEL5/imod_4.11.24_RHEL7-64_CUDA8.0.sh
 	sh imod_4.11.24_RHEL7-64_CUDA8.0.sh -yes -skip -name IMOD -dir /opt
 	rm -rf imod_4.11.24_RHEL7-64_CUDA8.0.sh
