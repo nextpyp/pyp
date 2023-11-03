@@ -435,7 +435,7 @@ def parse_arguments(block):
                 mfiles = dict()
                 mfiles["raw"] = ".xml .rawtlt .order"
                 if "data_retrieve" in parameters.keys() and parameters["data_retrieve"]:
-                    if not parameters["movie_ali"]:
+                    if "movie_ali" in parameters and not parameters["movie_ali"]:
                         mfiles["ali"] = ".xf .tlt .fid.txt _tiltalignScript.txt"
                         mfiles["ctf"] = ".def .param .ctf _CTFprof.txt _avgrot.txt"
                     mfiles["box"] = ".box .boxx"

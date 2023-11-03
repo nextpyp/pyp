@@ -746,11 +746,11 @@ def ctffind_tomo_estimate(name, parameters):
         meandef = (df1 + df2) / 2.0
         min_defocus = max(5000, meandef - 10000)
         max_defocus = meandef + 10000
+        df = meandef
     else:
         min_defocus = parameters["ctf_min_def"]
         max_defocus = parameters["ctf_max_def"]
-
-    df = meandef
+        df = (min_defocus + max_defocus) / 2
 
     if False and not parameters["ctf_use_ast"]:
 

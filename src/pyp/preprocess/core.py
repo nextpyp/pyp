@@ -152,6 +152,8 @@ def read_tilt_series(
     aligned_tilts = []
 
     data_path = Path(resolve_path(parameters["data_path"])).parent
+    project_raw_path = Path(filename).parent
+    
     name = os.path.basename(filename)
     mdocs = list(data_path.glob(f"{name}*.mdoc"))
 
@@ -171,6 +173,14 @@ def read_tilt_series(
     elif os.path.isfile(filename + ".tgz"):
         command = "tar xvfz " + filename + ".tgz".format(name)
         local_run.run_shell_command(command)
+    elif parameters["movie_mdoc"] and not parameters["movie_no_frames"]:
+        tilts = frames_from_mdoc(mdocs, parameters)
+        for tilt_image in tilts:
+            tilt_image_filename = tilt_image[0]
+            if (project_raw_path / tilt_image_filename).exists():
+                shutil.copy2(project_raw_path / tilt_image_filename, ".")
+            else:
+                raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
     elif len( glob.glob(filename + "*.mrc") ) > 0 or os.path.isfile(
         filename + "_001_0.00.mrc"
     ):
@@ -186,9 +196,7 @@ def read_tilt_series(
         for i in glob.glob(filename + "*.dm4"):
             shutil.copy2(i, ".")
     elif len(glob.glob(filename + "*.tif")) > 0:
-        for i in glob.glob(filename + "*.tif") + glob.glob(
-            filename + "*.tif.mdoc"
-        ):
+        for i in glob.glob(filename + "*.tif") + glob.glob(filename + "*.tif.mdoc"):
             shutil.copy2(i, ".")
     elif len(glob.glob(filename + "*.eer")) > 0:
         for i in glob.glob(filename + "*.eer"):
@@ -884,7 +892,7 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
                     else:
                         frame = line.strip().split('/')[-1] if len(mdoc_files) == 1 else str(file.stem).replace(".mdoc", "")
 
-                    assert Path(frame).exists(), f"{frame} does not exist. Please check the filename in mdoc files is correct"
+                    # assert Path(frame).exists(), f"{frame} does not exist. Please check the filename in mdoc files is correct"
                     frames_set.append([frame, tilt_angle, None]) # append the metadata into the list
 
                 elif line.startswith("TiltAngle"):
