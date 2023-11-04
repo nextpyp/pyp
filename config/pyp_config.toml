@@ -251,10 +251,10 @@ hidden = true
 
 [tabs.data.retrieve]
 name = "Use metadata"
-description = "Retrieve metadata from mdoc files (if available)"
+description = "Retrieve existing metadata (if available)"
 type = "bool"
 default = false
-hidden = ["spr_import", "tomo_import", "stream_tomo", "stream_spr"]
+hidden = ["spr_import_raw", "spr_import_star", "tomo_import_raw", "tomo_import_star", "stream_tomo", "stream_spr"]
 
 [tabs.data.mode]
 name = "data_mode"
