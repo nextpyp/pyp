@@ -4344,8 +4344,8 @@ if __name__ == "__main__":
                     os.mkdir("frealign/maps")
 
                 if Web.exists:
-                    name = os.path.split(os.getcwd())[-1]
-                    output =  name + "_r01_02"
+                    name = os.path.split(os.getcwd())[-1] + "_r01_02"
+                    output =  name 
                 else:
                     name = Path(project_params.resolve_path(parameters["sharpen_input_map"])).stem.replace("_half1","")
                     output = name + "_postprocessing"
