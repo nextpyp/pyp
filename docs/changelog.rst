@@ -7,7 +7,7 @@ Changelog
 v0.5.1 (11/04/2023)
 *******************
 
-   :fa:`plus-square,text-success` Import frame tilt-series data using mdoc files produced by PACEtomo.
+   :fa:`star,text-success` Import frame tilt-series data using mdoc files produced by PACEtomo.
 
    :fa:`plus-square,text-primary` Allow typing iteration number in navigation bar for refinement blocks.
 
