@@ -97,12 +97,12 @@ These are some examples of options for ``csp``:
 All results from 3D refinement are saved in ``frealign/maps`` and include png files for each refinement iteration for visual inspection.
 
 .. tip::
-    For some ``csp`` parameters, a colon separated list of values can be provided to specify different values for each iteration. For example, ``--refine_rhref=12:10:8:4`` tells ``csp`` to use a 12A resolution cutoff during the first refinement iteration, 10A during the second iteration and so forth.
+    For some ``csp`` parameters, a colon separated list of values can be provided to specify different values for each iteration. For example, ``--refine_rhref="12:10:8:4"`` tells ``csp`` to use a 12A resolution cutoff during the first refinement iteration, 10A during the second iteration and so forth.
 
 4 Filter bad particles
 ======================
 
-This step removes bad particles based on assigned particle scores during refinement. We first need to create a new ``T20S_clean``folder:
+This step removes bad particles based on assigned particle scores during refinement. We first need to create a new ``T20S_clean`` folder:
 
 .. code-block:: bash
 
@@ -131,14 +131,14 @@ Remove bad particles from metadata (this step cannot be undone):
 
 .. code-block:: bash
 
-    pcl -clean_discard    \
+    pcl -clean_discard                      \
         -no-clean_check_reconstruction
 
 
 6 Particle refinement
 =====================
 
-The next step is to do local alignments using a lower level of binning (using only clean particles). We first need to rename ``frealign/maps`` to ``frealign/frame_clean``:
+The next step is to do local alignments using a lower level of binning (using only clean particles). We first need to rename ``frealign/maps`` to ``frealign/maps_clean``:
 
 .. code-block:: bash
 
@@ -166,7 +166,7 @@ The next step is to do local alignments using a lower level of binning (using on
 7 Create shape mask
 ===================
 
-Create a shape mask from the most recent reconstruction:
+This step will create a shape mask using the most recent reconstruction:
 
 .. code-block:: bash
 
@@ -176,7 +176,7 @@ Create a shape mask from the most recent reconstruction:
 8 Fine refinement
 =================
 
-Additional refinement iterations using the shape mask:
+Next, we will perform additional refinement iterations using the shape mask:
 
 .. code-block:: bash
 
@@ -188,7 +188,7 @@ Additional refinement iterations using the shape mask:
 9 Particle-based CTF refinement
 ===============================
 
-Refine CTF per-particle using an 8x8 grid:
+This step refines the CTF per-particle using an 8x8 grid:
 
 .. code-block:: bash
 
@@ -199,7 +199,7 @@ Refine CTF per-particle using an 8x8 grid:
 10 Movie frame refinement
 ========================
 
-The step refines shifts for movie frames of each particle using the most recent 3D reconstruction as reference. We first need to rename ``frealign/maps`` to ``frealign/frame_fine``:
+This step refines shifts for movie frames of each particle using the most recent 3D reconstruction as reference. We first need to rename ``frealign/maps`` to ``frealign/maps_fine``:
 
 .. code-block:: bash
 
@@ -234,7 +234,7 @@ The step refines shifts for movie frames of each particle using the most recent 
 11 Dose weighting reconstruction
 ================================
 
-The step performs per-frame dose-weighting to increase the contribution of high-quality frames:
+This step performs per-frame dose-weighting to increase the contribution of high-quality frames:
 
 .. code-block:: bash
 
@@ -252,7 +252,7 @@ The step performs per-frame dose-weighting to increase the contribution of high-
 12 Particle refinement on refined frame averages
 ================================================
 
-The step does additional 3D refinement using the drift-corrected particles and the dose-weighted reconstruction:
+This step does additional 3D refinement using the drift-corrected particles and the dose-weighted reconstruction:
 
 .. code-block:: bash
 
@@ -270,9 +270,14 @@ The final step does masking, sharpening, and produces FSC resolution plots:
 .. code-block:: bash
 
     psp -sharpen_input_map `pwd`/frealign/frame/*_r01_half1.mrc  \
-        -sharpen_automask_threshold 0.5                                \
+        -sharpen_automask_threshold 0.5                          \
         -sharpen_adhoc_bfac -50
 
 .. note::
 
-    Output maps and FSC plots will be saved to the ``frealign/maps`` folder.
+    Output maps and FSC plots will be saved in the ``frealign/maps`` folder.
+
+.. seealso::
+
+    * :doc:`Tomography CLI tutorial<tomography>`
+    * :doc:`Classification CLI tutorial<classification>`

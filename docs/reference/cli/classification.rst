@@ -2,10 +2,9 @@
 Classification tutorial
 =======================
 
-This tutorial shows how to process tilt-series from the `E. coli. ribosomes (EMPIAR-10304) <https://www.ebi.ac.uk/empiar/EMPIAR-10304/>`_ dataset
+This tutorial shows how to process tilt-series from the `E. coli. ribosomes (EMPIAR-10304) <https://www.ebi.ac.uk/empiar/EMPIAR-10304/>`_ dataset.
 
-
-We first use the command below to download and decompress a zip file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
+We first use the command below to download and decompress a tbz file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
 
 .. code-block:: bash
     # cd to a location in the shared file system and run:
@@ -17,6 +16,8 @@ We first use the command below to download and decompress a zip file containing:
 1 Create a new project
 ======================
 
+Next, we create an empty folder where all files for the tutorial will be saved:
+
 .. code-block:: bash
 
     mkdir EMPIAR-10304
@@ -25,7 +26,7 @@ We first use the command below to download and decompress a zip file containing:
 2 Pre-processing
 ================
 
-Data pre-processing consists of movie frame alignment, tilt-series alignment, tomogram reconstruction, CTF estimation:
+The next command does data pre-processing consisting of movie frame alignment, tilt-series alignment, tomogram reconstruction, CTF estimation:
 
 .. code-block:: bash
 
@@ -44,15 +45,14 @@ Data pre-processing consists of movie frame alignment, tilt-series alignment, to
         -slurm_tasks 42                             \
         -slurm_memory 420
 
-
 .. note::
-    Nominal tilt angles (``*.rawtlt``) and acquisition order (``*.order``) for each tilt-series need to be provided with the raw data.
 
+    Nominal tilt angles (stored in ``*.rawtlt`` files) and acquisition order (stored in ``*.order`` files) for each tilt-series are provided with the raw data.
 
 3 Particle detection
-=================
+====================
 
-Detect spikes using the membrane values selected above:
+The next step is to detect ribosome particles using a size-based approach:
 
 .. code-block:: bash
 
@@ -68,15 +68,15 @@ Detect spikes using the membrane values selected above:
 
 
 4 Reference-based refinement
-==============================
+============================
 
-If a 3D reference is available, ``csp`` can align the particle projections using constrained refinement.
+If a 3D reference is available, we use the ``csp`` command to align particle projections using constrained refinement:
 
 .. code-block:: bash
 
     # launch coarse refinement
-    csp -refine_parfile "/path_to_particle.txt"         \
-        -refine_model "EMPIAR-10304_init_ref.mrc"       \
+    csp -refine_parfile=`pwd`/frealign/EMPIAR-10304_original_volumes.txt    \
+        -refine_model="/path_to_raw_data/10304_ref_bin4.mrc"                \
         -particle_mw 2000                               \
         -particle_rad 150                               \
         -extract_box 64                                 \
@@ -97,19 +97,16 @@ If a 3D reference is available, ``csp`` can align the particle projections using
         -csp_ToleranceParticlesPsi 180.0                \
         -csp_ToleranceParticlesShifts 50.0
 
-
-.. tip::
-    To only search one angle (i.e. psi), please set the tolerance of other refined rotations to zero (i.e. ``csp_ToleranceParticlesPhi``, ``csp_ToleranceParticlesTheta``).
-
-
 5 Filter particles
-===============================
+==================
+
+The next step is to remove particles with low correlation scores:
 
 .. code-block:: bash
 
     mv frealign/mapsfrealign/reference_based && mkdir frealign/maps
 
-    pcl -clean_parfile `pwd`/frealign/reference_based/EMPIAR-10304_r01_02.par.bz2   \
+    pcl -clean_parfile=`pwd`/frealign/reference_based/EMPIAR-10304_r01_02.par.bz2   \
         -clean_threshold 15.0                                                       \
         -clean_dist 20.0                                                            \
         -clean_mintilt -7.0                                                         \
@@ -118,7 +115,9 @@ If a 3D reference is available, ``csp`` can align the particle projections using
         -clean_check_reconstruction
 
 6  (optional): Permanently remove bad particles
-================
+===============================================
+
+It is often a good idea to permanently remove any bad particles identified in the previous step:
 
 .. code-block:: bash
 
@@ -126,17 +125,16 @@ If a 3D reference is available, ``csp`` can align the particle projections using
 
 
 7 Fully constrained refinement
-===============================================================
+==============================
 
-CSP can also use initial alignments from other software packages such as Relion or EMAN sub-volume averaging. You may find :doc:`Tomo import/export <tomo_import_export>` useful to perform sub-volume averaging in Relion. 
-
+In this step we do additional refinement using the raw data (without binning):
 
 .. code-block:: bash
 
-    mv frealign/maps frealign/particle_filter && mkdir frealign/maps    
+    mv frealign/maps frealign/particle_filter && mkdir frealign/maps
 
-    csp -refine_parfile `pwd`/frealign/particle_filter/EMPIAR-10304_r01_02_clean.par.bz2    \
-        -refine_model `pwd`/frealign/particle_filter/EMPIAR-10304_r01_02.mrc                \
+    csp -refine_parfile=`pwd`/frealign/particle_filter/EMPIAR-10304_r01_02_clean.par.bz2    \
+        -refine_model=`pwd`/frealign/particle_filter/EMPIAR-10304_r01_02.mrc                \
         -extract_box 256                                                                    \
         -extract_bin 1                                                                      \
         -refine_skip                                                                        \
@@ -156,10 +154,12 @@ CSP can also use initial alignments from other software packages such as Relion 
         -dose_weighting_fraction 4                                                          \
         -dose_weighting_global
 
-All results from 3D refinement are saved in ``frealign/maps`` and include png files for each refinement iteration for visual inspection.
+All results from 3D refinement are saved in the folder ``frealign/maps``, including png files for visual inspection corresponding to each refinement iteration.
 
 8 Create shape mask
-====================================
+===================
+
+The next step is to create a shape mask:
 
 .. code-block:: bash
 
@@ -171,16 +171,18 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
         -mask_edge_width 8
 
 
-9 Region-based local refinement before masking
-==================
+9 Region-based local refinement
+===============================
+
+The following command performs region-based constrained alignment:
 
 .. code-block:: bash
-    
+
     mv frealign/maps frealign/mask && mkdir frealign/maps
 
-    csp -refine_parfile `pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.par.bz2    \
-        -refine_model `pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.mrc          \
-        -refine_maskth `pwd`/frealign/mask/mask.mrc"                                    \
+    csp -refine_parfile=`pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.par.bz2    \
+        -refine_model=`pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.mrc          \
+        -refine_maskth=`pwd`/frealign/mask/mask.mrc"                                    \
         -refine_iter 2                                                                  \
         -refine_maxiter 6                                                               \
         -refine_rhref "12:10:8:6:5"                                                     \
@@ -196,14 +198,16 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
 
 
 10 Particle-based CTF refinement
-==================
+================================
+
+In this step we refine the CTF parameters on a per-particle basis:
 
 .. code-block:: bash
-    
+
     mv frealign/maps frealign/region_based && mkdir frealign/maps
 
-    csp -refine_parfile `pwd`/frealign/region_based/EMPIAR-10304_r01_06.par.bz2     \
-        -refine_model `pwd`/frealign/region_based/EMPIAR-10304_r01_06.mrc           \
+    csp -refine_parfile=`pwd`/frealign/region_based/EMPIAR-10304_r01_06.par.bz2     \
+        -refine_model=`pwd`/frealign/region_based/EMPIAR-10304_r01_06.mrc           \
         -refine_iter 2                                                              \
         -refine_maxiter 2                                                           \
         -refine_rhref "4.5"                                                         \
@@ -215,17 +219,17 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
         -csp_ToleranceMicrographDefocus1 2000                                       \
         -csp_ToleranceMicrographDefocus2 2000
 
+11 Additional region-based refinement after CTF refinement
+==========================================================
 
-
-11 Region-based refinement after particle-based CTF refinement
-==================
+The following command does additional region-based refinement:
 
 .. code-block:: bash
 
     mv frealign/maps frealign/ctf_refine && mkdir frealign/maps
-    
-    csp -refine_parfile `pwd`/frealign/ctf_refine/EMPIAR-10304_r01_02.par.bz2   \
-        -refine_model `pwd`/frealign/ctf_refine/EMPIAR-10304_r01_02.mrc         \
+
+    csp -refine_parfile=`pwd`/frealign/ctf_refine/EMPIAR-10304_r01_02.par.bz2   \
+        -refine_model=`pwd`/frealign/ctf_refine/EMPIAR-10304_r01_02.mrc         \
         -refine_iter 2                                                          \
         -refine_maxiter 4                                                       \
         -refine_rhref "6:5:4.5"                                                 \
@@ -241,14 +245,16 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
 
 
 12 3D classification
-==================
+====================
+
+In the last step we perform 3D classification into 8 classes:
 
 .. code-block:: bash
     
     mv frealign/maps frealign/region_based_2 && mkdir frealign/maps
 
-    csp -refine_parfile `pwd`/frealign/region_based_2/EMPIAR-10304_r01_04.par.bz2   \
-        -refine_model `pwd`/frealign/region_based_2/EMPIAR-10304_r01_04.mrc         \
+    csp -refine_parfile=`pwd`/frealign/region_based_2/EMPIAR-10304_r01_04.par.bz2   \
+        -refine_model=`pwd`/frealign/region_based_2/EMPIAR-10304_r01_04.mrc         \
         -refine_iter 2                                                              \
         -refine_maxiter 20                                                          \
         -no-refine_skip                                                             \
@@ -258,5 +264,11 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
         -no-csp_refine_micrographs                                                  \
         -class_num 8                                                                \
         -class_rhcls 8.0                                                            \
-        -dose_weighting_weights `pwd`/frealign/weights/global_weight.txt"
+        -dose_weighting_weights=`pwd`/frealign/weights/global_weight.txt"
 
+All results will be saved in the ``frealign/maps`` folder.
+
+.. seealso::
+
+    * :doc:`Tomography CLI tutorial<tomography>`
+    * :doc:`Single-particle CLI tutorial<single_particle>`
