@@ -165,7 +165,7 @@ The next step is to create a shape mask:
 
     mv frealign/maps frealign/fully_constrained && mkdir frealign/maps
 
-    pmk -mask_model `pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.mrc    \
+    pmk -mask_model=`pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.mrc    \
         -mask_threshold 0.4                                                     \
         -mask_normalized                                                        \
         -mask_edge_width 8
@@ -250,7 +250,7 @@ The following command does additional region-based refinement:
 In the last step we perform 3D classification into 8 classes:
 
 .. code-block:: bash
-    
+
     mv frealign/maps frealign/region_based_2 && mkdir frealign/maps
 
     csp -refine_parfile=`pwd`/frealign/region_based_2/EMPIAR-10304_r01_04.par.bz2   \
@@ -270,5 +270,5 @@ All results will be saved in the ``frealign/maps`` folder.
 
 .. seealso::
 
-    * :doc:`Tomography CLI tutorial<tomography>`
-    * :doc:`Single-particle CLI tutorial<single_particle>`
+    * :doc:`Tomography tutorial<tomography>`
+    * :doc:`Single-particle tutorial<single_particle>`

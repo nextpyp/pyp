@@ -4,6 +4,16 @@ Single-particle tutorial
 
 This tutorial shows how to process single-particle raw movies from `T20S proteasome (EMPIAR-10025) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a high-resolution 3D structure.
 
+We first download and decompress a tbz file containing a subset of 20 movies, the gain reference, and an initial model:
+
+.. code-block:: bash
+
+  # cd to a location in the shared file system and run:
+
+  wget https://nextpyp.app/files/data/nextpyp_spr_tutorial.tbz
+  tar xvfz nextpyp_spr_tutorial.tbz
+
+
 1 Create a new project
 ======================
 
@@ -113,13 +123,13 @@ This step removes bad particles based on assigned particle scores during refinem
 
     # filter bad particles
 
-    pcl -data_parent "PATH_TO/T20S"                                      \
+    pcl -data_parent=`pwd`/../T20S"                                      \
         -clean_spr_auto                                                  \
         -clean_dist 20                                                   \
-        -clean_parfile "PATH_TO/T20S/frealign/maps/T20S_r01_04.par.bz2"  \
+        -clean_parfile=`pwd`/../T20S/frealign/maps/T20S_r01_04.par.bz2   \
         -clean_check_reconstruction                                      \
         -no-clean_discard                                                \
-        -refine_model "PATH_TO/T20S/frealign/maps/T20S_r01_04.mrc"
+        -refine_model=`pwd`/../T20S/frealign/maps/T20S_r01_04.mrc
 
 .. tip::
     Check the results in the ``frealign/maps`` folder to confirm that the filtering operation was successful.
@@ -157,8 +167,8 @@ The next step is to do local alignments using a lower level of binning (using on
         -refine_maxiter 6                                                           \
         -refine_fboost                                                              \
         -no-refine_skip                                                             \
-        -refine_parfile `pwd`/frealign/maps_clean/T20S_clean_r01_02_clean.par.bz2   \
-        -refine_model `pwd`/frealign/maps_clean/T20S_clean_r01_02.mrc
+        -refine_parfile=`pwd`/frealign/maps_clean/T20S_clean_r01_02_clean.par.bz2   \
+        -refine_model=`pwd`/frealign/maps_clean/T20S_clean_r01_02.mrc
 
 .. note::
     Every time ``pyp`` commands are executed, the parameters are saved in a ``.pyp_config.toml`` file in the project directory. This means that parameter values are "remembered" and you only need to specify the ones that change between consecutive runs. For example, if you executed the ``csp`` command above and you want to run an additional refinement iteration, you can just run: ``csp -refine_maxiter 7``.
@@ -170,7 +180,7 @@ This step will create a shape mask using the most recent reconstruction:
 
 .. code-block:: bash
 
-    pmk -mask_model `pwd`/frealign/maps/T20S_clean_r01_06.mrc  \
+    pmk -mask_model=`pwd`/frealign/maps/T20S_clean_r01_06.mrc  \
         -mask_threshold 0.3
 
 8 Fine refinement
@@ -182,7 +192,7 @@ Next, we will perform additional refinement iterations using the shape mask:
 
     csp -refine_iter 7                               \
         -refine_maxiter 8                            \
-        -refine_maskth `pwd`/frealign/maps/mask.mrc
+        -refine_maskth=`pwd`/frealign/maps/mask.mrc
 
 
 9 Particle-based CTF refinement
@@ -218,8 +228,8 @@ This step refines shifts for movie frames of each particle using the most recent
         -csp_UseImagesForRefinementMax 60                                       \
         -csp_transreg                                                           \
         -csp_spatial_sigma 15.0                                                 \
-        -refine_parfile  `pwd`/frealign/maps_fine/T20S_clean_r01_09.par.bz2     \
-        -refine_model `pwd`/frealign/maps_fine/T20S_clean_r01_09.mrc            \
+        -refine_parfile=`pwd`/frealign/maps_fine/T20S_clean_r01_09.par.bz2      \
+        -refine_model=`pwd`/frealign/maps_fine/T20S_clean_r01_09.mrc            \
         -no-csp_refine_ctf
 
 .. note::
@@ -269,7 +279,7 @@ The final step does masking, sharpening, and produces FSC resolution plots:
 
 .. code-block:: bash
 
-    psp -sharpen_input_map `pwd`/frealign/frame/*_r01_half1.mrc  \
+    psp -sharpen_input_map=`pwd`/frealign/frame/*_r01_half1.mrc  \
         -sharpen_automask_threshold 0.5                          \
         -sharpen_adhoc_bfac -50
 
@@ -279,5 +289,5 @@ The final step does masking, sharpening, and produces FSC resolution plots:
 
 .. seealso::
 
-    * :doc:`Tomography CLI tutorial<tomography>`
-    * :doc:`Classification CLI tutorial<classification>`
+    * :doc:`Tomography tutorial<tomography>`
+    * :doc:`Classification tutorial<classification>`

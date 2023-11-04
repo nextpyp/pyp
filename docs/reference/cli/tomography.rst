@@ -146,7 +146,7 @@ The next step is to remove particles with low correlation scores:
 
     mv frealign/maps frealign/fully_constrained && mkdir frealign/maps
 
-    pcl -clean_parfile `pwd`/frealign/fully_constrained/EMPIAR-10164_r01_05.par.bz2     \
+    pcl -clean_parfile=`pwd`/frealign/fully_constrained/EMPIAR-10164_r01_05.par.bz2     \
         -clean_threshold 2.5                                                            \
         -clean_dist 10.0                                                                \
         -clean_mintilt -15.0                                                            \
@@ -173,8 +173,8 @@ The following command performs region-based constrained alignment:
 
     mv frealign/maps frealign/filter_particles && mkdir frealign/maps
 
-    csp -refine_parfile `pwd`/frealign/filter_particles/EMPIAR-10164_r01_02_clean.par.bz2   \
-        -refine_model `pwd`/frealign/filter_particles/EMPIAR-10164_r01_02.mrc"              \
+    csp -refine_parfile=`pwd`/frealign/filter_particles/EMPIAR-10164_r01_02_clean.par.bz2   \
+        -refine_model=`pwd`/frealign/filter_particles/EMPIAR-10164_r01_02.mrc"              \
         -particle_rad 100.0                                                                 \
         -extract_box 384                                                                    \
         -extract_bin 1                                                                      \
@@ -197,7 +197,7 @@ The next step is to create a shape mask:
 
     mv frealign/maps frealign/region_refine && mkdir frealign/maps
 
-    pmk -mask_model `pwd`/frealign/region_refine/EMPIAR-10164_r01_03.mrc     \
+    pmk -mask_model=`pwd`/frealign/region_refine/EMPIAR-10164_r01_03.mrc     \
         -mask_threshold 0.42                                                 \
         -mask_normalized                                                     \
         -mask_edge_width 8
@@ -214,7 +214,7 @@ Next, we do further refinement using the mask calculated in the previous step:
 
     csp -refine_maxiter 6                               \
         -refine_rhref "6:5:5:4:3.5"                     \
-        -refine_maskth `pwd`/frealign/mask/mask.mrc"
+        -refine_maskth=`pwd`/frealign/mask/mask.mrc"
 
 
 12 Particle-based CTF refinement
@@ -241,8 +241,8 @@ Next, we refine the raw movie frames against the most recent 3D reconstruction:
 
     mv frealign/maps frealign/ctf_refine && mkdir frealign/maps
 
-    csp -refine_parfile `pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.par.bz2   \
-        -refine_model `pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.mrc         \
+    csp -refine_parfile=`pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.par.bz2   \
+        -refine_model=`pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.mrc         \
         -particle_rad 80.0                                                      \
         -extract_fmt frealign_local                                             \
         -refine_iter 2                                                          \
@@ -284,11 +284,11 @@ The final step is to sharpen the map and produce FSC plots:
 
 .. code-block:: bash
 
-    psp -sharpen_input_map `pwd`/frealign/maps/EMPIAR-10164_r01_half1.mrc   \
+    psp -sharpen_input_map=`pwd`/frealign/maps/EMPIAR-10164_r01_half1.mrc   \
         -sharpen_automask_threshold 0.35                                    \
         -sharpen_adhoc_bfac -50
 
 .. seealso::
 
-    * :doc:`Single-particle CLI tutorial<single_particle>`
-    * :doc:`Classification CLI tutorial<classification>`
+    * :doc:`Single-particle tutorial<single_particle>`
+    * :doc:`Classification tutorial<classification>`
