@@ -140,7 +140,8 @@ def measure_score(recfile, modelfile, resolution, scale, pixel, clip, flip):
 
 
 def smooth_part_fsc(stats_file_name, plot_name):
-    logger.info("Smoothing part FSC curves")
+    if "_r01" in stats_file_name:
+        logger.info("Smoothing part FSC curves")
     stats = np.loadtxt(stats_file_name, comments=["C"])
     if len(stats) > 0:
         import matplotlib.pyplot as plt
