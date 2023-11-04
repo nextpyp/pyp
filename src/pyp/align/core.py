@@ -4254,6 +4254,10 @@ EOF
     else:
         [output, error] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
+    if "Segmentation fault" in error:
+        logger.error("Try increasing the Memory per task in the Resources tab (--slurm_memory in the CLI)")
+        raise Exception(error)
+
     # go back to parent directory and cleanup
     os.chdir("..")
     shutil.rmtree(tmp_directory)
