@@ -1564,9 +1564,9 @@ default = 0.0
 
 [tabs.refine.priors]
 name = "Use alignment priors"
-description = "Using priors during refinement as constraints may decrease the chance of overfitting"
+description = "Using priors during refinement may reduce the chance of overfitting"
 type = "bool"
-default = false
+default = true
 advanced = true
 
 [tabs.refine.beamtilt]
