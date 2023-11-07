@@ -163,6 +163,26 @@ def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swa
     return swarm_file
 
 
+def create_csp_classmerge_file(files, parameters, iteration, swarm_file="csp_class_merge.swarm"):
+    f = open(swarm_file, "w")
+    f.write(
+        "\n".join(
+            [
+                "cd {0}; export classmerge=classmerge; {1} --class {2} --no-skip --no-debug 2>&1 | tee ../log/r{2:02d}_csp_classmerge.log".format(
+                    os.getcwd(),
+                    run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"]),
+                    class_id+1, 
+                )
+                for class_id in range(parameters["class_num"])
+            ]
+        )
+    )
+    f.write("\n")
+    f.close()
+
+    return swarm_file
+
+
 def create_script_file(swarm_file, command, path):
     with open(swarm_file, "w") as f:
         f.write("#!/bin/bash\n")
@@ -416,7 +436,7 @@ def submit_jobs(
 
     logger.info("Submitting {0} job(s) ({1})".format(procs, id.strip()))
 
-    return id if jobtype != "cspswarm" else (id, procs)
+    return (id, procs) if jobtype != "cspmerge" else id
 
 
 def transfer_stack_to_scratch(dataset):

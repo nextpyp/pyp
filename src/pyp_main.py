@@ -1880,6 +1880,10 @@ def csp_split(parameters, iteration):
         files, parameters, iteration, "cspswarm.swarm"
     )
 
+    swarm_classmerge_file = slurm.create_csp_classmerge_file(
+        files, parameters, iteration, "csp_class_merge.swarm"
+    )
+
     jobtype = jobname = "cspswarm"
     if Web.exists:
         jobname = "Iteration %d (split)" % parameters["refine_iter"]
@@ -1887,6 +1891,7 @@ def csp_split(parameters, iteration):
     # submit jobs to batch system
     if parameters["slurm_merge_only"]:
         id = ""
+        class_merge_id = ""
     else:
         if parameters["csp_parx_only"]:
             id = slurm.submit_jobs(
@@ -1918,6 +1923,23 @@ def csp_split(parameters, iteration):
             # just use the first array job as prerequisite
             id = id.strip() + "_1"
 
+
+            # TODO: cpus and memory need their own parameters
+            jobtype = jobname = "classmerge"
+            (class_merge_id, procs) = slurm.submit_jobs(
+                ".",
+                swarm_classmerge_file,
+                jobtype,
+                jobname,
+                queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+                threads=parameters["slurm_tasks"],
+                memory=parameters["slurm_memory"],
+                walltime=parameters["slurm_walltime"],
+                tasks_per_arr=1, # one class per array job
+                csp_no_stacks=parameters["csp_no_stacks"],
+                dependencies=id,
+            )
+
     jobtype = jobname = "cspmerge"
     if Web.exists:
         jobname = "Iteration %d (merge)" % parameters["refine_iter"]
@@ -1932,7 +1954,7 @@ def csp_split(parameters, iteration):
         threads=parameters["slurm_merge_tasks"],
         memory=parameters["slurm_merge_memory"],
         walltime=parameters["slurm_merge_walltime"],
-        dependencies=id,
+        dependencies=class_merge_id,
     )
 
     os.chdir(workdir)
@@ -3926,6 +3948,17 @@ if __name__ == "__main__":
             except:
                 trackback()
                 logger.error("PYP (cspswarm) failed")
+                pass
+
+        elif "classmerge" in os.environ:
+
+            del os.environ["classmerge"]
+            logger.info("WIP")
+            try:
+                pass
+            except:
+                trackback()
+                logger.error("PYP (classmerge) failed")
                 pass
 
         elif "cspmerge" in os.environ:

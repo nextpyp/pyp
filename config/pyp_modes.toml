@@ -212,6 +212,26 @@ help = "Refinement iteration"
 type = "int"
 default = 2
 
+# classmerge
+
+[classmerge]
+
+_help = "CSP classmerge"
+
+[classmerge.class]
+help = "Class ID to process (1-indexing)"
+type = "int"
+
+[classmerge.skip]
+help = "Do not retrieve existing results"
+type = "bool"
+default = false
+
+[classmerge.debug]
+help = "Do not save results to project directory"
+type = "bool"
+default = false
+
 # cryolo3d
 
 [cryolo3d]

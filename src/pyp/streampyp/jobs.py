@@ -110,7 +110,7 @@ done
             % command_file,
         ]
 
-        if csp_no_stacks:
+        if csp_no_stacks and "classmerge" not in jobtype:
             cmdlist.append("unset %s \n" % jobtype)
             cmdlist.append(
                 "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path {1}/$OUTPUT_BASENAME\n".format(
@@ -154,7 +154,7 @@ done
                 '/bin/bash -c "' + commands[job_counter] + '"'
             )
             job_counter += 1
-        if csp_no_stacks and len(csp_local_merge_command) > 0:
+        if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:
             for batch in cmdgrid:
                 batch.append('/bin/bash -c "' + csp_local_merge_command + '"')
 
@@ -200,7 +200,6 @@ done
     else:
 
         # limit bundle size to number of nodes
-
         if os.path.exists(".pyp_config.toml"):
             par_dir = "."
         elif os.path.exists("../.pyp_config.toml"):
@@ -225,6 +224,8 @@ done
             )
         elif "nn-" in jobtype:
             multirun_file = os.path.join(os.getcwd(), submit_dir, "train_commands.swarm")
+        elif "classmerge" in jobtype:
+            multirun_file = os.path.join(os.getcwd(), submit_dir, "classmerge_commands.swarm")
         else:
             multirun_file = os.path.join(os.getcwd(), submit_dir, "commands.swarm")
 
