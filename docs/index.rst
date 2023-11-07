@@ -11,5 +11,6 @@ nextPYP
    tutorials
    guide
    reference
+   changelog
    license
    about

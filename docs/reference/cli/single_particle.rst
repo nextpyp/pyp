@@ -4,6 +4,16 @@ Single-particle tutorial
 
 This tutorial shows how to process single-particle raw movies from `T20S proteasome (EMPIAR-10025) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a high-resolution 3D structure.
 
+We first download and decompress a tbz file containing a subset of 20 movies, the gain reference, and an initial model:
+
+.. code-block:: bash
+
+  # cd to a location in the shared file system and run:
+
+  wget https://nextpyp.app/files/data/nextpyp_spr_tutorial.tbz
+  tar xvfz nextpyp_spr_tutorial.tbz
+
+
 1 Create a new project
 ======================
 
@@ -50,7 +60,7 @@ Some examples of options for data pre-processing are:
   - ``--ctf_max_res 4``: max resolution used for CTF fitting
   - ``--detect_method auto``: particle picking method
 
-The results of data pre-processing are saved in the ``ctf/`` and ``box/`` folders under the project directory (png files for visual inspection are saved in these locations as well).
+The results of data pre-processing are saved in the ``pkl/`` and ``webp/`` folders under the project directory.
 
 .. tip::
     Use ``pyp --help`` to get a complete list of options. The parameter list is very long and is organized into groups to facilitate navigation. For example, all parameters to control gain correction are under ``-gain_*``.
@@ -97,45 +107,48 @@ These are some examples of options for ``csp``:
 All results from 3D refinement are saved in ``frealign/maps`` and include png files for each refinement iteration for visual inspection.
 
 .. tip::
-    For some ``csp`` parameters, a colon separated list of values can be provided to specify different values for each iteration. For example, ``--refine_rhref=12:10:8:4`` tells ``csp`` to use a 12A resolution cutoff during the first refinement iteration, 10A during the second iteration and so forth.
+    For some ``csp`` parameters, a colon separated list of values can be provided to specify different values for each iteration. For example, ``--refine_rhref="12:10:8:4"`` tells ``csp`` to use a 12A resolution cutoff during the first refinement iteration, 10A during the second iteration and so forth.
 
 4 Filter bad particles
 ======================
 
-This step remove bad particles based the refinement scores for the reconstruction:
+This step removes bad particles based on assigned particle scores during refinement. We first need to create a new ``T20S_clean`` folder:
 
 .. code-block:: bash
 
     # make new project folder
-    cd .. 
-    mkdir TS20S_clean
-    cd TS20S_clean
+    cd ..
+    mkdir T20S_clean
+    cd T20S_clean
 
-    # launch Filter bad particles 
+    # filter bad particles
 
-    pcl -data_parent "PATH_TO/T20S"                                      \
+    pcl -data_parent=`pwd`/../T20S"                                      \
         -clean_spr_auto                                                  \
         -clean_dist 20                                                   \
-        -clean_parfile "PATH_TO/T20S/frealign/maps/T20S_r01_05.par.bz2"  \
+        -clean_parfile=`pwd`/../T20S/frealign/maps/T20S_r01_04.par.bz2   \
         -clean_check_reconstruction                                      \
         -no-clean_discard                                                \
-        -refine_model "PATH_TO/T20S/frealign/maps/T20S_r01_05.mrc"
+        -refine_model=`pwd`/../T20S/frealign/maps/T20S_r01_04.mrc
+
+.. tip::
+    Check the results in the ``frealign/maps`` folder to confirm that the filtering operation was successful.
 
 5 Permanently remove bad particles
 ==================================
 
-Remove bad particles from metadata permanently:
+Remove bad particles from metadata (this step cannot be undone):
 
 .. code-block:: bash
-    
-    pcl -clean_discard    \
+
+    pcl -clean_discard                      \
         -no-clean_check_reconstruction
 
 
 6 Particle refinement
 =====================
 
-The next step is to do local alignments using a lower level of binning and only using clean particles:
+The next step is to do local alignments using a lower level of binning (using only clean particles). We first need to rename ``frealign/maps`` to ``frealign/maps_clean``:
 
 .. code-block:: bash
 
@@ -152,32 +165,40 @@ The next step is to do local alignments using a lower level of binning and only 
         -refine_iter 2                                                              \
         -refine_rhref "6:4:3"                                                       \
         -refine_maxiter 6                                                           \
-        -refine_parfile `pwd`/frealign/maps_clean/TS_20S_clean_r01_02_clean.par.bz2 \
-        -refine_model `pwd`/frealign/maps_clean/TS_20S_clean_r01_02.mrc
+        -refine_fboost                                                              \
+        -no-refine_skip                                                             \
+        -refine_parfile=`pwd`/frealign/maps_clean/T20S_clean_r01_02_clean.par.bz2   \
+        -refine_model=`pwd`/frealign/maps_clean/T20S_clean_r01_02.mrc
 
 .. note::
-    Every time ``pyp`` or ``csp`` is ran, the value of all parameters are saved to the project directory in the ``.pyp_config.toml`` file. This means that when calling the program multiple times, you only need to specify the options that change from previous runs. For example, if you execute the ``pyp`` command above and then you want to use a smaller radius for particle detection, you would only need to run: ``pyp -particle_rad 60``. 
+    Every time ``pyp`` commands are executed, the parameters are saved in a ``.pyp_config.toml`` file in the project directory. This means that parameter values are "remembered" and you only need to specify the ones that change between consecutive runs. For example, if you executed the ``csp`` command above and you want to run an additional refinement iteration, you can just run: ``csp -refine_maxiter 7``.
 
 7 Create shape mask
 ===================
 
+This step will create a shape mask using the most recent reconstruction:
+
 .. code-block:: bash
 
-    pmk -mask_model `pwd`/frealign/maps/TS_20S_clean_r01_06.mrc  \
+    pmk -mask_model=`pwd`/frealign/maps/T20S_clean_r01_06.mrc  \
         -mask_threshold 0.3
 
 8 Fine refinement
 =================
+
+Next, we will perform additional refinement iterations using the shape mask:
+
 .. code-block:: bash
 
     csp -refine_iter 7                               \
         -refine_maxiter 8                            \
-        -refine_fboost                               \
-        -refine_maskth `pwd`/frealign/maps/mask.mrc
+        -refine_maskth=`pwd`/frealign/maps/mask.mrc
 
 
 9 Particle-based CTF refinement
-==================
+===============================
+
+This step refines the CTF per-particle using an 8x8 grid:
 
 .. code-block:: bash
 
@@ -185,21 +206,16 @@ The next step is to do local alignments using a lower level of binning and only 
         -csp_refine_ctf         \
         -csp_Grid_spr "8,8"
 
-
 10 Movie frame refinement
 ========================
 
-The step is to perform particle frame refinement that refines particle trajectories across frames:
+This step refines shifts for movie frames of each particle using the most recent 3D reconstruction as reference. We first need to rename ``frealign/maps`` to ``frealign/maps_fine``:
 
 .. code-block:: bash
 
     # save fine refinement results
 
     mv frealign/maps frealign/maps_fine
-
-    # clean up frame metadata (NOTE: clean up again if you want to redo his step)
-
-    rm csp/*local*
 
     # launch frame refinement
 
@@ -212,24 +228,23 @@ The step is to perform particle frame refinement that refines particle trajector
         -csp_UseImagesForRefinementMax 60                                       \
         -csp_transreg                                                           \
         -csp_spatial_sigma 15.0                                                 \
-        -refine_parfile  `pwd`/frealign/maps_refine/TS_20S_clean_r01_07.par.bz2 \
-        -refine_model `pwd`/frealign/maps_refine/TS_20S_clean_r01_07.mrc        \
-        -no-csp_refine_ctf                                                      
-
+        -refine_parfile=`pwd`/frealign/maps_fine/T20S_clean_r01_09.par.bz2      \
+        -refine_model=`pwd`/frealign/maps_fine/T20S_clean_r01_09.mrc            \
+        -no-csp_refine_ctf
 
 .. note::
-    If the metadata associated with a given operation (e.g., frame alignment, CTF estimation, particle picking) already exists in the directory structure, that particular operation will be skipped and the information contained in the metadata will be used. If you change a parameter that affects CTF estimation for example, the metadata associated with the CTF ``ctf/*.ctf`` will be deleted so it can be recomputed using the new settings. If you change a parameter that affects the frame alignment routine, the metadata ``ali/*.xf`` will be deleted and the frames will be realigned using the new settings.
 
+    If the metadata associated with a given operation (e.g., frame alignment, CTF estimation, particle picking) already exists in the directory structure, that particular operation will be skipped and the information contained in the metadata will be used. If you change a parameter that affects CTF estimation for example, the metadata associated with the CTF will be deleted so it can be recomputed using the new settings. If you change a parameter that affects the frame alignment routine, the corresponding metadata will be deleted and the frames will be realigned using the new settings.
 
 .. tip::
 
-    A history of pyp commands used for each project is kept in the ``.pyp_history`` file. 
+    A history of commands issued for each project is kept in the ``.pyp_history`` file.
 
 
 11 Dose weighting reconstruction
 ================================
 
-The step is to perform dose-weighting reconstruction that maximizes the contribution from high-quality frames:
+This step performs per-frame dose-weighting to increase the contribution of high-quality frames:
 
 .. code-block:: bash
 
@@ -247,27 +262,32 @@ The step is to perform dose-weighting reconstruction that maximizes the contribu
 12 Particle refinement on refined frame averages
 ================================================
 
-The step is to refine particle rotation and translation on refined particle frames, which have higher SNR:
+This step does additional 3D refinement using the drift-corrected particles and the dose-weighted reconstruction:
 
 .. code-block:: bash
-
 
     # launch frame refinement
 
     csp -refine_iter 5                  \
         -refine_maxiter 5               \
-        -no-refine_skip                 \
-
-.. note::
-    After this step is done, repeating step 9 and step 11 for multiple iterations until convergence is encouraged. Please always enable dose weighting reconstruction to ensure the reference used for refinement is as high resolution as possible. 
+        -no-refine_skip
 
 13 Map sharpening
 ==================
 
-Rename ``frealign/maps`` to ``frealign/frame_refine`` and create a new ``frealign/maps``
+The final step does masking, sharpening, and produces FSC resolution plots:
 
 .. code-block:: bash
 
-    psp -sharpen_input_map "frealign/frame_refine/*_r01_half1.mrc"      \
-        -sharpen_automask_threshold 0.5                                 \
+    psp -sharpen_input_map=`pwd`/frealign/frame/*_r01_half1.mrc  \
+        -sharpen_automask_threshold 0.5                          \
         -sharpen_adhoc_bfac -50
+
+.. note::
+
+    Output maps and FSC plots will be saved in the ``frealign/maps`` folder.
+
+.. seealso::
+
+    * :doc:`Tomography tutorial<tomography>`
+    * :doc:`Classification tutorial<classification>`

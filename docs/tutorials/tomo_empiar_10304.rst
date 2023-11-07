@@ -6,7 +6,7 @@ This tutorial shows how to convert raw tilt-series from `EMPIAR-10304 (E. coli. 
 
 Total running time required to complete this tutorial: 32 hr.
 
-We first use the command line to download and decompress a zip file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
+We first use the command line to download and decompress a tbz file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
 
 .. code-block:: bash
 
