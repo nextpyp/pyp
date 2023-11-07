@@ -332,7 +332,7 @@ def shape_phase_residuals(
     input = par_obj.data
 
     # figure out tomo or spr by check tilt angles
-    tltanlge = 17
+    tltangle = 17
     ptlindex = 16
     if np.any(input[:, tltanlge] != 0 ):
         is_tomo = True
@@ -417,9 +417,22 @@ def shape_phase_residuals(
                     # cluster = input[ np.logical_and( angular_group == g, defocus_group == f ) ]
                     if scores or frealignx:
                         # thresholds[g,f] = cluster[ cluster[:,field].argsort() ][ int( (cluster.shape[0]-1) * (1-threshold) ), field ]
-                        thresholds[g, f] = np.sort(input[cluster, field])[
-                            int((cluster.shape[0] - 1) * (1 - threshold))
-                        ]
+                        if is_tomo:
+                            bool_array = np.full(input.shape[0], False, dtype=bool)
+                            bool_array[cluster] = True
+                            scores_used = input[np.logical_and(bool_array, np.abs(input[:, tltangle]) < 10), [field, ptlindex]]
+                            take_mean = []
+                            for i in np.unique(scores_used[:, 1]):
+                                take_mean.append(np.mean(scores_used[:, 0], where=scores_used[:,1]==i))
+
+                            meanscore = np.array([take_mean])
+                            thresholds[g, f] = np.sort(meanscore)[
+                                int((meanscore.shape[0] - 1) * (1 - threshold))
+                            ]
+                        else:
+                            thresholds[g, f] = np.sort(input[cluster, field])[
+                                int((cluster.shape[0] - 1) * (1 - threshold))
+                            ]
                     else:
                         # thresholds[g,f] = cluster[ cluster[:,field].argsort() ][ int( (cluster.shape[0]-1) * threshold ), field ]
                         thresholds[g, f] = np.sort(input[cluster, field])[
@@ -496,7 +509,27 @@ def shape_phase_residuals(
             if scores or frealignx:
                 # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), np.nan, input[:,field] )
                 # input[:,occ] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), 0, input[:,occ] )
-                if not is_tomo:
+                if is_tomo and thresholds[g, f] > 0:
+                    ptl_index = np.unique(input[:, ptlindex])
+                    for i in ptl_index:
+                        field_array = input[input[:, ptlindex] == i, field]
+                        tltangle_array = input[input[:, ptlindex] == i, tltangle]
+                        meanfrom = field_array[np.abs(tltangle_array) < 10]
+                        input[input[:, ptlindex] == i, occ] = np.where(
+                            np.logical_and(
+                                np.logical_and(angular_group == g, defocus_group == f),
+                                np.logical_or(
+                                    np.logical_or(
+                                np.array([ True if meanfrom.size == 0 else np.mean(meanfrom)]*field_array.shape[0]) < thresholds[g, f],
+                                field_array < min_scores[g, f],
+                                    ),
+                                field_array > max_scores[g, f],
+                                ),
+                            ),
+                        0,
+                        input[input[:, ptlindex] == i, occ],
+                        )
+                else:
                     input[:, occ] = np.where(
                         np.logical_and(
                             np.logical_and(angular_group == g, defocus_group == f),
@@ -512,27 +545,7 @@ def shape_phase_residuals(
                         input[:, occ],
                     )
                     number = input[input[:, occ]==0].shape[0]
-                    logger.info(f"Number of particles with OCC = 0 is {number:,}")
-                else:
-                    ptl_index = np.unique(input[:, ptlindex])
-                    for i in ptl_index:
-                        field_array = input[input[:, ptlindex] == i, field]
-                        tltangle_array = input[input[:, ptlindex] == i, tltanlge]
-                        input[input[:, ptlindex] == i, occ] = np.where(
-                            np.logical_and(
-                                np.logical_and(angular_group == g, defocus_group == f),
-                                np.logical_or(
-                                    np.logical_or(
-                                np.mean(field_array[np.abs(tltangle_array) < 10]) < thresholds[g, f],
-                                np.mean(field_array[np.abs(tltangle_array) < 10]) < min_scores[g, f],
-                                    ),
-                                np.mean(field_array[np.abs(tltangle_array) < 10]) > max_scores[g, f],
-                                ),
-                            ),
-                        0,
-                        input[input[:, ptlindex] == i, occ],
-                        )
-                    
+                    logger.info(f"Number of particles with OCC = 0 is {number:,}")        
 
     if os.path.exists(fmatch_stack):
         logger.info(

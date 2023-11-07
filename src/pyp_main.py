@@ -482,7 +482,7 @@ def parse_arguments(block):
                 ):
                     parameters["scope_mag"] = str(ctf[11])
     
-    if "class_num" in parameters.keys() and parameters["class_num"] > 1:
+    if "class_num" in parameters.keys() and parameters["class_num"] > 1 or "tomo" in parameters["data_mode"]:
         parameters["refine_metric"] = "new"
 
     # enable _force depending on parameter changes
