@@ -334,7 +334,7 @@ def shape_phase_residuals(
     # figure out tomo or spr by check tilt angles
     tltangle = 17
     ptlindex = 16
-    if np.any(input[:, tltanlge] != 0 ):
+    if np.any(input[:, tltangle] != 0 ):
         is_tomo = True
     else:
         is_tomo = False
