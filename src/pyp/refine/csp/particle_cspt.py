@@ -1338,31 +1338,6 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
     total_micrographs = len(micrographs.keys())
 
-    """
-    # only retry if we're not doing incremental merge (metric cclin or cc3m)
-    if "cc" in metric:
-        # check if all the data is processed and re-submit cspswarm if needed
-        rerun_flag = os.path.join(input_dir, ".rerun")
-        max_retries = 3
-        if os.path.exists(rerun_flag):
-            retries = int(np.loadtxt(rerun_flag))
-        else:
-            retries = 0
-
-        if retries <= max_retries:
-            with open(rerun_flag, "w") as f:
-                f.write(str(retries + 1))
-            merge_check_err_and_resubmit(
-                mp, input_dir, micrographs, int(fp["refine_iter"])
-            )
-        else:
-            os.remove(rerun_flag)
-            message = "Found missing intermediate reconstructions even after {} retries, aborting.".format(
-                max_retries
-            )
-            raise Exception(message)
-    """
-
     (number_of_reconstructions_per_micrograph, _) = get_number_of_intermediate_reconstructions(mp)
 
     # each class should have (num_dumpfiles_per_bundle * num_bundle) dumpfiles
