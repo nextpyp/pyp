@@ -14,8 +14,8 @@ We first download and decompress a tbz file containing a subset of 20 movies, th
   tar xvfz nextpyp_spr_tutorial.tbz
 
 
-1 Create a new project
-======================
+Step 1: Create a new project
+============================
 
 The first step is to create a new folder where all the data will be stored.
 
@@ -26,8 +26,8 @@ The first step is to create a new folder where all the data will be stored.
     mkdir T20S
     cd T20S
 
-2 Pre-processing
-================
+Step 2: Pre-processing
+======================
 
 Data pre-processing consists of doing movie frame alignment, CTF estimation and particle picking:
 
@@ -65,8 +65,8 @@ The results of data pre-processing are saved in the ``pkl/`` and ``webp/`` folde
 .. tip::
     Use ``pyp --help`` to get a complete list of options. The parameter list is very long and is organized into groups to facilitate navigation. For example, all parameters to control gain correction are under ``-gain_*``.
 
-3 Reference-based refinement
-============================
+Step 3: Reference-based refinement
+==================================
 
 This step runs coarse 3D refinement to assign particle orientations using an external reference as initial model. The default protocol for 3D refinement consists of running 4 iterations of global search:
 
@@ -109,8 +109,8 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
 .. tip::
     For some ``csp`` parameters, a colon separated list of values can be provided to specify different values for each iteration. For example, ``--refine_rhref="12:10:8:4"`` tells ``csp`` to use a 12A resolution cutoff during the first refinement iteration, 10A during the second iteration and so forth.
 
-4 Filter bad particles
-======================
+Step 4: Filter bad particles
+============================
 
 This step removes bad particles based on assigned particle scores during refinement. We first need to create a new ``T20S_clean`` folder:
 
@@ -134,8 +134,8 @@ This step removes bad particles based on assigned particle scores during refinem
 .. tip::
     Check the results in the ``frealign/maps`` folder to confirm that the filtering operation was successful.
 
-5 Permanently remove bad particles
-==================================
+Step 5: Permanently remove bad particles
+========================================
 
 Remove bad particles from metadata (this step cannot be undone):
 
@@ -145,8 +145,8 @@ Remove bad particles from metadata (this step cannot be undone):
         -no-clean_check_reconstruction
 
 
-6 Particle refinement
-=====================
+Step 6: Particle refinement
+===========================
 
 The next step is to do local alignments using a lower level of binning (using only clean particles). We first need to rename ``frealign/maps`` to ``frealign/maps_clean``:
 
@@ -173,8 +173,10 @@ The next step is to do local alignments using a lower level of binning (using on
 .. note::
     Every time ``pyp`` commands are executed, the parameters are saved in a ``.pyp_config.toml`` file in the project directory. This means that parameter values are "remembered" and you only need to specify the ones that change between consecutive runs. For example, if you executed the ``csp`` command above and you want to run an additional refinement iteration, you can just run: ``csp -refine_maxiter 7``.
 
-7 Create shape mask
-===================
+Step 7: Create shape mask
+=========================
+
+This step will create a shape mask using the most recent reconstruction:
 
 This step will create a shape mask using the most recent reconstruction:
 
@@ -183,8 +185,8 @@ This step will create a shape mask using the most recent reconstruction:
     pmk -mask_model=`pwd`/frealign/maps/T20S_clean_r01_06.mrc  \
         -mask_threshold 0.3
 
-8 Fine refinement
-=================
+Step 8: Fine refinement
+=======================
 
 Next, we will perform additional refinement iterations using the shape mask:
 
@@ -195,8 +197,8 @@ Next, we will perform additional refinement iterations using the shape mask:
         -refine_maskth=`pwd`/frealign/maps/mask.mrc
 
 
-9 Particle-based CTF refinement
-===============================
+Step 9: Particle-based CTF refinement
+=====================================
 
 This step refines the CTF per-particle using an 8x8 grid:
 
@@ -206,8 +208,8 @@ This step refines the CTF per-particle using an 8x8 grid:
         -csp_refine_ctf         \
         -csp_Grid_spr "8,8"
 
-10 Movie frame refinement
-========================
+Step 10: Movie frame refinement
+===============================
 
 This step refines shifts for movie frames of each particle using the most recent 3D reconstruction as reference. We first need to rename ``frealign/maps`` to ``frealign/maps_fine``:
 
@@ -241,8 +243,8 @@ This step refines shifts for movie frames of each particle using the most recent
     A history of commands issued for each project is kept in the ``.pyp_history`` file.
 
 
-11 Dose weighting reconstruction
-================================
+Step 11: Dose weighting
+=======================
 
 This step performs per-frame dose-weighting to increase the contribution of high-quality frames:
 
@@ -259,8 +261,8 @@ This step performs per-frame dose-weighting to increase the contribution of high
         -no-csp_frame_refinement
 
 
-12 Particle refinement on refined frame averages
-================================================
+Step 12: Particle refinement after frame alignment
+==================================================
 
 This step does additional 3D refinement using the drift-corrected particles and the dose-weighted reconstruction:
 
@@ -272,8 +274,8 @@ This step does additional 3D refinement using the drift-corrected particles and 
         -refine_maxiter 5               \
         -no-refine_skip
 
-13 Map sharpening
-==================
+Step 13: Map sharpening
+=======================
 
 The final step does masking, sharpening, and produces FSC resolution plots:
 

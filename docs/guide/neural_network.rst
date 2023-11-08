@@ -1,6 +1,6 @@
-=====================================
-Neural-network based particle picking
-=====================================
+============================
+Neural-network based picking
+============================
 
 ``nextPYP`` implements semi-supervised particle picking using neural-networks both for 2D micrographs and 3D tomograms
 

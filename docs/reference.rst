@@ -17,6 +17,8 @@ Reference
    API <modules>
 ..
 
+These sections contain detailed information about components and aspects of ``nextPYP``.
+
 .. panels::
    :container: container-fluid pb-1
    :body: bg-primary text-centered text-white font-weight-bold

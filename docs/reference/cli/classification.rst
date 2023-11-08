@@ -2,19 +2,26 @@
 Classification tutorial
 =======================
 
-This tutorial shows how to process tilt-series from the `E. coli. ribosomes (EMPIAR-10304) <https://www.ebi.ac.uk/empiar/EMPIAR-10304/>`_ dataset.
+This tutorial shows how to convert raw tilt-series from `EMPIAR-10304 (E. coli. ribosomes) <https://www.ebi.ac.uk/empiar/EMPIAR-10304/>`_ into a ~4.9A resolution structure and resolve 8 different conformations.
 
 We first use the command below to download and decompress a tbz file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
 
 .. code-block:: bash
-    # cd to a location in the shared file system and run:
 
-    wget https://nextpyp.app/files/data/nextpyp_class_tutorial.tbz
-    tar xfz nextpyp_class_tutorial.tbz
-    source download_10304.sh
+  # cd to a location in the shared file system and run:
 
-1 Create a new project
-======================
+  wget https://nextpyp.app/files/data/nextpyp_class_tutorial.tbz
+  tar xfz nextpyp_class_tutorial.tbz
+  source download_10304.sh
+
+.. note::
+
+  Downloading the raw data from EMPIAR can take several minutes.
+
+Step 1: Create a new project
+============================
+
+Next, we create an empty folder where all files for the tutorial will be saved:
 
 Next, we create an empty folder where all files for the tutorial will be saved:
 
@@ -23,8 +30,8 @@ Next, we create an empty folder where all files for the tutorial will be saved:
     mkdir EMPIAR-10304
     cd EMPIAR-10304
 
-2 Pre-processing
-================
+Step 2: Pre-processing
+======================
 
 The next command does data pre-processing consisting of movie frame alignment, tilt-series alignment, tomogram reconstruction, CTF estimation:
 
@@ -49,8 +56,8 @@ The next command does data pre-processing consisting of movie frame alignment, t
 
     Nominal tilt angles (stored in ``*.rawtlt`` files) and acquisition order (stored in ``*.order`` files) for each tilt-series are provided with the raw data.
 
-3 Particle detection
-====================
+Step 3: Particle detection
+==========================
 
 The next step is to detect ribosome particles using a size-based approach:
 
@@ -67,8 +74,8 @@ The next step is to detect ribosome particles using a size-based approach:
         -tomo_spk_detection_width_3d 40.0
 
 
-4 Reference-based refinement
-============================
+Step 4: Reference-based refinement
+==================================
 
 If a 3D reference is available, we use the ``csp`` command to align particle projections using constrained refinement:
 
@@ -97,8 +104,8 @@ If a 3D reference is available, we use the ``csp`` command to align particle pro
         -csp_ToleranceParticlesPsi 180.0                \
         -csp_ToleranceParticlesShifts 50.0
 
-5 Filter particles
-==================
+Step 5: Filter particles
+========================
 
 The next step is to remove particles with low correlation scores:
 
@@ -114,8 +121,8 @@ The next step is to remove particles with low correlation scores:
         -clean_min_num_projections 1                                                \
         -clean_check_reconstruction
 
-6  (optional): Permanently remove bad particles
-===============================================
+Step 6  (optional): Permanently remove bad particles
+====================================================
 
 It is often a good idea to permanently remove any bad particles identified in the previous step:
 
@@ -124,8 +131,8 @@ It is often a good idea to permanently remove any bad particles identified in th
     pcl -clean_discard
 
 
-7 Fully constrained refinement
-==============================
+Step 7: Fully constrained refinement
+====================================
 
 In this step we do additional refinement using the raw data (without binning):
 
@@ -156,8 +163,8 @@ In this step we do additional refinement using the raw data (without binning):
 
 All results from 3D refinement are saved in the folder ``frealign/maps``, including png files for visual inspection corresponding to each refinement iteration.
 
-8 Create shape mask
-===================
+Step 8: Create shape mask
+=========================
 
 The next step is to create a shape mask:
 
@@ -171,8 +178,8 @@ The next step is to create a shape mask:
         -mask_edge_width 8
 
 
-9 Region-based local refinement
-===============================
+Step 9: Region-based local refinement
+=====================================
 
 The following command performs region-based constrained alignment:
 
@@ -197,8 +204,8 @@ The following command performs region-based constrained alignment:
         -csp_Grid "8,8,2"
 
 
-10 Particle-based CTF refinement
-================================
+Step 10: Particle-based CTF refinement
+======================================
 
 In this step we refine the CTF parameters on a per-particle basis:
 
@@ -219,8 +226,8 @@ In this step we refine the CTF parameters on a per-particle basis:
         -csp_ToleranceMicrographDefocus1 2000                                       \
         -csp_ToleranceMicrographDefocus2 2000
 
-11 Additional region-based refinement after CTF refinement
-==========================================================
+Step 11: Additional region-based refinement after CTF refinement
+================================================================
 
 The following command does additional region-based refinement:
 
@@ -244,8 +251,8 @@ The following command does additional region-based refinement:
         -dose_weighting_fraction 2
 
 
-12 3D classification
-====================
+Step 12: 3D classification
+==========================
 
 In the last step we perform 3D classification into 8 classes:
 

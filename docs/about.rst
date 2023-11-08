@@ -2,100 +2,102 @@
 About
 =====
 
+Information about ``nextPYP``
+
 Developers
 ==========
 
-| Jeff Martin |jwm| |0000-0002-9773-3256| 
+   | Jeff Martin |jwm| |0000-0002-9773-3256| 
 
-.. |jwm| image:: _static/gitlab.svg
-   :target: https://gitlab.cs.duke.edu/jeffrey.martin
-   :width: 16
-   :height: 16
-   :alt: GitLab commits from jwm
+   .. |jwm| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/jeffrey.martin
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from jwm
 
-.. |0000-0002-9773-3256| image:: _static/orcid.svg
-   :target: https://orcid.org/0000-0002-9773-3256
-   :width: 16
-   :height: 16
-   :alt: ORCID profile for 0000-0002-9773-3256
+   .. |0000-0002-9773-3256| image:: _static/orcid.svg
+      :target: https://orcid.org/0000-0002-9773-3256
+      :width: 16
+      :height: 16
+      :alt: ORCID profile for 0000-0002-9773-3256
 
-| Ye Zhou |yez| |0000-0002-0489-3614| 
+   | Ye Zhou |yez| |0000-0002-0489-3614| 
 
-.. |yez| image:: _static/gitlab.svg
-   :target: https://gitlab.cs.duke.edu/ye.zhou867
-   :width: 16
-   :height: 16
-   :alt: GitLab commits from yez
+   .. |yez| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/ye.zhou867
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from yez
 
-.. |0000-0002-0489-3614| image:: _static/orcid.svg
-   :target: https://orcid.org/0000-0002-0489-3614
-   :width: 16
-   :height: 16
-   :alt: ORCID profile for 0000-0002-0489-3614
+   .. |0000-0002-0489-3614| image:: _static/orcid.svg
+      :target: https://orcid.org/0000-0002-0489-3614
+      :width: 16
+      :height: 16
+      :alt: ORCID profile for 0000-0002-0489-3614
 
 
-| Hsuan-Fu Liu |hfl| |0000-0001-9302-7648|
+   | Hsuan-Fu Liu |hfl| |0000-0001-9302-7648|
 
-.. |hfl| image:: _static/gitlab.svg
-   :target: https://gitlab.cs.duke.edu/tofushan
-   :width: 16
-   :height: 16
-   :alt: GitLab commits from hfl
+   .. |hfl| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/tofushan
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from hfl
 
-.. |0000-0001-9302-7648| image:: _static/orcid.svg
-   :target: https://orcid.org/0000-0001-9302-7648
-   :width: 16
-   :height: 16
-   :alt: ORCID profile for 0000-0001-9302-7648
+   .. |0000-0001-9302-7648| image:: _static/orcid.svg
+      :target: https://orcid.org/0000-0001-9302-7648
+      :width: 16
+      :height: 16
+      :alt: ORCID profile for 0000-0001-9302-7648
 
-| Xiaochen Du |dux| |0000-0001-6228-0907| 
+   | Xiaochen Du |dux| |0000-0001-6228-0907| 
 
-.. |dux| image:: _static/gitlab.svg
-   :target: https://gitlab.cs.duke.edu/xiaochen.du
-   :width: 16
-   :height: 16
-   :alt: GitLab commits from dux
+   .. |dux| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/xiaochen.du
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from dux
 
-.. |0000-0001-6228-0907| image:: _static/orcid.svg
-   :target: https://orcid.org/0000-0001-6228-0907
-   :width: 16
-   :height: 16
-   :alt: ORCID profile for 0000-0001-6228-0907
+   .. |0000-0001-6228-0907| image:: _static/orcid.svg
+      :target: https://orcid.org/0000-0001-6228-0907
+      :width: 16
+      :height: 16
+      :alt: ORCID profile for 0000-0001-6228-0907
 
-| Qinwen Huang |qwh| |0000-0002-7082-5257| 
+   | Qinwen Huang |qwh| |0000-0002-7082-5257| 
 
-.. |qwh| image:: _static/gitlab.svg
-   :target: https://gitlab.cs.duke.edu/qinwen.huang
-   :width: 16
-   :height: 16
-   :alt: GitLab commits from qwh
+   .. |qwh| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/qinwen.huang
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from qwh
 
-.. |0000-0002-7082-5257| image:: _static/orcid.svg
-   :target: https://orcid.org/0000-0002-7082-5257
-   :width: 16
-   :height: 16
-   :alt: ORCID profile for 0000-0002-7082-5257
+   .. |0000-0002-7082-5257| image:: _static/orcid.svg
+      :target: https://orcid.org/0000-0002-7082-5257
+      :width: 16
+      :height: 16
+      :alt: ORCID profile for 0000-0002-7082-5257
 
-| Alberto Bartesaghi |alberto| |0000-0002-7360-1523|
+   | Alberto Bartesaghi |alberto| |0000-0002-7360-1523|
 
-.. |alberto| image:: _static/gitlab.svg
-   :target: https://gitlab.cs.duke.edu/alberto
-   :width: 16
-   :height: 16
-   :alt: GitLab commits from alberto
+   .. |alberto| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/alberto
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from alberto
 
-.. |0000-0002-7360-1523| image:: _static/orcid.svg
-   :target: https://orcid.org/0000-0002-7360-1523
-   :width: 16
-   :height: 16
-   :alt: ORCID profile for 0000-0002-7360-1523
+   .. |0000-0002-7360-1523| image:: _static/orcid.svg
+      :target: https://orcid.org/0000-0002-7360-1523
+      :width: 16
+      :height: 16
+      :alt: ORCID profile for 0000-0002-7360-1523
 
 References
 ==========
 
 ``nextPYP`` implements algorithms reported in the following publications:
 
-   - Liu, HF., Zhou, Y., Huang, Q., Piland, J., Jin, W., Mandel, J., Du, X., Martin, J., Bartesaghi, A. (2023), `nextPYP: a comprehensive and scalable platform for characterizing protein variability in-situ using single-particle cryo-electron tomography <https://www.nature.com/articles/s41592-023-02045-0>`_, Nature Methods, in press.
+   - Liu, HF., Zhou, Y., Huang, Q., Piland, J., Jin, W., Mandel, J., Du, X., Martin, J., Bartesaghi, A. (2023), `nextPYP: a comprehensive and scalable platform for characterizing protein variability in-situ using single-particle cryo-electron tomography <https://www.nature.com/articles/s41592-023-02045-0>`_, Nature Methods.
 
    - Huang, Q., Zhou, Y., Liu, HF., Bartesaghi, A. (2022) `Weakly Supervised Learning for Joint Image Denoising and Protein Localization in Cryo-Electron Microscopy <https://openaccess.thecvf.com/content/WACV2022/html/Huang_Weakly_Supervised_Learning_for_Joint_Image_Denoising_and_Protein_Localization_WACV_2022_paper.html>`_, IEEE/CVF Winter Conference on Applications of Computer Vision (WACV), pp. 3246-3255.
   
@@ -109,17 +111,17 @@ References
 
    - Bartesaghi, A., Aguerrebere, C., Falconieri, V., Banerjee, S., Earl, L. A., Zhu, X., ... & Subramaniam, S. (2018). `Atomic resolution cryo-EM structure of β-galactosidase <https://doi.org/10.1016/j.str.2018.04.004>`_. Structure, 26(6), pp. 848-856.
 
-   - Bartesaghi, A., Lecumberry, F., Sapiro, G., Subramaniam, S., (2012). `Protein secondary structure determination by constrained single-particle cryo-electron tomography <https://doi.org/10.1016/j.str.2012.10.016>`_, Structure, 20(12), pp. 2003-2013.
+   - Bartesaghi, A., Lecumberry, F., Sapiro, G., Subramaniam, S., (2012). `Protein secondary structure determination by constrained single-particle cryo-electron tomography <https://doi.org/10.1016/j.str.2012.10.016>`_, Structure, 20(12), pp. 2003-13.
 
 Funding
 =======
 
-Development of ``nextPYP`` is supported by grants from NIGMS (R01-GM141223), NIAID (U54-AI170752), the Chan Zuckerberg Initiative (2021-234602), and Duke University.
+   Development of ``nextPYP`` is supported by grants from NIGMS (R01-GM141223), NIAID (U54-AI170752), the Chan Zuckerberg Initiative (2021-234602), and Duke University.
 
 Dependencies
 ============
 
-``nextPYP`` uses functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, and `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_.
+   ``nextPYP`` uses functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, and `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_.
 
 cisTEM and CTFFIND4 license terms
 ---------------------------------

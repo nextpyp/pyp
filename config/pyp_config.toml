@@ -2722,8 +2722,20 @@ type = "float"
 default = 10
 advanced = true
 
+[tabs.sharpen.flip_x]
+name = "Invert handedness along x-axis"
+description = "Invert handedness of input volume along the x-axis"
+type = "bool"
+default = false
+
+[tabs.sharpen.flip_y]
+name = "Invert handedness along y-axis"
+description = "Invert handedness of input volume along the y-axis"
+type = "bool"
+default = false
+
 [tabs.sharpen.flip_z]
-name = "Invert handedness"
+name = "Invert handedness along z-axis"
 description = "Invert handedness of input volume along the z-axis"
 type = "bool"
 default = false
