@@ -332,12 +332,11 @@ def shape_phase_residuals(
     input = par_obj.data
 
     # figure out tomo or spr by check tilt angles
-    tltangle = 17
-    ptlindex = 16
+    tltangle = field + 3
+    ptlindex = field + 2
     
     if np.any(input[:, tltangle] !=0 ):
         is_tomo = True
-        logger.info("Tomo reconstruction score thresholding")
     else:
         is_tomo = False
 
@@ -422,16 +421,18 @@ def shape_phase_residuals(
                         if is_tomo:
                             bool_array = np.full(input.shape[0], False, dtype=bool)
                             bool_array[cluster] = True
-                            scores_used = input[np.logical_and(bool_array, np.abs(input[:, tltangle]) < 10), [field, ptlindex]]
+                            take_values = np.logical_and(bool_array, np.abs(input[:, tltangle]) < 10)
+                            used_array = input[take_values]
+                            scores_used = used_array[:, [field, ptlindex]]
                             take_mean = []
                             for i in np.unique(scores_used[:, 1]):
                                 take_mean.append(np.mean(scores_used[:, 0], where=scores_used[:,1]==i))
 
-                            meanscore = np.array([take_mean])
+                            meanscore = np.array(take_mean)
                             thresholds[g, f] = np.sort(meanscore)[
                                 int((meanscore.shape[0] - 1) * (1 - threshold))
                             ]
-                            logger.info(f"Tomo reconstruction using particle score threshold as {threshold[g, f]}")
+                            logger.info(f"Tomo reconstruction using particle score threshold as {thresholds[g, f]}")
                         else:
                             thresholds[g, f] = np.sort(input[cluster, field])[
                                 int((cluster.shape[0] - 1) * (1 - threshold))
@@ -513,22 +514,16 @@ def shape_phase_residuals(
                 # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), np.nan, input[:,field] )
                 # input[:,occ] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), 0, input[:,occ] )
                 if is_tomo and thresholds[g, f] > 0:
-                    ptl_index = np.unique(input[:, ptlindex])
+                    input_group = input[np.logical_and(angular_group == g, defocus_group == f)]
+                    ptl_index = np.unique(input_group[:, ptlindex])
+                    
                     for i in ptl_index:
-                        field_array = input[input[:, ptlindex] == i, field]
-                        tltangle_array = input[input[:, ptlindex] == i, tltangle]
-                        meanfrom = field_array[np.abs(tltangle_array) < 10]
+                        ptl_field_array = input_group[input_group[:, ptlindex] == i, field]
+                        tltangle_array = input_group[input_group[:, ptlindex] == i, tltangle]
+                        meanfrom = ptl_field_array[np.abs(tltangle_array) < 10]
+                        
                         input[input[:, ptlindex] == i, occ] = np.where(
-                            np.logical_and(
-                                np.logical_and(angular_group == g, defocus_group == f),
-                                np.logical_or(
-                                    np.logical_or(
-                                np.array( [ 0 if meanfrom.size == 0 else np.mean(meanfrom) ] * field_array.shape[0] ) < thresholds[g, f],
-                                field_array < min_scores[g, f],
-                                    ),
-                                field_array > max_scores[g, f],
-                                ),
-                            ),
+                        np.array( [ 0 if meanfrom.size == 0 else np.mean(meanfrom) ] * ptl_field_array.shape[0] ) < thresholds[g, f],
                         0,
                         input[input[:, ptlindex] == i, occ],
                         )
