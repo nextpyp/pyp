@@ -72,7 +72,7 @@ def sprtrain(args):
     os.chdir(scratch_train)
 
     logger.info(f"Training model")
-    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/../spr_pick; python {os.environ['PYP_DIR']}/../spr_pick/spr_pick/__main__.py train start --algorithm {args['detect_nn2d_algorithm']} --noise_value {args['detect_nn2d_noise_value']} --noise_style {args['detect_nn2d_noise_style']} --tau {args['detect_nn2d_tau']} --runs_dir {runs_dir} --train_dataset {train_images} --train_label {train_coords} --iterations {args['detect_nn2d_iterations']} --alpha {args['detect_nn2d_alpha']} --train_batch_size {args['detect_nn2d_batch_size']} --nms {args['detect_dist']} --num {args['detect_nn2d_num']} --bb {args['detect_nn2d_bb']} --patch_size {args['detect_nn2d_patch_size']} --validation_dataset {validation_images} --validation_label {validation_coords} 2>&1 | tee {os.path.join(train_folder, time_stamp + '_train.log')}"
+    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py train start --algorithm {args['detect_nn2d_algorithm']} --noise_value {args['detect_nn2d_noise_value']} --noise_style {args['detect_nn2d_noise_style']} --tau {args['detect_nn2d_tau']} --runs_dir {runs_dir} --train_dataset {train_images} --train_label {train_coords} --iterations {args['detect_nn2d_iterations']} --alpha {args['detect_nn2d_alpha']} --train_batch_size {args['detect_nn2d_batch_size']} --nms {args['detect_dist']} --num {args['detect_nn2d_num']} --bb {args['detect_nn2d_bb']} --patch_size {args['detect_nn2d_patch_size']} --validation_dataset {validation_images} --validation_label {validation_coords} 2>&1 | tee {os.path.join(train_folder, time_stamp + '_train.log')}"
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # move trained models to project folder
@@ -99,7 +99,7 @@ def spreval(args,name):
 
     if 'detect_nn2d_ref' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_nn2d_ref']) ):
         logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn2d_ref'])).name}")
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/../spr_pick; python {os.environ['PYP_DIR']}/../spr_pick/spr_pick/__main__.py eval --model {project_params.resolve_path(args['detect_nn2d_ref'])} --dataset {os.path.join( os.getcwd(), imgs_file)} --runs_dir {os.getcwd()} --num 1"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py eval --model {project_params.resolve_path(args['detect_nn2d_ref'])} --dataset {os.path.join( os.getcwd(), imgs_file)} --runs_dir {os.getcwd()} --num 1"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = glob.glob("./*/")[0]
 
@@ -236,7 +236,7 @@ def tomotrain(args):
     os.chdir(scratch_train)
 
     logger.info(f"Training model")
-    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/../cet_pick; python {os.environ['PYP_DIR']}/../cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 --debug 4 --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt {train_images} --train_coord_txt {train_coords} --val_img_txt {validation_images} --val_coord_txt {validation_coords} --test_img_txt {validation_images} --test_coord_txt {validation_coords} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 --debug 4 --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt {train_images} --train_coord_txt {train_coords} --val_img_txt {validation_images} --val_coord_txt {validation_coords} --test_img_txt {validation_images} --test_coord_txt {validation_coords} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # move trained models to project folder
@@ -271,7 +271,7 @@ def tomoeval(args,name):
 
         logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn3d_ref'])).name}")
         # use option "--gpus -1" to force run on CPU
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/../cet_pick; python {os.environ['PYP_DIR']}/../cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --out_thresh {args['detect_nn3d_thresh']} --with_score --exp_id test_reprod --load_model {project_params.resolve_path(args['detect_nn3d_ref'])} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt {os.path.join( os.getcwd(), imgs_file)} --test_coord_txt {os.path.join( os.getcwd(), test_file)} 2>&1 | tee {os.path.join(project_folder, 'train', name + '_testing.log')}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --out_thresh {args['detect_nn3d_thresh']} --with_score --exp_id test_reprod --load_model {project_params.resolve_path(args['detect_nn3d_ref'])} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt {os.path.join( os.getcwd(), imgs_file)} --test_coord_txt {os.path.join( os.getcwd(), test_file)} 2>&1 | tee {os.path.join(project_folder, 'train', name + '_testing.log')}"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
