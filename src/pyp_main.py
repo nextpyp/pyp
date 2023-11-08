@@ -1881,7 +1881,7 @@ def csp_split(parameters, iteration):
     )
 
     swarm_classmerge_file = slurm.create_csp_classmerge_file(
-        files, parameters, iteration, "csp_class_merge.swarm"
+        iteration, parameters, "csp_class_merge.swarm"
     )
 
     jobtype = jobname = "cspswarm"
@@ -1924,21 +1924,21 @@ def csp_split(parameters, iteration):
             id = id.strip() + "_1"
 
 
-            # TODO: cpus and memory need their own parameters
-            jobtype = jobname = "classmerge"
-            (class_merge_id, procs) = slurm.submit_jobs(
-                ".",
-                swarm_classmerge_file,
-                jobtype,
-                jobname,
-                queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-                threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
-                walltime=parameters["slurm_walltime"],
-                tasks_per_arr=1, # one class per array job
-                csp_no_stacks=parameters["csp_no_stacks"],
-                dependencies=id,
-            )
+    # TODO: cpus and memory need their own parameters
+    jobtype = jobname = "classmerge"
+    (class_merge_id, procs) = slurm.submit_jobs(
+        ".",
+        swarm_classmerge_file,
+        jobtype,
+        jobname,
+        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+        threads=parameters["slurm_tasks"],
+        memory=parameters["slurm_memory"],
+        walltime=parameters["slurm_walltime"],
+        tasks_per_arr=1, # one class per array job
+        csp_no_stacks=parameters["csp_no_stacks"],
+        dependencies=id,
+    )
 
     jobtype = jobname = "cspmerge"
     if Web.exists:
@@ -3953,9 +3953,11 @@ if __name__ == "__main__":
         elif "classmerge" in os.environ:
 
             del os.environ["classmerge"]
-            logger.info("WIP")
+
             try:
-                pass
+                args = project_params.parse_arguments("classmerge")
+                path = os.path.join(os.getcwd(), "..", "frealign", "scratch")
+                particle_cspt.csp_class_merge(class_index=args.classId, input_dir=path)
             except:
                 trackback()
                 logger.error("PYP (classmerge) failed")

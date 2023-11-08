@@ -218,9 +218,14 @@ default = 2
 
 _help = "CSP classmerge"
 
-[classmerge.class]
+[classmerge.classId]
 help = "Class ID to process (1-indexing)"
 type = "int"
+
+[classmerge.iter]
+help = "Refinement iteration"
+type = "int"
+default = 2
 
 [classmerge.skip]
 help = "Do not retrieve existing results"

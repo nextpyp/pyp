@@ -163,17 +163,19 @@ def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swa
     return swarm_file
 
 
-def create_csp_classmerge_file(files, parameters, iteration, swarm_file="csp_class_merge.swarm"):
+def create_csp_classmerge_file(iteration, parameters, swarm_file="csp_class_merge.swarm"):
     f = open(swarm_file, "w")
+    class_num = parameters["class_num"] if parameters["refine_iter"] > 2 else 1
     f.write(
         "\n".join(
             [
-                "cd {0}; export classmerge=classmerge; {1} --class {2} --no-skip --no-debug 2>&1 | tee ../log/r{2:02d}_csp_classmerge.log".format(
+                "cd {0}; export classmerge=classmerge; {1} --iter {3} --classId {2} --no-skip --no-debug 2>&1 | tee ../log/r{2:02d}_csp_classmerge.log".format(
                     os.getcwd(),
                     run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"]),
                     class_id+1, 
+                    iteration,
                 )
-                for class_id in range(parameters["class_num"])
+                for class_id in range(class_num)
             ]
         )
     )
