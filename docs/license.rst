@@ -2,6 +2,8 @@
 License
 =======
 
+``nextPYP`` is distributed under the open-source BSD 3-Clause license.
+
 BSD 3-Clause License
 --------------------
 

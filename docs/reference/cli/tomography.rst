@@ -13,8 +13,8 @@ We first download and decompress a tbz file containing a subset of 5 tilt-series
   wget https://nextpyp.app/files/data/nextpyp_tomo_tutorial.tbz
   tar xvfz nextpyp_tomo_tutorial.tbz
 
-1 Create a new project
-======================
+Step 1: Create a new project
+============================
 
 Next, we create an empty folder where all files for the tutorial will be saved:
 
@@ -23,8 +23,8 @@ Next, we create an empty folder where all files for the tutorial will be saved:
     mkdir EMPIAR-10164
     cd EMPIAR-10164
 
-2 Pre-processing
-================
+Step 2: Pre-processing
+======================
 
 Data pre-processing consists of movie frame alignment, tilt-series alignment, tomogram reconstruction, CTF estimation and virion detection:
 
@@ -45,8 +45,8 @@ Data pre-processing consists of movie frame alignment, tilt-series alignment, to
         -movie_pattern "TILTSERIES_SCANORD_ANGLE.tif"
 
 
-3 (optional) Virion segmentation
-================================
+Step 3 (optional): Virion segmentation
+======================================
 
 In this step we use ``IMOD`` over a remote X11 connection to interactively select virion segmentation thresholds. Execute the command below and select the column in the image where the yellow curve more closely matches the membrane. Go over all virions in the tilt-series and save the model when you are done:
 
@@ -61,8 +61,8 @@ In this step we use ``IMOD`` over a remote X11 connection to interactively selec
     To skip a virion, simply select the rightmost column (these virions will be removed from the downstream processing).
 
 
-4 Particle detection
-====================
+Step 4: Particle detection
+==========================
 
 Detect spikes using the membrane values selected above:
 
@@ -75,8 +75,8 @@ Detect spikes using the membrane values selected above:
         -tomo_spk_rad 50.0
 
 
-5 Reference-based refinement
-============================
+Step 5: Reference-based refinement
+==================================
 
 If a 3D reference is available, the ``csp`` command can be used to align the particle projections using constrained refinement:
 
@@ -110,8 +110,8 @@ If a 3D reference is available, the ``csp`` command can be used to align the par
     - To only search for in-plane rotations (i.e., rotation angle Psi), set the tolerance of the other two rotations ``csp_ToleranceParticlesPhi`` and ``csp_ToleranceParticlesTheta`` to zero.
     - ``csp`` can also use initial alignments from other software packages such as Relion or EMAN. For example, see :doc:`Tomo import/export <tomo_import_export>` to import alignments from Relion.
 
-6 Fully constrained refinement
-==============================
+Step 6: Fully constrained refinement
+====================================
 
 New, we do additional local refinement:
 
@@ -137,8 +137,8 @@ All results from 3D refinement are saved in the folder ``frealign/maps``, includ
 
     Tolerance parameters determine the range used for searching. If you think particle alignments or tilt-series alignments are not accurate, you can increase the corresponding tolerances.
 
-7 Filter particles
-==================
+Step 7: Filter particles
+========================
 
 The next step is to remove particles with low correlation scores:
 
@@ -154,8 +154,8 @@ The next step is to remove particles with low correlation scores:
         -clean_min_num_projections 1                                                    \
         -clean_check_reconstruction
 
-8  (optional): Permanently remove bad particles
-===============================================
+Step 8 (optional): Permanently remove bad particles
+===================================================
 
 It is often a good idea to permanently remove any bad particles identified in the previous step:
 
@@ -164,7 +164,7 @@ It is often a good idea to permanently remove any bad particles identified in th
     pcl -clean_discard
 
 
-9 Region-based local refinement before masking
+Step 9: Region-based refinement before masking
 ==============================================
 
 The following command performs region-based constrained alignment:
@@ -188,8 +188,8 @@ The following command performs region-based constrained alignment:
         -csp_Grid "8,8,2"
 
 
-10 Create shape mask
-====================
+Step 10: Create shape mask
+==========================
 
 The next step is to create a shape mask:
 
@@ -203,8 +203,8 @@ The next step is to create a shape mask:
         -mask_edge_width 8
 
 
-11 Region-based local refinement
-================================
+Step 11: Region-based refinement after masking
+==============================================
 
 Next, we do further refinement using the mask calculated in the previous step:
 
@@ -217,8 +217,8 @@ Next, we do further refinement using the mask calculated in the previous step:
         -refine_maskth=`pwd`/frealign/mask/mask.mrc"
 
 
-12 Particle-based CTF refinement
-================================
+Step 12: Particle-based CTF refinement
+======================================
 
 In this step we refine the CTF parameters on a per-particle basis:
 
@@ -232,8 +232,8 @@ In this step we refine the CTF parameters on a per-particle basis:
         -csp_UseImagesForRefinementMax 10
 
 
-13 Movie frame refinement
-=========================
+Step 13: Movie frame refinement
+===============================
 
 Next, we refine the raw movie frames against the most recent 3D reconstruction:
 
@@ -255,8 +255,8 @@ Next, we refine the raw movie frames against the most recent 3D reconstruction:
         -csp_UseImagesForRefinementMax 4
 
 
-14 Refinement after movie frame refinement
-==========================================
+Step 14: Refinement after movie frame refinement
+================================================
 
 Using the refined frame averages for each tilt, we perform additional constrained refinement:
 
@@ -277,8 +277,8 @@ Using the refined frame averages for each tilt, we perform additional constraine
         -csp_RefineProjectionCutoff 2
 
 
-15 Map sharpening
-=================
+Step 15: Map sharpening
+=======================
 
 The final step is to sharpen the map and produce FSC plots:
 

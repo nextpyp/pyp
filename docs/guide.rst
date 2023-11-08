@@ -12,6 +12,8 @@ User guide
    guide/picking
    guide/neural_network
 
+The following sections describe the main components and functionality of ``nextPYP``.
+
 .. panels::
    :container: container-fluid pb-1
    :body: bg-primary text-centered text-white font-weight-bold
