@@ -1188,6 +1188,7 @@ def run_mpi_reconstruction(
     # hack os.environ['PYP_SCRATCH']
     local_scratch = os.environ["PYP_SCRATCH"]
     os.environ["PYP_SCRATCH"] = local_input_dir
+    
     logger.info("Merging intermediate reconstructions")
     frealign.merge_reconstructions(mp, iteration, ref)
 

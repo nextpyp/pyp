@@ -334,8 +334,10 @@ def shape_phase_residuals(
     # figure out tomo or spr by check tilt angles
     tltangle = 17
     ptlindex = 16
-    if np.any(input[:, tltangle] != 0 ):
+    
+    if np.any(input[:, tltangle] !=0 ):
         is_tomo = True
+        logger.info("Tomo reconstruction score thresholding")
     else:
         is_tomo = False
 
@@ -429,6 +431,7 @@ def shape_phase_residuals(
                             thresholds[g, f] = np.sort(meanscore)[
                                 int((meanscore.shape[0] - 1) * (1 - threshold))
                             ]
+                            logger.info(f"Tomo reconstruction using particle score threshold as {threshold[g, f]}")
                         else:
                             thresholds[g, f] = np.sort(input[cluster, field])[
                                 int((cluster.shape[0] - 1) * (1 - threshold))
@@ -520,7 +523,7 @@ def shape_phase_residuals(
                                 np.logical_and(angular_group == g, defocus_group == f),
                                 np.logical_or(
                                     np.logical_or(
-                                np.array([ True if meanfrom.size == 0 else np.mean(meanfrom)]*field_array.shape[0]) < thresholds[g, f],
+                                np.array( [ 0 if meanfrom.size == 0 else np.mean(meanfrom) ] * field_array.shape[0] ) < thresholds[g, f],
                                 field_array < min_scores[g, f],
                                     ),
                                 field_array > max_scores[g, f],
@@ -544,8 +547,8 @@ def shape_phase_residuals(
                         0,
                         input[:, occ],
                     )
-                    number = input[input[:, occ]==0].shape[0]
-                    logger.info(f"Number of particles with OCC = 0 is {number:,}")        
+                number = input[input[:, occ]==0].shape[0]
+                logger.info(f"Number of particles with OCC = 0 is {number:,}")        
 
     if os.path.exists(fmatch_stack):
         logger.info(
