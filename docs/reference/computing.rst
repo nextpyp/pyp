@@ -4,7 +4,7 @@ Compute resources
 
 ``nextPYP`` can be run in standalone mode or in an HPC environment using the `SLURM <https://slurm.schedmd.com/>`_ workload manager. Standalone mode is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, an instance with access to a SLURM cluster will enable significantly faster processing.
 
-All operations in ``nextPYP`` are executed on a per-micrograph or per-tilt-series basis. The amount of compute resources needed is determined per micrograph/tilt-series (not by the total number of micrographs or tilt-series in a dataset).
+All operations in ``nextPYP`` are executed on a per-micrograph or per-tilt-series basis. As a consequence, compute resources are specified per micrograph/tilt-series (independent of the total number of micrographs/tilt-series in a dataset).
 
 Threads, tasks, and arrays
 --------------------------

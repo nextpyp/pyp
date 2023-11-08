@@ -3,7 +3,7 @@ Import/export tomography data
 #############################
 
 1 Import tomography data in star format
-========================================
+=======================================
 
 
 .. attention::

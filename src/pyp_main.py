@@ -4377,8 +4377,8 @@ if __name__ == "__main__":
                     os.mkdir("frealign/maps")
 
                 if Web.exists:
-                    name = os.path.split(os.getcwd())[-1]
-                    output =  name + "_r01_02"
+                    name = os.path.split(os.getcwd())[-1] + "_r01_02"
+                    output =  name 
                 else:
                     name = Path(project_params.resolve_path(parameters["sharpen_input_map"])).stem.replace("_half1","")
                     output = name + "_postprocessing"
@@ -4477,6 +4477,14 @@ if __name__ == "__main__":
                 randomize_phase = f"{randomize_below_fsc}{randomize_beyond} " 
 
                 pixel_size = parameters["scope_pixel"] * parameters["extract_bin"]
+                if parameters["sharpen_flip_x"]:
+                    flip_x = "--flip_x "
+                else:
+                    flip_x = ""
+                if parameters["sharpen_flip_y"]:
+                    flip_y = "--flip_y "
+                else:
+                    flip_y = ""
                 if parameters["sharpen_flip_z"]:
                     flip_z = "--flip_z "
                 else:
@@ -4491,7 +4499,7 @@ if __name__ == "__main__":
                     refine_res_lim = ""
 
                 comm_exe = os.environ["PYP_DIR"] + "/external/postprocessing/postprocessing.py "
-                basic = f"{half1} {half2} {mask} --angpix {pixel_size} --out {output} {flip_z}{mtf}{refine_res_lim}--xml "
+                basic = f"{half1} {half2} {mask} --angpix {pixel_size} --out {output} {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
                 comm = comm_exe + basic + bfac + filter + fsc + automask + randomize_phase
                 local_run.run_shell_command(comm, verbose=False)
 

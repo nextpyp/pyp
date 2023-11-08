@@ -6,7 +6,7 @@ This tutorial shows how to convert raw tilt-series from `EMPIAR-10304 (E. coli. 
 
 Total running time required to complete this tutorial: 32 hr.
 
-We first use the command line to download and decompress a zip file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
+We first use the command line to download and decompress a tbz file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
 
 .. code-block:: bash
 
@@ -150,20 +150,14 @@ Step 4: Particle detection
     * Go to the **Particle detection** tab:
 
       .. tabbed:: Particle detection
-        
-        - Set ``Detection method`` to 'auto'
 
-        - Click ``Show advanced options``
-        
         - Set ``Detection method`` to auto
-        
+
         - Set ``Detection radius (A)`` to 80
 
         - Set ``Threshold for contamination detection`` to 2.0
 
         - Set ``Minimum contamination size (voxels)`` to 60
-
-        - Set ``Contamination mask dilation (voxels)`` to 100 
 
         - Set ``Minimum distance between particles`` to 2
 
@@ -251,9 +245,9 @@ Step 5: Reference-based refinement
 
       .. tabbed:: Resources
 
-        - Set ``Threads (merge task)`` to 124
+        - Set ``Threads per task`` to the maximum allowable by your system
 
-        - Set ``Memory (merge task)`` to 700
+        - Set ``Memory per task`` to at least 4x the number of ``Threads per task``
 
         - Set ``Walltime per task`` to 72:00:00
 
@@ -582,8 +576,6 @@ Step 13: 3D classification
       .. tabbed:: Classification
 
         - Set ``Number of classes`` to 8
-
-        - Set ``Max resolution (A)`` to 8
 
         - Click on the **Exposure weighting** tab
 

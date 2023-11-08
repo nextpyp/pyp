@@ -6,7 +6,7 @@ This tutorial shows how to convert raw tilt-series from `EMPIAR-10164 (HIV-1 Gag
 
 Total running time required to complete this tutorial: ~20 hr.
 
-We first use the command line to download and decompress a zip file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
+We first use the command line to download and decompress a tbz file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
 
 .. code-block:: bash
 
@@ -539,7 +539,11 @@ Step 11: Create shape mask
 
     * Click on the menu icon :fa:`bars, text-primary` of the :badge:`Masking,badge-secondary` block, select the :badge:`Show Filesystem Location` option, and :badge:`Copy,badge-primary` the location of the block in the filesystem (we will use this in the next step))
 
-    * Click inside the :badge:`Masking,badge-secondary` block to inspect the results of masking
+    * Click inside the :badge:`Masking,badge-secondary` block to inspect the results of masking.
+
+.. note::
+
+  You may need to adjust the binarization threshold to obtain a mask that includes the protein density and excludes the background (a pre-calculated mask is provided with the raw data if you rather use that).
 
 Step 12: Region-based constrained refinement
 --------------------------------------------

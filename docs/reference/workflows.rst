@@ -19,8 +19,8 @@ The program ships with workflows for the :doc:`Single-particle tutorial<../tutor
 
 Inspect the results of the **Workflow** by navigating into each block
 
-2. Defining new workflows
--------------------------
+2. Defining custom workflows
+----------------------------
 
 **Workflows** are defined using  ``.toml`` files. Here is an example:
 

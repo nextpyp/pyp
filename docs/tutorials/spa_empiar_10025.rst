@@ -2,11 +2,11 @@
 Single-particle tutorial (EMPIAR-10025)
 #######################################
 
-This tutorial shows how to convert raw movies from `EMPIAR-10025 (T20S proteasome) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a ~3A resolution structure. 
+This tutorial shows how to convert raw movies from `EMPIAR-10025 (T20S proteasome) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a ~3A resolution structure.
 
 Total running time required to complete this tutorial: 45m.
 
-We first use the command line to download and decompress a zip file containing a subset of 20 movies, the gain reference, and an initial model:
+We first use the command line to download and decompress a tbz file containing a subset of 20 movies, the gain reference, and an initial model:
 
 .. code-block:: bash
 
@@ -248,7 +248,7 @@ Step 4: Reference-based refinement
     .. figure:: ../images/tutorial_spa_coarse_modified.webp
       :alt: File browser
 
-    This process executes four rounds of global orientation search (iterations 2-5). During reconstruction, the top 80% of particles (``Fraction of particles`` = 0.8) are used for the first iteration and unsupervised particle selection (``Fraction of particles`` = 0) is used for the remaining iterations
+    This process executes four rounds of global orientation search (iterations 2-5). The fraction of good particles at each iteration will be determined automatically (``Fraction of particles`` = 0) and used for reconstruction
 
   * Click inside the :badge:`Pre-processing,badge-secondary` block to inspect the results:
 
@@ -316,7 +316,7 @@ Step 6 Permanently remove bad particles
 Step 7: Particle refinement
 ---------------------------
 
-.. dropdown:: Reconstruction using 2x binned particles (:fa:`stopwatch` 9 min)
+.. dropdown:: Reconstruction and additional refinement using 2x binned particles (:fa:`stopwatch` 9 min)
   :container: + shadow
   :title: bg-primary text-white text-left
   :open:
@@ -347,6 +347,8 @@ Step 7: Particle refinement
       - Set ``Search mode`` to local
 
       - Set ``Max resolution (A)`` to 6:4:3
+
+      - Check ``Use signed correlation``
 
   * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to launch the job
 
@@ -398,10 +400,6 @@ Step 9: Local refinement
     .. tabbed:: Refinement
 
       - Set ``Last iteration`` to 7
-
-      - Check ``Use signed correlation``
-
-      - Set ``Resolution limit for signed correlation`` to 3
 
       - Select the ``Shape mask`` by clicking on the icon :fa:`search, text-primary`, navigating to the path of the :badge:`Masking,badge-secondary` block copied above, and selecting the file `frealign/maps/mask.mrc`
 
@@ -518,6 +516,11 @@ Step 12: Refinement after movie frame refinement
 
   * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
+  * Click inside the :badge:`Movie refinement,badge-secondary` block to inspect the results:
+
+    .. figure:: ../images/tutorial_spa_final_map.webp
+      :alt: Final map
+
 Step 13: Map sharpening
 -----------------------
 
@@ -542,8 +545,8 @@ Step 13: Map sharpening
 
   * Click inside the :badge:`Map sharpening,badge-secondary` block to inspect the results:
 
-    .. figure:: ../images/tutorial_spa_final_map.webp
-      :alt: Final map
+    .. figure:: ../images/tutorial_spa_post_processing.webp
+      :alt: Post processing
 
 .. note::
 

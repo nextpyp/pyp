@@ -251,10 +251,10 @@ hidden = true
 
 [tabs.data.retrieve]
 name = "Use metadata"
-description = "Retrieve metadata from mdoc files (if available)"
+description = "Retrieve existing metadata (if available)"
 type = "bool"
 default = false
-hidden = ["spr_import", "tomo_import", "stream_tomo", "stream_spr"]
+hidden = ["spr_import_raw", "spr_import_star", "tomo_import_raw", "tomo_import_star", "stream_tomo", "stream_spr"]
 
 [tabs.data.mode]
 name = "data_mode"
@@ -1564,9 +1564,9 @@ default = 0.0
 
 [tabs.refine.priors]
 name = "Use alignment priors"
-description = "Using priors during refinement as constraints may decrease the chance of overfitting"
+description = "Using priors during refinement may reduce the chance of overfitting"
 type = "bool"
-default = false
+default = true
 advanced = true
 
 [tabs.refine.beamtilt]
@@ -2722,8 +2722,20 @@ type = "float"
 default = 10
 advanced = true
 
+[tabs.sharpen.flip_x]
+name = "Invert handedness along x-axis"
+description = "Invert handedness of input volume along the x-axis"
+type = "bool"
+default = false
+
+[tabs.sharpen.flip_y]
+name = "Invert handedness along y-axis"
+description = "Invert handedness of input volume along the y-axis"
+type = "bool"
+default = false
+
 [tabs.sharpen.flip_z]
-name = "Invert handedness"
+name = "Invert handedness along z-axis"
 description = "Invert handedness of input volume along the z-axis"
 type = "bool"
 default = false

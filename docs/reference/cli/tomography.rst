@@ -4,19 +4,27 @@ Tomography tutorial
 
 This tutorial shows how to process tilt-series from the `HIV-1 Gag (EMPIAR-10164) <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset.
 
-.. note::
-    The following subset of tilt-series is used: TS_01, TS_03, TS_43, TS_45, and TS_54.
+We first download and decompress a tbz file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
 
-1 Create a new project
-======================
+.. code-block:: bash
+
+  # cd to a location in the shared file system and run:
+
+  wget https://nextpyp.app/files/data/nextpyp_tomo_tutorial.tbz
+  tar xvfz nextpyp_tomo_tutorial.tbz
+
+Step 1: Create a new project
+============================
+
+Next, we create an empty folder where all files for the tutorial will be saved:
 
 .. code-block:: bash
 
     mkdir EMPIAR-10164
     cd EMPIAR-10164
 
-2 Pre-processing
-================
+Step 2: Pre-processing
+======================
 
 Data pre-processing consists of movie frame alignment, tilt-series alignment, tomogram reconstruction, CTF estimation and virion detection:
 
@@ -37,15 +45,10 @@ Data pre-processing consists of movie frame alignment, tilt-series alignment, to
         -movie_pattern "TILTSERIES_SCANORD_ANGLE.tif"
 
 
-.. note::
-    You can redo desired steps by deleting corresponding files:
-    - Frame alignment: ``ali/{name}.mrc``
+Step 3 (optional): Virion segmentation
+======================================
 
-
-3 (optional) Virion segmentation
-=======================
-
-Select the column with the yellow curve that best represents the membrane:
+In this step we use ``IMOD`` over a remote X11 connection to interactively select virion segmentation thresholds. Execute the command below and select the column in the image where the yellow curve more closely matches the membrane. Go over all virions in the tilt-series and save the model when you are done:
 
 .. code-block:: bash
 
@@ -54,11 +57,12 @@ Select the column with the yellow curve that best represents the membrane:
         /opt/pyp/bin/run/pyp -vir -skip )
 
 .. tip::
-    Select the *column* that best follows the membrane. To skip a virion, simply select the rightmost column (no spike search will be performed on these virions).
+
+    To skip a virion, simply select the rightmost column (these virions will be removed from the downstream processing).
 
 
-4 Particle detection
-=================
+Step 4: Particle detection
+==========================
 
 Detect spikes using the membrane values selected above:
 
@@ -71,16 +75,16 @@ Detect spikes using the membrane values selected above:
         -tomo_spk_rad 50.0
 
 
-5 Reference-based refinement
-==============================
+Step 5: Reference-based refinement
+==================================
 
-If a 3D reference is available, ``csp`` can align the particle projections using constrained refinement.
+If a 3D reference is available, the ``csp`` command can be used to align the particle projections using constrained refinement:
 
 .. code-block:: bash
 
     # launch coarse refinement
 
-    csp -refine_parfile="path_to_alignment.txt"     \
+    csp -refine_parfile=`pwd`/frealign/EMPIAR-10164_original_volumes.txt     \
         -refine_model="EMPIAR-10164_init_ref.mrc"   \
         -particle_mw 300.0                          \
         -particle_rad 150.0                         \
@@ -102,16 +106,14 @@ If a 3D reference is available, ``csp`` can align the particle projections using
         -reconstruct_maxtilt 50
 
 .. tip::
-    To only search one angle (i.e., psi), please set the tolerance of other refined rotations (i.e., ``csp_ToleranceParticlesPhi``, ``csp_ToleranceParticlesTheta``) to zero.
 
-6 Fully constrained refinement
-===============================================================
+    - To only search for in-plane rotations (i.e., rotation angle Psi), set the tolerance of the other two rotations ``csp_ToleranceParticlesPhi`` and ``csp_ToleranceParticlesTheta`` to zero.
+    - ``csp`` can also use initial alignments from other software packages such as Relion or EMAN. For example, see :doc:`Tomo import/export <tomo_import_export>` to import alignments from Relion.
 
-CSP can also use initial alignments from other software packages such as Relion or EMAN sub-volume averaging. You may find :doc:`Tomo import/export <tomo_import_export>` useful to perform sub-volume averaging in Relion.
+Step 6: Fully constrained refinement
+====================================
 
-
-.. note::
-    Before exporting projects to Relion, you will need to run the following command to obtain an initial .par file.
+New, we do additional local refinement:
 
 .. code-block:: bash
 
@@ -129,20 +131,22 @@ CSP can also use initial alignments from other software packages such as Relion 
         -dose_weighting_enable                      \
         -dose_weighting_fraction 4
 
-All results from 3D refinement are saved in ``frealign/maps`` and include png files for each refinement iteration for visual inspection.
+All results from 3D refinement are saved in the folder ``frealign/maps``, including png files for visual inspection corresponding to each refinement iteration.
 
 .. tip::
-    The tolerance parameters determine the range used for searching, so if you think particle alignments or tilt-series alignments are not precise, you will need to increase the corresponding tolerances.
 
+    Tolerance parameters determine the range used for searching. If you think particle alignments or tilt-series alignments are not accurate, you can increase the corresponding tolerances.
 
-7 Filter particles
-===============================
+Step 7: Filter particles
+========================
+
+The next step is to remove particles with low correlation scores:
 
 .. code-block:: bash
-    
+
     mv frealign/maps frealign/fully_constrained && mkdir frealign/maps
 
-    pcl -clean_parfile `pwd`/frealign/fully_constrained/EMPIAR-10164_r01_05.par.bz2     \
+    pcl -clean_parfile=`pwd`/frealign/fully_constrained/EMPIAR-10164_r01_05.par.bz2     \
         -clean_threshold 2.5                                                            \
         -clean_dist 10.0                                                                \
         -clean_mintilt -15.0                                                            \
@@ -150,25 +154,27 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
         -clean_min_num_projections 1                                                    \
         -clean_check_reconstruction
 
+Step 8 (optional): Permanently remove bad particles
+===================================================
 
-
-8  (optional): Permanently remove bad particles
-================
+It is often a good idea to permanently remove any bad particles identified in the previous step:
 
 .. code-block:: bash
 
     pcl -clean_discard
 
 
-9 Region-based local refinement before masking
-==================
+Step 9: Region-based refinement before masking
+==============================================
+
+The following command performs region-based constrained alignment:
 
 .. code-block:: bash
-    
+
     mv frealign/maps frealign/filter_particles && mkdir frealign/maps
 
-    csp -refine_parfile `pwd`/frealign/filter_particles/EMPIAR-10164_r01_02_clean.par.bz2   \
-        -refine_model `pwd`/frealign/filter_particles/EMPIAR-10164_r01_02.mrc"              \
+    csp -refine_parfile=`pwd`/frealign/filter_particles/EMPIAR-10164_r01_02_clean.par.bz2   \
+        -refine_model=`pwd`/frealign/filter_particles/EMPIAR-10164_r01_02.mrc"              \
         -particle_rad 100.0                                                                 \
         -extract_box 384                                                                    \
         -extract_bin 1                                                                      \
@@ -182,21 +188,25 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
         -csp_Grid "8,8,2"
 
 
-10 Create shape mask
-====================================
+Step 10: Create shape mask
+==========================
+
+The next step is to create a shape mask:
 
 .. code-block:: bash
-    
+
     mv frealign/maps frealign/region_refine && mkdir frealign/maps
 
-    pmk -mask_model `pwd`/frealign/region_refine/EMPIAR-10164_r01_03.mrc    \
-        -mask_threshold 0.42                                                \
-        -mask_normalized                                                    \
+    pmk -mask_model=`pwd`/frealign/region_refine/EMPIAR-10164_r01_03.mrc     \
+        -mask_threshold 0.42                                                 \
+        -mask_normalized                                                     \
         -mask_edge_width 8
 
 
-11 Region-based local refinement
-==================
+Step 11: Region-based refinement after masking
+==============================================
+
+Next, we do further refinement using the mask calculated in the previous step:
 
 .. code-block:: bash
 
@@ -204,11 +214,13 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
 
     csp -refine_maxiter 6                               \
         -refine_rhref "6:5:5:4:3.5"                     \
-        -refine_maskth `pwd`/frealign/mask/mask.mrc"
+        -refine_maskth=`pwd`/frealign/mask/mask.mrc"
 
 
-12 Particle-based CTF refinement
-==================
+Step 12: Particle-based CTF refinement
+======================================
+
+In this step we refine the CTF parameters on a per-particle basis:
 
 .. code-block:: bash
 
@@ -220,15 +232,17 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
         -csp_UseImagesForRefinementMax 10
 
 
-13 Movie frame refinement
-==================
+Step 13: Movie frame refinement
+===============================
+
+Next, we refine the raw movie frames against the most recent 3D reconstruction:
 
 .. code-block:: bash
-    
+
     mv frealign/maps frealign/ctf_refine && mkdir frealign/maps
 
-    csp -refine_parfile `pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.par.bz2   \
-        -refine_model `pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.mrc         \
+    csp -refine_parfile=`pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.par.bz2   \
+        -refine_model=`pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.mrc         \
         -particle_rad 80.0                                                      \
         -extract_fmt frealign_local                                             \
         -refine_iter 2                                                          \
@@ -241,8 +255,10 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
         -csp_UseImagesForRefinementMax 4
 
 
-14 Refinement after movie frame refinement
-==================
+Step 14: Refinement after movie frame refinement
+================================================
+
+Using the refined frame averages for each tilt, we perform additional constrained refinement:
 
 .. code-block:: bash
 
@@ -261,13 +277,18 @@ All results from 3D refinement are saved in ``frealign/maps`` and include png fi
         -csp_RefineProjectionCutoff 2
 
 
-15 Map sharpening
-==================
+Step 15: Map sharpening
+=======================
+
+The final step is to sharpen the map and produce FSC plots:
 
 .. code-block:: bash
-    
-    mv frealign/maps frealign/frame_refine && mkdir frealign/maps
 
-    psp -sharpen_input_map `pwd`/frealign/frame_refine/EMPIAR-10164_r01_half1.mrc   \
-        -sharpen_automask_threshold 0.35                                            \
+    psp -sharpen_input_map=`pwd`/frealign/maps/EMPIAR-10164_r01_half1.mrc   \
+        -sharpen_automask_threshold 0.35                                    \
         -sharpen_adhoc_bfac -50
+
+.. seealso::
+
+    * :doc:`Single-particle tutorial<single_particle>`
+    * :doc:`Classification tutorial<classification>`

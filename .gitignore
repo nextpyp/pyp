@@ -12,16 +12,11 @@ src/pyp/*.vscode
 *cache
 singularity-example
 docs/_build/
-external/CSP/src/.currentRefine3D.dff
-external/CSP/src/CMakeCache.txt
 .CalculateFSC.dff
 .currentCtffind.dff
 .currentResample.dff
 .currentResize.dff
-external/CSP/src/csp_05_03_2021
 config/config.toml
 /.idea/
-external/CSP/csp_fboost
-external/CSP/csp
-external/CSP/csp_nofboost
 .pyp_history
+external/postprocessing/

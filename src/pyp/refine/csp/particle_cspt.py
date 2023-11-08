@@ -859,7 +859,16 @@ def run_reconstruction(
     timer.Timer.timers.update({"reconstruct3d_splitcom" :{"elapsed_time": recon_T, "start_time": recon_st, "end_time": str(datetime.datetime.now())}})
 
     if mp["dose_weighting_enable"]:
-        pyp_frealign_plot_weights.plot_weights(name, "weights.txt", num_frames, frames_per_tilt, mp["extract_box"], mp["scope_pixel"] * mp["extract_bin"])
+        if os.path.exists("weights.txt"):
+            pyp_frealign_plot_weights.plot_weights(name, "weights.txt", num_frames, frames_per_tilt, mp["extract_box"], mp["scope_pixel"] * mp["extract_bin"])
+        else:
+            logfile = commands[0].splitlines()[0].split(" ")[-2].replace(" ","")
+            if os.path.exists(logfile):
+                with open(logfile) as f:
+                    errors = f.read()
+                    logger.warning(errors)
+                    if "caught" in errors:
+                        raise Exception(errors)
 
     # files that will be saved to /nfs
     shutil.rmtree(output_folder, ignore_errors=True)

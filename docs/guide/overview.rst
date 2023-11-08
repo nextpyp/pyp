@@ -2,6 +2,8 @@
 Overview
 ========
 
+``nextPYP``'s graphical user interface (GUI) has the following components:
+
 Dashboard and projects
 ======================
 

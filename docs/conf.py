@@ -28,7 +28,7 @@ copyright = "2023, Bartesaghi Lab"
 # The full version, including alpha/beta/rc tags
 release = "0.1"
 
-html_favicon = 'favicon.png'
+html_favicon = '_static/favicon.png'
 
 # -- General configuration ---------------------------------------------------
 
