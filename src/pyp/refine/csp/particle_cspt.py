@@ -1340,10 +1340,10 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
         "plot fsc and clean par", text = "Plot FSC and producing clean par file took: {}", logger=logger.info
     ):
         # collate FSC curves from all references in one plot
-        if classes > 1:
+        if classes > 1 and not Web.exists:
 
             metadata = {}
-
+            logger.info("Creating plots for visualizing classes OCCs and FSCs")
             # plot class statistics
             import matplotlib.pyplot as plt
 

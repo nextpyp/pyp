@@ -1923,8 +1923,6 @@ def csp_split(parameters, iteration):
             # just use the first array job as prerequisite
             id = id.strip() + "_1"
 
-
-    # TODO: cpus and memory need their own parameters
     jobtype = jobname = "classmerge"
     (class_merge_id, procs) = slurm.submit_jobs(
         ".",
