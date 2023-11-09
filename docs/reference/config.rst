@@ -391,6 +391,67 @@ Minimal example:
 
 |
 
+``host``
+~~~~~~~~
+
+:Type: string
+:Required: no
+:Default: ``127.0.0.1``
+:Description:
+	The network interface to which the application HTTP server (not the reverse proxy HTTP server) should bind.
+
+	By default, the application HTTP server binds only to the loopback network interface, i.e. localhost,
+	so the application HTTP server will only be reachable from the local computer.
+
+	To make the application HTTP server reachable from an external private network, set ``host`` to ``0.0.0.0`` to bind
+	to all available network interfaces.
+
+	.. warn::
+		The application HTTP server is not designed to securely handle traffic from the public internet.
+		Exposing the application HTTP server directly to the public internet increases your risk of a security
+		compromise.
+
+		Only set ``host`` to ``0.0.0.0`` if the application HTTP server is isolated from the public internet
+		by a firewall or a private network.
+
+		To make the website securely accessible from the public internet, install the reverse proxy HTTP server
+		that is bundled with nextPYP, which is designed to operate securely in that environment.
+
+:Examples:
+	``host = '10.0.3.4'``
+
+	``host = '0.0.0.0'``
+
+|
+
+``port``
+~~~~~~~~
+
+:Type: int
+:Required: no
+:Default: ``8080``
+:Description:
+	The network port to which the application HTTP server (not the reverse proxy HTTP server) should bind.
+
+	By default, the application HTTP server binds to the port 8080, which is an unofficial secondary port for HTTP traffic.
+	Since port 8080 is not a privileged port, the application HTTP server can run without root privileges.
+
+	Since port 8080 is a common port for locally-running HTTP applications, you may already have another
+	service installed that uses that port. To avoid a port conflict, you can configure the application HTTP
+	server to use a different port, but be sure to use a non-privileged port at or above 1024.
+
+	.. warn::
+		Using a privileged port (below 1024) like 80 or 443 for the application server requires root privileges,
+		but the application HTTP server was not designed to run with root privileges. Doing so would be insecure,
+		and any security compromise that had access to elevated permissions would be much more severe.
+		If you wish to run the website on a canonical HTTP port like 80 or 443, you should use the reverse proxy
+		HTTP server bundled with nextPYP, which is designed to operate securely when exposed to the public internet.
+
+:Examples:
+	``port = 8082``
+
+|
+
 ``localDir``
 ~~~~~~~~~~~~
 
@@ -461,14 +522,37 @@ Minimal example:
 
 :Type: string
 :Required: no
-:Default: ``https://$hostname``, where ``$hostname`` is the result of the ``hostname`` command
+:Default: ``http://$host:$port``, where ``$host`` and ``$port`` are the values of the ``web.host`` and ``web.port`` configuration values respectively.
 :Description:
-	The URL of the webserver as seen from the SLURM nodes.
+	The URL of the webserver as visible from the pyp process.
 
 	This value should include the full URL prefix for the web server,
 	including the protocol (HTTP or HTTPs) and the port number (if non-standard).
-
 	Do not include a trailing slash.
+
+	When running in standalone mode, the pyp process will run on the same machine as the web server.
+	In this environment, the default value will be correct, and there should be no need to choose a different value.
+
+	When the pyp process runs on an external compute node (in, say, a SLURM cluster), this value must be the URL of
+	the website from the point of view of the compute node. The default value will not be correct in this case,
+	so be sure to set ``webhost`` to the correct value for your environment.
+
+	If the compute node is on a private network that is shared with the web server, then the correct value of
+	``webhost`` will be ``http://$hostname:$port`` where ``$port`` is the ``web.port`` configuration value and
+	``$hostname`` is the host name of the server from the point of view of the compute node. Note this configuration
+	uses unencrypted HTTP rather than encrypted HTTPs.
+
+	.. warn::
+		In this private network configuration, if the web server has any public network interfaces,
+		be sure to configure the firewall to only allow connections to the port defined by ``web.port``
+		over the private network interface. Connections over the public network interface should be blocked
+		by the firewall.
+
+	If the compute node is not on a shared private network with the web server, then the correct value will be
+	``https://$domain`` where ``$domain`` is the domain name of the web server as configured in the DNS registry.
+	This configuration requires using the reverse proxy HTTP server bundled with nextPYP to enable encrypted HTTPs
+	connections, since the connection may travel over an untrusted network, like the public internet.
+
 :Examples:
 	``webhost = 'https://streampyp.example.org'``
 	
