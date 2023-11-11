@@ -1514,7 +1514,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     mpi_funcs, mpi_args = [ ], [ ]
 
     # produce binned tomograms
-    need_recalculation = not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_force"] or parameters["tomo_rec_erase_fiducials"]
+    need_recalculation = parameters["tomo_rec_force"] or ( not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_erase_fiducials"] )
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
