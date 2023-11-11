@@ -210,7 +210,7 @@ def find_gain_reference(args, soures):
 
 def get_data_files(args, source):
 
-    files = glob.glob(project_params.resolve_path(args["data_path"]))
+    files = glob.glob(project_params.resolve_path(args["data_path_mdoc"])) + glob.glob(project_params.resolve_path(args["data_path"]))
     if len(args["stream_transfer_fileset"]) > 0:
         original_files = files.copy()
         for extension in args["stream_transfer_fileset"].split(","):
@@ -335,7 +335,6 @@ def create_in_destination(file, server, path):
     # logger.info('Signaling ' + target )
 
     if is_local(server):
-
         with open(target, "w") as f:
             f.write(" ")
 
@@ -683,7 +682,7 @@ if __name__ == "__main__":
             with open(filelist_filename) as t:
                 words2 = set(t.read().split("\n"))
 
-            # figure out files that need transfering
+            # figure out files that need transferring
             uniques = [i for i in words2 if not i in words1]
             names = [os.path.split(f)[-1] for f in uniques]
 
@@ -759,7 +758,7 @@ if __name__ == "__main__":
         pool.close()
         pool.join()
 
-        # bookeeping
+        # bookkeeping
         while results.empty() == False:
 
             current = results.get()
