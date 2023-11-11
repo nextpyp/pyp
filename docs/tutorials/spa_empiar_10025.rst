@@ -229,6 +229,10 @@ Step 4: Reference-based refinement
 
       - Check ``Use signed correlation``
 
+      - Check ``Show advanced options``
+
+      - Check ``Use alignment priors``
+
       - Click on the **Reconstruction** tab
 
       .. figure:: ../images/tutorial_spa_coarse_refinement.webp
