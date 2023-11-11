@@ -42,20 +42,20 @@ class Picker():
         radius2 = 0.5 * self.pixelsize * self.auto_binning / self.radius
         sigma1 = 0
         sigma2 = 0.001
-        
+
         com = "{5}/bin/mtffilter -3dfilter -radius1 {1} -hi {2} -l {3},{4} {0}.rec bp.mrc".format(
             self.name, radius1, sigma1, radius2, sigma2,get_imod_path()
         )
-        
-        
+
+
         run_shell_command(com)
-        
+
         self.lowres = mrc.read("bp.mrc")
-        
+
         if show:
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y "+name+".rec")
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y bp.mrc")
-            
+
     @timer.Timer(
         "getcont", text="Total time elapsed (getcont): {}", logger=logger.info
     )
@@ -67,7 +67,7 @@ class Picker():
             if show:
                 mrc.write(scipy.ndimage.gaussian_filter(G, sigma=sigma), "gaussian.mrc")
                 run_shell_command(get_imod_path()+"/bin/imod -xyz -Y gaussian.mrc")
-            
+
         maskthres=G.mean()-stdtimes*G.std()
         mask = G < maskthres
         cmask = scipy.ndimage.morphology.binary_opening(mask, ball(1))
@@ -78,9 +78,9 @@ class Picker():
         if show:
             mrc.write(area, "area.mrc")
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y area.mrc")
-            
+
         return area
-        
+
     @timer.Timer(
         "detect", text="Total time elapsed (detect): {}", logger=logger.info
     )
@@ -135,8 +135,8 @@ class Picker():
             particles_metrics[p,0] =foreground.std()
             particles_metrics[p,1] =background.std()
         stdmean,stdstd=particles_metrics[:,0].mean(),particles_metrics[:,0].std()
-        logger.info("stdmean: "+str(stdmean)+", stdstd: "+str(stdstd))
-        
+        logger.info("Pre-filtering stdmean: "+str(stdmean)+", stdstd: "+str(stdstd))
+
         stdthreshold=stdmean+stdstd*stdtimes
         return particles_metrics,stdthreshold
 
@@ -155,12 +155,12 @@ class Picker():
         rawboxs=[rawboxs[k] for k in sorted(rawboxs.keys())]
         for b in rawboxs:
             boxs+=b
-            
+
         f = open('boxs.txt', 'w')
         f.writelines([' '.join(str(boxs[i])[1:-1].split(', '))+'\n' for i in range(len(boxs))])
         f.close()
         circle = int(self.radius / self.pixelsize / self.auto_binning)
-        logger.info("Saving coordinates as spk and swap Y Z")
+        # Saving coordinates in spk format and swapping Y-Z
         run_shell_command(get_imod_path()+'/bin/point2model boxs.txt '+self.name+'.mod -sphere %s' % circle,  verbose=False)
         run_shell_command(get_imod_path()+'/bin/imodtrans -Y -T ' +self.name+ '.mod ' + self.name + ".spk", verbose=False )
         logger.info(str(len(boxs)) + " particles detected")
@@ -168,7 +168,7 @@ class Picker():
         if show:
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y bp.mrc "+self.name+".spk")
             self.show_particles(boxs,times=3)
-            
+
     @timer.Timer(
         "minima_extract", text="Total time elapsed (minima_extract): {}", logger=logger.info
     )
@@ -199,9 +199,9 @@ class Picker():
         while inhibited>0:
             inhibited=0
             minf=scipy.ndimage.minimum_filter(edited, locality)
-            
+
             editmax=edited.max()
-            
+
             for k in rawpoints.keys():
                 for i in range(len(rawpoints[k])):
                     p=rawpoints[k][i]
@@ -223,7 +223,7 @@ class Picker():
                         b=edited.shape[1] if b>edited.shape[1] else b
                         c=edited.shape[2] if c>edited.shape[2] else c
                         edited[x:a,y:b,z:c]+=(edited[x:a,y:b,z:c]==minimum)*(editmax-edited[x:a,y:b,z:c])
-                        
+
             deleting={}
             for k in rawpoints.keys():
                 for i in range(len(rawpoints[k])):
@@ -238,8 +238,8 @@ class Picker():
                             if k not in deleting:
                                 deleting[k]=[]
                             deleting[k].append(i)
-                            
-            
+
+
             for k in deleting.keys():
                 for i in range(len(deleting[k])-1,-1,-1):
                     point=rawpoints[k][deleting[k][i]][0]
@@ -252,7 +252,7 @@ class Picker():
             for p in rawpoints[k]:
                 points.append(p[0])
         return points
-            
+
     def show_particles(self,boxs,times=3):
         outboxs=[]
         for b in boxs:

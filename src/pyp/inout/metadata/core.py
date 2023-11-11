@@ -644,7 +644,7 @@ def get_new_input_list(parameters, inputlist):
                     "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 
                         and not ("none" in parameters["tomo_spk_method"] or "nn-train" in parameters["tomo_spk_method"])
                     )
-   
+
     if spr_pick or tomo_vir_pick or tomo_spk_pick:
 
         for sname in inputlist:
@@ -655,9 +655,9 @@ def get_new_input_list(parameters, inputlist):
                 boxx_exists = boxx.size > 0
             else:
                 boxx_exists = False
-            
+
             box_size = 0
-            
+
             if boxx_exists:
                 if is_spr:
                     box = boxx[
@@ -670,9 +670,7 @@ def get_new_input_list(parameters, inputlist):
                     box_size = boxx.shape[0]
 
             if not boxx_exists:
-                logger.info("boxx file does not exist")
-                logger.info("box.size: {}".format(box_size))
-                logger.info("Removing %s", sname)
+                logger.warning(f"boxx file not found. Box size = {box_size}. Removing {sname} from list")
             else:
                 newinput_dict.update({sname:box_size})
         newinputlist = sorted(newinput_dict, key=newinput_dict.get, reverse=True)
