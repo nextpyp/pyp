@@ -26,7 +26,6 @@ from pyp.system.singularity import get_pyp_configuration, run_pyp
 from pyp.system.utils import ctime, get_parameter_files_path, is_biowulf2
 from pyp.utils import get_relative_path, movie2regex, timer
 from pyp.inout.metadata import pyp_metadata
-from pyp.preprocess import frames_from_mdoc
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -377,6 +376,7 @@ def pyp_daemon(args):
                     condition = True
 
                     if parameters["movie_mdoc"]:
+                        from pyp.preprocess import frames_from_mdoc
                         fileset = frames_from_mdoc([os.path.join( session_dir, "raw",f)], parameters)
                         for tilt in fileset:
                             # check if file finished transferring
