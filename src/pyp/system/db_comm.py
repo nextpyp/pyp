@@ -73,7 +73,7 @@ def save_micrograph_to_website(name,verbose=False):
             for x in np.loadtxt(boxx_path, ndmin=2)
         ]
     else:
-        logger.warning("Cannot find boxx information to submit to database")
+        boxx = []
 
     # actually send the micrograph to the website
     Web().write_micrograph(name, ctf, avgrot, xf, boxx)
