@@ -1342,7 +1342,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if not skip:
         load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
 
-        if os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
+        if parameters["tomo_vir_method"] != "none" and os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
             # virion exlusion input from website
             seg_thresh = np.loadtxt("virion_thresholds.next", dtype=str, ndmin=2)
             TS_seg = seg_thresh[seg_thresh[:, 0] == name]
