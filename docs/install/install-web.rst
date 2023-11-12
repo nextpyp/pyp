@@ -11,10 +11,10 @@ Supported operating systems
  * `CentOS 7 <https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2009>`_
  * `Ubuntu 22.04.1 LTS <https://releases.ubuntu.com/22.04/>`_
 
-The application can be run in Standalone mode or using an HPC cluster.
+The application can be run in **Standalone** mode using a single server or in **SLURM** mode using an HPC cluster.
 
-Step 1: Prerequisites for installation on a cluster
----------------------------------------------------
+Step 1: Prerequisites for installation
+--------------------------------------
 
  * Website:
      ``nextPYP`` uses a web server as the main interface, so the machine where you install ``nextPYP``
@@ -22,11 +22,11 @@ Step 1: Prerequisites for installation on a cluster
      public internet, then the machine should be connected to the public internet and should have
      a registered domain name.
 
- * SLURM Cluster:
+ * SLURM scheduler (**SLURM** mode only):
      ``nextPYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM
      cluster must be reachable on the network from the machine where ``nextPYP`` will be installed.
 
- * Shared filesystem:
+ * Shared filesystem (**SLURM** mode only):
      ``nextPYP`` requires that the web server and the SLURM cluster share a single filesystem (e.g.
      an NFS storage system) and it be mounted at the same mount point on every machine.
      For example, if the shared filesystem is mounted on the SLURM cluster nodes as ``/nfs/data``,
@@ -38,8 +38,11 @@ Step 1: Prerequisites for installation on a cluster
      Because this user account runs the web server on the web server machine (which may be exposed to
      the public internet), the service account should not have administrative privileges.
 
- * Paswordless SSH access to the SLURM login node:
+ * Paswordless SSH access to the SLURM login node (**SLURM** mode only):
      The service account needs to have login access from the web server to the SLURM node via SSH without a password. This will require installing the public SSH key for the service account into the login system for the SLURM node. For a stock linux installation of sshd, that usually means copying the public key into a file like `/home/account/.ssh/authorized_keys`. But for SLURM clusters with a networked login system or SSO, you'll need to consult your organization's IT staff for SSH key installation instructions.
+
+ * Access to GPUs (optional):
+     This is only required when training neural networks for particle picking. ``nextPYP`` uses Apptainer_ which natively supports NVIDIA CUDA & AMD ROCm, but we have only tested it using NVIDIA GPUs with CUDA version 11.8. Support for other CUDA versions or AMD ROCm may require rebuilding the containers with driver and library versions matching the host configuration.
 
 .. _SLURM: https://slurm.schedmd.com/overview.html
 
@@ -92,7 +95,7 @@ Step 3: Download and run the installation script
 ------------------------------------------------
 
 First, create the folder where ``nextPYP`` will be installed. This folder must be on the shared
-filesystem (unless you are installing in Standalone mode). If you mounted the shared filesystem at e.g. ``/nfs/data/``, then create a folder
+filesystem (unless you are installing in **Standalone** mode). If you mounted the shared filesystem at e.g. ``/nfs/data/``, then create a folder
 called something like ``/nfs/data/apps/nextPYP``.
 
 Then, log into the web server machine with a user account that has administrator privileges
@@ -156,11 +159,11 @@ a few comments to describe the settings configured there, but you can find more 
 
 .. note::
 
-  To run ``nextPYP`` in Standalone mode, make sure there ``[slurm]`` section in the configuration file is removed.
+  To run ``nextPYP`` in **Standalone** mode, make sure there ``[slurm]`` section in the configuration file is removed.
   In this mode, the web server and the data processing are all run locally.
-  Although the default options should serve you well in standalone mode, if you want to customize anything,
+  Although the default options should serve you well in **Standalone** mode, if you want to customize anything,
   you can add the ``[standalone]`` section to your config file.
-  `See the full documentation for standalone mode configuration <../reference/config.html#standalone-section>`_.
+  `See the full documentation for Standalone mode configuration <../reference/config.html#standalone-section>`_.
 
 
 Step 5 (recommended): Configure access to system resources
@@ -174,13 +177,13 @@ Configure how to access system resources by specifying the following parameters:
  * ``pyp.binds``
      Since ``PYP`` runs inside of a Singularity/Apptainer container, by default, no files from outside of the container will be visible to ``PYP``. To make files visible to ``PYP``, bind the directories containing those files into the container.
 
- * ``slurm.path`` (SLURM mode only)
+ * ``slurm.path`` (**SLURM** mode only)
      Path to the SLURM binaries on the login node.
 
- * ``slurm.queues`` (SLURM mode only)
+ * ``slurm.queues`` (**SLURM** mode only)
      The names of any SLURM partitions to which users can submit ``nextPYP`` jobs.
 
- * ``slurm.gpuQueues`` (SLURM mode only)
+ * ``slurm.gpuQueues`` (**SLURM** mode only)
      The names of any SLURM partitions with GPU hardware to which users can submit ``nextPYP`` jobs.
 
 Here is an example of how to specify these options in the configuration file:
@@ -399,7 +402,7 @@ The various stages of service startup are written to log files in the ``local/lo
  * ``hostprocessor``
      This log records the output of the ``hostprocessor`` process, a small shell script to help the application
      server launch processes outside of the apptainer container on the host OS. The ``hostprocessor`` is mostly
-     used by the application server to run jobs in standalone mode.
+     used by the application server to run jobs in **Standalone** mode.
 
  * ``micromon``
      This log records the output of the HTTP server and the application itself. Every time the application is
