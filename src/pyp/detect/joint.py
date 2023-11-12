@@ -76,7 +76,7 @@ def sprtrain(args):
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # check for failure if not output was produced
-    if len(Path(os.getcwd()).rglob('*.training')) == 0:
+    if len(list(Path(os.getcwd()).rglob('*.training'))) == 0:
         raise Exception("Failed to run training module")
 
     # move trained models to project folder
@@ -122,23 +122,35 @@ def spreval(args,name):
         if not os.path.exists(coordinates_file):
             raise Exception("Failed to run inference module")
 
-        try:
-            coordinates = np.loadtxt( coordinates_file, dtype=str, comments="image_name", ndmin=2)
+        with open(coordinates_file) as f:
+            lines = len(f.readlines()) - 1
 
-            # display total number of positions
-            logger.info(str(len(coordinates)) + " total positions")
+        if lines > 0:
+            try:
+                coordinates = np.loadtxt( coordinates_file, dtype=str, comments="image_name", ndmin=2)
 
-            # threshold positions using mean of score distribution
-            boxes = coordinates.copy()[:,1:].astype('f')
-            # mean = boxes[:,-1].mean()
-            # boxes[:,-1] = ( boxes[:,-1] - mean )
-            coordinates = boxes[ boxes[:,-1] > args["detect_thre"] ]
-            logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_thre"]))
+                # display total number of positions
+                logger.info(str(len(coordinates)) + " total positions")
 
-            return coordinates[:,:2].astype('i') * 8
-        except:
+                # threshold positions using mean of score distribution
+                boxes = coordinates.copy()[:,1:].astype('f')
+                # mean = boxes[:,-1].mean()
+                # boxes[:,-1] = ( boxes[:,-1] - mean )
+                coordinates = boxes[ boxes[:,-1] > args["detect_thre"] ]
+                logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_thre"]))
+
+                if len(coordinates) > 0:
+                    return coordinates[:,:2].astype('i') * 8
+                else:
+                    logger.warning("No particles found")
+                    return np.array([])
+            except:
+                logger.warning("No particles found.")
+                return np.array([])
+        else:
             logger.warning("No particles found")
-            pass
+            return np.array([])
+
     else:
         logger.error("A model is needed for DL-based particle picking")
 
@@ -248,7 +260,7 @@ def tomotrain(args):
     [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # check for failure if not output was produced
-    if len(Path(os.getcwd()).rglob('*.pth')) == 0:
+    if len(list(Path(os.getcwd()).rglob('*.pth'))) == 0:
         raise Exception("Failed to run training module")
 
     # move trained models to project folder
@@ -300,22 +312,35 @@ def tomoeval(args,name):
         coordinates_file = os.path.join(results_folder,"exp/semi/test_reprod/output_test",name+".txt")
 
         # check for failure if not output was produced
-        if not os.path.exists(coordinates):
+        if not os.path.exists(coordinates_file):
             raise Exception("Failed to run inference module")
 
-        try:
-            coordinates = np.loadtxt( coordinates_file, dtype=str, comments="image_name", ndmin=2)
+        with open(coordinates_file) as f:
+            lines = len(f.readlines()) - 1
 
-            # threshold positions using mean of score distribution
-            boxes = coordinates.copy().astype('f')
-            # mean = boxes[:,-1].mean()
-            # boxes[:,-1] = ( boxes[:,-1] - mean )
-            coordinates = boxes[ boxes[:,-1] > args["detect_nn3d_thresh"] ]
-            logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_nn3d_thresh"]))
+        if lines > 0:
+            try:
+                coordinates = np.loadtxt( coordinates_file, dtype=str, comments="image_name", ndmin=2)
 
-            return coordinates[:,:3].astype('i')
-        except:
+                # threshold positions using mean of score distribution
+                boxes = coordinates.copy().astype('f')
+                # mean = boxes[:,-1].mean()
+                # boxes[:,-1] = ( boxes[:,-1] - mean )
+                coordinates = boxes[ boxes[:,-1] > args["detect_nn3d_thresh"] ]
+                logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_nn3d_thresh"]))
+
+                if len(coordinates) > 0:
+                    return coordinates[:,:3].astype('i')
+                else:
+                    logger.warning("No particles found")
+                    return np.array([])
+
+            except:
+                logger.warning("No particles found")
+                return np.array([])
+        else:
             logger.warning("No particles found")
-            pass
+            return np.array([])
+
     else:
         logger.error("A model is needed for 3D NN-based particle picking")
