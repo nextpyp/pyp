@@ -114,6 +114,8 @@ def save_tiltseries_to_website(name, metadata, verbose=False ):
             Web.BOXX(x[0], x[1], x[2], x[3], int(x[4]), int(x[5]))
             for x in np.loadtxt(boxx_path, ndmin=2)
         ]
+    else:
+        boxx = []
 
     # actually send the tilt series to the website
     Web().write_tiltseries(name, ctf, avgrot, xf, boxx, metadata)
