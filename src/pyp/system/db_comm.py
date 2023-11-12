@@ -347,6 +347,10 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
     initial_files = [
         "raw/{0}.rawtlt",
         "webp/{0}.webp",
+        "webp/{0}_rec.webp",
+        "webp/{0}_ali.webp",
+        "webp/{0}_sides.webp",
+        "webp/{0}_raw.webp",
         "mrc/{0}.mrc",
         "mrc/{0}.rec",
         "next/{0}.next",
