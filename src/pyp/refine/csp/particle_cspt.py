@@ -1861,8 +1861,8 @@ def classmerge_succeed(parameters: dict) -> bool:
     while time.time() - start_time < TIMEOUT:
         
         if cspswarm_fail_tag.exists():
-            # cspswarm/classmerge/cspmerge are all resubmitted, terminate this cspmerge directly
-            os.remove(cspswarm_fail_tag)
+            # partial cspswarm(s) & classmerge & cspmerge are all resubmitted by classmerge (one or more cspswarm(s) failed)
+            # so terminate this cspmerge directly
             return False
 
         classmerge_all_complete = True
@@ -1875,7 +1875,7 @@ def classmerge_succeed(parameters: dict) -> bool:
 
         time.sleep(INTERVAL)
 
-    # part of the classmerge jogs fail, resubmit classmerge and cspmerge 
+    # part of the classmerge jobs failed, resubmit classmerge & cspmerge (w/o cspswarm)
     parameters["slurm_merge_only"] = True
     
     slurm.launch_csp(micrograph_list=[],
