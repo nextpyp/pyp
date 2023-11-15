@@ -935,55 +935,11 @@ def merge_check_err_and_resubmit(
 
         os.chdir("swarm")
 
-        timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
-            "%Y%m%d_%H%M%S"
-        )
-
-        # launch processing
-        swarm_file = slurm.create_csp_swarm_file(
-            movies_resubmit, parameters, iteration, "cspswarm.swarm"
-        )
-
         if not os.path.exists("cspswarm.swarm_missing"):
-            if parameters["csp_parx_only"]:
-                id = slurm.submit_jobs(
-                    ".",
-                    swarm_file,
-                    "cspswarm",
-                    "process",
-                    parameters["slurm_queue"],
-                    0,
-                    2,
-                    20,
-                ).strip()
-            else:
-                (id, procs) = slurm.submit_jobs(
-                    ".",
-                    swarm_file,
-                    jobtype="cspswarm",
-                    jobname="Retry failed jobs",
-                    queue=parameters["slurm_queue"],
-                    scratch=0,
-                    threads=parameters["slurm_tasks"],
-                    memory=parameters["slurm_memory"],
-                    walltime=parameters["slurm_walltime"],
-                    tasks_per_arr=int(parameters["slurm_bundle_size"]),
-                    csp_no_stacks=parameters["csp_no_stacks"],
-                )
-                id = id.strip() + "_1"
-
-            slurm.submit_jobs(
-                ".",
-                run_pyp(command="pyp"),
-                jobtype="cspmerge",
-                jobname="Retry merge",
-                queue=parameters["slurm_queue"],
-                scratch=0,
-                threads=parameters["slurm_merge_tasks"],
-                memory=parameters["slurm_merge_memory"],
-                walltime=parameters["slurm_merge_walltime"],
-                dependencies=id,
-            )
+            slurm.launch_csp(micrograph_list=movies_resubmit,
+                            parameters=parameters,
+                            swarm_folder=Path().cwd(),
+                            )
             message = "Successfully re-submitted failed jobs"
 
             # save flag to indicate failure
@@ -992,6 +948,7 @@ def merge_check_err_and_resubmit(
         else:
             logger.error("Giving up retrying...")
             os.remove("cspswarm.swarm_missing")
+            message = "Stop re-submitting failed jobs"
 
         raise Exception(message)
 
@@ -1291,6 +1248,10 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     mp = project_params.load_pyp_parameters("../..")
     fp = mp
 
+    
+    if not classmerge_succeed(fp):
+        raise Exception("One or more classmerge job(s) failed")
+
     iteration = fp["refine_iter"]
 
     if iteration == 2:
@@ -1446,6 +1407,8 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     if "refine_skip" in fp.keys() and fp["refine_skip"] and fp["class_num"] > 1:
         fp["refine_skip"] = False
 
+    fp["slurm_merge_only"] = False
+
     project_params.save_parameters(fp, ".")
 
     # launch next iteration if needed
@@ -1567,7 +1530,7 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
 
     # timer will be reset if we get a batch of files
     # set the timer to slurm_merge_walltime - 10 min 
-    TIMEOUT =  slurm.get_total_seconds(parameters["slurm_merge_walltime"]) - 10 * 60 
+    TIMEOUT =  slurm.get_total_seconds(parameters["slurm_walltime"]) - 10 * 60 
     INTERVAL = 10           # 10 s 
     start_time = time.time()
 
@@ -1864,3 +1827,61 @@ def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="orderi
         dataset_name = fp["refine_dataset"] + "_%s" % pattern
 
         run_mpi_reconstruction(ref, pattern, dataset_name, iteration, mp, fp, input_dir, orderings)
+
+
+
+def classmerge_succeed(parameters: dict) -> bool: 
+    """classmerge_succeed Check if classmerge jobs all succeed. If not, either terminate current cspmerge or relaunch classmerge/cspmerge
+
+    Parameters
+    ----------
+    parameters : dict
+        PYP parameters 
+
+    Returns
+    -------
+    bool
+        Succeed or not
+    """
+    # see if classmerge resubmits cspwarm by its logs
+    # currently in frealign/scratch
+    frealign_maps = Path().cwd().parent / "maps"
+    swarm_folder = Path().cwd().parent.parent / "swarm"
+    cspswarm_fail_tag = swarm_folder / "cspswarm.swarm_missing"
+
+    dataset = parameters["data_set"]
+    iteration = parameters["refine_iter"]
+    num_classes = parameters["class_num"] if parameters["refine_iter"] > 2 else 1
+    maps_classes = [f"{dataset}_r{class_idx+1:02d}_{iteration:02d}.mrc" for class_idx in range(num_classes)]
+ 
+    TIMEOUT =  slurm.get_total_seconds(parameters["slurm_merge_walltime"]) - 10 * 60 
+    INTERVAL = 10           # 10 s 
+    start_time = time.time()
+
+    while time.time() - start_time < TIMEOUT:
+        
+        if cspswarm_fail_tag.exists():
+            # cspswarm/classmerge/cspmerge are all resubmitted, terminate this cspmerge directly
+            os.remove(cspswarm_fail_tag)
+            return False
+
+        classmerge_all_complete = True
+        for map in maps_classes:
+            if not (frealign_maps / map).exists():  
+                classmerge_all_complete = False 
+
+        if classmerge_all_complete:
+            return True       
+
+        time.sleep(INTERVAL)
+
+    # part of the classmerge jogs fail, resubmit classmerge and cspmerge 
+    parameters["slurm_merge_only"] = True
+    
+    slurm.launch_csp(micrograph_list=[],
+                    parameters=parameters,
+                    swarm_folder=swarm_folder,
+                    )
+    return False
+
+
