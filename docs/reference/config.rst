@@ -194,7 +194,8 @@ This section is used to configure properties of the SLURM_ cluster.
 ~~~~~~~~
 
 :Type: string
-:Required: yes
+:Required: no
+:Default: The username of the website process
 :Description:
 	The user name PYP will use to SSH into the SLURM login node.
 :Examples:
