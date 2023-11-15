@@ -84,6 +84,7 @@ This step runs coarse 3D refinement to assign particle orientations using an ext
         -refine_maxiter 4             \
         -refine_rhref "8:7:6"         \
         -refine_fboost                \
+        -refine_priors                \
         -reconstruct_cutoff "0"       \
         -refine_model PATH_TO/spr_tutorial/initial_model.mrc
 

@@ -235,6 +235,13 @@ path = { type="files", glob=true }
 required = true
 hidden = ["spr_import", "tomo_import"]
 
+[tabs.data.path_mdoc]
+name = "Location of mdoc files"
+description = "Location of mdoc files containing the metadata"
+type = "path"
+path = { type="files", glob=true }
+hidden = ["spr_import", "tomo_import", "spr_import_raw", "spr_import_star", "tomo_import_star" ]
+
 [tabs.data.parent]
 name = "Path to existing CLI project"
 description = "Path to existing CLI project"

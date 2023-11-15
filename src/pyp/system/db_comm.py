@@ -73,7 +73,7 @@ def save_micrograph_to_website(name,verbose=False):
             for x in np.loadtxt(boxx_path, ndmin=2)
         ]
     else:
-        logger.warning("Cannot find boxx information to submit to database")
+        boxx = []
 
     # actually send the micrograph to the website
     Web().write_micrograph(name, ctf, avgrot, xf, boxx)
@@ -114,6 +114,8 @@ def save_tiltseries_to_website(name, metadata, verbose=False ):
             Web.BOXX(x[0], x[1], x[2], x[3], int(x[4]), int(x[5]))
             for x in np.loadtxt(boxx_path, ndmin=2)
         ]
+    else:
+        boxx = []
 
     # actually send the tilt series to the website
     Web().write_tiltseries(name, ctf, avgrot, xf, boxx, metadata)
@@ -345,6 +347,10 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
     initial_files = [
         "raw/{0}.rawtlt",
         "webp/{0}.webp",
+        "webp/{0}_rec.webp",
+        "webp/{0}_ali.webp",
+        "webp/{0}_sides.webp",
+        "webp/{0}_raw.webp",
         "mrc/{0}.mrc",
         "mrc/{0}.rec",
         "next/{0}.next",

@@ -1342,7 +1342,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if not skip:
         load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
 
-        if os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
+        if parameters["tomo_vir_method"] != "none" and os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
             # virion exlusion input from website
             seg_thresh = np.loadtxt("virion_thresholds.next", dtype=str, ndmin=2)
             TS_seg = seg_thresh[seg_thresh[:, 0] == name]
@@ -1478,7 +1478,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # we need .ali for either sub-volume or virion extraction
     tilt_metadata["tilt_axis_angle"] = get_tilt_axis_angle(name, parameters)
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
-        parameters["detect_force"] or \
+        ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
         parameters["tomo_vir_force"] or \
         parameters["tomo_rec_force"] or \
         parameters["tomo_rec_erase_fiducials"] or \
@@ -1514,7 +1514,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     mpi_funcs, mpi_args = [ ], [ ]
 
     # produce binned tomograms
-    need_recalculation = not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_force"] or parameters["tomo_rec_erase_fiducials"]
+    need_recalculation = parameters["tomo_rec_force"] or ( not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_erase_fiducials"] )
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )

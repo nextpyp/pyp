@@ -23,41 +23,41 @@ def extract(image,boxes,boxsize):
     return particles
 
 class Picker():
-    
+
     @timer.Timer(
-        "init", text="Total time elapsed (init): {}", logger=logger.info
+        "init", text="Total time elapsed (picker init): {}", logger=logger.info
     )
     def __init__(self,name,radius=100,pixelsize=2.1,auto_binning = 12,show=False):
         self.radius=radius
         self.pixelsize=pixelsize
         self.name=name
-        self.auto_binning = auto_binning        
-        
+        self.auto_binning = auto_binning
+
         self.rec = mrc.read(name+'.rec')
         self.tilesize = int(3 * radius / pixelsize/ auto_binning)
         if self.tilesize % 2 > 0:
             self.tilesize += 1
-            
+
         radius1 = 0.001
         radius2 = 0.5 * self.pixelsize * self.auto_binning / self.radius
         sigma1 = 0
         sigma2 = 0.001
-        
+
         com = "{5}/bin/mtffilter -3dfilter -radius1 {1} -hi {2} -l {3},{4} {0}.rec bp.mrc".format(
             self.name, radius1, sigma1, radius2, sigma2,get_imod_path()
         )
-        
-        
+
+
         run_shell_command(com)
-        
+
         self.lowres = mrc.read("bp.mrc")
-        
+
         if show:
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y "+name+".rec")
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y bp.mrc")
-            
+
     @timer.Timer(
-        "getcont", text="Total time elapsed (getcont): {}", logger=logger.info
+        "getcont", text="Total time elapsed (picker getcont): {}", logger=logger.info
     )
     def getcont(self,contract_times=1,gaussian=True,sigma=15,stdtimes=3.5,min_size=125,dilation=100,show=False):
         G = self.rec.reshape(int(self.rec.shape[0]/contract_times),contract_times,int(self.rec.shape[1]/contract_times),contract_times,int(self.rec.shape[2]/contract_times),contract_times).mean(1).mean(2).mean(3)
@@ -67,7 +67,7 @@ class Picker():
             if show:
                 mrc.write(scipy.ndimage.gaussian_filter(G, sigma=sigma), "gaussian.mrc")
                 run_shell_command(get_imod_path()+"/bin/imod -xyz -Y gaussian.mrc")
-            
+
         maskthres=G.mean()-stdtimes*G.std()
         mask = G < maskthres
         cmask = scipy.ndimage.morphology.binary_opening(mask, ball(1))
@@ -78,11 +78,11 @@ class Picker():
         if show:
             mrc.write(area, "area.mrc")
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y area.mrc")
-            
+
         return area
-        
+
     @timer.Timer(
-        "detect", text="Total time elapsed (detect): {}", logger=logger.info
+        "detect", text="Total time elapsed (picker detect): {}", logger=logger.info
     )
     def detect(self,area,contract_times=1,radius_times=4,inhibit=False,detection_width=128,show=False):
         points=self.minima_extract(radius_times=radius_times,inhibit=inhibit)
@@ -90,8 +90,8 @@ class Picker():
         for i in range(len(points)):
             x = points[i][0]
             y = points[i][1]
-            z = points[i][2] 
-            
+            z = points[i][2]
+
             clean = not area[int(x/contract_times),int(y/contract_times),int(z/contract_times)]
             inside = (
                 x- self.tilesize / 2 >= 0
@@ -105,7 +105,7 @@ class Picker():
             )
             if clean and inside:
                 boxes.append([z,y,x])
-        
+
         logger.info(str(len(boxes)) + " initial positions found")
 
         if show:
@@ -114,19 +114,19 @@ class Picker():
             f.close()
             run_shell_command(get_imod_path()+'/bin/point2model boxes.txt boxes.mod -sp 5')
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y bp.mrc boxes.mod")
-            
+
 
         raw_particles = extract(self.lowres, boxes,self.tilesize)
         return boxes,raw_particles
-    
+
     @timer.Timer(
-        "prefilt", text="Total time elapsed (prefilt): {}", logger=logger.info
+        "prefilt", text="Total time elapsed (picker prefilt): {}", logger=logger.info
     )
     def prefilt(self,raw_particles,stdtimes=1):
         x, y= np.mgrid[0:self.tilesize, 0:self.tilesize] - self.tilesize / 2 + 0.5
         condition2d = np.sqrt(x*x+y*y) > self.radius / self.pixelsize / self.auto_binning
         raw_particles2d=raw_particles.sum(axis=2)
-        
+
         particles_metrics = np.zeros([raw_particles.shape[0],2])
         for p in range(raw_particles.shape[0]):
             raw = raw_particles2d[p, :, :]
@@ -135,13 +135,13 @@ class Picker():
             particles_metrics[p,0] =foreground.std()
             particles_metrics[p,1] =background.std()
         stdmean,stdstd=particles_metrics[:,0].mean(),particles_metrics[:,0].std()
-        logger.info("stdmean: "+str(stdmean)+", stdstd: "+str(stdstd))
-        
+        logger.info("Pre-filtering stdmean: "+str(stdmean)+", stdstd: "+str(stdstd))
+
         stdthreshold=stdmean+stdstd*stdtimes
         return particles_metrics,stdthreshold
 
     @timer.Timer(
-        "filt", text="Total time elapsed (filt): {}", logger=logger.info
+        "filt", text="Total time elapsed (picker filt): {}", logger=logger.info
     )
     def filt(self,boxes,particles_metrics,stdthreshold,remove_edge,show=False):
         boxs = []
@@ -155,12 +155,12 @@ class Picker():
         rawboxs=[rawboxs[k] for k in sorted(rawboxs.keys())]
         for b in rawboxs:
             boxs+=b
-            
+
         f = open('boxs.txt', 'w')
         f.writelines([' '.join(str(boxs[i])[1:-1].split(', '))+'\n' for i in range(len(boxs))])
         f.close()
         circle = int(self.radius / self.pixelsize / self.auto_binning)
-        logger.info("Saving coordinates as spk and swap Y Z")
+        # Saving coordinates in spk format and swapping Y-Z
         run_shell_command(get_imod_path()+'/bin/point2model boxs.txt '+self.name+'.mod -sphere %s' % circle,  verbose=False)
         run_shell_command(get_imod_path()+'/bin/imodtrans -Y -T ' +self.name+ '.mod ' + self.name + ".spk", verbose=False )
         logger.info(str(len(boxs)) + " particles detected")
@@ -168,9 +168,9 @@ class Picker():
         if show:
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y bp.mrc "+self.name+".spk")
             self.show_particles(boxs,times=3)
-            
+
     @timer.Timer(
-        "minima_extract", text="Total time elapsed (minima_extract): {}", logger=logger.info
+        "minima_extract", text="Total time elapsed (picker minima_extract): {}", logger=logger.info
     )
     def minima_extract(self,radius_times=4,inhibit=False):
         locality = int(radius_times*self.radius / self.pixelsize / self.auto_binning)
@@ -199,9 +199,9 @@ class Picker():
         while inhibited>0:
             inhibited=0
             minf=scipy.ndimage.minimum_filter(edited, locality)
-            
+
             editmax=edited.max()
-            
+
             for k in rawpoints.keys():
                 for i in range(len(rawpoints[k])):
                     p=rawpoints[k][i]
@@ -223,7 +223,7 @@ class Picker():
                         b=edited.shape[1] if b>edited.shape[1] else b
                         c=edited.shape[2] if c>edited.shape[2] else c
                         edited[x:a,y:b,z:c]+=(edited[x:a,y:b,z:c]==minimum)*(editmax-edited[x:a,y:b,z:c])
-                        
+
             deleting={}
             for k in rawpoints.keys():
                 for i in range(len(rawpoints[k])):
@@ -238,8 +238,8 @@ class Picker():
                             if k not in deleting:
                                 deleting[k]=[]
                             deleting[k].append(i)
-                            
-            
+
+
             for k in deleting.keys():
                 for i in range(len(deleting[k])-1,-1,-1):
                     point=rawpoints[k][deleting[k][i]][0]
@@ -252,7 +252,7 @@ class Picker():
             for p in rawpoints[k]:
                 points.append(p[0])
         return points
-            
+
     def show_particles(self,boxs,times=3):
         outboxs=[]
         for b in boxs:
@@ -272,23 +272,20 @@ class Picker():
         outmrc = extract(self.rec, outboxs,self.tilesize*times)
         mrc.write(outmrc.sum(axis=2), "particles.mrc")
         run_shell_command(get_imod_path()+"/bin/imod -xyz particles.mrc")
-        
+
 @timer.Timer(
-    "pick", text="Total time elapsed (pick): {}", logger=logger.info
+    "pick", text="Total time elapsed (picker): {}", logger=logger.info
 )
 
 
 def pick(name,radius=100,pixelsize=2.1,auto_binning = 12,contract_times=1,gaussian=False,sigma=15,stdtimes_cont=3.5,min_size=125,dilation=100,radius_times=4,inhibit=False,detection_width=128,stdtimes_filt=1,remove_edge=False,show=False):
-    
+
     p=Picker(name,radius=radius,pixelsize=pixelsize,auto_binning = auto_binning,show=show)
     area=p.getcont(contract_times=contract_times,gaussian=gaussian,sigma=sigma,stdtimes=stdtimes_cont,min_size=min_size,dilation=dilation,show=show)
-    
+
     boxes,raw_particles=p.detect(area,contract_times=contract_times,radius_times=radius_times,inhibit=False,detection_width=detection_width,show=show)
     particles_metrics,stdthreshold=p.prefilt(raw_particles,stdtimes=stdtimes_filt)
     if inhibit:
         boxes,raw_particles=p.detect(area,contract_times=contract_times,radius_times=radius_times,inhibit=True,detection_width=detection_width,show=show)
         particles_metrics,_=p.prefilt(raw_particles,stdtimes=stdtimes_filt)
     p.filt(boxes,particles_metrics,stdthreshold,remove_edge,show)
-    
-    
-    
