@@ -1873,67 +1873,10 @@ def csp_split(parameters, iteration):
     os.makedirs("swarm", exist_ok=True)
     os.chdir("swarm")
 
-    # timestamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
-
-    # launch processing
-    swarm_file = slurm.create_csp_swarm_file(
-        files, parameters, iteration, "cspswarm.swarm"
-    )
-
-    jobtype = jobname = "cspswarm"
-    if Web.exists:
-        jobname = "Iteration %d (split)" % parameters["refine_iter"]
-
-    # submit jobs to batch system
-    if parameters["slurm_merge_only"]:
-        id = ""
-    else:
-        if parameters["csp_parx_only"]:
-            id = slurm.submit_jobs(
-                ".",
-                swarm_file,
-                jobtype,
-                jobname,
-                queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-                scratch=0,
-                threads=2,
-                memory=20,
-            ).strip()
-        else:
-            (id, procs) = slurm.submit_jobs(
-                ".",
-                swarm_file,
-                jobtype,
-                jobname,
-                queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-                threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
-                walltime=parameters["slurm_walltime"],
-                tasks_per_arr=parameters["slurm_bundle_size"],
-                csp_no_stacks=parameters["csp_no_stacks"],
-            )
-            # allow cspmerge to start after any one of cspswarm jobs terminates
-            # id = ",".join([f"{id}_{str(arr_id)}" for arr_id in range(1, procs+1)]).replace(",", "?", 1)
-
-            # just use the first array job as prerequisite
-            id = id.strip() + "_1"
-
-    jobtype = jobname = "cspmerge"
-    if Web.exists:
-        jobname = "Iteration %d (merge)" % parameters["refine_iter"]
-
-    slurm.submit_jobs(
-        ".",
-        run_pyp(command="pyp"),
-        jobtype,
-        jobname,
-        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-        scratch=0,
-        threads=parameters["slurm_merge_tasks"],
-        memory=parameters["slurm_merge_memory"],
-        walltime=parameters["slurm_merge_walltime"],
-        dependencies=id,
-    )
+    slurm.launch_csp(micrograph_list=files,
+                    parameters=parameters,
+                    swarm_folder=Path().cwd(),
+                    )
 
     os.chdir(workdir)
 
@@ -3926,6 +3869,19 @@ if __name__ == "__main__":
             except:
                 trackback()
                 logger.error("PYP (cspswarm) failed")
+                pass
+
+        elif "classmerge" in os.environ:
+
+            del os.environ["classmerge"]
+
+            try:
+                args = project_params.parse_arguments("classmerge")
+                path = os.path.join(os.getcwd(), "..", "frealign", "scratch")
+                particle_cspt.csp_class_merge(class_index=args.classId, input_dir=path)
+            except:
+                trackback()
+                logger.error("PYP (classmerge) failed")
                 pass
 
         elif "cspmerge" in os.environ:
