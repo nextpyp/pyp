@@ -71,6 +71,88 @@ to point to the new shared folder you just created, e.g.:
     [web]
     shared = '/nfs/nextpyp/shared'
 
+You'll also need to add (or change) the ``web.host`` and/or ``web.webhost`` settings to match your network
+configuration. Depending on how your network is configured, choose one of the following options.
+
+Option 1: The SLURM cluster and the web server are on a shared private network
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, the application web server only binds to the loopback network interface
+to prevent access from external networks. To let SLURM compute nodes access the website,
+you must configure the web server to bind to the network interface used by the SLURM cluster
+by configuring the ``web.host`` setting. The correct value to use here will be the hostname or IP address
+that a SLURM compute node can use to connect to the web server. For example:
+
+.. code-block:: toml
+
+    [web]
+    host = 'nextpyp.internal.myorganization.org'
+
+.. note::
+
+    If you're also using the reverse proxy server, you'll need to update the reverse proxy configuration
+    to forward traffic to the same address you specified in the ``web.host`` setting.
+
+    By default, the reverse proxy forwards traffic to the loopback interface, but since we just configured
+    the web server to listen to a different network interface, the reverse proxy server won't be able to
+    find the web server anymore.
+
+    Change the reverse proxy server target by adding a second argument to the ``ExecStart``
+    directive in the systemd unit file at ``lib/systemd/system/nextPYP-rprox.service``.
+    The value of the argument should be the value of the ``web.host`` setting, e.g.:
+
+    .. code-block::
+
+        ExecStart="/usr/bin/nextpyp-startrprox" "nextpyp.myorganization.org" "nextpyp.internal.myorganization.org"
+
+    If you're using a non-default value for ``web.port``, include that in the proxy target as well, e.g.:
+
+    .. code-block::
+
+        ExecStart="/usr/bin/nextpyp-startrprox" "nextpyp.myorganization.org" "nextpyp.internal.myorganization.org:8083"
+
+    **TODO**: This option isn't actually supported yet on the Caddy-based reverse proxy container.
+    And the Apache-based reverse proxy container receives the target setting in a different way,
+    using the ``--target`` option.
+
+.. warn::
+
+    If the hostname or IP address you choose for the ``web.host`` setting is reachable from the public
+    internet, these settings will lead to a less secure configuration and increase your risk of a
+    security compromise! You should only use this configuration if the ``web.host`` value is only available
+    within your private network, and not the public internet.
+
+.. note::
+
+    Also update your firewall settings to allow traffic from your SLURM nodes to the web server,
+    over port 8080 by default, or the current value of your ``web.port`` setting.
+
+Option 2: The SLURM cluster and the web server are only connected through the public internet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You might run into this situation if your web server and the SLURM cluster are on different
+networks. In this situation, the SLURM nodes must connect to the website through the
+`reverse proxy <./install-rprox.rst>`_ server.
+
+To enable access in this environment, set the ``web.webhost`` setting to the public internet URL
+of the web server, using the HTTPs protocol and no port number, e.g.:
+
+.. code-block:: toml
+
+    [web]
+    webhost = 'https://nextpyp.myorganization.org'
+
+Do not use the ``web.host`` setting in this environment. The default value here will be correct.
+
+.. note::
+
+    The ``web.host`` and the ``web.webhost`` settings are actually different from each other!
+    Be sure not to get them confused. With the benefit of hindsight, the ``web.webhost`` setting
+    would perhaps be better named ``web.url`` now, but we'd rather not make a breaking change there.
+
+SLURM configuration
+~~~~~~~~~~~~~~~~~~~
+
 Then add a new ``[slurm]`` section to the config file as well.
 At a minimum, we'll need to set the ``slurm.host`` property.
 
