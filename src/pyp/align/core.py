@@ -4254,7 +4254,7 @@ EOF
     else:
         [output, error] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
-    if "Segmentation fault" in error:
+    if "Segmentation fault" in error or "Killed" in error:
         logger.error("Try increasing the Memory per task in the Resources tab (or --slurm_memory parameter in the CLI)")
         raise Exception(error)
 
