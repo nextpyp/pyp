@@ -3879,6 +3879,7 @@ if __name__ == "__main__":
                 args = project_params.parse_arguments("classmerge")
                 path = os.path.join(os.getcwd(), "..", "frealign", "scratch")
                 particle_cspt.csp_class_merge(class_index=args.classId, input_dir=path)
+                logger.info("PYP (classmerge) finished successfully")
             except:
                 trackback()
                 logger.error("PYP (classmerge) failed")
