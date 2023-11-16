@@ -935,7 +935,7 @@ def merge_check_err_and_resubmit(
 
         os.chdir("swarm")
 
-        if not os.path.exists("cspswarm.swarm_missing"):
+        if not os.path.exists(".cspswarm_retry"):
             slurm.launch_csp(micrograph_list=movies_resubmit,
                             parameters=parameters,
                             swarm_folder=Path().cwd(),
@@ -943,11 +943,12 @@ def merge_check_err_and_resubmit(
             message = "Successfully re-submitted failed jobs"
 
             # save flag to indicate failure
-            Path("cspswarm.swarm_missing").touch()
+            Path(".csp_current_fail").touch()
+            Path(".cspswarm_retry").touch()
 
         else:
             logger.error("Giving up retrying...")
-            os.remove("cspswarm.swarm_missing")
+            os.remove(".cspswarm_retry")
             message = "Stop re-submitting failed jobs"
 
         raise Exception(message)
@@ -1248,9 +1249,13 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     mp = project_params.load_pyp_parameters("../..")
     fp = mp
 
-    
-    if not classmerge_succeed(fp):
-        raise Exception("One or more classmerge job(s) failed")
+    if not (fp["class_num"] > 1 and fp["refine_iter"] > 2):
+        # cspswarm -> cspmerge
+        csp_class_merge(class_index=1, input_dir=input_dir)
+    else: 
+        # cspswarm -> classmerge -> cspmerge
+        if not classmerge_succeed(fp):
+            raise Exception("One or more classmerge job(s) failed")
 
     iteration = fp["refine_iter"]
 
@@ -1283,10 +1288,6 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     )
     shutil.copy2(
         os.path.join(Path(input_dir).parents[1], ".pyp_config.toml"), local_frealign_scratch
-    )
-    symlink_relative(
-        os.path.join(Path(input_dir).parents[1], "box"),
-        os.path.join(local_frealign_scratch, "box"),
     )
 
     micrographs = {}
@@ -1749,10 +1750,6 @@ def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="orderi
     shutil.copy2(
         os.path.join(Path(input_dir).parents[1], ".pyp_config.toml"), local_frealign_scratch
     )
-    symlink_relative(
-        os.path.join(Path(input_dir).parents[1], "box"),
-        os.path.join(local_frealign_scratch, "box"),
-    )
 
     micrographs = {}
     all_micrographs_file = "../../" + mp["data_set"] + ".films"
@@ -1829,6 +1826,8 @@ def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="orderi
         run_mpi_reconstruction(ref, pattern, dataset_name, iteration, mp, fp, input_dir, orderings)
 
 
+    os.chdir(project_dir)
+
 
 def classmerge_succeed(parameters: dict) -> bool: 
     """classmerge_succeed Check if classmerge jobs all succeed. If not, either terminate current cspmerge or relaunch classmerge/cspmerge
@@ -1847,7 +1846,7 @@ def classmerge_succeed(parameters: dict) -> bool:
     # currently in frealign/scratch
     frealign_maps = Path().cwd().parent / "maps"
     swarm_folder = Path().cwd().parent.parent / "swarm"
-    cspswarm_fail_tag = swarm_folder / "cspswarm.swarm_missing"
+    cspswarm_fail_tag = swarm_folder / ".csp_current_fail"
 
     dataset = parameters["data_set"]
     iteration = parameters["refine_iter"]
@@ -1863,6 +1862,7 @@ def classmerge_succeed(parameters: dict) -> bool:
         if cspswarm_fail_tag.exists():
             # partial cspswarm(s) & classmerge & cspmerge are all resubmitted by classmerge (one or more cspswarm(s) failed)
             # so terminate this cspmerge directly
+            os.remove(cspswarm_fail_tag)
             return False
 
         classmerge_all_complete = True

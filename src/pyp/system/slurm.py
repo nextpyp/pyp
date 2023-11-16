@@ -166,6 +166,7 @@ def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swa
 
 def create_csp_classmerge_file(iteration, parameters, swarm_file="csp_class_merge.swarm"):
     f = open(swarm_file, "w")
+    # this function would not be called if iteration == 2, but just in case
     class_num = parameters["class_num"] if parameters["refine_iter"] > 2 else 1
     f.write(
         "\n".join(
@@ -521,17 +522,12 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
     else:
         parameters["slurm_merge_only"] = True
 
-    swarm_classmerge_file = create_csp_classmerge_file(
-        iteration, parameters, "csp_class_merge.swarm"
-    )
-
     jobtype = "cspswarm"
     jobname = "Iteration %d (split)" % parameters["refine_iter"] if Web.exists else "cspswarm"
 
     # submit jobs to batch system
     if parameters["slurm_merge_only"]:
         id = ""
-        class_merge_id = ""
     else:
         if parameters["csp_parx_only"]:
             id = submit_jobs(
@@ -561,22 +557,28 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
             # just use the first array job as prerequisite
             id = id.strip() + "_1"
 
-    jobtype = "classmerge"
-    jobname = "Iteration %d (classmerge)" % parameters["refine_iter"] if Web.exists else "classmerge"
-    
-    (class_merge_id, procs) = submit_jobs(
-        ".",
-        swarm_classmerge_file,
-        jobtype,
-        jobname,
-        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-        threads=parameters["slurm_tasks"],
-        memory=parameters["slurm_memory"],
-        walltime=parameters["slurm_walltime"],
-        tasks_per_arr=1, # one class per array job
-        csp_no_stacks=parameters["csp_no_stacks"],
-        dependencies=id,
-    )
+    if parameters["class_num"] > 1 and iteration > 2:
+
+        swarm_classmerge_file = create_csp_classmerge_file(
+            iteration, parameters, "csp_class_merge.swarm"
+        )
+            
+        jobtype = "classmerge"
+        jobname = "Iteration %d (classmerge)" % parameters["refine_iter"] if Web.exists else "classmerge"
+        
+        (id, procs) = submit_jobs(
+            ".",
+            swarm_classmerge_file,
+            jobtype,
+            jobname,
+            queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+            threads=parameters["slurm_tasks"],
+            memory=parameters["slurm_memory"],
+            walltime=parameters["slurm_walltime"],
+            tasks_per_arr=1, # one class per array job
+            csp_no_stacks=parameters["csp_no_stacks"],
+            dependencies=id,
+        )
 
     jobtype = "cspmerge"
     jobname = "Iteration %d (merge)" % parameters["refine_iter"] if Web.exists else "cspmerge"
@@ -591,7 +593,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
         threads=parameters["slurm_merge_tasks"],
         memory=parameters["slurm_merge_memory"],
         walltime=parameters["slurm_merge_walltime"],
-        dependencies=class_merge_id,
+        dependencies=id,
     )
 
     os.chdir(current_directory)
