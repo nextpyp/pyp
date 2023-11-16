@@ -475,7 +475,7 @@ def merge_movie_files_in_job_arr(
             if current_class == classes:
                 is_frealignx = True
                 convert_parfile = True
-            logger.info("Reconstruction using frealignx format")
+            logger.debug("Reconstruction using frealignx format")
 
         else:
             is_frealignx = True

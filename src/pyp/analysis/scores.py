@@ -751,7 +751,7 @@ def shape_phase_residuals(
     #         f.close()
 
 @timer.Timer(
-    "call_shape_phase_residuals", text="Shaping phase residuals took: {}", logger=logger.info
+    "call_shape_phase_residuals", text="Shaping scores took: {}", logger=logger.info
 )
 def call_shape_phase_residuals(
     input_par_file, output_par_file, png_file, fp, iteration
