@@ -122,7 +122,7 @@ def occupancy_extended(parameters, dataset, iteration, nclasses, path=".", is_fr
         "read par for occ", text = "OCC Read par took: {}", logger=logger.info
         ):
             for k in range(nclasses):
-                logger.info("Processing class {}".format(k + 1))
+                logger.debug("Processing class {}".format(k + 1))
                 parxfile = "%s/%s_r%02d_%02d.par" % (path, dataset, k + 1, iteration)
                 headerline = frealign_parfile.EXTENDED_NEW_PAR_HEADER[2].strip("\n").split()
                 column_names = np.array(headerline[1:])
@@ -497,7 +497,7 @@ def classification_initialization(parameters, dataset, classes, iteration, use_f
 
 
 @timer.Timer(
-    "get avg and variance", text="Get statistics for refine and reconstruct took: {}", logger=logger.info
+    "get avg and variance", text="Geting statistics for refine and reconstruct took: {}", logger=logger.debug
 )
 def get_statistics_from_par(parfile, statistics_file):
 
