@@ -35,7 +35,7 @@ When in login mode, the application will require some first-time setup to create
 the first administrator account.
 
 Open the application website in your browser. Then change the url in the address bar
-by replacing the ``/#/`` part with ``/#/admin``. This will load the hidden administration page.
+by replacing the ``/#/dashboard`` part with ``/#/admin``. This will load the hidden administration page.
 
 For example, if you access the website at the url ``https://nextpyp.myorganization.org``, then the URL
 for the administrator page will be ``https://nextpyp.myorganization.org/#/admin``.

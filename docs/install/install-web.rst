@@ -27,6 +27,19 @@ Step 1: Prerequisites for installation
        If you intend to attach a SLURM cluster later on, this account should have access
        to the required network resources, like the SLURM login node, and a shared filesystem.
 
+    If you don't have a service account ready already, and you only need it to work on the local machine,
+    you can create one in Debian-like Linux with:
+
+    .. code-block:: bash
+
+        sudo adduser --system --group nextpyp
+
+    If you're using RHEL-like Linux, try:
+
+    .. code-block:: bash
+
+        sudo adduser --system --user-group nextpyp
+
  * Access to GPUs (optional):
      This is only required when training neural networks for particle picking. ``nextPYP`` uses Apptainer_
      which natively supports NVIDIA CUDA & AMD ROCm, but we have only tested it using NVIDIA GPUs with CUDA
@@ -84,18 +97,18 @@ Step 3: Download and run the installation script
 ------------------------------------------------
 
 First, create the folder where ``nextPYP`` will be installed. Something like ``/opt/nextPYP`` works well.
-
-Navigate to the folder in a shell session:
+Then navigate to the folder in a shell session:
 
 .. code-block:: bash
 
+  sudo mkdir -p /opt/nextPYP
   cd /opt/nextPYP
 
 Then, download the installation script:
 
 .. code-block:: bash
 
-  wget https://nextpyp.app/files/pyp/latest/install
+  sudo wget https://nextpyp.app/files/pyp/latest/install
 
 .. note::
 
@@ -109,7 +122,7 @@ You'll need to supply the name of the service account as the ``$PYP_USER`` envir
 
 .. code-block:: bash
 
-  chmod u+x install
+  sudo chmod u+x install
   sudo PYP_USER=nextpyp ./install
 
 If the installer gives an error like ``$username is not a valid group``, then you'll

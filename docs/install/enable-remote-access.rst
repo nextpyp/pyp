@@ -39,6 +39,10 @@ To visit the website for your installation, open http://hostname:8080 in your we
 ``hostname`` is the network name of your server machine. The raw IP address will work here too,
 e.g. http://10.0.0.5:8080.
 
+.. tip::
+
+    If your operating system has an active firewall, be sure to allow traffic on port 8080.
+
 
 Option 2: Access through untrusted networks, like the public internet
 ---------------------------------------------------------------------
@@ -100,7 +104,17 @@ If all went well, you should be greeted with a response similar to the following
 
 .. code-block::
 
-    TODO
+    ● nextPYP-rprox.service - nextPYP-rprox
+         Loaded: loaded (/lib/systemd/system/nextPYP-rprox.service; enabled; vendor preset: enabled)
+         Active: active (running) since Thu 2023-11-16 21:44:24 UTC; 21s ago
+       Main PID: 3101 (starter)
+          Tasks: 22 (limit: 4558)
+         Memory: 58.1M
+            CPU: 221ms
+         CGroup: /system.slice/nextPYP-rprox.service
+                 ├─3101 "Apptainer instance: root [reverse-proxy]"
+                 ├─3102 appinit "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+                 └─3125 caddy run --config /var/www/reverse-proxy/Caddyfile
 
 You should be able to visit your website at the URL https://myserver.myorganization.org, where
 ``myserver.myorganization.org`` is the domain name you used in ``$PYP_DOMAIN``.
