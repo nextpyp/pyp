@@ -1,9 +1,9 @@
 
-==================================
-Installation: Enable Remote Access
-==================================
+====================
+Enable remote access
+====================
 
-The `base installation instructions <./install-web>`_ install a complete working application for people using
+The :doc:`base installation instructions <./install-web>` install a complete working application for people using
 ``nextPYP`` on their local computer in a way that is secure by default.
 
 If, after you've installed the base application, you want to allow access from over a network,
@@ -52,10 +52,8 @@ Choose this option if you'd like to use your website from an untrusted network, 
 Prerequisites
 ~~~~~~~~~~~~~
 
- * Domain name
-    Accessing the app website from an untrusted network requires your server to have a domain name,
-    e.g., ``myserver.myorganization.org``.
-    This method of allowing remote access will not work with raw IP addresses.
+* Domain name
+    Accessing the app website from an untrusted network requires your server to have a domain name, e.g., ``myserver.myorganization.org``. This method of allowing remote access will not work with raw IP addresses.
 
 
 Instructions
@@ -117,6 +115,8 @@ If all went well, you should be greeted with a response similar to the following
 
 You should be able to visit your website at the URL https://myserver.myorganization.org, where
 ``myserver.myorganization.org`` is the domain name you used in ``$PYP_DOMAIN``.
+
+If not, there are a few useful places to look for debugging information. See :doc:`troubleshooting<./troubleshooting>` for more details.
 
 .. note::
 

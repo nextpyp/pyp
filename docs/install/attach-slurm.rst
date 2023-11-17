@@ -1,9 +1,9 @@
 
-====================================
-Installation: Attach a SLURM cluster
-====================================
+======================
+Attach a SLURM cluster
+======================
 
-The `base installation instructions <./install-web>`_ install a complete working application that does
+The :doc:`base installation instructions <./install-web>` install a complete working application that does
 all the computation on the local machine.
 
 If, after you've installed the base application, you want to improve performance by attaching a SLURM_ cluster,
@@ -16,8 +16,7 @@ Step 1: Prerequisites
 ---------------------
 
  * SLURM scheduler:
-     ``nextPYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM
-     cluster must be reachable on the network from the machine where ``nextPYP`` is installed.
+ ``nextPYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM cluster must be reachable on the network from the machine where ``nextPYP`` is installed.
 
  * Shared filesystem:
      ``nextPYP`` requires that the web server and the SLURM cluster share a single filesystem (e.g.
@@ -98,7 +97,7 @@ that a SLURM compute node can use to connect to the web server. For example:
     find the web server anymore.
 
     Change the reverse proxy server target by adding a second argument to the ``ExecStart``
-    directive in the systemd unit file at ``lib/systemd/system/nextPYP-rprox.service``.
+    directive in the systemd unit file at ``/lib/systemd/system/nextPYP-rprox.service``.
     The value of the argument should be the value of the ``web.host`` setting, e.g.:
 
     .. code-block::
@@ -213,12 +212,12 @@ To generate a new SSH key for the service account, run the following commands as
 
 .. note::
 
-    * You may need to create the ``.ssh`` folder if it doesn't already exist.
+    * You may need to create the ``.ssh`` folder if it doesn't already exist. 
     Be sure to set the
     `correct filesystem permissions for .ssh folders <https://itishermann.me/blog/correct-file-permission-for-ssh-keys-and-folders/>`_.
 
-    * RSA keys are known to work well with ``nextPYP``'s `SSH client <http://www.jcraft.com/jsch/>`_,
-    but if your organization prefers the newer ECDSA key type, you can try to generate one of those instead.
+    * RSA keys are known to work well with ``nextPYP``'s `SSH client <http://www.jcraft.com/jsch/>`_.
+    If your organization prefers the newer ECDSA key type, you can try to generate one of those instead.
     The SSH client advertises support for ECDSA keys, but we havent tested them ourselves.
 
 Other SSH configurations than the one suggested here may work as well. If you stray from the defaults,
@@ -244,7 +243,7 @@ If instead, you see an error or a timeout or a no-response message of some kind,
 To find out what went wrong will require some debugging.
 
 The first useful place to look for error information will be the ``micromon`` log in the ``local/logs`` folder of
-your installation. Errors with the SSH connection will appear there.
+your installation. Errors with the SSH connection will appear there. See :doc:`troubleshooting<./troubleshooting>` for more details.
 
 The next place to look for errors is the log files in the ``shared/log`` folder in the shared filesystem.
 If worker processes can't connect to the website, their log files will usually explain why. Usually problems
