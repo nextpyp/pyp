@@ -3,7 +3,7 @@
 Installation: Attach a SLURM cluster
 ====================================
 
-The `base installation instructions <./install-web.rst>`_ install complete working application that does
+The `base installation instructions <./install-web>`_ install a complete working application that does
 all the computation on the local machine.
 
 If, after you've installed the base application, you want to improve performance by attaching a SLURM_ cluster,
@@ -132,7 +132,7 @@ Option 2: The SLURM cluster and the web server are only connected through the pu
 
 You might run into this situation if your web server and the SLURM cluster are on different
 networks. In this situation, the SLURM nodes must connect to the website through the
-`reverse proxy <./install-rprox.rst>`_ server.
+`reverse proxy <./install-rprox>`_ server.
 
 To enable access in this environment, set the ``web.webhost`` setting to the public internet URL
 of the web server, using the HTTPs protocol and no port number, e.g.:
@@ -198,7 +198,7 @@ Step 4: SSH configuration
 To process a compute job, the website will attempt to SSH into the login node of the SLURM cluster to submit jobs.
 For this connection to work, the website must have access to an SSH key.
 
-To generate a new SSH key for the service account, run the following commands as the service account.
+To generate a new SSH key for the service account, run the following commands as the service account:
 
 .. code-block:: bash
 
@@ -213,30 +213,28 @@ To generate a new SSH key for the service account, run the following commands as
 
 .. note::
 
-    You may need to create the ``.ssh`` folder if it doesn't already exist.
+    * You may need to create the ``.ssh`` folder if it doesn't already exist.
     Be sure to set the
     `correct filesystem permissions for .ssh folders <https://itishermann.me/blog/correct-file-permission-for-ssh-keys-and-folders/>`_.
 
-.. note::
-
-    RSA keys are known to work well with nextPYP's `SSH client <http://www.jcraft.com/jsch/>`_,
+    * RSA keys are known to work well with ``nextPYP``'s `SSH client <http://www.jcraft.com/jsch/>`_,
     but if your organization prefers the newer ECDSA key type, you can try to generate one of those instead.
     The SSH client advertises support for ECDSA keys, but we havent tested them ourselves.
 
 Other SSH configurations than the one suggested here may work as well. If you stray from the defaults,
 you may need to update the ``config.toml`` file to describe your SSH configuration to the website.
 You can find more information about all of the SSH settings in the
-`full documentation for the configuration file <../reference/config.html>`_.
+`full documentation for the configuration file <../reference/config>`_.
 
 
 Step 5: Test the new configuration
 ----------------------------------
 
 After the website is restarted, go to the administration page. You can access the administration page by
-clicking on your username in the upper right corner and clcking the administration link there. Or you can
+clicking on your username in the upper right corner and clicking the administration link there. Or you can
 just visit the administration page directly by changing the path (and hash) parts of the URL to ``/#/admin``.
 
-On the administration page, in the "PYP" tab, click the "PYP/WebRPC Ping" button.
+On the administration page, in the *PYP* tab, click the *PYP/WebRPC Ping* button.
 
 This button will launch a short simple job on the cluster and wait for the result.
 

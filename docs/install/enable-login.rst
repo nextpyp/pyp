@@ -3,7 +3,7 @@
 Installation: Enable Multiple Users
 ===================================
 
-The `base installation instructions <./install-web.rst>`_ install complete working application for
+The `base installation instructions <./install-web>`_ install a complete working application for
 a single person.
 
 If, after you've installed the base application, you want to allow multiple people to access it,

@@ -3,6 +3,14 @@
 Installation
 ============
 
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Menu
+
+   enable-login
+   enable-remote-access
+   attach-slurm
 
 Supported operating systems
 ---------------------------
@@ -18,14 +26,14 @@ Step 1: Prerequisites for installation
 --------------------------------------
 
  * Service account:
-     ``nextPYP`` requires a service account to run the web server process.
-     Because this user account runs a web server which may be exposed to external networks,
-     like the public internet, the service account should not have administrative privileges.
+    ``nextPYP`` requires a service account to run the web server process.
+    Because this user account runs a web server which may be exposed to external networks,
+    like the public internet, the service account should not have administrative privileges.
 
-     .. note::
+    .. note::
 
-       If you intend to attach a SLURM cluster later on, this account should have access
-       to the required network resources, like the SLURM login node, and a shared filesystem.
+      If you intend to attach a SLURM cluster later on, this account should have access
+      to the required network resources, like the SLURM login node, and a shared filesystem.
 
     If you don't have a service account ready already, and you only need it to work on the local machine,
     you can create one in Debian-like Linux with:
@@ -41,17 +49,14 @@ Step 1: Prerequisites for installation
         sudo adduser --system --user-group nextpyp
 
  * Access to GPUs (optional):
-     This is only required when training neural networks for particle picking. ``nextPYP`` uses Apptainer_
-     which natively supports NVIDIA CUDA & AMD ROCm, but we have only tested it using NVIDIA GPUs with CUDA
-     version 11.8. Support for other CUDA versions or AMD ROCm may require rebuilding the containers with driver
-     and library versions matching the host configuration.
+    GPUs are only required to execute certain processing steps in ``nextPYP``. For example, they are needed to train neural networks used for particle picking (both for single-particle and tomography). ``nextPYP`` uses Apptainer_ which natively supports NVIDIA CUDA & AMD ROCm, but we have only tested it using NVIDIA GPUs with CUDA version 11.8. Support for other CUDA versions or AMD ROCm may require rebuilding the containers with driver and library versions matching the host configuration.
 
 
 Step 2: Install operating system packages
 -----------------------------------------
 
 The only packages needed are Apptainer_ (formerly Singularity) and ``wget``. Instructions for installing
-then vary by operating system.
+then vary by operating system:
 
 .. _Apptainer: http://apptainer.org/
 
@@ -200,7 +205,7 @@ Running the ``wget`` command above should return a response like the following.
     
     2023-11-15 11:46:35 (47.7 MB/s) - written to stdout [353/353]
 
-If you get errors instead of something similar to above responses, then the application did not start up successfully.
+If you get errors instead of something similar to the responses above, then the application did not start up successfully.
 You can look for clues as to what went wrong by checking the various log files.
 See `troubleshooting`_ for more details.
 
@@ -211,7 +216,7 @@ in your browser now at http://localhost:8080.
 
   If you're logged into the server remotely over SSH, you won't be able to visit the website in your browser just yet.
   Remote network access to the website is disabled by default.
-  To enable remote access, head to `Next Steps`_.
+  To enable remote access, head to `Next steps`_.
 
 
 Step 5 (recommended): Configure access to system resources
@@ -268,31 +273,31 @@ After making changes to your configuration file, restart the application:
   sudo systemctl restart nextPYP
 
 There are many other configuration options supported beyond the ones described here.
-For a full reference, see <../reference/config.html>`_.
+For a full reference, see <../reference/config>`_.
 
 
-Next Steps
+Next steps
 ----------
 
 You can start using the application right away. By default, it's installed in single-user mode,
 runs computation jobs on the local server, and is only accessible locally. This is the simplest configuration
 for the application, but you can enable other configurations using the linked instructions below.
 
- * `Enable remote access <./enable-remote-access.rst>`_
+* `Enable remote access <./enable-remote-access>`_
 
-     If you're not logged into the server locally (i.e., with a keyboard and monitor), then you'll need
-     to enable remote access to use the website from the network. Follow these instructions to configure
-     remote network access.
+   If you're not logged into the server locally (i.e., with a keyboard and monitor), then you'll need
+   to enable remote access to use the website from the network. Follow these instructions to configure
+   remote network access.
 
- * `Enable multiple users <./enable-login.rst>`_
+* `Enable multiple users <./enable-login>`_
 
-     If you need to allow multiple different people to use the application, but want them to have
-     separate projects and storage locations, follow these instructions to set up multi-user mode.
+   If you need to allow multiple different people to use the application, but want them to have
+   separate projects and storage locations, follow these instructions to set up multi-user mode.
 
- * `Attach a SLURM cluster <./attach-slurm.rst>`_
+* `Attach a SLURM cluster <./attach-slurm>`_
 
-     For large processing jobs, using a compute cluster can speed up results significantly.
-     These instructions show how to attach a SLURM cluster to your installation.
+   For large processing jobs, using a compute cluster can speed up results significantly.
+   These instructions show how to attach a SLURM cluster to your installation.
 
 
 .. _troubleshooting:

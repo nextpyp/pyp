@@ -3,7 +3,7 @@
 Installation: Enable Remote Access
 ==================================
 
-The `base installation instructions <./install-web.rst>`_ install complete working application for people using
+The `base installation instructions <./install-web>`_ install a complete working application for people using
 ``nextPYP`` on their local computer in a way that is secure by default.
 
 If, after you've installed the base application, you want to allow access from over a network,
@@ -53,7 +53,6 @@ Prerequisites
 ~~~~~~~~~~~~~
 
  * Domain name
-
     Accessing the app website from an untrusted network requires your server to have a domain name,
     e.g., ``myserver.myorganization.org``.
     This method of allowing remote access will not work with raw IP addresses.
@@ -63,7 +62,7 @@ Instructions
 ~~~~~~~~~~~~
 
 To allow people to access your app web site securely, we'll install the reverse proxy HTTP server
-that is bundled with nextPYP.
+that is bundled with ``nextPYP``.
 
 First, navigate to the folder where you installed the application, e.g. ``/opt/nextPYP``:
 
