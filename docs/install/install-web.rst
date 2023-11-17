@@ -273,7 +273,7 @@ After making changes to your configuration file, restart the application:
 
   sudo systemctl restart nextPYP
 
-There are many other configuration options supported beyond the ones described here. See the `full documentation for the configuration file <../reference/config>`_ for details.
+There are many other configuration options supported beyond the ones described here. See the :doc:`full documentation for the configuration file<../reference/config>` for details.
 
 Hopefully the services will start up perfectly and you can start using ``nextPYP`` right away. If not, there are a few useful places to look for debugging information. See :doc:`troubleshooting<./troubleshooting>` for more details.
 

@@ -87,8 +87,7 @@ that a SLURM compute node can use to connect to the web server. For example:
     [web]
     host = 'nextpyp.internal.myorganization.org'
 
-.. note::
-
+..
     If you're also using the reverse proxy server, you'll need to update the reverse proxy configuration
     to forward traffic to the same address you specified in the ``web.host`` setting.
 
@@ -100,13 +99,13 @@ that a SLURM compute node can use to connect to the web server. For example:
     directive in the systemd unit file at ``/lib/systemd/system/nextPYP-rprox.service``.
     The value of the argument should be the value of the ``web.host`` setting, e.g.:
 
-    .. code-block::
+    code-block::
 
         ExecStart="/usr/bin/nextpyp-startrprox" "nextpyp.myorganization.org" "nextpyp.internal.myorganization.org"
 
     If you're using a non-default value for ``web.port``, include that in the proxy target as well, e.g.:
 
-    .. code-block::
+    code-block::
 
         ExecStart="/usr/bin/nextpyp-startrprox" "nextpyp.myorganization.org" "nextpyp.internal.myorganization.org:8083"
 
@@ -114,7 +113,7 @@ that a SLURM compute node can use to connect to the web server. For example:
     And the Apache-based reverse proxy container receives the target setting in a different way,
     using the ``--target`` option.
 
-.. warn::
+.. warning::
 
     If the hostname or IP address you choose for the ``web.host`` setting is reachable from the public
     internet, these settings will lead to a less secure configuration and increase your risk of a
@@ -161,7 +160,7 @@ At a minimum, we'll need to set the ``slurm.host`` property.
     host = 'slurm-login.myorganization.org'
 
 Feel free to add any other relevant SLURM configuration here as well. You can find more information about all of
-the available settings in the `full documentation for the configuration file <../reference/config.html>`_.
+the available settings in the :doc:`full documentation for the configuration file <../reference/config>`.
 
 Additonally, it may be helpful to set a few other commonly-needed options now, depending on your SLURM environment:
 
@@ -223,7 +222,7 @@ To generate a new SSH key for the service account, run the following commands as
 Other SSH configurations than the one suggested here may work as well. If you stray from the defaults,
 you may need to update the ``config.toml`` file to describe your SSH configuration to the website.
 You can find more information about all of the SSH settings in the
-`full documentation for the configuration file <../reference/config>`_.
+:doc:`full documentation for the configuration file <../reference/config>`.
 
 
 Step 5: Test the new configuration
