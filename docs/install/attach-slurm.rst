@@ -132,7 +132,7 @@ Option 2: The SLURM cluster and the web server are only connected through the pu
 
 You might run into this situation if your web server and the SLURM cluster are on different
 networks. In this situation, the SLURM nodes must connect to the website through the
-`reverse proxy <./install-rprox.rst>`_ server.
+`reverse proxy <./enable-remote-access.rst>`_ server.
 
 To enable access in this environment, set the ``web.webhost`` setting to the public internet URL
 of the web server, using the HTTPs protocol and no port number, e.g.:
