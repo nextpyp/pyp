@@ -8,8 +8,8 @@ Installation
    :maxdepth: 2
    :caption: Menu
 
-   enable-login
    enable-remote-access
+   enable-login
    attach-slurm
    troubleshooting
 

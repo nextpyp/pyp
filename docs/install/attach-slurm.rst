@@ -16,7 +16,7 @@ Step 1: Prerequisites
 ---------------------
 
  * SLURM scheduler:
- ``nextPYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM cluster must be reachable on the network from the machine where ``nextPYP`` is installed.
+     ``nextPYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM cluster must be reachable on the network from the machine where ``nextPYP`` is installed.
 
  * Shared filesystem:
      ``nextPYP`` requires that the web server and the SLURM cluster share a single filesystem (e.g.

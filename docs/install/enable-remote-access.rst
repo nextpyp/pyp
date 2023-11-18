@@ -75,7 +75,7 @@ You'll need to supply your server's domain name as the ``$PYP_DOMAIN`` environme
 
 .. code-block:: bash
 
-    chmod u+x install-rprox
+    sudo chmod u+x install-rprox
     sudo PYP_DOMAIN=myserver.myorganization.org ./install-rprox
 
 .. note::
