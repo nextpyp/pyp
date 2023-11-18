@@ -26,7 +26,7 @@ and you'd like to access it from the local private network.
 Instructions
 ~~~~~~~~~~~~
 
-Edit your ``config.toml`` file (in the installion directory you created) and add the ``web.host`` option:
+Edit your ``config.toml`` file (in the installation directory you created) and add the ``web.host`` option:
 
 .. code-block:: toml
 
@@ -34,6 +34,12 @@ Edit your ``config.toml`` file (in the installion directory you created) and add
     host = '0.0.0.0'
 
 This configuration tells the application HTTP server to bind to all available network interfaces.
+
+After making changes to your configuration file, restart the application:
+
+.. code-block:: bash
+
+  sudo systemctl restart nextPYP
 
 To visit the website for your installation, open http://hostname:8080 in your web browser, where
 ``hostname`` is the network name of your server machine. The raw IP address will work here too,
