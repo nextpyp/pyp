@@ -68,7 +68,7 @@ def run_shell_command(command, verbose=False):
     ).communicate()
     if verbose and len(output) > 0:
         logger.info("\n".join([s for s in output.split("\n") if s]))
-    if len(error) > 0 and "BZIP2" not in error and "no version information available" not in error and "Format: lossy" not in error:
+    if len(error) > 0 and "BZIP2" not in error and "no version information available" not in error and "Format: lossy" not in error and "p_observed" not in error and "it/s" not in error:
         logger.error(error)
     return output, error
 
