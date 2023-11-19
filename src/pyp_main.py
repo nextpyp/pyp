@@ -1342,7 +1342,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if not skip:
         load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
 
-        if os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
+        if parameters["tomo_vir_method"] != "none" and os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
             # virion exlusion input from website
             seg_thresh = np.loadtxt("virion_thresholds.next", dtype=str, ndmin=2)
             TS_seg = seg_thresh[seg_thresh[:, 0] == name]
@@ -1478,7 +1478,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # we need .ali for either sub-volume or virion extraction
     tilt_metadata["tilt_axis_angle"] = get_tilt_axis_angle(name, parameters)
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
-        parameters["detect_force"] or \
+        ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
         parameters["tomo_vir_force"] or \
         parameters["tomo_rec_force"] or \
         parameters["tomo_rec_erase_fiducials"] or \
@@ -1514,7 +1514,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     mpi_funcs, mpi_args = [ ], [ ]
 
     # produce binned tomograms
-    need_recalculation = not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_force"] or parameters["tomo_rec_erase_fiducials"]
+    need_recalculation = parameters["tomo_rec_force"] or ( not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_erase_fiducials"] )
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
@@ -1873,67 +1873,10 @@ def csp_split(parameters, iteration):
     os.makedirs("swarm", exist_ok=True)
     os.chdir("swarm")
 
-    # timestamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
-
-    # launch processing
-    swarm_file = slurm.create_csp_swarm_file(
-        files, parameters, iteration, "cspswarm.swarm"
-    )
-
-    jobtype = jobname = "cspswarm"
-    if Web.exists:
-        jobname = "Iteration %d (split)" % parameters["refine_iter"]
-
-    # submit jobs to batch system
-    if parameters["slurm_merge_only"]:
-        id = ""
-    else:
-        if parameters["csp_parx_only"]:
-            id = slurm.submit_jobs(
-                ".",
-                swarm_file,
-                jobtype,
-                jobname,
-                queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-                scratch=0,
-                threads=2,
-                memory=20,
-            ).strip()
-        else:
-            (id, procs) = slurm.submit_jobs(
-                ".",
-                swarm_file,
-                jobtype,
-                jobname,
-                queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-                threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
-                walltime=parameters["slurm_walltime"],
-                tasks_per_arr=parameters["slurm_bundle_size"],
-                csp_no_stacks=parameters["csp_no_stacks"],
-            )
-            # allow cspmerge to start after any one of cspswarm jobs terminates
-            # id = ",".join([f"{id}_{str(arr_id)}" for arr_id in range(1, procs+1)]).replace(",", "?", 1)
-
-            # just use the first array job as prerequisite
-            id = id.strip() + "_1"
-
-    jobtype = jobname = "cspmerge"
-    if Web.exists:
-        jobname = "Iteration %d (merge)" % parameters["refine_iter"]
-
-    slurm.submit_jobs(
-        ".",
-        run_pyp(command="pyp"),
-        jobtype,
-        jobname,
-        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-        scratch=0,
-        threads=parameters["slurm_merge_tasks"],
-        memory=parameters["slurm_merge_memory"],
-        walltime=parameters["slurm_merge_walltime"],
-        dependencies=id,
-    )
+    slurm.launch_csp(micrograph_list=files,
+                    parameters=parameters,
+                    swarm_folder=Path().cwd(),
+                    )
 
     os.chdir(workdir)
 
@@ -3926,6 +3869,20 @@ if __name__ == "__main__":
             except:
                 trackback()
                 logger.error("PYP (cspswarm) failed")
+                pass
+
+        elif "classmerge" in os.environ:
+
+            del os.environ["classmerge"]
+
+            try:
+                args = project_params.parse_arguments("classmerge")
+                path = os.path.join(os.getcwd(), "..", "frealign", "scratch")
+                particle_cspt.csp_class_merge(class_index=args.classId, input_dir=path)
+                logger.info("PYP (classmerge) finished successfully")
+            except:
+                trackback()
+                logger.error("PYP (classmerge) failed")
                 pass
 
         elif "cspmerge" in os.environ:

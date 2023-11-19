@@ -1799,7 +1799,7 @@ class Parameters:
     @staticmethod
     def add_lines_with_statistics(input_parfile, current_class, current_path, is_frealignx=False):
 
-        logger.info("Adding 10,000 rows for good statistics with refine3d")
+        logger.debug("Adding 10,000 rows for good statistics with refine3d")
         # first append the other rows back
         film_col = 7
         current_data = Parameters.from_file(input_parfile).data

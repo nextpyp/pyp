@@ -4254,8 +4254,8 @@ EOF
     else:
         [output, error] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
-    if "Segmentation fault" in error:
-        logger.error("Try increasing the Memory per task in the Resources tab (--slurm_memory in the CLI)")
+    if "Segmentation fault" in error or "Killed" in error:
+        logger.error("Try increasing the Memory per task in the Resources tab (or --slurm_memory parameter in the CLI)")
         raise Exception(error)
 
     # go back to parent directory and cleanup
@@ -4668,7 +4668,7 @@ EOF
             # Fiducial-less alignment
 
             logger.info(
-                "Doing patch based tilt-series alingment using IMODs imodchopconts\n"
+                "Doing patch based tilt-series alingment using IMODs imodchopconts"
             )
 
             max_size = min(

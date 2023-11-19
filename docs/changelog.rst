@@ -4,6 +4,25 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.5.2 (11/18/2023)
+*******************
+
+   :fa:`star,text-success` Add support for PACEtomo tilt-series in streaming Sessions.
+
+   :fa:`plus-square,text-primary` Parallelize reconstruction step during 3D classification for faster speeds.
+
+   :fa:`plus-square,text-primary` Add new options to flip maps in post-processing block.
+
+   :fa:`plus-square,text-primary` Simplify installation instructions and setup process.
+
+   :fa:`bug,text-danger` Fix issue with location of executables for neural network-based particle picking.
+
+   :fa:`bug,text-danger` Fix issue with re-calculation of binned tomograms when reconstruction parameters change.
+
+   :fa:`bug,text-danger` Fix issue with re-calculation of particle coordinates when no particles were found.
+
+   :fa:`bug,text-danger` Correctly display particle size in tomography pre-processing block statistics.
+
 v0.5.1 (11/04/2023)
 *******************
 

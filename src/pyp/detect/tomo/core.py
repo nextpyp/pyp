@@ -1143,79 +1143,81 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         radius_in_pixels = int(parameters["tomo_vir_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"])
 
-        if parameters["tomo_vir_method"] == "manual":
-            logger.info("Using manual picking")
-            # reset virion binning since we are considering above it already
-            virion_binning = 1
+        if not os.path.exists("%s.vir" % name):
 
-            if not os.path.exists( name + ".next" ):
-                logger.warning("Cannot find coordinates file for this tilt-series")
-            else:
-                logger.info("Using manually picked coordinates")
-                # convert coordinates from next to pyp format
-                joint.coordinates_next2pyp("{0}.next".format(name),binning=1,radius=radius_in_pixels)
-                local_run.run_shell_command("{0}/bin/point2model -scat -sphere {2} -values 1 {1}.next {1}.mod".format(get_imod_path(), name,radius_in_pixels),verbose=parameters["slurm_verbose"])
+            if parameters["tomo_vir_method"] == "manual":
+                logger.info("Using manual picking")
+                # reset virion binning since we are considering above it already
+                virion_binning = 1
 
-                # adjust geometry of models to match tomogram dimensions
-                local_run.run_shell_command("{0}/bin/imodtrans -Y -T {1}.mod {1}.vir".format(get_imod_path(), name),verbose=parameters["slurm_verbose"])
+                if not os.path.exists( name + ".next" ):
+                    logger.warning("Cannot find coordinates file for this tilt-series")
+                else:
+                    logger.info("Using manually picked coordinates")
+                    # convert coordinates from next to pyp format
+                    joint.coordinates_next2pyp("{0}.next".format(name),binning=1,radius=radius_in_pixels)
+                    local_run.run_shell_command("{0}/bin/point2model -scat -sphere {2} -values 1 {1}.next {1}.mod".format(get_imod_path(), name,radius_in_pixels),verbose=parameters["slurm_verbose"])
 
-                # clean up
-                remote_next_file = os.path.join( current_path, 'next', name + '.next' )
-                if os.path.exists(remote_next_file):
-                    os.remove(remote_next_file)
-                if os.path.exists(name + ".next"):
-                    os.remove( name + ".next")
-                if os.path.exists(name + ".mod"):
-                    os.remove( name + ".mod")
-                os.system(f'cp -p *.vir {current_path}/next')
+                    # adjust geometry of models to match tomogram dimensions
+                    local_run.run_shell_command("{0}/bin/imodtrans -Y -T {1}.mod {1}.vir".format(get_imod_path(), name),verbose=parameters["slurm_verbose"])
 
-        elif parameters["tomo_vir_method"] == "nn-eval":
-            logger.info("Using NN-picking")
-
-            # reset virion binning since we are considering above it already
-            virion_binning = 1
-
-            if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
-                logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
-            else:
-                boxs = joint.tomoeval(parameters,name)
-                if boxs is not None:
-                    if len(boxs) > 0:
-
-                        logger.info(f"{len(boxs)} virions found")
-                        # add additional column so we can specify the radius using point2model
-                        boxs = np.append(boxs, radius_in_pixels * np.ones((boxs.shape[0],1)),1)
-                        np.savetxt("{}.box".format(name), boxs.astype('int').astype('str'), fmt='%s', delimiter='\t')
-
-                        # convert to IMOD model
-                        command = (
-                            f"{get_imod_path()}/bin/point2model -scat -sphere {radius_in_pixels} -values 1 -input {name}.box -output {name}.mod"
-                        )
-                        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-                        command = (
-                            f"{get_imod_path()}/bin/imodtrans -Y -T {name}.mod {name}.vir"
-                        )
-                        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-
-                        os.remove( name + ".box")
+                    # clean up
+                    remote_next_file = os.path.join( current_path, 'next', name + '.next' )
+                    if os.path.exists(remote_next_file):
+                        os.remove(remote_next_file)
+                    if os.path.exists(name + ".next"):
+                        os.remove( name + ".next")
+                    if os.path.exists(name + ".mod"):
                         os.remove( name + ".mod")
+                    os.system(f'cp -p *.vir {current_path}/next')
 
-                # clean up
-                remote_next_file = os.path.join( current_path, 'next', name + '.next' )
-                if os.path.exists(remote_next_file):
-                    os.remove(remote_next_file)
-                if os.path.exists(name + ".next"):
-                    os.remove(name + ".next")
-                os.system(f'cp -p *.vir {current_path}/next')
-        else:
-            logger.info("Using auto-picking")
+            elif parameters["tomo_vir_method"] == "nn-eval":
+                logger.info("Using NN-picking")
+
+                # reset virion binning since we are considering above it already
+                virion_binning = 1
+
+                if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
+                    logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
+                else:
+                    boxs = joint.tomoeval(parameters,name)
+                    if boxs is not None:
+                        if len(boxs) > 0:
+
+                            logger.info(f"{len(boxs)} virions found")
+                            # add additional column so we can specify the radius using point2model
+                            boxs = np.append(boxs, radius_in_pixels * np.ones((boxs.shape[0],1)),1)
+                            np.savetxt("{}.box".format(name), boxs.astype('int').astype('str'), fmt='%s', delimiter='\t')
+
+                            # convert to IMOD model
+                            command = (
+                                f"{get_imod_path()}/bin/point2model -scat -sphere {radius_in_pixels} -values 1 -input {name}.box -output {name}.mod"
+                            )
+                            local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+                            command = (
+                                f"{get_imod_path()}/bin/imodtrans -Y -T {name}.mod {name}.vir"
+                            )
+                            local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+
+                            os.remove( name + ".box")
+                            os.remove( name + ".mod")
+
+                    # clean up
+                    remote_next_file = os.path.join( current_path, 'next', name + '.next' )
+                    if os.path.exists(remote_next_file):
+                        os.remove(remote_next_file)
+                    if os.path.exists(name + ".next"):
+                        os.remove(name + ".next")
+                    os.system(f'cp -p *.vir {current_path}/next')
+            else:
+                logger.info("Using auto-picking")
 
         """Performs virion detection/extraction in tomogram then spike detection/extraction in virion."""
         process_virions(
             name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
         )
 
-    elif "tomo_spk_method" in parameters and parameters["tomo_spk_method"] != "none":
+    elif "tomo_spk_method" in parameters and parameters["tomo_spk_method"] != "none" and not os.path.exists("%s.spk" % name):
 
         if parameters["tomo_spk_rad"] == 0:
             raise Exception("Please specify a particle radius > 0 (-tomo_spk_rad)")
@@ -1239,7 +1241,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 os.remove( name + ".next")
                 os.remove( name + ".mod")
             except:
-                logger.warning("No particle picked for this tomogram")
+                logger.warning("No particles picked for this tomogram")
 
         elif parameters["tomo_spk_method"] == "nn-eval":
 

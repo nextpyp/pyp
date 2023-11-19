@@ -6,4 +6,5 @@ from .core import (
     remove_xrays_from_movie_file,
     resample_and_resize,
     resize_initial_model,
+    frames_from_mdoc,
 )

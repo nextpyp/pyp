@@ -75,6 +75,10 @@ def sprtrain(args):
     command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py train start --algorithm {args['detect_nn2d_algorithm']} --noise_value {args['detect_nn2d_noise_value']} --noise_style {args['detect_nn2d_noise_style']} --tau {args['detect_nn2d_tau']} --runs_dir {runs_dir} --train_dataset {train_images} --train_label {train_coords} --iterations {args['detect_nn2d_iterations']} --alpha {args['detect_nn2d_alpha']} --train_batch_size {args['detect_nn2d_batch_size']} --nms {args['detect_dist']} --num {args['detect_nn2d_num']} --bb {args['detect_nn2d_bb']} --patch_size {args['detect_nn2d_patch_size']} --validation_dataset {validation_images} --validation_label {validation_coords} 2>&1 | tee {os.path.join(train_folder, time_stamp + '_train.log')}"
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
+    # check for failure if not output was produced
+    if len(list(Path(os.getcwd()).rglob('*.training'))) == 0:
+        raise Exception("Failed to run training module")
+
     # move trained models to project folder
     logger.info(f"Copying results to {output_folder}")
     for path in Path(os.getcwd()).rglob('*.training'):
@@ -114,23 +118,39 @@ def spreval(args,name):
 
         # convert coordinates to boxx
         coordinates_file = glob.glob(results_folder+"eval_imgs/*.txt")[0]
-        try:
-            coordinates = np.loadtxt( coordinates_file, dtype=str, comments="image_name", ndmin=2)
 
-            # display total number of positions
-            logger.info(str(len(coordinates)) + " total positions")
+        if not os.path.exists(coordinates_file):
+            raise Exception("Failed to run inference module")
 
-            # threshold positions using mean of score distribution
-            boxes = coordinates.copy()[:,1:].astype('f')
-            # mean = boxes[:,-1].mean()
-            # boxes[:,-1] = ( boxes[:,-1] - mean )
-            coordinates = boxes[ boxes[:,-1] > args["detect_thre"] ]
-            logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_thre"]))
+        with open(coordinates_file) as f:
+            lines = len(f.readlines()) - 1
 
-            return coordinates[:,:2].astype('i') * 8
-        except:
+        if lines > 0:
+            try:
+                coordinates = np.loadtxt( coordinates_file, dtype=str, comments="image_name", ndmin=2)
+
+                # display total number of positions
+                logger.info(str(len(coordinates)) + " total positions")
+
+                # threshold positions using mean of score distribution
+                boxes = coordinates.copy()[:,1:].astype('f')
+                # mean = boxes[:,-1].mean()
+                # boxes[:,-1] = ( boxes[:,-1] - mean )
+                coordinates = boxes[ boxes[:,-1] > args["detect_thre"] ]
+                logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_thre"]))
+
+                if len(coordinates) > 0:
+                    return coordinates[:,:2].astype('i') * 8
+                else:
+                    logger.warning("No particles found")
+                    return np.array([])
+            except:
+                logger.warning("No particles found.")
+                return np.array([])
+        else:
             logger.warning("No particles found")
-            pass
+            return np.array([])
+
     else:
         logger.error("A model is needed for DL-based particle picking")
 
@@ -237,7 +257,11 @@ def tomotrain(args):
 
     logger.info(f"Training model")
     command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 --debug 4 --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt {train_images} --train_coord_txt {train_coords} --val_img_txt {validation_images} --val_coord_txt {validation_coords} --test_img_txt {validation_images} --test_coord_txt {validation_coords} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
-    local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+    [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+
+    # check for failure if not output was produced
+    if len(list(Path(os.getcwd()).rglob('*.pth'))) == 0:
+        raise Exception("Failed to run training module")
 
     # move trained models to project folder
     logger.info(f"Copying results to {output_folder}")
@@ -272,7 +296,7 @@ def tomoeval(args,name):
         logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn3d_ref'])).name}")
         # use option "--gpus -1" to force run on CPU
         command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --out_thresh {args['detect_nn3d_thresh']} --with_score --exp_id test_reprod --load_model {project_params.resolve_path(args['detect_nn3d_ref'])} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt {os.path.join( os.getcwd(), imgs_file)} --test_coord_txt {os.path.join( os.getcwd(), test_file)} 2>&1 | tee {os.path.join(project_folder, 'train', name + '_testing.log')}"
-        local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+        [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
         # use this to save intermediate files generated by NN particle picking
@@ -286,19 +310,37 @@ def tomoeval(args,name):
 
         # parse output and convert coordinates to boxx format
         coordinates_file = os.path.join(results_folder,"exp/semi/test_reprod/output_test",name+".txt")
-        try:
-            coordinates = np.loadtxt( coordinates_file, dtype=str, comments="image_name", ndmin=2)
 
-            # threshold positions using mean of score distribution
-            boxes = coordinates.copy().astype('f')
-            # mean = boxes[:,-1].mean()
-            # boxes[:,-1] = ( boxes[:,-1] - mean )
-            coordinates = boxes[ boxes[:,-1] > args["detect_nn3d_thresh"] ]
-            logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_nn3d_thresh"]))
+        # check for failure if not output was produced
+        if not os.path.exists(coordinates_file):
+            raise Exception("Failed to run inference module")
 
-            return coordinates[:,:3].astype('i')
-        except:
+        with open(coordinates_file) as f:
+            lines = len(f.readlines()) - 1
+
+        if lines > 0:
+            try:
+                coordinates = np.loadtxt( coordinates_file, dtype=str, comments="image_name", ndmin=2)
+
+                # threshold positions using mean of score distribution
+                boxes = coordinates.copy().astype('f')
+                # mean = boxes[:,-1].mean()
+                # boxes[:,-1] = ( boxes[:,-1] - mean )
+                coordinates = boxes[ boxes[:,-1] > args["detect_nn3d_thresh"] ]
+                logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_nn3d_thresh"]))
+
+                if len(coordinates) > 0:
+                    return coordinates[:,:3].astype('i')
+                else:
+                    logger.warning("No particles found")
+                    return np.array([])
+
+            except:
+                logger.warning("No particles found")
+                return np.array([])
+        else:
             logger.warning("No particles found")
-            pass
+            return np.array([])
+
     else:
         logger.error("A model is needed for 3D NN-based particle picking")

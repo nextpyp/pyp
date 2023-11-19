@@ -475,7 +475,7 @@ def merge_movie_files_in_job_arr(
             if current_class == classes:
                 is_frealignx = True
                 convert_parfile = True
-            logger.info("Reconstruction using frealignx format")
+            logger.debug("Reconstruction using frealignx format")
 
         else:
             is_frealignx = True
@@ -935,63 +935,21 @@ def merge_check_err_and_resubmit(
 
         os.chdir("swarm")
 
-        timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
-            "%Y%m%d_%H%M%S"
-        )
-
-        # launch processing
-        swarm_file = slurm.create_csp_swarm_file(
-            movies_resubmit, parameters, iteration, "cspswarm.swarm"
-        )
-
-        if not os.path.exists("cspswarm.swarm_missing"):
-            if parameters["csp_parx_only"]:
-                id = slurm.submit_jobs(
-                    ".",
-                    swarm_file,
-                    "cspswarm",
-                    "process",
-                    parameters["slurm_queue"],
-                    0,
-                    2,
-                    20,
-                ).strip()
-            else:
-                (id, procs) = slurm.submit_jobs(
-                    ".",
-                    swarm_file,
-                    jobtype="cspswarm",
-                    jobname="Retry failed jobs",
-                    queue=parameters["slurm_queue"],
-                    scratch=0,
-                    threads=parameters["slurm_tasks"],
-                    memory=parameters["slurm_memory"],
-                    walltime=parameters["slurm_walltime"],
-                    tasks_per_arr=int(parameters["slurm_bundle_size"]),
-                    csp_no_stacks=parameters["csp_no_stacks"],
-                )
-                id = id.strip() + "_1"
-
-            slurm.submit_jobs(
-                ".",
-                run_pyp(command="pyp"),
-                jobtype="cspmerge",
-                jobname="Retry merge",
-                queue=parameters["slurm_queue"],
-                scratch=0,
-                threads=parameters["slurm_merge_tasks"],
-                memory=parameters["slurm_merge_memory"],
-                walltime=parameters["slurm_merge_walltime"],
-                dependencies=id,
-            )
+        if not os.path.exists(".cspswarm_retry"):
+            slurm.launch_csp(micrograph_list=movies_resubmit,
+                            parameters=parameters,
+                            swarm_folder=Path().cwd(),
+                            )
             message = "Successfully re-submitted failed jobs"
 
             # save flag to indicate failure
-            Path("cspswarm.swarm_missing").touch()
+            Path(".csp_current_fail").touch()
+            Path(".cspswarm_retry").touch()
 
         else:
             logger.error("Giving up retrying...")
-            os.remove("cspswarm.swarm_missing")
+            os.remove(".cspswarm_retry")
+            message = "Stop re-submitting failed jobs"
 
         raise Exception(message)
 
@@ -1260,7 +1218,7 @@ def run_mpi_reconstruction(
         # save what is worth to original frealing/maps
         for file in (
             ["../maps/" + dataset_name + "_fyp.png", "../maps/" + dataset_name + "_map.webp", "../maps/" + dataset_name + ".mrc", "../maps/" + dataset_name + "_raw.mrc"]
-            + glob.glob("../maps/*_r??_???.txt")
+            + glob.glob(f"../maps/*_r{ref:02d}_???.txt")
             + glob.glob("../maps/*half*.mrc")
             + glob.glob("../maps/*crop.mrc")
         ):
@@ -1291,6 +1249,14 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     # load pyp params from main folder
     mp = project_params.load_pyp_parameters("../..")
     fp = mp
+
+    if not (fp["class_num"] > 1 and fp["refine_iter"] > 2):
+        # cspswarm -> cspmerge
+        csp_class_merge(class_index=1, input_dir=input_dir)
+    else: 
+        # cspswarm -> classmerge -> cspmerge
+        if not classmerge_succeed(fp):
+            raise Exception("One or more classmerge job(s) failed")
 
     iteration = fp["refine_iter"]
 
@@ -1324,10 +1290,6 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     shutil.copy2(
         os.path.join(Path(input_dir).parents[1], ".pyp_config.toml"), local_frealign_scratch
     )
-    symlink_relative(
-        os.path.join(Path(input_dir).parents[1], "box"),
-        os.path.join(local_frealign_scratch, "box"),
-    )
 
     micrographs = {}
     all_micrographs_file = "../../" + mp["data_set"] + ".films"
@@ -1337,107 +1299,14 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
             micrographs[line.strip()] = index
             index += 1
 
-    total_micrographs = len(micrographs.keys())
-
-    """
-    # only retry if we're not doing incremental merge (metric cclin or cc3m)
-    if "cc" in metric:
-        # check if all the data is processed and re-submit cspswarm if needed
-        rerun_flag = os.path.join(input_dir, ".rerun")
-        max_retries = 3
-        if os.path.exists(rerun_flag):
-            retries = int(np.loadtxt(rerun_flag))
-        else:
-            retries = 0
-
-        if retries <= max_retries:
-            with open(rerun_flag, "w") as f:
-                f.write(str(retries + 1))
-            merge_check_err_and_resubmit(
-                mp, input_dir, micrographs, int(fp["refine_iter"])
-            )
-        else:
-            os.remove(rerun_flag)
-            message = "Found missing intermediate reconstructions even after {} retries, aborting.".format(
-                max_retries
-            )
-            raise Exception(message)
-    """
-
-    (number_of_reconstructions_per_micrograph, _) = get_number_of_intermediate_reconstructions(mp)
-
-    # each class should have (num_dumpfiles_per_bundle * num_bundle) dumpfiles
-    num_dumpfiles_per_bundle = 1 if "cc" not in metric else number_of_reconstructions_per_micrograph - 1
-    num_bundle = math.ceil(total_micrographs / mp["slurm_bundle_size"])
-
-    orderings = ["" for _ in range(num_dumpfiles_per_bundle * num_bundle)]
-
-    # decompress all intermediate dump files in local scratch
-    os.chdir(local_frealign_scratch)
-
-    all_jobs = []
-
-    collect_all_cspswarm = live_decompress_and_merge(input_dir, mp, micrographs, all_jobs, merge=(
-        (("spr" not in mp["data_mode"] or "local" in mp["extract_fmt"]) and iteration > 2 )
-        )
-    )
-
-    if not collect_all_cspswarm:
-        raise Exception(f"One or more job(s) failed")
-
-    if not fp["refine_parfile_compress"]:
-        # copy the mrc files and parfiles to scratch
-        with timer.Timer("Copy mrc, par to scratch", text = "Copy file to merge took: {}", logger=logger.info):
-            for file in glob.glob(input_dir + "/*mrc") + glob.glob(input_dir + "/*par"):
-                symlink_relative(file, os.path.join(local_frealign_scratch, os.path.basename(file)))
-
-    if "cc" not in metric and fp["refine_parfile_compress"]:
-        all_jobs = np.array(all_jobs)
-    else:
-        all_jobs = np.atleast_2d(np.array(
-            [
-                i.split("_r01_")[0].split("_")
-                for i in glob.glob("*_r01_%02d.par" % iteration)
-            ],
-            dtype=int,
-        ))
-
-    # identify the different job IDs
-    slurm_job_ids = sorted(np.unique(all_jobs[:, 0]))
-    for job in slurm_job_ids:
-        # figure out number of empty slots
-        zero_indexes = [i for i in range(len(orderings)) if orderings[i] == ""]
-        # get the job array IDs for this job
-        array_ids = sorted(all_jobs[all_jobs[:, 0] == job][:, 1])
-        if len(zero_indexes) >= len(array_ids):
-            for id in array_ids:
-                orderings[zero_indexes[id - 1]] = str(job) + "_" + str(id)
-        else:
-            message = "Number of missing jobs ({}) does not match the number of missing movies ({}).".format(
-                len(zero_indexes), len(array_ids)
-            )
-            raise Exception(message)
-
-
-    with timer.Timer(
-        "Parallel run all reconstruction", text = "Run parallel reconstruction took: {}", logger=logger.info
-    ):
-        for class_index in range(classes):
-
-            ref = class_index + 1
-            pattern = "r%02d_%02d" % (ref, iteration)
-            dataset_name = fp["refine_dataset"] + "_%s" % pattern
-
-            run_mpi_reconstruction(ref, pattern, dataset_name, iteration, mp, fp, input_dir, orderings)
-
     with timer.Timer(
         "plot fsc and clean par", text = "Plot FSC and producing clean par file took: {}", logger=logger.info
     ):
         # collate FSC curves from all references in one plot
-        if classes > 1:
+        if classes > 1 and not Web.exists:
 
             metadata = {}
-
+            logger.info("Creating plots for visualizing classes OCCs and FSCs")
             # plot class statistics
             import matplotlib.pyplot as plt
 
@@ -1459,8 +1328,16 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
                     fp["refine_dataset"]
                     + "_r%02d_%02d.par" % (ref + 1, iteration)
                 )
+                
+                parfile = Path().cwd().parent / "maps" / par_file
+                compressed_parfile = Path().cwd().parent / "maps" / str(par_file+".bz2")
 
-                input = frealign_parfile.Parameters.from_file(par_file).data
+                if compressed_parfile.exists():
+                    parfile = frealign_parfile.Parameters.decompress_parameter_file(str(compressed_parfile), mp["slurm_merge_tasks"])
+                elif not parfile.exists():
+                    assert Exception(f"{parfile} does not exist. Please check")
+
+                input = frealign_parfile.Parameters.from_file(parfile).data
 
                 if input[0].shape[0] > 45:
                     sortedocc = np.sort(input[:, 12])[::-1]
@@ -1531,6 +1408,8 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
     if "refine_skip" in fp.keys() and fp["refine_skip"] and fp["class_num"] > 1:
         fp["refine_skip"] = False
+
+    fp["slurm_merge_only"] = False
 
     project_params.save_parameters(fp, ".")
 
@@ -1637,7 +1516,7 @@ def rename_par_local_files(
 @timer.Timer(
     "live_decompress_and_merge", text="Live decompress and merge took: {}", logger=logger.info
 )
-def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merge=True):
+def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, all_jobs, merge=True):
     """ Perform live bz2 file decompression and intermediate merging once single cspswarm completes.  
 
     Args:
@@ -1653,7 +1532,7 @@ def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merg
 
     # timer will be reset if we get a batch of files
     # set the timer to slurm_merge_walltime - 10 min 
-    TIMEOUT =  slurm.get_total_seconds(parameters["slurm_merge_walltime"]) - 10 * 60 
+    TIMEOUT =  slurm.get_total_seconds(parameters["slurm_walltime"]) - 10 * 60 
     INTERVAL = 10           # 10 s 
     start_time = time.time()
 
@@ -1667,7 +1546,7 @@ def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merg
     if compressed:
         num_dumpfiles_per_bundle = 1 
         num_bundle = math.ceil(len(micrographs.keys()) / parameters["slurm_bundle_size"])
-        num_bz2_per_bundle = classes
+        num_bz2_per_bundle = 1 # classes
         total_num_bz2 = num_bz2_per_bundle * num_bundle
 
         decompression_threshold = min(parameters["slurm_merge_tasks"] - 1, total_num_bz2) 
@@ -1685,7 +1564,7 @@ def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merg
             arguments = []
             finished_micrographs = glob.glob(os.path.join(input_dir, ".*"))
 
-            compressed_files = glob.glob(os.path.join(input_dir, "*.bz2"))
+            compressed_files = glob.glob(os.path.join(input_dir, f"*_r{class_index:02d}_*.bz2"))
 
             # find un-processed bz2 files
             for f in compressed_files:
@@ -1705,10 +1584,10 @@ def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merg
                     class_to_merge[class_ind] = True
 
                     jobid = filename.split("_r")[0].split("_")
-                    if "r01" in filename:
-                        cspswarm_jobid = int(jobid[0])
-                        cspswarm_arrid = int(jobid[1])
-                        [all_jobs.append([cspswarm_jobid, cspswarm_arrid]) for _ in range(num_dumpfiles_per_bundle)]
+                    
+                    cspswarm_jobid = int(jobid[0])
+                    cspswarm_arrid = int(jobid[1])
+                    [all_jobs.append([cspswarm_jobid, cspswarm_arrid]) for _ in range(num_dumpfiles_per_bundle)]
 
                 decompression_threshold = min(parameters["slurm_merge_tasks"] - 1, total_num_bz2 - len(decompressed))
                 decompression_queue.clear()
@@ -1726,14 +1605,13 @@ def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merg
 
             if merge:
                 # perform intermediate merge on files we just decompressed
-                for class_num in range(1, classes+1):
-                    class_ind = class_num - 1
-                    # only merge decompressed intermediate reconstructions
-                    if class_to_merge[class_ind]:
-                        pattern = "r%02d_%02d" % (class_num, iteration)
-                        num_dumpfiles = frealign.local_merge_reconstruction(name=pattern)
-                        class_to_merge[class_ind] = False
-                        dumpfiles_count_class[class_ind] += num_dumpfiles - 1   # the 1 is output dumpfile
+                class_ind = class_index - 1
+                # only merge decompressed intermediate reconstructions
+                if class_to_merge[class_ind]:
+                    pattern = "r%02d_%02d" % (class_index, iteration)
+                    num_dumpfiles = frealign.local_merge_reconstruction(name=pattern)
+                    class_to_merge[class_ind] = False
+                    dumpfiles_count_class[class_ind] += num_dumpfiles - 1   # the 1 is output dumpfile
 
             # done processing all micrographs
             # if len(set(micrographs.keys()) - processed_micrographs) == 0:
@@ -1741,8 +1619,7 @@ def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merg
             if total_num_bz2 - processed == 0:
                 # check the number of dumpfiles is correct
                 if merge:
-                    for class_ind, num in enumerate(dumpfiles_count_class):
-                        assert (num == num_bundle * num_dumpfiles_per_bundle), f"{num} dumpfiles in class {class_ind+1} is not {num_bundle * num_dumpfiles_per_bundle}"
+                    assert (dumpfiles_count_class[class_index-1] == num_bundle * num_dumpfiles_per_bundle), f"{dumpfiles_count_class[class_index-1]} dumpfiles in class {class_index} is not {num_bundle * num_dumpfiles_per_bundle}"
                 succeed = True
                 break
 
@@ -1767,28 +1644,23 @@ def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merg
         succeed = False
         while time.time() - start_time < TIMEOUT:
             if merge:
-                # perform intermediate merge on files we just decompressed
-                for class_num in range(1, classes+1):
-                    class_ind = class_num - 1
-                    # only merge decompressed intermediate reconstructions
-                    if class_to_merge[class_ind]:
-                        pattern = "r%02d_%02d" % (class_num, iteration)
-                        num_dumpfiles = frealign.local_merge_reconstruction(name=pattern)
-                        dumpfiles_count_class[class_ind] += num_dumpfiles - 1   # the 1 is output dumpfile
+                # only merge decompressed intermediate reconstructions
+                if class_to_merge[class_index-1]:
+                    pattern = "r%02d_%02d" % (class_index, iteration)
+                    num_dumpfiles = frealign.local_merge_reconstruction(name=pattern)
+                    dumpfiles_count_class[class_index-1] += num_dumpfiles - 1   # the 1 is output dumpfile
             else:
-                for class_num in range(1, classes+1):
-                    class_ind = class_num - 1
-                    # check all the intermediate files
-                    if class_to_merge[class_ind]:
-                        pattern = "r%02d_%02d.par" % (class_num, iteration)
-                        dump_par_num = len(glob.glob("*" + pattern))
-                        dumpfiles_count_class[class_ind] = dump_par_num
+                # check all the intermediate files
+                if class_to_merge[class_index-1]:
+                    pattern = "r%02d_%02d.par" % (class_index, iteration)
+                    dump_par_num = len(glob.glob("*" + pattern))
+                    dumpfiles_count_class[class_index-1] = dump_par_num
 
-            for i in range(classes): 
-                if dumpfiles_count_class[i] == total_num_dump_perclass:
-                    class_to_merge[i] = False
-                else:    
-                    class_to_merge[i] = True
+            if dumpfiles_count_class[class_index-1] == total_num_dump_perclass:
+                class_to_merge[class_index-1] = False
+            else:    
+                class_to_merge[class_index-1] = True
+            
             if not any(class_to_merge):
                 succeed = True
                 os.chdir(pwd)
@@ -1804,7 +1676,7 @@ def live_decompress_and_merge(input_dir, parameters, micrographs, all_jobs, merg
         logger.warning("Time out! Don't have enough time to wait for all cspswarm jobs to complete")
         
         # result is incomplete after TIMEOUT -> need to resubmit failed cspswarm jobs
-        if len(set(micrographs.keys()) - processed_micrographs) > 0:
+        if class_index == 1 and len(set(micrographs.keys()) - processed_micrographs) > 0:
             merge_check_err_and_resubmit(parameters, input_dir, micrographs, int(parameters["refine_iter"]))
         return False
     else:
@@ -1831,3 +1703,186 @@ def csp_has_error(path_to_logs: Path, micrographs: dict) -> bool:
                 break
 
     return has_error
+
+
+
+def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="ordering.txt"):
+    
+    # we are originally in the project directory
+    project_dir = os.getcwd()
+
+    # now switch to frealign/scratch directory where all the .bz2 files are
+    Path(input_dir).mkdir(parents=True, exist_ok=True)
+    os.chdir(input_dir)
+
+    # load pyp params from main folder
+    mp = project_params.load_pyp_parameters("../../")
+    fp = mp
+
+    iteration = fp["refine_iter"]
+
+    if iteration == 2:
+        classes = 1
+    else:
+        classes = int(project_params.param(fp["class_num"], iteration))
+
+    fp["refine_dataset"] = mp["data_set"]
+    metric = project_params.param(mp["refine_metric"], iteration).lower()
+
+    # initialize directory structure to replicate frealign folders
+    local_scratch = os.environ["PYP_SCRATCH"]
+    local_frealign = os.path.join(local_scratch, "frealign")
+    local_frealign_scratch = os.path.join(local_frealign, "scratch")
+    for dir in ["maps", "scratch", "log"]:
+        os.makedirs(os.path.join(local_frealign, dir), exist_ok=True)
+    # copy frealign metadata
+    for file in glob.glob(os.path.join(input_dir, "../maps/*.txt")):
+        shutil.copy2(file, os.path.join(local_frealign, "maps"))
+
+    # copy pyp metadata to scracth space
+    shutil.copy2(
+        os.path.join(Path(input_dir).parents[1], fp["data_set"] + ".micrographs"),
+        local_frealign_scratch,
+    )
+    shutil.copy2(
+        os.path.join(Path(input_dir).parents[1], fp["data_set"] + ".films"),
+        local_frealign_scratch,
+    )
+    shutil.copy2(
+        os.path.join(Path(input_dir).parents[1], ".pyp_config.toml"), local_frealign_scratch
+    )
+
+    micrographs = {}
+    all_micrographs_file = "../../" + mp["data_set"] + ".films"
+    with open(all_micrographs_file) as f:
+        index = 0
+        for line in f.readlines():
+            micrographs[line.strip()] = index
+            index += 1
+
+    total_micrographs = len(micrographs.keys())
+
+    (number_of_reconstructions_per_micrograph, _) = get_number_of_intermediate_reconstructions(mp)
+
+    # each class should have (num_dumpfiles_per_bundle * num_bundle) dumpfiles
+    num_dumpfiles_per_bundle = 1 if "cc" not in metric else number_of_reconstructions_per_micrograph - 1
+    num_bundle = math.ceil(total_micrographs / mp["slurm_bundle_size"])
+
+    orderings = ["" for _ in range(num_dumpfiles_per_bundle * num_bundle)]
+
+    # decompress all intermediate dump files in local scratch
+    os.chdir(local_frealign_scratch)
+
+    all_jobs = []
+
+    collect_all_cspswarm = live_decompress_and_merge(class_index, input_dir, mp, micrographs, all_jobs, merge=(
+        (("spr" not in mp["data_mode"] or "local" in mp["extract_fmt"]) and iteration > 2 )
+        )
+    )
+
+    if not collect_all_cspswarm:
+        raise Exception(f"One or more job(s) failed")
+
+    if not fp["refine_parfile_compress"]:
+        # copy the mrc files and parfiles to scratch
+        with timer.Timer("Copy mrc, par to scratch", text = "Copy file to merge took: {}", logger=logger.info):
+            for file in glob.glob(input_dir + "/*mrc") + glob.glob(input_dir + "/*par"):
+                symlink_relative(file, os.path.join(local_frealign_scratch, os.path.basename(file)))
+
+    if "cc" not in metric and fp["refine_parfile_compress"]:
+        all_jobs = np.array(all_jobs)
+    else:
+        all_jobs = np.atleast_2d(np.array(
+            [
+                i.split("_r01_")[0].split("_")
+                for i in glob.glob("*_r01_%02d.par" % iteration)
+            ],
+            dtype=int,
+        ))
+
+    # identify the different job IDs
+    slurm_job_ids = sorted(np.unique(all_jobs[:, 0]))
+    for job in slurm_job_ids:
+        # figure out number of empty slots
+        zero_indexes = [i for i in range(len(orderings)) if orderings[i] == ""]
+        # get the job array IDs for this job
+        array_ids = sorted(all_jobs[all_jobs[:, 0] == job][:, 1])
+        if len(zero_indexes) >= len(array_ids):
+            for id in array_ids:
+                orderings[zero_indexes[id - 1]] = str(job) + "_" + str(id)
+        else:
+            message = "Number of missing jobs ({}) does not match the number of missing movies ({}).".format(
+                len(zero_indexes), len(array_ids)
+            )
+            raise Exception(message)
+
+
+    with timer.Timer(
+        "Parallel run all reconstruction", text = "Run parallel reconstruction took: {}", logger=logger.info
+    ):
+        ref = class_index
+        pattern = "r%02d_%02d" % (ref, iteration)
+        dataset_name = fp["refine_dataset"] + "_%s" % pattern
+
+        run_mpi_reconstruction(ref, pattern, dataset_name, iteration, mp, fp, input_dir, orderings)
+
+
+    os.chdir(project_dir)
+
+
+def classmerge_succeed(parameters: dict) -> bool: 
+    """classmerge_succeed Check if classmerge jobs all succeed. If not, either terminate current cspmerge or relaunch classmerge/cspmerge
+
+    Parameters
+    ----------
+    parameters : dict
+        PYP parameters 
+
+    Returns
+    -------
+    bool
+        Succeed or not
+    """
+    # see if classmerge resubmits cspwarm by its logs
+    # currently in frealign/scratch
+    frealign_maps = Path().cwd().parent / "maps"
+    swarm_folder = Path().cwd().parent.parent / "swarm"
+    cspswarm_fail_tag = swarm_folder / ".csp_current_fail"
+
+    dataset = parameters["data_set"]
+    iteration = parameters["refine_iter"]
+    num_classes = parameters["class_num"] if parameters["refine_iter"] > 2 else 1
+    maps_classes = [f"{dataset}_r{class_idx+1:02d}_{iteration:02d}.mrc" for class_idx in range(num_classes)]
+ 
+    TIMEOUT =  slurm.get_total_seconds(parameters["slurm_merge_walltime"]) - 10 * 60 
+    INTERVAL = 10           # 10 s 
+    start_time = time.time()
+
+    while time.time() - start_time < TIMEOUT:
+        
+        if cspswarm_fail_tag.exists():
+            # partial cspswarm(s) & classmerge & cspmerge are all resubmitted by classmerge (one or more cspswarm(s) failed)
+            # so terminate this cspmerge directly
+            os.remove(cspswarm_fail_tag)
+            return False
+
+        classmerge_all_complete = True
+        for map in maps_classes:
+            if not (frealign_maps / map).exists():  
+                classmerge_all_complete = False 
+
+        if classmerge_all_complete:
+            return True       
+
+        time.sleep(INTERVAL)
+
+    # part of the classmerge jobs failed, resubmit classmerge & cspmerge (w/o cspswarm)
+    parameters["slurm_merge_only"] = True
+    
+    slurm.launch_csp(micrograph_list=[],
+                    parameters=parameters,
+                    swarm_folder=swarm_folder,
+                    )
+    return False
+
+

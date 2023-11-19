@@ -360,8 +360,10 @@ def pyp_daemon(args):
 
         if True:
             # find list of un-processed data
-            all_files = [ Path(s).stem for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path"])).suffix ) ) ]
-
+            if parameters["movie_mdoc"] and "data_path_mdoc" in parameters and len(parameters["data_path_mdoc"]) > 0 and Path(project_params.resolve_path(parameters["data_path_mdoc"])).parents[0].exists():
+                all_files = [ Path(s).name for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path_mdoc"])).suffix ) ) ]
+            else:
+                all_files = [ Path(s).stem for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path"])).suffix ) ) ]
             for f in all_files:
                 if args["gain_reference"]:
                     isgain = f == Path(project_params.resolve_path(args["gain_reference"])).stem or "gain" in f.lower()
@@ -373,28 +375,48 @@ def pyp_daemon(args):
                     # check if transfer complete
                     condition = True
 
-                    fileset = [Path(project_params.project_params.resolve_path(args["data_path"])).suffix]
-                    if len(args["stream_transfer_fileset"]) > 0:
-                        fileset.extend( args["stream_transfer_fileset"].split(",") )
-                    for extension in fileset:
-                        # check if file finished transfering
-                        signal_file = "%s/.%s.%s" % (
-                            raw_dir,
-                            f,
-                            extension.split(".")[-1],
-                        )
-                        if not os.path.exists(signal_file):
-                            condition = False
-                            break
+                    if parameters["movie_mdoc"]:
+                        from pyp.preprocess import frames_from_mdoc
+                        fileset = frames_from_mdoc([os.path.join( session_dir, "raw",f)], parameters)
+                        for tilt in fileset:
+                            # check if file finished transferring
+                            signal_file = "%s/.%s" % (
+                                raw_dir,
+                                tilt[0],
+                            )
+                            if not os.path.exists(signal_file):
+                                logger.warning("doesnt exist")
+                                condition = False
+                                break
+                    else:
+                        fileset = [Path(project_params.project_params.resolve_path(args["data_path"])).suffix]
+                        if len(args["stream_transfer_fileset"]) > 0:
+                            fileset.extend( args["stream_transfer_fileset"].split(",") )
+                        for extension in fileset:
+                            # check if file finished transferring
+                            signal_file = "%s/.%s.%s" % (
+                                raw_dir,
+                                f,
+                                extension.split(".")[-1],
+                            )
+                            if not os.path.exists(signal_file):
+                                condition = False
+                                break
+
                     if os.path.exists(os.path.join(raw_dir, f, ".tbz")) or args["stream_compress"] and os.path.exists(os.path.join(raw_dir, f, ".tif")):
                         condition = True
 
                     if "tomo" in args["data_mode"]:
                         # figure out tilt-series name
-                        if not args["movie_no_frames"]:
+                        if args["movie_mdoc"]:
+                            name = Path(f).stem.replace(".mrc", "")
+                        elif not args["movie_no_frames"]:
                             regex = movie2regex(args["movie_pattern"].split(".")[0], filename="*")
                             r = re.compile(regex)
-                            name = re.match(r, f).group(1)
+                            try:
+                                name = re.match(r, f).group(1)
+                            except:
+                                raise Exception("Could not determine tilt-series name")
                         else:
                             name = f
                         # check that all files are present
@@ -402,7 +424,8 @@ def pyp_daemon(args):
                             number_of_files = 0
                         else:
                             number_of_files = len(args["stream_transfer_fileset"].split(","))
-                        condition = len(glob.glob( os.path.join( raw_dir, "." + name + "*" ))) == args["stream_num_tilts"] * ( number_of_files + 1 )
+                        if not args["movie_mdoc"]:
+                            condition = len(glob.glob( os.path.join( raw_dir, "." + name + "*" ))) == args["stream_num_tilts"] * ( number_of_files + 1 )
                         condition_plus = condition and not os.path.isfile( os.path.join( session_dir, "mrc", name + ".rec" ) )
                     else:
                         name = f
