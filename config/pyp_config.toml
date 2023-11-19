@@ -2302,6 +2302,20 @@ type = "float"
 default = 0.0001
 advanced = true
 
+[tabs.csp.AngleStep]
+name = "Refine - Angle Step"
+description = "Angle Step for global search (degree)"
+type = "float"
+default = 20
+advanced = true
+
+[tabs.csp.ShiftStep]
+name = "Refine - Shift Step"
+description = "Shift Step for global search (A)"
+type = "float"
+default = 8
+advanced = true
+
 [tabs.csp.refine_micrographs]
 name = "Refine tilt-geometry"
 description = "Optimize tilt-axis orientation and position for each tilt-image"
