@@ -243,7 +243,7 @@ Configure how to access system resources by specifying the following parameters:
      of the container will be visible to ``PYP``. To make files visible to ``PYP``, bind the directories
      containing those files into the container. Make those directories are also readable by the service account.
 
- * ``web.local``
+ * ``web.localDir``
      Directory for storing the database and user data.
 
      This location should have fast read/write speeds, ideally in local storage.
@@ -265,7 +265,7 @@ Here is an example of how to specify these options in the configuration file:
   binds = [ '/nfs', '/cifs' ]
 
   [web]
-  local = '/bigspace/nextpyp/local'
+  localDir = '/bigspace/nextpyp/local'
 
 After making changes to your configuration file, restart the application:
 
