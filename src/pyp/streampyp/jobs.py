@@ -119,6 +119,30 @@ done
                 ),
             )
 
+    # limit bundle size to number of nodes
+    if os.path.exists(".pyp_config.toml"):
+        par_dir = "."
+    elif os.path.exists("../.pyp_config.toml"):
+        par_dir = ".."
+    elif os.path.exists("../../.pyp_config.toml"):
+        par_dir = "../.."
+    else:
+        raise Exception("can't find .pyp_config.toml")
+
+    all_cpu_nodes = int(project_params.load_parameters(par_dir)["slurm_max_cpus"])
+    bundle_size = all_cpu_nodes / threads
+    net_processes = int(math.ceil(float(processes) / tasks_per_arr))
+    if bundle_size > 0 and net_processes < bundle_size:
+        if Web.exists:
+            bundle = None
+        else:
+            bundle = ""
+    else:
+        if Web.exists:
+            bundle = int(bundle_size)
+        else:
+            bundle = "%" + str(int(bundle_size))
+
     if Web.exists:
 
         # convert dependencies into a list
@@ -168,7 +192,7 @@ done
             return Web().slurm_sbatch(
                 web_name=jobname,
                 cluster_name="pyp_"+jobtype,
-                commands=Web.CommandsScript(cmdlist, processes),
+                commands=Web.CommandsScript(cmdlist, processes, bundle),
                 dir=_absolutize_path(submit_dir),
                 args=[
                     "--mem=%sG" % memory,
@@ -184,7 +208,7 @@ done
             return Web().slurm_sbatch(
                 web_name=jobname,
 				cluster_name="pyp_"+jobtype,
-                commands=Web.CommandsGrid(cmdgrid),
+                commands=Web.CommandsGrid(cmdgrid, bundle),
                 dir=_absolutize_path(submit_dir),
                 args=[
                     "--mem=%sG" % memory,
@@ -198,24 +222,6 @@ done
             )
 
     else:
-
-        # limit bundle size to number of nodes
-        if os.path.exists(".pyp_config.toml"):
-            par_dir = "."
-        elif os.path.exists("../.pyp_config.toml"):
-            par_dir = ".."
-        elif os.path.exists("../../.pyp_config.toml"):
-            par_dir = "../.."
-        else:
-            raise Exception("can't find .pyp_config.toml")
-        all_cpu_nodes = int(project_params.load_parameters(par_dir)["slurm_max_cpus"])
-
-        bundle_size = all_cpu_nodes / threads
-        net_processes = int(math.ceil(float(processes) / tasks_per_arr))
-        if bundle_size > 0 and net_processes < bundle_size:
-            bundle = ""
-        else:
-            bundle = "%" + str(int(bundle_size))
 
         if "sess_" in jobtype:
             multirun_file = "{0}/commands.swarm".format(submit_dir)
