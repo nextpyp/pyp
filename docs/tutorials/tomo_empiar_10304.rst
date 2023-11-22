@@ -581,7 +581,7 @@ Step 13: 3D classification
 
       .. tabbed:: Exposure weighting
 
-        - Specify the location of the ``External weights`` by by clicking on the icon :fa:`search, text-primary` and selecting the file `frealign/weights/global_weights.txt` from the file location of the previous block
+        - Specify the location of the ``External weights`` by clicking on the icon :fa:`search, text-primary` and selecting the file `frealign/weights/global_weights.txt` from the file location of the previous block
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
