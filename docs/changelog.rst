@@ -4,6 +4,17 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.5.3 (11/25/2023)
+*******************
+
+   :fa:`star,text-success` Implement interactive measuring tool for micrographs and tomograms.
+
+   :fa:`star,text-success` Allow multiple sessions when user login mode is enabled.
+
+   :fa:`plus-square,text-primary` Sort classes in increasing order in Class View panel.
+
+   :fa:`bug,text-danger` Fix issues when limiting total number of tasks in slurm scheduler.
+
 v0.5.2 (11/18/2023)
 *******************
 
