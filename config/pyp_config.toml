@@ -912,6 +912,13 @@ hidden = true
 _name = "Tilt-series alignment"
 _description = "Parameters for tilt-series alignment"
 
+[tabs.tomo_ali.method]
+name = "Alignment method"
+description = "Method to use for tilt-series alignment"
+type = "enum"
+enum = { imod_gold="IMOD (fiducials)", imod_patch="IMOD (patch tracking)", aretomo="Aretomo" }
+default = "imod_gold"
+
 [tabs.tomo_ali.patch_based]
 name = "Skip fiducial-based alignment"
 description = "Do patch-based alignment instead"

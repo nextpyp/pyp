@@ -4378,7 +4378,7 @@ def align_tilt_series(name, parameters, rotation=0):
     )
 
     # always redo coarse alignment
-    if True: # not os.path.exists(name + ".prexg"):
+    if not 'aretomo' in parameters["tomo_ali_method"].lower():
         logger.info("Doing pre-alignment using IMODs tiltxcorr")
 
         if parameters["tomo_rec_square"]:
@@ -4470,17 +4470,6 @@ def align_tilt_series(name, parameters, rotation=0):
 
         # update current transform
         run_shell_command("mv {0}_first.prexg {0}.prexg".format(name),verbose=parameters["slurm_verbose"])
-    else:
-
-        # generate pre-aligned stack with available alignment parameters
-        logger.info(
-            "Using existing tilt-series pre-alignments ( " + name + ".prexg )\n"
-        )
-
-        com = "{0}/bin/newstack -linear -xform {1}.prexg {1}_bin.st {1}_bin.preali -scale 0,32767 -mode 1 -taper 1,1".format(
-            get_imod_path(), name
-        )
-        run_shell_command(com,verbose=parameters["slurm_verbose"])
 
     actual_pixel = (
         float(parameters["scope_pixel"]) * float(parameters["data_bin"]) * binning
@@ -4504,13 +4493,21 @@ def align_tilt_series(name, parameters, rotation=0):
         """
 
     # check if fiducial/patch tracking coordinates exist
-    if False: # os.path.exists(name + ".fid.txt"):
+    if 'aretomo' in parameters["tomo_ali_method"]:
 
-        logger.info(
-            "\nUsing existing fiducial/patch based alignments ( "
-            + name
-            + ".fid.txt )\n"
-        )
+            logger.info("Aliging tilt-series using AreTomo")
+
+            # patch tracking
+            if parameters["tomo_ali_patch_based"]:
+                patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
+            else:
+                patches = ""
+            command = f"export LD_LIBRARY_PATH=/opt/apps/rhel7/compatlib:/opt/apps/rhel7/cuda-11.0.3/lib64; {os.environ['PYP_DIR']}/external/AreTomo/AreTomo_1.3.4_Cuda111_Feb22_2023 -InMrc {name}.mrc -OutMrc {name}.rec {2} -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
+            run_shell_command(command, verbose=parameters["slurm_verbose"])
+
+            # save output
+            shutil.copy2(f"{name}.rec_Imod/{name}.xf", f"{name}.xf")
+            shutil.copy2(f"{name}.rec_Imod/{name}.tlt", f"{name}.tlt")
 
     else:
 
