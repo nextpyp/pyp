@@ -1257,7 +1257,7 @@ def thresholding_and_plot(films, shifts_3d: list, parameters: dict):
             os.rename(newbox3dfile, box3dfile)
 
             mean_scores = [_[4] for _ in newbox3d]
-            plot.histogram_particle_tomo(mean_scores, parameters["clean_threshold"], tiltseries)
+            plot.histogram_particle_tomo(mean_scores, parameters["clean_threshold"], tiltseries, "csp")
 
 
         films_used_particles[film][1] = particle_used_film

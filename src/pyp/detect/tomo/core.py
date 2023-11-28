@@ -1389,7 +1389,7 @@ EOF
     with open("%s_vir0000.txt" % name, "w") as f:
 
         # invert volume contrast for eman particles
-        if parameters["data_invert"] and parameters["tomo_ext_fmt"] == "eman":
+        if not parameters["data_invert"] and parameters["tomo_ext_fmt"] == "eman":
             command = "{0}/bin/newstack {1}.ali {1}.ali -multadd -1,0".format(
                 get_imod_path(), name
             )

@@ -573,13 +573,23 @@ def generate_plots(
     )
     input = par_obj.data
     
-
     if scores:
         field = 14
     elif frealignx:
         field = 15
     else:
         field = 11
+
+    # figure out tomo or spr by check tilt angles
+    tltangle = field + 3
+    ptlindex = field + 2
+    film_id = 7
+    occ_col = field - 3
+    
+    if np.any(input[:, tltangle] !=0 ):
+        is_tomo = True
+    else:
+        is_tomo = False
 
     defocus_values = np.zeros(defocuses)
     for f in range(defocuses):
@@ -793,6 +803,22 @@ def generate_plots(
         ax[0, 2].set_title("Phase Residuals")
     ax[0, 2].set_yticks([])
     metadata["phase_residual"] = phase_residual
+
+    # particle score plot for tomo
+    try:
+        if is_tomo:
+            use_sub_block = input[input[:, occ_col] > 50][:, [film_id, field, ptlindex, tltangle]]
+            take_mean = []
+            for film in np.unique(use_sub_block[:,0]):
+                ptl_in_image = use_sub_block[use_sub_block[:,0] == film ]
+                ptl = np.unique(ptl_in_image[:, 2])
+                for p in ptl:
+                    take_score = ptl_in_image[np.logical_and(ptl_in_image[:, 2]== p, np.abs(ptl_in_image[:, 3]) < 10)][:, 1]
+                    take_mean.append(np.mean(take_score))
+            histogram_particle_tomo(take_mean, threshold=0, tiltseries=os.path.splitext(parfile)[0], save_path="../maps")
+    except:
+        logger.info("Per particle score plot for tomo was not successful")
+        pass
 
     occ_n, occ_bins, occ_patches = ax[1, 0].hist(
         input[:, 11], angles, density=1, facecolor="yellow", alpha=0.75
@@ -1466,7 +1492,7 @@ def plot_trajectories(
     run_shell_command(f"convert -density 500 {name_png}.pdf {name_png}_local.webp")
 
 
-def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str):
+def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, save_path: str):
 
     # remove -1 (i.e. particles that do not have enough projections, missing in parifle etc.)
     scores = [_ for _ in scores if _ >= 0.0]
@@ -1483,7 +1509,7 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str):
         axs.spines["left"].set_linewidth(1)
         axs.tick_params(axis='both', which='major', labelsize=10)
 
-        plt.savefig(f"csp/{tiltseries}_scores.svgz")
+        plt.savefig(f"{save_path}/{tiltseries}_scores.svgz")
         plt.close()
     else:
         logger.info("No valide projections for tiltseries %s left" % tiltseries)

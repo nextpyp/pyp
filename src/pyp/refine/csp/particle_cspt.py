@@ -1221,6 +1221,7 @@ def run_mpi_reconstruction(
             + glob.glob(f"../maps/*_r{ref:02d}_???.txt")
             + glob.glob("../maps/*half*.mrc")
             + glob.glob("../maps/*crop.mrc")
+            + glob.glob("../maps/*scores.svgz")
         ):
             if os.path.exists(file):
                 shutil.copy2(file, output_folder)
