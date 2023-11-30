@@ -47,7 +47,7 @@ from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
 from pyp.analysis.scores import clean_particles_tomo, score_particles_fromparx, particle_cleaning
 from pyp.ctf import utils as ctf_utils
-from pyp.detect import joint, tomo_subvolume_extract_is_required
+from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
@@ -4040,7 +4040,8 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 args = project_params.load_pyp_parameters()
-                joint.sprtrain(args)
+                # joint.sprtrain(args)
+                topaz.sprtrain(args)
                 logger.info("PYP (sprtrain) finished successfully")
             except:
                 trackback()
