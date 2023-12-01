@@ -12,12 +12,12 @@ def cli():
     pass
 
 
-@cli.command()
+@cli.command('slurm_started')
 def slurm_started():
     Web().slurm_started(_arrayid())
 
 
-@cli.command()
+@cli.command('slurm_ended')
 @click.option('--exit', default=0)
 def slurm_ended(exit):
     Web().slurm_ended(_arrayid(), exit)

@@ -143,31 +143,34 @@ class Web:
                 env=env,
                 args=args,
                 deps=deps,
-                mpi=mpi,
+                mpi=mpi
             )
         )
 
     class CommandsScript:
-        def __init__(self, commands, array_size=None):
+        def __init__(self, commands, array_size=None, bundle_size=None):
             """
     		Runs commands together as a script inside a single launch of singularity/MPI
 
     		:param [str] commands: the list of commands
     		:param int: None to run commands sequentially on one SLURM node.
     		            Pass a positive integer to run the script in parallel on multiple SLURM nodes.
+    		:param [int] bundle_size: The bundle size to use for SLURM jobs, or None to not use bundling
     		"""
             self.commands = commands
             self.array_size = array_size
+            self.bundle_size = bundle_size
 
         def render(self):
             return {
                 "type": "script",
                 "commands": self.commands,
                 "array_size": self.array_size,
+                "bundle_size": self.bundle_size
             }
 
     class CommandsGrid:
-        def __init__(self, commands):
+        def __init__(self, commands, bundle_size=None):
             """
     		Runs commands as a 2D grid, some sequentially, and some in parallel.
     		Each command is individually wrapped in a singularity/MPI launch
@@ -178,11 +181,17 @@ class Web:
     		                         eg: [[c1, c2, c3]] runs three commands in the sequence c1,c2,c3 on a single compute node.
     		                             [[c1], [c2], [c3]] runs three commands in parallel, with each ci running on a different compute node.
     		                             [[c1, c2], [c3]] runs two commands c1,c2 on one compute node, and command c3 on another compute node
+    		:param [int] bundle_size: The bundle size to use for SLURM jobs, or None to not use bundling
     		"""
             self.commands = commands
+            self.bundle_size = bundle_size
 
         def render(self):
-            return {"type": "grid", "commands": self.commands}
+            return {
+                "type": "grid",
+                "commands": self.commands,
+                "bundle_size": self.bundle_size
+            }
 
     CTF = namedtuple(
         "CTF",

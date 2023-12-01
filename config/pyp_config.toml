@@ -3489,8 +3489,8 @@ type = "int"
 default = 1
 
 [tabs.slurm.max_cpus]
-name = "Max number of tasks"
-description = "Limit the number of tasks that can run simultaneously (0=follow slurm limits)"
+name = "Max number of threads"
+description = "Limit the total number of threads that can run simultaneously (0=follow slurm limits)"
 type = "int"
 default = 0
 hidden = [ "map_post_process", "stream_spr", "stream_tomo" ]
