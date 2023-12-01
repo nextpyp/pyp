@@ -1511,7 +1511,11 @@ EOF
             if fslice < 0:
                 ypad_dn = fslice
                 fslice = 0
-
+            
+            # skip if reversed slice
+            if fslice > lslice:
+                continue
+            
             # shiftx = y / 2 - float(spike[0]) * binning
             shiftx = x / 2 - float(spike[0]) * binning
 
