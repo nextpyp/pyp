@@ -45,6 +45,8 @@ def get_slurm_path():
 def get_imod_path():
     return "/opt/IMOD".format(os.environ["PYP_DIR"])
 
+def get_aretomo_path():
+    return "export LD_LIBRARY_PATH=/opt/apps/rhel7/compatlib:/opt/apps/rhel7/cuda-11.0.3/lib64; {0}/external/AreTomo2".format(os.environ["PYP_DIR"])
 
 def get_relion_path():
     return "{0}/external/postproc".format(os.environ["PYP_DIR"])

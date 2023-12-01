@@ -48,6 +48,7 @@ from pyp.system.set_up import initialize_classification, prepare_frealign_dir
 from pyp.system.utils import (
     get_frealign_paths,
     get_imod_path,
+    get_aretomo_path,
     get_summovie_path,
     get_unblur_path,
     get_unblur2_path,
@@ -4502,7 +4503,7 @@ def align_tilt_series(name, parameters, rotation=0):
                 patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
             else:
                 patches = ""
-            command = f"export LD_LIBRARY_PATH=/opt/apps/rhel7/compatlib:/opt/apps/rhel7/cuda-11.0.3/lib64; {os.environ['PYP_DIR']}/external/AreTomo/AreTomo_1.3.4_Cuda111_Feb22_2023 -InMrc {name}.mrc -OutMrc {name}.rec {2} -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
+            command = f"{get_aretomo_path()}/AreTomo2_cuda11.4 -InMrc {name}.mrc -OutMrc {name}.rec {2} -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             # save output
