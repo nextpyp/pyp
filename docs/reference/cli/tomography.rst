@@ -18,8 +18,6 @@ Step 1: Create a new project
 
 Next, we create an empty folder where all files for the tutorial will be saved:
 
-Next, we create an empty folder where all files for the tutorial will be saved:
-
 .. code-block:: bash
 
     mkdir EMPIAR-10164
@@ -217,6 +215,7 @@ Next, we do further refinement using the mask calculated in the previous step:
     csp -refine_maxiter 6                               \
         -refine_rhref "6:5:5:4:3.5"                     \
         -refine_maskth=`pwd`/frealign/mask/mask.mrc"
+
 
 Step 12: Particle-based CTF refinement
 ======================================

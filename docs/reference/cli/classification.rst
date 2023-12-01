@@ -23,8 +23,6 @@ Step 1: Create a new project
 
 Next, we create an empty folder where all files for the tutorial will be saved:
 
-Next, we create an empty folder where all files for the tutorial will be saved:
-
 .. code-block:: bash
 
     mkdir EMPIAR-10304

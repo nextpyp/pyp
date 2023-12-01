@@ -179,8 +179,6 @@ Step 7: Create shape mask
 
 This step will create a shape mask using the most recent reconstruction:
 
-This step will create a shape mask using the most recent reconstruction:
-
 .. code-block:: bash
 
     pmk -mask_model=`pwd`/frealign/maps/T20S_clean_r01_06.mrc  \
