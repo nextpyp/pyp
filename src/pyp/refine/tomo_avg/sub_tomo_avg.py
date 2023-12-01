@@ -484,7 +484,7 @@ def sva_iterate(mp, sp, iter):
     with open(command_file, "w") as f:
         f.write("#!/bin/bash\n")
         f.write("module load MPICH\n")
-        f.write("module load FFTW\n")
+        f.write("module load FFTW/3.3.7\n")
         f.write(f"{executable} {xmlexe} && 3davg -plot")
 
     # submit job using slurm

@@ -331,6 +331,15 @@ def shape_phase_residuals(
     )
     input = par_obj.data
 
+    # figure out tomo or spr by check tilt angles
+    tltangle = field + 3
+    ptlindex = field + 2
+    
+    if np.any(input[:, tltangle] !=0 ):
+        is_tomo = True
+    else:
+        is_tomo = False
+
     import matplotlib as mpl
 
     mpl.use("Agg")
@@ -409,9 +418,25 @@ def shape_phase_residuals(
                     # cluster = input[ np.logical_and( angular_group == g, defocus_group == f ) ]
                     if scores or frealignx:
                         # thresholds[g,f] = cluster[ cluster[:,field].argsort() ][ int( (cluster.shape[0]-1) * (1-threshold) ), field ]
-                        thresholds[g, f] = np.sort(input[cluster, field])[
-                            int((cluster.shape[0] - 1) * (1 - threshold))
-                        ]
+                        if is_tomo:
+                            bool_array = np.full(input.shape[0], False, dtype=bool)
+                            bool_array[cluster] = True
+                            take_values = np.logical_and(bool_array, np.abs(input[:, tltangle]) < 10)
+                            used_array = input[take_values]
+                            scores_used = used_array[:, [field, ptlindex]]
+                            take_mean = []
+                            for i in np.unique(scores_used[:, 1]):
+                                take_mean.append(np.mean(scores_used[:, 0], where=scores_used[:,1]==i))
+
+                            meanscore = np.array(take_mean)
+                            thresholds[g, f] = np.sort(meanscore)[
+                                int((meanscore.shape[0] - 1) * (1 - threshold))
+                            ]
+                            logger.info(f"Tomo reconstruction using particle score threshold as {thresholds[g, f]}")
+                        else:
+                            thresholds[g, f] = np.sort(input[cluster, field])[
+                                int((cluster.shape[0] - 1) * (1 - threshold))
+                            ]
                     else:
                         # thresholds[g,f] = cluster[ cluster[:,field].argsort() ][ int( (cluster.shape[0]-1) * threshold ), field ]
                         thresholds[g, f] = np.sort(input[cluster, field])[
@@ -488,40 +513,37 @@ def shape_phase_residuals(
             if scores or frealignx:
                 # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), np.nan, input[:,field] )
                 # input[:,occ] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), 0, input[:,occ] )
-                input[:, occ] = np.where(
-                    np.logical_and(
-                        np.logical_and(angular_group == g, defocus_group == f),
-                        np.logical_or(
+                if is_tomo and thresholds[g, f] > 0:
+                    input_group = input[np.logical_and(angular_group == g, defocus_group == f)]
+                    ptl_index = np.unique(input_group[:, ptlindex])
+                    
+                    for i in ptl_index:
+                        ptl_field_array = input_group[input_group[:, ptlindex] == i, field]
+                        tltangle_array = input_group[input_group[:, ptlindex] == i, tltangle]
+                        meanfrom = ptl_field_array[np.abs(tltangle_array) < 10]
+                        
+                        input[input[:, ptlindex] == i, occ] = np.where(
+                        np.array( [ 0 if meanfrom.size == 0 else np.mean(meanfrom) ] * ptl_field_array.shape[0] ) < thresholds[g, f],
+                        0,
+                        input[input[:, ptlindex] == i, occ],
+                        )
+                else:
+                    input[:, occ] = np.where(
+                        np.logical_and(
+                            np.logical_and(angular_group == g, defocus_group == f),
                             np.logical_or(
-                                input[:, field] < thresholds[g, f],
-                                input[:, field] < min_scores[g, f],
+                                np.logical_or(
+                                    input[:, field] < thresholds[g, f],
+                                    input[:, field] < min_scores[g, f],
+                                ),
+                                input[:, field] > max_scores[g, f],
                             ),
-                            input[:, field] > max_scores[g, f],
                         ),
-                    ),
-                    0,
-                    input[:, occ],
-                )
+                        0,
+                        input[:, occ],
+                    )
                 number = input[input[:, occ]==0].shape[0]
-                logger.info(f"Number of particles with OCC = 0 is {number:,}")
-            """
-            else:
-                # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] > thresholds[g,f] ), np.nan, input[:,field] )
-                input[:, field] = np.where(
-                    np.logical_and(
-                        np.logical_and(angular_group == g, defocus_group == f),
-                        np.logical_or(
-                            np.logical_or(
-                                input[:, field] > thresholds[g, f],
-                                input[:, field] < min_scores[g, f],
-                            ),
-                            input[:, field] > max_scores[g, f],
-                        ),
-                    ),
-                    np.nan,
-                    input[:, field],
-                )
-            """
+                logger.info(f"Number of particles with OCC = 0 is {number:,}")        
 
     if os.path.exists(fmatch_stack):
         logger.info(
@@ -1235,7 +1257,7 @@ def thresholding_and_plot(films, shifts_3d: list, parameters: dict):
             os.rename(newbox3dfile, box3dfile)
 
             mean_scores = [_[4] for _ in newbox3d]
-            plot.histogram_particle_tomo(mean_scores, parameters["clean_threshold"], tiltseries)
+            plot.histogram_particle_tomo(mean_scores, parameters["clean_threshold"], tiltseries, "csp")
 
 
         films_used_particles[film][1] = particle_used_film
