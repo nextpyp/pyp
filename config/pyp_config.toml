@@ -2309,7 +2309,6 @@ type = "float"
 default = 0.0001
 advanced = true
 
-
 [tabs.csp.refine_micrographs]
 name = "Refine tilt-geometry"
 description = "Optimize tilt-axis orientation and position for each tilt-image"
