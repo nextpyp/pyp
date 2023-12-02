@@ -175,6 +175,19 @@ is dedicated to configuring the container environment.
 	``containerExec = { module = 'singularity', exec = 'apptainer' }``
 
 
+|
+
+``cudaLibs``
+~~~~~~~~~~~
+
+:Type: array of strings
+:Required: no
+:Description:
+	Paths to the CUDA libraries on the GPU compute nodes.
+:Examples:
+	`cudaLibs = [ '/usr/local/envs/pyp/lib/python3.8/site-packages/nvidia/cufft/lib', '/usr/local/envs/pyp/lib/python3.8/site-packages/nvidia/cuda_runtime/lib' ]`
+
+
 SLURM Section
 -------------
 

@@ -1,6 +1,7 @@
 import os
 import socket
 from pwd import getpwnam
+from pyp.system.singularity import get_pyp_configuration
 
 def timeout_command(command, time, full_path=False):
     if full_path:
@@ -45,8 +46,19 @@ def get_slurm_path():
 def get_imod_path():
     return "/opt/IMOD".format(os.environ["PYP_DIR"])
 
+def cuda_path_prefix(command):
+    config = get_pyp_configuration()
+    if 'cudaLibs' in config["pyp"]:
+        command = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{':'.join(path for path in config['pyp']['cudaLibs'])}; " + command
+    return command
+
 def get_aretomo_path():
-    return "export LD_LIBRARY_PATH=/opt/apps/rhel7/compatlib:/opt/apps/rhel7/cuda-11.0.3/lib64; {0}/external/AreTomo2".format(os.environ["PYP_DIR"])
+    command = cuda_path_prefix(f"{os.environ['PYP_DIR']}/external/AreTomo")
+    return command
+
+def get_motincorr_path():
+    command = cuda_path_prefix(f"{os.environ['PYP_DIR']}/external/MotionCorr3")
+    return command
 
 def get_relion_path():
     return "{0}/external/postproc".format(os.environ["PYP_DIR"])
