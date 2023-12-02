@@ -4503,13 +4503,14 @@ def align_tilt_series(name, parameters, rotation=0):
                 patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
             else:
                 patches = ""
-            command = f"{get_aretomo_path()}/AreTomo2_cuda11.4 -InMrc {name}.mrc -OutMrc {name}.rec {2} -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
+            command = f"{get_aretomo_path()}/AreTomo_1.3.4_Cuda118_Feb22_2023 -InMrc {name}.mrc -OutMrc {name}.rec -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             # save output
             shutil.copy2(f"{name}.rec_Imod/{name}.xf", f"{name}.xf")
             shutil.copy2(f"{name}.rec_Imod/{name}.tlt", f"{name}.tlt")
 
+            return
     else:
 
         # alignment using gold fiducials
@@ -4693,7 +4694,7 @@ EOF
             shutil.copy2("%s.fid" % name, "%s.fid.txt" % name)
 
     # make alignment output between different variants uniform
-    if not parameters["tomo_ali_patch_based"]:
+    if not parameters["tomo_ali_patch_based"] and 'aretomo' not in parameters["tomo_ali_method"]:
 
         # alignment using gold fiducials
 
@@ -4733,7 +4734,7 @@ EOF
             np.savetxt("{0}_bin.xf".format(name), rot2D, fmt="%13.7f")
             shutil.copy2("%s.rawtlt" % name, "%s.tlt" % name)
 
-    else:
+    elif parameters["tomo_ali_patch_based"]:
 
         # patch-based alignment
 
@@ -4821,7 +4822,6 @@ EOF
         get_imod_path(), name
     )
     run_shell_command(command,verbose=parameters["slurm_verbose"])
-
 
 
 def check_parfile_match_allboxes(par_file: str, allboxes_file: str):
