@@ -4111,7 +4111,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
     if 'motioncor3' in parameters["movie_ali"]:
 
-        logger.info("Aliging frames using MotionCorr3")
+        logger.info("Aliging frames using MotionCor3")
 
         # patch tracking
         if "tomo_ali_patch_based" in parameters and parameters["tomo_ali_patch_based"]:
@@ -4213,7 +4213,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             frame_options += f" -Group {parameters['movie_group']}"
         frame_options += f" -Bft {parameters['movie_bfactor']}"
 
-        command = f"{get_motioncor3_path()}/MotionCor3 {input} -OutMrc {name} {gain} -OutAln {os.getcwd()} {frame_options} {patches}"
+        command = f"{get_motioncor3_path()} {input} -OutMrc {name} {gain} -OutAln {os.getcwd()} {frame_options} {patches}"
         logger.warning(command)
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
@@ -4626,7 +4626,7 @@ def align_tilt_series(name, parameters, rotation=0):
                 patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
             else:
                 patches = ""
-            command = f"{get_aretomo_path()}/AreTomo_1.3.4_Cuda118_Feb22_2023 -InMrc {name}.mrc -OutMrc {name}.rec -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
+            command = f"{get_aretomo_path()} -InMrc {name}.mrc -OutMrc {name}.rec -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             # save output

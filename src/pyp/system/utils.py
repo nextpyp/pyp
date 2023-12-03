@@ -53,11 +53,17 @@ def cuda_path_prefix(command):
     return command
 
 def get_aretomo_path():
-    command = cuda_path_prefix(f"{os.environ['PYP_DIR']}/external/AreTomo")
+    config = get_pyp_configuration()
+    if 'areTomo2' in config["pyp"]:
+        command = config["pyp"]["areTomo2"]
+    command = cuda_path_prefix(command)
     return command
 
 def get_motioncor3_path():
-    command = cuda_path_prefix(f"{os.environ['PYP_DIR']}/external/MotionCor3")
+    config = get_pyp_configuration()
+    if 'motionCor3' in config["pyp"]:
+        command = config["pyp"]["motionCor3"]
+    command = cuda_path_prefix(command)
     return command
 
 def get_relion_path():
