@@ -379,7 +379,7 @@ hidden = true
 name = "Alignment method"
 description = "Method used for frame alignment"
 type = "enum"
-enum = { unblur="unblur", skip="no alignment" }
+enum = { unblur="unblur", motioncorr="motioncor3", skip="no alignment" }
 default = "unblur"
 hidden = ["spr_import_star","tomo_import_star"]
 

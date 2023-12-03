@@ -56,8 +56,8 @@ def get_aretomo_path():
     command = cuda_path_prefix(f"{os.environ['PYP_DIR']}/external/AreTomo")
     return command
 
-def get_motincorr_path():
-    command = cuda_path_prefix(f"{os.environ['PYP_DIR']}/external/MotionCorr3")
+def get_motioncor3_path():
+    command = cuda_path_prefix(f"{os.environ['PYP_DIR']}/external/MotionCor3")
     return command
 
 def get_relion_path():
