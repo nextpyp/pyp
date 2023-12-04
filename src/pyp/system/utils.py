@@ -61,6 +61,8 @@ def get_tomo_path():
 def get_bsoft_path():
     return "{0}/external/bsoft".format(os.environ["PYP_DIR"])
 
+def get_topaz_path():
+    return "{}/external/topaz".format(os.environ["PYP_DIR"])
 
 def get_embfactor_path():
     return "{0}/external/embfactor".format(os.environ["PYP_DIR"])

@@ -563,7 +563,7 @@ hidden = true
 name = "Detection method"
 description = "Strategy to use for particle picking"
 type = "enum"
-enum = { none="none", auto="auto", all="all", nn-train="nn-train (list of positions required)", nn-eval="nn-eval (trained model required)" }
+enum = { none="none", auto="auto", all="all", nn-train="nn-train (list of positions required)", nn-eval="nn-eval (trained model required)", nn-train-topaz="nn-train-topaz (list of positions required)", nn-eval-topaz="nn-eval-topaz (trained model required)" }
 default = "none"
 
 [tabs.detect.ref]
@@ -615,6 +615,18 @@ description = "Path to trained model (*.training)"
 type = "path"
 path = { type="files" }
 input = { type="trainedModel2D" }
+
+[tabs.detect_nn2d.bin]
+name = "Image downsampling factor"
+description = "Downsample images by this factor for training and evaluation"
+type = "int"
+default = 8
+
+[tabs.detect_nn2d.num_particles]
+name = "Expected number of particles per micrograph"
+description = "instead of setting pi directly, pi can be set by giving the expected number of particles per micrograph (>0). either this parameter or pi must be set."
+type = "int"
+default = 300
 
 [tabs.detect_nn2d.iterations]
 name = "Iterations"
@@ -689,6 +701,173 @@ description = "Parameter used during training"
 type = "int"
 default = 28
 hidden = ["tomo_pre_process", "stream_spr"]
+advanced = true
+
+[tabs.detect_nn2d.topaz_pretrained]
+name = "Use pretrained initialization"
+description = "by default, topaz train will initialize model parameters from the pretrained parameters if a pretrained model with the same configuration is available (e.g. resnet8 with 64 units)."
+type = "bool"
+default = false
+
+[tabs.detect_nn2d.topaz_epochs]
+name = "Number of epochs for topaz training"
+description = "Maximum number of training epochs"
+type = "int"
+default = 10
+
+[tabs.detect_nn2d.topaz_train_rad]
+name = "Training radius (pixels)"
+description = "Pixel radius around particle centers to consider positive"
+type = "int"
+default = 3
+
+[tabs.detect_nn2d.topaz_train_method]
+name = "Loss function"
+description = "Objective function to use for learning the region classifier"
+type = "enum"
+enum = { PN="PN", GE-KL="GE-KL", GE-binomial="GE-binomial", PU="PU" }
+default = "GE-binomial"
+advanced = true
+
+[tabs.detect_nn2d.topaz_train_slack]
+name = "Slack"
+description = "Weight on GE penalty (default: 10 for GE-KL, 1 for GE-binomial)"
+type = "float"
+default = 1
+advanced = true
+
+[tabs.detect_nn2d.topaz_train_autoencoder]
+name = "Autoencoder weight"
+description = "Option to augment method with autoencoder. weight on reconstruction error (default: 0)"
+type = "float"
+default = 0
+advanced = true
+
+[tabs.detect_nn2d.topaz_train_reg]
+name = "Regularization"
+description = "l2 regularizer on the model parameters (default: 0)"
+type = "float"
+default = 0
+advanced = true
+
+[tabs.detect_nn2d.topaz_train_learn_rate]
+name = "Learning rate"
+description = "Learning rate for the optimizer (default: 0.0002)"
+type = "float"
+default = 0.0002
+advanced = true
+
+[tabs.detect_nn2d.topaz_train_batchsize]
+name = "Minibatch size"
+description = "Number of data points per minibatch (default: 256)"
+type = "int"
+default = 256
+advanced = true
+
+[tabs.detect_nn2d.topaz_train_batchbalance]
+name = "Minibatch balance"
+description = "Fraction of minibatch that is positive data points (default: 0.0625)"
+type = "float"
+default = 0.0625
+advanced = true
+
+[tabs.detect_nn2d.topaz_train_epochsize]
+name = "Epoch size"
+description = "Number of parameter updates per epoch (default: 1000)"
+type = "int"
+default = 1000
+advanced = true
+
+[tabs.detect_nn2d.topaz_model]
+name = "Model architecture"
+description = "Model type to fit (default: resnet8)"
+type = "enum"
+enum = { resnet8="resnet8" }
+default = "resnet8"
+advanced = true
+
+[tabs.detect_nn2d.topaz_units]
+name = "Number of units in base layer"
+description = "Nnumber of units model parameter (default: 32)"
+type = "int"
+default = 32
+advanced = true
+
+[tabs.detect_nn2d.topaz_dropout]
+name = "Dropout rate"
+description = "Dropout rate model parameter(default: 0.0)"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.detect_nn2d.topaz_bn]
+name = "Batch normalization"
+description = "Use batch norm in the model (default: on)"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.detect_nn2d.topaz_pooling]
+name = "Pooling method"
+description = "Pooling method to use (default: none)"
+type = "enum"
+enum = { none="none" }
+default = "none"
+advanced = true
+
+[tabs.detect_nn2d.topaz_unit_scale]
+name = "Unit scaling"
+description = "Scale the number of units up by this factor every pool/stride layer (default: 2)"
+type = "int"
+default = 2
+advanced = true
+
+[tabs.detect_nn2d.topaz_network_unit_scale]
+name = "Encode network unit scaling"
+description = "Scaled number of units per layer in generative model, only used if autoencoder > 0 (default: 32)"
+type = "int"
+default = 32
+advanced = true
+
+[tabs.detect_nn2d.topaz_extract_rad]
+name = "Radius of extracted regions"
+description = "Radius of the regions to extract"
+type = "int"
+default = 10
+
+[tabs.detect_nn2d.topaz_extract_thres]
+name = "Extraction threshold"
+description = "Log-likelihood score threshold at which to terminate region extraction, -6 is p>=0.0025 (default: -6)"
+type = "float"
+default = -6
+advanced = true
+
+[tabs.detect_nn2d.topaz_extract_assign_rad]
+name = "Max assignment radius"
+description = "Maximum distance between prediction and labeled target allowed for considering them a match (default: same as extraction radius)"
+type = "int"
+default = 10
+advanced = true
+
+[tabs.detect_nn2d.topaz_extract_min_rad]
+name = "Min extraction radius"
+description = "Mminimum radius for region extraction when tuning radius parameter (default: 5)"
+type = "int"
+default = 5
+advanced = true
+
+[tabs.detect_nn2d.topaz_extract_max_rad]
+name = "Max extraction radius"
+description = "Maximum radius for region extraction when tuning radius parameters (default: 100)"
+type = "int"
+default = 100
+advanced = true
+
+[tabs.detect_nn2d.topaz_extract_step_rad]
+name = "Step radius"
+description = "Grid size when searching for optimal radius parameter (default: 5)"
+type = "int"
+default = 5
 advanced = true
 
 [tabs.detect_nn2d.debug]
