@@ -295,7 +295,7 @@ def tomoeval(args,name):
 
         logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn3d_ref'])).name}")
         # use option "--gpus -1" to force run on CPU
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --out_thresh {args['detect_nn3d_thresh']} --with_score --exp_id test_reprod --load_model {project_params.resolve_path(args['detect_nn3d_ref'])} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt {os.path.join( os.getcwd(), imgs_file)} --test_coord_txt {os.path.join( os.getcwd(), test_file)} 2>&1 | tee {os.path.join(project_folder, 'train', name + '_testing.log')}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --with_score --exp_id test_reprod --load_model {project_params.resolve_path(args['detect_nn3d_ref'])} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt {os.path.join( os.getcwd(), imgs_file)} --test_coord_txt {os.path.join( os.getcwd(), test_file)} 2>&1 | tee {os.path.join(project_folder, 'train', name + '_testing.log')}"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 

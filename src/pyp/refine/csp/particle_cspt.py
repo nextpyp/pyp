@@ -1155,6 +1155,7 @@ def run_mpi_reconstruction(
     # hack os.environ['PYP_SCRATCH']
     local_scratch = os.environ["PYP_SCRATCH"]
     os.environ["PYP_SCRATCH"] = local_input_dir
+    
     logger.info("Merging intermediate reconstructions")
     frealign.merge_reconstructions(mp, iteration, ref)
 
@@ -1220,6 +1221,7 @@ def run_mpi_reconstruction(
             + glob.glob(f"../maps/*_r{ref:02d}_???.txt")
             + glob.glob("../maps/*half*.mrc")
             + glob.glob("../maps/*crop.mrc")
+            + glob.glob("../maps/*scores.svgz")
         ):
             if os.path.exists(file):
                 shutil.copy2(file, output_folder)

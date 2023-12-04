@@ -1389,7 +1389,7 @@ EOF
     with open("%s_vir0000.txt" % name, "w") as f:
 
         # invert volume contrast for eman particles
-        if parameters["data_invert"] and parameters["tomo_ext_fmt"] == "eman":
+        if not parameters["data_invert"] and parameters["tomo_ext_fmt"] == "eman":
             command = "{0}/bin/newstack {1}.ali {1}.ali -multadd -1,0".format(
                 get_imod_path(), name
             )
@@ -1511,7 +1511,11 @@ EOF
             if fslice < 0:
                 ypad_dn = fslice
                 fslice = 0
-
+            
+            # skip if reversed slice
+            if fslice > lslice:
+                continue
+            
             # shiftx = y / 2 - float(spike[0]) * binning
             shiftx = x / 2 - float(spike[0]) * binning
 
