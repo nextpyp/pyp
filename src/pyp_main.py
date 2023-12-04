@@ -4040,8 +4040,10 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 args = project_params.load_pyp_parameters()
-                # joint.sprtrain(args)
-                topaz.sprtrain(args)
+                if args["detect_method"].endswith("topaz"):
+                    topaz.sprtrain(args)
+                else:
+                    joint.sprtrain(args)
                 logger.info("PYP (sprtrain) finished successfully")
             except:
                 trackback()

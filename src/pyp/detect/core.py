@@ -269,8 +269,11 @@ def pick_particles(
                 np.savetxt("{0}.box".format(name), box, fmt="%i\t")
 
         elif mparameters["detect_method"].startswith("nn-"):
-            # boxs = joint.spreval(mparameters,name)
-            boxs = topaz.spreval(mparameters,name)
+            
+            if mparameters["detect_method"].endswith("topaz"):
+                boxs = topaz.spreval(mparameters,name)
+            else:
+                boxs = joint.spreval(mparameters,name)
             if boxs is not None:
                 if len(boxs) > 0:
                     boxes = np.zeros( [boxs.shape[0], 4] )
