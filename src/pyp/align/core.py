@@ -48,9 +48,11 @@ from pyp.system.set_up import initialize_classification, prepare_frealign_dir
 from pyp.system.utils import (
     get_frealign_paths,
     get_imod_path,
+    get_aretomo_path,
     get_summovie_path,
     get_unblur_path,
     get_unblur2_path,
+    get_motioncor3_path,
     imod_load_command,
 )
 from pyp.system.wrapper_functions import avgstack
@@ -4106,119 +4108,241 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
     movie_file = name + suffix
     aligned_average = name + ".avg"
-    if "gain_reference" in parameters.keys() and os.path.exists(
-        project_params.resolve_path(parameters["gain_reference"])
-        ):
-        gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
-        gain_file = os.path.basename(gain_reference_file)
 
-        gain_corrected = "no"
+    if 'motioncor3' in parameters["movie_ali"]:
 
-        if ("gain_rotation" in parameters.keys()
-        and abs(int(parameters["gain_rotation"])) >= 0
-        ):
-            gain_rotation = abs(int(parameters["gain_rotation"]))
+        logger.info("Aliging frames using MotionCor3")
 
-        if "gain_fliph" in parameters.keys():
-            if parameters["gain_fliph"]:
-                gain_fliph = "yes"
-            else:
-                gain_fliph = "no"
+        # patch tracking
+        if "tomo_ali_patch_based" in parameters and parameters["tomo_ali_patch_based"]:
+            patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
+        else:
+            patches = ""
 
-        if "gain_flipv" in parameters.keys():
-            if parameters["gain_flipv"]:
-                gain_flipv = "yes"
-            else:
-                gain_flipv = "no"
+        """
+        -InMrc
+        -InTiff
+        -InEer
+        -InSuffix
+        -OutMrc
+        -FmIntFile
+        -ArcDir
+        -FullSum
+        -Gain
+        -Dark
+        -DefectFile
+        -DefectMap
+        -InAln
+        -OutAln
+        -TmpFile
+        -LogDir
+        -FmIntFile
+        -Serial          0
+        -EerSampling     1
+        -Patch           0  0  0
+        -Iter            15
+        -Tol             0.10
+        -Bft             500.00 100.00
+        -PhaseOnly       0
+        -FtBin           1.00
+        -InitDose        0.00
+        -FmDose          0.00
+        -PixSize         0.00
+        -kV              300
+        -Cs              2.70
+        -AmpCont         0.07
+        -ExtPhase        0.00
+        -Throw           0
+        -Trunc           0
+        -SumRange        3.00  25.00
+        -SplitSum        0
+        -Group           1  4
+        -FmRef           -1
+        -OutStack        0  1
+        -RotGain         0
+        -FlipGain        0
+        -InvGain         0
+        -Align           1
+        -Tilt            0.00  0.00
+        -Mag             1.00  1.00  0.00
+        -InFmMotion      0
+        -Crop            0  0
+        -Gpu             0
+        -UseGpus         1
+        -GpuMemUsage     0.75
+        -OutStar         0
+        -TiffOrder       1
+        -CorrInterp      0
+        """
+        if 'mrc' in suffix:
+            input = f"-InMrc ../{movie_file}"
+        elif 'tif' in suffix:
+            input = f"-InTiff ../{movie_file}"
+        elif 'eer' in suffix:
+            input = f"-InEer ../{movie_file}"
 
-        gain_operate = "\n../%s\n%s\n%s\n%d" % (gain_file, gain_flipv, gain_fliph, gain_rotation)
-    else:
-        gain_corrected = "yes"
-        gain_operate = ""
+            eer_frames_perimage = int(parameters["movie_eer_frames"])
+            eer_superres_factor = int(parameters["movie_eer_reduce"])
+            eer = f"{input} -EerSampling {eer_superres_factor}"
 
-    pixel = float(parameters["scope_pixel"])
-    binning = float(parameters["data_bin"])
-    voltage = float(parameters["scope_voltage"])
-    dose_rate = float(parameters["scope_dose_rate"])
-    actual_pixel = (
-        pixel
-        * float(parameters["data_bin"])
-    )
+            # TODO: produce frame integration file to tell motiomcorr to reduce number of frames
 
-    if "movie_weights" in parameters.keys() and parameters["movie_weights"]:
-        weighted = "yes\n%s\n%s\n0" % (
-            voltage,
-            dose_rate,
+        if "gain_reference" in parameters.keys() and os.path.exists(
+            project_params.resolve_path(parameters["gain_reference"])
+            ):
+            gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
+            gain_file = os.path.basename(gain_reference_file)
+            gain = f" -Gain {gain_file}"
+
+            if "gain_flipv" in parameters.keys() and parameters["gain_flipv"]:
+                gain += f" -FlipGain 1"
+            elif "gain_fliph" in parameters.keys() and parameters["gain_fliph"]:
+                gain += f" -FlipGain 2"
+            if "gain_rotation" in parameters.keys() and abs(int(parameters["gain_rotation"])) >= 0:
+                gain += f" -RotGain {parameters['gain_rotation']}"
+        else:
+            gain = ""
+
+        frame_options = ""
+        if parameters["movie_first"] > 0:
+            frame_options += f" -Throw {parameters['movie_first']}"
+        if parameters["movie_last"] != -1:
+            x, y, total_frames = get_image_dimensions(movie_file) 
+            frame_options += f" -Trunc {total_frames - parameters['movie_last']}"
+        if parameters["movie_group"] > 1:
+            frame_options += f" -Group {parameters['movie_group']}"
+        frame_options += f" -Bft {parameters['movie_bfactor']}"
+
+        command = f"{get_motioncor3_path()} {input} -OutMrc {name} {gain} -OutAln {os.getcwd()} {frame_options} {patches}"
+        logger.warning(command)
+        [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+
+        if "Segmentation fault" in error or "Killed" in error:
+            logger.error("MotionCor3 failed")
+            raise Exception(error)
+
+        # rename frame average
+        shutil.move( name + ".mrc", name + ".avg" )
+
+        # read shifts and save in txt format
+        shifts = np.loadtxt(f"{name}.aln",skiprows=8,ndmin=2)
+        np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt=".4f")
+
+    elif 'unblur' in parameters["movie_ali"]:
+
+        if "gain_reference" in parameters.keys() and os.path.exists(
+            project_params.resolve_path(parameters["gain_reference"])
+            ):
+            gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
+            gain_file = os.path.basename(gain_reference_file)
+
+            gain_corrected = "no"
+
+            if ("gain_rotation" in parameters.keys()
+            and abs(int(parameters["gain_rotation"])) >= 0
+            ):
+                gain_rotation = abs(int(parameters["gain_rotation"]))
+
+            if "gain_fliph" in parameters.keys():
+                if parameters["gain_fliph"]:
+                    gain_fliph = "yes"
+                else:
+                    gain_fliph = "no"
+
+            if "gain_flipv" in parameters.keys():
+                if parameters["gain_flipv"]:
+                    gain_flipv = "yes"
+                else:
+                    gain_flipv = "no"
+
+            gain_operate = "\n../%s\n%s\n%s\n%d" % (gain_file, gain_flipv, gain_fliph, gain_rotation)
+        else:
+            gain_corrected = "yes"
+            gain_operate = ""
+
+        pixel = float(parameters["scope_pixel"])
+        binning = float(parameters["data_bin"])
+        voltage = float(parameters["scope_voltage"])
+        dose_rate = float(parameters["scope_dose_rate"])
+        actual_pixel = (
+            pixel
+            * float(parameters["data_bin"])
         )
-        restore_Noise_power = "\nYES"
-    else:
-        weighted = "NO"
-        restore_Noise_power = ""
 
-    save_aligned_frames = False
+        if "movie_weights" in parameters.keys() and parameters["movie_weights"]:
+            weighted = "yes\n%s\n%s\n0" % (
+                voltage,
+                dose_rate,
+            )
+            restore_Noise_power = "\nYES"
+        else:
+            weighted = "NO"
+            restore_Noise_power = ""
 
-    if save_aligned_frames:
-        save_frames = "yes\n%s_aligned_frames.mrc" % name
-    else:
-        save_frames = "no"
+        save_aligned_frames = False
 
-    if "eer" in suffix:
-        eer_frames_perimage = int(parameters["movie_eer_frames"])
-        eer_superres_factor = int(parameters["movie_eer_reduce"])
-        eer = "\n%d\n%d" % (eer_frames_perimage, eer_superres_factor)
-        actual_pixel /= eer_superres_factor
-    else:
-        eer = ""
+        if save_aligned_frames:
+            save_frames = "yes\n%s_aligned_frames.mrc" % name
+        else:
+            save_frames = "no"
 
-    if parameters["movie_force_integer"]:
-        forceinteger = "yes"
-    else:
-        forceinteger = "no"
+        if "eer" in suffix:
+            eer_frames_perimage = int(parameters["movie_eer_frames"])
+            eer_superres_factor = int(parameters["movie_eer_reduce"])
+            eer = "\n%d\n%d" % (eer_frames_perimage, eer_superres_factor)
+            actual_pixel /= eer_superres_factor
+        else:
+            eer = ""
 
-    bfactor = float(parameters["movie_bfactor"])
-    first_frame = int(parameters["movie_first"]) + 1 # pyp from 0, unblur starts from 1
-    last_frame = int(parameters["movie_last"]) + 1 if int(parameters["movie_last"]) != -1 else 0 # pyp's end is -1, unblur's end is 0
-    running_average = 1
-    maximum_shifts_in_A = 40.0
-    minimum_shifts_in_A = 0.0
-    threads = parameters["slurm_tasks"] if "spr" in parameters["data_mode"].lower() else 1
+        if parameters["movie_force_integer"]:
+            forceinteger = "yes"
+        else:
+            forceinteger = "no"
 
-    """
-            **   Welcome to Unblur   **
+        bfactor = float(parameters["movie_bfactor"])
+        first_frame = int(parameters["movie_first"]) + 1 # pyp from 0, unblur starts from 1
+        last_frame = int(parameters["movie_last"]) + 1 if int(parameters["movie_last"]) != -1 else 0 # pyp's end is -1, unblur's end is 0
+        running_average = 1
+        maximum_shifts_in_A = 40.0
+        minimum_shifts_in_A = 0.0
+        threads = parameters["slurm_tasks"] if "spr" in parameters["data_mode"].lower() else 1
 
-                Version : 2.00
-            Compiled : Jun 30 2022
-        Library Version : 2.0.0-alpha--1--dirty
-            From Branch : main
-                Mode : Interactive
+        """
+                **   Welcome to Unblur   **
 
-    Input stack filename [my_movie.mrc]                :
-    Output aligned sum [my_aligned_sum.mrc]            :
-    Output shift text file [my_shifts.txt]             :
-    Pixel size of images (A) [1.0]                     :
-    Output binning factor [1]                          :
-    Apply Exposure filter? [yes]                       : no
-    Set Expert Options? [no]                           : yes
-    Minimum shift for initial search (A) [2.0]         :
-    Outer radius shift limit (A) [80.0]                :
-    B-factor to apply to images (A^2) [1500]           :
-    Half-width of vertical Fourier mask [1]            :
-    Half-width of horizontal Fourier mask [1]          :
-    Termination shift threshold (A) [1]                :
-    Maximum number of iterations [20]                  :
-    Input stack is dark-subtracted? [yes]              :
-    Input stack is gain-corrected? [yes]               :
-    First frame to use for sum [1]                     :
-    Last frame to use for sum (0 for last frame) [0]   :
-    Number of frames for running average [1]           :
-    Save Aligned Frames? [no]                          :
-    Correct Magnification Distortion? [no]             :
-    Max. threads to use for calculation [1]            :
-    """
+                    Version : 2.00
+                Compiled : Jun 30 2022
+            Library Version : 2.0.0-alpha--1--dirty
+                From Branch : main
+                    Mode : Interactive
 
-    # unblur cisTEM 2.0
-    unblur_path = get_unblur2_path()
-    command = f"""
+        Input stack filename [my_movie.mrc]                :
+        Output aligned sum [my_aligned_sum.mrc]            :
+        Output shift text file [my_shifts.txt]             :
+        Pixel size of images (A) [1.0]                     :
+        Output binning factor [1]                          :
+        Apply Exposure filter? [yes]                       : no
+        Set Expert Options? [no]                           : yes
+        Minimum shift for initial search (A) [2.0]         :
+        Outer radius shift limit (A) [80.0]                :
+        B-factor to apply to images (A^2) [1500]           :
+        Half-width of vertical Fourier mask [1]            :
+        Half-width of horizontal Fourier mask [1]          :
+        Termination shift threshold (A) [1]                :
+        Maximum number of iterations [20]                  :
+        Input stack is dark-subtracted? [yes]              :
+        Input stack is gain-corrected? [yes]               :
+        First frame to use for sum [1]                     :
+        Last frame to use for sum (0 for last frame) [0]   :
+        Number of frames for running average [1]           :
+        Save Aligned Frames? [no]                          :
+        Correct Magnification Distortion? [no]             :
+        Max. threads to use for calculation [1]            :
+        """
+
+        # unblur cisTEM 2.0
+        unblur_path = get_unblur2_path()
+        command = f"""
 {unblur_path}/unblur_gain << EOF
 ../{movie_file}
 ../{aligned_average}
@@ -4245,18 +4369,18 @@ no
 {threads}
 EOF
 """
-    command = (
-        "export OMP_NUM_THREADS={0}; export NCPUS={0}; ".format(threads)
-        + command
-    )
-    if parameters['data_mode'] == 'tomo' and parameters["slurm_verbose"] and not isfirst:
-        [output, error] = run_shell_command(command, verbose=False)
-    else:
-        [output, error] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+        command = (
+            "export OMP_NUM_THREADS={0}; export NCPUS={0}; ".format(threads)
+            + command
+        )
+        if parameters['data_mode'] == 'tomo' and parameters["slurm_verbose"] and not isfirst:
+            [output, error] = run_shell_command(command, verbose=False)
+        else:
+            [output, error] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
-    if "Segmentation fault" in error or "Killed" in error:
-        logger.error("Try increasing the Memory per task in the Resources tab (or --slurm_memory parameter in the CLI)")
-        raise Exception(error)
+        if "Segmentation fault" in error or "Killed" in error:
+            logger.error("Try increasing the Memory per task in the Resources tab (or --slurm_memory parameter in the CLI)")
+            raise Exception(error)
 
     # go back to parent directory and cleanup
     os.chdir("..")
@@ -4378,7 +4502,7 @@ def align_tilt_series(name, parameters, rotation=0):
     )
 
     # always redo coarse alignment
-    if True: # not os.path.exists(name + ".prexg"):
+    if not 'aretomo' in parameters["tomo_ali_method"].lower():
         logger.info("Doing pre-alignment using IMODs tiltxcorr")
 
         if parameters["tomo_rec_square"]:
@@ -4470,17 +4594,6 @@ def align_tilt_series(name, parameters, rotation=0):
 
         # update current transform
         run_shell_command("mv {0}_first.prexg {0}.prexg".format(name),verbose=parameters["slurm_verbose"])
-    else:
-
-        # generate pre-aligned stack with available alignment parameters
-        logger.info(
-            "Using existing tilt-series pre-alignments ( " + name + ".prexg )\n"
-        )
-
-        com = "{0}/bin/newstack -linear -xform {1}.prexg {1}_bin.st {1}_bin.preali -scale 0,32767 -mode 1 -taper 1,1".format(
-            get_imod_path(), name
-        )
-        run_shell_command(com,verbose=parameters["slurm_verbose"])
 
     actual_pixel = (
         float(parameters["scope_pixel"]) * float(parameters["data_bin"]) * binning
@@ -4504,14 +4617,23 @@ def align_tilt_series(name, parameters, rotation=0):
         """
 
     # check if fiducial/patch tracking coordinates exist
-    if False: # os.path.exists(name + ".fid.txt"):
+    if 'aretomo' in parameters["tomo_ali_method"]:
 
-        logger.info(
-            "\nUsing existing fiducial/patch based alignments ( "
-            + name
-            + ".fid.txt )\n"
-        )
+            logger.info("Aliging tilt-series using AreTomo")
 
+            # patch tracking
+            if parameters["tomo_ali_patch_based"]:
+                patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
+            else:
+                patches = ""
+            command = f"{get_aretomo_path()} -InMrc {name}.mrc -OutMrc {name}.rec -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
+            run_shell_command(command, verbose=parameters["slurm_verbose"])
+
+            # save output
+            shutil.copy2(f"{name}.rec_Imod/{name}.xf", f"{name}.xf")
+            shutil.copy2(f"{name}.rec_Imod/{name}.tlt", f"{name}.tlt")
+
+            return
     else:
 
         # alignment using gold fiducials
@@ -4695,7 +4817,7 @@ EOF
             shutil.copy2("%s.fid" % name, "%s.fid.txt" % name)
 
     # make alignment output between different variants uniform
-    if not parameters["tomo_ali_patch_based"]:
+    if not parameters["tomo_ali_patch_based"] and 'aretomo' not in parameters["tomo_ali_method"]:
 
         # alignment using gold fiducials
 
@@ -4735,7 +4857,7 @@ EOF
             np.savetxt("{0}_bin.xf".format(name), rot2D, fmt="%13.7f")
             shutil.copy2("%s.rawtlt" % name, "%s.tlt" % name)
 
-    else:
+    elif parameters["tomo_ali_patch_based"]:
 
         # patch-based alignment
 
@@ -4823,7 +4945,6 @@ EOF
         get_imod_path(), name
     )
     run_shell_command(command,verbose=parameters["slurm_verbose"])
-
 
 
 def check_parfile_match_allboxes(par_file: str, allboxes_file: str):

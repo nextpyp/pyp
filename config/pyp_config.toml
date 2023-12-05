@@ -379,7 +379,7 @@ hidden = true
 name = "Alignment method"
 description = "Method used for frame alignment"
 type = "enum"
-enum = { unblur="unblur", skip="no alignment" }
+enum = { unblur="unblur", motioncor3="motioncor3", skip="no alignment" }
 default = "unblur"
 hidden = ["spr_import_star","tomo_import_star"]
 
@@ -1090,6 +1090,13 @@ hidden = true
 [tabs.tomo_ali]
 _name = "Tilt-series alignment"
 _description = "Parameters for tilt-series alignment"
+
+[tabs.tomo_ali.method]
+name = "Alignment method"
+description = "Method to use for tilt-series alignment"
+type = "enum"
+enum = { imod_gold="IMOD (fiducials)", imod_patch="IMOD (patch tracking)", aretomo="Aretomo" }
+default = "imod_gold"
 
 [tabs.tomo_ali.patch_based]
 name = "Skip fiducial-based alignment"

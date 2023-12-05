@@ -1455,10 +1455,11 @@ def generate_aligned_tiltseries(name, parameters, tilt_metadata):
     sec = 0 
     with open(f"{name}.xf", "r") as f:
         for line in f.readlines():
-            with open(f"{name}_{sec:04d}.xf", "w") as newf:
-                newf.write(line)
-            sec += 1
-    
+            if len(line) > 1:
+                with open(f"{name}_{sec:04d}.xf", "w") as newf:
+                    newf.write(line)
+                sec += 1
+
     commands = [] 
     aligned_images = []
     for tilt in range(sec):
@@ -1470,7 +1471,7 @@ def generate_aligned_tiltseries(name, parameters, tilt_metadata):
 
     from pyp.system import mpi
     mpi.submit_jobs_to_workers(commands, os.getcwd())
-    
+
     command = "{0}/bin/newstack {2} {1}.ali".format(
         get_imod_path(), name, " ".join(aligned_images)
     )
