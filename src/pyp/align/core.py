@@ -4619,19 +4619,45 @@ def align_tilt_series(name, parameters, rotation=0):
     # check if fiducial/patch tracking coordinates exist
     if 'aretomo' in parameters["tomo_ali_method"]:
 
-            logger.info("Aliging tilt-series using AreTomo")
+            logger.info("Aliging tilt-series using AreTomo2")
+            
+            binning_tomo = parameters["tomo_rec_binning"]
+            thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
 
-            # patch tracking
+            specimen_thickness = parameters["tomo_rec_aretomo_zheight"]
+            assert (specimen_thickness < thickness), f"Height of specimen ({specimen_thickness}) needs to be smaller than tomogram thickness ({thickness})"
+            
+            # default using SART for reconstruction
+            reconstruct_option = f"-Sart {parameters['tomo_rec_aretomo_sart_iter']} {parameters['tomo_rec_aretomo_sart_num_projs']}"
+            if parameters["tomo_rec_aretomo_wbp"]:
+                reconstruct_option = "-Wbp 1"
+        
+            # correct the tilt offset 
+            tilt_offset_option = "1" if parameters['tomo_rec_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_rec_aretomo_tiltoff']}"
+
+            # local motion by giving the number of patches 
             if parameters["tomo_ali_patch_based"]:
                 patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
             else:
                 patches = ""
-            command = f"{get_aretomo_path()} -InMrc {name}.mrc -OutMrc {name}.rec -AngFile {name}.rawtlt -VolZ 0 -OutBin {binning} -TiltAxis {parameters['scope_tilt_axis']} -OutImod 1 {patches}"
+
+            command = f"{get_aretomo_path()} \
+                            -InMrc {name}.mrc \
+                            -OutMrc {name}.rec \
+                            -AngFile {name}.rawtlt \
+                            -VolZ {thickness} \
+                            -OutBin {binning_tomo} \
+                            -TiltAxis {parameters['scope_tilt_axis']} \
+                            -DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
+                            -AlignZ {specimen_thickness} \
+                            {reconstruct_option} \
+                            -TiltCor {tilt_offset_option} \
+                            -OutImod 1 {patches}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             # save output
-            shutil.copy2(f"{name}.rec_Imod/{name}.xf", f"{name}.xf")
-            shutil.copy2(f"{name}.rec_Imod/{name}.tlt", f"{name}.tlt")
+            shutil.copy2(f"{name}_Imod/{name}_st.xf", f"{name}.xf")
+            shutil.copy2(f"{name}_Imod/{name}_st.tlt", f"{name}.tlt")
 
             return
     else:
