@@ -209,7 +209,7 @@ hidden = true
 
 [tabs.scope.tilt_axis]
 name = "Tilt-axis angle (degrees)"
-description = "Approximate orientation of tilt-axis with respect to the y-axis"
+description = "Approximate orientation of tilt-axis with respect to the x-axis (counterclockwise positive)."
 type = "float"
 default = 0.0
 hidden = [ "spr_import_raw", "spr_import_star", "stream_spr" ]
