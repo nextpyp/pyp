@@ -305,7 +305,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
 
     elif "aretomo" in parameters["tomo_rec_method"].lower():  
         
-        if False and Path(f"{name}_aretomo.rec").exists():
+        if Path(f"{name}_aretomo.rec").exists():
             os.rename(f"{name}_aretomo.rec", f"{name}.rec")
         else:
             reconstruct_option = f"-Sart {parameters['tomo_rec_aretomo_sart_iter']} {parameters['tomo_rec_aretomo_sart_num_projs']}"
