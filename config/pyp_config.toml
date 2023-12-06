@@ -1228,7 +1228,7 @@ advanced = true
 name = "Use weighted back-projection"
 description = "Use weighted back-projection to reconstruct tomograms. If this option is turned on, SART is not used."
 type = "bool"
-default = false
+default = true
 advanced = true
 
 [tabs.tomo_rec.aretomo_sart_iter]
