@@ -894,7 +894,7 @@ def split(parameters):
         swarm_file = slurm.create_pyp_swarm_file(parameters, files, timestamp)
 
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "nn-train" or parameters["tomo_spk_method"] == "nn-train" ) 
-        spr_train = parameters["data_mode"] == "spr" and parameters["detect_method"] == "nn-train"
+        spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
 
         if ( tomo_train or spr_train ) and os.path.exists(os.path.join("train","current_list.txt")):
             train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
