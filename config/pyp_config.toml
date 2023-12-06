@@ -1095,7 +1095,7 @@ _description = "Parameters for tilt-series alignment"
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
 type = "enum"
-enum = { imod_gold="IMOD (fiducials)", imod_patch="IMOD (patch tracking)", aretomo="Aretomo" }
+enum = { imod_gold="IMOD (fiducials)", imod_patch="IMOD (patch tracking)", aretomo="Aretomo2" }
 default = "imod_gold"
 
 [tabs.tomo_ali.patch_based]

@@ -57,7 +57,7 @@ def get_aretomo_path():
     if 'areTomo2' in config["pyp"]:
         command = config["pyp"]["areTomo2"]
     else:
-        raise Exception("AreTomo2 configuration is missing")
+        command = "/opt/pyp/external/AreTomo2/AreTomo2"
     command = cuda_path_prefix(command)
     return command
 

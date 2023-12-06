@@ -4644,17 +4644,17 @@ def align_tilt_series(name, parameters, rotation=0):
                 patches = ""
 
             command = f"{get_aretomo_path()} \
-                            -InMrc {name}.mrc \
-                            -OutMrc {name}.rec \
-                            -AngFile {name}.rawtlt \
-                            -VolZ {thickness} \
-                            -OutBin {binning_tomo} \
-                            -TiltAxis {parameters['scope_tilt_axis']} \
-                            -DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
-                            -AlignZ {specimen_thickness} \
-                            {reconstruct_option} \
-                            -TiltCor {tilt_offset_option} \
-                            -OutImod 1 {patches}"
+-InMrc {name}.mrc \
+-OutMrc {name}.rec \
+-AngFile {name}.rawtlt \
+-VolZ {thickness} \
+-OutBin {binning_tomo} \
+-TiltAxis {parameters['scope_tilt_axis']} \
+-DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
+-AlignZ {specimen_thickness} \
+{reconstruct_option} \
+-TiltCor {tilt_offset_option} \
+-OutImod 1 {patches}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             # save output
