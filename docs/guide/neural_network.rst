@@ -79,6 +79,11 @@ Step 3: Run inference using the trained model
 
     Since the quality of the picking may depend on the size of the training set, challenging datasets may require the use of more particles for training
 
+Support for Topaz picking
+-------------------------
+
+    Starting in version 0.5.4, nextPYP supports 2D particle picking using `Topaz <https://github.com/tbepler/topaz>`_. To use Topaz, you first need to install the program on your server or compute nodes and your nextPYP instance needs to be properly configured by setting the path to the Topaz executable and to any host-specific CUDA libraries using the configuration variables ``topaz`` and ``cudaPaths``. See the :doc:`full documentation for the configuration file<../reference/config>` for details. Once this is done, simply select ``nn-topaz-train`` or ``nn-topaz-eval`` in Steps 2 and 3 above, respectively.
+
 .. seealso::
 
     * :doc:`Particle picking<picking>`

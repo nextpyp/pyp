@@ -657,32 +657,35 @@ def read_tilt_series(
                 parameters, dims[0], dims[1],
             )
 
-            # update gain reference with local, pre-processed copy
-            #if gain_reference_file is not None:
-            #    parameters["gain_reference"] = gain_reference_file
-
-
             # align frames in each tilt
             isfirst = True
-            for tilt in sorted_tilts:
-                logger.info("Aligning frames for tilt angle %.2f", tilt[1])
-                frame_name = tilt[0].replace(file_format, "")
-
-                arguments.append(
-                    (
-                        parameters,
-                        frame_name,
-                        file_format,
-                        isfirst
-                    )
-                )
-                isfirst = False
-
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
             t.start()
-            mpi.submit_function_to_workers(
-                align.align_movie_super, arguments, verbose=parameters["slurm_verbose"]
-            )
+            import torch
+            if torch.cuda.is_available() and 'motioncor3' in parameters["movie_ali"]:
+                for tilt in sorted_tilts:
+                    logger.info("Aligning frames for tilt angle %.2f", tilt[1])
+                    frame_name = tilt[0].replace(file_format, "")
+                    align.align_movie_super( parameters, frame_name, file_format, isfirst)
+            else:
+                # submit jobs to workers
+                for tilt in sorted_tilts:
+                    logger.info("Aligning frames for tilt angle %.2f", tilt[1])
+                    frame_name = tilt[0].replace(file_format, "")
+
+                    arguments.append(
+                        (
+                            parameters,
+                            frame_name,
+                            file_format,
+                            isfirst
+                        )
+                    )
+                    isfirst = False
+
+                mpi.submit_function_to_workers(
+                    align.align_movie_super, arguments, verbose=parameters["slurm_verbose"]
+                )
             t.stop()
 
             # compose drift-corrected tilt-series

@@ -705,7 +705,7 @@ advanced = true
 
 [tabs.detect_nn2d.topaz_pretrained]
 name = "Use pretrained initialization"
-description = "by default, topaz train will initialize model parameters from the pretrained parameters if a pretrained model with the same configuration is available (e.g. resnet8 with 64 units)."
+description = "Topaz train will initialize model parameters from the pretrained parameters if a pretrained model with the same configuration is available (e.g. resnet8 with 64 units)."
 type = "bool"
 default = false
 
@@ -738,49 +738,49 @@ advanced = true
 
 [tabs.detect_nn2d.topaz_train_autoencoder]
 name = "Autoencoder weight"
-description = "Option to augment method with autoencoder. weight on reconstruction error (default: 0)"
+description = "Option to augment method with autoencoder. Weight on reconstruction error"
 type = "float"
 default = 0
 advanced = true
 
 [tabs.detect_nn2d.topaz_train_reg]
 name = "Regularization"
-description = "l2 regularizer on the model parameters (default: 0)"
+description = "L2 regularizer on the model parameters"
 type = "float"
 default = 0
 advanced = true
 
 [tabs.detect_nn2d.topaz_train_learn_rate]
 name = "Learning rate"
-description = "Learning rate for the optimizer (default: 0.0002)"
+description = "Learning rate for the optimizer"
 type = "float"
 default = 0.0002
 advanced = true
 
 [tabs.detect_nn2d.topaz_train_batchsize]
 name = "Minibatch size"
-description = "Number of data points per minibatch (default: 256)"
+description = "Number of data points per minibatch"
 type = "int"
 default = 256
 advanced = true
 
 [tabs.detect_nn2d.topaz_train_batchbalance]
 name = "Minibatch balance"
-description = "Fraction of minibatch that is positive data points (default: 0.0625)"
+description = "Fraction of minibatch that is positive data points"
 type = "float"
 default = 0.0625
 advanced = true
 
 [tabs.detect_nn2d.topaz_train_epochsize]
 name = "Epoch size"
-description = "Number of parameter updates per epoch (default: 1000)"
+description = "Number of parameter updates per epoch"
 type = "int"
 default = 1000
 advanced = true
 
 [tabs.detect_nn2d.topaz_model]
 name = "Model architecture"
-description = "Model type to fit (default: resnet8)"
+description = "Model type to fit"
 type = "enum"
 enum = { resnet8="resnet8" }
 default = "resnet8"
@@ -788,28 +788,28 @@ advanced = true
 
 [tabs.detect_nn2d.topaz_units]
 name = "Number of units in base layer"
-description = "Nnumber of units model parameter (default: 32)"
+description = "Number of units model parameter"
 type = "int"
 default = 32
 advanced = true
 
 [tabs.detect_nn2d.topaz_dropout]
 name = "Dropout rate"
-description = "Dropout rate model parameter(default: 0.0)"
+description = "Dropout rate model parameter"
 type = "float"
 default = 0.0
 advanced = true
 
 [tabs.detect_nn2d.topaz_bn]
 name = "Batch normalization"
-description = "Use batch norm in the model (default: on)"
+description = "Use batch norm in the model"
 type = "bool"
 default = true
 advanced = true
 
 [tabs.detect_nn2d.topaz_pooling]
 name = "Pooling method"
-description = "Pooling method to use (default: none)"
+description = "Pooling method to use"
 type = "enum"
 enum = { none="none" }
 default = "none"
@@ -817,14 +817,14 @@ advanced = true
 
 [tabs.detect_nn2d.topaz_unit_scale]
 name = "Unit scaling"
-description = "Scale the number of units up by this factor every pool/stride layer (default: 2)"
+description = "Scale the number of units up by this factor every pool/stride layer"
 type = "int"
 default = 2
 advanced = true
 
 [tabs.detect_nn2d.topaz_network_unit_scale]
 name = "Encode network unit scaling"
-description = "Scaled number of units per layer in generative model, only used if autoencoder > 0 (default: 32)"
+description = "Scaled number of units per layer in generative model, only used if autoencoder > 0"
 type = "int"
 default = 32
 advanced = true
@@ -837,7 +837,7 @@ default = 10
 
 [tabs.detect_nn2d.topaz_extract_thres]
 name = "Extraction threshold"
-description = "Log-likelihood score threshold at which to terminate region extraction, -6 is p>=0.0025 (default: -6)"
+description = "Log-likelihood score threshold at which to terminate region extraction, -6 is p>=0.0025"
 type = "float"
 default = -6
 advanced = true
@@ -851,21 +851,21 @@ advanced = true
 
 [tabs.detect_nn2d.topaz_extract_min_rad]
 name = "Min extraction radius"
-description = "Mminimum radius for region extraction when tuning radius parameter (default: 5)"
+description = "Minimum radius for region extraction when tuning radius parameter"
 type = "int"
 default = 5
 advanced = true
 
 [tabs.detect_nn2d.topaz_extract_max_rad]
 name = "Max extraction radius"
-description = "Maximum radius for region extraction when tuning radius parameters (default: 100)"
+description = "Maximum radius for region extraction when tuning radius parameters"
 type = "int"
 default = 100
 advanced = true
 
 [tabs.detect_nn2d.topaz_extract_step_rad]
 name = "Step radius"
-description = "Grid size when searching for optimal radius parameter (default: 5)"
+description = "Grid size when searching for optimal radius parameter"
 type = "int"
 default = 5
 advanced = true
@@ -1095,7 +1095,7 @@ _description = "Parameters for tilt-series alignment"
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
 type = "enum"
-enum = { imod_gold="IMOD (fiducials)", imod_patch="IMOD (patch tracking)", aretomo="Aretomo" }
+enum = { imod_gold="IMOD (fiducials)", imod_patch="IMOD (patch tracking)", aretomo="Aretomo2" }
 default = "imod_gold"
 
 [tabs.tomo_ali.patch_based]
@@ -1228,7 +1228,7 @@ advanced = true
 name = "Use weighted back-projection"
 description = "Use weighted back-projection to reconstruct tomograms. If this option is turned on, SART is not used."
 type = "bool"
-default = false
+default = true
 advanced = true
 
 [tabs.tomo_rec.aretomo_sart_iter]
@@ -1254,9 +1254,9 @@ advanced = true
 
 [tabs.tomo_rec.aretomo_dark_tol]
 name = "Threshold to remove dark images"
-description = "Threshold to remove dark images (lowing the threshold means less images are removed)."
+description = "Threshold to remove dark images (lower values remove fewer images)."
 type = "float"
-default = 0.7
+default = 0.0
 advanced = true
 
 [tabs.tomo_rec.aretomo_measure_tiltoff]

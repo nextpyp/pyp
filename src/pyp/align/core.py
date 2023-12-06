@@ -4109,9 +4109,16 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     movie_file = name + suffix
     aligned_average = name + ".avg"
 
-    if 'motioncor3' in parameters["movie_ali"]:
+    pixel = float(parameters["scope_pixel"])
+    binning = float(parameters["data_bin"])
+    voltage = float(parameters["scope_voltage"])
+    dose_rate = float(parameters["scope_dose_rate"])
+    actual_pixel = (
+        pixel
+        * float(parameters["data_bin"])
+    )
 
-        logger.info("Aliging frames using MotionCor3")
+    if 'motioncor3' in parameters["movie_ali"]:
 
         # patch tracking
         if "tomo_ali_patch_based" in parameters and parameters["tomo_ali_patch_based"]:
@@ -4213,20 +4220,24 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             frame_options += f" -Group {parameters['movie_group']}"
         frame_options += f" -Bft {parameters['movie_bfactor']}"
 
-        command = f"{get_motioncor3_path()} {input} -OutMrc {name} {gain} -OutAln {os.getcwd()} {frame_options} {patches}"
-        logger.warning(command)
+        command = f"{get_motioncor3_path()} \
+{input} \
+-OutMrc {name}.mrc \
+{gain} \
+-OutAln {os.getcwd()} \
+{frame_options} \
+{patches}"
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
         if "Segmentation fault" in error or "Killed" in error:
-            logger.error("MotionCor3 failed")
             raise Exception(error)
 
         # rename frame average
-        shutil.move( name + ".mrc", name + ".avg" )
+        shutil.move( name + ".mrc", f"../{aligned_average}")
 
         # read shifts and save in txt format
         shifts = np.loadtxt(f"{name}.aln",skiprows=8,ndmin=2)
-        np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt=".4f")
+        np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt="%.4f")
 
     elif 'unblur' in parameters["movie_ali"]:
 
@@ -4259,15 +4270,6 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         else:
             gain_corrected = "yes"
             gain_operate = ""
-
-        pixel = float(parameters["scope_pixel"])
-        binning = float(parameters["data_bin"])
-        voltage = float(parameters["scope_voltage"])
-        dose_rate = float(parameters["scope_dose_rate"])
-        actual_pixel = (
-            pixel
-            * float(parameters["data_bin"])
-        )
 
         if "movie_weights" in parameters.keys() and parameters["movie_weights"]:
             weighted = "yes\n%s\n%s\n0" % (
@@ -4619,40 +4621,38 @@ def align_tilt_series(name, parameters, rotation=0):
     # check if fiducial/patch tracking coordinates exist
     if 'aretomo' in parameters["tomo_ali_method"]:
 
-            logger.info("Aliging tilt-series using AreTomo2")
-            
             binning_tomo = parameters["tomo_rec_binning"]
             thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
 
             specimen_thickness = parameters["tomo_rec_aretomo_zheight"]
             assert (specimen_thickness < thickness), f"Height of specimen ({specimen_thickness}) needs to be smaller than tomogram thickness ({thickness})"
-            
+
             # default using SART for reconstruction
             reconstruct_option = f"-Sart {parameters['tomo_rec_aretomo_sart_iter']} {parameters['tomo_rec_aretomo_sart_num_projs']}"
             if parameters["tomo_rec_aretomo_wbp"]:
                 reconstruct_option = "-Wbp 1"
-        
-            # correct the tilt offset 
+
+            # correct the tilt offset
             tilt_offset_option = "1" if parameters['tomo_rec_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_rec_aretomo_tiltoff']}"
 
-            # local motion by giving the number of patches 
+            # local motion by giving the number of patches
             if parameters["tomo_ali_patch_based"]:
                 patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
             else:
                 patches = ""
 
             command = f"{get_aretomo_path()} \
-                            -InMrc {name}.mrc \
-                            -OutMrc {name}.rec \
-                            -AngFile {name}.rawtlt \
-                            -VolZ {thickness} \
-                            -OutBin {binning_tomo} \
-                            -TiltAxis {parameters['scope_tilt_axis']} \
-                            -DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
-                            -AlignZ {specimen_thickness} \
-                            {reconstruct_option} \
-                            -TiltCor {tilt_offset_option} \
-                            -OutImod 1 {patches}"
+-InMrc {name}.mrc \
+-OutMrc {name}.rec \
+-AngFile {name}.rawtlt \
+-VolZ {thickness} \
+-OutBin {binning_tomo} \
+-TiltAxis {parameters['scope_tilt_axis']} \
+-DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
+-AlignZ {specimen_thickness} \
+{reconstruct_option} \
+-TiltCor {tilt_offset_option} \
+-OutImod 1 {patches}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             # save output

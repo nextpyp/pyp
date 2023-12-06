@@ -57,7 +57,7 @@ def get_aretomo_path():
     if 'areTomo2' in config["pyp"]:
         command = config["pyp"]["areTomo2"]
     else:
-        raise Exception("AreTomo2 configuration is missing")
+        command = "/opt/pyp/external/AreTomo2/AreTomo2"
     command = cuda_path_prefix(command)
     return command
 
@@ -66,7 +66,7 @@ def get_motioncor3_path():
     if 'motionCor3' in config["pyp"]:
         command = config["pyp"]["motionCor3"]
     else:
-        raise Exception("MotionCor3 configuration is missing")
+        command = "/opt/pyp/external/MotionCor3/MotionCor3"
     command = cuda_path_prefix(command)
     return command
 
@@ -86,7 +86,7 @@ def get_bsoft_path():
     return "{0}/external/bsoft".format(os.environ["PYP_DIR"])
 
 def get_topaz_path():
-    return "{}/external/topaz".format(os.environ["PYP_DIR"])
+    return "/usr/local/envs/pyp/bin"
 
 def get_embfactor_path():
     return "{0}/external/embfactor".format(os.environ["PYP_DIR"])
