@@ -4643,7 +4643,7 @@ def align_tilt_series(name, parameters, rotation=0):
 
             command = f"{get_aretomo_path()} \
 -InMrc {name}.mrc \
--OutMrc {name}.rec \
+-OutMrc {name}_aretomo.rec \
 -AngFile {name}.rawtlt \
 -VolZ {thickness} \
 -OutBin {binning_tomo} \
@@ -4654,11 +4654,13 @@ def align_tilt_series(name, parameters, rotation=0):
 -TiltCor {tilt_offset_option} \
 -OutImod 1 {patches}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
-
+            
             # save output
-            shutil.copy2(f"{name}_Imod/{name}_st.xf", f"{name}.xf")
-            shutil.copy2(f"{name}_Imod/{name}_st.tlt", f"{name}.tlt")
-
+            try:
+                shutil.copy2(f"{name}_Imod/{name}_st.xf", f"{name}.xf")
+                shutil.copy2(f"{name}_Imod/{name}_st.tlt", f"{name}.tlt")
+            except:
+                raise Exception("AreTomo2 fails to run.")
             return
     else:
 

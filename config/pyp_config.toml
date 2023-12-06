@@ -1147,6 +1147,13 @@ advanced = true
 _name = "Tomogram reconstruction"
 _description = "Parameters for tomographic reconstruction"
 
+[tabs.tomo_rec.method]
+name = "Method for tomogram reconstruction"
+description = "Method used for tomgoram reconstruction."
+type = "enum"
+enum = { imod="imod", aretomo="aretomo" }
+default = "imod"
+
 [tabs.tomo_rec.force]
 name = "Force re-calculation"
 description = "Force re-calculation of tomograms"
