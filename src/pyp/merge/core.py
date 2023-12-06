@@ -3,6 +3,8 @@ import os
 import shutil
 import subprocess
 
+from pathlib import Path
+
 import numpy as np
 
 from pyp import utils
@@ -13,7 +15,7 @@ from pyp.merge import weights as pyp_weights
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import get_imod_path
+from pyp.system.utils import get_imod_path, get_aretomo_path
 from pyp.utils import get_relative_path
 from pyp.utils.timer import Timer
 
@@ -244,9 +246,6 @@ def weight_average(input_stack, output_stack, weights):
 @Timer("merge", text="Merging took: {}", logger=logger.info)
 def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
     """Perform 3D reconstruction for tomoswarm."""
-    # Pad and filter aligned phase-flipped tilt-series
-    # command = "{0}/bin/mrctaper {1}.ali".format(get_imod_path(), name)
-    # run_shell_command(command)
 
     if "tomo_rec_dose_weighting" in parameters and parameters["tomo_rec_dose_weighting"] and os.path.exists("%s.order" % name):
 
@@ -291,9 +290,9 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
 
     # create binned reconstruction
     # only reconstruct tomograms if we're not using aretomo2
-    if 'aretomo' not in parameters["tomo_ali_method"]:   
-
-        thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
+    thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
+    if 'imod' in parameters["tomo_rec_method"].lower():   
+        
         if False and parameters["tomo_rec_square"]:
             command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -SLICE 0,{2} -THICKNESS {3} -WIDTH {4} -IMAGEBINNED {5} -FULLIMAGE {6},{4} {7} {8}".format(
                 get_imod_path(), name, x - 1, thickness, y, binning, x, tilt_options, zfact,
@@ -303,3 +302,23 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
                 get_imod_path(), name, thickness, binning,  x, y, tilt_options, zfact,
             )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
+
+    elif "aretomo" in parameters["tomo_rec_method"].lower():  
+        
+        if Path(f"{name}_aretomo.rec").exists():
+            os.rename(f"{name}_aretomo.rec", f"{name}.rec")
+        else:
+            reconstruct_option = f"-Sart {parameters['tomo_rec_aretomo_sart_iter']} {parameters['tomo_rec_aretomo_sart_num_projs']}"
+            if parameters["tomo_rec_aretomo_wbp"]:
+                reconstruct_option = "-Wbp 1"
+
+            command = f"{get_aretomo_path()} \
+-InMrc {name}_bin.ali \
+-OutMrc {name}.rec \
+-AngFile {name}.tlt \
+-VolZ {int(1.0 * thickness / binning)} \
+-OutBin 1 \
+-DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
+{reconstruct_option} \
+-Align 0"
+            run_shell_command(command, verbose=parameters["slurm_verbose"])
