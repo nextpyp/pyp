@@ -1254,9 +1254,9 @@ advanced = true
 
 [tabs.tomo_rec.aretomo_dark_tol]
 name = "Threshold to remove dark images"
-description = "Threshold to remove dark images (lowing the threshold means less images are removed)."
+description = "Threshold to remove dark images (lower values remove fewer images)."
 type = "float"
-default = 0.7
+default = 0.0
 advanced = true
 
 [tabs.tomo_rec.aretomo_measure_tiltoff]
