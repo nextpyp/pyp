@@ -66,7 +66,7 @@ def get_motioncor3_path():
     if 'motionCor3' in config["pyp"]:
         command = config["pyp"]["motionCor3"]
     else:
-        raise Exception("MotionCor3 configuration is missing")
+        command = "/opt/pyp/external/MotionCor3/MotionCor3"
     command = cuda_path_prefix(command)
     return command
 

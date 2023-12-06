@@ -4109,9 +4109,16 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     movie_file = name + suffix
     aligned_average = name + ".avg"
 
-    if 'motioncor3' in parameters["movie_ali"]:
+    pixel = float(parameters["scope_pixel"])
+    binning = float(parameters["data_bin"])
+    voltage = float(parameters["scope_voltage"])
+    dose_rate = float(parameters["scope_dose_rate"])
+    actual_pixel = (
+        pixel
+        * float(parameters["data_bin"])
+    )
 
-        logger.info("Aliging frames using MotionCor3")
+    if 'motioncor3' in parameters["movie_ali"]:
 
         # patch tracking
         if "tomo_ali_patch_based" in parameters and parameters["tomo_ali_patch_based"]:
@@ -4213,20 +4220,24 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             frame_options += f" -Group {parameters['movie_group']}"
         frame_options += f" -Bft {parameters['movie_bfactor']}"
 
-        command = f"{get_motioncor3_path()} {input} -OutMrc {name} {gain} -OutAln {os.getcwd()} {frame_options} {patches}"
-        logger.warning(command)
+        command = f"{get_motioncor3_path()} \
+{input} \
+-OutMrc {name}.mrc \
+{gain} \
+-OutAln {os.getcwd()} \
+{frame_options} \
+{patches}"
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
         if "Segmentation fault" in error or "Killed" in error:
-            logger.error("MotionCor3 failed")
             raise Exception(error)
 
         # rename frame average
-        shutil.move( name + ".mrc", name + ".avg" )
+        shutil.move( name + ".mrc", f"../{aligned_average}")
 
         # read shifts and save in txt format
         shifts = np.loadtxt(f"{name}.aln",skiprows=8,ndmin=2)
-        np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt=".4f")
+        np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt="%.4f")
 
     elif 'unblur' in parameters["movie_ali"]:
 
@@ -4259,15 +4270,6 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         else:
             gain_corrected = "yes"
             gain_operate = ""
-
-        pixel = float(parameters["scope_pixel"])
-        binning = float(parameters["data_bin"])
-        voltage = float(parameters["scope_voltage"])
-        dose_rate = float(parameters["scope_dose_rate"])
-        actual_pixel = (
-            pixel
-            * float(parameters["data_bin"])
-        )
 
         if "movie_weights" in parameters.keys() and parameters["movie_weights"]:
             weighted = "yes\n%s\n%s\n0" % (
