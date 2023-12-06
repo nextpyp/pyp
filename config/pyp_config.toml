@@ -379,7 +379,7 @@ hidden = true
 name = "Alignment method"
 description = "Method used for frame alignment"
 type = "enum"
-enum = { unblur="unblur", skip="no alignment" }
+enum = { unblur="unblur", motioncor3="motioncor3", skip="no alignment" }
 default = "unblur"
 hidden = ["spr_import_star","tomo_import_star"]
 
@@ -1091,6 +1091,13 @@ hidden = true
 _name = "Tilt-series alignment"
 _description = "Parameters for tilt-series alignment"
 
+[tabs.tomo_ali.method]
+name = "Alignment method"
+description = "Method to use for tilt-series alignment"
+type = "enum"
+enum = { imod_gold="IMOD (fiducials)", imod_patch="IMOD (patch tracking)", aretomo="Aretomo" }
+default = "imod_gold"
+
 [tabs.tomo_ali.patch_based]
 name = "Skip fiducial-based alignment"
 description = "Do patch-based alignment instead"
@@ -1215,6 +1222,55 @@ name = "Resize squares to closest multiple of 512"
 description = "Tilt images will be reshaped into squares using the closest multiple of 512 as size"
 type = "bool"
 default = true
+advanced = true
+
+[tabs.tomo_rec.aretomo_wbp]
+name = "Use weighted back-projection"
+description = "Use weighted back-projection to reconstruct tomograms. If this option is turned on, SART is not used."
+type = "bool"
+default = false
+advanced = true
+
+[tabs.tomo_rec.aretomo_sart_iter]
+name = "Number of iterations for SART reconstruction"
+description = "Number of iterations for SART reconstruction, "
+type = "int"
+default = 20
+advanced = true
+
+[tabs.tomo_rec.aretomo_sart_num_projs]
+name = "Number off projections per subet for SART reconstruction"
+description = "Number off projections per subet for SART reconstruction"
+type = "int"
+default = 5
+advanced = true
+
+[tabs.tomo_rec.aretomo_zheight]
+name = "Z height of specimen (pixel)"
+description = "Z height of specimen (not tomogram), critical for the alignment."
+type = "int"
+default = 600
+advanced = true
+
+[tabs.tomo_rec.aretomo_dark_tol]
+name = "Threshold to remove dark images"
+description = "Threshold to remove dark images (lowing the threshold means less images are removed)."
+type = "float"
+default = 0.7
+advanced = true
+
+[tabs.tomo_rec.aretomo_measure_tiltoff]
+name = "Measure tilt offset"
+description = "Measure the tilt offset automatically. Note that the tilt angles might change."
+type = "bool"
+default = true
+advanced = true
+
+[tabs.tomo_rec.aretomo_tiltoff]
+name = "Add tilt offset"
+description = "Add tilt offset to the tilt angle before alignment, instead of measuring the offset automatically."
+type = "float"
+default = 0.0
 advanced = true
 
 [tabs.tomo_vir]
