@@ -1495,7 +1495,7 @@ _description = "Sub-tomogram extraction parameters"
 name = "Extraction format"
 description = "Format to use for sub-tomogram extraction"
 type = "enum"
-enum = { none="none", eman="eman", 3DAVG="3DAVG" }
+enum = { none="none", eman="eman", 3DAVG="3davg" }
 default = "none"
 
 [tabs.tomo_ext.size]

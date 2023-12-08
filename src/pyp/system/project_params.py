@@ -193,9 +193,9 @@ def check_parameter_consistency(parameters):
     if (
         parameters["data_mode"] == "spr"
         and "extract_box" in parameters.keys() and parameters["extract_box"] > 0
-        and "frealign" not in parameters["extract_fmt"]
-        and "relion" not in parameters["extract_fmt"]
-        and "eman" not in parameters["extract_fmt"]
+        and "frealign" not in parameters["extract_fmt"].lower()
+        and "relion" not in parameters["extract_fmt"].lower()
+        and "eman" not in parameters["extract_fmt"].lower()
         and not int(parameters["class_num"]) > 0
     ):
         raise Exception(

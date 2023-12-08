@@ -351,7 +351,7 @@ def process_virion_multiprocessing(
             if os.path.exists("isdm4"):
                 A = A[:, ::-1, :]
             if ("tomo_ext_fmt" in parameters
-                and "eman" in parameters["tomo_ext_fmt"]
+                and "eman" in parameters["tomo_ext_fmt"].lower()
                 and not parameters["data_invert"]
             ):
                 logger.info(
@@ -1389,7 +1389,7 @@ EOF
     with open("%s_vir0000.txt" % name, "w") as f:
 
         # invert volume contrast for eman particles
-        if not parameters["data_invert"] and parameters["tomo_ext_fmt"] == "eman":
+        if not parameters["data_invert"] and parameters["tomo_ext_fmt"].lower() == "eman":
             command = "{0}/bin/newstack {1}.ali {1}.ali -multadd -1,0".format(
                 get_imod_path(), name
             )
