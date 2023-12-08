@@ -291,8 +291,8 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
     # create binned reconstruction
     # only reconstruct tomograms if we're not using aretomo2
     thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
-    if 'imod' in parameters["tomo_rec_method"].lower():   
-        
+    if 'imod' in parameters["tomo_rec_method"].lower():
+
         if False and parameters["tomo_rec_square"]:
             command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -SLICE 0,{2} -THICKNESS {3} -WIDTH {4} -IMAGEBINNED {5} -FULLIMAGE {6},{4} {7} {8}".format(
                 get_imod_path(), name, x - 1, thickness, y, binning, x, tilt_options, zfact,
@@ -303,8 +303,8 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
             )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
 
-    elif "aretomo" in parameters["tomo_rec_method"].lower():  
-        
+    elif "aretomo" in parameters["tomo_rec_method"].lower():
+
         if Path(f"{name}_aretomo.rec").exists():
             os.rename(f"{name}_aretomo.rec", f"{name}.rec")
         else:
