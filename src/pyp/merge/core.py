@@ -309,7 +309,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
             os.rename(f"{name}_aretomo.rec", f"{name}.rec")
         else:
             reconstruct_option = f"-Sart {parameters['tomo_rec_aretomo_sart_iter']} {parameters['tomo_rec_aretomo_sart_num_projs']}"
-            if parameters["tomo_rec_aretomo_wbp"]:
+            if not parameters["tomo_rec_aretomo_sart"]:
                 reconstruct_option = "-Wbp 1"
 
             command = f"{get_aretomo_path()} \
