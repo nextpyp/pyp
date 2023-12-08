@@ -1514,7 +1514,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     mpi_funcs, mpi_args = [ ], [ ]
 
     # produce binned tomograms
-    need_recalculation = parameters["tomo_rec_force"] or ( not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_erase_fiducials"] )
+    need_recalculation = parameters["tomo_rec_force"] or ( parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] )
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
@@ -1559,7 +1559,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     tilt_metadata["ctf_profiles"] = ctf_profiles
 
     # erase fiducials if needed
-    if not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
+    if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
 
         # create binned aligned stack
         if not os.path.exists(f'{name}_bin.ali'):

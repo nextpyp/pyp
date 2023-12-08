@@ -4121,7 +4121,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     if 'motioncor3' in parameters["movie_ali"]:
 
         # patch tracking
-        if "tomo_ali_patch_based" in parameters and parameters["tomo_ali_patch_based"]:
+        if "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_patch":
             patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
         else:
             patches = ""
@@ -4629,14 +4629,14 @@ def align_tilt_series(name, parameters, rotation=0):
 
             # default using SART for reconstruction
             reconstruct_option = f"-Sart {parameters['tomo_rec_aretomo_sart_iter']} {parameters['tomo_rec_aretomo_sart_num_projs']}"
-            if parameters["tomo_rec_aretomo_wbp"]:
+            if not parameters["tomo_rec_aretomo_sart"]:
                 reconstruct_option = "-Wbp 1"
 
             # correct the tilt offset
             tilt_offset_option = "1" if parameters['tomo_rec_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_rec_aretomo_tiltoff']}"
 
             # local motion by giving the number of patches
-            if parameters["tomo_ali_patch_based"]:
+            if parameters["tomo_ali_method"] == "imod_patch":
                 patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
             else:
                 patches = ""
@@ -4665,7 +4665,7 @@ def align_tilt_series(name, parameters, rotation=0):
     else:
 
         # alignment using gold fiducials
-        if "tomo_ali_fiducial" in parameters and parameters["tomo_ali_fiducial"] > 0 and "tomo_ali_patch_based" in parameters and not parameters["tomo_ali_patch_based"]:
+        if "tomo_ali_fiducial" in parameters and parameters["tomo_ali_fiducial"] > 0 and "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_gold":
 
             # Alignment with RAPTOR
             logger.info("Doing fiducial based alignment using RAPTOR")
@@ -4814,7 +4814,7 @@ EOF
                     """
 
         # if not using fiducials, or if RAPTOR failed
-        if parameters["tomo_ali_fiducial"] == 0 or parameters["tomo_ali_patch_based"]:
+        if parameters["tomo_ali_fiducial"] == 0 or parameters["tomo_ali_method"] == "imod_patch":
             # Fiducial-less alignment
 
             logger.info(
@@ -4845,7 +4845,7 @@ EOF
             shutil.copy2("%s.fid" % name, "%s.fid.txt" % name)
 
     # make alignment output between different variants uniform
-    if not parameters["tomo_ali_patch_based"] and 'aretomo' not in parameters["tomo_ali_method"]:
+    if parameters["tomo_ali_method"] == "imod_gold":
 
         # alignment using gold fiducials
 
@@ -4885,7 +4885,7 @@ EOF
             np.savetxt("{0}_bin.xf".format(name), rot2D, fmt="%13.7f")
             shutil.copy2("%s.rawtlt" % name, "%s.tlt" % name)
 
-    elif parameters["tomo_ali_patch_based"]:
+    elif parameters["tomo_ali_method"] == "imod_patch":
 
         # patch-based alignment
 

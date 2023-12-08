@@ -1095,14 +1095,8 @@ _description = "Parameters for tilt-series alignment"
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
 type = "enum"
-enum = { imod_gold="IMOD (fiducials)", imod_patch="IMOD (patch tracking)", aretomo="Aretomo2" }
+enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2" }
 default = "imod_gold"
-
-[tabs.tomo_ali.patch_based]
-name = "Skip fiducial-based alignment"
-description = "Do patch-based alignment instead"
-type = "bool"
-default = false
 
 [tabs.tomo_ali.fiducial]
 name = "Fiducial diameter (A)"
@@ -1117,7 +1111,7 @@ type = "int"
 default = -1
 
 [tabs.tomo_ali.patches]
-name = "Number of patches (fiducial-less alignment)"
+name = "Number of patches (patch tracking)"
 description = "Numer of patches in x and y to use for tilt-series alignment"
 type = "int"
 default = 10
