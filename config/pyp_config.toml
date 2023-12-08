@@ -209,7 +209,7 @@ hidden = true
 
 [tabs.scope.tilt_axis]
 name = "Tilt-axis angle (degrees)"
-description = "Approximate orientation of tilt-axis with respect to the x-axis (counterclockwise positive)."
+description = "Approximate orientation of tilt-axis with respect to the x-axis (counterclockwise positive)"
 type = "float"
 default = 0.0
 hidden = [ "spr_import_raw", "spr_import_star", "stream_spr" ]
@@ -624,7 +624,7 @@ default = 8
 
 [tabs.detect_nn2d.num_particles]
 name = "Expected number of particles per micrograph"
-description = "instead of setting pi directly, pi can be set by giving the expected number of particles per micrograph (>0). either this parameter or pi must be set."
+description = "Expected number of particles per micrograph (>0). Either this parameter or pi must be set"
 type = "int"
 default = 300
 
@@ -705,9 +705,17 @@ advanced = true
 
 [tabs.detect_nn2d.topaz_pretrained]
 name = "Use pretrained initialization"
-description = "Topaz train will initialize model parameters from the pretrained parameters if a pretrained model with the same configuration is available (e.g. resnet8 with 64 units)."
+description = "Topaz train will initialize model parameters from the pretrained parameters if a pretrained model with the same configuration is available (e.g. resnet8 with 64 units)"
 type = "bool"
 default = false
+
+[tabs.detect_nn2d.topaz_pretrained_model]
+name = "Pre-train model (Topaz extract)"
+description = "Pre-trained model to use for particle picking"
+type = "enum"
+enum = { resnet16_u64="resnet16_u64" }
+default = "resnet16_u64"
+advanced = true
 
 [tabs.detect_nn2d.topaz_epochs]
 name = "Number of epochs for topaz training"
@@ -1125,13 +1133,13 @@ hidden = true
 
 [tabs.tomo_ali.auto_bin]
 name = "Auto binning"
-description = "Determine binning factor for tilt-series alignment automatically"
+description = "Automatically determine binning factor to use for alignment"
 type = "bool"
 default = true
 advanced = true
 
 [tabs.tomo_ali.binning]
-name = "Binning for titl-series alignment"
+name = "Binning for tilt-series alignment"
 description = "Bin tilt-series by this factor before alignment"
 type = "int"
 default = 8
@@ -1143,9 +1151,9 @@ _description = "Parameters for tomographic reconstruction"
 
 [tabs.tomo_rec.method]
 name = "Method for tomogram reconstruction"
-description = "Method used for tomgoram reconstruction."
+description = "Method used for tomogram reconstruction"
 type = "enum"
-enum = { imod="imod", aretomo="aretomo" }
+enum = { imod="imod", aretomo="aretomo2 (AT2)" }
 default = "imod"
 
 [tabs.tomo_rec.force]
@@ -3027,7 +3035,7 @@ hidden = true
 
 [tabs.sharpen.plot_rhref]
 name = "Plot refinement resolution"
-description = "Resolution limit in Angstroems used during the refinement, to be displayed on the FSC plots."
+description = "Resolution limit in Angstroms used during refinement, to be displayed on the FSC plots"
 type = "bool"
 default = false
 hidden = true

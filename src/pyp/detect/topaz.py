@@ -26,7 +26,7 @@ def sprtrain(args):
     binning = args["detect_nn2d_bin"]
 
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
-    
+
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
     os.makedirs(scratch_train)
@@ -68,31 +68,30 @@ def sprtrain(args):
 
     logger.info(f"Training model")
     command = f"{utils.get_topaz_path()}/topaz train \
-                            -n {args['detect_nn2d_num_particles']} \
-                            --num-workers={args['slurm_tasks']} \
-                            --train-images {scratch_train} \
-                            --train-targets {train_coords} \
-                            {pretrained} \
-                            --method {args['detect_nn2d_topaz_train_method']}\
-                            --num-epochs {args['detect_nn2d_topaz_epochs']} \
-                            --radius {args['detect_nn2d_topaz_train_rad']} \
-                            --slack {args['detect_nn2d_topaz_train_slack']} \
-                            --autoencoder {args['detect_nn2d_topaz_train_autoencoder']} \
-                            --l2 {args['detect_nn2d_topaz_train_reg']} \
-                            --learning-rate {args['detect_nn2d_topaz_train_learn_rate']} \
-                            --minibatch-size {args['detect_nn2d_topaz_train_batchsize']} \
-                            --minibatch-balance {args['detect_nn2d_topaz_train_batchbalance']} \
-                            --epoch-size {args['detect_nn2d_topaz_train_epochsize']} \
-                            --save-prefix=topaz_train \
-                            -o model_training.txt"
-
-                            # --model {args['detect_nn2d_topaz_model']} \
-                            # --units {args['detect_nn2d_topaz_units']} \
-                            # --dropout {args['detect_nn2d_topaz_dropout']} \
-                            # --bn {batchnorm} \
-                            # --pooling {args['detect_nn2d_topaz_pooling']} \
-                            # --unit-scaling {args['detect_nn2d_topaz_unit_scale']} \
-                            # --ngf {args['detect_nn2d_topaz_network_unit_scale']} \
+-n {args['detect_nn2d_num_particles']} \
+--num-workers={args['slurm_tasks']} \
+--train-images {scratch_train} \
+--train-targets {train_coords} \
+{pretrained} \
+--method {args['detect_nn2d_topaz_train_method']}\
+--num-epochs {args['detect_nn2d_topaz_epochs']} \
+--radius {args['detect_nn2d_topaz_train_rad']} \
+--slack {args['detect_nn2d_topaz_train_slack']} \
+--autoencoder {args['detect_nn2d_topaz_train_autoencoder']} \
+--l2 {args['detect_nn2d_topaz_train_reg']} \
+--learning-rate {args['detect_nn2d_topaz_train_learn_rate']} \
+--minibatch-size {args['detect_nn2d_topaz_train_batchsize']} \
+--minibatch-balance {args['detect_nn2d_topaz_train_batchbalance']} \
+--epoch-size {args['detect_nn2d_topaz_train_epochsize']} \
+--save-prefix=topaz_train \
+-o model_training.txt"
+# --model {args['detect_nn2d_topaz_model']} \
+# --units {args['detect_nn2d_topaz_units']} \
+# --dropout {args['detect_nn2d_topaz_dropout']} \
+# --bn {batchnorm} \
+# --pooling {args['detect_nn2d_topaz_pooling']} \
+# --unit-scaling {args['detect_nn2d_topaz_unit_scale']} \
+# --ngf {args['detect_nn2d_topaz_network_unit_scale']} \
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # check for failure if not output was produced
@@ -111,27 +110,27 @@ def spreval(args,name):
 
     binning = args["detect_nn2d_bin"]
     joint.bin_image(name + ".avg", name + "_bin.mrc", binning, args["slurm_verbose"])
-    
+
     coordinates_file = f"{name}_predicted_particles_all_upsampled.txt"
-    
-    if 'detect_nn2d_ref' in args.keys() and os.path.isfile(project_params.resolve_path(args['detect_nn2d_ref'])):    
+
+    if 'detect_nn2d_ref' in args.keys() and os.path.isfile(project_params.resolve_path(args['detect_nn2d_ref'])):
         logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn2d_ref'])).name}")
         model_arg = f"-m {project_params.resolve_path(args['detect_nn2d_ref'])}"
     else:
-        logger.info(f"Evaluating using pre-trained model.")
-        model_arg = ""
+        logger.info(f"Evaluating using pre-trained model")
+        model_arg = f"--model {args['detect_nn2d_topaz_pretrained_model']}"
 
     command = f"{utils.get_topaz_path()}/topaz extract \
-                            -r {args['detect_nn2d_topaz_extract_rad']} \
-                            {model_arg} \
-                            --threshold {args['detect_nn2d_topaz_extract_thres']} \
-                            --assignment-radius {args['detect_nn2d_topaz_extract_assign_rad']} \
-                            --min-radius {args['detect_nn2d_topaz_extract_min_rad']} \
-                            --max-radius {args['detect_nn2d_topaz_extract_max_rad']} \
-                            --step-radius {args['detect_nn2d_topaz_extract_step_rad']} \
-                            -x {binning} \
-                            -o {coordinates_file} \
-                            {Path().cwd() / f'{name}_bin.mrc'}"
+-r {args['detect_nn2d_topaz_extract_rad']} \
+{model_arg} \
+--threshold {args['detect_nn2d_topaz_extract_thres']} \
+--assignment-radius {args['detect_nn2d_topaz_extract_assign_rad']} \
+--min-radius {args['detect_nn2d_topaz_extract_min_rad']} \
+--max-radius {args['detect_nn2d_topaz_extract_max_rad']} \
+--step-radius {args['detect_nn2d_topaz_extract_step_rad']} \
+-x {binning} \
+-o {coordinates_file} \
+{Path().cwd() / f'{name}_bin.mrc'}"
 
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
