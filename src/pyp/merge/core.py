@@ -322,3 +322,16 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
 {reconstruct_option} \
 -Align 0"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
+
+    if parameters["tomo_rec_topaz_denoise"]:
+
+        command = f"{utils.get_topaz_path()}/topaz denoise3d \
+{name}.rec \
+--model {parameters['tomo_rec_topaz_model']} \
+--device -2 \
+--gaussian {parameters['tomo_rec_topaz_gaussian']} \
+--patch-size {parameters['tomo_rec_topaz_patch_size']} \
+--patch-padding {parameters['tomo_rec_topaz_patch_padding']} \
+-output {os.getcwd()}"
+
+        local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])

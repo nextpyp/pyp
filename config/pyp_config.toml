@@ -1274,6 +1274,41 @@ type = "float"
 default = 0.0
 advanced = true
 
+[tabs.tomo_rec.topaz_denoise]
+name = "Denoise tomograms using Topaz"
+description = "Denoise tomograms using Topaz pre-trained model"
+type = "bool"
+default = false
+
+[tabs.tomo_rec.topaz_model]
+name = "Pre-train model (Topaz)"
+description = "Pre-trained model to use for denoising"
+type = "enum"
+enum = { unet-3d-10a="unet-3d-10a" }
+default = "unet-3d-10a"
+advanced = true
+
+[tabs.tomo_rec.topaz_gaussian]
+name = "Gaussian filter (Topaz)"
+description = "Denoise tomograms using Topaz pre-trained model"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.tomo_rec.topaz_patch_size]
+name = "Patch size (Topaz)"
+description = "Neighborhood size for Topaz denoising"
+type = "int"
+default = 96
+advanced = true
+
+[tabs.tomo_rec.topaz_patch_padding]
+name = "Patch padding size (Topaz)"
+description = "Patch padding size for Topaz denoising"
+type = "int"
+default = 48
+advanced = true
+
 [tabs.tomo_vir]
 _name = "Virion/spike detection"
 _description = "Virion and spike detection parameters"
