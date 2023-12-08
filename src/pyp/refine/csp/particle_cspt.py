@@ -1100,8 +1100,16 @@ def run_mpi_reconstruction(
         "plot_used_png", text = "Plot used particles pngs took: {}", logger=logger.info
     ):
 
-
         if float(project_params.param(fp["reconstruct_cutoff"], iteration)) >= 0:
+            # creat bild file from used.par file
+            mpi_funcs, mpi_args = [], []
+
+            mpi_funcs.append(plot.par2bild)
+
+            bild_output = f"../maps/{dataset_name}_used.bild"
+
+            mpi_args.append( [( merge_used_parfile, bild_output, fp)] )
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=fp["slurm_verbose"])
 
             # plot using all particles
             arg_input = f"{dataset_name}.par"
