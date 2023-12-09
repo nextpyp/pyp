@@ -6,6 +6,7 @@ import subprocess
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 from pathlib import Path
 from scipy.spatial import distance
 
@@ -885,7 +886,15 @@ def generate_plots(
         spacing = math.ceil(input.shape[0] / 512.0)
         output["occ_plot"] = np.sort(input[::spacing, 11])[::-1].tolist()
 
-    return output, metadata
+    # save dict to pikle for parallel run
+    output_file = parfile.replace(".par", "_temp.pkl")
+    meta_file = parfile.replace(".par", "_meta_temp.pkl")
+    with open(output_file, 'wb') as f1:
+        pickle.dump(output, f1)
+    with open(meta_file, 'wb') as f2:
+        pickle.dump(metadata, f2)
+
+    # return output, metadata
 
 
 def generate_plots_relion(parfile, angles=25, defocuses=25):
