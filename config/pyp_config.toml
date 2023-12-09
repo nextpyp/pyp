@@ -26,7 +26,7 @@ tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "detect", "detect_nn
 [blocks.spr_pre_process]
 name = "SPA pre-processing"
 description = "Micrograph pre-processing"
-tabs = [ "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
+tabs = [ "movie", "ctf", "detect", "detect_nn2d", "detect_topaz2d", "slurm" ]
 
 [blocks.spr_coarse_refine]
 name = "SPA Coarse Refinement"
@@ -563,7 +563,7 @@ hidden = true
 name = "Detection method"
 description = "Strategy to use for particle picking"
 type = "enum"
-enum = { none="none", auto="auto", all="all", nn-train="nn-train (list of positions required)", nn-eval="nn-eval (trained model required)", nn-train-topaz="nn-train-topaz (list of positions required)", nn-eval-topaz="nn-eval-topaz (trained model required)" }
+enum = { none="none", auto="auto", all="all", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)", topaz-train="topaz-train (list of positions required)", topaz-eval="topaz-eval (trained model required)" }
 default = "none"
 
 [tabs.detect.ref]
@@ -606,7 +606,7 @@ default = true
 hidden = [ "spr_pre_process", "stream_spr" ]
 
 [tabs.detect_nn2d]
-_name = "Training/Evaluation"
+_name = "Training/Evaluation (pyp)"
 _description = "Settings for particle detection using neural networks"
 
 [tabs.detect_nn2d.ref]
@@ -703,33 +703,68 @@ default = 28
 hidden = ["tomo_pre_process", "stream_spr"]
 advanced = true
 
-[tabs.detect_nn2d.topaz_pretrained]
+[tabs.detect_nn2d.thresh]
+name = "Threshold for soft/hard positives"
+description = "Threshold for soft/hard positives"
+type = "float"
+default = 0
+
+[tabs.detect_nn2d.debug]
+name = "Debug mode"
+description = "Save intermediate results to output folder"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.detect_topaz2d]
+_name = "Training/Evaluation (topaz)"
+_description = "Settings for particle detection using Topaz"
+
+[tabs.detect_topaz2d.ref]
+name = "Trained model"
+description = "Path to trained model (*.training)"
+type = "path"
+path = { type="files" }
+input = { type="trainedModel2D" }
+
+[tabs.detect_topaz2d.pretrained]
 name = "Use pretrained initialization"
-description = "Topaz train will initialize model parameters from the pretrained parameters if a pretrained model with the same configuration is available (e.g. resnet8 with 64 units)"
+description = "Initialize parameters using a pretrained model"
 type = "bool"
 default = false
 
-[tabs.detect_nn2d.topaz_pretrained_model]
+[tabs.detect_topaz2d.pretrained_model]
 name = "Pre-train model (Topaz extract)"
 description = "Pre-trained model to use for particle picking"
 type = "enum"
-enum = { resnet16_u64="resnet16_u64" }
+enum = { none="none", resnet8_u32="resnet8_u32", resnet8_u64="resnet8_u64", resnet16_u32="resnet16_u32", resnet16_u64="resnet16_u64" }
 default = "resnet16_u64"
-advanced = true
 
-[tabs.detect_nn2d.topaz_epochs]
-name = "Number of epochs for topaz training"
+[tabs.detect_topaz2d.num_particles]
+name = "Expected number of particles per micrograph"
+description = "Expected number of particles per micrograph (>0). Either this parameter or pi must be set"
+type = "int"
+default = 300
+
+[tabs.detect_topaz2d.epochs]
+name = "Number of epochs for training"
 description = "Maximum number of training epochs"
 type = "int"
 default = 10
 
-[tabs.detect_nn2d.topaz_train_rad]
-name = "Training radius (pixels)"
+[tabs.detect_topaz2d.bin]
+name = "Image downsampling factor"
+description = "Downsample images by this factor for training and evaluation"
+type = "int"
+default = 8
+
+[tabs.detect_topaz2d.train_rad]
+name = "Training radius in pixels"
 description = "Pixel radius around particle centers to consider positive"
 type = "int"
 default = 3
 
-[tabs.detect_nn2d.topaz_train_method]
+[tabs.detect_topaz2d.train_method]
 name = "Loss function"
 description = "Objective function to use for learning the region classifier"
 type = "enum"
@@ -737,56 +772,56 @@ enum = { PN="PN", GE-KL="GE-KL", GE-binomial="GE-binomial", PU="PU" }
 default = "GE-binomial"
 advanced = true
 
-[tabs.detect_nn2d.topaz_train_slack]
+[tabs.detect_topaz2d.train_slack]
 name = "Slack"
 description = "Weight on GE penalty (default: 10 for GE-KL, 1 for GE-binomial)"
 type = "float"
-default = 1
+default = -1
 advanced = true
 
-[tabs.detect_nn2d.topaz_train_autoencoder]
+[tabs.detect_topaz2d.train_autoencoder]
 name = "Autoencoder weight"
 description = "Option to augment method with autoencoder. Weight on reconstruction error"
 type = "float"
 default = 0
 advanced = true
 
-[tabs.detect_nn2d.topaz_train_reg]
+[tabs.detect_topaz2d.train_reg]
 name = "Regularization"
 description = "L2 regularizer on the model parameters"
 type = "float"
 default = 0
 advanced = true
 
-[tabs.detect_nn2d.topaz_train_learn_rate]
+[tabs.detect_topaz2d.train_learn_rate]
 name = "Learning rate"
 description = "Learning rate for the optimizer"
 type = "float"
 default = 0.0002
 advanced = true
 
-[tabs.detect_nn2d.topaz_train_batchsize]
+[tabs.detect_topaz2d.train_batchsize]
 name = "Minibatch size"
 description = "Number of data points per minibatch"
 type = "int"
 default = 256
 advanced = true
 
-[tabs.detect_nn2d.topaz_train_batchbalance]
+[tabs.detect_topaz2d.train_batchbalance]
 name = "Minibatch balance"
 description = "Fraction of minibatch that is positive data points"
 type = "float"
 default = 0.0625
 advanced = true
 
-[tabs.detect_nn2d.topaz_train_epochsize]
+[tabs.detect_topaz2d.train_epochsize]
 name = "Epoch size"
 description = "Number of parameter updates per epoch"
 type = "int"
 default = 1000
 advanced = true
 
-[tabs.detect_nn2d.topaz_model]
+[tabs.detect_topaz2d.model]
 name = "Model architecture"
 description = "Model type to fit"
 type = "enum"
@@ -794,28 +829,28 @@ enum = { resnet8="resnet8" }
 default = "resnet8"
 advanced = true
 
-[tabs.detect_nn2d.topaz_units]
+[tabs.detect_topaz2d.units]
 name = "Number of units in base layer"
 description = "Number of units model parameter"
 type = "int"
 default = 32
 advanced = true
 
-[tabs.detect_nn2d.topaz_dropout]
+[tabs.detect_topaz2d.dropout]
 name = "Dropout rate"
 description = "Dropout rate model parameter"
 type = "float"
 default = 0.0
 advanced = true
 
-[tabs.detect_nn2d.topaz_bn]
+[tabs.detect_topaz2d.bn]
 name = "Batch normalization"
 description = "Use batch norm in the model"
 type = "bool"
 default = true
 advanced = true
 
-[tabs.detect_nn2d.topaz_pooling]
+[tabs.detect_topaz2d.pooling]
 name = "Pooling method"
 description = "Pooling method to use"
 type = "enum"
@@ -823,64 +858,64 @@ enum = { none="none" }
 default = "none"
 advanced = true
 
-[tabs.detect_nn2d.topaz_unit_scale]
+[tabs.detect_topaz2d.unit_scale]
 name = "Unit scaling"
 description = "Scale the number of units up by this factor every pool/stride layer"
 type = "int"
 default = 2
 advanced = true
 
-[tabs.detect_nn2d.topaz_network_unit_scale]
+[tabs.detect_topaz2d.network_unit_scale]
 name = "Encode network unit scaling"
 description = "Scaled number of units per layer in generative model, only used if autoencoder > 0"
 type = "int"
 default = 32
 advanced = true
 
-[tabs.detect_nn2d.topaz_extract_rad]
+[tabs.detect_topaz2d.extract_rad]
 name = "Radius of extracted regions"
-description = "Radius of the regions to extract"
+description = "Radius of regions to extract (increase if particles are double-picked, decrease if particles are missed)"
 type = "int"
 default = 10
 
-[tabs.detect_nn2d.topaz_extract_thres]
+[tabs.detect_topaz2d.extract_thres]
 name = "Extraction threshold"
-description = "Log-likelihood score threshold at which to terminate region extraction, -6 is p>=0.0025"
+description = "Log-likelihood score threshold at which to terminate region extraction (-6 is p>=0.0025)"
 type = "float"
-default = -6
+default = 0
 advanced = true
 
-[tabs.detect_nn2d.topaz_extract_assign_rad]
+[tabs.detect_topaz2d.extract_assign_rad]
 name = "Max assignment radius"
 description = "Maximum distance between prediction and labeled target allowed for considering them a match (default: same as extraction radius)"
 type = "int"
 default = 10
 advanced = true
 
-[tabs.detect_nn2d.topaz_extract_min_rad]
+[tabs.detect_topaz2d.extract_min_rad]
 name = "Min extraction radius"
 description = "Minimum radius for region extraction when tuning radius parameter"
 type = "int"
 default = 5
 advanced = true
 
-[tabs.detect_nn2d.topaz_extract_max_rad]
+[tabs.detect_topaz2d.extract_max_rad]
 name = "Max extraction radius"
 description = "Maximum radius for region extraction when tuning radius parameters"
 type = "int"
 default = 100
 advanced = true
 
-[tabs.detect_nn2d.topaz_extract_step_rad]
+[tabs.detect_topaz2d.extract_step_rad]
 name = "Step radius"
 description = "Grid size when searching for optimal radius parameter"
 type = "int"
 default = 5
 advanced = true
 
-[tabs.detect_nn2d.debug]
+[tabs.detect_topaz2d.debug]
 name = "Debug mode"
-description = "Save intermediate results to output folder"
+description = "Save intermediate results to output folder train/"
 type = "bool"
 default = false
 advanced = true
@@ -1283,7 +1318,7 @@ default = 0.0
 advanced = true
 
 [tabs.tomo_rec.topaz_denoise]
-name = "Denoise tomograms using Topaz"
+name = "Denoise tomograms using Topaz denoise"
 description = "Denoise tomograms using Topaz pre-trained model"
 type = "bool"
 default = false
@@ -1292,27 +1327,27 @@ default = false
 name = "Pre-train model (Topaz denoise)"
 description = "Pre-trained model to use for denoising"
 type = "enum"
-enum = { unet-3d-10a="unet-3d-10a" }
+enum = { unet-3d-10a="unet-3d-10a", unet-3d="unet-3d", unet-3d-20a="unet-3d-20a" }
 default = "unet-3d-10a"
 advanced = true
 
 [tabs.tomo_rec.topaz_gaussian]
 name = "Gaussian filter (Topaz denoise)"
-description = "Denoise tomograms using Topaz pre-trained model"
-type = "bool"
-default = false
+description = "Standard deviation of Gaussian filter for post-processing (0 means no postprocessing)"
+type = "float"
+default = 0.0
 advanced = true
 
 [tabs.tomo_rec.topaz_patch_size]
 name = "Patch size (Topaz denoise)"
-description = "Neighborhood size for Topaz denoising"
+description = "Denoises volumes in patches of this size"
 type = "int"
 default = 96
 advanced = true
 
 [tabs.tomo_rec.topaz_patch_padding]
 name = "Patch padding size (Topaz denoise)"
-description = "Patch padding size for Topaz denoising"
+description = "Padding around each patch to remove edge artifacts"
 type = "int"
 default = 48
 advanced = true
@@ -1325,7 +1360,7 @@ _description = "Virion and spike detection parameters"
 name = "Virion detection method"
 description = "Strategy for virion detection"
 type = "enum"
-enum = { none="none", auto="auto", manual="manual (list of positions required)", nn-train="nn-train (list of positions required)", nn-eval="nn-eval (trained model required)" }
+enum = { none="none", auto="auto", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)" }
 default = "none"
 
 [tabs.tomo_vir.rad]
@@ -1440,7 +1475,7 @@ _description = "Sub-tomogram detection parameters"
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", auto="auto", import="import", manual="manual (list of positions required)", nn-train="nn-train (list of positions required)", nn-eval="nn-eval (trained model required)" }
+enum = { none="none", auto="auto", import="import", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)" }
 default = "none"
 
 [tabs.tomo_spk.files]

@@ -46,7 +46,7 @@ Step 1: Pick particles for training
 Step 2: Train the neural-network model
 --------------------------------------
 
-- Open the settings of the :badge:`Pre-processing,badge-secondary` block, go to the **Particle detection** tab and select `nn-train` as the ``Detection method``
+- Open the settings of the :badge:`Pre-processing,badge-secondary` block, go to the **Particle detection** tab and select `pyp-train` as the ``Detection method``
 
 - Choose the list of manually selected positions from the ``Select list for training`` dropdown menu at the top of the form
 
@@ -67,7 +67,7 @@ Step 2: Train the neural-network model
 Step 3: Run inference using the trained model
 ---------------------------------------------
 
-- Go to the **Particle detection** tab in the :badge:`Pre-processing,badge-secondary` block and select `nn-eval` as the ``Detection method``
+- Go to the **Particle detection** tab in the :badge:`Pre-processing,badge-secondary` block and select `pyp-eval` as the ``Detection method``
 
 - Go to the **Training/Evaluation** tab and select the location of the trained model obtained in the previous step (``train/YYYYMMDD_HHMMSS/*.training`` for 2D, and ``train/YYYYMMDD_HHMMSS/*.pth`` for 3D)
 
@@ -82,7 +82,7 @@ Step 3: Run inference using the trained model
 Support for Topaz picking
 -------------------------
 
-    Starting in version 0.5.4, nextPYP supports 2D particle picking using `Topaz <https://github.com/tbepler/topaz>`_. To use Topaz, you first need to install the program on your server or compute nodes and your nextPYP instance needs to be properly configured by setting the path to the Topaz executable and to any host-specific CUDA libraries using the configuration variables ``topaz`` and ``cudaPaths``. See the :doc:`full documentation for the configuration file<../reference/config>` for details. Once this is done, simply select ``nn-topaz-train`` or ``nn-topaz-eval`` in Steps 2 and 3 above, respectively.
+    Starting in version 0.5.4, nextPYP supports 2D particle picking using `Topaz <https://github.com/tbepler/topaz>`_. To use Topaz, you first need to install the program on your server or compute nodes and your nextPYP instance needs to be properly configured by setting the path to the Topaz executable and to any host-specific CUDA libraries using the configuration variables ``topaz`` and ``cudaPaths``. See the :doc:`full documentation for the configuration file<../reference/config>` for details. Once this is done, simply select ``topaz-train`` or ``topaz-eval`` in Steps 2 and 3 above, respectively.
 
 .. seealso::
 

@@ -4040,7 +4040,7 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 args = project_params.load_pyp_parameters()
-                if args["detect_method"].endswith("topaz"):
+                if args["detect_method"].startswith("topaz"):
                     topaz.sprtrain(args)
                 else:
                     joint.sprtrain(args)

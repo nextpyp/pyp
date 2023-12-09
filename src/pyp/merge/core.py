@@ -2,6 +2,8 @@ import math
 import os
 import shutil
 import subprocess
+import datetime
+import time
 
 from pathlib import Path
 
@@ -15,7 +17,7 @@ from pyp.merge import weights as pyp_weights
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import get_imod_path, get_aretomo_path
+from pyp.system.utils import get_imod_path, get_aretomo_path, get_topaz_path
 from pyp.utils import get_relative_path
 from pyp.utils.timer import Timer
 
@@ -325,13 +327,37 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
 
     if parameters["tomo_rec_topaz_denoise"]:
 
-        command = f"{utils.get_topaz_path()}/topaz denoise3d \
+        """
+        usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
+                    [-a EVEN_TRAIN_PATH] [-b ODD_TRAIN_PATH] [--N-train N_TRAIN]
+                    [--N-test N_TEST] [-c CROP]
+                    [--base-kernel-width BASE_KERNEL_WIDTH]
+                    [--optim {adam,adagrad,sgd}] [--lr LR] [--criteria {L1,L2}]
+                    [--momentum MOMENTUM] [--batch-size BATCH_SIZE]
+                    [--num-epochs NUM_EPOCHS] [-w WEIGHT_DECAY]
+                    [--save-interval SAVE_INTERVAL] [--save-prefix SAVE_PREFIX]
+                    [--num-workers NUM_WORKERS] [-j NUM_THREADS] [-g GAUSSIAN]
+                    [-s PATCH_SIZE] [-p PATCH_PADDING] [-d DEVICE]
+                    [volumes ...]
+        """
+
+        # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
+        import torch
+        if torch.cuda.is_available():
+            devices = 0
+        else:
+            devices = -1
+
+        time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
+
+        command = f"{get_topaz_path()}/topaz denoise3d \
 {name}.rec \
 --model {parameters['tomo_rec_topaz_model']} \
---device -2 \
+--device {devices} \
 --gaussian {parameters['tomo_rec_topaz_gaussian']} \
 --patch-size {parameters['tomo_rec_topaz_patch_size']} \
 --patch-padding {parameters['tomo_rec_topaz_patch_padding']} \
--output {os.getcwd()}"
+--output {os.getcwd()} \
+2>&1 | tee {time_stamp}_topaz_denoise3d.log"
 
-        local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+        run_shell_command(command, verbose=parameters['slurm_verbose'])
