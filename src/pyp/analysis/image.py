@@ -481,5 +481,6 @@ def dose_weight(args, parameters, imagefile, working_path, current_path):
         working_path,
         args.file,
     )
-    logger.info(command)
+    if parameters['slurm_verbose']:
+        logger.info(command)
     os.system(command)
