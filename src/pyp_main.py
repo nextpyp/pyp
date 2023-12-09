@@ -1542,7 +1542,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if len(mpi_funcs) > 0:
         t = timer.Timer(text="Tomogram reconstruction + ctffind tilt took: {}", logger=logger.info)
         t.start()
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
         t.stop()
 
     # package CTF metadata into dictionary
@@ -1648,7 +1648,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if len(mpi_funcs):
         t = timer.Timer(text="Ploting ctf and tomo webp's took: {}", logger=logger.info)
         t.start()
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
         t.stop()
 
     # convert to jpg to fool nextPYP
