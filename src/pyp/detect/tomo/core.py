@@ -1171,7 +1171,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                         os.remove( name + ".mod")
                     os.system(f'cp -p *.vir {current_path}/next')
 
-            elif parameters["tomo_vir_method"] == "nn-eval":
+            elif parameters["tomo_vir_method"] == "pyp-eval":
                 logger.info("Using NN-picking")
 
                 # reset virion binning since we are considering above it already
@@ -1243,7 +1243,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             except:
                 logger.warning("No particles picked for this tomogram")
 
-        elif parameters["tomo_spk_method"] == "nn-eval":
+        elif parameters["tomo_spk_method"] == "pyp-eval":
 
             if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
                 logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
@@ -1308,7 +1308,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         # switch y and z if these come auto pick
         if parameters["tomo_spk_method"] == "auto":
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
-        elif parameters["tomo_spk_method"] == "nn-eval":
+        elif parameters["tomo_spk_method"] == "pyp-eval":
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
         if parameters["tomo_vir_detect_method"] == "template" or parameters["tomo_vir_detect_method"] == "mesh":
             # reverse z-dimension to display on website

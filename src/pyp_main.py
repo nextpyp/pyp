@@ -893,7 +893,7 @@ def split(parameters):
 
         swarm_file = slurm.create_pyp_swarm_file(parameters, files, timestamp)
 
-        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "nn-train" or parameters["tomo_spk_method"] == "nn-train" ) 
+        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" ) 
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
 
         if ( tomo_train or spr_train ) and os.path.exists(os.path.join("train","current_list.txt")):
@@ -1187,7 +1187,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
     # pick and extract particles
     # TODO: split pick and extract particles
     # then change to if detect.is_required(parameters) and not detect.is_done(name):
-    if ( parameters["detect_force"] or detect.is_required(parameters,name) ) and parameters["detect_method"] != "nn-train" and parameters["detect_method"] != "none":
+    if ( parameters["detect_force"] or detect.is_required(parameters,name) ) and parameters["detect_method"] != "pyp-train" and parameters["detect_method"] != "none":
         detect_args = [(name, aligned_average, parameters, actual_pixel)]
         mpiF.append(detect.pick_particles)
         mpiARG.append(detect_args)

@@ -633,16 +633,16 @@ def get_new_input_list(parameters, inputlist):
 
     spr_pick = (
                 is_spr 
-                and "detect_rad" in parameters and parameters["detect_rad"] > 0  
-                and not ("none" in parameters["detect_method"] or "nn-train" in parameters["detect_method"])
+                and "detect_rad" in parameters and parameters["detect_rad"] > 0
+                and not ("none" in parameters["detect_method"] or "pyp-train" in parameters["detect_method"])
                 )
     tomo_vir_pick = (
-                    "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0 
-                    and not ("none" in parameters["tomo_vir_detect_method"] or "none" in parameters["tomo_vir_method"] or "nn-train" in parameters["tomo_vir_method"])
+                    "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0
+                    and not ("none" in parameters["tomo_vir_detect_method"] or "none" in parameters["tomo_vir_method"] or "pyp-train" in parameters["tomo_vir_method"])
                     )
     tomo_spk_pick = (
-                    "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 
-                        and not ("none" in parameters["tomo_spk_method"] or "nn-train" in parameters["tomo_spk_method"])
+                    "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0
+                        and not ("none" in parameters["tomo_spk_method"] or "pyp-train" in parameters["tomo_spk_method"])
                     )
 
     if spr_pick or tomo_vir_pick or tomo_spk_pick:
