@@ -15,6 +15,7 @@ from xml.sax import make_parser
 from tqdm import tqdm
 
 import numpy as np
+import pickle
 
 from pyp import align, postprocess
 from pyp.analysis import plot, statistics
@@ -1100,42 +1101,60 @@ def run_mpi_reconstruction(
         "plot_used_png", text = "Plot used particles pngs took: {}", logger=logger.info
     ):
 
-
         if float(project_params.param(fp["reconstruct_cutoff"], iteration)) >= 0:
+            # creat bild file from used.par file
+            mpi_funcs, mpi_args = [], []
 
+            mpi_funcs.append(plot.par2bild)
+            bild_output = f"../maps/{dataset_name}_used.bild"
+            mpi_args.append( [( merge_used_parfile, bild_output, fp)] )
+            
             # plot using all particles
             arg_input = f"{dataset_name}.par"
             arg_angle_groups = 25
             arg_defocus_groups = 25
             arg_dump = False
-            plot_outputs, metadata = plot.generate_plots(
+            mpi_funcs.append(plot.generate_plots)
+            mpi_args.append([(
                 arg_input,
                 arg_angle_groups,
                 arg_defocus_groups,
                 arg_scores,
                 arg_frealignx,
                 arg_dump,
-            )
+            )])
 
             # plot using used particles
             arg_input = f"{dataset_name}_used.par"
             arg_angle_groups = 25
             arg_defocus_groups = 25
             arg_dump = False
-            plot_outputs_used, metadata_used = plot.generate_plots(
+            mpi_funcs.append(plot.generate_plots)
+            mpi_args.append([(    
                 arg_input,
                 arg_angle_groups,
                 arg_defocus_groups,
                 arg_scores,
                 arg_frealignx,
                 arg_dump,
-            )
-
+            )])
+            
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=fp["slurm_verbose"])
             # transfer files to maps directory
             for file in glob.glob(dataset_name + "*_prs.png"):
                 shutil.move(file, "../maps")
 
     # combine 2D plots from used particles and global statistics for histograms
+    # read saved pickle files 
+    with open(f"{dataset_name}_temp.pkl", 'rb') as f1:
+        plot_outputs = pickle.load(f1)
+    with open(f"{dataset_name}_meta_temp.pkl", 'rb') as f2:
+        metadata = pickle.load(f2)
+    with open(f"{dataset_name}_used_temp.pkl", 'rb') as f3:
+        plot_outputs_used = pickle.load(f3)
+    with open(f"{dataset_name}_used_meta_temp.pkl", 'rb') as f4:
+        metadata_used = pickle.load(f4)
+
     consolidated_plot_outputs = plot_outputs.copy()
     consolidated_plot_outputs["def_rot_histogram"] = plot_outputs_used["def_rot_histogram"]
     consolidated_plot_outputs["def_rot_scores"] = plot_outputs_used["def_rot_scores"]

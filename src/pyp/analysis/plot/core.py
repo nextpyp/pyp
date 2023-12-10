@@ -6,6 +6,7 @@ import subprocess
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 from pathlib import Path
 from scipy.spatial import distance
 
@@ -885,7 +886,15 @@ def generate_plots(
         spacing = math.ceil(input.shape[0] / 512.0)
         output["occ_plot"] = np.sort(input[::spacing, 11])[::-1].tolist()
 
-    return output, metadata
+    # save dict to pikle for parallel run
+    output_file = parfile.replace(".par", "_temp.pkl")
+    meta_file = parfile.replace(".par", "_meta_temp.pkl")
+    with open(output_file, 'wb') as f1:
+        pickle.dump(output, f1)
+    with open(meta_file, 'wb') as f2:
+        pickle.dump(metadata, f2)
+
+    # return output, metadata
 
 
 def generate_plots_relion(parfile, angles=25, defocuses=25):
@@ -1530,4 +1539,21 @@ def get_scale_for_trajectory(local_trajectories, coordinates) -> float:
 
     # 0.6 is meant to leave some space, so it won't look too crowded
     return dist / mean_length * 0.6
+
+
+def par2bild(parfile, output, parameters):
+    # Read angles parameters from parfile and convert to .bild file to view in ChimeraX
+    
+
+    if "tomo" in parameters["data_mode"]:
+        tilt_max = parameters["reconstruct_maxtilt"]
+        is_tomo = f"--tomo --tilt_max {tilt_max}"
+    else:
+        is_tomo = ""
+
+    comm= os.environ["PYP_DIR"] + f"/external/postprocessing/par_to_bild.py --input {parfile} --output {output} {is_tomo} --apix {parameters['scope_pixel']} --healpix_order 4 --boxsize {parameters['extract_box']} --height_scale 0.3 --width_scale 0.5 --occ_cutoff {parameters['reconstruct_cutoff']} --sym {parameters['particle_sym']} "
+
+    run_shell_command(comm, verbose=False)
+    if os.path.isfile(output):
+        logger.info(f"Bild file created and saved in {os.getcwd() + '/' + output}")
 
