@@ -1180,6 +1180,41 @@ type = "int"
 default = 8
 advanced = true
 
+[tabs.tomo_ali.aretomo_zheight]
+name = "Z height of specimen in pixels (aretomo)"
+description = "Z height of specimen (not tomogram), critical for the alignment"
+type = "int"
+default = 600
+advanced = true
+
+[tabs.tomo_ali.aretomo_tiltoff]
+name = "Add tilt offset (aretomo)"
+description = "Add tilt offset to the tilt angle before alignment, instead of measuring the offset automatically"
+type = "float"
+default = 0.0
+advanced = true
+
+[tabs.tomo_ali.aretomo_measure_tiltoff]
+name = "Measure tilt offset (aretomo)"
+description = "Measure the tilt offset automatically. Note that the tilt angles might change"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.tomo_ali.aretomo_bft]
+name = "B-factors for low-pass filter (aretomo)"
+description = "Used in the cross correlation. The first value is used for global measurement. The second for the local measurement"
+type = "str"
+default = "0,0"
+advanced = true
+
+[tabs.tomo_ali.aretomo_dark_tol]
+name = "Threshold to remove dark images (aretomo)"
+description = "Threshold to remove dark images (lower values remove fewer images)"
+type = "float"
+default = 0.0
+advanced = true
+
 [tabs.tomo_rec]
 _name = "Tomogram reconstruction"
 _description = "Parameters for tomographic reconstruction"
@@ -1287,34 +1322,6 @@ name = "Number of projections per subet for SART reconstruction (aretomo)"
 description = "Number of projections per subet for SART reconstruction"
 type = "int"
 default = 5
-advanced = true
-
-[tabs.tomo_rec.aretomo_zheight]
-name = "Z height of specimen (pixel) (aretomo)"
-description = "Z height of specimen (not tomogram), critical for the alignment"
-type = "int"
-default = 600
-advanced = true
-
-[tabs.tomo_rec.aretomo_dark_tol]
-name = "Threshold to remove dark images (aretomo)"
-description = "Threshold to remove dark images (lower values remove fewer images)"
-type = "float"
-default = 0.0
-advanced = true
-
-[tabs.tomo_rec.aretomo_measure_tiltoff]
-name = "Measure tilt offset (aretomo)"
-description = "Measure the tilt offset automatically. Note that the tilt angles might change"
-type = "bool"
-default = true
-advanced = true
-
-[tabs.tomo_rec.aretomo_tiltoff]
-name = "Add tilt offset (aretomo)"
-description = "Add tilt offset to the tilt angle before alignment, instead of measuring the offset automatically"
-type = "float"
-default = 0.0
 advanced = true
 
 [tabs.tomo_rec.topaz_denoise]

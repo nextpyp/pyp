@@ -246,7 +246,7 @@ def weight_average(input_stack, output_stack, weights):
 
 
 @Timer("merge", text="Merging took: {}", logger=logger.info)
-def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
+def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=False):
     """Perform 3D reconstruction for tomoswarm."""
 
     if "tomo_rec_dose_weighting" in parameters and parameters["tomo_rec_dose_weighting"] and os.path.exists("%s.order" % name):
@@ -305,7 +305,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
             )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
 
-    elif "aretomo" in parameters["tomo_rec_method"].lower():
+    elif "aretomo" in parameters["tomo_rec_method"].lower() and ( "aretomo" not in parameters["tomo_ali_method"].lower() or force ):
 
         if Path(f"{name}_aretomo.rec").exists():
             os.rename(f"{name}_aretomo.rec", f"{name}.rec")
@@ -320,7 +320,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options):
 -AngFile {name}.tlt \
 -VolZ {int(1.0 * thickness / binning)} \
 -OutBin 1 \
--DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
+-DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 {reconstruct_option} \
 -Align 0"
             run_shell_command(command, verbose=parameters["slurm_verbose"])

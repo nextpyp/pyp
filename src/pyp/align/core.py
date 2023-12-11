@@ -4624,8 +4624,12 @@ def align_tilt_series(name, parameters, rotation=0):
             binning_tomo = parameters["tomo_rec_binning"]
             thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
 
-            specimen_thickness = parameters["tomo_rec_aretomo_zheight"]
+            specimen_thickness = parameters["tomo_ali_aretomo_zheight"]
             assert (specimen_thickness < thickness), f"Height of specimen ({specimen_thickness}) needs to be smaller than tomogram thickness ({thickness})"
+
+            if "aretomo" not in parameters["tomo_rec_method"]:
+                # skip reconstruction if using IMOD
+                thickness = 0
 
             # default using SART for reconstruction
             reconstruct_option = f"-Sart {parameters['tomo_rec_aretomo_sart_iter']} {parameters['tomo_rec_aretomo_sart_num_projs']}"
@@ -4633,13 +4637,174 @@ def align_tilt_series(name, parameters, rotation=0):
                 reconstruct_option = "-Wbp 1"
 
             # correct the tilt offset
-            tilt_offset_option = "1" if parameters['tomo_rec_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_rec_aretomo_tiltoff']}"
+            tilt_offset_option = "1" if parameters['tomo_ali_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_ali_aretomo_tiltoff']}"
 
             # local motion by giving the number of patches
             if parameters["tomo_ali_method"] == "imod_patch":
                 patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
             else:
                 patches = ""
+
+            """ Usage: AreTomo2 Tags
+
+            -InMrc
+            1. Input MRC file that stores tomo tilt series.
+
+            -OutMrc
+            1. Output MRC file that stores the aligned tilt series.
+
+            -AlnFile
+            1. Alignment file to be loaded.
+            2. It will be applied to the loaded tilt series.
+
+            -AngFile
+            1. A single- or multi-column Text file that contains tilt
+                angles in the first column.
+            2. Both the number and the order of tilt angles must match
+                the number and order of projection images in the input
+                MRC file.
+
+            -TmpFile
+            1. Temporary image file for debugging.
+
+            -LogFile
+            1. Log file storing alignment data.
+
+            -TiltRange
+            Min and max tilts. By default the header values are used.
+
+            -TiltAxis
+            Tilt axis, default header value.
+
+            -AlignZ
+            Volume height for alignment, default 256
+
+            -VolZ
+            1. Volume z height for reconstrunction. It must be
+                greater than 0 to reconstruct a volume.
+            2. Default is 0, only aligned tilt series will
+                generated.
+
+            -OutBin
+            Binning for aligned output tilt series, default 1
+
+            -Gpu
+            GPU IDs. Default 0.
+
+            -TiltCor
+            1. Correct the offset of tilt angle.
+            2. This argument can be followed by two values. The
+                first value can be -1, 0, or 1. and the  default is 0,
+                indicating the tilt offset is measured for alignment
+                only  When the value is 1, the offset is applied to
+                reconstion too. When a negative value is given, tilt
+                is not measured not applied.
+            3. The second value is user provided tilt offset. When it
+                is given, the measurement is disabled.
+
+            -ReconRange
+            1. It specifies the min and max tilt angles from which
+                a 3D volume will be reconstructed. Any tilt image
+                whose tilt ange is outside this range is exclueded
+                in the reconstruction.
+
+            -PixSize                                                                                                                                                                                                                                                [29/1972]
+            1. Pixel size in Angstrom of the input tilt series. It
+                is only required for dose weighting. If missing, dose
+                weighting will be disabled.
+
+            -Kv
+            1. High tension in kV
+            2. Required for dose weighting and CTF estimation
+
+            -ImgDose
+            1. Dose on sample in each image exposure in e/A2. Note
+                this is not accumulated dose. If missing, dose weighting
+                will be disabled.
+
+            -Cs
+            1. Spherical aberration in mm
+            2. Requred only for CTF correction
+
+            $-10s
+            1. Amplitude contrast, default 0.07
+
+            -10s
+            1. Guess of phase shift and search range in degree.
+            2. Only required for CTF estimation and with
+            3. Phase plate installed.
+
+            -FlipVol
+            1. By giving a non-zero value, the reconstructed
+                volume is saved in xyz fashion. The default is
+                xzy.
+            -FlipInt
+            1. Flip the intensity of the volume to make structure white.
+                Default 0 means no flipping. Non-zero value flips.
+            -Sart
+            1. Specify number of SART iterations and number
+                of projections per update. The default values
+                are 15 and 5, respectively
+
+            -Wbp
+            1. By specifying 1, weighted back projection is enabled
+                to reconstruct volume.
+
+            -DarkTol
+            1. Set tolerance for removing dark images. The range is
+                in (0, 1). The default value is 0.7. The higher value is
+                more restrictive.
+
+            -TiltScheme
+            1. This option is used to determine the sequence each
+                tilt image is acquired. This sequence is needed for the
+                determination of accumulated dose on sample. If this
+                option is missing, dose weighting will be disabled.
+            2. Three parameters are needed. This first one is the
+                starting angle. The second, tilt step, positive or
+                negative,  indicates tilting direction direction
+                after the starting angle. The third is 1, 2, or 3,
+                corresponding
+            to single-branch, two-branch, or Hagen
+                scheme of data collection, respectively.
+
+            -OutXF
+            1. When set by giving no-zero value, IMOD compatible
+                XF file will be generated.
+
+            -OutImod
+            1. It generates the Imod files needed by Relion4 or Warp
+                for subtomogram averaging. These files are saved in the
+                subfolder named after the output MRC file name.
+            2. 0: default, do not generate any IMod files.
+            3. 1: generate IMod files needed for Relion 4.
+            4. 2: generate IMod files needed for WARP.
+            5. 3: generate IMod files when the aligned tilt series
+                    is used as the input for Relion 4 or WARP.
+
+            -Align
+            1. Skip alignment when followed by 0. This option is
+                used when the input MRC file is an aligned tilt series.
+                The default value is 1.
+
+            -CropVol
+            1. Crop the reconstructed volume to the specified sizes
+                in x and y directions.
+            2. Size x is the length perpendicular to tilt axis and size
+                y is the length along the tilt axis.
+            3. This option is only enabled when -RoiFile is enabled.
+
+            -Bft
+            1. B-factors for low-pass filter used in the cross
+                correlation. The first value is used for global
+                measurement. The second for the local measurement.
+
+            -IntpCor
+            1. When enabled, the correction for information loss due
+                to linear interpolation will be perform. The default
+                setting value 1 enables the correction.
+
+            """
 
             command = f"{get_aretomo_path()} \
 -InMrc {name}.mrc \
@@ -4648,19 +4813,23 @@ def align_tilt_series(name, parameters, rotation=0):
 -VolZ {thickness} \
 -OutBin {binning_tomo} \
 -TiltAxis {parameters['scope_tilt_axis']} \
--DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
+-DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 -AlignZ {specimen_thickness} \
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
 -OutImod 1 {patches}"
-            run_shell_command(command, verbose=parameters["slurm_verbose"])
-            
+            [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+
             # save output
             try:
                 shutil.copy2(f"{name}_Imod/{name}_st.xf", f"{name}.xf")
                 shutil.copy2(f"{name}_Imod/{name}_st.tlt", f"{name}.tlt")
             except:
-                raise Exception("AreTomo2 fails to run.")
+                if 'Error: GPU' in output:
+                    if not parameters['slurm_verbose']:
+                        logger.error(output)
+                    logger.error('A GPU must be available for AreTomo2 to run')
+                raise Exception("AreTomo2 failed to run")
             return
     else:
 

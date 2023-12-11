@@ -1595,7 +1595,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             pass
 
         # re-calculate reconstruction using gold-erased tilt-series
-        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options)
+        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
