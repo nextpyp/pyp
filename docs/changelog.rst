@@ -4,6 +4,25 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.5.4 (12/12/2023)
+*******************
+
+   :fa:`star,text-success` Add `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ wrapper for movie frame alignment (requires GPU).
+
+   :fa:`star,text-success` Add `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_ wrapper for tilt-series alignment and reconstruction (requires GPU).
+
+   :fa:`star,text-success` Add `Topaz <https://github.com/tbepler/topaz>`_ wrapper for 2D particle picking and 3D denoising (GPU recommended).
+
+   :fa:`star,text-success` Produce .bild files after each refinement iteration for 3D visualization in Chimera.
+
+   :fa:`plus-square,text-primary` Allow mix-and-matching of IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
+
+   :fa:`bug,text-danger` Fix OOM error when running constrained refinement using a single thread.
+
+   :fa:`bug,text-danger` Fix issue in tomography sessions when not using .mdoc files to read metadata.
+
+   :fa:`bug,text-danger` Fix bug when exporting sub-tomograms for use in external programs.
+
 v0.5.3 (11/25/2023)
 *******************
 
