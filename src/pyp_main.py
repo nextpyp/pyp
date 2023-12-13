@@ -891,7 +891,7 @@ def split(parameters):
     # launch pre-processing
     if not os.path.isfile("frealign/mpirun.mynodes"):
 
-        swarm_file = slurm.create_pyp_swarm_file(parameters, files, timestamp)
+        swarm_file, gpu = slurm.create_pyp_swarm_file(parameters, files, timestamp)
 
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" ) 
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
@@ -899,18 +899,11 @@ def split(parameters):
         if ( tomo_train or spr_train ) and os.path.exists(os.path.join("train","current_list.txt")):
             train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
 
-            # try to get the gpu partition
-            config = get_pyp_configuration()
-            try:
-                parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
-            except:
-                pass
-
             # submit swarm jobs
             id_train = slurm.submit_jobs(
                 "swarm",
                 train_swarm_file,
-                jobtype=parameters["data_mode"] + "train",
+                jobtype="milotrain" if parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
                 jobname="Train",
                 queue=parameters["slurm_queue_gpu"],
                 scratch=0,
@@ -920,8 +913,22 @@ def split(parameters):
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
             ).strip()
+
         else:
             id_train = ""
+            slurm_queue = parameters["slurm_queue_gpu"] if slurm.use_gpu(parameters) else parameters["slurm_queue"]
+
+            if gpu:
+                # try to get the gpu partition
+                config = get_pyp_configuration()
+                try:
+                    parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
+                except:
+                    pass
+
+                partition_name = parameters["slurm_queue_gpu"] + " --gres=gpu:1 "
+            else:
+                partition_name = parameters["slurm_queue"]
 
             # submit swarm jobs
             id = slurm.submit_jobs(
@@ -929,7 +936,7 @@ def split(parameters):
                 swarm_file,
                 jobtype=parameters["data_mode"] + "swarm",
                 jobname="Split",
-                queue=parameters["slurm_queue"],
+                queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
                 memory=parameters["slurm_memory"],
