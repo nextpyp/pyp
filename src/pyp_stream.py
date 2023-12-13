@@ -210,7 +210,9 @@ def find_gain_reference(args, soures):
 
 def get_data_files(args, source):
 
-    files = glob.glob(project_params.resolve_path(args["data_path_mdoc"])) + glob.glob(project_params.resolve_path(args["data_path"]))
+    files = glob.glob(project_params.resolve_path(args["data_path"]))
+    if args["data_path_mdoc"] != None:
+        files = glob.glob(project_params.resolve_path(args["data_path_mdoc"])) + files
     if len(args["stream_transfer_fileset"]) > 0:
         original_files = files.copy()
         for extension in args["stream_transfer_fileset"].split(","):

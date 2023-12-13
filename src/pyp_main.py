@@ -893,7 +893,7 @@ def split(parameters):
 
         swarm_file = slurm.create_pyp_swarm_file(parameters, files, timestamp)
 
-        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "nn-train" or parameters["tomo_spk_method"] == "nn-train" ) 
+        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" ) 
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
 
         if ( tomo_train or spr_train ) and os.path.exists(os.path.join("train","current_list.txt")):
@@ -1187,7 +1187,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
     # pick and extract particles
     # TODO: split pick and extract particles
     # then change to if detect.is_required(parameters) and not detect.is_done(name):
-    if ( parameters["detect_force"] or detect.is_required(parameters,name) ) and parameters["detect_method"] != "nn-train" and parameters["detect_method"] != "none":
+    if ( parameters["detect_force"] or detect.is_required(parameters,name) ) and parameters["detect_method"] != "pyp-train" and parameters["detect_method"] != "none":
         detect_args = [(name, aligned_average, parameters, actual_pixel)]
         mpiF.append(detect.pick_particles)
         mpiARG.append(detect_args)
@@ -1514,7 +1514,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     mpi_funcs, mpi_args = [ ], [ ]
 
     # produce binned tomograms
-    need_recalculation = parameters["tomo_rec_force"] or ( not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_erase_fiducials"] )
+    need_recalculation = parameters["tomo_rec_force"] or ( parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] )
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
@@ -1542,7 +1542,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if len(mpi_funcs) > 0:
         t = timer.Timer(text="Tomogram reconstruction + ctffind tilt took: {}", logger=logger.info)
         t.start()
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
         t.stop()
 
     # package CTF metadata into dictionary
@@ -1559,7 +1559,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     tilt_metadata["ctf_profiles"] = ctf_profiles
 
     # erase fiducials if needed
-    if not parameters["tomo_ali_patch_based"] and parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
+    if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
 
         # create binned aligned stack
         if not os.path.exists(f'{name}_bin.ali'):
@@ -1595,7 +1595,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             pass
 
         # re-calculate reconstruction using gold-erased tilt-series
-        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options)
+        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
@@ -1648,7 +1648,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if len(mpi_funcs):
         t = timer.Timer(text="Ploting ctf and tomo webp's took: {}", logger=logger.info)
         t.start()
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
         t.stop()
 
     # convert to jpg to fool nextPYP
@@ -4040,7 +4040,7 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 args = project_params.load_pyp_parameters()
-                if args["detect_method"].endswith("topaz"):
+                if args["detect_method"].startswith("topaz"):
                     topaz.sprtrain(args)
                 else:
                     joint.sprtrain(args)

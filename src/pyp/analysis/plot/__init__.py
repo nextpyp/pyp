@@ -15,4 +15,5 @@ from .core import (
     tomo_slicer_gif,
     tomo_montage,
     histogram_particle_tomo,
+    par2bild
 )

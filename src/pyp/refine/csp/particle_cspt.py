@@ -1106,9 +1106,9 @@ def run_mpi_reconstruction(
             mpi_funcs, mpi_args = [], []
 
             mpi_funcs.append(plot.par2bild)
-            bild_output = f"../maps/{dataset_name}_used.bild"
+            bild_output = os.path.join(os.path.dirname(input_dir),"maps",f"{dataset_name}.bild")
             mpi_args.append( [( merge_used_parfile, bild_output, fp)] )
-            
+
             # plot using all particles
             arg_input = f"{dataset_name}.par"
             arg_angle_groups = 25
@@ -1130,7 +1130,7 @@ def run_mpi_reconstruction(
             arg_defocus_groups = 25
             arg_dump = False
             mpi_funcs.append(plot.generate_plots)
-            mpi_args.append([(    
+            mpi_args.append([(
                 arg_input,
                 arg_angle_groups,
                 arg_defocus_groups,
@@ -1138,7 +1138,7 @@ def run_mpi_reconstruction(
                 arg_frealignx,
                 arg_dump,
             )])
-            
+
             mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=fp["slurm_verbose"])
             # transfer files to maps directory
             for file in glob.glob(dataset_name + "*_prs.png"):

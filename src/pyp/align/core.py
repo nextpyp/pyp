@@ -4121,7 +4121,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     if 'motioncor3' in parameters["movie_ali"]:
 
         # patch tracking
-        if "tomo_ali_patch_based" in parameters and parameters["tomo_ali_patch_based"]:
+        if "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_patch":
             patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
         else:
             patches = ""
@@ -4199,7 +4199,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             ):
             gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
             gain_file = os.path.basename(gain_reference_file)
-            gain = f" -Gain {gain_file}"
+            gain = f" -Gain ../{gain_file}"
 
             if "gain_flipv" in parameters.keys() and parameters["gain_flipv"]:
                 gain += f" -FlipGain 1"
@@ -4220,6 +4220,258 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             frame_options += f" -Group {parameters['movie_group']}"
         frame_options += f" -Bft {parameters['movie_bfactor']}"
 
+        """
+        Usage: MotionCor3 Tags
+
+        -InMrc
+        1. Input MRC file that stores dose fractionated stacks.
+        2. It can be a MRC file containing a single stack collected
+            in Leginon or multiple stacks collected in UcsfTomo.
+        3. It can also be the path of a folder containing multiple
+            MRC files when -Serial option is turned on.
+
+        -InTiff
+        1. Input TIFF file that stores a dose fractionated stack.
+        -InEer
+        1. Input EER file that stores a dose fractionated stack.
+        -OutMrc
+        1. Output MRC file that stores the frame sum.
+        2. It can be either a MRC file name or the prefix of a series
+            MRC files when -Serial option is turned on.
+
+        -ArcDir
+        1. Path of the archive folder that holds the archived raw
+            stacks with each pixel packed into 4 bits.
+        2. The archived stacks are saved in MRC file with the gain
+            reference saved in the extended header.
+        3. The rotated and/or flipped gain reference will be saved
+            if -RotGain and or -FlipGain are enabled.
+
+        -FullSum
+        1. MRC file for global-motion corrected, unweighted sum.
+        2. This file is generated as soon as the global motion
+            correction is completed while the program continues
+            lengthy local motion correction. This file allows users
+            to perform CTF estimate to gain quick feedback on the
+            image quality.
+        3. This file is temporary, when the next stack is processed,
+            its content will be overwritten.
+
+        -DefectFile
+        1. Defect file stores entries of defects on camera.
+        2. Each entry corresponds to a rectangular region in image.
+        The pixels in such a region are replaced by neighboring
+        good pixel values.
+        3. Each entry contains 4 integers x, y, w, h representing
+        the x, y coordinates, width, and heights, respectively.
+
+        -InAln
+        1. Specify the path to the directory where the alignment file
+            will be loaded.
+        2. The alignment file is a text file that stores the program
+            setting and measured global and local motion. This file
+            is created with -OutAln option.
+        3. Once the alignment file is loaded, the alignment procedure
+            will be bypassed with the loaded alignment data applied
+            to generate motion-corrected images.
+
+        -OutAln
+        1. Specify the path to the directory where the alignment file
+            will be saved.
+        2. The alignment file is a text file that stores the program
+            setting and measured global and local motion. This file can
+            be reloaded next time into MotionCor2 that will bypass
+            the alignment process.
+
+        -DefectMap
+        1. Defect map is a binary (0 or 1) map where defective pixels
+        are assigned value of 1 and good pixels have value of 0.
+        2. The defective pixels are corrected with a random pick of
+        good pixels in its neighborhood.
+        3. This is map must have the same dimension and orientation
+        as the input movie frame.
+        4. This map can be provided as either MRC or TIFF file that has
+        MRC mode of 0 or 5 (unsigned 8 bit).
+
+        -Serial
+        1. Serial-processing all MRC files in a given folder whose
+            name should be specified following -InMrc.
+        2. The output MRC file name emplate should be provided
+            folllowing -OutMrc
+        3. 1 - serial processing, 0 - single processing, default.
+        4. This option is only for single-particle stack files.
+
+        -Gain
+        MRC file that stores the gain reference. If not
+        specified, MRC extended header will be visited
+        to look for gain reference.
+
+        -Dark
+        1. MRC file that stores the dark reference. If not
+            specified, dark subtraction will be skipped.
+        2. If -RotGain and/or -FlipGain is specified, the
+            dark reference will also be rotated and/or flipped.
+
+        -TmpFile
+        Temporary image file for debugging.
+
+        -LogDir
+        1. Log directory storing log files. Log files have the
+            same file names as the output MRC files but with mrc
+            replaced with log.
+
+        -Patch
+        1. It follows by  number of patches in x and y dimensions.
+        2. The default values are 1 1, meaning only full-frame
+            based alignment is performed.
+
+        -Iter
+        Maximum iterations for iterative alignment,
+        default 5 iterations.
+
+        -Tol
+        Tolerance for iterative alignment,
+        default 0.5 pixel.
+
+        -Bft
+        B-Factor for alignment, default 100.
+
+        -PhaseOnly
+        Only phase is used in cross correlation.
+        default is 0, i.e., false.
+
+        -FtBin
+        Binning performed in Fourier space, default 1.0.
+
+        -InitDose
+        Initial dose received before stack is acquired
+
+        -FmDose
+        Frame dose in e/A^2. If not specified, dose
+        weighting will be skipped.
+
+        -PixSize
+        Pixel size in A of input stack in angstrom. If not
+        specified, dose weighting will be skipped.
+
+        -kV
+        High tension in kV needed for dose weighting.
+        Default is 300.
+
+        -Cs               1. Spherical aberration in mm. The default is set to
+            zero, meaning NO CTF estimation.
+
+        -AmpCont          1. Amplitude contrast. The default is 0.07.
+
+        -ExtPhase         1. Extra phase shift in degree. The default is 0 degree,
+            meaning NO estimation of extra phase shift.
+        2. If a positive value is given, extra phase shift will
+            estimated in a range centered at the given value. The
+            range is limited within [0, 180] degrees.
+
+        -Align
+        Generate aligned sum (1) or simple sum (0)
+
+        -Throw
+        Throw initial number of frames, default is 0
+
+        -Trunc
+        Truncate last number of frames, default is 0
+
+        -SumRange
+        1. Sum frames whose accumulated doses fall in the
+            specified range. The first number is the minimum
+            dose and the second is the maximum dose.
+        2. The default range is [3, 25] electrons per square
+            angstrom.
+
+        -Group
+        1. Group every specified number of frames by adding
+            them together. The alignment is then performed
+            on the group sums. The so measured motion is
+            interpolated to each raw frame.
+        2. The 1st integer is for gobal alignment and the
+            2nd is for patch alignment.
+
+        -Crop
+        1. Crop the loaded frames to the given size.
+        2. By default the original size is loaded.
+
+        -FmRef
+        Specify a frame in the input movie stack to be the
+        reference to which all other frames are aligned. The
+        reference is 1-based index in the input movie stack
+        regardless how many frames will be thrown. By default
+        the reference is set to be the central frame.
+
+        -OutStack
+        1. It is followed by two integers used to specify if
+            the aligned stack will be generated.
+        2. When the 1st integer is set to 1, the aligned stack
+            will be created.
+        3. The 2nd integer specifies the z binning, i.e, the
+            number of aligned frames to be summed in each
+            output frame in the aligned stack.
+
+        -RotGain
+        Rotate gain reference counter-clockwise.
+        0 - no rotation, default,
+        1 - rotate 90 degree,
+        2 - rotate 180 degree,
+        3 - rotate 270 degree.
+
+        -FlipGain
+        Flip gain reference after gain rotation.
+        0 - no flipping, default,
+        1 - flip upside down,
+        2 - flip left right.
+
+        -InvGain
+        Inverse gain value at each pixel (1/f). If a orginal
+        value is zero, the inversed value is set zero.
+        This option can be used together with flip and
+        rotate gain reference.
+
+        -Mag
+        1. Correct anisotropic magnification by stretching
+            image along the major axis, the axis where the
+            lower magificantion is detected.
+        2. Three inputs are needed including magnifications
+            along major and minor axes and the angle of the
+            major axis relative to the image x-axis in degree.
+        3. By default no correction is performed.
+
+        -InFmMotion
+        1. 1 - Account for in-frame motion.
+            0 - Do not account for in-frame motion.
+
+        -Gpu
+        GPU IDs. Default 0.
+        For multiple GPUs, separate IDs by space.
+        For example, -Gpu 0 1 2 3 specifies 4 GPUs.
+
+        -GpuMemUsage
+        1. GPU memory usage, default 0.5, meaning 50% of GPU
+            memory will be used to buffer movie frames.
+        2. The value should be between 0 and 0.5. When 0 is given,
+            all movie frames are buffered on CPU memory.
+
+        -UseGpus
+        1. Specify number of GPUs out of free GPUs to use in the
+            current process. By default, all free GPUs are used
+        2. If less free GPUs are found than the specified number,
+            the process will continue. If zero is found, the
+            the process will quit.
+
+        -SplitSum
+        1. Generate odd and even sums using odd and even frames
+            respectively when this option is enabled.
+
+        -OutStar
+        1. Generate the star file for Relion 4 polishing. By
+            Default, it is diaabled. Set 1 to enable.
+        """
+
         command = f"{get_motioncor3_path()} \
 {input} \
 -OutMrc {name}.mrc \
@@ -4231,6 +4483,12 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
+
+        if "no CUDA-capable device is detected" in output:
+            if not parameters['slurm_verbose']:
+                logger.error(output)
+            logger.error('A GPU must be available for MotionCor3 to run')
+            raise Exception(output)
 
         # rename frame average
         shutil.move( name + ".mrc", f"../{aligned_average}")
@@ -4624,22 +4882,187 @@ def align_tilt_series(name, parameters, rotation=0):
             binning_tomo = parameters["tomo_rec_binning"]
             thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
 
-            specimen_thickness = parameters["tomo_rec_aretomo_zheight"]
+            specimen_thickness = parameters["tomo_ali_aretomo_zheight"]
             assert (specimen_thickness < thickness), f"Height of specimen ({specimen_thickness}) needs to be smaller than tomogram thickness ({thickness})"
+
+            if "aretomo" not in parameters["tomo_rec_method"]:
+                # skip reconstruction if using IMOD
+                thickness = 0
 
             # default using SART for reconstruction
             reconstruct_option = f"-Sart {parameters['tomo_rec_aretomo_sart_iter']} {parameters['tomo_rec_aretomo_sart_num_projs']}"
-            if parameters["tomo_rec_aretomo_wbp"]:
+            if not parameters["tomo_rec_aretomo_sart"]:
                 reconstruct_option = "-Wbp 1"
 
             # correct the tilt offset
-            tilt_offset_option = "1" if parameters['tomo_rec_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_rec_aretomo_tiltoff']}"
+            tilt_offset_option = "1" if parameters['tomo_ali_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_ali_aretomo_tiltoff']}"
 
             # local motion by giving the number of patches
-            if parameters["tomo_ali_patch_based"]:
+            if parameters["tomo_ali_method"] == "imod_patch":
                 patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
             else:
                 patches = ""
+
+            """ Usage: AreTomo2 Tags
+
+            -InMrc
+            1. Input MRC file that stores tomo tilt series.
+
+            -OutMrc
+            1. Output MRC file that stores the aligned tilt series.
+
+            -AlnFile
+            1. Alignment file to be loaded.
+            2. It will be applied to the loaded tilt series.
+
+            -AngFile
+            1. A single- or multi-column Text file that contains tilt
+                angles in the first column.
+            2. Both the number and the order of tilt angles must match
+                the number and order of projection images in the input
+                MRC file.
+
+            -TmpFile
+            1. Temporary image file for debugging.
+
+            -LogFile
+            1. Log file storing alignment data.
+
+            -TiltRange
+            Min and max tilts. By default the header values are used.
+
+            -TiltAxis
+            Tilt axis, default header value.
+
+            -AlignZ
+            Volume height for alignment, default 256
+
+            -VolZ
+            1. Volume z height for reconstrunction. It must be
+                greater than 0 to reconstruct a volume.
+            2. Default is 0, only aligned tilt series will
+                generated.
+
+            -OutBin
+            Binning for aligned output tilt series, default 1
+
+            -Gpu
+            GPU IDs. Default 0.
+
+            -TiltCor
+            1. Correct the offset of tilt angle.
+            2. This argument can be followed by two values. The
+                first value can be -1, 0, or 1. and the  default is 0,
+                indicating the tilt offset is measured for alignment
+                only  When the value is 1, the offset is applied to
+                reconstion too. When a negative value is given, tilt
+                is not measured not applied.
+            3. The second value is user provided tilt offset. When it
+                is given, the measurement is disabled.
+
+            -ReconRange
+            1. It specifies the min and max tilt angles from which
+                a 3D volume will be reconstructed. Any tilt image
+                whose tilt ange is outside this range is exclueded
+                in the reconstruction.
+
+            -PixSize                                                                                                                                                                                                                                                [29/1972]
+            1. Pixel size in Angstrom of the input tilt series. It
+                is only required for dose weighting. If missing, dose
+                weighting will be disabled.
+
+            -Kv
+            1. High tension in kV
+            2. Required for dose weighting and CTF estimation
+
+            -ImgDose
+            1. Dose on sample in each image exposure in e/A2. Note
+                this is not accumulated dose. If missing, dose weighting
+                will be disabled.
+
+            -Cs
+            1. Spherical aberration in mm
+            2. Requred only for CTF correction
+
+            $-10s
+            1. Amplitude contrast, default 0.07
+
+            -10s
+            1. Guess of phase shift and search range in degree.
+            2. Only required for CTF estimation and with
+            3. Phase plate installed.
+
+            -FlipVol
+            1. By giving a non-zero value, the reconstructed
+                volume is saved in xyz fashion. The default is
+                xzy.
+            -FlipInt
+            1. Flip the intensity of the volume to make structure white.
+                Default 0 means no flipping. Non-zero value flips.
+            -Sart
+            1. Specify number of SART iterations and number
+                of projections per update. The default values
+                are 15 and 5, respectively
+
+            -Wbp
+            1. By specifying 1, weighted back projection is enabled
+                to reconstruct volume.
+
+            -DarkTol
+            1. Set tolerance for removing dark images. The range is
+                in (0, 1). The default value is 0.7. The higher value is
+                more restrictive.
+
+            -TiltScheme
+            1. This option is used to determine the sequence each
+                tilt image is acquired. This sequence is needed for the
+                determination of accumulated dose on sample. If this
+                option is missing, dose weighting will be disabled.
+            2. Three parameters are needed. This first one is the
+                starting angle. The second, tilt step, positive or
+                negative,  indicates tilting direction direction
+                after the starting angle. The third is 1, 2, or 3,
+                corresponding
+            to single-branch, two-branch, or Hagen
+                scheme of data collection, respectively.
+
+            -OutXF
+            1. When set by giving no-zero value, IMOD compatible
+                XF file will be generated.
+
+            -OutImod
+            1. It generates the Imod files needed by Relion4 or Warp
+                for subtomogram averaging. These files are saved in the
+                subfolder named after the output MRC file name.
+            2. 0: default, do not generate any IMod files.
+            3. 1: generate IMod files needed for Relion 4.
+            4. 2: generate IMod files needed for WARP.
+            5. 3: generate IMod files when the aligned tilt series
+                    is used as the input for Relion 4 or WARP.
+
+            -Align
+            1. Skip alignment when followed by 0. This option is
+                used when the input MRC file is an aligned tilt series.
+                The default value is 1.
+
+            -CropVol
+            1. Crop the reconstructed volume to the specified sizes
+                in x and y directions.
+            2. Size x is the length perpendicular to tilt axis and size
+                y is the length along the tilt axis.
+            3. This option is only enabled when -RoiFile is enabled.
+
+            -Bft
+            1. B-factors for low-pass filter used in the cross
+                correlation. The first value is used for global
+                measurement. The second for the local measurement.
+
+            -IntpCor
+            1. When enabled, the correction for information loss due
+                to linear interpolation will be perform. The default
+                setting value 1 enables the correction.
+
+            """
 
             command = f"{get_aretomo_path()} \
 -InMrc {name}.mrc \
@@ -4648,24 +5071,28 @@ def align_tilt_series(name, parameters, rotation=0):
 -VolZ {thickness} \
 -OutBin {binning_tomo} \
 -TiltAxis {parameters['scope_tilt_axis']} \
--DarkTol {parameters['tomo_rec_aretomo_dark_tol']} \
+-DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 -AlignZ {specimen_thickness} \
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
 -OutImod 1 {patches}"
-            run_shell_command(command, verbose=parameters["slurm_verbose"])
-            
+            [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+
             # save output
             try:
                 shutil.copy2(f"{name}_Imod/{name}_st.xf", f"{name}.xf")
                 shutil.copy2(f"{name}_Imod/{name}_st.tlt", f"{name}.tlt")
             except:
-                raise Exception("AreTomo2 fails to run.")
+                if 'Error: GPU' in output:
+                    if not parameters['slurm_verbose']:
+                        logger.error(output)
+                    logger.error('A GPU must be available for AreTomo2 to run')
+                raise Exception("AreTomo2 failed to run")
             return
     else:
 
         # alignment using gold fiducials
-        if "tomo_ali_fiducial" in parameters and parameters["tomo_ali_fiducial"] > 0 and "tomo_ali_patch_based" in parameters and not parameters["tomo_ali_patch_based"]:
+        if "tomo_ali_fiducial" in parameters and parameters["tomo_ali_fiducial"] > 0 and "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_gold":
 
             # Alignment with RAPTOR
             logger.info("Doing fiducial based alignment using RAPTOR")
@@ -4814,7 +5241,7 @@ EOF
                     """
 
         # if not using fiducials, or if RAPTOR failed
-        if parameters["tomo_ali_fiducial"] == 0 or parameters["tomo_ali_patch_based"]:
+        if parameters["tomo_ali_fiducial"] == 0 or parameters["tomo_ali_method"] == "imod_patch":
             # Fiducial-less alignment
 
             logger.info(
@@ -4845,7 +5272,7 @@ EOF
             shutil.copy2("%s.fid" % name, "%s.fid.txt" % name)
 
     # make alignment output between different variants uniform
-    if not parameters["tomo_ali_patch_based"] and 'aretomo' not in parameters["tomo_ali_method"]:
+    if parameters["tomo_ali_method"] == "imod_gold":
 
         # alignment using gold fiducials
 
@@ -4885,7 +5312,7 @@ EOF
             np.savetxt("{0}_bin.xf".format(name), rot2D, fmt="%13.7f")
             shutil.copy2("%s.rawtlt" % name, "%s.tlt" % name)
 
-    elif parameters["tomo_ali_patch_based"]:
+    elif parameters["tomo_ali_method"] == "imod_patch":
 
         # patch-based alignment
 

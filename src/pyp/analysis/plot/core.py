@@ -1530,10 +1530,10 @@ def get_scale_for_trajectory(local_trajectories, coordinates) -> float:
     # get the mean length for each trajectory
     max_lengths = [np.max(distance.cdist(dots, dots, 'euclidean')) for dots in local_trajectories]
     mean_length = np.mean(max_lengths)
-    
+
     # get the mean shortest distance for each particle
     dists_particles = distance.cdist(coordinates, coordinates, 'euclidean')
-    
+
     min_dists = [min([dist for dist in particle if dist > 0.0]) for particle in dists_particles]
     dist = np.percentile(min_dists, 75)
 
@@ -1543,7 +1543,7 @@ def get_scale_for_trajectory(local_trajectories, coordinates) -> float:
 
 def par2bild(parfile, output, parameters):
     # Read angles parameters from parfile and convert to .bild file to view in ChimeraX
-    
+
 
     if "tomo" in parameters["data_mode"]:
         tilt_max = parameters["reconstruct_maxtilt"]
@@ -1554,6 +1554,3 @@ def par2bild(parfile, output, parameters):
     comm= os.environ["PYP_DIR"] + f"/external/postprocessing/par_to_bild.py --input {parfile} --output {output} {is_tomo} --apix {parameters['scope_pixel']*parameters['data_bin']*parameters['extract_bin']} --healpix_order 4 --boxsize {parameters['extract_box']} --height_scale 0.3 --width_scale 0.5 --occ_cutoff {parameters['reconstruct_cutoff']} --sym {parameters['particle_sym']} "
 
     run_shell_command(comm, verbose=False)
-    if os.path.isfile(output):
-        logger.info(f"Bild file created and saved in {os.getcwd() + '/' + output}")
-

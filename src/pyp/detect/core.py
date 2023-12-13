@@ -268,9 +268,9 @@ def pick_particles(
                 box = np.hstack((box[:, :2][:, ::-1], zeros))
                 np.savetxt("{0}.box".format(name), box, fmt="%i\t")
 
-        elif mparameters["detect_method"].startswith("nn-"):
-            
-            if mparameters["detect_method"].endswith("topaz"):
+        elif mparameters["detect_method"].endswith("-train") or mparameters["detect_method"].endswith("-eval"):
+
+            if "topaz" in mparameters["detect_method"].lower():
                 boxs = topaz.spreval(mparameters,name)
             else:
                 boxs = joint.spreval(mparameters,name)

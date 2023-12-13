@@ -351,7 +351,7 @@ def process_virion_multiprocessing(
             if os.path.exists("isdm4"):
                 A = A[:, ::-1, :]
             if ("tomo_ext_fmt" in parameters
-                and "eman" in parameters["tomo_ext_fmt"]
+                and "eman" in parameters["tomo_ext_fmt"].lower()
                 and not parameters["data_invert"]
             ):
                 logger.info(
@@ -1171,7 +1171,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                         os.remove( name + ".mod")
                     os.system(f'cp -p *.vir {current_path}/next')
 
-            elif parameters["tomo_vir_method"] == "nn-eval":
+            elif parameters["tomo_vir_method"] == "pyp-eval":
                 logger.info("Using NN-picking")
 
                 # reset virion binning since we are considering above it already
@@ -1243,7 +1243,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             except:
                 logger.warning("No particles picked for this tomogram")
 
-        elif parameters["tomo_spk_method"] == "nn-eval":
+        elif parameters["tomo_spk_method"] == "pyp-eval":
 
             if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
                 logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
@@ -1308,7 +1308,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         # switch y and z if these come auto pick
         if parameters["tomo_spk_method"] == "auto":
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
-        elif parameters["tomo_spk_method"] == "nn-eval":
+        elif parameters["tomo_spk_method"] == "pyp-eval":
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
         if parameters["tomo_vir_detect_method"] == "template" or parameters["tomo_vir_detect_method"] == "mesh":
             # reverse z-dimension to display on website
@@ -1389,7 +1389,7 @@ EOF
     with open("%s_vir0000.txt" % name, "w") as f:
 
         # invert volume contrast for eman particles
-        if not parameters["data_invert"] and parameters["tomo_ext_fmt"] == "eman":
+        if not parameters["data_invert"] and parameters["tomo_ext_fmt"].lower() == "eman":
             command = "{0}/bin/newstack {1}.ali {1}.ali -multadd -1,0".format(
                 get_imod_path(), name
             )

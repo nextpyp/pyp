@@ -228,7 +228,7 @@ done
             multirun_file = os.path.join(
                 submit_dir, command_file.replace(".swarm", ".array")
             )
-        elif "nn-" in jobtype:
+        elif "-train" in jobtype:
             multirun_file = os.path.join(os.getcwd(), submit_dir, "train_commands.swarm")
         elif "classmerge" in jobtype:
             multirun_file = os.path.join(os.getcwd(), submit_dir, "classmerge_commands.swarm")

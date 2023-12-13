@@ -91,7 +91,7 @@ There are three modes available for virion picking:
     
     * We will assume that you already have a list of manually picked virion centers (see Method 1 above)
 
-    * Select `nn-train` as the ``Virion detection method``
+    * Select `pyp-train` as the ``Virion detection method``
 
     * Select the list of virion positions from the ``Select list of positions`` drop-down menu (top of the form)
 
@@ -101,7 +101,7 @@ There are three modes available for virion picking:
 
     * Go to the **Virion/spike detection** tab
 
-    * Select `nn-eval` as the ``Virion detection method``
+    * Select `pyp-eval` as the ``Virion detection method``
 
     * Go to the **Training/evaluation** tab and specify the ``Trained model`` obtained in the previous step by clicking on the icon :fa:`search, text-primary` and navigating to the ``train/`` folder inside the :badge:`Pre-processing,badge-secondary` block. Each training run will be saved in a separate folder (named with the timestamp ``YYYYMMDD_HHMMSS``), where multiple intermediate models in `.pth` format will be available.
 
