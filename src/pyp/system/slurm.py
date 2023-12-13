@@ -80,6 +80,16 @@ def calculate_rec_swarm_required_resources(mparameters, fparameters, particles):
 
 
 def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.swarm"):
+
+    # enable Nvidia GPU?
+    if ( ("movie_ali" in parameters and "motioncor3" in parameters["movie_ali"].lower())
+        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower())
+        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower())
+        ):
+        gpu = True
+    else:
+        gpu = False
+
     with open(os.path.join("swarm", swarm_file), "w") as f:
         if "extract_fmt" in parameters.keys() and "frealign_local" in parameters["extract_fmt"]:
             # remove existing files
@@ -94,7 +104,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
                 "\n".join(
                     [
                         "cd {3}/swarm; export {2}swarm={2}swarm; {0} --keep --file raw/{1} --path {3} 2>&1 | tee ../log/{1}_per_particle_refinement.log".format(
-                            run_pyp(command="pyp", script=True),
+                            run_pyp(command="pyp", script=True, gpu=gpu),
                             s,
                             parameters["data_mode"],
                             os.getcwd(),
@@ -113,6 +123,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
                                 command="pyp",
                                 script=True,
                                 cpus=parameters["slurm_tasks"],
+                                gpu=gpu,
                             ),
                             timestamp,
                             s,
@@ -125,7 +136,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
             )
         f.write("\n")
 
-    return swarm_file
+    return swarm_file, gpu
 
 
 def create_train_swarm_file(parameters, timestamp, swarm_file="train.swarm"):

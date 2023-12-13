@@ -5082,6 +5082,7 @@ def align_tilt_series(name, parameters, rotation=0):
             try:
                 shutil.copy2(f"{name}_Imod/{name}_st.xf", f"{name}.xf")
                 shutil.copy2(f"{name}_Imod/{name}_st.tlt", f"{name}.tlt")
+                os.symlink(f"{name}_aretomo.rec", f"{name}.rec")
             except:
                 if 'Error: GPU' in output:
                     if not parameters['slurm_verbose']:
