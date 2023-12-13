@@ -916,15 +916,23 @@ def split(parameters):
 
         else:
             id_train = ""
-            slurm_queue = parameters["slurm_queue_gpu"] if slurm.use_gpu(parameters) else parameters["slurm_queue"]
 
+            config = get_pyp_configuration()
+
+            if not Web.exists and parameters["slurm_queue"] == "":
+
+                parameters["slurm_queue"] = ",".join( config["slurm"["queues"]] )
+
+                if parameters["slurm_queue"] == "":
+
+                    raise Exception("Please either provide proper computing resources in the parameter settings or configur.toml file")
+                
             if gpu:
                 # try to get the gpu partition
-                config = get_pyp_configuration()
                 try:
-                    parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
+                    parameters["slurm_queue_gpu"] = ",".join( config["slurm"]["gpuQueues"] )
                 except:
-                    pass
+                    raise Exception("Can't find GPU/CPU resources, please add available resources in configure.toml file")
 
                 partition_name = parameters["slurm_queue_gpu"] + " --gres=gpu:1 "
             else:
