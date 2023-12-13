@@ -609,7 +609,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
 
     os.chdir(current_directory)
 
-    def use_gpu(parameters: dict) -> bool:
+def use_gpu(parameters: dict) -> bool:
     """use_gpu Determine if we need to submit jobs to GPUs
 
     Parameters
