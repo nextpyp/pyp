@@ -921,13 +921,13 @@ def split(parameters):
 
             if not Web.exists and parameters["slurm_queue"] == "":
 
-                parameters["slurm_queue"] = ",".join( config["slurm"["queues"]] )
+                parameters["slurm_queue"] = ",".join( config["slurm"]["queues"] )
 
                 if parameters["slurm_queue"] == "":
 
                     raise Exception("Please either provide proper computing resources in the parameter settings or configur.toml file")
                 
-            if gpu:
+            if not Web.exists and gpu:
                 # try to get the gpu partition
                 try:
                     parameters["slurm_queue_gpu"] = ",".join( config["slurm"]["gpuQueues"] )
