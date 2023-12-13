@@ -3461,7 +3461,7 @@ if __name__ == "__main__":
                 parameters = project_params.load_pyp_parameters()
                 tomo_merge(parameters)
                 # reset all flags for re-calculation
-                parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
+                parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
                 project_params.save_pyp_parameters(parameters)
                 logger.info("PYP (tomomerge) finished successfully")
             except:
