@@ -372,7 +372,7 @@ default = 1
 name = "Force recalculation"
 description = "Force recalculation of movie frame alignment"
 type = "bool"
-default = false
+default = true
 hidden = true
 
 [tabs.movie.ali]
@@ -469,7 +469,7 @@ _description = "Settings for contrast transfer function (CTF)"
 name = "Force recalculation"
 description = "Force recalculation of CTF parameters"
 type = "bool"
-default = false
+default = true
 hidden = true
 
 [tabs.ctf.min_res]
@@ -1163,7 +1163,7 @@ default = 10
 name = "Force re-calculation"
 description = "Force re-calculation of tilt-series alignment"
 type = "bool"
-default = false
+default = true
 hidden = true
 
 [tabs.tomo_ali.auto_bin]
@@ -1230,7 +1230,7 @@ default = "imod"
 name = "Force re-calculation"
 description = "Force re-calculation of tomograms"
 type = "bool"
-default = false
+default = true
 hidden = true
 
 [tabs.tomo_rec.dose_weighting]
