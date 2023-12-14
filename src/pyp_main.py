@@ -30,6 +30,7 @@ import time
 import json
 import pickle
 import re
+import toml
 from pathlib import Path
 from uuid import uuid4
 import numpy as np
@@ -3216,24 +3217,30 @@ if __name__ == "__main__":
             jobid = f"{os.environ['SLURM_ARRAY_JOB_ID']}_{os.environ['SLURM_ARRAY_TASK_ID']}"
         elif "SLURM_JOB_ID" in os.environ:
             jobid = os.environ["SLURM_JOB_ID"]
+
+        # initialize various parameters
+        if not "PYP_DIR" in os.environ:
+            raise Exception("You must define environment variable $PYP_DIR")
+
+        # retrieve version number
+        version = toml.load(os.path.join(os.environ['PYP_DIR'],"nextpyp.toml"))['version']
+        memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else ""
+
         if jobid is None:
             logger.info(
-                "Job launching on host {} using {} task(s)".format(
-                socket.gethostname(), mpi_tasks
+                "Job (v{}) launching on {} using {} task(s) {}".format(
+                version, socket.gethostname(), mpi_tasks, memory
                 )
             )
         else:
             logger.info(
-                "Job {} launching on {} using {} task(s)".format(
-                jobid, socket.gethostname(), mpi_tasks
+                "Job {} (v{}) launching on {} using {} task(s) {}".format(
+                jobid, version, socket.gethostname(), mpi_tasks, memory
                 )
             )
 
         config = get_pyp_configuration()
 
-        # initialize various parameters
-        if not "PYP_DIR" in os.environ:
-            raise Exception("You must define environment variable $PYP_DIR")
         os.environ["OMP_NUM_THREADS"] = os.environ["IMOD_PROCESSORS"] = "1"
 
         os.environ["PYTHONDIR"] = "{0}/src".format(os.environ["PYP_DIR"])
