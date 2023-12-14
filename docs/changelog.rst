@@ -17,6 +17,12 @@ v0.5.4 (12/12/2023)
 
    :fa:`plus-square,text-primary` Allow mix-and-matching of IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
 
+   :fa:`plus-square,text-primary` Automatically select a gpu partition when running jobs that require access to GPUs.
+
+   :fa:`plus-square,text-primary` Display version number and amount of allocated memory at the beginning of every log.
+
+   :fa:`plus-square,text-primary` Change default memory allocation to 2GB and added Resources tab to data import blocks.
+
    :fa:`bug,text-danger` Fix OOM error when running constrained refinement using a single thread.
 
    :fa:`bug,text-danger` Fix issue in tomography sessions when not using .mdoc files to read metadata.
