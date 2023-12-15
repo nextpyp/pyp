@@ -4478,7 +4478,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             command = f"{get_motioncor3_path()} {input} -OutMrc {name}.mrc {gain} -OutAln {os.getcwd()} {frame_options} {patches} -Gpu {gpu_id}"
         
             [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
-
+            print(f"Output is {output}")
+            print(f"Error is {error}")
             if "All GPUs are in use" in error:
                 gpu_id += 1
                 logger.info(f"Trying run MotionCor with device id {gpu_id}")
