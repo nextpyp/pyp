@@ -4481,10 +4481,10 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
             if "All GPUs are in use" in error:
                 gpu_id += 1
+                logger.info(f"Trying run MotionCor with device id {gpu_id}")
             else:
                 break
         
-
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
 
