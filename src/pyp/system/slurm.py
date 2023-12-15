@@ -609,22 +609,3 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
 
     os.chdir(current_directory)
 
-def use_gpu(parameters: dict) -> bool:
-    """use_gpu Determine if we need to submit jobs to GPUs
-
-    Parameters
-    ----------
-    parameters : dict
-        PYP configuration
-
-    Returns
-    -------
-    bool
-    """
-    if ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower()) or \
-        ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower()):
-        return True
-    elif "movie_ali" in parameters and "motioncor3" in parameters["movie_ali"].lower(): 
-        return True
-
-    return False
