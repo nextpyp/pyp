@@ -452,6 +452,20 @@ description = "Force integer shifts to preserve high-resolution information"
 type = "bool"
 default = false
 
+[tabs.movie.motioncor_tol]
+name = "Tolerance for iterative alignment (motioncor3)"
+description = "Tolerance for iterative alignment."
+type = "float"
+default = 0.1
+advanced = true
+
+[tabs.movie.motioncor_iter]
+name = "Maximum iterations for iterative alignment (motioncor3)"
+description = "Maximum iterations for iterative alignment."
+type = "int"
+default = 15
+advanced = true
+
 [tabs.movie.weights]
 name = "Exposure weighting"
 description = "Produce exposure-weighted frame averages (if frames are available)"
@@ -471,6 +485,13 @@ description = "Force recalculation of CTF parameters"
 type = "bool"
 default = true
 hidden = true
+
+[tabs.ctf.motioncor]
+name = "Use CTF estimation from motioncor3"
+description = "Use CTF estimation from motioncor3. Note that motioncor3 must be used for movie alignment."
+type = "bool"
+default = false
+advanced = true
 
 [tabs.ctf.min_res]
 name = "Min resolution (A)"

@@ -4200,7 +4200,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
             gain_file = os.path.basename(gain_reference_file)
             gain = f" -Gain ../{gain_file}"
-
+            
+            # If both -RotGain and -FlipGain are enabled, the gain reference will be rotated first and flipped next.
             if "gain_flipv" in parameters.keys() and parameters["gain_flipv"]:
                 gain += f" -FlipGain 1"
             elif "gain_fliph" in parameters.keys() and parameters["gain_fliph"]:
@@ -4219,6 +4220,11 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         if parameters["movie_group"] > 1:
             frame_options += f" -Group {parameters['movie_group']}"
         frame_options += f" -Bft {parameters['movie_bfactor']}"
+
+        frame_options += f" -Tol {parameters['movie_motioncor_tol']} -Iter {parameters['movie_motioncor_iter']}"
+
+        if parameters["ctf_motioncor"]:
+            frame_options += f" -PixSize {parameters['scope_pixel']} -kV {parameters['scope_voltage']} -Cs {parameters['scope_cs']} -AmpCont {parameters['scope_wgh']}"
 
         """
         Usage: MotionCor3 Tags
@@ -4481,6 +4487,9 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 {patches}"
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
+        import time
+        time.sleep(1000000)
+
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
 
@@ -4492,6 +4501,11 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
         # rename frame average
         shutil.move( name + ".mrc", f"../{aligned_average}")
+        try:
+            shutil.move(f"{name}_Ctf.txt", "..")
+            shutil.move(f"{name}_Ctf.mrc", "..")
+        except: 
+            pass
 
         # read shifts and save in txt format
         shifts = np.loadtxt(f"{name}.aln",skiprows=8,ndmin=2)
