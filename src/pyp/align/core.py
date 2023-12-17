@@ -4487,9 +4487,6 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 {patches}"
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
-        import time
-        time.sleep(1000000)
-
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
 
