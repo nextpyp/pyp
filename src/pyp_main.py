@@ -3266,14 +3266,14 @@ if __name__ == "__main__":
 
         if "SLURM_ARRAY_JOB_ID" in os.environ:
             subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
-            os.environ["PYP_SCRATCH"] = str(Path(os.environ["PYP_SCRATCH"]) / subdir)
         elif "SLURM_JOB_ID" in os.environ:
-            os.environ["PYP_SCRATCH"] = str(
-                Path(os.environ["PYP_SCRATCH"]) / os.environ["SLURM_JOB_ID"]
-            )
+            subdir = os.environ["SLURM_JOB_ID"]
+        os.environ["PYP_SCRATCH"] = str(
+            Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"] / subdir
+        )
         if not os.path.exists(os.environ["PYP_SCRATCH"]):
             try:
-                os.mkdir(os.environ["PYP_SCRATCH"])
+                os.makedirs(os.environ["PYP_SCRATCH"], exist_ok=True)
             except:
                 pass
 
