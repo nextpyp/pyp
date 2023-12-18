@@ -293,6 +293,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
     # create binned reconstruction
     # only reconstruct tomograms if we're not using aretomo2
     thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
+
     if 'imod' in parameters["tomo_rec_method"].lower():
 
         if False and parameters["tomo_rec_square"]:
@@ -300,12 +301,12 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 get_imod_path(), name, x - 1, thickness, y, binning, x, tilt_options, zfact,
             )
         else:
-            command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7} -AdjustOrigin ".format(
+            command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7}".format(
                 get_imod_path(), name, thickness, binning,  x, y, tilt_options, zfact,
             )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
 
-    elif "aretomo" in parameters["tomo_rec_method"].lower() and ( "aretomo" not in parameters["tomo_ali_method"].lower() or force ):
+    elif "aretomo" in parameters["tomo_rec_method"].lower() and ( "aretomo" not in parameters["tomo_ali_method"].lower() or force):
 
         if Path(f"{name}_aretomo.rec").exists():
             os.rename(f"{name}_aretomo.rec", f"{name}.rec")
@@ -315,11 +316,11 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 reconstruct_option = "-Wbp 1"
 
             command = f"{get_aretomo_path()} \
--InMrc {name}_bin.ali \
+-InMrc {name}.ali \
 -OutMrc {name}.rec \
 -AngFile {name}.tlt \
--VolZ {int(1.0 * thickness / binning)} \
--OutBin 1 \
+-VolZ {int(1.0 * thickness)} \
+-OutBin {binning} \
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 {reconstruct_option} \
 -Align 0"

@@ -4200,7 +4200,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
             gain_file = os.path.basename(gain_reference_file)
             gain = f" -Gain ../{gain_file}"
-
+            
+            # If both -RotGain and -FlipGain are enabled, the gain reference will be rotated first and flipped next.
             if "gain_flipv" in parameters.keys() and parameters["gain_flipv"]:
                 gain += f" -FlipGain 1"
             elif "gain_fliph" in parameters.keys() and parameters["gain_fliph"]:
@@ -4219,6 +4220,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         if parameters["movie_group"] > 1:
             frame_options += f" -Group {parameters['movie_group']}"
         frame_options += f" -Bft {parameters['movie_bfactor']}"
+
+        frame_options += f" -Tol {parameters['movie_motioncor_tol']} -Iter {parameters['movie_motioncor_iter']}"
 
         """
         Usage: MotionCor3 Tags

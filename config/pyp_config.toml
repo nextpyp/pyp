@@ -452,6 +452,20 @@ description = "Force integer shifts to preserve high-resolution information"
 type = "bool"
 default = false
 
+[tabs.movie.motioncor_tol]
+name = "Tolerance for iterative alignment (motioncor3)"
+description = "Tolerance for iterative alignment."
+type = "float"
+default = 0.1
+advanced = true
+
+[tabs.movie.motioncor_iter]
+name = "Maximum iterations for iterative alignment (motioncor3)"
+description = "Maximum iterations for iterative alignment."
+type = "int"
+default = 15
+advanced = true
+
 [tabs.movie.weights]
 name = "Exposure weighting"
 description = "Produce exposure-weighted frame averages (if frames are available)"
