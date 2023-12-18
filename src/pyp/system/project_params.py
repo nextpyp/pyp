@@ -544,7 +544,7 @@ def save_parameters(parameters, path=".", param_file_name=".pyp_config.toml"):
     try:
         save_parameters_to_website(parameters)
     except:
-        logger.error("ERROR sending parameters to website")
+        logger.warning("Detected inconsistencies in pyp configuration file")
         type, value, traceback = sys.exc_info()
         sys.__excepthook__(type, value, traceback)
 

@@ -2268,7 +2268,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
                 )
             except:
                 logger.warning(
-                    "Cannot find frealign statistics file in maps folder, skipping"
+                    "Could not find frealign statistics file in maps folder"
                 )
                 pass
 
