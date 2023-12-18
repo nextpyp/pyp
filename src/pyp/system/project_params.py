@@ -793,6 +793,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     )
                     [os.remove(f) for f in glob.glob("mrc/*.mrc")]
                     [os.remove(f) for f in glob.glob("mrc/*.tif")]
+                    new_parameters["movie_force"] = True
 
                 else:
                     # assume we are recomputing frame alignment
