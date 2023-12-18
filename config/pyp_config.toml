@@ -447,7 +447,7 @@ default = 1
 hidden = true
 
 [tabs.movie.force_integer]
-name = "Force integer shifts"
+name = "Force integer shifts (unblur)"
 description = "Force integer shifts to preserve high-resolution information"
 type = "bool"
 default = false
