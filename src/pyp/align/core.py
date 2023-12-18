@@ -4120,7 +4120,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
     if 'motioncor3' in parameters["movie_ali"]:
         
-        gpu_id = int(os.environ["CUDA_VISIBLE_DEVICES"])
+        gpu_id = os.environ["CUDA_VISIBLE_DEVICES"]
         # patch tracking
         if "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_patch":
             patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
@@ -4474,17 +4474,9 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             Default, it is diaabled. Set 1 to enable.
         """
 
-        while gpu_id < 10:
-            command = f"{get_motioncor3_path()} {input} -OutMrc {name}.mrc {gain} -OutAln {os.getcwd()} {frame_options} {patches} -Gpu {gpu_id}"
+        command = f"{get_motioncor3_path()} {input} -OutMrc {name}.mrc {gain} -OutAln {os.getcwd()} {frame_options} {patches} -Gpu {gpu_id}"
         
-            [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
-            print(f"Output is {output}")
-            print(f"Error is {error}")
-            if "All GPUs are in use" in error:
-                gpu_id += 1
-                logger.info(f"Trying run MotionCor with device id {gpu_id}")
-            else:
-                break
+        [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
         
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)

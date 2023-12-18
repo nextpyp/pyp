@@ -893,6 +893,35 @@ def split(parameters):
 
         swarm_file, gpu = slurm.create_pyp_swarm_file(parameters, files, timestamp)
 
+        config = get_pyp_configuration()
+
+        if not Web.exists and parameters["slurm_queue"] == "":
+
+            parameters["slurm_queue"] = ",".join( config["slurm"]["queues"] )
+
+            if parameters["slurm_queue"] == "":
+
+                raise Exception("Please either provide proper computing resources in the parameter settings or configur.toml file")
+            
+        if gpu:
+            # try to get the gpu partition
+            if parameters["slurm_queue_gpu"] == "":
+                try:
+                    parameters["slurm_queue_gpu"] = ",".join( config["slurm"]["gpuQueues"] )
+                except:
+                    raise Exception("Can't find GPU resources. Please either provide proper computing resources in the parameter settings or configur.toml file")
+                
+            if not Web.exists:
+                partition_name = parameters["slurm_queue_gpu"] + " --gres=gpu:1 "
+            else:
+                partition_name = parameters["slurm_queue_gpu"]
+
+            job_name = "Split (gpu)"
+
+        else:
+            partition_name = parameters["slurm_queue"]
+            job_name = "Split (cpu)"
+
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" ) 
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
 
@@ -904,7 +933,7 @@ def split(parameters):
                 "swarm",
                 train_swarm_file,
                 jobtype="milotrain" if parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
-                jobname="Train",
+                jobname="Train (gpu)",
                 queue=parameters["slurm_queue_gpu"],
                 scratch=0,
                 threads=parameters["slurm_merge_tasks"],
@@ -917,33 +946,12 @@ def split(parameters):
         else:
             id_train = ""
 
-            config = get_pyp_configuration()
-
-            if not Web.exists and parameters["slurm_queue"] == "":
-
-                parameters["slurm_queue"] = ",".join( config["slurm"]["queues"] )
-
-                if parameters["slurm_queue"] == "":
-
-                    raise Exception("Please either provide proper computing resources in the parameter settings or configur.toml file")
-                
-            if not Web.exists and gpu:
-                # try to get the gpu partition
-                try:
-                    parameters["slurm_queue_gpu"] = ",".join( config["slurm"]["gpuQueues"] )
-                except:
-                    raise Exception("Can't find GPU/CPU resources, please add available resources in configure.toml file")
-
-                partition_name = parameters["slurm_queue_gpu"] + " --gres=gpu:1 "
-            else:
-                partition_name = parameters["slurm_queue"]
-
             # submit swarm jobs
             id = slurm.submit_jobs(
                 "swarm",
                 swarm_file,
                 jobtype=parameters["data_mode"] + "swarm",
-                jobname="Split",
+                jobname=job_name,
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
