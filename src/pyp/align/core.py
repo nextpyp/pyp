@@ -4223,9 +4223,6 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
         frame_options += f" -Tol {parameters['movie_motioncor_tol']} -Iter {parameters['movie_motioncor_iter']}"
 
-        if parameters["ctf_motioncor"]:
-            frame_options += f" -PixSize {parameters['scope_pixel']} -kV {parameters['scope_voltage']} -Cs {parameters['scope_cs']} -AmpCont {parameters['scope_wgh']}"
-
         """
         Usage: MotionCor3 Tags
 
@@ -4498,11 +4495,6 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
         # rename frame average
         shutil.move( name + ".mrc", f"../{aligned_average}")
-        try:
-            shutil.move(f"{name}_Ctf.txt", "..")
-            shutil.move(f"{name}_Ctf.mrc", "..")
-        except: 
-            pass
 
         # read shifts and save in txt format
         shifts = np.loadtxt(f"{name}.aln",skiprows=8,ndmin=2)

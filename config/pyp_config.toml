@@ -486,13 +486,6 @@ type = "bool"
 default = true
 hidden = true
 
-[tabs.ctf.motioncor]
-name = "Use CTF estimation from motioncor3"
-description = "Use CTF estimation from motioncor3. Note that motioncor3 must be used for movie alignment."
-type = "bool"
-default = false
-advanced = true
-
 [tabs.ctf.min_res]
 name = "Min resolution (A)"
 description = "Minimum resolution used during CTF estimation"

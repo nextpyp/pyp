@@ -460,24 +460,8 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
     x, y, z = get_image_dimensions(name + ".avg")
 
     counts = 0.0
-
-    use_motioncor3 = False
-    if "motioncor3" in parameters["movie_ali"] and parameters["ctf_motioncor"]:
-        logger.info("test")
-        use_motioncor3 = True
-        
-        if not Path(f"{name}_Ctf.txt").exists():
-            logger.warning(f"{name}_Ctf.txt not found. Fall back to estimating CTF using CTFFIND4.")
-            use_motioncor3 = False
-        
-        if not Path(f"{name}_Ctf.mrc").exists():
-            logger.warning(f"{name}_Ctf.mrc not found. Fall back to estimating CTF using CTFFIND4.")
-            use_motioncor3 = False
-        
+    
     ctf = ctffind4_movie(name, parameters)
-    if use_motioncor3:
-        ctf = np.loadtxt(f"{name}_Ctf.txt", comments="#", dtype="f")[[0, 1, 2, 4, 5]]
-        os.rename(f"{name}_Ctf.mrc", "power.mrc")
 
     df1 = ctf[0]
     df2 = ctf[1]
