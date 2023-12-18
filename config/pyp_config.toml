@@ -379,7 +379,7 @@ hidden = true
 name = "Alignment method"
 description = "Method used for frame alignment"
 type = "enum"
-enum = { unblur="unblur", motioncor3="motioncor3", skip="no alignment" }
+enum = { unblur="unblur", motioncor="motioncor3", skip="no alignment" }
 default = "unblur"
 hidden = ["spr_import_star","tomo_import_star"]
 
@@ -453,15 +453,15 @@ type = "bool"
 default = false
 
 [tabs.movie.motioncor_tol]
-name = "Tolerance for iterative alignment (motioncor3)"
-description = "Tolerance for iterative alignment."
+name = "Shifts tolerance (motioncor)"
+description = "Tolerance for shifts during iterative alignment"
 type = "float"
 default = 0.1
 advanced = true
 
 [tabs.movie.motioncor_iter]
-name = "Maximum iterations for iterative alignment (motioncor3)"
-description = "Maximum iterations for iterative alignment."
+name = "Maximum iterations (motioncor)"
+description = "Maximum number of iterations during iterative alignment"
 type = "int"
 default = 15
 advanced = true
