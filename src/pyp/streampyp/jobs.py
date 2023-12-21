@@ -240,6 +240,27 @@ done
             f.write("#SBATCH --open-mode=append\n")
             f.write(f"#SBATCH --output={submit_dir}/slurm-%A.out\n")
             f.write("cd %s\n" % (submit_dir))
+
+            if "gres=gpu" in queue:
+                f.write("""
+available_devs=""
+for devidx in $(seq 0 15);
+do
+    string=$(nvidia-smi -i $devidx --query-compute-apps=pid --format=csv,noheader)
+    # echo $devidx, $string 
+    # if [[ -z $(nvidia-smi -i $devidx --query-compute-apps=pid --format=csv,noheader) ]] ; then
+    if ! [[ $string = *"No devices were found"* ]]; then
+	 if [[ -z "$available_devs" ]] ; then
+            available_devs=$devidx
+        else
+            available_devs=$available_devs,$devidx
+        fi
+    fi
+done
+export CUDA_VISIBLE_DEVICES=$available_devs
+
+"""
+            )
                 
             for line in cmdlist:
                 f.write(line)

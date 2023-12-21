@@ -4120,7 +4120,6 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
     if 'motioncor3' in parameters["movie_ali"]:
         
-        gpu_id = os.environ["CUDA_VISIBLE_DEVICES"]
         # patch tracking
         if "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_patch":
             patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
@@ -4473,8 +4472,9 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         1. Generate the star file for Relion 4 polishing. By
             Default, it is diaabled. Set 1 to enable.
         """
-
-        command = f"{get_motioncor3_path()} {input} -OutMrc {name}.mrc {gain} -OutAln {os.getcwd()} {frame_options} {patches} -Gpu {gpu_id}"
+        
+        gpu_id = os.environ["CUDA_VISIBLE_DEVICES"]
+        command = f"{get_motioncor3_path()} {input} -OutMrc {name}.mrc {gain} -OutAln {os.getcwd()} {frame_options} {patches} -Gpu {gpu_id} -UseGpus 1"
         
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
         
