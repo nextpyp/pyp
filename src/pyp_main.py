@@ -952,16 +952,6 @@ def split(parameters):
         else:
             id_train = ""
 
-            motioncor_or_aretomo = not parameters["csp_no_stacks"] and ( "motioncor3" in parameters["movie_ali"].lower() and parameters["movie_force"] or "tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters["tomo_ali_force"] or "tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters["tomo_rec_force"] )
-
-            # get the gpu partition from the configuration file if not specified
-            if motioncor_or_aretomo and parameters["slurm_queue_gpu"] == None:
-                config = get_pyp_configuration()
-                try:
-                    parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
-                except:
-                    pass
-
             # submit swarm jobs
             id = slurm.submit_jobs(
                 "swarm",
