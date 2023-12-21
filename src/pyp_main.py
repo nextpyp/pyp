@@ -30,6 +30,7 @@ import time
 import json
 import pickle
 import re
+import toml
 from pathlib import Path
 from uuid import uuid4
 import numpy as np
@@ -927,6 +928,11 @@ def split(parameters):
 
         if ( tomo_train or spr_train ) and os.path.exists(os.path.join("train","current_list.txt")):
             train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
+            
+            if not Web.exists:
+                partition_name = parameters["slurm_queue_gpu"] + " --gres=gpu:1 "
+            else:
+                partition_name = parameters["slurm_queue_gpu"]
 
             # submit swarm jobs
             id_train = slurm.submit_jobs(
@@ -934,7 +940,7 @@ def split(parameters):
                 train_swarm_file,
                 jobtype="milotrain" if parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
                 jobname="Train (gpu)",
-                queue=parameters["slurm_queue_gpu"],
+                queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_merge_tasks"],
                 memory=parameters["slurm_merge_memory"],
@@ -945,6 +951,16 @@ def split(parameters):
 
         else:
             id_train = ""
+
+            motioncor_or_aretomo = not parameters["csp_no_stacks"] and ( "motioncor3" in parameters["movie_ali"].lower() and parameters["movie_force"] or "tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters["tomo_ali_force"] or "tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters["tomo_rec_force"] )
+
+            # get the gpu partition from the configuration file if not specified
+            if motioncor_or_aretomo and parameters["slurm_queue_gpu"] == None:
+                config = get_pyp_configuration()
+                try:
+                    parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
+                except:
+                    pass
 
             # submit swarm jobs
             id = slurm.submit_jobs(
@@ -2279,7 +2295,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
                 )
             except:
                 logger.warning(
-                    "Cannot find frealign statistics file in maps folder, skipping"
+                    "Could not find frealign statistics file in maps folder"
                 )
                 pass
 
@@ -3228,24 +3244,30 @@ if __name__ == "__main__":
             jobid = f"{os.environ['SLURM_ARRAY_JOB_ID']}_{os.environ['SLURM_ARRAY_TASK_ID']}"
         elif "SLURM_JOB_ID" in os.environ:
             jobid = os.environ["SLURM_JOB_ID"]
+
+        # initialize various parameters
+        if not "PYP_DIR" in os.environ:
+            raise Exception("You must define environment variable $PYP_DIR")
+
+        # retrieve version number
+        version = toml.load(os.path.join(os.environ['PYP_DIR'],"nextpyp.toml"))['version']
+        memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else ""
+
         if jobid is None:
             logger.info(
-                "Job launching on host {} using {} task(s)".format(
-                socket.gethostname(), mpi_tasks
+                "Job (v{}) launching on {} using {} task(s) {}".format(
+                version, socket.gethostname(), mpi_tasks, memory
                 )
             )
         else:
             logger.info(
-                "Job {} launching on {} using {} task(s)".format(
-                jobid, socket.gethostname(), mpi_tasks
+                "Job {} (v{}) launching on {} using {} task(s) {}".format(
+                jobid, version, socket.gethostname(), mpi_tasks, memory
                 )
             )
 
         config = get_pyp_configuration()
 
-        # initialize various parameters
-        if not "PYP_DIR" in os.environ:
-            raise Exception("You must define environment variable $PYP_DIR")
         os.environ["OMP_NUM_THREADS"] = os.environ["IMOD_PROCESSORS"] = "1"
 
         os.environ["PYTHONDIR"] = "{0}/src".format(os.environ["PYP_DIR"])
@@ -3271,14 +3293,14 @@ if __name__ == "__main__":
 
         if "SLURM_ARRAY_JOB_ID" in os.environ:
             subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
-            os.environ["PYP_SCRATCH"] = str(Path(os.environ["PYP_SCRATCH"]) / subdir)
         elif "SLURM_JOB_ID" in os.environ:
-            os.environ["PYP_SCRATCH"] = str(
-                Path(os.environ["PYP_SCRATCH"]) / os.environ["SLURM_JOB_ID"]
-            )
+            subdir = os.environ["SLURM_JOB_ID"]
+        os.environ["PYP_SCRATCH"] = str(
+            Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"] / subdir
+        )
         if not os.path.exists(os.environ["PYP_SCRATCH"]):
             try:
-                os.mkdir(os.environ["PYP_SCRATCH"])
+                os.makedirs(os.environ["PYP_SCRATCH"], exist_ok=True)
             except:
                 pass
 
@@ -3484,7 +3506,7 @@ if __name__ == "__main__":
                 parameters = project_params.load_pyp_parameters()
                 tomo_merge(parameters)
                 # reset all flags for re-calculation
-                parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
+                parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
                 project_params.save_pyp_parameters(parameters)
                 logger.info("PYP (tomomerge) finished successfully")
             except:

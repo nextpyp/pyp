@@ -53,6 +53,7 @@ from pyp.system.utils import (
     get_unblur_path,
     get_unblur2_path,
     get_motioncor3_path,
+    get_gpu_id,
     imod_load_command,
 )
 from pyp.system.wrapper_functions import avgstack
@@ -4201,7 +4202,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
             gain_file = os.path.basename(gain_reference_file)
             gain = f" -Gain ../{gain_file}"
-
+            
+            # If both -RotGain and -FlipGain are enabled, the gain reference will be rotated first and flipped next.
             if "gain_flipv" in parameters.keys() and parameters["gain_flipv"]:
                 gain += f" -FlipGain 1"
             elif "gain_fliph" in parameters.keys() and parameters["gain_fliph"]:
@@ -4220,6 +4222,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         if parameters["movie_group"] > 1:
             frame_options += f" -Group {parameters['movie_group']}"
         frame_options += f" -Bft {parameters['movie_bfactor']}"
+
+        frame_options += f" -Tol {parameters['movie_motioncor_tol']} -Iter {parameters['movie_motioncor_iter']}"
 
         """
         Usage: MotionCor3 Tags
@@ -5072,7 +5076,8 @@ def align_tilt_series(name, parameters, rotation=0):
 -AlignZ {specimen_thickness} \
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
--OutImod 1 {patches}"
+-OutImod 1 {patches} \
+-Gpu {get_gpu_id()}"
             [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             # save output

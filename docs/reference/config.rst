@@ -185,7 +185,7 @@ is dedicated to configuring the container environment.
 :Description:
 	Paths to the CUDA libraries on the GPU compute nodes.
 :Examples:
-	`cudaLibs = [ '/usr/local/envs/pyp/lib/python3.8/site-packages/nvidia/cufft/lib', '/usr/local/envs/pyp/lib/python3.8/site-packages/nvidia/cuda_runtime/lib' ]`
+	`cudaLibs = [ '/usr/local/cuda/targets/x86_64-linux/lib' ]`
 
 |
 

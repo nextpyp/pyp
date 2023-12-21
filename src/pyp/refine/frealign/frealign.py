@@ -2631,6 +2631,10 @@ eot
     
     # cleanup
     # os.remove( scratch + name + '.res' )
+    
+    if mp["slurm_verbose"]:
+        with open(reclogfile) as log:
+            logger.info(log.read())
 
     try:
         os.remove(scratch + name + "_weights")

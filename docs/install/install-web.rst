@@ -50,7 +50,7 @@ Step 1: Prerequisites for installation
         sudo adduser --system --user-group nextpyp
 
  * Access to GPUs (optional):
-    GPUs are only required to execute certain processing steps in ``nextPYP``. For example, they are needed to train neural networks used for particle picking (both for single-particle and tomography). ``nextPYP`` uses Apptainer_ which natively supports NVIDIA CUDA & AMD ROCm, but we have only tested it using NVIDIA GPUs with CUDA version 11.8. Support for other CUDA versions or AMD ROCm may require rebuilding the containers with driver and library versions matching the host configuration.
+    GPUs are only required to execute certain processing steps in ``nextPYP`` (e.g.: train neural networks for particle picking, run MotionCor3 for frame alignment or Aretomo for tilt-series alignment and reconstruction). ``nextPYP`` uses Apptainer_ which natively supports NVIDIA CUDA & AMD ROCm, but we have only tested it with NVIDIA GPUs. If you have problems using AMD ROCm GPUs, please contact us.
 
 
 Step 2: Install operating system packages
