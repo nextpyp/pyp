@@ -870,6 +870,29 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     if os.path.exists(thresholds_file):
                         os.remove(thresholds_file)
 
+    else:
+        # rerun a failed job without changing parameters 
+        if len(glob.glob("mrc/*mrc")) == 0:
+            logger.info("No processed result detected in the mrc/ folder, will force movie alignment, ctf estimation, and particle detection")
+            new_parameters["movie_force"] = True
+            # Triggering all following recalculations
+            new_parameters["ctf_force"] = True
+            clean_ctf_files(project_dir)
+            new_parameters["detect_force"] = True
+            clean_picking_files(project_dir)
+
+            if "tomo" in previous_parameters["data_mode"]:
+                logger.info("Forcing tomo related procedure")
+                new_parameters["tomo_ali_force"] = True
+                new_parameters["tomo_vir_force"] = True
+                new_parameters["tomo_rec_force"] = True
+                clean_tomo_vir_particles(project_dir)
+
+        elif "tomo" in previous_parameters["data_mode"] and len(glob.glob("mrc/*rec")) == 0:
+            new_parameters["tomo_vir_force"] = True
+            new_parameters["tomo_rec_force"] = True
+            clean_tomo_vir_particles(project_dir)
+
     return new_parameters
 
 

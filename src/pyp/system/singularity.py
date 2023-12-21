@@ -25,7 +25,7 @@ def get_pyp_configuration():
     return config
 
 
-def get_singularity_command(command, parameters):
+def get_singularity_command(command, parameters, gpu=False):
 
     config = get_pyp_configuration()
 
@@ -44,8 +44,13 @@ def get_singularity_command(command, parameters):
 
     container = config["pyp"]["container"]
 
+    if gpu:
+        gpu_enbale = "--nv"
+    else:
+        gpu_enbale = ""
+
     command = (
-        f"singularity --quiet --silent exec {binds} {container} {command} {parameters}"
+        f"singularity --quiet --silent exec {gpu_enbale} {binds} {container} {command} {parameters}"
     )
 
     return command
@@ -113,7 +118,7 @@ def run_slurm(command, path="", env="", quick=False):
 
 
 # command to run pyp
-def run_pyp(command, script=False, cpus=1):
+def run_pyp(command, script=False, cpus=1, gpu=False):
 
     # we always want to execute pyp inside the container
     command = "/opt/pyp/bin/run/" + command
@@ -126,7 +131,7 @@ def run_pyp(command, script=False, cpus=1):
     # if script or not os.environ['SINGULARITY_CONTAINER']:
     if script:
 
-        command = get_singularity_command(command=command, parameters="")
+        command = get_singularity_command(command=command, parameters="", gpu=gpu)
 
         singularity_path = ""
         if "singularity" in get_pyp_configuration()["pyp"].keys():

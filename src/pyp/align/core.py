@@ -4120,13 +4120,13 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     )
 
     if 'motioncor3' in parameters["movie_ali"]:
-
+        
         # patch tracking
         if "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_patch":
             patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
         else:
             patches = ""
-
+        
         """
         -InMrc
         -InTiff
@@ -4182,6 +4182,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         -TiffOrder       1
         -CorrInterp      0
         """
+            
         if 'mrc' in suffix:
             input = f"-InMrc ../{movie_file}"
         elif 'tif' in suffix:
@@ -4475,17 +4476,12 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         1. Generate the star file for Relion 4 polishing. By
             Default, it is diaabled. Set 1 to enable.
         """
-
-        command = f"{get_motioncor3_path()} \
-{input} \
--OutMrc {name}.mrc \
-{gain} \
--OutAln {os.getcwd()} \
-{frame_options} \
-{patches} \
--Gpu {get_gpu_id()}"
+        
+        gpu_id = os.environ["CUDA_VISIBLE_DEVICES"]
+        command = f"{get_motioncor3_path()} {input} -OutMrc {name}.mrc {gain} -OutAln {os.getcwd()} {frame_options} {patches} -Gpu {gpu_id} -UseGpus 1"
+        
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
-
+        
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
 
@@ -5088,6 +5084,7 @@ def align_tilt_series(name, parameters, rotation=0):
             try:
                 shutil.copy2(f"{name}_Imod/{name}_st.xf", f"{name}.xf")
                 shutil.copy2(f"{name}_Imod/{name}_st.tlt", f"{name}.tlt")
+                os.symlink(f"{name}_aretomo.rec", f"{name}.rec")
             except:
                 if 'Error: GPU' in output:
                     if not parameters['slurm_verbose']:
