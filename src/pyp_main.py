@@ -4460,6 +4460,8 @@ if __name__ == "__main__":
                 basic = f"{half1} {half2} {mask} --angpix {pixel_size} --out {output} {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
                 comm = comm_exe + basic + bfac + filter + fsc + automask + randomize_phase
                 local_run.run_shell_command(comm, verbose=False)
+                if not os.path.exists(output_map):
+                    raise Exception("Does the postprocessing block have enough RAM assigned (launch task)?")
 
                 # produce map slices
                 radius = (
