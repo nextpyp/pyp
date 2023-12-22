@@ -896,43 +896,39 @@ def split(parameters):
 
         config = get_pyp_configuration()
 
-        if not Web.exists and parameters["slurm_queue"] == "":
+        if parameters["slurm_queue"] == None and "slurm" in config:
 
-            parameters["slurm_queue"] = ",".join( config["slurm"]["queues"] )
+            try:
+                parameters["slurm_queue"] = config["slurm"]["queues"][0]
+            except:
+                raise Exception("No CPU partitions are configured for this instance")
 
-            if parameters["slurm_queue"] == "":
-
-                raise Exception("Please either provide proper computing resources in the parameter settings or configur.toml file")
-            
         if gpu:
             # try to get the gpu partition
-            if parameters["slurm_queue_gpu"] == "":
+            partition_name = ""
+            if parameters["slurm_queue_gpu"] == None and "slurm" in config:
                 try:
-                    parameters["slurm_queue_gpu"] = ",".join( config["slurm"]["gpuQueues"] )
+                    parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
+                    partition_name = parameters["slurm_queue_gpu"]
                 except:
-                    raise Exception("Can't find GPU resources. Please either provide proper computing resources in the parameter settings or configur.toml file")
-                
+                    raise Exception("No GPU partitions are configured for this instance")
             if not Web.exists:
-                partition_name = parameters["slurm_queue_gpu"] + " --gres=gpu:1 "
-            else:
-                partition_name = parameters["slurm_queue_gpu"]
-
+                partition_name += " --gres=gpu:1 "
             job_name = "Split (gpu)"
 
         else:
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
 
-        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" ) 
+        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
 
         if ( tomo_train or spr_train ) and os.path.exists(os.path.join("train","current_list.txt")):
             train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
-            
+
+            partition_name = parameters["slurm_queue_gpu"]
             if not Web.exists:
-                partition_name = parameters["slurm_queue_gpu"] + " --gres=gpu:1 "
-            else:
-                partition_name = parameters["slurm_queue_gpu"]
+                partition_name += " --gres=gpu:1 "
 
             # submit swarm jobs
             id_train = slurm.submit_jobs(

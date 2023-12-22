@@ -4119,14 +4119,14 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         * float(parameters["data_bin"])
     )
 
-    if 'motioncor3' in parameters["movie_ali"]:
-        
+    if 'motioncor' in parameters["movie_ali"]:
+
         # patch tracking
         if "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_patch":
             patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
         else:
             patches = ""
-        
+
         """
         -InMrc
         -InTiff

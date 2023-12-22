@@ -82,7 +82,7 @@ def calculate_rec_swarm_required_resources(mparameters, fparameters, particles):
 def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.swarm"):
 
     # enable Nvidia GPU?
-    if ( ("movie_ali" in parameters and "motioncor3" in parameters["movie_ali"].lower() and parameters["movie_force"] )
+    if ( ("movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters["movie_force"] )
         or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters["tomo_ali_force"])
         or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters["tomo_rec_force"])
         ):
