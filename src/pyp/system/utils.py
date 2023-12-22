@@ -71,12 +71,7 @@ def get_motioncor3_path():
     return command
 
 def get_gpu_id():
-    if "SLURM_STEP_GPUS" in os.environ:
-        return os.environ['SLURM_STEP_GPUS']
-    elif "SLURM_JOB_GPUS" in os.environ:
-        return os.environ['SLURM_JOB_GPUS']
-    else:
-        return 0
+    return 0
 
 def get_relion_path():
     return "{0}/external/postproc".format(os.environ["PYP_DIR"])
