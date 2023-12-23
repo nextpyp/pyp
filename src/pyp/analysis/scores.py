@@ -432,7 +432,7 @@ def shape_phase_residuals(
                             thresholds[g, f] = np.sort(meanscore)[
                                 int((meanscore.shape[0] - 1) * (1 - threshold))
                             ]
-                            logger.info(f"Tomo reconstruction using particle score threshold as {thresholds[g, f]}")
+                            logger.info(f"Minimum score used for reconstruction = {thresholds[g, f]:.2f}")
                         else:
                             thresholds[g, f] = np.sort(input[cluster, field])[
                                 int((cluster.shape[0] - 1) * (1 - threshold))
@@ -516,12 +516,12 @@ def shape_phase_residuals(
                 if is_tomo and thresholds[g, f] > 0:
                     input_group = input[np.logical_and(angular_group == g, defocus_group == f)]
                     ptl_index = np.unique(input_group[:, ptlindex])
-                    
+
                     for i in ptl_index:
                         ptl_field_array = input_group[input_group[:, ptlindex] == i, field]
                         tltangle_array = input_group[input_group[:, ptlindex] == i, tltangle]
                         meanfrom = ptl_field_array[np.abs(tltangle_array) < 10]
-                        
+
                         input[input[:, ptlindex] == i, occ] = np.where(
                         np.array( [ 0 if meanfrom.size == 0 else np.mean(meanfrom) ] * ptl_field_array.shape[0] ) < thresholds[g, f],
                         0,
@@ -543,7 +543,7 @@ def shape_phase_residuals(
                         input[:, occ],
                     )
                 number = input[input[:, occ]==0].shape[0]
-                logger.info(f"Number of particles with OCC = 0 is {number:,}")        
+                logger.info(f"Number of particles with OCC = 0 is {number:,} (out of {input.shape[0]:,}, {number/input.shape[0]*100:.2f}%)")
 
     if os.path.exists(fmatch_stack):
         logger.info(
