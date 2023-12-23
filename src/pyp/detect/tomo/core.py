@@ -1481,9 +1481,10 @@ EOF
                     or tilt_Y - half_spk_size < 0
                     or tilt_Y + half_spk_size > micrograph_y
                 ):
-                    logger.info(
-                        "Skip particle with missing tilted projection(s)"
-                    )
+                    if parameters["slurm_verbose"]:
+                        logger.info(
+                            "Skip particle with missing tilted projection(s)"
+                        )
                     lose_tilt = True
                     break
 

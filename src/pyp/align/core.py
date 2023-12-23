@@ -1565,7 +1565,7 @@ def csp_refinement(
         classes = 1
     else:
         classes = int(project_params.param(mp["class_num"], iteration))
-    
+
     # write parx file for class=1 by pre-pending particle index (frealign/maps/name_r01_01.parx -> parxfile)
     with Timer(
         "particle re-index", text = "Pre-pending index to par took: {}", logger=logger.info

@@ -1738,7 +1738,7 @@ def csp_extract_coordinates(
                         "maps",
                         "%s_r%02d_%02d.par"
                         % (parameters["data_set"], current_class + 1, iteration - 1),
-                    ) 
+                    )
                 else:
                     merged_par_file = os.path.join(
                         os.getcwd(),
@@ -1746,13 +1746,13 @@ def csp_extract_coordinates(
                         "maps",
                         "%s_r%02d_%02d.par.bz2"
                         % (parameters["data_set"], current_class + 1, iteration - 1),
-                    )      
-            
+                    )
+
             if os.path.exists(merged_par_file) and ".par" in merged_par_file:
                 par_alignment = True
             else:
                 par_alignment = False
-   
+
             if par_alignment:
                 logger.info("Retrieving alignments from " + Path(merged_par_file).name)
                 # decompress file if needed
@@ -1776,7 +1776,7 @@ def csp_extract_coordinates(
                     start += 3
                     extracted_rows = np.loadtxt(merged_par_file, dtype=float, comments="C", skiprows=start, max_rows=step, ndmin=2)
                     allparxs.append(extracted_rows[:, 1:])
-                    
+
             # else, fall back to canonical extended parameters
             else:
                 allparxs.append([])
@@ -1806,7 +1806,7 @@ def csp_extract_coordinates(
         parameters["refine_parfile"] = refinement
 
         if "tomo" in parameters["data_mode"].lower():
-            
+
             # generate new parx file from previous parx (not containing frame)
             if use_frames and (
                 refinement.endswith(".par")
@@ -1822,7 +1822,7 @@ def csp_extract_coordinates(
                         refinement
                     )
                 except:
-                    raise Exception("Parfile cannot be read.")
+                    raise Exception(f"Parfile {refinement} cannot be read.")
 
                 parx_object_no_frames.data = parx_object_no_frames.data[
                     parx_object_no_frames.data[:, film_col] == micrograph_index
@@ -1858,7 +1858,7 @@ def csp_extract_coordinates(
                     )
                 except:
                     xf_frames = [metadata["drift"][tilt_idx].to_numpy() for tilt_idx in sorted(metadata["drift"].keys())]
-                
+
                 # convert short parxfile to long parxfile/allboxes that contains frames
                 [
                     allboxes,
@@ -1897,17 +1897,17 @@ def csp_extract_coordinates(
                     .tolist()
                 )
 
-                metadata = None 
+                metadata = None
                 # same as single particle to check boxx selection
                 if os.path.exists(os.path.join(working_path, filename + ".pkl")):
                     metadata = pyp_metadata.LocalMetadata(os.path.join(working_path, filename + ".pkl")).data
-                """    
+                """
                     boxx = metadata["box"].to_numpy()
                 else:
                     boxx_file = os.path.join(working_path, filename + ".boxx")
                     if os.path.exists(boxx_file):
                         boxx = np.loadtxt(boxx_file, ndmin=2)
-                
+
                 indexes = np.argwhere(
                     np.logical_and(
                         boxx[:, 4] == 1, boxx[:, 5] >= int(parameters["extract_cls"])
@@ -1958,7 +1958,7 @@ def csp_extract_coordinates(
             os.path.join(working_path, filename + frame_tag + ".allparxs"), "w"
         ) as f:
             f.writelines("%s\n" % item for item in allparxs[0])
-        
+
 
     return allboxes, allparxs
 
@@ -2016,7 +2016,7 @@ def tomo_extract_coordinates(
     else:
         virion_bin = 1
         virion_boxsize = 0
-        
+
     # set virion box size
     if virion_boxsize > 0:
         virion_boxsize /= virion_bin
@@ -2046,14 +2046,14 @@ def tomo_extract_coordinates(
     allparxs = []
     allparxs.append([])
     allimodboxes = []
-    
+
     # get size of full unbinned reconstruction from .rec file
     rec_X, rec_Y, rec_Z = metadata["tomo"].at[0, "x"], metadata["tomo"].at[0, "y"], metadata["tomo"].at[0, "z"]
     recX, recY, recZ = [binning * _ for _ in [rec_X, rec_Y, rec_Z]]
 
     # Image center per IMOD's convention
     center_X, center_Y, center_Z = [x / 2 for x in [recX, recY, recZ]]
-    
+
     # get some geometry values
     min_micrograph_x = (recX - micrographsize_x) / 2.0
     min_micrograph_y = (recY - micrographsize_y) / 2.0
@@ -2079,7 +2079,7 @@ def tomo_extract_coordinates(
 
     image_counter = 1
     global_spike_counter = 0
-    
+
     if "vir" in metadata:
         virion_coordinates = metadata["vir"].to_numpy()
     elif os.path.exists("mod/%s.txt" % name):
@@ -2093,7 +2093,7 @@ def tomo_extract_coordinates(
         virion_coordinates = metadata["box"].to_numpy()
     else:
         virion_coordinates = np.empty( shape=(0, 0) )
-    
+
     # create xf from metadata
     metadata_object.writeTextFile(metadata["ali"].to_numpy(), "%s.xf")
     inversexf = Path(os.environ["PYP_SCRATCH"]) / f"{name}_inverse.xf"
@@ -2130,7 +2130,7 @@ EOF
         for line in myfile.readlines():
             particle_name = os.path.basename(line.split()[-1])
             alignmentSVA[particle_name] = line.split()
-    
+
     if os.path.exists(f"mod/{name}_gold.mod"):
         command = "{0}/bin/model2point mod/{1}_gold.mod {2}_gold.txt".format(
             get_imod_path(), name, Path(os.environ["PYP_SCRATCH"]) / name
@@ -2232,7 +2232,7 @@ EOF
             # two possible names of extracted subvolumes
             spike_vol = "%s_vir%04d_spk%04d.mrc" % (name, vir, spike)
             particle_vol = "%s_spk%04d.rec" % (name, vir)
-            
+
             if spike_vol in alignmentSVA:
                 spike_string = alignmentSVA[spike_vol]
             elif particle_vol in alignmentSVA:
@@ -2304,7 +2304,7 @@ EOF
             ]
 
             allboxes_3d.append(transformed_3d_loc)
-            
+
             tilt_image_counter = 1
 
             # traverse all images in tilt series
@@ -2364,7 +2364,7 @@ EOF
                         )
                         tilt_image_counter += 1
                         continue
-                
+
                 distance_to_tilt_axis = tilt_x
 
                 T = inverse_xf_file[tilt_image_counter - 1, :6]
@@ -2448,7 +2448,7 @@ EOF
                     )
                     tilt_image_counter += 1
                     continue
-            
+
                 # retrieve shifts from previous run
                 x_correction = y_correction = 0
                 if Path(refinement).exists() and ".par" in refinement:
@@ -2511,7 +2511,7 @@ EOF
                 df1 = defocus_per_tilt[tilt_image_counter - 1, 1]
                 df2 = defocus_per_tilt[tilt_image_counter - 1, 2]
                 angast = defocus_per_tilt[tilt_image_counter - 1, 3]
-            
+
                 if parameters["csp_ctf_handedness"]:
                     ctf_tilt_angle = angle * -1
                 else:
@@ -2730,7 +2730,7 @@ EOF
 
                 tilt_image_counter += 1
                 image_counter += 1
-            
+
             global_spike_counter += 1
 
 

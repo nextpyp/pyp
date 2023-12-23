@@ -543,7 +543,7 @@ def shape_phase_residuals(
                         input[:, occ],
                     )
                 number = input[input[:, occ]==0].shape[0]
-                logger.info(f"Number of particles with OCC = 0 is {number:,} (out of {input.shape[0]:,}, {number/input.shape[0]*100:.2f}%)")
+                logger.info(f"Number of particles with zero occupancy = {number:,} (out of {input.shape[0]:,}, {number/input.shape[0]*100:.2f}%)")
 
     if os.path.exists(fmatch_stack):
         logger.info(
