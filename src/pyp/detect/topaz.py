@@ -87,7 +87,7 @@ def sprtrain(args):
     pretrained = "--pretrained" if args["detect_topaz2d_pretrained"] else "--no-pretrained"
     batchnorm = "on" if args['detect_topaz2d_bn'] else "off"
 
-    logger.info(f"Training model")
+    logger.info(f"Training topaz model")
     command = f"{utils.get_topaz_path()}/topaz train \
 -n {args['detect_topaz2d_num_particles']} \
 --num-workers={args['slurm_tasks']} \

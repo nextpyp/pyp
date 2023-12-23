@@ -71,7 +71,7 @@ def sprtrain(args):
     # go to scratch directory
     os.chdir(scratch_train)
 
-    logger.info(f"Training model")
+    logger.info(f"Training pyp model")
     command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py train start --algorithm {args['detect_nn2d_algorithm']} --noise_value {args['detect_nn2d_noise_value']} --noise_style {args['detect_nn2d_noise_style']} --tau {args['detect_nn2d_tau']} --runs_dir {runs_dir} --train_dataset {train_images} --train_label {train_coords} --iterations {args['detect_nn2d_iterations']} --alpha {args['detect_nn2d_alpha']} --train_batch_size {args['detect_nn2d_batch_size']} --nms {args['detect_dist']} --num {args['detect_nn2d_num']} --bb {args['detect_nn2d_bb']} --patch_size {args['detect_nn2d_patch_size']} --validation_dataset {validation_images} --validation_label {validation_coords} 2>&1 | tee {os.path.join(os.getcwd(), 'log', time_stamp + '_spr_pick_train.log')}"
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
@@ -255,7 +255,7 @@ def tomotrain(args):
     # make sure all output stays under the train folder
     os.chdir(scratch_train)
 
-    logger.info(f"Training model")
+    logger.info(f"Training pyp model")
     command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 --debug 4 --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt {train_images} --train_coord_txt {train_coords} --val_img_txt {validation_images} --val_coord_txt {validation_coords} --test_img_txt {validation_images} --test_coord_txt {validation_coords} 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
     [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 

@@ -1662,7 +1662,7 @@ def split_reconstruction(
     if os.path.exists(stack_dir + "%s_recstack.mrc" % dataset):
         stack = stack_dir + "%s_recstack.mrc" % dataset
         with open(reclogfile, "w") as f:
-            f.write("Using {0}\n".format(stack))
+            f.write("Using particle stack {0}\n".format(stack))
     elif os.path.exists(Path(os.environ["PYP_SCRATCH"]) / f"{dataset}_stack.mrc"):
         stack = str(Path(os.environ["PYP_SCRATCH"]) / f"{dataset}_stack.mrc")
     else:
@@ -1675,7 +1675,7 @@ def split_reconstruction(
             stack = stack_dir + "%s_stack.mrc" % dataset
 
         with open(reclogfile, "w") as f:
-            f.write("Using {0}\n".format(stack))
+            f.write("Using particle stack {0}\n".format(stack))
         # start = time.time()
         # logger.info("starting copying the file over")
         # if not os.path.exists( '/scratch/%s_stack.mrc' % dataset ):
@@ -2231,7 +2231,7 @@ eot
                 # if dose weighting is enabled, we will go into this block
                 weight_files = project_params.resolve_path(mp["dose_weighting_weights"]) if "dose_weighting_weights" in mp else ""
                 external_weight = "/scratch/not_provided"
-                
+
                 if ".txt" in weight_files:
                     tag = "_" + name.split("_")[1] + "_" if "*" in weight_files else "txt"
                     files = [f for f in glob.glob(weight_files) if tag in f]
@@ -2320,6 +2320,8 @@ eot
 
     # run job
     if run:
+        if fp["slurm_verbose"]:
+            logger.info(command)
         with open(reclogfile, "a") as f:
             f.write(command)
         subprocess.Popen(command, shell=True, text=True).wait()
