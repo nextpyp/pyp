@@ -923,28 +923,30 @@ def split(parameters):
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
 
-        if ( tomo_train or spr_train ) and os.path.exists(os.path.join("train","current_list.txt")):
-            train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
+        if ( tomo_train or spr_train ):
+            if os.path.exists(os.path.join("train","current_list.txt")):
+                train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
 
-            partition_name = parameters["slurm_queue_gpu"]
-            if not Web.exists:
-                partition_name += " --gres=gpu:1 "
+                partition_name = parameters["slurm_queue_gpu"]
+                if not Web.exists:
+                    partition_name += " --gres=gpu:1 "
 
-            # submit swarm jobs
-            id_train = slurm.submit_jobs(
-                "swarm",
-                train_swarm_file,
-                jobtype="milotrain" if parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
-                jobname="Train (gpu)",
-                queue=partition_name,
-                scratch=0,
-                threads=parameters["slurm_merge_tasks"],
-                memory=parameters["slurm_merge_memory"],
-                walltime=parameters["slurm_merge_walltime"],
-                tasks_per_arr=parameters["slurm_bundle_size"],
-                csp_no_stacks=parameters["csp_no_stacks"],
-            ).strip()
-
+                # submit swarm jobs
+                id_train = slurm.submit_jobs(
+                    "swarm",
+                    train_swarm_file,
+                    jobtype="milotrain" if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
+                    jobname="Train (gpu)",
+                    queue=partition_name,
+                    scratch=0,
+                    threads=parameters["slurm_merge_tasks"],
+                    memory=parameters["slurm_merge_memory"],
+                    walltime=parameters["slurm_merge_walltime"],
+                    tasks_per_arr=parameters["slurm_bundle_size"],
+                    csp_no_stacks=parameters["csp_no_stacks"],
+                ).strip()
+            else:
+                raise Exception("Please select a list of coordinates for training")
         else:
             id_train = ""
 
