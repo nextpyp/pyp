@@ -52,8 +52,7 @@ def sprtrain(args):
                     args["slurm_verbose"]
                 )
             )
-    mpi.submit_function_to_workers(joint.bin_image, arguments, verbose=args["slurm_verbose"])
-
+    mpi.submit_function_to_workers(joint.bin_image, arguments, verbose=args["slurm_verbose"], silent=True)
 
     time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
     output_folder = os.path.join( train_folder, time_stamp )
