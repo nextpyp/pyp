@@ -2,6 +2,7 @@ import os
 import socket
 from pwd import getpwnam
 from pyp.system.singularity import get_pyp_configuration
+from pyp.system.local_run import run_shell_command
 
 def timeout_command(command, time, full_path=False):
     if full_path:
@@ -70,8 +71,26 @@ def get_motioncor3_path():
     command = cuda_path_prefix(command)
     return command
 
+def get_gpu_ids():
+    # if in standalone mode, attempt to search for available devices
+    available_devices = []
+    for i in range(16):
+        [ output, error ] = run_shell_command(f"nvidia-smi -i {i} --query-compute-apps=pid --format=csv,noheader")
+        if len(output) == 0:
+            available_devices.append(i)
+    return available_devices
+
 def get_gpu_id():
-    return 0
+    # if using slurm, follow the default device ID (assume we always use a single GPU)
+    if "SLURM_JOB_GPUS" in os.environ or "SLURM_STEP_GPUS" in os.environ:
+        return 0
+    # if in standalone mode, try to figure out what devices are available
+    else:
+        devices = get_gpu_ids()
+        if len(devices) > 0:
+            return devices[0]
+        else:
+            raise Exception("No GPU devices available")
 
 def get_relion_path():
     return "{0}/external/postproc".format(os.environ["PYP_DIR"])
