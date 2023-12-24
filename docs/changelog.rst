@@ -15,19 +15,27 @@ v0.5.4 (12/12/2023)
 
    :fa:`star,text-success` Produce .bild files after each refinement iteration for 3D visualization in Chimera.
 
-   :fa:`plus-square,text-primary` Allow mix-and-matching of IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
+   :fa:`plus-square,text-primary` Allow mix-and-matching IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
 
-   :fa:`plus-square,text-primary` Automatically select a gpu partition when running jobs that require access to GPUs.
+   :fa:`plus-square,text-primary` Automatically submit jobs to a GPU partition when running tasks that require GPUs.
 
-   :fa:`plus-square,text-primary` Display version number and amount of allocated memory at the beginning of every log.
+   :fa:`plus-square,text-primary` Display version number and amount of allocated memory at the beginning of every job.
 
-   :fa:`plus-square,text-primary` Change default memory allocation to 2GB and added Resources tab to data import blocks.
+   :fa:`plus-square,text-primary` Change default memory allocation for launch task to 4GB and add Resources tab to data import blocks.
+
+   :fa:`plus-square,text-primary` Simplify Resources tab for all blocks by hiding unnecessary parameters.
+
+   :fa:`plus-square,text-primary` Allow use of pre-computed results from reference-based refinement in tomography and classification tutorials.
 
    :fa:`bug,text-danger` Fix OOM error when running constrained refinement using a single thread.
 
-   :fa:`bug,text-danger` Fix issue in tomography sessions when not using .mdoc files to read metadata.
+   :fa:`bug,text-danger` Fix error in particle filtering blocks when no particles were left on a given micrograph/tilt-series.
+
+   :fa:`bug,text-danger` Fix issue in tomography sessions when not using .mdoc files to import metadata.
 
    :fa:`bug,text-danger` Fix bug when exporting sub-tomograms for use in external programs.
+
+   :fa:`bug,text-danger` Fix various other small bugs.
 
 v0.5.3 (11/25/2023)
 *******************
