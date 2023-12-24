@@ -312,6 +312,12 @@ def parse_arguments(block):
                 or not Path(
                     project_params.resolve_path(parameters["refine_parfile"])
                 ).exists
+                or not "refine_parfile_tomo" in parameters.keys()
+                or parameters["refine_parfile_tomo"] is None
+                or project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto"
+                or not Path(
+                    project_params.resolve_path(parameters["refine_parfile_tomo"])
+                ).exists
                 or reinitialize
             ):
                 # if not using all micrographs, we need to generate new .par file
@@ -353,7 +359,10 @@ def parse_arguments(block):
                         mask_file = project_params.get_mask_from_projects() if mask_path == 'auto' else mask_path
 
                 if os.path.exists(reference_par_file):
-                    parameters["refine_parfile"] = reference_par_file
+                    if data_mode == "tomo":
+                        parameters["refine_parfile_tomo"] = reference_par_file
+                    else:
+                        parameters["refine_parfile"] = reference_par_file
                     if block != "spr_tomo_post_process":
                         logger.info("Using parameter file " + reference_par_file)
                 if os.path.exists(reference_model_file):

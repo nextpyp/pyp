@@ -255,6 +255,9 @@ Step 5: Reference-based refinement
 
     * One round of refinement and reconstruction will be executed. Click inside the block to see the results
 
+.. tip::
+
+  You can significantly speed up this step by using the precalculated results provided in the tutorial .tbz file. To do this, go to the **Refinement** tab, check ``Show advanced options``, set ``Optimizer - Exhaustive search points`` to 0, and click :fa:`search,text-primary` in ``Input parameter file`` to select the file ``EMPIAR-10304_poses.par.bz2``.
 
 Step 6. Filter particles
 ------------------------
@@ -339,7 +342,7 @@ Step 8. Fully constrained refinement
         - Select the location of the ``Initial parameter file`` by clicking on the icon :fa:`search,text-primary` and selecting the file `tomo-fine-refinement-*_r01_02.par.bz2` (select the file ``tomo-fine-refinement-*_r01_02_clean.par.bz2`` if bad particles were permanently removed in the previous step)
 
         - Set ``Last iteration`` to 3
-        
+
         - Check ``Skip refinement``
 
         - Set ``Max resolution (A)`` to 18:14

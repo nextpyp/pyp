@@ -1821,12 +1821,13 @@ default = true
 hidden = true
 
 [tabs.refine.parfile_tomo]
-name = "Initial sub-volume alignments"
-description = "Parameter file to initialize refinement (*.txt)"
+name = "Alignments from sub-volume averaging"
+description = "Parameter file containing poses from sub-volume averaging (*.txt)"
 type = "path"
 path = { type="files" }
 input = { type="txtfile" }
-hidden = true
+advanced = true
+hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine"]
 
 [tabs.refine.resume]
 name = "Resume refinement"

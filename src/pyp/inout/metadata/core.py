@@ -1796,14 +1796,13 @@ def csp_extract_coordinates(
 
         if "refine_parfile" in parameters.keys():
             refinement = project_params.resolve_path(parameters["refine_parfile"])
+            # decompress file if needed
+            refinement = frealign_parfile.Parameters.decompress_parameter_file(
+                refinement, parameters["slurm_tasks"]
+            )
+            parameters["refine_parfile"] = refinement
         else:
             refinement = 'none'
-
-        # decompress file if needed
-        refinement = frealign_parfile.Parameters.decompress_parameter_file(
-            refinement, parameters["slurm_tasks"]
-        )
-        parameters["refine_parfile"] = refinement
 
         if "tomo" in parameters["data_mode"].lower():
 
@@ -1870,6 +1869,23 @@ def csp_extract_coordinates(
                 [allboxes, allparxs] = tomo_extract_coordinates(
                     filename, parameters, use_frames, extract_projections=False
                 )
+
+                # use external alignments if available
+                if parameters["refine_iter"] == 2 and refinement.endswith(".par"):
+                    with timer.Timer(
+                        "read_alignment", text = "Reading alignments from parfile took: {}", logger=logger.info
+                    ):
+                        allparxs = []
+                        index_file = os.path.join( current_path, "csp" , "micrograph_particle.index" )
+                        assert os.path.exists(index_file), f"Index file is missing: {index_file}"
+                        with open(index_file) as f:
+                            index_dict = json.load(f)
+                        start, end = index_dict[str(micrograph_index)]
+                        step = end - start
+                        start += 3
+                        extracted_rows = np.loadtxt(refinement, dtype=float, comments="C", skiprows=start, max_rows=step, ndmin=2)
+                        allparxs.append(extracted_rows[:, 1:])
+
             # copy boxes3d and ctf files to local scratch
             shutil.copy2("csp/{}_boxes3d.txt".format(filename), working_path)
 
@@ -1988,7 +2004,7 @@ def tomo_extract_coordinates(
     # distance_from_equator = float(parameters["tomo_vir_detect_band"])
     min_tilt = float(parameters["reconstruct_mintilt"])
     max_tilt = float(parameters["reconstruct_maxtilt"])
-    refinement = project_params.resolve_path(parameters["refine_parfile"])
+    refinement = project_params.resolve_path(parameters["refine_parfile_tomo"])
 
     # get metadata from pickle
     pkl = Path("pkl") / f"{name}.pkl"
@@ -2162,7 +2178,7 @@ EOF
 
     logger.info(f"The height of specimen in the tomogram is {height_specimen:.2f} A")
 
-    if Path(refinement).exists() and ".par" in parameters["refine_parfile"]:
+    if Path(refinement).exists() and parameters["refine_parfile_tomo"].endswith(".par"):
         input = frealign_parfile.Parameters.from_file(refinement).data
 
     # traverse all virions in tilt series
@@ -2451,7 +2467,7 @@ EOF
 
                 # retrieve shifts from previous run
                 x_correction = y_correction = 0
-                if Path(refinement).exists() and ".par" in refinement:
+                if Path(refinement).exists() and refinement.endswith(".par"):
                     local = input[input[:, 7] == film]
                     x_correction = local[image_counter - 1, 4] / pixel
                     y_correction = local[image_counter - 1, 5] / pixel

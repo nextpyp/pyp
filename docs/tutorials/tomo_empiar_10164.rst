@@ -330,13 +330,15 @@ Step 6: Reference-based refinement
         - Set ``Particle translation range (voxels)`` to 50
 
         - Click on the **Resources** tab
-  
+
       .. tabbed:: Reconstruction
-        
+
+        - Check ``Show advanced options``
+
         - Set ``Max tilt-angle`` to 50
 
         - Set ``Min tilt-angle`` to -50
-      
+
       .. tabbed:: Resources
 
         - Set ``Walltime per task`` to 9:00:00
@@ -352,6 +354,9 @@ Step 6: Reference-based refinement
       .. figure:: ../images/tutorial_tomo_coarse_iter2.webp
         :alt: Iter 2
 
+.. tip::
+
+  You can significantly speed up this step by using the precalculated results provided in the tutorial .tbz file. To do this, go to the **Refinement** tab, check ``Show advanced options``, set ``Optimizer - Exhaustive search points`` to 0, and click :fa:`search,text-primary` in ``Input parameter file`` to select the file ``EMPIAR-10164_poses.par.bz2``.
 
 Step 7. Fully constrained refinement
 ------------------------------------
