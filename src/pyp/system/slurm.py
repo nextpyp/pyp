@@ -85,7 +85,9 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
     if ( ("movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters["movie_force"] )
         or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters["tomo_ali_force"])
         or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters["tomo_rec_force"])
-        or ("detect_method" in parameters and "topaz-train" in parameters["detect_method"].lower() and parameters["detect_force"])
+        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters["detect_force"])
+        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters["detect_force"])
+        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters["tomo_vir_force"])
         ):
         gpu = True
     else:
