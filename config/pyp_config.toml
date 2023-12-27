@@ -929,13 +929,13 @@ advanced = true
 
 [tabs.detect_topaz2d.debug]
 name = "Debug mode"
-description = "Save intermediate results to output folder train/"
+description = "Save file with output coordinates to train/ folder"
 type = "bool"
 default = false
 advanced = true
 
 [tabs.detect_nn3d]
-_name = "Training/Evaluation"
+_name = "Training/Evaluation (pyp)"
 _description = "Settings for particle detection using neural networks"
 
 [tabs.detect_nn3d.ref]
