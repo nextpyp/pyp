@@ -3292,6 +3292,8 @@ if __name__ == "__main__":
             subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
         elif "SLURM_JOB_ID" in os.environ:
             subdir = os.environ["SLURM_JOB_ID"]
+        else:
+            subdir = ""
         os.environ["PYP_SCRATCH"] = str(
             Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"] / subdir
         )
