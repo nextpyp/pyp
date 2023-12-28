@@ -5429,8 +5429,6 @@ def check_parfile_match_allboxes(par_file: str, allboxes_file: str):
     pardata = Parameters.from_file(par_file).data
     allboxes = np.loadtxt(allboxes_file, ndmin=2)
     # add more info about how to avoid this error
-    assert (pardata.shape[0] == allboxes.shape[0]), "Number of particles in the parfile is incorrect. You may have a different set of particles from proprocessing. \
-        Or you cleaned (modified) your particles after refinement while still using old particle coordinates. \
-            "
+    assert (pardata.shape[0] == allboxes.shape[0]), f"Number of particles in parfile and metadata do not match: {pardata.shape[0]} != {allboxes.shape[0]}. You may have a different set of particles than that used during pre-processing or you may have cleaned (modified) your particles after refinement while still using old particle coordinates."
 
 
