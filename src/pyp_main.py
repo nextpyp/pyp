@@ -4645,9 +4645,14 @@ EOF
 
                 logger.info("PYP (launch) finished successfully")
 
-        if job_name:
+        if Path(current_directory).name == "swarm":
+            folder = Path(current_directory).parents[0]
+        else:
+            folder = current_directory
+        parameters = project_params.load_parameters(folder)
+        if job_name and parameters and "slurm_verbose" in parameters and parameters["slurm_verbose"]:
             timers = timer.Timer().timers
-            with open(Path(current_directory) / f"{job_name}.json", "w") as f:
+            with open(Path(folder) / "swarm" / f"{job_name}.json", "w") as f:
                 f.write(json.dumps(timers, indent=2))
 
     except:
