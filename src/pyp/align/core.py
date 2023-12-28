@@ -4491,7 +4491,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
 
-        if "no CUDA-capable device is detected" in output:
+        if "no CUDA-capable device is detected" in output or "All GPUs are in use" in output:
             if not parameters['slurm_verbose']:
                 logger.error(output)
             logger.error('A GPU must be available for MotionCor3 to run')
