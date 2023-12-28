@@ -470,7 +470,8 @@ def parse_arguments(block):
                             )
                         destination = d + "/" + name + f
                         if os.path.isfile(source) and not os.path.exists(destination):
-                            logger.info("Retrieving " + source)
+                            if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
+                                logger.info("Retrieving " + source)
                             shutil.copy2(source, destination)
 
             ctffile = "ctf/" + os.path.splitext(os.path.basename(files[0]))[0] + ".ctf"
