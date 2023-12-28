@@ -671,14 +671,6 @@ def spr_merge(parameters, check_for_missing_files=True):
     stacklist = ["eman/" + line + "_phase_flipped_stack.mrc" for line in inputlist]
     null = [os.remove(i) for i in stacklist if os.path.isfile(i)]
 
-    ctffile = "ctf/" + inputlist[0] + ".ctf"
-
-    if os.path.isfile(ctffile):
-        ctf = np.loadtxt(ctffile)
-        parameters = ctf_utils.update_pyp_params_using_ctf(parameters, ctf, save=True)
-    else:
-        logger.info("Unable to find ctf file in {}".format(os.getcwd()))
-
     # launch processing jobs
     if False and int(parameters["extract_box"]) > 0:
 
