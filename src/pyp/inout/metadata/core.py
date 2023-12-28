@@ -674,7 +674,7 @@ def get_new_input_list(parameters, inputlist):
             else:
                 newinput_dict.update({sname:box_size})
         newinputlist = sorted(newinput_dict, key=newinput_dict.get, reverse=True)
-        logger.warning("Updating films order to reflect the particles number rank")
+        logger.warning("Update micrograph/tilt-series order according to number of particles")
     else:
         newinputlist = inputlist
 
