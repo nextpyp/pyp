@@ -3203,26 +3203,27 @@ def clear_scratch(scratch):
 # remove any leftover scratch directories that are older than 1 hour
 def clear_scratch(scratch):
     # list all top level directories under scratch folder
-    for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
-        # check if directory is in the form {SLURM_JOB_ID}_{SLURM_ARRAY_TASK_ID}
-        if bool(re.match('[\d/_]+$',dir)):
-            # get list of all files in this directory
-            list_of_files = glob.glob(f'{os.path.join(scratch,dir)}/**/*.*',recursive=True)
-            if len(list_of_files) > 0:
-                try:
-                    # get timestamp of most recent file
-                    latest_file = max(list_of_files, key=os.path.getctime)
-                    age_in_minutes = ( time.time() - os.path.getctime(latest_file) ) / 60.
-                    # if age of most recent file is more than 1 hour, assume this is a zombie folder
-                    if age_in_minutes > 60:
-                        try:
-                            logger.warning(f"Detected zombie run at {dir}, clearing up files")
-                            shutil.rmtree(os.path.join(scratch,dir), ignore_errors=True)
-                        except:
-                            logger.error(f"Failed to delete folder {dir}")
-                            pass
-                except:
-                    pass
+    if os.path.exists(scratch):
+        for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
+            # check if directory is in the form {SLURM_JOB_ID}_{SLURM_ARRAY_TASK_ID}
+            if bool(re.match('[\d/_]+$',dir)):
+                # get list of all files in this directory
+                list_of_files = glob.glob(f'{os.path.join(scratch,dir)}/**/*.*',recursive=True)
+                if len(list_of_files) > 0:
+                    try:
+                        # get timestamp of most recent file
+                        latest_file = max(list_of_files, key=os.path.getctime)
+                        age_in_minutes = ( time.time() - os.path.getctime(latest_file) ) / 60.
+                        # if age of most recent file is more than 1 hour, assume this is a zombie folder
+                        if age_in_minutes > 60:
+                            try:
+                                logger.warning(f"Detected zombie run at {dir}, clearing up files")
+                                shutil.rmtree(os.path.join(scratch,dir), ignore_errors=True)
+                            except:
+                                logger.error(f"Failed to delete folder {dir}")
+                                pass
+                    except:
+                        pass
 
 if __name__ == "__main__":
 
