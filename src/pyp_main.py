@@ -1711,7 +1711,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         data.loadFiles()
 
         if Web.exists:
-            save_tomo_results_lean(name, current_path, verbose=parameters["slurm_verbose"])
+            save_tomo_results_lean(name, parameters, current_path, verbose=parameters["slurm_verbose"])
         else:
             save_tomo_results(name, parameters, current_path, verbose=parameters["slurm_verbose"])
 

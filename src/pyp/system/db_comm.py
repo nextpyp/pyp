@@ -15,7 +15,7 @@ from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
-from pyp.utils import flatten, get_relative_path
+from pyp.utils import flatten, get_relative_path, symlink_relative
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -409,10 +409,17 @@ def save_tomo_results(name, parameters, current_path, verbose=False):
 
     files[
         "mrc"
-    ] = "{0}.mrc {0}.rec {0}_bin.mrc {0}_bin.ali {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
+    ] = "{0}.rec {0}_bin.mrc {0}_bin.ali {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
         name
     )
 
+    if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")):
+        symlink_relative(
+            os.path.join(current_path,"raw",name+".mrc"),
+            os.path.join(current_path,"mrc",name+".mrc")
+        )
+    else:
+        files["mrc"] = "{0}.mrc ".format(name) + files["mrc"]
     files[
         "webp"
     ] = "{0}_view.webp {0}_?D_ctftilt.webp {0}_raw.webp {0}_ali.webp {0}_sides.webp {0}_rec.webp {0}_vir????_binned_nad.webp".format(
@@ -429,16 +436,24 @@ def save_tomo_results(name, parameters, current_path, verbose=False):
     save_results(files, current_path, verbose)
 
 
-def save_tomo_results_lean(name, current_path, verbose):
+def save_tomo_results_lean(name, parameters, current_path, verbose):
     """Save tomo swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
 
     files[
         "mrc"
-    ] = "{0}.mrc {0}.rec {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
+    ] = "{0}.rec {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
         name
     )
+
+    if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")):
+        symlink_relative(
+            os.path.join(current_path,"raw",name+".mrc"),
+            os.path.join(current_path,"mrc",name+".mrc")
+        )
+    else:
+        files["mrc"] = "{0}.mrc ".format(name) + files["mrc"]
 
     files[
         "webp"
