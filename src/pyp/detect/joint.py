@@ -38,7 +38,7 @@ def sprtrain(args):
 
     # generate binned versions of images
     files = np.loadtxt( os.path.join( "train", train_name + "_images.txt"), comments="image_name", dtype="str", ndmin=2)[:,0]
-    binning = 8
+    binning = args["detect_nn2d_bin"]
 
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
     logger.info(f"Binning coordinates ({number_of_labels} labels)")
