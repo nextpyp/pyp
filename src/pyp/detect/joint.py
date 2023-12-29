@@ -47,7 +47,7 @@ def sprtrain(args):
 
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
-    os.makedirs(scratch_train)
+    os.makedirs(os.path.join(scratch_train,"log"),exist_ok=True)
 
     logger.info(f"Binning {len(files)} micrographs")
     # bin images and save to local scratch
@@ -66,7 +66,7 @@ def sprtrain(args):
 
     time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
     output_folder = os.path.join( train_folder, time_stamp )
-    os.makedirs( output_folder )
+    os.makedirs(output_folder, exist_ok=True)
 
     # go to scratch directory
     os.chdir(scratch_train)
@@ -246,7 +246,7 @@ def tomotrain(args):
 
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
-    os.makedirs(scratch_train)
+    os.makedirs(os.path.join(scratch_train,"log"), exist_ok=True)
 
     time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
     output_folder = os.path.join( train_folder, time_stamp )
