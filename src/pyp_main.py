@@ -911,7 +911,7 @@ def split(parameters):
         if gpu or tomo_train or spr_train:
             # try to get the gpu partition
             partition_name = ""
-            if parameters["slurm_queue_gpu"] == None and "slurm" in config:
+            if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ) and "slurm" in config:
                 try:
                     parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
                     partition_name = parameters["slurm_queue_gpu"]
