@@ -905,7 +905,10 @@ def split(parameters):
             except:
                 raise Exception("No CPU partitions are configured for this instance")
 
-        if gpu:
+        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
+        spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
+
+        if gpu or tomo_train or spr_train:
             # try to get the gpu partition
             partition_name = ""
             if parameters["slurm_queue_gpu"] == None and "slurm" in config:
@@ -915,15 +918,12 @@ def split(parameters):
                 except:
                     raise Exception("No GPU partitions are configured for this instance")
             if not Web.exists:
-                partition_name += " --gres=gpu:1 "
+                partition_name += " --gres=gpu:RTXA5000:1 "
             job_name = "Split (gpu)"
 
         else:
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
-
-        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
-        spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
 
         if ( tomo_train or spr_train ):
             if os.path.exists(os.path.join("train","current_list.txt")):
