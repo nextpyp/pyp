@@ -541,7 +541,7 @@ def spr_merge(parameters, check_for_missing_files=True):
                 # missing files remaining after retrying
                 try:
                     os.remove(micrographs)
-                    logger.warning("Missing processed files remainning and will be exlcuded from the film list. Please check manually ")
+                    logger.warning("Detected errors even after retrying. Stopping.")
                 except:
                     pass
 
