@@ -1501,7 +1501,7 @@ default = "none"
 
 [tabs.tomo_spk.files]
 name = "Import particle coordinates"
-description = "Folder containing files with particle coordinates (*.box, *.spk)"
+description = "Folder containing files with particle coordinates (*.spk)"
 type = "path"
 path = { type="folders" }
 
