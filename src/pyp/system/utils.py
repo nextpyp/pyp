@@ -79,7 +79,7 @@ def get_gpu_id():
     # if in standalone mode, try to figure out what devices are available
     else:
         try:
-            devices = GPUtil.getAvailable(order = 'load', limit = 1, maxLoad = 0.1, maxMemory = 0.1, includeNan=False, excludeID=[], excludeUUID=[])
+            devices = GPUtil.getAvailable(order = 'load', limit = 64, maxLoad = 0.1, maxMemory = 0.1, includeNan=False, excludeID=[], excludeUUID=[])
         except:
             devices = []
         if len(devices) > 0:
