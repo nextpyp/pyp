@@ -14,8 +14,8 @@ from pyp.streampyp.web import Web
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.singularity import get_pyp_configuration, run_pyp, run_slurm, run_ssh
-from pyp.system.utils import get_shell_multirun_path, is_atrf, is_biowulf2, is_dcc, qos, get_slurm_path
+from pyp.system.singularity import run_pyp, run_ssh
+from pyp.system.utils import needs_gpu
 from pyp.utils import get_relative_path
 
 relative_path = str(get_relative_path(__file__))
@@ -324,20 +324,7 @@ def create_rec_merge_swarm_file(iteration):
 def create_ref_swarm_file(fp, iteration, classes, particles, metric, increment):
     ref_swarm_file = "swarm/frealign_msearch_%02d.swarm" % (iteration)
     f = open(ref_swarm_file, "w")
-
-    if is_biowulf2():
-        if "-g" in fp["queue"]:
-            mem = int(fp["queue"].split("-g")[1])
-            threads = 125 / mem
-            if "ibfdr" in fp["queue"]:
-                threads = 58 / mem
-        else:
-            threads = 32
-
-        threads = 1
-    else:
-        threads = 1
-
+    threads = 1
     first = count = 0
     last = min(first + increment - 1, particles - 1)
     thread_count = 0
