@@ -100,7 +100,7 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices
+from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
@@ -3471,7 +3471,7 @@ if __name__ == "__main__":
 
                 args = project_params.parse_arguments("tomoswarm")
 
-                if needs_gpu(args):
+                if needs_gpu(args) and not slurm_gpu_mode():
                     done = False
                     for d in get_gpu_devices():
                         lock_file = os.path.join(Path(os.environ["PYP_SCRATCH"]).parents[0],f"gpu_device_{d:02d}.lock")

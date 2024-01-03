@@ -71,9 +71,12 @@ def get_motioncor3_path():
     command = cuda_path_prefix(command)
     return command
 
+def slurm_gpu_mode():
+    return "SLURM_JOB_GPUS" in os.environ or "SLURM_STEP_GPUS" in os.environ
+
 def get_gpu_id():
     # if using slurm, follow the default device ID (assume we always use a single GPU)
-    if "SLURM_JOB_GPUS" in os.environ or "SLURM_STEP_GPUS" in os.environ:
+    if slurm_gpu_mode():
         return 0
     # if in standalone mode, retrieve gpu id from file
     else:
