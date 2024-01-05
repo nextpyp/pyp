@@ -919,7 +919,7 @@ def split(parameters):
                 except:
                     raise Exception("No GPU partitions are configured for this instance")
             if not Web.exists:
-                partition_name += " --gres=gpu:RTXA5000:1 "
+                partition_name += " --gres=gpu:1 "
             job_name = "Split (gpu)"
 
         else:
