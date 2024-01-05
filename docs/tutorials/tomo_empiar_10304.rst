@@ -257,7 +257,6 @@ Step 5: Reference-based refinement
 
 .. tip::
 
-  You can significantly speed up this step by using the precalculated results provided in the tutorial .tbz file. To do this, go to the **Refinement** tab, check ``Show advanced options``, set ``Optimizer - Exhaustive search points`` to 0, and click :fa:`search,text-primary` in ``Input parameter file`` to select the file ``EMPIAR-10304_poses.par.bz2``.
 
 Step 6. Filter particles
 ------------------------
