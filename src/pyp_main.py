@@ -918,8 +918,13 @@ def split(parameters):
                     partition_name = parameters["slurm_queue_gpu"]
                 except:
                     raise Exception("No GPU partitions are configured for this instance")
+            elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"]==None:
+                partition_name = parameters["slurm_queue_gpu"]
+            else:
+                raise Exception("The jobs need GPUs, but GPU configuration was not set properly")
+
             if not Web.exists:
-                partition_name += " --gres=gpu:RTXA5000:1 "
+                partition_name += " --gres=gpu:1 "
             job_name = "Split (gpu)"
 
         else:
@@ -929,10 +934,6 @@ def split(parameters):
         if ( tomo_train or spr_train ):
             if os.path.exists(os.path.join("train","current_list.txt")):
                 train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
-
-                partition_name = parameters["slurm_queue_gpu"]
-                if not Web.exists:
-                    partition_name += " --gres=gpu:1 "
 
                 # submit swarm jobs
                 id_train = slurm.submit_jobs(
