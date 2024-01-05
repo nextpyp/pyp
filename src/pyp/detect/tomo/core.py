@@ -97,14 +97,11 @@ def process_virion_multiprocessing(
     # Run segmentation
     # USAGE: virus_segment_membrane input.mrc iradius oradius weight iterations variances output.mrc
     # set envirionments to avoid potential conflicts
-    env_changed = False
+
     if os.environ.get("LD_LIBRARY_PATH"):
         current_env = os.environ["LD_LIBRARY_PATH"]
         if "/.singularity.d/libs" in current_env:
             os.environ["LD_LIBRARY_PATH"] = current_env.replace("/.singularity.d/libs", "")
-            env_changed = True
-
-    print(os.environ["LD_LIBRARY_PATH"])
 
     weight = 1
     iterations = 500
@@ -493,8 +490,6 @@ def process_virion_multiprocessing(
     if os.path.exists(virion_name + "_unbinned.rec"):
         os.remove(virion_name + "_unbinned.rec")
 
-    if env_changed:
-        os.environ["LD_LIBRARY_PATH"] = current_env
 
 def process_virions(
     name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,

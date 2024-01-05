@@ -921,7 +921,7 @@ def split(parameters):
             elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"]==None:
                 partition_name = parameters["slurm_queue_gpu"]
             else:
-                raise Exception("No GPU resouces found")
+                raise Exception("The jobs need GPUs, but GPU configuration was not set properly")
 
             if not Web.exists:
                 partition_name += " --gres=gpu:1 "
