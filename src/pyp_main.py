@@ -100,7 +100,7 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode
+from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode, check_env
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
@@ -1635,6 +1635,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     t = timer.Timer(text="Virion and spike detection took: {}", logger=logger.info)
     t.start()
+    # remove environment LD_LIBRARY_PATH conflicts
+    check_env()
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
         name,
