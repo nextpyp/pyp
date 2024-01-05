@@ -4637,6 +4637,10 @@ EOF
                 if os.path.exists(os.environ["TMPDIR"]):
                     shutil.rmtree(os.environ["TMPDIR"])
 
+                # clean up local scratch
+                if os.path.exists(os.environ["PYP_SCRATCH"]):
+                    shutil.rmtree(os.environ["PYP_SCRATCH"])
+
                 logger.info("PYP (launch) finished successfully")
 
         if Path(current_directory).name == "swarm":
