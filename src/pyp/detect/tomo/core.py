@@ -21,6 +21,7 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import (
     get_tomo_path,
     get_imod_path,
+    check_env,
 )
 from pyp.utils import get_relative_path
 
@@ -97,6 +98,7 @@ def process_virion_multiprocessing(
     # Run segmentation
     # USAGE: virus_segment_membrane input.mrc iradius oradius weight iterations variances output.mrc
     check_env()
+
     weight = 1
     iterations = 500
     variances = 10
