@@ -34,7 +34,6 @@ import toml
 from pathlib import Path
 from uuid import uuid4
 import numpy as np
-from filelock import Timeout, FileLock
 
 from pyp import align
 from pyp import ctf as ctf_mod
@@ -3472,24 +3471,7 @@ if __name__ == "__main__":
 
                 args = project_params.parse_arguments("tomoswarm")
 
-                if needs_gpu(args) and not slurm_gpu_mode():
-                    done = False
-                    for d in get_gpu_devices():
-                        lock_file = os.path.join(Path(os.environ["PYP_SCRATCH"]).parents[0],f"gpu_device_{d:02d}.lock")
-                        lock = FileLock(lock_file, timeout=1)
-                        try:
-                            with lock.acquire(timeout=10):
-                                with open(get_gpu_file()) as f:
-                                    f.write(d)
-                                tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
-                                done = True
-                        except Timeout:
-                            print("Another instance of this application currently holds the lock.")
-                            pass
-                    if not done:
-                        raise Exception("No GPU devices found")
-                else:
-                    tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
+                tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
                 logger.info("PYP (tomoswarm) finished successfully")
             except:
