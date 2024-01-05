@@ -873,7 +873,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
     else:
         # rerun a failed job without changing parameters 
         if len(glob.glob("mrc/*mrc")) == 0:
-            logger.info("No processed result detected in the mrc/ folder, will force movie alignment, ctf estimation, and particle detection")
+            logger.info("No processed results detected in the mrc/ folder, will force movie alignment, ctf estimation, and particle detection")
             new_parameters["movie_force"] = True
             # Triggering all following recalculations
             new_parameters["ctf_force"] = True

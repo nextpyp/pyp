@@ -284,11 +284,14 @@ export CUDA_VISIBLE_DEVICES=$available_devs
             walltime,
         )
         command = run_ssh(command)
-        logger.info(command)
         [output, error] = run_shell_command(command, verbose=False)
         if "error" in error or "failed" in error:
-            logger.error(error)
-            raise Exception(error)
+            logger.warning(command)
+            if not "sleeping and retrying" in error:
+                raise Exception(error)
+            else:
+                logger.warning(error)
+                id = output.split()[-1]
         else:
             id = output.split()[-1]
         return id

@@ -1565,7 +1565,7 @@ def csp_refinement(
         classes = 1
     else:
         classes = int(project_params.param(mp["class_num"], iteration))
-    
+
     # write parx file for class=1 by pre-pending particle index (frealign/maps/name_r01_01.parx -> parxfile)
     with Timer(
         "particle re-index", text = "Pre-pending index to par took: {}", logger=logger.info
@@ -4491,7 +4491,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
 
-        if "no CUDA-capable device is detected" in output:
+        if "no CUDA-capable device is detected" in output or "All GPUs are in use" in output:
             if not parameters['slurm_verbose']:
                 logger.error(output)
             logger.error('A GPU must be available for MotionCor3 to run')
@@ -5429,8 +5429,6 @@ def check_parfile_match_allboxes(par_file: str, allboxes_file: str):
     pardata = Parameters.from_file(par_file).data
     allboxes = np.loadtxt(allboxes_file, ndmin=2)
     # add more info about how to avoid this error
-    assert (pardata.shape[0] == allboxes.shape[0]), "Number of particles in the parfile is incorrect. You may have a different set of particles from proprocessing. \
-        Or you cleaned (modified) your particles after refinement while still using old particle coordinates. \
-            "
+    assert (pardata.shape[0] == allboxes.shape[0]), f"Number of particles in parfile and metadata do not match: {pardata.shape[0]} != {allboxes.shape[0]}. You may have a different set of particles than that used during pre-processing or you may have cleaned (modified) your particles after refinement while still using old particle coordinates."
 
 

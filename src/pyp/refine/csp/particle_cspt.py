@@ -1678,23 +1678,23 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
 
             if dumpfiles_count_class[class_index-1] == total_num_dump_perclass:
                 class_to_merge[class_index-1] = False
-            else:    
+            else:
                 class_to_merge[class_index-1] = True
-            
+
             if not any(class_to_merge):
                 succeed = True
                 os.chdir(pwd)
                 break
-            
+
             # check if there's error from logs. If yes, we stop the merge job
             if csp_has_error(path_to_logs, micrographs):
                 return False
-            
+
             time.sleep(INTERVAL)
-        
+
     if not succeed:
-        logger.warning("Time out! Don't have enough time to wait for all cspswarm jobs to complete")
-        
+        logger.warning("Job reached walltime. Attempting to resubmit remaining jobs but you may need to increase the walltime (merge task)")
+
         # result is incomplete after TIMEOUT -> need to resubmit failed cspswarm jobs
         if class_index == 1 and len(set(micrographs.keys()) - processed_micrographs) > 0:
             merge_check_err_and_resubmit(parameters, input_dir, micrographs, int(parameters["refine_iter"]))
@@ -1708,14 +1708,14 @@ def csp_has_error(path_to_logs: Path, micrographs: dict) -> bool:
 
     has_error = False
     ERROR_KEYWORDS = ["PYP (cspswarm) failed"]
-    
+
     for micrograph in micrographs.keys():
         micrograph_log = Path(path_to_logs, f"{micrograph}_csp.log")
         if micrograph_log.exists():
             # use "grep" to check if log files contain any error message
             command = "grep -E %s %s" % ("'" + "|".join(ERROR_KEYWORDS) + "'", str(micrograph_log))
             [output, error] = local_run.run_shell_command(command, verbose=False)
-            
+
             if len(output) > 0:
                 logger.error(f"{micrograph} fails. Stopping the merge job.")
                 logger.error(output)
@@ -1727,7 +1727,7 @@ def csp_has_error(path_to_logs: Path, micrographs: dict) -> bool:
 
 
 def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="ordering.txt"):
-    
+
     # we are originally in the project directory
     project_dir = os.getcwd()
 

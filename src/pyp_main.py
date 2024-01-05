@@ -34,6 +34,7 @@ import toml
 from pathlib import Path
 from uuid import uuid4
 import numpy as np
+from filelock import Timeout, FileLock
 
 from pyp import align
 from pyp import ctf as ctf_mod
@@ -99,7 +100,7 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path
+from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
@@ -312,6 +313,12 @@ def parse_arguments(block):
                 or not Path(
                     project_params.resolve_path(parameters["refine_parfile"])
                 ).exists
+                or not "refine_parfile_tomo" in parameters.keys()
+                or parameters["refine_parfile_tomo"] is None
+                or project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto"
+                or not Path(
+                    project_params.resolve_path(parameters["refine_parfile_tomo"])
+                ).exists
                 or reinitialize
             ):
                 # if not using all micrographs, we need to generate new .par file
@@ -353,7 +360,10 @@ def parse_arguments(block):
                         mask_file = project_params.get_mask_from_projects() if mask_path == 'auto' else mask_path
 
                 if os.path.exists(reference_par_file):
-                    parameters["refine_parfile"] = reference_par_file
+                    if data_mode == "tomo":
+                        parameters["refine_parfile_tomo"] = reference_par_file
+                    else:
+                        parameters["refine_parfile"] = reference_par_file
                     if block != "spr_tomo_post_process":
                         logger.info("Using parameter file " + reference_par_file)
                 if os.path.exists(reference_model_file):
@@ -461,7 +471,8 @@ def parse_arguments(block):
                             )
                         destination = d + "/" + name + f
                         if os.path.isfile(source) and not os.path.exists(destination):
-                            logger.info("Retrieving " + source)
+                            if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
+                                logger.info("Retrieving " + source)
                             shutil.copy2(source, destination)
 
             ctffile = "ctf/" + os.path.splitext(os.path.basename(files[0]))[0] + ".ctf"
@@ -531,7 +542,7 @@ def spr_merge(parameters, check_for_missing_files=True):
                 # missing files remaining after retrying
                 try:
                     os.remove(micrographs)
-                    logger.warning("Missing processed files remainning and will be exlcuded from the film list. Please check manually ")
+                    logger.warning("Detected errors even after retrying. Stopping.")
                 except:
                     pass
 
@@ -660,14 +671,6 @@ def spr_merge(parameters, check_for_missing_files=True):
 
     stacklist = ["eman/" + line + "_phase_flipped_stack.mrc" for line in inputlist]
     null = [os.remove(i) for i in stacklist if os.path.isfile(i)]
-
-    ctffile = "ctf/" + inputlist[0] + ".ctf"
-
-    if os.path.isfile(ctffile):
-        ctf = np.loadtxt(ctffile)
-        parameters = ctf_utils.update_pyp_params_using_ctf(parameters, ctf, save=True)
-    else:
-        logger.info("Unable to find ctf file in {}".format(os.getcwd()))
 
     # launch processing jobs
     if False and int(parameters["extract_box"]) > 0:
@@ -903,48 +906,50 @@ def split(parameters):
             except:
                 raise Exception("No CPU partitions are configured for this instance")
 
-        if gpu:
+        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
+        spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
+
+        if gpu or tomo_train or spr_train:
             # try to get the gpu partition
             partition_name = ""
-            if parameters["slurm_queue_gpu"] == None and "slurm" in config:
+            if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ) and "slurm" in config:
                 try:
                     parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
                     partition_name = parameters["slurm_queue_gpu"]
                 except:
                     raise Exception("No GPU partitions are configured for this instance")
             if not Web.exists:
-                partition_name += " --gres=gpu:1 "
+                partition_name += " --gres=gpu:RTXA5000:1 "
             job_name = "Split (gpu)"
 
         else:
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
 
-        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
-        spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
+        if ( tomo_train or spr_train ):
+            if os.path.exists(os.path.join("train","current_list.txt")):
+                train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
 
-        if ( tomo_train or spr_train ) and os.path.exists(os.path.join("train","current_list.txt")):
-            train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
+                partition_name = parameters["slurm_queue_gpu"]
+                if not Web.exists:
+                    partition_name += " --gres=gpu:1 "
 
-            partition_name = parameters["slurm_queue_gpu"]
-            if not Web.exists:
-                partition_name += " --gres=gpu:1 "
-
-            # submit swarm jobs
-            id_train = slurm.submit_jobs(
-                "swarm",
-                train_swarm_file,
-                jobtype="milotrain" if parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
-                jobname="Train (gpu)",
-                queue=partition_name,
-                scratch=0,
-                threads=parameters["slurm_merge_tasks"],
-                memory=parameters["slurm_merge_memory"],
-                walltime=parameters["slurm_merge_walltime"],
-                tasks_per_arr=parameters["slurm_bundle_size"],
-                csp_no_stacks=parameters["csp_no_stacks"],
-            ).strip()
-
+                # submit swarm jobs
+                id_train = slurm.submit_jobs(
+                    "swarm",
+                    train_swarm_file,
+                    jobtype="milotrain" if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
+                    jobname="Train (gpu)",
+                    queue=partition_name,
+                    scratch=0,
+                    threads=parameters["slurm_merge_tasks"],
+                    memory=parameters["slurm_merge_memory"],
+                    walltime=parameters["slurm_merge_walltime"],
+                    tasks_per_arr=parameters["slurm_bundle_size"],
+                    csp_no_stacks=parameters["csp_no_stacks"],
+                ).strip()
+            else:
+                raise Exception("Please select a list of coordinates for training")
         else:
             id_train = ""
 
@@ -1171,6 +1176,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
                     gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
                     if os.path.exists(gain_reference_file):
                         shutil.copy2(gain_reference_file, os.getcwd())
+                logger.info("Aligning frames using " + parameters['movie_ali'])
                 aligned_average = align.align_movie_super(
                     parameters, name, extension
                 )
@@ -1698,7 +1704,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         data.loadFiles()
 
         if Web.exists:
-            save_tomo_results_lean(name, current_path, verbose=parameters["slurm_verbose"])
+            save_tomo_results_lean(name, parameters, current_path, verbose=parameters["slurm_verbose"])
         else:
             save_tomo_results(name, parameters, current_path, verbose=parameters["slurm_verbose"])
 
@@ -3198,26 +3204,27 @@ def clear_scratch(scratch):
 # remove any leftover scratch directories that are older than 1 hour
 def clear_scratch(scratch):
     # list all top level directories under scratch folder
-    for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
-        # check if directory is in the form {SLURM_JOB_ID}_{SLURM_ARRAY_TASK_ID}
-        if bool(re.match('[\d/_]+$',dir)):
-            # get list of all files in this directory
-            list_of_files = glob.glob(f'{os.path.join(scratch,dir)}/**/*.*',recursive=True)
-            if len(list_of_files) > 0:
-                try:
-                    # get timestamp of most recent file
-                    latest_file = max(list_of_files, key=os.path.getctime)
-                    age_in_minutes = ( time.time() - os.path.getctime(latest_file) ) / 60.
-                    # if age of most recent file is more than 1 hour, assume this is a zombie folder
-                    if age_in_minutes > 60:
-                        try:
-                            logger.warning(f"Detected zombie run at {dir}, clearing up files")
-                            shutil.rmtree(os.path.join(scratch,dir), ignore_errors=True)
-                        except:
-                            logger.error(f"Failed to delete folder {dir}")
-                            pass
-                except:
-                    pass
+    if os.path.exists(scratch):
+        for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
+            # check if directory is in the form {SLURM_JOB_ID}_{SLURM_ARRAY_TASK_ID}
+            if bool(re.match('[\d/_]+$',dir)):
+                # get list of all files in this directory
+                list_of_files = glob.glob(f'{os.path.join(scratch,dir)}/**/*.*',recursive=True)
+                if len(list_of_files) > 0:
+                    try:
+                        # get timestamp of most recent file
+                        latest_file = max(list_of_files, key=os.path.getctime)
+                        age_in_minutes = ( time.time() - os.path.getctime(latest_file) ) / 60.
+                        # if age of most recent file is more than 1 hour, assume this is a zombie folder
+                        if age_in_minutes > 60:
+                            try:
+                                logger.warning(f"Detected zombie run at {dir}, clearing up files")
+                                shutil.rmtree(os.path.join(scratch,dir), ignore_errors=True)
+                            except:
+                                logger.error(f"Failed to delete folder {dir}")
+                                pass
+                    except:
+                        pass
 
 if __name__ == "__main__":
 
@@ -3281,6 +3288,8 @@ if __name__ == "__main__":
             subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
         elif "SLURM_JOB_ID" in os.environ:
             subdir = os.environ["SLURM_JOB_ID"]
+        else:
+            subdir = ""
         os.environ["PYP_SCRATCH"] = str(
             Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"] / subdir
         )
@@ -3462,7 +3471,24 @@ if __name__ == "__main__":
 
                 args = project_params.parse_arguments("tomoswarm")
 
-                tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
+                if needs_gpu(args) and not slurm_gpu_mode():
+                    done = False
+                    for d in get_gpu_devices():
+                        lock_file = os.path.join(Path(os.environ["PYP_SCRATCH"]).parents[0],f"gpu_device_{d:02d}.lock")
+                        lock = FileLock(lock_file, timeout=1)
+                        try:
+                            with lock.acquire(timeout=10):
+                                with open(get_gpu_file()) as f:
+                                    f.write(d)
+                                tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
+                                done = True
+                        except Timeout:
+                            print("Another instance of this application currently holds the lock.")
+                            pass
+                    if not done:
+                        raise Exception("No GPU devices found")
+                else:
+                    tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
                 logger.info("PYP (tomoswarm) finished successfully")
             except:
@@ -3800,12 +3826,12 @@ if __name__ == "__main__":
                         null = [os.mkdir(f) for f in folders if not os.path.exists(f)]
 
                         if parameters["refine_iter"] == 2:
-                            
+
                             latest_parfile, latest_reference = None, None
                             # data_parent is None if running CLI
                             if "data_parent" in parameters and parameters["data_parent"] is not None:
                                 latest_parfile, latest_reference = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
-                            
+
                             parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
 
                             # NOTE: spr does not really require a parfile first time we run csp
@@ -4460,6 +4486,8 @@ if __name__ == "__main__":
                 basic = f"{half1} {half2} {mask} --angpix {pixel_size} --out {output} {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
                 comm = comm_exe + basic + bfac + filter + fsc + automask + randomize_phase
                 local_run.run_shell_command(comm, verbose=False)
+                if not os.path.exists(output_map):
+                    raise Exception("Does the postprocessing block have enough RAM assigned (launch task)?")
 
                 # produce map slices
                 radius = (
@@ -4628,9 +4656,14 @@ EOF
 
                 logger.info("PYP (launch) finished successfully")
 
-        if job_name:
+        if Path(current_directory).name == "swarm":
+            folder = Path(current_directory).parents[0]
+        else:
+            folder = current_directory
+        parameters = project_params.load_parameters(folder)
+        if job_name and parameters and "slurm_verbose" in parameters and parameters["slurm_verbose"]:
             timers = timer.Timer().timers
-            with open(Path(current_directory) / f"{job_name}.json", "w") as f:
+            with open(Path(folder) / "swarm" / f"{job_name}.json", "w") as f:
                 f.write(json.dumps(timers, indent=2))
 
     except:

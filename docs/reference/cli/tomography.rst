@@ -84,7 +84,7 @@ If a 3D reference is available, the ``csp`` command can be used to align the par
 
     # launch coarse refinement
 
-    csp -refine_parfile=`pwd`/frealign/EMPIAR-10164_original_volumes.txt     \
+    csp -refine_parfile_tomo=`pwd`/frealign/EMPIAR-10164_original_volumes.txt     \
         -refine_model="EMPIAR-10164_init_ref.mrc"   \
         -particle_mw 300.0                          \
         -particle_rad 150.0                         \

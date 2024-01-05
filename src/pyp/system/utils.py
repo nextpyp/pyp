@@ -1,3 +1,4 @@
+import GPUtil
 import os
 import socket
 from pwd import getpwnam
@@ -70,8 +71,42 @@ def get_motioncor3_path():
     command = cuda_path_prefix(command)
     return command
 
+def slurm_gpu_mode():
+    return "SLURM_JOB_GPUS" in os.environ or "SLURM_STEP_GPUS" in os.environ
+
 def get_gpu_id():
-    return 0
+    # if using slurm, follow the default device ID (assume we always use a single GPU)
+    if slurm_gpu_mode():
+        return 0
+    # if in standalone mode, retrieve gpu id from file
+    else:
+        try:
+            with open(get_gpu_file()) as f:
+                return int(f.read())
+        except:
+            raise Exception("No GPU devices found")
+
+def get_gpu_file():
+    return os.path.join(os.environ["PYP_SCRATCH"],"gpu_device.id")
+
+def needs_gpu(parameters):
+    # enable Nvidia GPU?
+    if ( ("movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters["movie_force"] )
+        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters["tomo_ali_force"])
+        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters["tomo_rec_force"])
+        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters["detect_force"])
+        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters["detect_force"])
+        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters["tomo_vir_force"])
+        ):
+        return True
+    else:
+        return False
+
+def get_gpu_devices():
+    try:
+        devices = GPUtil.getAvailable(order = 'load', limit = 64, maxLoad = 0.1, maxMemory = 0.1, includeNan=False, excludeID=[], excludeUUID=[])
+    except:
+        devices = []
 
 def get_relion_path():
     return "{0}/external/postproc".format(os.environ["PYP_DIR"])

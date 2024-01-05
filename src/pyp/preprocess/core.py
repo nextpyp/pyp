@@ -392,8 +392,6 @@ def read_tilt_series(
                 assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"
             else:
 
-                logger.info("Processing individual frames")
-
                 shifts = np.zeros([len(sorted_tilts)])
 
                 # parallelize frame alignment
@@ -423,8 +421,8 @@ def read_tilt_series(
                             )
                             # aligned_tilt = align_stack( frame_name, parameters )
                         else:
-                            logger.info("Using super version for aligning frames")
-                            pool.apply_async(
+                             logger.info(f"Processing individual frames using {parameters['movie_ali']}")
+                             pool.apply_async(
                                 align.align_stack_super,
                                 args=(
                                     frame_name,
@@ -661,6 +659,7 @@ def read_tilt_series(
             isfirst = True
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
             t.start()
+            logger.info(f"Processing individual frames using {parameters['movie_ali']}")
             import torch
             if torch.cuda.is_available() and 'motioncor' in parameters["movie_ali"]:
                 for tilt in sorted_tilts:

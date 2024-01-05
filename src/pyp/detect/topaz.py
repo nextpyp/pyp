@@ -23,7 +23,7 @@ def sprtrain(args):
 
     # generate binned versions of images
     files = np.loadtxt( os.path.join( "train", train_name + "_images.txt"), comments="image_name", dtype="str", ndmin=2)[:,0]
-    binning = args["detect_nn2d_bin"]
+    binning = args["detect_topaz2d_bin"]
 
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
 
@@ -52,8 +52,7 @@ def sprtrain(args):
                     args["slurm_verbose"]
                 )
             )
-    mpi.submit_function_to_workers(joint.bin_image, arguments, verbose=args["slurm_verbose"])
-
+    mpi.submit_function_to_workers(joint.bin_image, arguments, verbose=args["slurm_verbose"], silent=True)
 
     time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
     output_folder = os.path.join( train_folder, time_stamp )
@@ -87,7 +86,7 @@ def sprtrain(args):
     pretrained = "--pretrained" if args["detect_topaz2d_pretrained"] else "--no-pretrained"
     batchnorm = "on" if args['detect_topaz2d_bn'] else "off"
 
-    logger.info(f"Training model")
+    logger.info(f"Training topaz model")
     command = f"{utils.get_topaz_path()}/topaz train \
 -n {args['detect_topaz2d_num_particles']} \
 --num-workers={args['slurm_tasks']} \
