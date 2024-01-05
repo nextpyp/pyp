@@ -96,6 +96,7 @@ def process_virion_multiprocessing(
 
     # Run segmentation
     # USAGE: virus_segment_membrane input.mrc iradius oradius weight iterations variances output.mrc
+    check_env()
     weight = 1
     iterations = 500
     variances = 10

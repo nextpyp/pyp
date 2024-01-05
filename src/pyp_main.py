@@ -1636,7 +1636,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     t = timer.Timer(text="Virion and spike detection took: {}", logger=logger.info)
     t.start()
     # remove environment LD_LIBRARY_PATH conflicts
-    check_env()
+    
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
         name,
@@ -1658,6 +1658,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     tilt_metadata["spike_coordinates"] = spike_coordinates
 
+    check_env()
+    
     mpi_funcs, mpi_args = [ ], [ ]
     if ctffind_tilt:
         mpi_funcs.append(ctf_mod.plot_ctffind_tilt)
