@@ -181,7 +181,7 @@ def get_gain_reference(parameters, x, y):
         and len(project_params.resolve_path(parameters["gain_reference"])) > 0
     ):
         gain_file = project_params.resolve_path(parameters["gain_reference"])
-        if os.path.exists(gain_file):
+        if os.path.isfile(gain_file):
             gain_reference_file = gain_file
 
     # turn off function to automatically search for gain reference
