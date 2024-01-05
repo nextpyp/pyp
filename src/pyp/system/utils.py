@@ -81,8 +81,7 @@ def get_gpu_id():
     # if in standalone mode, retrieve gpu id from file
     else:
         try:
-            with open(get_gpu_file()) as f:
-                return int(f.read())
+            return os.environ["CUDA_VISIBLE_DEVICES"].split(',')[0]
         except:
             raise Exception("No GPU devices found")
 
