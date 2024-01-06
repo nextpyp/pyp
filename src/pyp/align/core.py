@@ -4572,7 +4572,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         running_average = 1
         maximum_shifts_in_A = 40.0
         minimum_shifts_in_A = 0.0
-        threads = parameters["slurm_tasks"] if "spr" in parameters["data_mode"].lower() else 1
+        threads = min(6,parameters["slurm_tasks"]) if "spr" in parameters["data_mode"].lower() else 1
 
         """
                 **   Welcome to Unblur   **
