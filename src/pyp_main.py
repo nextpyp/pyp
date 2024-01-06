@@ -1658,8 +1658,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     tilt_metadata["spike_coordinates"] = spike_coordinates
 
-    check_env()
-    
     mpi_funcs, mpi_args = [ ], [ ]
     if ctffind_tilt:
         mpi_funcs.append(ctf_mod.plot_ctffind_tilt)
