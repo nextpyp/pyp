@@ -19,7 +19,7 @@ from pyp.analysis.image import contrast_stretch
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import get_imod_path
+from pyp.system.utils import get_imod_path, check_env
 from pyp.utils import get_relative_path
 
 relative_path = str(get_relative_path(__file__))
@@ -1218,7 +1218,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     # generate pngs for the middle slices
     starting_slice, ending_slice = 0, num_z_slices - 1
     output_pattern = tomogram_flip.replace(".rec", "")
-
+    check_env()
     command = "{0}/bin/mrc2tif -z {1},{2} -p -S {3},{4} {5} {6}".format(
         get_imod_path(),
         starting_slice,
@@ -1318,6 +1318,7 @@ def tomo_montage(input, output, dimensions=384, verbose=False):
     os.chdir( working_dir )
 
     # generate pngs
+    check_env()
     output_pattern = Path(input).stem
     command = "{0}/bin/mrc2tif -p -S {1},{2} {3} {4}".format(
         get_imod_path(),
