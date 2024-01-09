@@ -1801,6 +1801,9 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
     """
     assert tiltang_file.exists(), f"Tilt angle file ({tiltang_file}) does not exist. "
     assert xf_file.exists(), f"Tiltseries alignment file ({xf_file}) does not exist. "
+    
+    flip = "`selected`"
+    no_flip = "`unselected`"
 
     tilt_angles = np.loadtxt(tiltang_file, ndmin=1, dtype=float)
     tilt_angles_modified = tilt_angles - angle_to_detect
@@ -1832,18 +1835,16 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
             estimated_tilt_angle, estimated_tilt_axis = f.read().strip().split()
             estimated_tilt_angle, estimated_tilt_axis = float(estimated_tilt_angle), float(estimated_tilt_axis)
             # logger.info(f"{estimated_tilt_axis}, {tilt_axis}, {estimated_tilt_angle}, {tilt_angle}")
-
+            
+            handedness = no_flip
             if abs(estimated_tilt_angle - abs(tilt_angle)) < tilt_angle_error:    
                 if tilt_angle > 0:
                     if abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error:
-                        logger.info("`Invert CTF handedness` should be `selected` in the refinement.")
-                    else:
-                        logger.info("`Invert CTF handedness` should be `unselected` in the refinement.")
+                        handedness = flip
                 else:
-                    if abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error:
-                        logger.info("`Invert CTF handedness` should be `unselected` in the refinement.")
-                    else:
-                        logger.info("`Invert CTF handedness` should be `selected` in the refinement.")
+                    if abs(estimated_tilt_axis - tilt_axis) > tilt_axis_error:
+                        handedness = flip
+                logger.warning(f"`Invert CTF handedness` should be {handedness} in the refinement.")
             else:
                 logger.warning(f"Estimated tilt angle ({estimated_tilt_angle}) is too far off from the real tilt angle ({tilt_angles[index]}). Skipping detecting handedness...")
     else:
