@@ -858,7 +858,7 @@ def ctffind_tomo_estimate(name, parameters):
                         parameters,
                         counter,
                         tilt_angle,
-                        -(90 + tilt_axis),
+                        -90 + tilt_axis,
                         mean_df,
                         tolerance,
                     )
@@ -1444,7 +1444,15 @@ EOF
             raise Exception("Do not recognize the ctffind command")
 
         # suppress long log
-        [ output, error ] = local_run.run_shell_command(command, verbose=False)
+        [output, error] = local_run.run_shell_command(command, verbose=False)
+
+        with open(logfile, 'r') as f:
+            for line in f.readlines():
+                if "Tilt_axis, tilt angle" in line:
+                    estimated_tilt_axis, estimated_tilt_angle = line.split(":")[1].replace("degrees", "").replace(" ", "").split(",")
+                    estimated_tilt_axis, estimated_tilt_angle = float(estimated_tilt_axis), float(estimated_tilt_angle)
+                    with open(f"../{imagefile}_handedness.txt", "w") as f:
+                        f.write(f"{estimated_tilt_angle} {estimated_tilt_axis}")
 
         if parameters["slurm_verbose"] and imagefile.endswith('_0000'):
             with open(logfile) as f:
@@ -1772,3 +1780,71 @@ EOF
     shutil.copy2("%s_power.mrc" % name, "power_for_ctffind3.mrc")
 
     return
+
+def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_detect: float = 30.0, tilt_axis_error: float = 90.0, tilt_angle_error = 10.0):
+    """detect_handedness Detect tilt handedness by checking the tilt geometry estimated by ctffind_tilt
+
+    Parameters
+    ----------
+    name : str
+        Name of tilt-series
+    tiltang_file : Path
+        Path to tilt angle file (*.tlt)
+    xf_file : Path
+        Path to tilt alignment file (*.xf)
+    angle_to_detect : float, optional
+        Tilt angle to detect the handedness, usually angle between 10 to 50 or -10 to -50 works better, by default 30.0
+    tilt_axis_error : float, optional
+        Tolerance of estimated tilt axis angle, by default 90.0
+    tilt_angle_error : float, optional
+        Tolerance of estimated tilt angle, by default 10.0
+    """
+    assert tiltang_file.exists(), f"Tilt angle file ({tiltang_file}) does not exist. "
+    assert xf_file.exists(), f"Tiltseries alignment file ({xf_file}) does not exist. "
+
+    tilt_angles = np.loadtxt(tiltang_file, ndmin=1, dtype=float)
+    tilt_angles_modified = tilt_angles - angle_to_detect
+    index = np.argmin(abs(tilt_angles_modified.ravel()))
+
+    logger.info(f"Using {tilt_angles[index]} to detect tilt handedness...")
+
+    tilt_axis = float(
+                    [
+                        line.split("\n")
+                        for line in subprocess.check_output(
+                            "%s/bin/xf2rotmagstr %s" % (get_imod_path(), name + ".xf"),
+                            stderr=subprocess.STDOUT,
+                            shell=True,
+                            text=True,
+                        ).split("\n")
+                        if "rot=" in line
+                    ][index][0].split()[2][:-1]
+                )
+    tilt_axis = -90 + tilt_axis
+    tilt_angle = tilt_angles[index]
+
+    # produced by running ctffind_tilt
+    estimated_tilt = Path(f"{name}_{index:04d}_handedness.txt")
+
+    # NOTE: tilt angle is always positive, check tilt axis
+    if estimated_tilt.exists():
+        with open(estimated_tilt, "r") as f:
+            estimated_tilt_angle, estimated_tilt_axis = f.read().strip().split()
+            estimated_tilt_angle, estimated_tilt_axis = float(estimated_tilt_angle), float(estimated_tilt_axis)
+            # logger.info(f"{estimated_tilt_axis}, {tilt_axis}, {estimated_tilt_angle}, {tilt_angle}")
+
+            if abs(estimated_tilt_angle - abs(tilt_angle)) < tilt_angle_error:    
+                if tilt_angle > 0:
+                    if abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error:
+                        logger.info("`Invert CTF handedness` should be `selected` in the refinement.")
+                    else:
+                        logger.info("`Invert CTF handedness` should be `unselected` in the refinement.")
+                else:
+                    if abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error:
+                        logger.info("`Invert CTF handedness` should be `unselected` in the refinement.")
+                    else:
+                        logger.info("`Invert CTF handedness` should be `selected` in the refinement.")
+            else:
+                logger.warning(f"Estimated tilt angle ({estimated_tilt_angle}) is too far off from the real tilt angle ({tilt_angles[index]}). Skipping detecting handedness...")
+    else:
+        logger.warning(f"{estimated_tilt} does not exist. Skipping detecting handedness. ")

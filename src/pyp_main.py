@@ -1576,6 +1576,9 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
         t.stop()
 
+    if ctffind_tilt:
+        ctf_mod.detect_handedness(name=name, tiltang_file=Path(f"{name}.tlt"), xf_file=Path(f"{name}.xf"), angle_to_detect=30.0)
+
     # package CTF metadata into dictionary
     ctf_profiles = {}
     ctf_values = {}

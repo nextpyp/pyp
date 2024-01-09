@@ -12,5 +12,6 @@ from .core import (
     run_ctffind_tilt,
     run_tomoctffind,
     run_tomops,
-    plot_ctffind_tilt
+    plot_ctffind_tilt,
+    detect_handedness,
 )
