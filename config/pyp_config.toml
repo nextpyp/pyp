@@ -209,7 +209,7 @@ hidden = true
 
 [tabs.scope.tilt_axis]
 name = "Tilt-axis angle (degrees)"
-description = "Approximate orientation of tilt-axis with respect to the x-axis (counterclockwise positive)"
+description = "Approximate orientation of tilt-axis with respect to the x-axis (counterclockwise positive). Use 90.0 if tilt-series are already aligned."
 type = "float"
 default = 0.0
 hidden = [ "spr_import_raw", "spr_import_star", "stream_spr" ]
@@ -547,6 +547,20 @@ description = "Use local defocus estimation"
 type = "bool"
 default = false
 hidden = true
+
+[tabs.ctf.handedness_mintilt]
+name = "Min tilt to detect tilt handedness"
+description = "Positive value to determine lower bound of tilt range. Both negative and positive range will be used. "
+type = "float"
+default = 10.0
+hidden = [ "stream_spr", "spr_pre_process" ]
+
+[tabs.ctf.handedness_maxtilt]
+name = "Max tilt to detect tilt handedness"
+description = "Positive value to determine upper bound of tilt range. Both negative and positive range will be used. "
+type = "float"
+default = 50.0
+hidden = [ "stream_spr", "spr_pre_process" ]
 
 # Particle detection parameters
 
