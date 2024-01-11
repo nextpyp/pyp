@@ -363,7 +363,7 @@ This section is used to configure properties of the job launcher in non-cluster 
 |
 
 ``availableCpus``
-~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 :Type: int
 :Required: no
@@ -371,10 +371,43 @@ This section is used to configure properties of the job launcher in non-cluster 
 :Description:
 	The number of CPUs the standalone job launcher will use for jobs.
 	You may want to set this to something less than the maximum your system supports,
-	so there are always some CPU resources reserved to run the website, reverse proxy, and database processes.
+	so there are always some CPU resources reserved to run the website, reverse proxy, database processes,
+	and anything else your system needs to run.
 :Examples:
 	``availableCpus = 4``
 
+|
+
+``availabileMemoryGiB``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+:Type: int
+:Required: no
+:Default: 80% of the available total memory
+:Description:
+	The amount of memory, in GiB, the standalone job launcher will use for jobs.
+	You may want to set this to something less than the maximum your system supports,
+	so there is always some leftover memory to run the website, reverse proxy, database processes,
+	and anything else your system needs to run.
+:Examples:
+	``availabileMemoryGiB = 4``
+
+|
+
+``availableGpus``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+:Type: int
+:Required: no
+:Default: The total number of NVidia GPUs in your system
+:Description:
+	The number of NVidia GPUs the standalone job launcher will use for jobs.
+	AMD, Intel, and other GPU types aren't supported yet,
+	unless they somehow are visible to and usable by the NVidia Cuda runtime.
+:Examples:
+	``availableGpus = 4``
+
+|
 
 StreamPYP Section
 -----------------

@@ -81,8 +81,7 @@ def get_gpu_id():
     # if in standalone mode, retrieve gpu id from file
     else:
         try:
-            with open(get_gpu_file()) as f:
-                return int(f.read())
+            return os.environ["CUDA_VISIBLE_DEVICES"].split(',')[0]
         except:
             raise Exception("No GPU devices found")
 
@@ -194,6 +193,11 @@ def is_atrf_bad():
     return False
 
 
+def check_env():
+     # set environment to avoid potential lib conflicts
+    if os.environ.get("LD_LIBRARY_PATH") and  "/.singularity.d/libs" in os.environ["LD_LIBRARY_PATH"]:
+        current_env = os.environ["LD_LIBRARY_PATH"]
+        os.environ["LD_LIBRARY_PATH"] = current_env.replace("/.singularity.d/libs", "")
 
 # detect if this is biowulf2
 def is_biowulf2():

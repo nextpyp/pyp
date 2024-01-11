@@ -181,7 +181,7 @@ def get_gain_reference(parameters, x, y):
         and len(project_params.resolve_path(parameters["gain_reference"])) > 0
     ):
         gain_file = project_params.resolve_path(parameters["gain_reference"])
-        if os.path.exists(gain_file):
+        if os.path.isfile(gain_file):
             gain_reference_file = gain_file
 
     # turn off function to automatically search for gain reference
@@ -218,6 +218,14 @@ def get_gain_reference(parameters, x, y):
         else:
             logger.warning("Can't recognize the gain reference extension")
 
+        if "gain_fliph" in parameters.keys() and parameters["gain_fliph"]:
+            logger.info("Applying horizontal flip to gain reference")
+            gain_reference = numpy.fliplr(gain_reference)
+
+        if "gain_flipv" in parameters.keys() and parameters["gain_flipv"]:
+            logger.info("Applying vertical flip to gain reference")
+            gain_reference = numpy.flipud(gain_reference)
+
         if (
             "gain_rotation" in parameters.keys()
             and abs(int(parameters["gain_rotation"])) > 0
@@ -227,14 +235,6 @@ def get_gain_reference(parameters, x, y):
                 % (90 * parameters["gain_rotation"])
             )
             gain_reference = numpy.rot90(gain_reference, parameters["gain_rotation"])
-
-        if "gain_fliph" in parameters.keys() and parameters["gain_fliph"]:
-            logger.info("Applying horizontal flip to gain reference")
-            gain_reference = numpy.fliplr(gain_reference)
-
-        if "gain_flipv" in parameters.keys() and parameters["gain_flipv"]:
-            logger.info("Applying vertical flip to gain reference")
-            gain_reference = numpy.flipud(gain_reference)
 
         logger.info(
             "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f",

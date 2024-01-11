@@ -34,7 +34,6 @@ import toml
 from pathlib import Path
 from uuid import uuid4
 import numpy as np
-from filelock import Timeout, FileLock
 
 from pyp import align
 from pyp import ctf as ctf_mod
@@ -100,7 +99,7 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode
+from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode, check_env
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
@@ -918,8 +917,13 @@ def split(parameters):
                     partition_name = parameters["slurm_queue_gpu"]
                 except:
                     raise Exception("No GPU partitions are configured for this instance")
+            elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"]==None:
+                partition_name = parameters["slurm_queue_gpu"]
+            else:
+                raise Exception("The jobs need GPUs, but GPU configuration was not set properly")
+
             if not Web.exists:
-                partition_name += " --gres=gpu:RTXA5000:1 "
+                partition_name += " --gres=gpu:1 "
             job_name = "Split (gpu)"
 
         else:
@@ -929,10 +933,6 @@ def split(parameters):
         if ( tomo_train or spr_train ):
             if os.path.exists(os.path.join("train","current_list.txt")):
                 train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
-
-                partition_name = parameters["slurm_queue_gpu"]
-                if not Web.exists:
-                    partition_name += " --gres=gpu:1 "
 
                 # submit swarm jobs
                 id_train = slurm.submit_jobs(
@@ -1641,6 +1641,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     t = timer.Timer(text="Virion and spike detection took: {}", logger=logger.info)
     t.start()
+    # remove environment LD_LIBRARY_PATH conflicts
+    
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
         name,
@@ -3478,24 +3480,7 @@ if __name__ == "__main__":
 
                 args = project_params.parse_arguments("tomoswarm")
 
-                if needs_gpu(args) and not slurm_gpu_mode():
-                    done = False
-                    for d in get_gpu_devices():
-                        lock_file = os.path.join(Path(os.environ["PYP_SCRATCH"]).parents[0],f"gpu_device_{d:02d}.lock")
-                        lock = FileLock(lock_file, timeout=1)
-                        try:
-                            with lock.acquire(timeout=10):
-                                with open(get_gpu_file()) as f:
-                                    f.write(d)
-                                tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
-                                done = True
-                        except Timeout:
-                            print("Another instance of this application currently holds the lock.")
-                            pass
-                    if not done:
-                        raise Exception("No GPU devices found")
-                else:
-                    tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
+                tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
                 logger.info("PYP (tomoswarm) finished successfully")
             except:
@@ -4660,6 +4645,10 @@ EOF
                 # clean up local scratch
                 if os.path.exists(os.environ["TMPDIR"]):
                     shutil.rmtree(os.environ["TMPDIR"])
+
+                # clean up local scratch
+                if os.path.exists(os.environ["PYP_SCRATCH"]):
+                    shutil.rmtree(os.environ["PYP_SCRATCH"])
 
                 logger.info("PYP (launch) finished successfully")
 
