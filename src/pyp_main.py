@@ -1577,7 +1577,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         t.stop()
 
     if ctffind_tilt:
-        ctf_mod.detect_handedness(name=name, tiltang_file=Path(f"{name}.tlt"), xf_file=Path(f"{name}.xf"), angle_to_detect=30.0)
+        ctf_mod.detect_handedness_tilt_range(name=name,
+                                             tilt_angles=tilt_angles, 
+                                             lower_tilt=parameters["ctf_handedness_mintilt"], 
+                                             upper_tilt=parameters["ctf_handedness_maxtilt"],)
+
 
     # package CTF metadata into dictionary
     ctf_profiles = {}

@@ -548,6 +548,20 @@ type = "bool"
 default = false
 hidden = true
 
+[tabs.ctf.handedness_mintilt]
+name = "Min tilt to detect tilt handedness"
+description = "Positive value to determine lower bound of tilt range. Both negative and positive range will be used. "
+type = "float"
+default = 10.0
+hidden = [ "stream_spr", "spr_pre_process" ]
+
+[tabs.ctf.handedness_maxtilt]
+name = "Max tilt to detect tilt handedness"
+description = "Positive value to determine upper bound of tilt range. Both negative and positive range will be used. "
+type = "float"
+default = 50.0
+hidden = [ "stream_spr", "spr_pre_process" ]
+
 # Particle detection parameters
 
 [tabs.detect]

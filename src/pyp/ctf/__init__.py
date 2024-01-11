@@ -14,4 +14,5 @@ from .core import (
     run_tomops,
     plot_ctffind_tilt,
     detect_handedness,
+    detect_handedness_tilt_range,
 )

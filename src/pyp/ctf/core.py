@@ -1802,8 +1802,8 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
     assert tiltang_file.exists(), f"Tilt angle file ({tiltang_file}) does not exist. "
     assert xf_file.exists(), f"Tiltseries alignment file ({xf_file}) does not exist. "
     
-    flip = "`selected`"
-    no_flip = "`unselected`"
+    FLIP = True
+    NO_FLIP = False
 
     tilt_angles = np.loadtxt(tiltang_file, ndmin=1, dtype=float)
     tilt_angles_modified = tilt_angles - angle_to_detect
@@ -1836,16 +1836,54 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
             estimated_tilt_angle, estimated_tilt_axis = float(estimated_tilt_angle), float(estimated_tilt_axis)
             # logger.info(f"{estimated_tilt_axis}, {tilt_axis}, {estimated_tilt_angle}, {tilt_angle}")
             
-            handedness = no_flip
+            handedness = NO_FLIP
             if abs(estimated_tilt_angle - abs(tilt_angle)) < tilt_angle_error:    
                 if tilt_angle > 0:
                     if abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error:
-                        handedness = flip
+                        handedness = FLIP
                 else:
                     if abs(estimated_tilt_axis - tilt_axis) > tilt_axis_error:
-                        handedness = flip
-                logger.warning(f"`Invert CTF handedness` should be {handedness} in the refinement.")
+                        handedness = FLIP
+                return handedness
             else:
-                logger.warning(f"Estimated tilt angle ({estimated_tilt_angle}) is too far off from the real tilt angle ({tilt_angles[index]}). Skipping detecting handedness...")
+                logger.warning(f"Estimated tilt angle ({estimated_tilt_angle}) is too far off from the real tilt angle ({tilt_angles[index]}). Skipping detecting handedness using tilt angle {angle_to_detect}...")    
     else:
-        logger.warning(f"{estimated_tilt} does not exist. Skipping detecting handedness. ")
+        logger.warning(f"{estimated_tilt} does not exist. Skipping detecting handedness using tilt angle {angle_to_detect}... ")
+
+    return None
+
+
+def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt: float = 10.0, upper_tilt: float = 50.0): 
+    """ Detect the tilt handedness using multiple tilts 
+        Lower bound and upper bound should be all positive. 
+        For example, using lower_tilt == 10 and upper_tilt == 50, images within +10 to +50 and -10 to -50 will be used.  
+
+    Args:
+        name (str): Name of tilt-series
+        tilt_angles (np.ndarray): tilt angles
+        lower_tilt (float, optional): Lower tilt in the range. Defaults to 10.0.
+        upper_tilt (float, optional): Upper tilt in the range. Defaults to 50.0.
+    """
+
+    lower_tilt = abs(lower_tilt)
+    upper_tilt = abs(upper_tilt)
+    assert lower_tilt <= upper_tilt, f"Lower tilt ({lower_tilt}) needs to be <= upper tilt ({upper_tilt})"
+
+    candidates = []
+
+    for angle in tilt_angles:
+        if (lower_tilt <= angle and angle <= upper_tilt) or (-upper_tilt <= angle and angle <= -lower_tilt):
+            candidates.append(detect_handedness(name=name, 
+                                                tiltang_file=Path(f"{name}.tlt"), 
+                                                xf_file=Path(f"{name}.xf"), 
+                                                angle_to_detect=angle,
+                                                ))
+    # remove tilted images that can be used 
+    candidates = [_ for _ in candidates if _ is not None]
+    if len(candidates) > 0:
+        candidates.sort() # False is the first element after sorting
+        median = candidates[math.ceil(len(candidates)/2)]
+        handedness = "`selected`" if median is True else "`unselected`"
+        logger.warning(f"`Invert CTF handedness` should be {handedness} in the refinement.")
+    else:
+        logger.warning("Do not have enough tilt to detect handedness.")
