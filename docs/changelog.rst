@@ -37,6 +37,10 @@ v0.5.4 (1/12/2024)
 
    :fa:`bug,text-danger` Fix bug when exporting sub-tomograms for use in external programs.
 
+   :fa:`bug,text-danger` Update systemd script to improve robustness during restarts.
+
+   :fa:`bug,text-danger` Fix issues with cancellation of jobs to improve robustness.
+
    :fa:`bug,text-danger` Fix discrepancy with gain reference rotation/flips between data import and pre-processing blocks.
 
 v0.5.3 (11/25/2023)
