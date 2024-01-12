@@ -106,7 +106,7 @@ class Picker():
             if clean and inside:
                 boxes.append([z,y,x])
 
-        logger.info(str(len(boxes)) + " initial positions found")
+        logger.info(f"{len(boxes):,} initial positions found")
 
         if show:
             f = open('boxes.txt', 'w')
@@ -163,7 +163,7 @@ class Picker():
         # Saving coordinates in spk format and swapping Y-Z
         run_shell_command(get_imod_path()+'/bin/point2model boxs.txt '+self.name+'.mod -sphere %s' % circle,  verbose=False)
         run_shell_command(get_imod_path()+'/bin/imodtrans -Y -T ' +self.name+ '.mod ' + self.name + ".spk", verbose=False )
-        logger.info(str(len(boxs)) + " particles detected")
+        logger.info(f"{len(boxs):,} particles detected")
 
         if show:
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y bp.mrc "+self.name+".spk")
