@@ -1834,9 +1834,9 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
             estimated_tilt_angle, estimated_tilt_axis = f.read().strip().split()
             estimated_tilt_angle, estimated_tilt_axis = float(estimated_tilt_angle), float(estimated_tilt_axis)
             # logger.info(f"{estimated_tilt_axis}, {tilt_axis}, {estimated_tilt_angle}, {tilt_angle}")
-            
+
             handedness = NO_FLIP
-            if abs(estimated_tilt_angle - abs(tilt_angle)) < tilt_angle_error:    
+            if abs(estimated_tilt_angle - abs(tilt_angle)) < tilt_angle_error:
                 if tilt_angle > 0:
                     if abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error:
                         handedness = FLIP
@@ -1845,7 +1845,7 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
                         handedness = FLIP
                 return handedness
             else:
-                logger.warning(f"Estimated tilt angle ({estimated_tilt_angle}) is too far off from the real tilt angle ({tilt_angles[index]}). Skipping detecting handedness using tilt angle {angle_to_detect}...")    
+                logger.warning(f"Estimated tilt-angle ({estimated_tilt_angle}) is very different from expected value ({tilt_angles[index]}). Skip handedness detection for this tilt")
     else:
         logger.warning(f"{estimated_tilt} does not exist. Skipping detecting handedness using tilt angle {angle_to_detect}... ")
 
@@ -1883,6 +1883,6 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
         candidates.sort() # False is the first element after sorting
         median = candidates[math.ceil(len(candidates)/2)]
         handedness = "" if median is True else "NOT "
-        logger.warning(f"Invert CTF handedness option should {handedness}BE selected during refinement")
+        logger.warning(f"Invert CTF handedness option should {handedness}be selected during refinement")
     else:
         logger.warning("Not enough tilts to detect CTF handedness")

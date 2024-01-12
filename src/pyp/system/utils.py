@@ -75,15 +75,7 @@ def slurm_gpu_mode():
     return "SLURM_JOB_GPUS" in os.environ or "SLURM_STEP_GPUS" in os.environ
 
 def get_gpu_id():
-    # if using slurm, follow the default device ID (assume we always use a single GPU)
-    if slurm_gpu_mode():
-        return 0
-    # if in standalone mode, retrieve gpu id from file
-    else:
-        try:
-            return os.environ["CUDA_VISIBLE_DEVICES"].split(',')[0]
-        except:
-            raise Exception("No GPU devices found")
+    return 0
 
 def get_gpu_file():
     return os.path.join(os.environ["PYP_SCRATCH"],"gpu_device.id")

@@ -23,23 +23,21 @@ v0.5.4 (1/12/2024)
 
    :fa:`plus-square,text-primary` Display version number and amount of allocated memory at the beginning of every job.
 
-   :fa:`plus-square,text-primary` Change default memory allocation for launch task to 4GB and add Resources tab to data import blocks.
+   :fa:`plus-square,text-primary` Change default memory allocation for launch task to 4GB and add Resources tab to all data import blocks.
 
-   :fa:`plus-square,text-primary` Simplify Resources tab for all blocks by hiding unnecessary parameters.
-
-   :fa:`plus-square,text-primary` Allow use of pre-computed results from reference-based refinement in coarse refinement blocks.
+   :fa:`plus-square,text-primary` Simplify Resources tab by hiding unnecessary parameters depending on the block type.
 
    :fa:`bug,text-danger` Fix OOM error when running constrained refinement using a single thread.
 
-   :fa:`bug,text-danger` Fix error in particle filtering blocks when no particles were left on a given micrograph/tilt-series.
+   :fa:`bug,text-danger` Fix error in particle filtering blocks when no particles are left in a given micrograph/tilt-series.
 
    :fa:`bug,text-danger` Fix issue in tomography sessions when .mdoc files are not used to import metadata.
 
    :fa:`bug,text-danger` Fix bug when exporting sub-tomograms for use in external programs.
 
-   :fa:`bug,text-danger` Update systemd script to improve robustness during restarts.
+   :fa:`bug,text-danger` Update systemd script to improve robustness during program restart.
 
-   :fa:`bug,text-danger` Fix issues with cancellation of jobs to improve robustness.
+   :fa:`bug,text-danger` Fix issues with cancellation of jobs in standalone mode.
 
    :fa:`bug,text-danger` Fix discrepancy with gain reference rotation/flips between data import and pre-processing blocks.
 
