@@ -40,7 +40,7 @@ The next command does data pre-processing consisting of movie frame alignment, t
         -data_mode tomo                             \
         -scope_pixel 2.1                            \
         -scope_voltage 300                          \
-        -scope_tilt_axis 0.0                        \
+        -scope_tilt_axis 90.0                       \
         -movie_no_frames                            \
         -ctf_max_res 5.0                            \
         -tomo_rec_binning 12                        \
