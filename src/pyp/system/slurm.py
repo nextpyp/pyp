@@ -358,6 +358,7 @@ def submit_jobs(
     dependencies="",
     tasks_per_arr=1,
     csp_no_stacks=False,
+    use_gpu=False,
 ):
     """Submit jobs to batch system"""
 
@@ -415,6 +416,7 @@ def submit_jobs(
             dependencies,
             tasks_per_arr,
             csp_no_stacks,
+            use_gpu,
         )
     else:
         id = jobs.submit_script(
@@ -428,6 +430,7 @@ def submit_jobs(
             walltime,
             dependencies,
             is_script,
+            use_gpu,
         )
 
     logger.info("Submitting {0} job(s) ({1})".format(procs, id.strip()))

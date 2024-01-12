@@ -948,6 +948,7 @@ def split(parameters):
                     walltime=parameters["slurm_merge_walltime"],
                     tasks_per_arr=parameters["slurm_bundle_size"],
                     csp_no_stacks=parameters["csp_no_stacks"],
+                    use_gpu=gpu,
                 ).strip()
             else:
                 raise Exception("Please select a list of coordinates for training")
@@ -968,6 +969,7 @@ def split(parameters):
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 dependencies=id_train,
                 csp_no_stacks=parameters["csp_no_stacks"],
+                use_gpu=gpu,
             ).strip()
 
             # submit merge job dependent on swarm jobs
