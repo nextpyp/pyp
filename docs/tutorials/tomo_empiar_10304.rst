@@ -77,6 +77,8 @@ Step 2: Import raw tilt-series
 
         - Set ``Acceleration voltage (kV)`` to 300
 
+        - Set ``Tilt-axis angle (degrees)`` to 90.0
+
     * Click :badge:`Save,badge-primary` and the new block will appear on the project page
 
     * The block is in the modified state (indicated by the :fa:`asterisk` sign) and is ready to be executed

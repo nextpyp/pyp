@@ -1260,11 +1260,9 @@ def refineCtftilt(
         math.inf,
     )
 
-    ctffind_command = f"{get_ctffind_tilt_path()}/ctffind"
 
     rootname = Path(imagefile).stem
     best_output_spectra = rootname + "_ctffind4.mrc"
-    best_logfile = "../" + rootname + "_ctffind4.log"
     best_avrot = rootname + "_ctffind4_avrot.txt"
     best_txt = Path(best_output_spectra).stem + ".txt"
 
@@ -1331,8 +1329,6 @@ Desired number of parallel threads [1]             :
 
     output_spectra_tilt = rootname + "_tilt.mrc"
     logfile_tilt = rootname + "_tilt.log"
-    if not parameters["slurm_verbose"]:
-        logfile_tilt = "/dev/null"
     avrot_tilt = Path(output_spectra_tilt).stem + "_avrot.txt"
 
     output_spectra_notilt = rootname + "_notilt.mrc"
@@ -1446,13 +1442,18 @@ EOF
         # suppress long log
         [output, error] = local_run.run_shell_command(command, verbose=False)
 
+        assert Path(logfile).exists(), f"{logfile} does not exist. CTFFIND_TILT fails to run."
+
         with open(logfile, 'r') as f:
+            estimated_tilt_axis, estimated_tilt_angle = None, None
             for line in f.readlines():
                 if "Tilt_axis, tilt angle" in line:
                     estimated_tilt_axis, estimated_tilt_angle = line.split(":")[1].replace("degrees", "").replace(" ", "").split(",")
                     estimated_tilt_axis, estimated_tilt_angle = float(estimated_tilt_axis), float(estimated_tilt_angle)
                     with open(f"../{imagefile}_handedness.txt", "w") as f:
                         f.write(f"{estimated_tilt_angle} {estimated_tilt_axis}")
+                    break
+            assert estimated_tilt_angle is not None and estimated_tilt_axis is not None, "Ctffind_tilt logfile does not contain estimated tilt geometry. Please check. "
 
         if parameters["slurm_verbose"] and imagefile.endswith('_0000'):
             with open(logfile) as f:
