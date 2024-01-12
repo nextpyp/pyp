@@ -719,7 +719,7 @@ def ctffind_tomo_estimate(name, parameters):
         tiltang = np.loadtxt(rawtilt, dtype='float', ndmin=0)
         centralz = np.argmin(abs(tiltang.ravel()))
         start_end_section = f"{int(centralz) + 1},{int(centralz) + 1}"
-        logger.info("Central-Z for initial ctf estimation is " + start_end_section)
+        logger.info("Central z-slice for initial CTF estimation is " + start_end_section)
     else:
         z = mrc.readHeaderFromFile(name + ".mrc")["nz"]
         start_end_section = f"{int(z/2)},{int(z/2)}"
