@@ -13,7 +13,9 @@ v0.5.4 (1/12/2024)
 
    :fa:`star,text-success` Add `Topaz <https://github.com/tbepler/topaz>`_ wrapper for 2D particle picking and 3D denoising (GPU recommended).
 
-   :fa:`star,text-success` Produce .bild files after each refinement iteration for 3D visualization in Chimera.
+   :fa:`star,text-success` Produce .bild files after each refinement iteration for 3D visualization in Chimera/ChimeraX.
+
+   :fa:`star,text-success` Automatic determination of CTF handedness during pre-processing of tilt-series.
 
    :fa:`plus-square,text-primary` Allow mix-and-match of IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
 
