@@ -135,7 +135,7 @@ class Picker():
             particles_metrics[p,0] =foreground.std()
             particles_metrics[p,1] =background.std()
         stdmean,stdstd=particles_metrics[:,0].mean(),particles_metrics[:,0].std()
-        logger.info("Pre-filtering stdmean: "+str(stdmean)+", stdstd: "+str(stdstd))
+        logger.info(f"Pre-filtering image statistics: mean = {stdmean:.2f}, std = {stdstd:.2f}")
 
         stdthreshold=stdmean+stdstd*stdtimes
         return particles_metrics,stdthreshold
