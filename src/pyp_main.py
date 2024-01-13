@@ -903,7 +903,9 @@ def split(parameters):
             try:
                 parameters["slurm_queue"] = config["slurm"]["queues"][0]
             except:
-                raise Exception("No CPU partitions are configured for this instance")
+                logger.warning("No CPU partitions configured for this instance?")
+                parameters["slurm_queue"] = ""
+                pass
 
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
@@ -917,11 +919,12 @@ def split(parameters):
                         parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
                         partition_name = parameters["slurm_queue_gpu"]
                     except:
-                        raise Exception("No GPU partitions are configured for this instance")
-                elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"]==None:
+                        logger.warning("No GPU partitions configured for this instance?")
+                        pass
+                elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"] == None:
                     partition_name = parameters["slurm_queue_gpu"]
                 else:
-                    raise Exception("The jobs need GPUs, but GPU configuration was not set properly")
+                    logger.warning("No GPU partitions configured for this instance?")
 
             if not Web.exists:
                 partition_name += " --gres=gpu:1 "
