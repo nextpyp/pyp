@@ -2136,7 +2136,7 @@ EOF
 
     # pre-load magnification matrix
     [output, error] = local_run.run_shell_command(
-        "%s/bin/xf2rotmagstr %s" % (get_imod_path(), inversexf),
+        "%s/bin/xf2rotmagstr %s" % (get_imod_path(), inversexf), verbose=False
     )
     xf_rot_mag = output.split("\n")
 
