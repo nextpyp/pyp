@@ -670,7 +670,7 @@ def get_new_input_list(parameters, inputlist):
                     box_size = boxx.shape[0]
 
             if not boxx_exists:
-                logger.warning(f"boxx file not found. Box size = {box_size}. Removing {sname} from list")
+                logger.warning(f"{sname} has no particles, removing from list")
             else:
                 newinput_dict.update({sname:box_size})
         newinputlist = sorted(newinput_dict, key=newinput_dict.get, reverse=True)
