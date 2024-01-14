@@ -284,7 +284,7 @@ def tomoeval(args,name):
 
     imgs_file = "images.txt"
     with open( imgs_file, 'w' ) as f:
-        f.write("image_name\tpath\n")
+        f.write("image_name\trec_path\n")
         f.write( name + "\t" + os.path.join( project_folder, 'mrc', name + ".rec") + "\n" )
 
     test_file = "testing.txt"
