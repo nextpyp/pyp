@@ -2359,7 +2359,7 @@ def local_merge_reconstruction(name=""):
     if len(matchfiles_1) == 1:
         return 1
 
-    assert (len(matchfiles_1) > 0 and len(matchfiles_1) == len(matchfiles_2)), f"Number of intermediate reconstructions does not match (half1: {len(matchfiles_1)} is NOT half2: {len(matchfiles_2)})"
+    assert (len(matchfiles_1) > 0 and len(matchfiles_1) == len(matchfiles_2)), f"Number of intermediate reconstructions does not match (half1: {len(matchfiles_1)} != half2: {len(matchfiles_2)})"
 
     renamed_1 = [ f"{dummy_name}_map1_n{idx+1}.mrc" for idx, f in enumerate(matchfiles_1) ]
     renamed_2 = [ f"{dummy_name}_map2_n{idx+1}.mrc" for idx, f in enumerate(matchfiles_2) ]
@@ -2383,7 +2383,7 @@ def local_merge_reconstruction(name=""):
 
     local_run.run_shell_command(command, verbose=False)
 
-    assert (os.path.exists(output_1)), "Local merge3d does not run successfully, please check"
+    assert (os.path.exists(output_1)), "Local merge3d failed, stopping"
     # remove previous intermediates reconstruction 
     for dump_1, dump_2 in zip(renamed_1, renamed_2):
         os.remove(dump_1)

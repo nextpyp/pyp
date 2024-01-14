@@ -5256,7 +5256,7 @@ EOF
             # Fiducial-less alignment
 
             logger.info(
-                "Align tilt-series using patch tracking (IMOD/imodchopconts)"
+                "Align tilt-series using patch tracking (IMOD)"
             )
 
             max_size = min(
