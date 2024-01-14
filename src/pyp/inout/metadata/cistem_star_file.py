@@ -1,5 +1,7 @@
 import numpy as np
+import numpy.lib.recfunctions as rf
 
+import sys
 from pathlib import Path
 
 
@@ -65,6 +67,7 @@ SIZE_FLOAT = 4
 SIZE_CHAR = 1
 
 # https://numpy.org/devdocs/reference/arrays.dtypes.html
+# only used by from_binary()
 MAPPING = {
     INTEGER: (SIZE_INT, 'i'),
     FLOAT: (SIZE_FLOAT, 'f'),
@@ -137,28 +140,28 @@ def check_valid(byte_string: str):
 
 class Parameters:
 
-    input_file: str = None
-    data: np.ndarray = None
-    num_columns: int = -1
-    num_rows: int = -1
-    active_columns = []
-    
     def __init__(self, input_file: str):
         
+        self.input_file: str = None
+        self.data: np.ndarray = None
+        self.num_columns: int = -1
+        self.num_rows: int = -1
+        self.active_columns = []
+
         assert Path(input_file).exists(), f"{input_file} does not exist"
 
         if input_file.endswith(".cistem"):
-            self.data = self.from_binary(input_binary=input_file)
+            self.from_binary(input_binary=input_file)
         elif input_file.endswith(".star"):
-            self.data = self.from_star(input_star=input_file)
+            self.from_star(input_star=input_file)
         else:
             raise Exception(f"{input_file} file extension not recognized.")
 
         self.input_file = input_file
 
-    @classmethod  
+    @classmethod
     def from_file(cls, input_file: str): 
-        return Parameters(input_file=input_file)
+        return cls(input_file=input_file)
 
     def from_binary(self, input_binary):
         
@@ -179,25 +182,60 @@ class Parameters:
                     size_data_type, str_data_type = data_type[0], data_type[1]
                     self.active_columns.append((str(byte_str_order), f'<{str_data_type}{size_data_type}'))
                 else:
-                    raise Exception(f"Binary file contains unrecognized header.")
+                    raise Exception(f"Binary file contains unrecognized header. {byte_str_order}")
+         
+            assert len(self.active_columns) > 0, f"No column detected. Binary file might be broken."
 
             # 3. read the data and parse them into numpy array
             byte_str = read_byte_str(f)
             dt_data = np.dtype(self.active_columns)
-            self.data = np.frombuffer(byte_str, 
-                                      dtype=dt_data, 
-                                      count=self.num_rows)
-            self.data = np.array(self.data.tolist())
-            print(self.data.shape)
-                
-    def from_star(self, input_star):
-        return 
+            data = np.frombuffer(byte_str, 
+                                 dtype=dt_data, 
+                                 count=self.num_rows)
+            data = np.array(data.tolist())
 
-    def to_binary(self):
-        return 
-    
-    def to_star(self):
-        return
+            # sanity check
+            assert data.ndim == 2, "Data is not 2D" 
+            assert (data.shape[0] == self.num_rows), f"Number of rows does not match between data and header: {self.data.shape[0]} v.s. {self.num_rows}"
+            assert (data.shape[1] == self.num_columns), f"Number of columns does not match between data and header: {self.data.shape[1]} v.s. {self.num_columns}"
+
+            self.data = data
+
+
+
+    def from_star(self, input_star):
+        raise Exception("Currently reading star file is not supported")
+ 
+    def to_binary(self, filename):
+
+        assert (self.input_file is not None and self.data is not None), "No data detected. Please read file first. "
+        assert (self.num_columns > 0 and self.num_rows), f"Number of columns ({self.num_columns}) and rows ({self.num_rows}) should be larger than 0"
+        assert len(self.active_columns) > 0, f"No column detected."
+        
+        assert filename.endswith(".cistem"), f"Filename of output ({filename}) better has .cistem extension."
+
+        with open(filename, "wb") as f:
+            
+            # 1. Write number of columns and rows
+            byte_str = np.array([(self.num_columns, self.num_rows)], dtype=DT_DIMS).tobytes()
+            f.write(byte_str)
+
+            # 2. Write headers
+            for col in self.active_columns:
+                str_data_order, str_data_type = col[0], col[1]
+                bitmask_identifier = int(str_data_order)
+                data_type = HEADER_LIST[bitmask_identifier]
+                byte_str = np.array([(bitmask_identifier, data_type)], dtype=DT_COLUMN).tobytes()
+                f.write(byte_str)
+            
+            # 3. Write data
+            dt_data = np.dtype(self.active_columns)
+            data_with_type = rf.unstructured_to_structured(self.data, dtype=dt_data)
+            f.write(data_with_type.tobytes())
+
+
+    def to_star(self, filename):
+        raise Exception("Currently writing star file is not supported")
 
     def get_data(self):
         return self.data
@@ -206,4 +244,9 @@ class Parameters:
 
 
 
-Parameters.from_file("output.cistem")
+test = Parameters.from_file("output.cistem")
+test.to_binary("test.cistem")
+print(test.data)
+
+test2 = Parameters.from_file("test.cistem")
+print(test2.data)
