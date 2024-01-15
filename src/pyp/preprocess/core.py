@@ -153,7 +153,7 @@ def read_tilt_series(
 
     data_path = Path(resolve_path(parameters["data_path"])).parent
     project_raw_path = Path(filename).parent
-    
+
     name = os.path.basename(filename)
     mdocs = list(data_path.glob(f"{name}*.mdoc"))
 
@@ -730,9 +730,9 @@ def read_tilt_series(
     drift_metadata["drift"] = shifts
 
     if "eer" in parameters["data_path"] and parameters["movie_eer_reduce"] > 1:
-        upsample = parameters["movie_eer_reduce"] 
+        upsample = parameters["movie_eer_reduce"]
         logger.info("Aligned image pixel size upsampling to " + str(pixel_size / upsample))
-        pixel_size /= upsample 
+        pixel_size /= upsample
 
     logger.info(
         "Original dimensions: [ X ,Y, Z ] = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, axis = %f",
@@ -872,8 +872,8 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
         parameters (dict): PYP parameters
 
     Returns:
-        list, list: 
-            list of detected frames where each entry is (filenames, tilt angle, order) 
+        list, list:
+            list of detected frames where each entry is (filenames, tilt angle, order)
             dimension of images
     """
     tilt_angle = None
@@ -882,13 +882,13 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
     for file in mdoc_files:
 
         with open(file, 'r') as f:
-            
+
             for line in f.readlines():
                 # if line.startswith("ImageSize"):
                 #     dims = list(map(int, line.split("=")[-1].strip().split()))
-                
+
                 if line.startswith("SubFramePath"):
-                    # use the name of mdoc file as the filename of movie instead of the one in mdoc file, if there're multiple mdoc files 
+                    # use the name of mdoc file as the filename of movie instead of the one in mdoc file, if there're multiple mdoc files
                     if "\\" in line:
                         frame = line.strip().split('\\')[-1] if len(mdoc_files) == 1 else str(file.stem).replace(".mdoc", "")
                     else:
@@ -899,21 +899,21 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
 
                 elif line.startswith("TiltAngle"):
                     tilt_angle = float(line.split("=")[-1].strip())
-                
+
                 elif line.startswith("DateTime"):
                     time = line.split("=")[-1].strip()
                     date_pattern = "%y-%b-%d  %H:%M:%S"
                     try:
-                        data_output = datetime.datetime.strptime(time, date_pattern)  
+                        data_output = datetime.datetime.strptime(time, date_pattern)
                     except:
                         raise Exception(f"{time} cannot be matched by the pattern {date_pattern}")
-                    frames_set[-1][-1] = data_output # update its datetime 
+                    frames_set[-1][-1] = data_output # update its datetime
 
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
                     parameters["scope_tilt_axis"] = axis_angle
 
-    # sort the frames by scanning orders 
+    # sort the frames by scanning orders
     frames_set = sorted(frames_set, key=lambda x: x[-1])
     order = 0
     for frame in frames_set:
