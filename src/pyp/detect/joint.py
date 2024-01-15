@@ -316,7 +316,7 @@ def tomoeval(args,name):
                 logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_nn3d_thresh"]))
 
                 if len(coordinates) > 0:
-                    return coordinates[:,:3].astype('i')
+                    return coordinates[:,:3].astype('i') + 1
                 else:
                     logger.warning("No particles found")
                     return np.array([])
