@@ -193,33 +193,6 @@ def coordinates_next2pyp(coordinates,binning,radius=0):
     # overwrite original file with pyp coordinates
     np.savetxt(coordinates, pyp_coordinates.astype('int').astype('str'), fmt='%s', delimiter='\t')
 
-def coordinates_next2joint(pkl_file,down_ratio,coordinates):
-
-    # figure out binning from image dimensions
-    # metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
-    # x = metadata.data['image']['x'][0]
-    # y = metadata.data['image']['y'][0]
-    # binning = int(math.ceil(max(x, y) / 512.0))
-
-    # read coordinate file written by nextPYP
-    coordinate_file = np.loadtxt( coordinates, dtype='str', ndmin=2)
-    next_coordinates = coordinate_file[1:,1:].astype("float")
-
-    # store coordinates in pyp format
-    joint_coordinates = next_coordinates.copy()
-
-    # apply binning in x and y dimensions
-    # joint_coordinates[:,0] = next_coordinates[:,0] / binning
-    # joint_coordinates[:,2] = next_coordinates[:,2] / binning
-
-    # apply additional binning in z-dimension
-    joint_coordinates[:,1] = next_coordinates[:,1] / down_ratio
-
-    coordinate_file[1:,1:] = joint_coordinates.astype('int').astype('str')
-
-    # overwrite original file with pyp coordinates
-    np.savetxt(coordinates, coordinate_file, fmt='%s', delimiter='\t')
-
 def tomotrain(args):
     """Train NN for 3D particle picking.
 
@@ -241,8 +214,6 @@ def tomotrain(args):
     # substitute coordinate files with binned values
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
     logger.info(f"Binning coordinates ({number_of_labels} labels)")
-    if args['detect_nn3d_down_ratio'] > 1:
-        coordinates_next2joint(files[0].replace('/mrc/','/pkl/').replace('.rec','.pkl'),args['detect_nn3d_down_ratio'],train_coords)
 
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
@@ -256,10 +227,19 @@ def tomotrain(args):
     os.chdir(scratch_train)
 
     logger.info(f"Training pyp model")
-    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 --debug 4 --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt {train_images} --train_coord_txt {train_coords} --val_img_txt {validation_images} --val_coord_txt {validation_coords} --test_img_txt {validation_images} --test_coord_txt {validation_coords} 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
+    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} --compress --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 --debug 4 --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt {train_images} --train_coord_txt {train_coords} --val_img_txt {validation_images} --val_coord_txt {validation_coords} --test_img_txt {validation_images} --test_coord_txt {validation_coords} 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
     [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
-    # check for failure if not output was produced
+    # display log if available
+    try:
+        with open( list(Path(os.getcwd()).rglob('log.txt'))[0], ) as f:
+            for line in f.readlines():
+                logger.info(line.rstrip('\r\n'))
+    except:
+        logger.warning("No log found for training command")
+        pass
+
+    # check for failure if no output model was produced
     if len(list(Path(os.getcwd()).rglob('*.pth'))) == 0:
         raise Exception("Failed to run training module")
 
@@ -299,14 +279,22 @@ def tomoeval(args,name):
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
+        # display log
+        try:
+            with open( list(Path(os.getcwd()).rglob('log.txt'))[0], ) as f:
+                for line in f.readlines():
+                    logger.info(line.rstrip('\r\n'))
+        except:
+            logger.warning("No log found for inference command")
+            pass
+
         # use this to save intermediate files generated by NN particle picking
-        if False and args["slurm_verbose"]:
-            for f in glob.glob( os.path.join(results_folder, "exp/semi/test_reprod/*.*" )):
-                logger.info("Now saving " + f)
-                logger.info("To " + os.path.join( project_folder, "train"))
-                shutil.copy2( f, os.path.join( project_folder, "train") )
-            command = f"cp -pr {os.path.join(results_folder, 'exp/semi/test_reprod')} {os.path.join(project_folder,'train')}"
-            os.system(command)
+        if args["detect_nn2d_debug"]:
+            debug_folder = os.path.join( results_folder, "debug" )
+            os.makedirs( debug_folder )
+            logger.info(f"Saving intermediate results to {debug_folder}")
+            for path in Path(os.getcwd()).rglob('*.png'):
+                shutil.copy2( path, debug_folder )
 
         # parse output and convert coordinates to boxx format
         coordinates_file = os.path.join(results_folder,"exp/semi/test_reprod/output",name+".txt")
