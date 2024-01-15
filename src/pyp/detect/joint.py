@@ -309,7 +309,7 @@ def tomoeval(args,name):
             os.system(command)
 
         # parse output and convert coordinates to boxx format
-        coordinates_file = os.path.join(results_folder,"exp/semi/test_reprod/output_test",name+".txt")
+        coordinates_file = os.path.join(results_folder,"exp/semi/test_reprod/output",name+".txt")
 
         # check for failure if not output was produced
         if not os.path.exists(coordinates_file):
