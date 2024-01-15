@@ -1521,7 +1521,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
         parameters["tomo_vir_force"] or \
         parameters["tomo_rec_force"] or \
-        parameters["tomo_rec_erase_fiducials"] or \
         tomo_subvolume_extract_is_required(parameters) or \
         detect.tomo_vir_is_required(parameters) or \
         not ctf_mod.is_done(metadata, parameters, name=name, project_dir=current_path):
@@ -1554,7 +1553,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     mpi_funcs, mpi_args = [ ], [ ]
 
     # produce binned tomograms
-    need_recalculation = parameters["tomo_rec_force"] or ( parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] )
+    need_recalculation = parameters["tomo_rec_force"]
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
@@ -1682,7 +1681,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.plot_tomo_ctf)
         mpi_args.append( [(name,parameters["slurm_verbose"])] )
 
-    if not os.path.exists(f"{name}_rec.webp") or parameters["tomo_rec_force"] or parameters["tomo_rec_erase_fiducials"]:
+    if not os.path.exists(f"{name}_rec.webp") or parameters["tomo_rec_force"]:
         mpi_funcs.append(plot.tomo_slicer_gif)
         mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True, 2, parameters["slurm_verbose"])] )
 

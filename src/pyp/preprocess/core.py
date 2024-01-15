@@ -767,7 +767,6 @@ def read_tilt_series(
             ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
             parameters["tomo_vir_force"] or \
             parameters["tomo_rec_force"] or \
-            parameters["tomo_rec_erase_fiducials"] or \
             tomo_subvolume_extract_is_required(parameters) or \
             tomo_vir_is_required(parameters) or \
             not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path):
