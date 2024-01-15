@@ -26,154 +26,173 @@ def save_parameters_to_website(parameters):
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
+    else:
+        try:
+            # actually send the micrograph to the website
+            Web().write_parameters(parameter_id=parameters["data_set"], parameters=parameters)
 
-    # actually send the micrograph to the website
-    Web().write_parameters(parameter_id=parameters["data_set"], parameters=parameters)
-
-    if 'slurm_verbose' in parameters and parameters['slurm_verbose']:
-        logger.info("Parameters entered into database successfully")
-
+            if 'slurm_verbose' in parameters and parameters['slurm_verbose']:
+                logger.info("Parameters entered into database successfully")
+        except:
+            logger.error("Failed to enter parameters into database")
+            raise
 
 def save_micrograph_to_website(name,verbose=False):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
-
-    # scan the CTF info
-    ctf_path = "%s.ctf" % name
-    ctf = None
-    if os.path.exists(ctf_path):
-        ctf = Web.CTF(*[float(x[0]) for x in csv.reader(open(ctf_path, "r"))])
     else:
-        logger.warning("Cannot find ctf information to submit to database")
+        try:
+            # scan the CTF info
+            ctf_path = "%s.ctf" % name
+            ctf = None
+            if os.path.exists(ctf_path):
+                ctf = Web.CTF(*[float(x[0]) for x in csv.reader(open(ctf_path, "r"))])
+            else:
+                logger.warning("Cannot find ctf information to submit to database")
 
-    # scan the AVGROT info
-    avgrot_path = "%s_avgrot.txt" % name
-    avgrot = None
-    if os.path.exists(avgrot_path):
-        avgrot = [Web.AVGROT(*x) for x in np.loadtxt(avgrot_path, comments="#").T]
-    else:
-        logger.warning("Cannot find avgrot information to submit to database")
+            # scan the AVGROT info
+            avgrot_path = "%s_avgrot.txt" % name
+            avgrot = None
+            if os.path.exists(avgrot_path):
+                avgrot = [Web.AVGROT(*x) for x in np.loadtxt(avgrot_path, comments="#").T]
+            else:
+                logger.warning("Cannot find avgrot information to submit to database")
 
-    # scan motion info
-    xf_path = "%s.xf" % name
-    xf = None
-    if os.path.exists(xf_path):
-        xf = [Web.XF(*x) for x in np.loadtxt(xf_path, ndmin=2)]
-    else:
-        logger.warning("Cannot find xf information to submit to database")
+            # scan motion info
+            xf_path = "%s.xf" % name
+            xf = None
+            if os.path.exists(xf_path):
+                xf = [Web.XF(*x) for x in np.loadtxt(xf_path, ndmin=2)]
+            else:
+                logger.warning("Cannot find xf information to submit to database")
 
-    # scan particles info
-    boxx_path = "%s.boxx" % name
-    boxx = None
-    if os.path.exists(boxx_path):
-        boxx = [
-            Web.BOXX(x[0], x[1], x[2], x[3], int(x[4]), int(x[5]))
-            for x in np.loadtxt(boxx_path, ndmin=2)
-        ]
-    else:
-        boxx = []
+            # scan particles info
+            boxx_path = "%s.boxx" % name
+            boxx = None
+            if os.path.exists(boxx_path):
+                boxx = [
+                    Web.BOXX(x[0], x[1], x[2], x[3], int(x[4]), int(x[5]))
+                    for x in np.loadtxt(boxx_path, ndmin=2)
+                ]
+            else:
+                boxx = []
 
-    # actually send the micrograph to the website
-    Web().write_micrograph(name, ctf, avgrot, xf, boxx)
+            # actually send the micrograph to the website
+            Web().write_micrograph(name, ctf, avgrot, xf, boxx)
 
-    if verbose:
-        logger.info("Series %s entered into database successfully" % name)
-
+            if verbose:
+                logger.info("Series %s entered into database successfully" % name)
+        except:
+            logger.error("Failed to enter micrograph into database")
+            raise
 
 def save_tiltseries_to_website(name, metadata, verbose=False ):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
-
-    # scan the CTF info
-    ctf_path = "%s.ctf" % name
-    ctf = None
-    if os.path.exists(ctf_path):
-        ctf = Web.CTF(*[float(x[0]) for x in csv.reader(open(ctf_path, "r"))])
-
-    # scan the AVGROT info
-    avgrot_path = "%s_avgrot.txt" % name
-    avgrot = None
-    if os.path.exists(avgrot_path):
-        avgrot = [Web.AVGROT(*x) for x in np.loadtxt(avgrot_path, comments="#").T]
-
-    # scan motion info
-    xf_path = "%s.xf" % name
-    xf = None
-    if os.path.exists(xf_path):
-        xf = [Web.XF(*x) for x in np.loadtxt(xf_path, ndmin=2)]
-
-    # scan particles info
-    boxx_path = "%s.boxx" % name
-    boxx = None
-    if os.path.exists(boxx_path):
-        boxx = [
-            Web.BOXX(x[0], x[1], x[2], x[3], int(x[4]), int(x[5]))
-            for x in np.loadtxt(boxx_path, ndmin=2)
-        ]
     else:
-        boxx = []
+        try:
+            # scan the CTF info
+            ctf_path = "%s.ctf" % name
+            ctf = None
+            if os.path.exists(ctf_path):
+                ctf = Web.CTF(*[float(x[0]) for x in csv.reader(open(ctf_path, "r"))])
 
-    # actually send the tilt series to the website
-    Web().write_tiltseries(name, ctf, avgrot, xf, boxx, metadata)
+            # scan the AVGROT info
+            avgrot_path = "%s_avgrot.txt" % name
+            avgrot = None
+            if os.path.exists(avgrot_path):
+                avgrot = [Web.AVGROT(*x) for x in np.loadtxt(avgrot_path, comments="#").T]
 
-    if verbose:
-        logger.info("Series %s entered into database successfully" % name)
+            # scan motion info
+            xf_path = "%s.xf" % name
+            xf = None
+            if os.path.exists(xf_path):
+                xf = [Web.XF(*x) for x in np.loadtxt(xf_path, ndmin=2)]
 
+            # scan particles info
+            boxx_path = "%s.boxx" % name
+            boxx = None
+            if os.path.exists(boxx_path):
+                boxx = [
+                    Web.BOXX(x[0], x[1], x[2], x[3], int(x[4]), int(x[5]))
+                    for x in np.loadtxt(boxx_path, ndmin=2)
+                ]
+            else:
+                boxx = []
+
+            # actually send the tilt series to the website
+            Web().write_tiltseries(name, ctf, avgrot, xf, boxx, metadata)
+
+            if verbose:
+                logger.info("Series %s entered into database successfully" % name)
+        except:
+            logger.error("Failed to enter tilt-series into database")
+            raise
 
 def save_reconstruction_to_website(name, fsc, plots, metadata, verbose=False):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
+    else:
+        try:
+            # actually send the reconstruction to the website
+            Web().write_reconstruction(name, metadata, fsc, plots)
 
-    # actually send the reconstruction to the website
-    Web().write_reconstruction(name, metadata, fsc, plots)
-
-    if verbose:
-        logger.info("Reconstruction %s entered into database successfully" % name)
-
+            if verbose:
+                logger.info("Reconstruction %s entered into database successfully" % name)
+        except:
+            logger.error("Failed to enter reconstruction into database")
+            raise
 
 def save_refinement_to_website(name, iteration, verbose=False):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
-
-    # actually send the refinement to the website
-    Web().write_refinement(name, iteration)
-
-    if verbose:
-        logger.info("Refinement %s entered into database successfully" % name)
-
+    else:
+        try:
+            # actually send the refinement to the website
+            Web().write_refinement(name, iteration)
+            if verbose:
+                logger.info("Refinement %s entered into database successfully" % name)
+        except:
+            logger.error("Failed to enter refinement into database")
 
 def save_refinement_bundle_to_website(name, iteration, verbose=False):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
+    else:
+        try:
+            # actually send the refinement to the website
+            Web().write_refinement_bundle(name, iteration)
 
-    # actually send the refinement to the website
-    Web().write_refinement_bundle(name, iteration)
-
-    if verbose:
-        logger.info("Refinement bundle %s entered into database successfully" % name)
+            if verbose:
+                logger.info("Refinement bundle %s entered into database successfully" % name)
+        except:
+            logger.error("Failed to enter refinement into database")
 
 def save_classes_to_website(name, metadata, verbose=False):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
+    else:
+        try:
+            # actually send the micrograph to the website
+            Web().write_classes(name,metadata)
 
-    # actually send the micrograph to the website
-    Web().write_classes(name,metadata)
-
-    if verbose:
-        logger.info("Classes %s entered into database successfully" % name)
-
+            if verbose:
+                logger.info("Classes %s entered into database successfully" % name)
+        except:
+            logger.error("Failed to enter classes into database")
+            raise
 
 def save_to_database_daemon(name, current_path, parameters):
 
