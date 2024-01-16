@@ -967,6 +967,12 @@ type = "int"
 default = 2
 hidden = true
 
+[tabs.detect_nn3d.compress]
+name = "Additional binning in Z"
+description = "Apply additional 2x binning in Z-dimension"
+type = "bool"
+default = true
+
 [tabs.detect_nn3d.num_epochs]
 name = "Epochs"
 description = "Number of epochs used during training"
@@ -983,7 +989,7 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.val_interval]
 name = "Interval to perform validation"
-description = "Run validation within this interval"
+description = "Run validation every this number of epochs"
 type = "int"
 default = 100
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
@@ -998,7 +1004,7 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.cr_weight]
 name = "Contrastive regularization weight"
-description = "Weight for contrastive regularization module"
+description = "Weight for contrastive regularization term"
 type = "float"
 default = 0.1
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
@@ -1013,7 +1019,7 @@ advanced = true
 
 [tabs.detect_nn3d.tau]
 name = "Class prior probability"
-description = "Class prior probability"
+description = "Class prior probability (tau)"
 type = "float"
 default = 0.4
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
@@ -1021,7 +1027,7 @@ advanced = true
 
 [tabs.detect_nn3d.max_objects]
 name = "Max number of particles"
-description = "Limit number of particles per tomogram"
+description = "Expected number of particles per tomogram"
 type = "int"
 default = 200
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
