@@ -1393,6 +1393,13 @@ type = "int"
 default = 48
 advanced = true
 
+[tabs.tomo_rec.topaz_use_gpu]
+name = "Use GPU (Topaz denoise)"
+description = "Request a GPU to run Topaz denoise"
+type = "bool"
+default = false
+advanced = true
+
 [tabs.tomo_vir]
 _name = "Virion/spike detection"
 _description = "Virion and spike detection parameters"

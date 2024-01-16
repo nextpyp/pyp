@@ -82,12 +82,13 @@ def get_gpu_file():
 
 def needs_gpu(parameters):
     # enable Nvidia GPU?
-    if ( ("movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters["movie_force"] )
-        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters["tomo_ali_force"])
-        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters["tomo_rec_force"])
-        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters["detect_force"])
-        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters["detect_force"])
-        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters["tomo_vir_force"])
+    if ( ( "movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters.get("movie_force") )
+        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters.get("tomo_ali_force") )
+        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters.get("tomo_rec_force") )
+        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters.get("detect_force") )
+        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters.get("detect_force") )
+        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters.get("tomo_vir_force") )
+        or ( parameters.get("tomo_rec_topaz_denoise") and parameters.get("tomo_rec_topaz_use_gpu") and parameters.get("tomo_rec_force") )
         ):
         return True
     else:
