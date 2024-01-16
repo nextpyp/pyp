@@ -351,7 +351,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
             devices = -1
 
         time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
-
+        logger.info("Denoising tomogram using Topaz")
         command = f"{get_topaz_path()}/topaz denoise3d \
 {name}.rec \
 --model {parameters['tomo_rec_topaz_model']} \
