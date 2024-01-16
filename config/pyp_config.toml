@@ -977,7 +977,7 @@ default = true
 name = "Epochs"
 description = "Number of epochs used during training"
 type = "int"
-default = 600
+default = 10
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.bbox]
@@ -991,7 +991,7 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 name = "Interval to perform validation"
 description = "Run validation every this number of epochs"
 type = "int"
-default = 100
+default = 5
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 advanced = true
 
@@ -999,7 +999,7 @@ advanced = true
 name = "Threshold for soft/hard positives"
 description = "Threshold for soft/hard positives"
 type = "float"
-default = 0.8
+default = 0.85
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.cr_weight]
@@ -1021,7 +1021,7 @@ advanced = true
 name = "Class prior probability"
 description = "Class prior probability (tau)"
 type = "float"
-default = 0.4
+default = 0.01
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 advanced = true
 
@@ -1029,14 +1029,14 @@ advanced = true
 name = "Max number of particles"
 description = "Expected number of particles per tomogram"
 type = "int"
-default = 200
+default = 1200
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.lr]
 name = "Learning rate"
 description = "Rate to use during training"
 type = "float"
-default = 0.001
+default = 0.0005
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.debug]
