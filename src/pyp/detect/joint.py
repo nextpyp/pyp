@@ -233,7 +233,12 @@ def tomotrain(args):
     else:
         debug = ""
 
-    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} --compress --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt {train_images} --train_coord_txt {train_coords} --val_img_txt {validation_images} --val_coord_txt {validation_coords} --test_img_txt {validation_images} --test_coord_txt {validation_coords} 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
+    if args.get("detect_nn3d_compress"):
+        compress = "--compress"
+    else:
+        compress = ""
+
+    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt {train_images} --train_coord_txt {train_coords} --val_img_txt {validation_images} --val_coord_txt {validation_coords} --test_img_txt {validation_images} --test_coord_txt {validation_coords} 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
     [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # display log if available
@@ -281,7 +286,14 @@ def tomoeval(args,name):
 
         logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn3d_ref'])).name}")
         # use option "--gpus -1" to force run on CPU
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --with_score --exp_id test_reprod --load_model {project_params.resolve_path(args['detect_nn3d_ref'])} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt {os.path.join( os.getcwd(), imgs_file)} --test_coord_txt {os.path.join( os.getcwd(), test_file)} 2>&1 | tee {os.path.join(project_folder, 'train', name + '_testing.log')}"
+
+        if args.get("detect_nn3d_compress"):
+            compress = "--compress"
+        else:
+            compress = ""
+
+
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --with_score --exp_id test_reprod --load_model {project_params.resolve_path(args['detect_nn3d_ref'])} {compress} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt {os.path.join( os.getcwd(), imgs_file)} --test_coord_txt {os.path.join( os.getcwd(), test_file)} 2>&1 | tee {os.path.join(project_folder, 'train', name + '_testing.log')}"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
