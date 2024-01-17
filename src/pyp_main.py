@@ -99,7 +99,7 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode, check_env
+from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, get_gpu_queue
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
@@ -915,24 +915,8 @@ def split(parameters):
 
         if gpu or tomo_train or spr_train:
             # try to get the gpu partition
-            partition_name = ""
-            if "slurm" in config:
-                if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ):
-                    try:
-                        parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
-                        partition_name = parameters["slurm_queue_gpu"]
-                    except:
-                        logger.warning("No GPU partitions configured for this instance?")
-                        pass
-                elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"] == None:
-                    partition_name = parameters["slurm_queue_gpu"]
-                else:
-                    logger.warning("No GPU partitions configured for this instance?")
-
-            if not Web.exists:
-                partition_name += " --gres=gpu:1 "
+            partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
-
         else:
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
