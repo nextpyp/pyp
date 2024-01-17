@@ -379,7 +379,7 @@ hidden = true
 name = "Alignment method"
 description = "Method used for frame alignment"
 type = "enum"
-enum = { unblur="unblur", motioncor="motioncor3", skip="no alignment" }
+enum = { unblur="unblur", motioncor="motioncor3 (GPU required)", skip="no alignment" }
 default = "unblur"
 hidden = ["spr_import_star","tomo_import_star"]
 
@@ -1172,7 +1172,7 @@ _description = "Parameters for tilt-series alignment"
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
 type = "enum"
-enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2" }
+enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)" }
 default = "imod_gold"
 
 [tabs.tomo_ali.fiducial]
@@ -1257,7 +1257,7 @@ _description = "Parameters for tomographic reconstruction"
 name = "Method for tomogram reconstruction"
 description = "Method used for tomogram reconstruction"
 type = "enum"
-enum = { imod="imod", aretomo="aretomo2" }
+enum = { imod="imod", aretomo="aretomo2 (GPU required)" }
 default = "imod"
 
 [tabs.tomo_rec.force]
