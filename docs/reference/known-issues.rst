@@ -42,6 +42,8 @@ Known Issues
     - **Problem**: This can be caused by the JVM running out of memory. You may see the following error message: ``502 Proxy Error. The proxy server received an invalid response from an upstream server. The proxy server could not handle the request. Reason: Error reading from remote server.`` and the server log may show the error: ``Caused by: java.lang.OutOfMemoryError: Java heap space``.
     - **Solution**: Increase the memory of the JVM to 8192 MB by adding the option ``heapMiB = 8192`` to the ``config.toml`` configuration file in the **[web]** section. Restart nextPYP for the changes to take effect.
 
+See also the :doc:`troubleshooting<../install/troubleshooting>` section for more resources.
+
 .. admonition:: Still need help?
 
    Search ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ or post a new question.
