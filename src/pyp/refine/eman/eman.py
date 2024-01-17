@@ -4,7 +4,7 @@ import subprocess
 from pyp.inout.image import mrc
 from pyp.system import project_params
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import eman_load_command, is_atrf, is_biowulf2, qos
+from pyp.system.utils import eman_load_command, qos
 from pyp.utils import get_relative_path
 
 relative_path = str(get_relative_path(__file__))
@@ -23,33 +23,14 @@ def eman_2d_classify(parameters, new_name, imagic_stack, radius):
     else:
         emanpath = os.environ["SHELLDIR"]
 
-    if is_biowulf2():
-        command = "cd eman; sbatch --time 5-0:00:00 --gres=lscratch:400 --mem=58g --ntasks=32 --export data={0},shrink={1},radius={2},classes={3} {4} {5}/eman2_classify_mpi.sh".format(
-            new_name + "_stack",
-            parameters["class_bin"],
-            radius * 1.25,
-            classes,
-            parameters["slurm_queue"] + " " + qos(parameters["slurm_queue"]),
-            emanpath,
-        )  # umask=33
-    elif is_atrf():
-        command = "cd eman; qsub -v data={0},shrink={1},radius={2},classes={3} -W umask=33 -l nodes=1:gpfs {4} {5}/eman2_classify_mpi.sh".format(
-            new_name + "_stack",
-            parameters["class_bin"],
-            radius * 1.25,
-            classes,
-            parameters["slurm_queue"],
-            emanpath,
-        )
-    else:
-        command = "cd eman; sbatch --export=data={0},shrink={1},radius={2},classes={3} --nodes=1 {4} {5}/eman2_classify_mpi.sh".format(
-            new_name + "_stack",
-            parameters["class_bin"],
-            radius * 1.25,
-            classes,
-            parameters["slurm_queue"],
-            emanpath,
-        )
+    command = "cd eman; sbatch --export=data={0},shrink={1},radius={2},classes={3} --nodes=1 {4} {5}/eman2_classify_mpi.sh".format(
+        new_name + "_stack",
+        parameters["class_bin"],
+        radius * 1.25,
+        classes,
+        parameters["slurm_queue"],
+        emanpath,
+    )
 
     logger.info(command)
     logger.info(

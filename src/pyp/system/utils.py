@@ -174,31 +174,11 @@ def get_ctffind_tilt_path():
 def get_shell_multirun_path():
     return "{0}/external/shell".format(os.environ["PYP_DIR"])
 
-
-def is_atrf():
-    if "fr-s-hpc" in socket.gethostname() or "moab" in socket.gethostname():
-        return True
-    else:
-        return False
-
-
-def is_atrf_bad():
-    return False
-
-
 def check_env():
      # set environment to avoid potential lib conflicts
     if os.environ.get("LD_LIBRARY_PATH") and  "/.singularity.d/libs" in os.environ["LD_LIBRARY_PATH"]:
         current_env = os.environ["LD_LIBRARY_PATH"]
         os.environ["LD_LIBRARY_PATH"] = current_env.replace("/.singularity.d/libs", "")
-
-# detect if this is biowulf2
-def is_biowulf2():
-    if "biowulf" in socket.gethostname() or "cn" in socket.gethostname():
-        return True
-    else:
-        return False
-
 
 def is_dcc():
     # kept for compatibility
