@@ -142,7 +142,7 @@ class Parameters:
 
     def __init__(self, input_file: str):
         
-        self._input_file: str = None
+        self._input_file: Path = None
         self._data: np.ndarray = None
         self._num_columns: int = -1
         self._num_rows: int = -1
@@ -157,7 +157,7 @@ class Parameters:
         else:
             raise Exception(f"{input_file} file extension not recognized.")
 
-        self._input_file = input_file
+        self._input_file = Path(input_file).absolute()
 
     @classmethod
     def from_file(cls, input_file: str): 
@@ -251,6 +251,7 @@ class Parameters:
         # TODO: check if # columns is identical
         assert type(data) == np.ndarray, f"Input data type is not Numpy array, it is {type(data)}"
         assert data.ndim == 2, "Input data is not 2D"
+        assert type(data[0]) == np.ndarray, f"First row of input data type is not Numpy array, it is {type(data[0])}"
         assert (self.get_data() is None or data.shape[1] == self.get_data().shape[1]), "Input data must have the same number of columns as original data."
         return 
 
