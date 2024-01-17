@@ -461,7 +461,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Ab-initio: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of Particles: {class_fraction:.2}")
+            logger.info(f"Ab-initio: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of particles: {class_fraction:.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -520,7 +520,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Seeded startup: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of Particles: {class_fraction:.2}")
+            logger.info(f"Seeded startup: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of particles: {class_fraction:.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -578,7 +578,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Refinement mode: iteration {cycle_number}/{refinement_cycle_count}, High Res Limit: {high_res_limit}, Fraction of Particles: {class_fraction:.2}")
+            logger.info(f"Refinement mode: iteration {cycle_number}/{refinement_cycle_count}, High Res Limit: {high_res_limit}, Fraction of particles: {class_fraction:.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
