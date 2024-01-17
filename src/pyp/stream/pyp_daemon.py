@@ -22,7 +22,7 @@ from pyp.system import project_params, slurm, user_comm, set_up
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
-from pyp.system.utils import needs_gpu
+from pyp.system.utils import needs_gpu, get_gpu_queue
 from pyp.utils import get_relative_path, movie2regex, timer
 from pyp.inout.metadata import pyp_metadata
 
