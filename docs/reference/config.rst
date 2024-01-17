@@ -175,44 +175,6 @@ is dedicated to configuring the container environment.
 	``containerExec = { module = 'singularity', exec = 'apptainer' }``
 
 
-|
-
-``cudaLibs``
-~~~~~~~~~~~
-
-:Type: array of strings
-:Required: no
-:Description:
-	Paths to the CUDA libraries on the GPU compute nodes.
-:Examples:
-	`cudaLibs = [ '/usr/local/cuda/targets/x86_64-linux/lib' ]`
-
-|
-
-``areTomo``
-~~~~~~~~~~~
-
-:Type: string
-:Required: no
-:Description:
-	Location of AreTomo2 executable.
-	This parameter is required to use AreTomo2 for tilt-series alignment.
-:Examples:
-	``areTomo = '/opt/apps/AreTomo2/AreTomo2``
-
-|
-
-``motionCor3``
-~~~~~~~~~~~
-
-:Type: string
-:Required: no
-:Description:
-	Location of MotionCor3 executable.
-	This parameter is required to use MotionCor3 for frame alignment.
-:Examples:
-	``areTomo = '/opt/apps/MotionCor3/MotionCor3``
-
 
 SLURM Section
 -------------
