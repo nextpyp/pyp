@@ -589,9 +589,12 @@ def pyp_daemon_process(args,):
                     if os.path.exists(fil):
                         os.remove(fil)
             else:
-                fil = glob.glob( os.path.join( raw_dir, "." + file + "*") )[0]
-                if os.path.exists(fil):
-                    os.remove(fil)
+                try:
+                    fil = glob.glob( os.path.join( raw_dir, "." + file + "*") )[0]
+                    if os.path.exists(fil):
+                        os.remove(fil)
+                except:
+                    pass
 
     # Start processing
     # make distinction between SPA and TOMO
