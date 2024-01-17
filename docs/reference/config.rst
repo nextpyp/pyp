@@ -39,7 +39,7 @@ Here's an example of a minimal configuration to run ``nextPYP`` on the command l
 
 	[pyp]
 	container = '/storage/singularity-images/pyp.sif'
-	scratch = '/tmp/pyp-scratch/`
+	scratch = '/tmp/pyp-scratch/'
 	binds = ['/data']
 
 	[slurm]
@@ -105,7 +105,7 @@ is dedicated to configuring the container environment.
 	Directory for large (multi-GiB) temporary files on the compute nodes.
 	This location should have fast read/write speeds, ideally in local storage.
 :Examples:
-	``scratch = '/tmp/pyp-scratch``
+	``scratch = '/tmp/pyp-scratch'``
 
 |
 
