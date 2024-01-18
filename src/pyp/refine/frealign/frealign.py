@@ -5460,7 +5460,7 @@ def refine2d_mpi(
         """
 
     assert len(commands) > 0, f"{input_frealign_par} does not have particles"
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
 
     return splitted_parfiles, dumpfiles
 
