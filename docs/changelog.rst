@@ -4,7 +4,7 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.5.4 (1/17/2024)
+v0.5.4 (1/19/2024)
 *******************
 
    :fa:`star,text-success` Add `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ wrapper for movie frame alignment (GPU required).
