@@ -946,7 +946,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
 
             if os.path.exists(clear_flag):
                 logger.info("Clear flag detected")
-                logger.warning("Will do deep clean previous refinement results")
+                logger.warning("Will do a deep clean of previous refinement results")
 
                 # remove existing parfile and webp files
                 [os.remove(f) for f in glob.glob( os.path.join(frealign_dir, "*.webp") )]
