@@ -4,7 +4,7 @@ Tomography tutorial (EMPIAR-10164)
 
 This tutorial shows how to convert raw tilt-series from `EMPIAR-10164 (HIV-1 Gag) <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ into a ~3A resolution structure. 
 
-Total running time required to complete this tutorial: ~20 hr.
+Total running time required to complete this tutorial: ~20 hrs.
 
 We first use the command line to download and decompress a tbz file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
 
