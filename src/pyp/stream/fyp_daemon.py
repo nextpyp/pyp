@@ -750,24 +750,30 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     )
                 if "stop" in flag.values(): return flag
 
-            # Run initial 2D classification
-            new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
-            flag, new_status = run_refinement(
-                    classification_status=status,
-                    previous_name=None,
-                    boxes_lists=boxes_lists,
-                    parameters=mparameters,
-                    new_name=new_name,
-                    allparxs_dir=local_scratch_dir,
-                    ali_dir=ali_dir,
-                    stack_dir=local_scratch_dir
-                    )
-            logger.info(f"Class2D status is {new_status}")
-            if "stop" in flag.values(): return flag
+            try:
+                # Run initial 2D classification
+                new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
+                flag, new_status = run_refinement(
+                        classification_status=status,
+                        previous_name=None,
+                        boxes_lists=boxes_lists,
+                        parameters=mparameters,
+                        new_name=new_name,
+                        allparxs_dir=local_scratch_dir,
+                        ali_dir=ali_dir,
+                        stack_dir=local_scratch_dir
+                        )
+                logger.info(f"Class2D status is {new_status}")
+                if "stop" in flag.values(): return flag
 
-            global_start = False
-            new_status["seeded_startup"] = 0
-
+                global_start = False
+                new_status["seeded_startup"] = 0
+            except:
+                type, value, traceback = sys.exc_info()
+                sys.__excepthook__(type, value, traceback)
+                logger.warning("Inconsistencies detected during processing, waiting 30 seconds before resuming")
+                time.sleep(30)
+                pass
         try:
             if os.path.exists(restart_flag):
                 logger.info("Restart flag detected")
