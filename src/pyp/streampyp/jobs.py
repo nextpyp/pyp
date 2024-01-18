@@ -22,6 +22,16 @@ def _absolutize_path(path):
     else:
         return os.path.join(os.getcwd(), path)
 
+def get_gres_option(use_gpu,gres):
+    if use_gpu:
+        gpu_gres = "--gres=gpu:1"
+        if len(gres) > 0:
+            gpu_gres += f",{gres}"
+    elif len(gres) > 0:
+        gpu_gres = f"--gres={gres}"
+    else:
+        gpu_gres = ""
+    return gpu_gres
 
 def submit_commands(
     submit_dir,
@@ -266,7 +276,7 @@ export CUDA_VISIBLE_DEVICES=$available_devs
         else:
             depend = " --dependency=afterany:{0}".format(dependencies)
 
-        command = """{0} --array=1-{7}{8} --time={9} --mem={5}G --cpus-per-task={6} {1} {2} --job-name={4} {3}""".format(
+        command = """{0} --array=1-{7}{8} --time={9} --mem={5}G --cpus-per-task={6} {1} {2} --job-name={4} {10} {3}""".format(
             run_slurm(command="sbatch", path=os.getcwd()),
             "--partition=%s" % queue if queue != '' else '',
             depend,
@@ -277,6 +287,7 @@ export CUDA_VISIBLE_DEVICES=$available_devs
             net_processes,
             bundle,
             walltime,
+            get_gres_option(use_gpu,gres),
         )
         command = run_ssh(command)
         [output, error] = run_shell_command(command, verbose=False)
@@ -389,7 +400,7 @@ def submit_script(
                 path=os.path.join(os.getcwd(), submit_dir),
             )
         partition = f"--partition={queue}" if queue != '' else ''
-        command = "{0} {2} {3} --mem={6}G --job-name={1} {4} {5}".format(
+        command = "{0} {2} {3} --mem={6}G --job-name={1} {4} {7} {5}".format(
             run_slurm(
                 command="sbatch",
                 path=os.path.join(os.getcwd(), submit_dir),
@@ -401,9 +412,9 @@ def submit_script(
             depend,
             command_file,
             memory,
+            get_gres_option(use_gpu,gres),
         )
         command = run_ssh(command)
-        logger.info(command)
         [id, error] = run_shell_command(command, verbose=False)
         if "error" in error or "failed" in error:
             logger.error(error)

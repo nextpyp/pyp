@@ -108,8 +108,6 @@ def get_gpu_queue(parameters):
             queue = parameters["slurm_queue_gpu"]
         else:
             logger.warning("No GPU partitions configured for this instance?")
-    if not Web.exists:
-        queue += " --gres=gpu:1 "
     return queue
 
 def get_gpu_devices():
