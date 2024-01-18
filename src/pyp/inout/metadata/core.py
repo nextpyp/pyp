@@ -2404,7 +2404,7 @@ EOF
                 tilt_Y_true = tilt_Y - min_micrograph_y
 
                 # HF: re-center using translational shifts from sub-tomogram averaging
-                fp = spa_euler_angles(
+                fp, pp = spa_euler_angles(
                     tilt,
                     -axis,
                     [norm0, norm1, norm2],
@@ -2610,7 +2610,16 @@ EOF
                 # AB - 0verride film number if we are processing each movie independently
                 if parameters["csp_no_stacks"]:
                     film = 0
-
+                
+                # norm0 = norm1 = norm2 = 0
+                # m00 = m05 = m10 = 1
+                # m01 = m02 = m04 = m06 = m08 = m09 = 0
+                ppsi = pp[0]
+                ptheta = pp[1]
+                pphi = pp[2]
+                # m03 = pp[3] 
+                # m07 = pp[4] 
+                # m11 = pp[5]
                 if use_frames:
                     # if using frames
 
@@ -2712,20 +2721,20 @@ EOF
                             confidence,
                             ptl_CCX,
                             -axis,
-                            norm0,
-                            norm1,
-                            norm2,
-                            m00,
-                            m01,
-                            m02,
+                            0, #norm0,
+                            0, # norm1,
+                            0, # norm2,
+                            1, #m00,
+                            0, #m01,
+                            0, # m02,
                             0.0, # m03 * pixel, # 0.0,
-                            m04,
-                            m05,
-                            m06,
+                            0, #m04,
+                            1, #m05,
+                            0, #m06,
                             0.0, # m07 * pixel, # 0.0,
-                            m08,
-                            m09,
-                            m10,
+                            0, # m08,
+                            0, #m09,
+                            1, #m10,
                             0.0, # m11 * pixel, # 0.0,
                             m12,
                             m13,
