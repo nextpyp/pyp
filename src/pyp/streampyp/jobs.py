@@ -31,6 +31,7 @@ def submit_commands(
     queue,
     threads,
     memory,
+    gres,
     walltime,
     dependencies,
     tasks_per_arr,
@@ -189,14 +190,19 @@ done
             mpi = {"oversubscribe": True, "cpus": threads}
 
         # launch job via streampyp
-        gres = "gpu:1" if use_gpu else None
+        gpu_gres = "gpu:1" if use_gpu else None
+        if len(gres) > 0:
+            if gpu_gres:
+                gpu_gres += f",{gres}"
+            else:
+                gpu_gres = gres
         if len(csp_local_merge_command) == 0:
             return Web().slurm_sbatch(
                 web_name=jobname,
                 cluster_name="pyp_"+jobtype,
                 commands=Web.CommandsScript(cmdlist, processes, bundle),
                 dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gres),
+                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres),
                 deps=dependencies,
                 mpi=mpi,
             )
@@ -206,7 +212,7 @@ done
                 cluster_name="pyp_"+jobtype,
                 commands=Web.CommandsGrid(cmdgrid, bundle),
                 dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gres),
+                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres),
                 deps=dependencies,
                 mpi=mpi,
             )
@@ -305,6 +311,7 @@ def submit_script(
     queue,
     threads,
     memory,
+    gres,
     walltime,
     dependencies,
     is_script,
@@ -346,6 +353,13 @@ def submit_script(
         else:
             dependencies = dependencies.split(",")
 
+        gpu_gres = "gpu:1" if use_gpu else None
+        if len(gres) > 0:
+            if gpu_gres:
+                gpu_gres += f",{gres}"
+            else:
+                gpu_gres = gres
+
         # launch job via streampyp
         return Web().slurm_sbatch(
             web_name=jobname,
@@ -353,7 +367,7 @@ def submit_script(
             commands=Web.CommandsScript([cmd]),
             dir=_absolutize_path(submit_dir),
             env=[(jobtype, jobtype)],
-            args=get_slurm_args( queue, threads, walltime, memory, jobname, "gpu:1" if use_gpu else None),
+            args=get_slurm_args( queue, threads, walltime, memory, jobname, gpu_gres),
             deps=dependencies,
             mpi=mpi,
         )

@@ -443,6 +443,7 @@ def launch_preprocessing(args, autoprocess):
             scratch=0,
             threads=args["slurm_daemon_tasks"],
             memory=args["slurm_daemon_memory"],
+            gres=args["slurm_daemon_gres"],
             walltime=args["slurm_daemon_walltime"],
             tasks_per_arr=1,
         )

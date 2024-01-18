@@ -181,6 +181,7 @@ def pyp_daemon(args):
                 scratch=0,
                 threads=parameters["slurm_class2d_tasks"],
                 memory=parameters["slurm_class2d_memory"],
+                gres=parameters["slurm_class2d_gres"],
                 walltime=parameters["slurm_class2d_walltime"],
             )
 
@@ -493,6 +494,7 @@ def pyp_daemon(args):
                 queue=queue,
                 threads=args["slurm_tasks"],
                 memory=args["slurm_memory"],
+                gres=parameters["slurm_gres"],
                 walltime=args.get("slurm_merge_walltime"),
                 tasks_per_arr=args.get("slurm_bundle_size"),
                 csp_no_stacks=args.get("csp_no_stacks"),
