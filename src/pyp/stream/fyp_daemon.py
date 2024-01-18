@@ -314,7 +314,7 @@ def write_stacks_to_file(
 
         if len(mpi_funcs) > 0:
 
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
 
             # remove micrographs from local scratch
             [os.remove(stack_dir / f"{film}.mrc") for film in new_films]
