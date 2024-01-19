@@ -1026,7 +1026,7 @@ def score_particles_fromparx(par_data, mintilt: float, maxtilt: float, min_num_p
                 
                 matrix = particle[0,matrix0_col: matrix15_col+1]
                 matrix[12: 16] = np.array([0,0,0,1])
-                dx, dy, dz = geometry.getShiftsForRecenter(particle[0,normx_col:normz_col+1], matrix, 0)
+                dx, dy, dz = m[3], m[7], m[11] # They are particle 3D shifts in A
                 dx, dy, dz = dx/pixel_size, dy/pixel_size, dz/pixel_size
                 shifts_3d[film][ptl] = [dx, dy, dz]
             else:
