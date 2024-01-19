@@ -2,7 +2,7 @@
 About
 =====
 
-Information about ``nextPYP``
+`nextPYP <https://nextpyp.app/>`_ is a comprehensive platform for single-particle cryo-EM/ET image analysis developed and maintained by the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_ at `Duke University <http://www.duke.edu>`_.
 
 Developers
 ==========
@@ -97,7 +97,7 @@ References
 
 ``nextPYP`` implements algorithms reported in the following publications:
 
-   - Liu, HF., Zhou, Y., Huang, Q., Piland, J., Jin, W., Mandel, J., Du, X., Martin, J., Bartesaghi, A. (2023), `nextPYP: a comprehensive and scalable platform for characterizing protein variability in-situ using single-particle cryo-electron tomography <https://www.nature.com/articles/s41592-023-02045-0>`_, Nature Methods.
+   - Liu, HF., Zhou, Y., Huang, Q., Piland, J., Jin, W., Mandel, J., Du, X., Martin, J., Bartesaghi, A. (2023), `nextPYP: a comprehensive and scalable platform for characterizing protein variability in-situ using single-particle cryo-electron tomography <https://www.nature.com/articles/s41592-023-02045-0>`_, Nature Methods, 20:1909–1919.
 
    - Huang, Q., Zhou, Y., Liu, HF., Bartesaghi, A. (2022) `Weakly Supervised Learning for Joint Image Denoising and Protein Localization in Cryo-Electron Microscopy <https://openaccess.thecvf.com/content/WACV2022/html/Huang_Weakly_Supervised_Learning_for_Joint_Image_Denoising_and_Protein_Localization_WACV_2022_paper.html>`_, IEEE/CVF Winter Conference on Applications of Computer Vision (WACV), pp. 3246-3255.
   

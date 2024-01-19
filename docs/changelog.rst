@@ -4,7 +4,7 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.5.4 (1/12/2024)
+v0.5.4 (1/19/2024)
 *******************
 
    :fa:`star,text-success` Add `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ wrapper for movie frame alignment (GPU required).
@@ -26,6 +26,10 @@ v0.5.4 (1/12/2024)
    :fa:`plus-square,text-primary` Change default memory allocation for launch task to 4GB and add Resources tab to all data import blocks.
 
    :fa:`plus-square,text-primary` Simplify Resources tab by hiding unnecessary parameters depending on the block type.
+
+   :fa:`plus-square,text-primary` Implement GPU resource management policies for slurm and standalone modes.
+
+   :fa:`plus-square,text-primary` Show per-particle score distribution for all tomography refinement blocks and improve plot layout.
 
    :fa:`bug,text-danger` Fix OOM error when running constrained refinement using a single thread.
 

@@ -747,7 +747,7 @@ class Parameters:
             commands.append("grep '^[^C]' %s > %s && cut -c%d-%d %s > %s && cut -c%d-%d %s > %s" % (parfile, parfile + '.tmp',
                                                                                                     section1_start, section1_end, parfile + '.tmp', f"{idx}_1.tmp",
                                                                                                     section2_start, section2_end, parfile + '.tmp', f"{idx}_2.tmp"))
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
 
         # update (write) INDEX, FILM columns for each parfile
         if frealignx:

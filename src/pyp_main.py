@@ -99,7 +99,7 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode, check_env
+from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, get_gpu_queue
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
@@ -915,24 +915,8 @@ def split(parameters):
 
         if gpu or tomo_train or spr_train:
             # try to get the gpu partition
-            partition_name = ""
-            if "slurm" in config:
-                if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ):
-                    try:
-                        parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
-                        partition_name = parameters["slurm_queue_gpu"]
-                    except:
-                        logger.warning("No GPU partitions configured for this instance?")
-                        pass
-                elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"] == None:
-                    partition_name = parameters["slurm_queue_gpu"]
-                else:
-                    logger.warning("No GPU partitions configured for this instance?")
-
-            if not Web.exists:
-                partition_name += " --gres=gpu:1 "
+            partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
-
         else:
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
@@ -951,6 +935,7 @@ def split(parameters):
                     scratch=0,
                     threads=parameters["slurm_merge_tasks"],
                     memory=parameters["slurm_merge_memory"],
+                    gres=parameters["slurm_merge_gres"],
                     walltime=parameters["slurm_merge_walltime"],
                     tasks_per_arr=parameters["slurm_bundle_size"],
                     csp_no_stacks=parameters["csp_no_stacks"],
@@ -971,6 +956,7 @@ def split(parameters):
                 scratch=0,
                 threads=parameters["slurm_tasks"],
                 memory=parameters["slurm_memory"],
+                gres=parameters["slurm_gres"],
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 dependencies=id_train,
@@ -987,6 +973,7 @@ def split(parameters):
                 queue=parameters["slurm_queue"],
                 scratch=0,
                 threads=parameters["slurm_merge_tasks"],
+                gres=parameters["slurm_merge_gres"],
                 memory=parameters["slurm_merge_memory"],
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
@@ -1185,7 +1172,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
                     gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
                     if os.path.exists(gain_reference_file):
                         shutil.copy2(gain_reference_file, os.getcwd())
-                logger.info("Aligning frames using " + parameters['movie_ali'])
+                logger.info("Aligning frames using: " + parameters['movie_ali'])
                 aligned_average = align.align_movie_super(
                     parameters, name, extension
                 )

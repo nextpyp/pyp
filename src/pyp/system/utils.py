@@ -3,6 +3,7 @@ import os
 import socket
 from pwd import getpwnam
 from pyp.system.singularity import get_pyp_configuration
+from pyp.streampyp.web import Web
 
 def timeout_command(command, time, full_path=False):
     if full_path:
@@ -71,9 +72,6 @@ def get_motioncor3_path():
     command = cuda_path_prefix(command)
     return command
 
-def slurm_gpu_mode():
-    return "SLURM_JOB_GPUS" in os.environ or "SLURM_STEP_GPUS" in os.environ
-
 def get_gpu_id():
     return 0
 
@@ -93,6 +91,24 @@ def needs_gpu(parameters):
         return True
     else:
         return False
+
+def get_gpu_queue(parameters):
+    # try to get the gpu partition
+    queue = ""
+    config = get_pyp_configuration()
+    if "slurm" in config:
+        if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ):
+            try:
+                parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
+                queue = parameters["slurm_queue_gpu"]
+            except:
+                logger.warning("No GPU partitions configured for this instance?")
+                pass
+        elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"] == None:
+            queue = parameters["slurm_queue_gpu"]
+        else:
+            logger.warning("No GPU partitions configured for this instance?")
+    return queue
 
 def get_gpu_devices():
     try:
@@ -174,31 +190,11 @@ def get_ctffind_tilt_path():
 def get_shell_multirun_path():
     return "{0}/external/shell".format(os.environ["PYP_DIR"])
 
-
-def is_atrf():
-    if "fr-s-hpc" in socket.gethostname() or "moab" in socket.gethostname():
-        return True
-    else:
-        return False
-
-
-def is_atrf_bad():
-    return False
-
-
 def check_env():
      # set environment to avoid potential lib conflicts
     if os.environ.get("LD_LIBRARY_PATH") and  "/.singularity.d/libs" in os.environ["LD_LIBRARY_PATH"]:
         current_env = os.environ["LD_LIBRARY_PATH"]
         os.environ["LD_LIBRARY_PATH"] = current_env.replace("/.singularity.d/libs", "")
-
-# detect if this is biowulf2
-def is_biowulf2():
-    if "biowulf" in socket.gethostname() or "cn" in socket.gethostname():
-        return True
-    else:
-        return False
-
 
 def is_dcc():
     # kept for compatibility

@@ -11,7 +11,7 @@ Supported operating systems
  * `CentOS 7 <https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2009>`_
  * `Ubuntu 22.04.1 LTS <https://releases.ubuntu.com/22.04/>`_
 
-The application can be run in Standalone mode or using an HPC cluster.
+The ``PYP`` command line interface can only be run when a SLURM cluster is attached (it does not work in standalone mode).
 
 Step 1: Prerequisites for installation on a cluster
 ---------------------------------------------------
