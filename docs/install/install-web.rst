@@ -308,17 +308,17 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
 
 .. code-block:: bash
 
+  # stop nextPYP
+  sudo systemctl stop nextPYP
+
   # download the new version
   sudo wget https://nextpyp.app/files/pyp/latest/install
   sudo chmod u+x install
 
-  # stop nextPYP
-  sudo systemctl stop nextPYP
-
   # re-run the installation
   sudo PYP_USER=nextpyp ./install
 
-If you configured ``nextPYP`` for :doc:`remote access through untrusted networks<./enable-remote-access#option-2-access-through-untrusted-networks-like-the-public-internet>`, you may also need to stop and upgrade the reverse proxy:
+If you configured ``nextPYP`` for :doc:`remote access through untrusted networks<./enable-remote-access>`, you may also need to stop and upgrade the reverse proxy:
 
 .. code-block:: bash
 
