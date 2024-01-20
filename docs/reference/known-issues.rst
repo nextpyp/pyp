@@ -15,7 +15,7 @@ Known Issues
 #. Jobs run perpetually
 
     - **Problem**: The jobs panel shows that processes are running (spinning cogs) even after processing has finished.
-    - **Solution**: Cancel the jobs using the red button :fa:`ban,text-danger` in the jobs panel. If the problem persist, consult the :doc:`../install/troubleshooting<./troubleshooting>` section and report any problems using the Github's `discussion board<https://github.com/orgs/nextpyp/discussions>`_.
+    - **Solution**: Cancel the jobs using the red button :fa:`ban,text-danger` in the jobs panel. If the problem persist, consult the :doc:`troubleshooting<../install/troubleshooting>` section and report any problems using the Github's `discussion board <https://github.com/orgs/nextpyp/discussions>`_.
 
 #. Default format used by singularity containers and out-of-memory kills
 
@@ -31,21 +31,21 @@ Known Issues
 
     - **Problem**: This can be caused by the JVM running out of memory. You may see the following error message:
 
-    .. code-block:: bash
-        502 Proxy Error. The proxy server received an invalid response from an upstream server.
-        The proxy server could not handle the request. Reason: Error reading from remote server.
+.. code-block:: bash
+    502 Proxy Error. The proxy server received an invalid response from an upstream server.
+    The proxy server could not handle the request. Reason: Error reading from remote server.
 
     and the server log may show the error:
 
-    .. code-block:: bash
-        Caused by: java.lang.OutOfMemoryError: Java heap space.
+.. code-block:: bash
+    Caused by: java.lang.OutOfMemoryError: Java heap space.
 
     - **Solution**: Increase the memory of the JVM to 8192 MB by adding the option ``heapMiB = 8192`` to the ``config.toml`` configuration file in the ``[web]`` section. Restart ``nextPYP`` for the changes to take effect.
 
 #. General unexpected behavior
 
     - **Problem**: Website components are missing, pages don't load properly, etc.
-    - **Solution**: This is usually indicative of an underlying problem. Reloading the page may correct the issue temporarily, but if the problem persist, consult the :doc:`../install/troubleshooting<./troubleshooting>` section and report the problem using Github's `discussion board<https://github.com/orgs/nextpyp/discussions>`_.
+    - **Solution**: This is usually indicative of an underlying problem. Reloading the page may correct the issue temporarily, but if the problem persist, consult the :doc:`../install/troubleshooting<./troubleshooting>` section and report the problem using Github's `discussion board <https://github.com/orgs/nextpyp/discussions>`_.
 
 For other problems, please consult the :doc:`troubleshooting<../install/troubleshooting>` section.
 
@@ -55,13 +55,11 @@ For other problems, please consult the :doc:`troubleshooting<../install/troubles
 
 .. important::
 
-   When reporting a new problem, please share the entire log of the process that produced the error. To do so, you can either upload the file as an attachment or copy and paste the text of the log into the Github message using code formatting, for example:
+   When reporting a new problem, please share the *entire* log of the process that produced the error. To do so, you can either upload the file as an attachment or copy and paste the text of the log into the Github message using code formatting (*please refrain from uploading screenshots*), for example:
 
-   .. code-block:: bash
-        This is the error message I'm getting:
-        ```
-        10	2024-01-19 19:21:46 [INFO] Reading and converting coordinates took: 00h 00m 00s
-        11	2024-01-19 19:21:48 [ERROR] An error has occurred.
+.. code-block:: bash
+    This is the error message I'm getting:
+    ```
+    10	2024-01-19 19:21:46 [INFO] Reading and converting coordinates took: 00h 00m 00s
+    11	2024-01-19 19:21:48 [ERROR] An error has occurred.
         ``
-
-   **Please avoid sharing screenshots if you can**.
