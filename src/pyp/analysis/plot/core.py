@@ -1511,8 +1511,8 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, sav
         axs.set_xlim([-0.5, max(max(scores)+1,threshold)])
         axs.hist(scores, bins=100)
 
-        axs.set_xlabel('Mean score', fontsize=20, labelpad=10, weight="bold")
-        axs.set_ylabel('Population', fontsize=20, labelpad=10, weight="bold" )
+        axs.set_xlabel('Mean score', fontsize=12, labelpad=10)
+        axs.set_ylabel('Population', fontsize=12, labelpad=10)
         axs.spines.right.set_visible(False)
         axs.spines.top.set_visible(False)
         axs.spines["bottom"].set_linewidth(1)
