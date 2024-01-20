@@ -22,7 +22,7 @@ sys.path.insert(0, MAIN_DIR)
 # -- Project information -----------------------------------------------------
 
 project = "nextPYP"
-copyright = "2023, Bartesaghi Lab"
+copyright = "2024, Bartesaghi Lab"
 # author = "Alberto Bartesaghi"
 
 # The full version, including alpha/beta/rc tags
