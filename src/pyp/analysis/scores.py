@@ -1264,7 +1264,7 @@ def thresholding_and_plot(films, shifts_3d: list, parameters: dict):
         film_count += 1
 
     logger.warning(
-        "{} particles ({:.1f}%) from {} tilt-series will be used".format(
+        "{:,} particles ({:.1f}%) from {} tilt-series will be used".format(
             particle_used_count,
             (particle_used_count / particle_all_count * 100),
             film_count,
