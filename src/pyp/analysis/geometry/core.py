@@ -268,7 +268,7 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
 
     However, different programs use different conventions. Here we only introduce LEFT and RIGHT handedness for rotation. 
     
-    * Left handedness is used by IMOD and vtk module, 3DAVG, EMAN2, Frealign, including normXYZ, normXYZ and Euler angles of rotation.
+    * Left handedness is used by 3DAVG, EMAN2, Frealign, including normXYZ, normXYZ and Euler angles of rotation.
     Its rotation matrix, if rotating around z axis, should be 
                    cos(angle)    sin(angle)  0
     R( angle ) = [ -sin(angle)    cos(angle)  0 ] 
@@ -407,7 +407,7 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
     px = -t[0, 3]
     py = -t[1, 3]
     pz = -t[2, 3]
-    
+
     t = np.dot(tilt_angle_matrix, t)
     t = np.dot(np.linalg.inv(tilt_axis_rotation_matrix), t)
 
