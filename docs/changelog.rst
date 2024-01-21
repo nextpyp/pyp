@@ -4,14 +4,14 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.6.0 (1/20/2024)
+v0.6.0 (1/21/2024)
 *******************
 
-   :fa:`star,text-success` Add `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ wrapper for movie frame alignment (GPU required).
+   :fa:`star,text-success` Allow use of `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ for movie frame alignment (GPU required).
 
-   :fa:`star,text-success` Add `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_ wrapper for tilt-series alignment and reconstruction (GPU required).
+   :fa:`star,text-success` Allow use of `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_ for tilt-series alignment and reconstruction (GPU required).
 
-   :fa:`star,text-success` Add `Topaz <https://github.com/tbepler/topaz>`_ wrapper for 2D particle picking and 3D denoising (GPU recommended).
+   :fa:`star,text-success` Allow use of `Topaz <https://github.com/tbepler/topaz>`_ for 2D particle picking and 3D denoising (GPU recommended).
 
    :fa:`star,text-success` Produce .bild files after each refinement iteration for 3D visualization in Chimera/ChimeraX.
 
@@ -30,6 +30,8 @@ v0.6.0 (1/20/2024)
    :fa:`plus-square,text-primary` Implement GPU resource management policies for slurm and standalone modes.
 
    :fa:`plus-square,text-primary` Show per-particle score distribution for all tomography refinement blocks and improve plot layout.
+
+   :fa:`plus-square,text-primary` Allow use of slurm's GRES (generic resource scheduling) when submitting jobs to a cluster.
 
    :fa:`bug,text-danger` Fix OOM error when running constrained refinement using a single thread.
 

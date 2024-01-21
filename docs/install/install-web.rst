@@ -311,22 +311,18 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
   # stop nextPYP
   sudo systemctl stop nextPYP
 
+  # stop the reverse proxy (only required if you configured remote access through untrusted networks)
+  sudo systemctl stop nextPYP-rprox
+
   # download the new version
-  sudo wget https://nextpyp.app/files/pyp/latest/install
+  sudo wget https://nextpyp.app/files/pyp/latest/install -O install
   sudo chmod u+x install
 
   # re-run the installation
   sudo PYP_USER=nextpyp ./install
 
-If you configured ``nextPYP`` for :doc:`remote access through untrusted networks<./enable-remote-access>`, you may also need to stop and upgrade the reverse proxy:
-
-.. code-block:: bash
-
-  # stop the reverse proxy
-  sudo systemctl stop nextPYP-rprox
+  # re-install the reverse proxy (only if you configured remote access through untrusted networks)
   sudo chmod u+x install-rprox
-
-  # re-run the installation
   sudo PYP_DOMAIN=myserver.myorganization.org ./install-rprox
 
 After this, you should be able to access the application the same way you did before the upgrade.

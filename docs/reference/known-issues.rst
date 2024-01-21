@@ -29,18 +29,7 @@ Known Issues
 
 #. Website is unresponsive, pages are slow to load or **Error reading from remote server** is displayed.
 
-    - **Problem**: This can be caused by the JVM running out of memory. You may see the following error message:
-
-        ```
-        502 Proxy Error. The proxy server received an invalid response from an upstream server.
-        The proxy server could not handle the request. Reason: Error reading from remote server.
-        ```
-
-        and the server log may show the error:
-
-        ```
-        Caused by: java.lang.OutOfMemoryError: Java heap space.
-        ```
+    - **Problem**: This can be caused by the JVM running out of memory. You may see the following error message: ``502 Proxy Error. The proxy server received an invalid response from an upstream server. The proxy server could not handle the request. Reason: Error reading from remote server.``, and the server log may show the error: ``Caused by: java.lang.OutOfMemoryError: Java heap space.``
 
     - **Solution**: Increase the memory of the JVM to 8192 MB by adding the option ``heapMiB = 8192`` to the ``config.toml`` configuration file in the ``[web]`` section. Restart ``nextPYP`` for the changes to take effect.
 
@@ -57,12 +46,4 @@ For other problems, please consult the :doc:`troubleshooting<../install/troubles
 
 .. important::
 
-   When reporting a new problem, please share the *entire* log of the process that produced the error. To do so, you can either upload the file as an attachment or copy and paste the text of the log into the Github message using code formatting, for example:
-
-.. code-block:: bash
-
-    This is the error message I'm getting:
-    ```
-    10	2024-01-19 19:21:46 [INFO] Reading and converting coordinates took: 00h 00m 00s
-    11	2024-01-19 19:21:48 [ERROR] An error has occurred.
-    ```
+   When reporting a new problem, please share the *entire* log of the process that produced the error. To do so, you can either upload the file as an attachment or copy and paste the text of the log into the Github message using code formatting (**do not upload screenshots if at all possible**).
