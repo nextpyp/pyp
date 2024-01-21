@@ -3696,7 +3696,7 @@ name = "Raw data transfer"
 description="Whether to move, copy or link the raw data from the original destination to the session folder"
 type = "enum"
 enum = { move="move", copy="copy", link="link" }
-default = "move"
+default = "link"
 
 [tabs.stream.transfer_all]
 name = "Transfer additional files"
