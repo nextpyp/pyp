@@ -543,7 +543,7 @@ def shape_phase_residuals(
                         input[:, occ],
                     )
                 number = input[input[:, occ]==0].shape[0]
-                logger.info(f"Number of particles with zero occupancy = {number:,} (out of {input.shape[0]:,}, {number/input.shape[0]*100:.2f}%)")
+                logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
 
     if os.path.exists(fmatch_stack):
         logger.info(
@@ -1264,7 +1264,7 @@ def thresholding_and_plot(films, shifts_3d: list, parameters: dict):
         film_count += 1
 
     logger.warning(
-        "{} particles ({:.1f}%) from {} tilt-series will be used".format(
+        "{:,} particles ({:.1f}%) from {} tilt-series will be used".format(
             particle_used_count,
             (particle_used_count / particle_all_count * 100),
             film_count,

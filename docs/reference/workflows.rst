@@ -4,7 +4,7 @@ Workflows
 
 ``nextPYP`` supports the use of pre-defined sequences of blocks, called **Workflows**. 
 
-The program ships with workflows for the :doc:`Single-particle tutorial<../tutorials/spa_empiar_10025>`, the :doc:`Tomography tutorial<../tutorials/tomo_empiar_10164>` and the :doc:`Classification tutorial<../tutorials/tomo_empiar_10304>`.
+The program comes with workflows for the :doc:`Single-particle tutorial<../tutorials/spa_empiar_10025>`, the :doc:`Tomography tutorial<../tutorials/tomo_empiar_10164>` and the :doc:`Classification tutorial<../tutorials/tomo_empiar_10304>`.
 
 1. Import a workflow
 --------------------
@@ -13,11 +13,11 @@ The program ships with workflows for the :doc:`Single-particle tutorial<../tutor
 
 - Choose a workflow from the list and click :badge:`Import,badge-primary`
 
-- A form will appear asking for any required parameters. This typically includes the location of the raw data (and associated files) and :doc:`Computing resources<computing>` to use
+- A form will appear asking for any required parameters. This typically includes the location of the raw data (and associated files) and the :doc:`Computing resources<computing>` to use
 
 - Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for N blocks,badge-primary` (where N is the number of blocks in the workflow)
 
-Inspect the results of the **Workflow** by navigating into each block
+You can inspect the results of the **Workflow** by navigating into each block.
 
 2. Defining custom workflows
 ----------------------------
@@ -51,6 +51,10 @@ Inspect the results of the **Workflow** by navigating into each block
     detect_method = "all"
     slurm_tasks = 7
     slurm_memory = 14
+
+.. tip::
+
+    You can use the workflows included with ``nextPYP`` as a starting point to create your own workflows.
 
 The location of the ``.toml`` files must be specified in ``nextPYP``'s configuration file, using the entry ``workflowDirs``:
 

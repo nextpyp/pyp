@@ -539,7 +539,11 @@ if __name__ == "__main__":
         args["extract_cls"] = 0
 
     # remote server
-    server = "{0}@{1}".format(os.environ["USER"], config["slurm"]["host"])
+    try:
+        server = "{0}@{1}".format(os.environ["USER"], config["slurm"]["host"])
+    except:
+        server = None
+        pass
 
     # create necessary folders
     create_paths(server, os.path.join(target_path, "raw"))
