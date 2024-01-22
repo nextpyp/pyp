@@ -983,6 +983,7 @@ def frealign_def_split(fp, parfile, tolerance):
         25,
         1,
         10,
+        "",
         "12:00:00",
     )
 
@@ -995,6 +996,7 @@ def frealign_def_split(fp, parfile, tolerance):
         0,
         1,
         10,
+        "",
         "12:00:00",
         id,
     )
@@ -1238,6 +1240,7 @@ def frealign_rec(mparameters, fparameters, iteration, alignment_option):
                         400,
                         threads,
                         58,
+                        "",
                         "12:00:00",
                     )
                     slurm.submit_jobs(
@@ -1248,6 +1251,7 @@ def frealign_rec(mparameters, fparameters, iteration, alignment_option):
                         400,
                         0,
                         58,
+                        "",
                         "12:00:00",
                         id,
                     )
@@ -1528,6 +1532,7 @@ def frealign_iterate(mp, fp, iteration, keep_previous_alignments=False):
                 25,
                 1,
                 10,
+                "",
                 "12:00:00",
             )
 
@@ -1545,6 +1550,7 @@ def frealign_iterate(mp, fp, iteration, keep_previous_alignments=False):
             0,
             70,
             690,
+            "",
             "12:00:00",
             id,
         )
@@ -2359,7 +2365,7 @@ def local_merge_reconstruction(name=""):
     if len(matchfiles_1) == 1:
         return 1
 
-    assert (len(matchfiles_1) > 0 and len(matchfiles_1) == len(matchfiles_2)), f"Number of intermediate reconstructions does not match (half1: {len(matchfiles_1)} is NOT half2: {len(matchfiles_2)})"
+    assert (len(matchfiles_1) > 0 and len(matchfiles_1) == len(matchfiles_2)), f"Number of intermediate reconstructions does not match (half1: {len(matchfiles_1)} != half2: {len(matchfiles_2)})"
 
     renamed_1 = [ f"{dummy_name}_map1_n{idx+1}.mrc" for idx, f in enumerate(matchfiles_1) ]
     renamed_2 = [ f"{dummy_name}_map2_n{idx+1}.mrc" for idx, f in enumerate(matchfiles_2) ]
@@ -2383,7 +2389,7 @@ def local_merge_reconstruction(name=""):
 
     local_run.run_shell_command(command, verbose=False)
 
-    assert (os.path.exists(output_1)), "Local merge3d does not run successfully, please check"
+    assert (os.path.exists(output_1)), "Local merge3d failed, stopping"
     # remove previous intermediates reconstruction 
     for dump_1, dump_2 in zip(renamed_1, renamed_2):
         os.remove(dump_1)
@@ -5460,7 +5466,7 @@ def refine2d_mpi(
         """
 
     assert len(commands) > 0, f"{input_frealign_par} does not have particles"
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
 
     return splitted_parfiles, dumpfiles
 
@@ -6184,6 +6190,7 @@ def rec_merge_check_error_and_resubmit(mparameters, fparameters, iteration):
             400,
             0,
             58,
+            "",
             "12:00:00",
         )
         slurm.submit_jobs(
@@ -6194,6 +6201,7 @@ def rec_merge_check_error_and_resubmit(mparameters, fparameters, iteration):
             400,
             0,
             58,
+            "",
             "12:00:00",
             id,
         )
@@ -6292,6 +6300,7 @@ def ref_merge_check_error_and_resubmit(fp, iteration, machinefile):
                 25,
                 1,
                 10,
+                "",
                 "4:00:00",
             )
             slurm.submit_jobs(
@@ -6302,6 +6311,7 @@ def ref_merge_check_error_and_resubmit(fp, iteration, machinefile):
                 0,
                 2,
                 58,
+                "",
                 "4:00:00",
                 id,
             )

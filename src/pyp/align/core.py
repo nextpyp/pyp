@@ -4572,7 +4572,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         running_average = 1
         maximum_shifts_in_A = 40.0
         minimum_shifts_in_A = 0.0
-        threads = parameters["slurm_tasks"] if "spr" in parameters["data_mode"].lower() else 1
+        threads = min(6,parameters["slurm_tasks"]) if "spr" in parameters["data_mode"].lower() else 1
 
         """
                 **   Welcome to Unblur   **
@@ -4886,6 +4886,8 @@ def align_tilt_series(name, parameters, rotation=0):
     # check if fiducial/patch tracking coordinates exist
     if 'aretomo' in parameters["tomo_ali_method"]:
 
+            logger.info("Align tilt-series using AreTomo2")
+ 
             binning_tomo = parameters["tomo_rec_binning"]
             thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
 
@@ -5104,7 +5106,7 @@ def align_tilt_series(name, parameters, rotation=0):
         if "tomo_ali_fiducial" in parameters and parameters["tomo_ali_fiducial"] > 0 and "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_gold":
 
             # Alignment with RAPTOR
-            logger.info("Doing fiducial based alignment using RAPTOR")
+            logger.info("Align tilt-series using gold fiducials (IMOD/RAPTOR)")
 
             gold_diameter = int(round(parameters["tomo_ali_fiducial"] / actual_pixel))
 
@@ -5254,7 +5256,7 @@ EOF
             # Fiducial-less alignment
 
             logger.info(
-                "Doing patch based tilt-series alingment using IMODs imodchopconts"
+                "Align tilt-series using patch tracking (IMOD)"
             )
 
             max_size = min(

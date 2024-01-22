@@ -3,6 +3,7 @@ import os
 import socket
 from pwd import getpwnam
 from pyp.system.singularity import get_pyp_configuration
+from pyp.streampyp.web import Web
 
 def timeout_command(command, time, full_path=False):
     if full_path:
@@ -71,35 +72,43 @@ def get_motioncor3_path():
     command = cuda_path_prefix(command)
     return command
 
-def slurm_gpu_mode():
-    return "SLURM_JOB_GPUS" in os.environ or "SLURM_STEP_GPUS" in os.environ
-
 def get_gpu_id():
-    # if using slurm, follow the default device ID (assume we always use a single GPU)
-    if slurm_gpu_mode():
-        return 0
-    # if in standalone mode, retrieve gpu id from file
-    else:
-        try:
-            return os.environ["CUDA_VISIBLE_DEVICES"].split(',')[0]
-        except:
-            raise Exception("No GPU devices found")
+    return 0
 
 def get_gpu_file():
     return os.path.join(os.environ["PYP_SCRATCH"],"gpu_device.id")
 
 def needs_gpu(parameters):
     # enable Nvidia GPU?
-    if ( ("movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters["movie_force"] )
-        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters["tomo_ali_force"])
-        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters["tomo_rec_force"])
-        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters["detect_force"])
-        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters["detect_force"])
-        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters["tomo_vir_force"])
+    if ( ( "movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters.get("movie_force") )
+        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters.get("tomo_ali_force") )
+        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters.get("tomo_rec_force") )
+        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters.get("detect_force") )
+        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters.get("detect_force") )
+        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters.get("tomo_vir_force") )
+        or ( parameters.get("tomo_rec_topaz_denoise") and parameters.get("tomo_rec_topaz_use_gpu") and parameters.get("tomo_rec_force") )
         ):
         return True
     else:
         return False
+
+def get_gpu_queue(parameters):
+    # try to get the gpu partition
+    queue = ""
+    config = get_pyp_configuration()
+    if "slurm" in config:
+        if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ):
+            try:
+                parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
+                queue = parameters["slurm_queue_gpu"]
+            except:
+                logger.warning("No GPU partitions configured for this instance?")
+                pass
+        elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"] == None:
+            queue = parameters["slurm_queue_gpu"]
+        else:
+            logger.warning("No GPU partitions configured for this instance?")
+    return queue
 
 def get_gpu_devices():
     try:
@@ -181,31 +190,11 @@ def get_ctffind_tilt_path():
 def get_shell_multirun_path():
     return "{0}/external/shell".format(os.environ["PYP_DIR"])
 
-
-def is_atrf():
-    if "fr-s-hpc" in socket.gethostname() or "moab" in socket.gethostname():
-        return True
-    else:
-        return False
-
-
-def is_atrf_bad():
-    return False
-
-
 def check_env():
      # set environment to avoid potential lib conflicts
     if os.environ.get("LD_LIBRARY_PATH") and  "/.singularity.d/libs" in os.environ["LD_LIBRARY_PATH"]:
         current_env = os.environ["LD_LIBRARY_PATH"]
         os.environ["LD_LIBRARY_PATH"] = current_env.replace("/.singularity.d/libs", "")
-
-# detect if this is biowulf2
-def is_biowulf2():
-    if "biowulf" in socket.gethostname() or "cn" in socket.gethostname():
-        return True
-    else:
-        return False
-
 
 def is_dcc():
     # kept for compatibility

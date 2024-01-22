@@ -314,7 +314,7 @@ def write_stacks_to_file(
 
         if len(mpi_funcs) > 0:
 
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
 
             # remove micrographs from local scratch
             [os.remove(stack_dir / f"{film}.mrc") for film in new_films]
@@ -461,7 +461,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Ab-initio: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of Particles: {class_fraction:.2}")
+            logger.info(f"Ab-initio: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of particles: {class_fraction:.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -520,7 +520,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Seeded startup: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of Particles: {class_fraction:.2}")
+            logger.info(f"Seeded startup: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of particles: {class_fraction:.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -578,7 +578,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Refinement mode: iteration {cycle_number}/{refinement_cycle_count}, High Res Limit: {high_res_limit}, Fraction of Particles: {class_fraction:.2}")
+            logger.info(f"Refinement mode: iteration {cycle_number}/{refinement_cycle_count}, High Res Limit: {high_res_limit}, Fraction of particles: {class_fraction:.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -750,24 +750,30 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     )
                 if "stop" in flag.values(): return flag
 
-            # Run initial 2D classification
-            new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
-            flag, new_status = run_refinement(
-                    classification_status=status,
-                    previous_name=None,
-                    boxes_lists=boxes_lists,
-                    parameters=mparameters,
-                    new_name=new_name,
-                    allparxs_dir=local_scratch_dir,
-                    ali_dir=ali_dir,
-                    stack_dir=local_scratch_dir
-                    )
-            logger.info(f"Class2D status is {new_status}")
-            if "stop" in flag.values(): return flag
+            try:
+                # Run initial 2D classification
+                new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
+                flag, new_status = run_refinement(
+                        classification_status=status,
+                        previous_name=None,
+                        boxes_lists=boxes_lists,
+                        parameters=mparameters,
+                        new_name=new_name,
+                        allparxs_dir=local_scratch_dir,
+                        ali_dir=ali_dir,
+                        stack_dir=local_scratch_dir
+                        )
+                logger.info(f"Class2D status is {new_status}")
+                if "stop" in flag.values(): return flag
 
-            global_start = False
-            new_status["seeded_startup"] = 0
-
+                global_start = False
+                new_status["seeded_startup"] = 0
+            except:
+                type, value, traceback = sys.exc_info()
+                sys.__excepthook__(type, value, traceback)
+                logger.warning("Inconsistencies detected during processing, waiting 30 seconds before resuming")
+                time.sleep(30)
+                pass
         try:
             if os.path.exists(restart_flag):
                 logger.info("Restart flag detected")
@@ -946,7 +952,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
 
             if os.path.exists(clear_flag):
                 logger.info("Clear flag detected")
-                logger.warning("Will do deep clean previous refinement results")
+                logger.warning("Will do a deep clean of previous refinement results")
 
                 # remove existing parfile and webp files
                 [os.remove(f) for f in glob.glob( os.path.join(frealign_dir, "*.webp") )]

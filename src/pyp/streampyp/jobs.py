@@ -22,6 +22,16 @@ def _absolutize_path(path):
     else:
         return os.path.join(os.getcwd(), path)
 
+def get_gres_option(use_gpu,gres):
+    if use_gpu:
+        gpu_gres = "--gres=gpu:1"
+        if len(gres) > 0:
+            gpu_gres += f",{gres}"
+    elif len(gres) > 0:
+        gpu_gres = f"--gres={gres}"
+    else:
+        gpu_gres = ""
+    return gpu_gres
 
 def submit_commands(
     submit_dir,
@@ -31,10 +41,12 @@ def submit_commands(
     queue,
     threads,
     memory,
+    gres,
     walltime,
     dependencies,
     tasks_per_arr,
     csp_no_stacks,
+    use_gpu,
 ):
 
     # example inputs:
@@ -188,39 +200,32 @@ done
             mpi = {"oversubscribe": True, "cpus": threads}
 
         # launch job via streampyp
+        gpu_gres = "gpu:1" if use_gpu else None
+        if len(gres) > 0:
+            if gpu_gres:
+                gpu_gres += f",{gres}"
+            else:
+                gpu_gres = gres
         if len(csp_local_merge_command) == 0:
             return Web().slurm_sbatch(
                 web_name=jobname,
                 cluster_name="pyp_"+jobtype,
                 commands=Web.CommandsScript(cmdlist, processes, bundle),
                 dir=_absolutize_path(submit_dir),
-                args=[
-                    "--mem=%sG" % memory,
-                    "--cpus-per-task=%s" % threads,
-                    ("--partition=%s" % queue) if queue != '' else '',
-                    "--time=%s" % walltime,
-                    "--job-name='%s'" % jobname,
-                ],
+                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres),
                 deps=dependencies,
                 mpi=mpi,
             )
         else:
             return Web().slurm_sbatch(
                 web_name=jobname,
-				cluster_name="pyp_"+jobtype,
+                cluster_name="pyp_"+jobtype,
                 commands=Web.CommandsGrid(cmdgrid, bundle),
                 dir=_absolutize_path(submit_dir),
-                args=[
-                    "--mem=%sG" % memory,
-                    "--cpus-per-task=%s" % threads,
-                    ("--partition=%s" % queue) if queue != '' else '',
-                    "--time=%s" % walltime,
-                    "--job-name='%s'" % jobname,
-                ],
+                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres),
                 deps=dependencies,
                 mpi=mpi,
             )
-
     else:
 
         if "sess_" in jobtype:
@@ -271,7 +276,7 @@ export CUDA_VISIBLE_DEVICES=$available_devs
         else:
             depend = " --dependency=afterany:{0}".format(dependencies)
 
-        command = """{0} --array=1-{7}{8} --time={9} --mem={5}G --cpus-per-task={6} {1} {2} --job-name={4} {3}""".format(
+        command = """{0} --array=1-{7}{8} --time={9} --mem={5}G --cpus-per-task={6} {1} {2} --job-name={4} {10} {3}""".format(
             run_slurm(command="sbatch", path=os.getcwd()),
             "--partition=%s" % queue if queue != '' else '',
             depend,
@@ -282,6 +287,7 @@ export CUDA_VISIBLE_DEVICES=$available_devs
             net_processes,
             bundle,
             walltime,
+            get_gres_option(use_gpu,gres),
         )
         command = run_ssh(command)
         [output, error] = run_shell_command(command, verbose=False)
@@ -296,6 +302,17 @@ export CUDA_VISIBLE_DEVICES=$available_devs
             id = output.split()[-1]
         return id
 
+def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None):
+    args = [
+        ("--partition=%s" % queue) if queue != '' else '',
+        "--cpus-per-task=%d" % threads,
+        "--time=%s" % walltime,
+        "--mem=%sG" % memory,
+        "--job-name='%s'" % jobname,
+    ]
+    if gres != None:
+        args.append("--gres=%s" % gres)
+    return args
 
 def submit_script(
     submit_dir,
@@ -305,9 +322,11 @@ def submit_script(
     queue,
     threads,
     memory,
+    gres,
     walltime,
     dependencies,
     is_script,
+    use_gpu=False,
 ):
 
     # example inputs:
@@ -345,20 +364,21 @@ def submit_script(
         else:
             dependencies = dependencies.split(",")
 
+        gpu_gres = "gpu:1" if use_gpu else None
+        if len(gres) > 0:
+            if gpu_gres:
+                gpu_gres += f",{gres}"
+            else:
+                gpu_gres = gres
+
         # launch job via streampyp
         return Web().slurm_sbatch(
             web_name=jobname,
-			cluster_name="pyp_"+jobtype,
+            cluster_name="pyp_"+jobtype,
             commands=Web.CommandsScript([cmd]),
             dir=_absolutize_path(submit_dir),
             env=[(jobtype, jobtype)],
-            args=[
-                ("--partition=%s" % queue) if queue != '' else '',
-                "--cpus-per-task=%d" % threads,
-                "--time=%s" % walltime,
-                "--mem=%sG" % memory,
-                "--job-name='%s'" % jobname,
-            ],
+            args=get_slurm_args( queue, threads, walltime, memory, jobname, gpu_gres),
             deps=dependencies,
             mpi=mpi,
         )
@@ -380,7 +400,7 @@ def submit_script(
                 path=os.path.join(os.getcwd(), submit_dir),
             )
         partition = f"--partition={queue}" if queue != '' else ''
-        command = "{0} {2} {3} --mem={6}G --job-name={1} {4} {5}".format(
+        command = "{0} {2} {3} --mem={6}G --job-name={1} {4} {7} {5}".format(
             run_slurm(
                 command="sbatch",
                 path=os.path.join(os.getcwd(), submit_dir),
@@ -392,9 +412,9 @@ def submit_script(
             depend,
             command_file,
             memory,
+            get_gres_option(use_gpu,gres),
         )
         command = run_ssh(command)
-        logger.info(command)
         [id, error] = run_shell_command(command, verbose=False)
         if "error" in error or "failed" in error:
             logger.error(error)

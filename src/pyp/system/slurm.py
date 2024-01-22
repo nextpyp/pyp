@@ -354,10 +354,12 @@ def submit_jobs(
     scratch=0,
     threads=2,
     memory=2,
+    gres="",
     walltime="72:00:00",
     dependencies="",
     tasks_per_arr=1,
     csp_no_stacks=False,
+    use_gpu=False,
 ):
     """Submit jobs to batch system"""
 
@@ -411,10 +413,12 @@ def submit_jobs(
             queue,
             threads,
             memory,
+            gres,
             walltime,
             dependencies,
             tasks_per_arr,
             csp_no_stacks,
+            use_gpu,
         )
     else:
         id = jobs.submit_script(
@@ -425,9 +429,11 @@ def submit_jobs(
             queue,
             threads,
             memory,
+            gres,
             walltime,
             dependencies,
             is_script,
+            use_gpu,
         )
 
     logger.info("Submitting {0} job(s) ({1})".format(procs, id.strip()))
@@ -541,6 +547,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
                 queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
                 threads=parameters["slurm_tasks"],
                 memory=parameters["slurm_memory"],
+                gres=parameters["slurm_gres"],
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
@@ -566,6 +573,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
             queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
             threads=parameters["slurm_tasks"],
             memory=parameters["slurm_memory"],
+            gres=parameters["slurm_gres"],
             walltime=parameters["slurm_walltime"],
             tasks_per_arr=1, # one class per array job
             csp_no_stacks=parameters["csp_no_stacks"],
@@ -584,6 +592,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
         scratch=0,
         threads=parameters["slurm_merge_tasks"],
         memory=parameters["slurm_merge_memory"],
+        gres=parameters["slurm_merge_gres"],
         walltime=parameters["slurm_merge_walltime"],
         dependencies=id,
     )

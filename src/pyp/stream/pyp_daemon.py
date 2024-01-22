@@ -16,14 +16,13 @@ import numpy as np
 from pyp.streampyp.web import Web
 import pyp.streampyp.metadb_daemon
 from pyp.analysis import plot
-from pyp.inout.image import collate_and_compress, compress_and_delete
+from pyp.inout.image import compress_and_delete
 from pyp.inout.image import digital_micrograph as dm4
-from pyp.inout.metadata import frealign_parfile
 from pyp.system import project_params, slurm, user_comm, set_up
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
-from pyp.system.utils import ctime, get_parameter_files_path, is_biowulf2
+from pyp.system.utils import needs_gpu, get_gpu_queue
 from pyp.utils import get_relative_path, movie2regex, timer
 from pyp.inout.metadata import pyp_metadata
 
@@ -182,6 +181,7 @@ def pyp_daemon(args):
                 scratch=0,
                 threads=parameters["slurm_class2d_tasks"],
                 memory=parameters["slurm_class2d_memory"],
+                gres=parameters["slurm_class2d_gres"],
                 walltime=parameters["slurm_class2d_walltime"],
             )
 
@@ -480,13 +480,12 @@ def pyp_daemon(args):
             run_shell_command("chmod u+x {0}".format(swarm_file),verbose=False)
 
             # submit jobs to batch system
-            queue = "None"
-            if "quickQueue" in config["slurm"].keys():
-                queue = config["slurm"]["quickQueue"]
-            elif "queue" in config["slurm"].keys():
-                queue = config["slurm"]["queue"]
-            elif "slurm_queue" in args:
-                queue = args["slurm_queue"]
+            gpu = needs_gpu(parameters)
+            if gpu:
+                queue = get_gpu_queue(parameters)
+            else:
+                queue = parameters["slurm_queue"]
+
             id = slurm.submit_jobs(
                 submit_dir=os.path.join(session_dir, "swarm"),
                 command_file=swarm_file,
@@ -495,6 +494,11 @@ def pyp_daemon(args):
                 queue=queue,
                 threads=args["slurm_tasks"],
                 memory=args["slurm_memory"],
+                gres=parameters["slurm_gres"],
+                walltime=args.get("slurm_merge_walltime"),
+                tasks_per_arr=args.get("slurm_bundle_size"),
+                csp_no_stacks=args.get("csp_no_stacks"),
+                use_gpu=gpu,
             ).strip()
 
             alreadysubmitted.extend(tobesubmitted)
@@ -589,9 +593,12 @@ def pyp_daemon_process(args,):
                     if os.path.exists(fil):
                         os.remove(fil)
             else:
-                fil = glob.glob( os.path.join( raw_dir, "." + file + "*") )[0]
-                if os.path.exists(fil):
-                    os.remove(fil)
+                try:
+                    fil = glob.glob( os.path.join( raw_dir, "." + file + "*") )[0]
+                    if os.path.exists(fil):
+                        os.remove(fil)
+                except:
+                    pass
 
     # Start processing
     # make distinction between SPA and TOMO

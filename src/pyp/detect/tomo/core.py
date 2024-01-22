@@ -33,7 +33,7 @@ def get_virion_segmentation_thresholds(seg_thresh):
     return np.array(
         [" 0.1 0.01 0.005 0.0025 0.001 0.0005 0.00025 0.0001 -0.000144325".split()]
     ).squeeze()[int(seg_thresh)]
-    
+
 
 def process_virion_multiprocessing(
     name,
@@ -375,7 +375,7 @@ def process_virion_multiprocessing(
                 )
 
             with open(newfile, "w") as newf:
-            
+
                 with open(tmp_coordinate_file, "w") as tmpf:
 
                     tmpf.write(
@@ -392,12 +392,12 @@ def process_virion_multiprocessing(
                                 name = virion_name + "_spk%04d.mrc" % index
                                 # check if spikes were already extracted using retrieved _cut.txt
                                 # if not, only process the lines which are height corrected
-                                
+
                                 if (
                                         fresh_template_match and float(parameters["tomo_vir_detect_offset"])
                                 ) > 0 and data[6] != "0":
                                     continue
-                                
+
                                 pos = (np.array(data[3:6], dtype=float)).astype("int")
                                 if spike_binning != 1:
                                     pos //= int(spike_binning)
@@ -1484,10 +1484,6 @@ EOF
                     or tilt_Y - half_spk_size < 0
                     or tilt_Y + half_spk_size > micrograph_y
                 ):
-                    if parameters["slurm_verbose"]:
-                        logger.info(
-                            "Skip particle with missing tilted projection(s)"
-                        )
                     lose_tilt = True
                     break
 
@@ -1515,11 +1511,11 @@ EOF
             if fslice < 0:
                 ypad_dn = fslice
                 fslice = 0
-            
+
             # skip if reversed slice
             if fslice > lslice:
                 continue
-            
+
             # shiftx = y / 2 - float(spike[0]) * binning
             shiftx = x / 2 - float(spike[0]) * binning
 
@@ -1661,9 +1657,9 @@ def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth):
 
         # normals = normals.astype(int)
         normals = compute_normals(verts, faces)
-        
+
         clean_vts, clean_norms = clean_verts(verts, normals, distance)
-        
+
         z = volume.shape[2]
 
         if bandwidth > 0 and bandwidth < z / 2:
@@ -1672,13 +1668,13 @@ def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth):
             keep_mask = np.logical_and(clean_vts[:, 0] >= inner_band, clean_vts[:, 0] <= outer_band)
             clean_vts = clean_vts[keep_mask]
             clean_norms = clean_norms[keep_mask]
-        
+
         # need to swap x, z the same as the vertices coordinates
         clean_norms_swapxz = clean_norms.copy()
         clean_norms_swapxz[:, [0, 2]] = clean_norms[:, [2, 0]]
 
         write_mesh_cmm(clean_vts, virion_name)
-        
+
     else:
         logger.info("Cannot find {0}_binned_nad_seg.mrc".format(virion_name))
 
@@ -1716,7 +1712,7 @@ def clean_verts(verts, normals, distance):
             # use the first normal of the neighbor
             clean_norm.append(normals[neighbors[0]])
             visited.update(neighbors)
-    
+
     return np.array(clean_verts), np.array(clean_norm)
 
 def write_mesh_cmm(verts, name):

@@ -379,7 +379,7 @@ hidden = true
 name = "Alignment method"
 description = "Method used for frame alignment"
 type = "enum"
-enum = { unblur="unblur", motioncor="motioncor3", skip="no alignment" }
+enum = { unblur="unblur", motioncor="motioncor3 (GPU required)", skip="no alignment" }
 default = "unblur"
 hidden = ["spr_import_star","tomo_import_star"]
 
@@ -967,11 +967,17 @@ type = "int"
 default = 2
 hidden = true
 
+[tabs.detect_nn3d.compress]
+name = "Additional binning in Z"
+description = "Apply additional 2x binning in Z-dimension"
+type = "bool"
+default = true
+
 [tabs.detect_nn3d.num_epochs]
 name = "Epochs"
 description = "Number of epochs used during training"
 type = "int"
-default = 600
+default = 10
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.bbox]
@@ -983,9 +989,9 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.val_interval]
 name = "Interval to perform validation"
-description = "Run validation within this interval"
+description = "Run validation every this number of epochs"
 type = "int"
-default = 100
+default = 5
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 advanced = true
 
@@ -993,12 +999,12 @@ advanced = true
 name = "Threshold for soft/hard positives"
 description = "Threshold for soft/hard positives"
 type = "float"
-default = 0.8
+default = 0.85
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.cr_weight]
 name = "Contrastive regularization weight"
-description = "Weight for contrastive regularization module"
+description = "Weight for contrastive regularization term"
 type = "float"
 default = 0.1
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
@@ -1013,24 +1019,24 @@ advanced = true
 
 [tabs.detect_nn3d.tau]
 name = "Class prior probability"
-description = "Class prior probability"
+description = "Class prior probability (tau)"
 type = "float"
-default = 0.4
+default = 0.01
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 advanced = true
 
 [tabs.detect_nn3d.max_objects]
 name = "Max number of particles"
-description = "Limit number of particles per tomogram"
+description = "Expected number of particles per tomogram"
 type = "int"
-default = 200
+default = 1200
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.lr]
 name = "Learning rate"
 description = "Rate to use during training"
 type = "float"
-default = 0.001
+default = 0.0005
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_nn3d.debug]
@@ -1166,7 +1172,7 @@ _description = "Parameters for tilt-series alignment"
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
 type = "enum"
-enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2" }
+enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)" }
 default = "imod_gold"
 
 [tabs.tomo_ali.fiducial]
@@ -1251,7 +1257,7 @@ _description = "Parameters for tomographic reconstruction"
 name = "Method for tomogram reconstruction"
 description = "Method used for tomogram reconstruction"
 type = "enum"
-enum = { imod="imod", aretomo="aretomo2" }
+enum = { imod="imod", aretomo="aretomo2 (GPU required)" }
 default = "imod"
 
 [tabs.tomo_rec.force]
@@ -1385,6 +1391,13 @@ name = "Patch padding size (Topaz denoise)"
 description = "Padding around each patch to remove edge artifacts"
 type = "int"
 default = 48
+advanced = true
+
+[tabs.tomo_rec.topaz_use_gpu]
+name = "Use GPU (Topaz denoise)"
+description = "Request a GPU to run Topaz denoise"
+type = "bool"
+default = false
 advanced = true
 
 [tabs.tomo_vir]
@@ -3683,7 +3696,7 @@ name = "Raw data transfer"
 description="Whether to move, copy or link the raw data from the original destination to the session folder"
 type = "enum"
 enum = { move="move", copy="copy", link="link" }
-default = "move"
+default = "link"
 
 [tabs.stream.transfer_all]
 name = "Transfer additional files"
@@ -3840,6 +3853,14 @@ type = "int"
 default = 4
 hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
 
+[tabs.slurm.gres]
+name = "Gres per task"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+type = "str"
+default = ""
+hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
 [tabs.slurm.walltime]
 name = "Walltime per task"
 description = "Limit running time for each task (dd-hh:mm:ss)"
@@ -3882,6 +3903,14 @@ type = "int"
 default = 4
 hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process"]
 
+[tabs.slurm.merge_gres]
+name = "Gres (merge task)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+type = "str"
+default = ""
+hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process"]
+advanced = true
+
 [tabs.slurm.merge_walltime]
 name = "Walltime (merge task)"
 description = "Max running time for merging task (dd-hh:mm:ss)"
@@ -3911,6 +3940,14 @@ type = "int"
 default = 2
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
 
+[tabs.slurm.daemon_gres]
+name = "Gres (refinement daemon)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+type = "str"
+default = ""
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
 [tabs.slurm.daemon_walltime]
 name = "Walltime per task (pre-processing daemon)"
 description = "Max running time for pre-processing task (dd-hh:mm:ss)"
@@ -3939,6 +3976,14 @@ description = "Amount of memory used for 2D/3D refinement daemon (GB)"
 type = "int"
 default = 4
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+
+[tabs.slurm.class2d_gres]
+name = "Gres (refinement daemon)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+type = "str"
+default = ""
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
 
 [tabs.slurm.class2d_walltime]
 name = "Walltime (refinement daemon)"

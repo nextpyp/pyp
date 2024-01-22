@@ -22,6 +22,7 @@ Supported operating systems
  * `CentOS 7 <https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2009>`_
  * `Ubuntu 22.04.1 LTS <https://releases.ubuntu.com/22.04/>`_
 
+These instructions refer to the installation of ``nextPYP``'s' web interface. If you want to install the ``PYP`` command line interface, follow :doc:`these instructions<../reference/cli/installation>` instead.
 
 Step 1: Prerequisites for installation
 --------------------------------------
@@ -299,3 +300,29 @@ for the application, but you can enable other configurations using the linked in
 
   For large processing jobs, using a compute cluster can speed up results significantly.
   These instructions show how to attach a SLURM cluster to your installation.
+
+Upgrading to a new version
+--------------------------
+
+To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation:
+
+.. code-block:: bash
+
+  # stop nextPYP
+  sudo systemctl stop nextPYP
+
+  # stop the reverse proxy (only required if you configured remote access through untrusted networks)
+  sudo systemctl stop nextPYP-rprox
+
+  # download the new version
+  sudo wget https://nextpyp.app/files/pyp/latest/install -O install
+  sudo chmod u+x install
+
+  # re-run the installation
+  sudo PYP_USER=nextpyp ./install
+
+  # re-install the reverse proxy (only if you configured remote access through untrusted networks)
+  sudo chmod u+x install-rprox
+  sudo PYP_DOMAIN=myserver.myorganization.org ./install-rprox
+
+After this, you should be able to access the application the same way you did before the upgrade.

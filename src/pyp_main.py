@@ -99,7 +99,7 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, needs_gpu, get_gpu_devices, slurm_gpu_mode, check_env
+from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, get_gpu_queue
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
@@ -572,8 +572,9 @@ def spr_merge(parameters, check_for_missing_files=True):
         with open(films, "w") as f:
             f.write("\n".join(inputlist))
     else:
-        logger.warning("No particle was picked in any of the images. Please check the particle picking parameters")
+        logger.error("Either all micrographs failed or no particles were found, stopping")
         inputlist = input_all_list
+        raise
 
     # use given naming convention when extracting frames for relion
     if False:
@@ -751,7 +752,8 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 # missing files remaining after retrying
                 try:
                     os.remove(micrographs)
-                    logger.warning("Missing processed files remainning and will be exlcuded from the film list. Please check manually ")
+                    logger.error("Second attempt failed, stopping. Please check for errors in the logs.")
+                    raise
                 except:
                     pass
             else:
@@ -786,8 +788,9 @@ def tomo_merge(parameters, check_for_missing_files=True):
             f.write("\n".join(inputlist))
             f.close()
     else:
-        logger.warning("No particle was picked in any of the images. Please check the particle picking parameters")
+        logger.error("Either all micrographs failed or no particles were found, stopping")
         inputlist = input_all_list
+        raise
 
     if detect.tomo_spk_is_required(parameters) > 0:
         # produce .txt file for 3DAVG
@@ -903,29 +906,17 @@ def split(parameters):
             try:
                 parameters["slurm_queue"] = config["slurm"]["queues"][0]
             except:
-                raise Exception("No CPU partitions are configured for this instance")
+                logger.warning("No CPU partitions configured for this instance?")
+                parameters["slurm_queue"] = ""
+                pass
 
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
 
         if gpu or tomo_train or spr_train:
             # try to get the gpu partition
-            partition_name = ""
-            if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ) and "slurm" in config:
-                try:
-                    parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
-                    partition_name = parameters["slurm_queue_gpu"]
-                except:
-                    raise Exception("No GPU partitions are configured for this instance")
-            elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"]==None:
-                partition_name = parameters["slurm_queue_gpu"]
-            else:
-                raise Exception("The jobs need GPUs, but GPU configuration was not set properly")
-
-            if not Web.exists:
-                partition_name += " --gres=gpu:1 "
+            partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
-
         else:
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
@@ -944,9 +935,11 @@ def split(parameters):
                     scratch=0,
                     threads=parameters["slurm_merge_tasks"],
                     memory=parameters["slurm_merge_memory"],
+                    gres=parameters["slurm_merge_gres"],
                     walltime=parameters["slurm_merge_walltime"],
                     tasks_per_arr=parameters["slurm_bundle_size"],
                     csp_no_stacks=parameters["csp_no_stacks"],
+                    use_gpu=gpu,
                 ).strip()
             else:
                 raise Exception("Please select a list of coordinates for training")
@@ -963,10 +956,12 @@ def split(parameters):
                 scratch=0,
                 threads=parameters["slurm_tasks"],
                 memory=parameters["slurm_memory"],
+                gres=parameters["slurm_gres"],
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 dependencies=id_train,
                 csp_no_stacks=parameters["csp_no_stacks"],
+                use_gpu=gpu,
             ).strip()
 
             # submit merge job dependent on swarm jobs
@@ -978,6 +973,7 @@ def split(parameters):
                 queue=parameters["slurm_queue"],
                 scratch=0,
                 threads=parameters["slurm_merge_tasks"],
+                gres=parameters["slurm_merge_gres"],
                 memory=parameters["slurm_merge_memory"],
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
@@ -1176,7 +1172,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
                     gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
                     if os.path.exists(gain_reference_file):
                         shutil.copy2(gain_reference_file, os.getcwd())
-                logger.info("Aligning frames using " + parameters['movie_ali'])
+                logger.info("Aligning frames using: " + parameters['movie_ali'])
                 aligned_average = align.align_movie_super(
                     parameters, name, extension
                 )
@@ -1512,7 +1508,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
         parameters["tomo_vir_force"] or \
         parameters["tomo_rec_force"] or \
-        parameters["tomo_rec_erase_fiducials"] or \
         tomo_subvolume_extract_is_required(parameters) or \
         detect.tomo_vir_is_required(parameters) or \
         not ctf_mod.is_done(metadata, parameters, name=name, project_dir=current_path):
@@ -1545,7 +1540,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     mpi_funcs, mpi_args = [ ], [ ]
 
     # produce binned tomograms
-    need_recalculation = parameters["tomo_rec_force"] or ( parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] )
+    need_recalculation = parameters["tomo_rec_force"]
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
@@ -1673,7 +1668,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.plot_tomo_ctf)
         mpi_args.append( [(name,parameters["slurm_verbose"])] )
 
-    if not os.path.exists(f"{name}_rec.webp") or parameters["tomo_rec_force"] or parameters["tomo_rec_erase_fiducials"]:
+    if not os.path.exists(f"{name}_rec.webp") or parameters["tomo_rec_force"]:
         mpi_funcs.append(plot.tomo_slicer_gif)
         mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True, 2, parameters["slurm_verbose"])] )
 

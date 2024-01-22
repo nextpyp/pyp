@@ -670,7 +670,7 @@ def get_new_input_list(parameters, inputlist):
                     box_size = boxx.shape[0]
 
             if not boxx_exists:
-                logger.warning(f"boxx file not found. Box size = {box_size}. Removing {sname} from list")
+                logger.warning(f"{sname} has no particles, removing from list")
             else:
                 newinput_dict.update({sname:box_size})
         newinputlist = sorted(newinput_dict, key=newinput_dict.get, reverse=True)
@@ -2136,7 +2136,7 @@ EOF
 
     # pre-load magnification matrix
     [output, error] = local_run.run_shell_command(
-        "%s/bin/xf2rotmagstr %s" % (get_imod_path(), inversexf),
+        "%s/bin/xf2rotmagstr %s" % (get_imod_path(), inversexf), verbose=False
     )
     xf_rot_mag = output.split("\n")
 
@@ -2404,7 +2404,7 @@ EOF
                 tilt_Y_true = tilt_Y - min_micrograph_y
 
                 # HF: re-center using translational shifts from sub-tomogram averaging
-                fp = spa_euler_angles(
+                fp, particle_orientation = spa_euler_angles(
                     tilt,
                     -axis,
                     [norm0, norm1, norm2],
@@ -2610,6 +2610,10 @@ EOF
                 # AB - 0verride film number if we are processing each movie independently
                 if parameters["csp_no_stacks"]:
                     film = 0
+                
+                ppsi = particle_orientation[0]
+                ptheta = particle_orientation[1]
+                pphi = particle_orientation[2]
 
                 if use_frames:
                     # if using frames
@@ -2712,20 +2716,20 @@ EOF
                             confidence,
                             ptl_CCX,
                             -axis,
-                            norm0,
-                            norm1,
-                            norm2,
-                            m00,
-                            m01,
-                            m02,
+                            0, # norm0,
+                            0, # norm1,
+                            0, # norm2,
+                            1, # m00,
+                            0, # m01,
+                            0, # m02,
                             0.0, # m03 * pixel, # 0.0,
-                            m04,
-                            m05,
-                            m06,
+                            0, # m04,
+                            1, # m05,
+                            0, # m06,
                             0.0, # m07 * pixel, # 0.0,
-                            m08,
-                            m09,
-                            m10,
+                            0, # m08,
+                            0, # m09,
+                            1, # m10,
                             0.0, # m11 * pixel, # 0.0,
                             m12,
                             m13,

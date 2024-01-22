@@ -212,6 +212,33 @@ def eulerTwoZYZtoOneZYZ(matrixZYZZYZ):
     return m
 
 
+def get_degrees_from_matrix(matrix: np.ndarray):
+
+    if matrix[2, 2] < 1 - np.nextafter(0, 1):
+        if matrix[2, 2] > -1 + np.nextafter(0, 1):
+            theta = math.acos(matrix[2, 2])
+            psi = math.atan2(matrix[2, 1] / math.sin(theta), matrix[2, 0] / math.sin(theta))
+            phi = math.atan2(matrix[1, 2] / math.sin(theta), -matrix[0, 2] / math.sin(theta))
+        else:
+            theta = math.pi
+            phi = math.atan2(-matrix[0, 1], -matrix[0, 0])
+            psi = 0
+    else:
+        theta = 0
+        phi = math.atan2(matrix[0, 1], matrix[0, 0])
+        psi = 0
+
+    frealign = np.degrees(np.array([psi, theta, phi]))
+
+    # frealign does not use negative angles, so we add 360 to each negative angle
+    frealign = np.where(frealign < 0, frealign + 360.0, frealign)
+
+    psi, theta, phi = frealign[0], frealign[1], frealign[2]
+
+    return psi, theta, phi
+
+
+
 def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
 
     """
@@ -241,7 +268,7 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
 
     However, different programs use different conventions. Here we only introduce LEFT and RIGHT handedness for rotation. 
     
-    * Left handedness is used by IMOD and vtk module, 3DAVG, EMAN2, Frealign, including normXYZ, normXYZ and Euler angles of rotation.
+    * Left handedness is used by 3DAVG, EMAN2, Frealign, including normXYZ, normXYZ and Euler angles of rotation.
     Its rotation matrix, if rotating around z axis, should be 
                    cos(angle)    sin(angle)  0
     R( angle ) = [ -sin(angle)    cos(angle)  0 ] 
@@ -326,18 +353,6 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
         ]
     )
 
-    """    
-    # Z * Y * Z
-    refinement_rotation_reverse = np.matrix(
-        [
-            [m[0], -m[4], -m[8], 0],
-            [-m[1], m[5], m[9], 0],
-            [-m[2], m[6], m[10], 0],
-            [m[12], m[13], m[14], m[15]],
-        ]
-    )
-    
-    """
     # translation matrix only
     refinement_translation = np.dot(np.linalg.inv(refinement_rotation), refinement)
 
@@ -373,6 +388,9 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
     # n = np.dot(np.linalg.inv(refinement_rotation), n)
     n = eulerTwoZYZtoOneZYZ(n)
 
+    # now we combine all the rotations into particle rotation (in parfile)
+    ppsi, ptheta, pphi = get_degrees_from_matrix(n)
+
     r = np.dot(n, r)
 
     ######################
@@ -384,83 +402,14 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
     t = np.dot(np.linalg.inv(refinement_translation), t)
     t = np.dot(np.linalg.inv(refinement_rotation_reverse), t)
     t = np.dot(np.linalg.inv(norm_reverse), t)
+
+    # now we store particle shifts directly into parfile without norm, matrix
+    px = -t[0, 3]
+    py = -t[1, 3]
+    pz = -t[2, 3]
+
     t = np.dot(tilt_angle_matrix, t)
     t = np.dot(np.linalg.inv(tilt_axis_rotation_matrix), t)
-
-    # Legacy code
-    """
-    # correction in the direction perpendicular to the tilt axis
-    # correction = [ -.5, 0, 0, 1 ]
-    # tcorrection = np.dot( r2D, correction )
-
-    # print 'tcorrection', tcorrection
-
-    # apply .box coordinate discretization error
-    r2D = vtk.rotation_matrix( np.radians(tilt_axis_angle), [0,0,1] )
-    t = vtk.translation_matrix( [tilt_correction[0], tilt_correction[1], 0] )
-    # t = vtk.translation_matrix( [tcorrection[0], tcorrection[1], 0] )
-
-    # tilt axis angle rotation: t->RotateZ( tilt_axis_angle )
-    t = np.dot( r2D, t )
-
-    # Difference vector between 2D rotation origins (IMOD vs. FREALIGN)
-    diff2D = [ 1, 1, 0, 1 ]
-
-    # Compute: t = Rot(C1) wrt C2 - C1 = Rot * ( C1 - C2 ) - ( C1 - C2 )
-    tdiff2D = np.dot( r2D, diff2D ) - diff2D
-
-    # print 'tdiff2D', tdiff2D
-
-    # apply rotation center and refinement translations: t->Translate( -tdiff2D[0], -tdiff2D[1], -tdiff2D[2] );
-    t = np.dot( vtk.translation_matrix( -tdiff2D ), t )
-
-    # correct for center of tilt axis: t->Translate( -1, 0, 0 );
-    t = np.dot( vtk.translation_matrix( [-1,0,0] ), t )
-
-    # apply tilt angle rotation: t->RotateY( -tilt_angle );
-    t = np.dot( vtk.rotation_matrix( np.radians(-tilt_angle), [0,1,0] ), t )
-
-    # Convert to IMOD's tilt axis location: t->Translate( .5, 0, .5 );
-    t = np.dot( vtk.translation_matrix( [.5,0,.5] ), t )
-
-    # The remaining transformations are the spike normal and the 3DAVG refinement transformation.
-    # Spike normals are a pure rotation R1. 3DAVG refinement is a full rotation and translation matrix F = R2 * T2
-    # If the two transformations are composed, the net rotation is then: R = R1 * R2 and the translation component is T2.
-    # The origin of the net rotation R is different from the image rotation, so to account for this we express
-    # as R * T3, where T3 corrects for the difference in the origin of the rotation.
-
-    # apply spike euler angles (pure rotation R1)
-    t = np.dot( vtk.rotation_matrix( np.radians(-normal[2]), [0,0,1] ), t )
-    t = np.dot( vtk.rotation_matrix( np.radians(-normal[0]), [1,0,0] ), t )
-    t = np.dot( vtk.rotation_matrix( np.radians(-normal[1]), [0,0,1] ), t )
-
-    # apply 3DAVG refinement transformation (rotation only, R2)
-    t = np.dot( refinement_rotation, t )
-
-    #  compute translation due to change in rotation origin for R1 * R2
-    r = vtk.rotation_matrix( np.radians(-normal[2]), [0,0,1] )
-    r = np.dot( vtk.rotation_matrix( np.radians(-normal[0]), [1,0,0] ), r )
-    r = np.dot( vtk.rotation_matrix( np.radians(-normal[1]), [0,0,1] ), r )
-    r = np.dot( refinement_rotation, r )
-
-    # Difference vector between rotation origins C1=[51,50,50] and C2=[51,51,50]
-    diff = [ 0, 1, 0, 1 ]
-
-    # Compute: t = Rot(C1) wrt C2 - C1 = Rot * ( C1 - C2 ) - ( C1 - C2 )
-    tdiff = np.dot( r, diff ) - diff
-
-    # print 'tdiff', tdiff
-
-    # compute post-multiplying translation component from refinement matrix, T2
-    f = np.dot( np.linalg.inv( refinement_rotation ), refinement )
-
-    # apply rotation center and refinement translations
-    t = np.dot( vtk.translation_matrix( [-tdiff[0,0]+f[0,3], -tdiff[0,1]-f[1,3], -tdiff[0,2]+f[2,3] ] ), t )
-    # t = np.dot( vtk.translation_matrix( -tdiff[0,:3] ), t )
-
-    # try this option to see if it fixes the problem
-    t = np.dot( vtk.translation_matrix([0,0,-cutOffset]), t )
-    """
 
     # extract euler angles from transformation matrix by decoding its sin and cos
 
@@ -491,12 +440,9 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
         phi = math.atan2(r[0, 1], r[0, 0])
         psi = 0
 
-    frealign = np.degrees(np.array([psi, theta, phi]))
+    psi, theta, phi = get_degrees_from_matrix(r)
 
-    # frealign does not use negative angles, so we add 360 to each negative angle
-    frealign = np.where(frealign < 0, frealign + 360.0, frealign)
-
-    return [frealign[0], frealign[1], frealign[2], t[0, 3], t[1, 3]]
+    return [psi, theta, phi, t[0, 3], t[1, 3]], [-ppsi, -ptheta, -pphi, px, py, pz]
 
 
 def getShiftsForRecenter(normal, m, cutOffset):
@@ -555,7 +501,6 @@ def getShiftsForRecenter(normal, m, cutOffset):
     t = np.dot(np.linalg.inv(norm_reverse), t)
 
     return [t[0, 3], t[1, 3], t[2, 3]]
-
 
 def findSpecimenBounds(particle_coordinates, dim_tomogram):
     """ Find the boundaries in x, y, z of 'specimen', which will be used to divide a tomogram into several grids for frame refinement

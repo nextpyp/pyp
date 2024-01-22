@@ -4,38 +4,48 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.5.4 (12/12/2023)
+v0.6.0 (1/21/2024)
 *******************
 
-   :fa:`star,text-success` Add `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ wrapper for movie frame alignment (requires GPU).
+   :fa:`star,text-success` Allow use of `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ for movie frame alignment (GPU required).
 
-   :fa:`star,text-success` Add `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_ wrapper for tilt-series alignment and reconstruction (requires GPU).
+   :fa:`star,text-success` Allow use of `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_ for tilt-series alignment and reconstruction (GPU required).
 
-   :fa:`star,text-success` Add `Topaz <https://github.com/tbepler/topaz>`_ wrapper for 2D particle picking and 3D denoising (GPU recommended).
+   :fa:`star,text-success` Allow use of `Topaz <https://github.com/tbepler/topaz>`_ for 2D particle picking and 3D denoising (GPU recommended).
 
-   :fa:`star,text-success` Produce .bild files after each refinement iteration for 3D visualization in Chimera.
+   :fa:`star,text-success` Produce .bild files after each refinement iteration for 3D visualization in Chimera/ChimeraX.
 
-   :fa:`plus-square,text-primary` Allow mix-and-matching IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
+   :fa:`star,text-success` Automatic determination of CTF handedness during pre-processing of tilt-series.
 
-   :fa:`plus-square,text-primary` Automatically submit jobs to a GPU partition when running tasks that require GPUs.
+   :fa:`plus-square,text-primary` Allow mix-and-match of IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
+
+   :fa:`plus-square,text-primary` Automatically submit jobs to a GPU partition when running tasks that require GPU acceleration.
 
    :fa:`plus-square,text-primary` Display version number and amount of allocated memory at the beginning of every job.
 
-   :fa:`plus-square,text-primary` Change default memory allocation for launch task to 4GB and add Resources tab to data import blocks.
+   :fa:`plus-square,text-primary` Change default memory allocation for launch task to 4GB and add Resources tab to all data import blocks.
 
-   :fa:`plus-square,text-primary` Simplify Resources tab for all blocks by hiding unnecessary parameters.
+   :fa:`plus-square,text-primary` Simplify Resources tab by hiding unnecessary parameters depending on the block type.
 
-   :fa:`plus-square,text-primary` Allow use of pre-computed results from reference-based refinement in tomography and classification tutorials.
+   :fa:`plus-square,text-primary` Implement GPU resource management policies for slurm and standalone modes.
+
+   :fa:`plus-square,text-primary` Show per-particle score distribution for all tomography refinement blocks and improve plot layout.
+
+   :fa:`plus-square,text-primary` Allow use of slurm's GRES (generic resource scheduling) when submitting jobs to a cluster.
 
    :fa:`bug,text-danger` Fix OOM error when running constrained refinement using a single thread.
 
-   :fa:`bug,text-danger` Fix error in particle filtering blocks when no particles were left on a given micrograph/tilt-series.
+   :fa:`bug,text-danger` Fix error in particle filtering blocks when no particles are left in a given micrograph/tilt-series.
 
-   :fa:`bug,text-danger` Fix issue in tomography sessions when not using .mdoc files to import metadata.
+   :fa:`bug,text-danger` Fix issue in tomography sessions when .mdoc files are not used to import metadata.
 
    :fa:`bug,text-danger` Fix bug when exporting sub-tomograms for use in external programs.
 
-   :fa:`bug,text-danger` Fix various other small bugs.
+   :fa:`bug,text-danger` Update systemd script to improve robustness during program restart.
+
+   :fa:`bug,text-danger` Fix issues with cancellation of jobs in standalone mode.
+
+   :fa:`bug,text-danger` Fix discrepancy with gain reference rotation/flips between data import and pre-processing blocks.
 
 v0.5.3 (11/25/2023)
 *******************

@@ -719,7 +719,7 @@ def ctffind_tomo_estimate(name, parameters):
         tiltang = np.loadtxt(rawtilt, dtype='float', ndmin=0)
         centralz = np.argmin(abs(tiltang.ravel()))
         start_end_section = f"{int(centralz) + 1},{int(centralz) + 1}"
-        logger.info("Central-Z for initial ctf estimation is " + start_end_section)
+        logger.info("Central z-slice for initial CTF estimation is " + start_end_section)
     else:
         z = mrc.readHeaderFromFile(name + ".mrc")["nz"]
         start_end_section = f"{int(z/2)},{int(z/2)}"
@@ -1810,8 +1810,6 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
     tilt_angles_modified = tilt_angles - angle_to_detect
     index = np.argmin(abs(tilt_angles_modified.ravel()))
 
-    logger.info(f"Using {tilt_angles[index]} to detect tilt handedness...")
-
     tilt_axis = float(
                     [
                         line.split("\n")
@@ -1836,9 +1834,9 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
             estimated_tilt_angle, estimated_tilt_axis = f.read().strip().split()
             estimated_tilt_angle, estimated_tilt_axis = float(estimated_tilt_angle), float(estimated_tilt_axis)
             # logger.info(f"{estimated_tilt_axis}, {tilt_axis}, {estimated_tilt_angle}, {tilt_angle}")
-            
+
             handedness = NO_FLIP
-            if abs(estimated_tilt_angle - abs(tilt_angle)) < tilt_angle_error:    
+            if abs(estimated_tilt_angle - abs(tilt_angle)) < tilt_angle_error:
                 if tilt_angle > 0:
                     if abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error:
                         handedness = FLIP
@@ -1847,7 +1845,7 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
                         handedness = FLIP
                 return handedness
             else:
-                logger.warning(f"Estimated tilt angle ({estimated_tilt_angle}) is too far off from the real tilt angle ({tilt_angles[index]}). Skipping detecting handedness using tilt angle {angle_to_detect}...")    
+                logger.warning(f"Estimated tilt-angle ({estimated_tilt_angle}) is very different from expected value ({tilt_angles[index]}). Skip handedness detection for this tilt")
     else:
         logger.warning(f"{estimated_tilt} does not exist. Skipping detecting handedness using tilt angle {angle_to_detect}... ")
 
@@ -1869,7 +1867,7 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
     lower_tilt = abs(lower_tilt)
     upper_tilt = abs(upper_tilt)
     assert lower_tilt <= upper_tilt, f"Lower tilt ({lower_tilt}) needs to be <= upper tilt ({upper_tilt})"
-
+    logger.info(f"Using tilts between {lower_tilt} and {upper_tilt} to determine CTF handedness")
     candidates = []
 
     for angle in tilt_angles:
@@ -1884,7 +1882,7 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
     if len(candidates) > 0:
         candidates.sort() # False is the first element after sorting
         median = candidates[math.ceil(len(candidates)/2)]
-        handedness = "`selected`" if median is True else "`unselected`"
-        logger.warning(f"`Invert CTF handedness` should be {handedness} in the refinement.")
+        handedness = "" if median is True else "NOT "
+        logger.warning(f"Invert CTF handedness option should {handedness}be selected during refinement")
     else:
-        logger.warning("Do not have enough tilt to detect handedness.")
+        logger.warning("Not enough tilts to detect CTF handedness")

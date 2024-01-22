@@ -543,7 +543,7 @@ def shape_phase_residuals(
                         input[:, occ],
                     )
                 number = input[input[:, occ]==0].shape[0]
-                logger.info(f"Number of particles with zero occupancy = {number:,} (out of {input.shape[0]:,}, {number/input.shape[0]*100:.2f}%)")
+                logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
 
     if os.path.exists(fmatch_stack):
         logger.info(
@@ -1026,7 +1026,7 @@ def score_particles_fromparx(par_data, mintilt: float, maxtilt: float, min_num_p
                 
                 matrix = particle[0,matrix0_col: matrix15_col+1]
                 matrix[12: 16] = np.array([0,0,0,1])
-                dx, dy, dz = geometry.getShiftsForRecenter(particle[0,normx_col:normz_col+1], matrix, 0)
+                dx, dy, dz = -matrix[3], -matrix[7], -matrix[11] # They are particle 3D shifts in A
                 dx, dy, dz = dx/pixel_size, dy/pixel_size, dz/pixel_size
                 shifts_3d[film][ptl] = [dx, dy, dz]
             else:
@@ -1264,7 +1264,7 @@ def thresholding_and_plot(films, shifts_3d: list, parameters: dict):
         film_count += 1
 
     logger.warning(
-        "{} particles ({:.1f}%) from {} tilt-series will be used".format(
+        "{:,} particles ({:.1f}%) from {} tilt-series will be used".format(
             particle_used_count,
             (particle_used_count / particle_all_count * 100),
             film_count,
