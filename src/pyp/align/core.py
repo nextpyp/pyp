@@ -4228,7 +4228,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         frame_options += f" -SumRange {parameters['movie_motioncor_sumrange_min']} {parameters['movie_motioncor_sumrange_max']}"
         
         if parameters["movie_motioncor_frameref"] > 0:
-            frame_options += f" -FmRef {parameters['movie_motioncor_frameref']}"
+            frame_ref = parameters['movie_motioncor_frameref'] if parameters['movie_motioncor_frameref'] <= total_frames else total_frames
+            frame_options += f" -FmRef {frame_ref}"
 
         dose_weighting_options = ""
         if parameters["movie_weights"]:
