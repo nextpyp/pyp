@@ -172,11 +172,39 @@ type = "float"
 default = 0.07
 advanced = true
 
+[tabs.scope.init_dose]
+name = "Initial dose (e^-/A^2)"
+description = "Initial dose before stack is acquired."
+type = "float"
+default = 0.0
+advanced = true
+
 [tabs.scope.dose_rate]
 name = "Dose rate (e^-/A^2)"
 description = "Number of electrons per unit area used during imaging"
 type = "float"
 default = 1.0
+advanced = true
+
+[tabs.scope.mag_major]
+name = "Magnification along major axis"
+description = "Magnification along major axis"
+type = "float"
+default = 1.0
+advanced = true
+
+[tabs.scope.mag_minor]
+name = "Magnification along minor axis"
+description = "Magnification along minor axis"
+type = "float"
+default = 1.0
+advanced = true
+
+[tabs.scope.distort_ang]
+name = "Distortion angle"
+description = "Angle of the major axis relative to the image x-axis in degrees."
+type = "float"
+default = 0.0
 advanced = true
 
 [tabs.scope.beam_tilt_x]
@@ -439,13 +467,6 @@ description = "Bfactor to use during frame alignment (use larger values for nois
 type = "float"
 default = 1500
 
-[tabs.movie.patch]
-name = "Patches"
-description = "Number of patches to use during frame alignment (relion method only, 1=no patches)"
-type = "int"
-default = 1
-hidden = true
-
 [tabs.movie.force_integer]
 name = "Force integer shifts (unblur)"
 description = "Force integer shifts to preserve high-resolution information"
@@ -466,11 +487,53 @@ type = "int"
 default = 15
 advanced = true
 
+[tabs.movie.motioncor_patch]
+name = "Patch alginment (motioncor)"
+description = "Number of patches used for frame alignment."
+type = "int"
+default = 1
+advanced = true
+
+[tabs.movie.motioncor_frameref]
+name = "Frame used for reference (motioncor)"
+description = "The frame used for reference during alignment (1 means the first frame; 0 means the center)."
+type = "int"
+default = 0
+advanced = true
+
+[tabs.movie.motioncor_bfactor]
+name = "Bfactor for alignment (motioncor)"
+description = "Bfactor to use during frame alignment (use larger values for noisier data)"
+type = "float"
+default = 100
+
+[tabs.movie.motioncor_sumrange_min]
+name = "Minimum dose for summing frames (motioncor)"
+description = "Frames bwteen minimum and maximum dose are used for averaging"
+type = "float"
+default = 3.0
+advanced = true
+
+[tabs.movie.motioncor_sumrange_max]
+name = "Maximum dose for summing frames (motioncor)"
+description = "Frames bwteen minimum and maximum dose are used for averaging"
+type = "float"
+default = 25.0
+advanced = true
+
 [tabs.movie.weights]
 name = "Exposure weighting"
 description = "Produce exposure-weighted frame averages (if frames are available)"
 type = "bool"
 default = false
+hidden = ["spr_import_star","spr_import","tomo_import_star","tomo_import","stream_tomo"]
+
+[tabs.movie.magcorr]
+name = "Correct anisotropic magnification"
+description = "Correct anisotropic magnification by stretching image along the major axis."
+type = "bool"
+default = false
+advanced = true
 hidden = ["spr_import_star","spr_import","tomo_import_star","tomo_import","stream_tomo"]
 
 # Contrast transfer function parameters

@@ -857,6 +857,8 @@ def readMRCfile(filename, parameters, binning):
 
 
 def get_image_dimensions(name):
+    
+    assert Path(name), f"{name} does not exist."
 
     command = "{0}/bin/header -size {1}".format(get_imod_path(), name)
     [output, error] = run_shell_command(command, verbose=False)
