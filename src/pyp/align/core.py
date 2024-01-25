@@ -4113,7 +4113,11 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     pixel = float(parameters["scope_pixel"])
     binning = float(parameters["data_bin"])
     voltage = float(parameters["scope_voltage"])
+    init_dose = float(parameters["scope_init_dose"])
     dose_rate = float(parameters["scope_dose_rate"])
+    mag_major = float(parameters["scope_mag_major"])
+    mag_minor = float(parameters["scope_mag_minor"])
+    distort_angle = float(parameters["scope_distort_ang"])
     actual_pixel = (
         pixel
         * float(parameters["data_bin"])
@@ -4122,8 +4126,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     if 'motioncor' in parameters["movie_ali"]:
 
         # patch tracking
-        if "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_patch":
-            patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
+        if "movie_motioncor_patch" in parameters and parameters["movie_motioncor_patch"] > 1:
+            patches = f" -Patch {parameters['movie_motioncor_patch']} {parameters['movie_motioncor_patch']}"
         else:
             patches = ""
 
@@ -4193,9 +4197,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             eer_frames_perimage = int(parameters["movie_eer_frames"])
             eer_superres_factor = int(parameters["movie_eer_reduce"])
             eer = f"{input} -EerSampling {eer_superres_factor}"
-
-            # TODO: produce frame integration file to tell motiomcorr to reduce number of frames
-
+        
         if "gain_reference" in parameters.keys() and os.path.exists(
             project_params.resolve_path(parameters["gain_reference"])
             ):
@@ -4214,16 +4216,27 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             gain = ""
 
         frame_options = ""
+        x, y, total_frames = get_image_dimensions(f"../{movie_file}")
         if parameters["movie_first"] > 0:
             frame_options += f" -Throw {parameters['movie_first']}"
         if parameters["movie_last"] != -1:
-            x, y, total_frames = get_image_dimensions(movie_file) 
             frame_options += f" -Trunc {total_frames - parameters['movie_last']}"
         if parameters["movie_group"] > 1:
             frame_options += f" -Group {parameters['movie_group']}"
-        frame_options += f" -Bft {parameters['movie_bfactor']}"
-
+        frame_options += f" -Bft {parameters['movie_motioncor_bfactor']}"
         frame_options += f" -Tol {parameters['movie_motioncor_tol']} -Iter {parameters['movie_motioncor_iter']}"
+        frame_options += f" -SumRange {parameters['movie_motioncor_sumrange_min']} {parameters['movie_motioncor_sumrange_max']}"
+        
+        if parameters["movie_motioncor_frameref"] > 0:
+            frame_options += f" -FmRef {parameters['movie_motioncor_frameref']}"
+
+        dose_weighting_options = ""
+        if parameters["movie_weights"]:
+            dose_weighting_options += f" -InitDose {init_dose} -FmDose {dose_rate} -PixSize {pixel} -kV {voltage}" 
+        
+        mag_correction_options = ""
+        if parameters["movie_magcorr"]:
+            mag_correction_options += f" -Mag {mag_major} {mag_minor} {distort_angle}"
 
         """
         Usage: MotionCor3 Tags
@@ -4480,10 +4493,13 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         command = f"{get_motioncor3_path()} \
 {input} \
 -OutMrc {name}.mrc \
+-FtBin {binning} \
 {gain} \
 -OutAln {os.getcwd()} \
 {frame_options} \
 {patches} \
+{dose_weighting_options} \
+{mag_correction_options} \
 -Gpu {get_gpu_id()} \
 -UseGpus 1"
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
@@ -4501,7 +4517,16 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         shutil.move( name + ".mrc", f"../{aligned_average}")
 
         # read shifts and save in txt format
-        shifts = np.loadtxt(f"{name}.aln",skiprows=8,ndmin=2)
+        newf = open(f"{name}_clean.aln", "w")
+        
+        # output file has header and footer (if patch is used)
+        NUM_LINES_HEADER = 8
+        with open(f"{name}.aln", "r") as f:
+            for idx, line in enumerate(f.readlines()):
+                if NUM_LINES_HEADER < idx + 1 and idx < NUM_LINES_HEADER + total_frames:
+                    newf.write(line)
+        newf.close()
+        shifts = np.loadtxt(f"{name}_clean.aln",ndmin=2)
         np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt="%.4f")
 
     elif 'unblur' in parameters["movie_ali"]:
@@ -4537,9 +4562,10 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             gain_operate = ""
 
         if "movie_weights" in parameters.keys() and parameters["movie_weights"]:
-            weighted = "yes\n%s\n%s\n0" % (
+            weighted = "yes\n%s\n%s\n%s" % (
                 voltage,
                 dose_rate,
+                init_dose,
             )
             restore_Noise_power = "\nYES"
         else:
@@ -4565,6 +4591,15 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             forceinteger = "yes"
         else:
             forceinteger = "no"
+       
+        if "movie_magcorr" in parameters.keys() and parameters["movie_magcorr"]:
+            mag_corrections = "yes\n%s\n%s\n%s" % (
+                distort_angle,
+                mag_major,
+                mag_minor,
+            )
+        else:
+            mag_corrections = "no"
 
         bfactor = float(parameters["movie_bfactor"])
         first_frame = int(parameters["movie_first"]) + 1 # pyp from 0, unblur starts from 1
@@ -4632,7 +4667,7 @@ yes
 {running_average}
 {save_frames}{eer}
 {forceinteger}
-no
+{mag_corrections}
 {threads}
 EOF
 """
