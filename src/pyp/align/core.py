@@ -4234,6 +4234,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         dose_weighting_options = ""
         if parameters["movie_weights"]:
             dose_weighting_options += f" -InitDose {init_dose} -FmDose {dose_rate} -PixSize {pixel} -kV {voltage}" 
+            dose_weighting_options += " -Cs 0" # NOT do CTF estimation
         
         mag_correction_options = ""
         if parameters["movie_magcorr"]:
@@ -4515,8 +4516,11 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             raise Exception(output)
 
         # rename frame average
-        shutil.move( name + ".mrc", f"../{aligned_average}")
-
+        if parameters["movie_weights"]:
+            shutil.move( name + "_DW.mrc", f"../{aligned_average}")
+        else:
+            shutil.move( name + ".mrc", f"../{aligned_average}")
+        
         # read shifts and save in txt format
         newf = open(f"{name}_clean.aln", "w")
         
