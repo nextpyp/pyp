@@ -4,6 +4,17 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.6.1 (1/28/2024)
+*******************
+
+   :fa:`star,text-success` Produce necessary files to map final structures back into tomograms using `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_.
+
+   :fa:`star,text-success` Enable dose weighting and magnification correction options during frame alignment and averaging.
+
+   :fa:`plus-square,text-primary` Expose full set of options when using MotionCor3 for frame alignment.
+
+   :fa:`plus-square,text-primary` Allow specification of GPU resources using Gres option (to allow selection of specific types of cards).
+
 v0.6.0 (1/21/2024)
 *******************
 
