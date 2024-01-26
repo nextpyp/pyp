@@ -4517,7 +4517,10 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
         # rename frame average
         if parameters["movie_weights"]:
-            shutil.move( name + "_DW.mrc", f"../{aligned_average}")
+            if parameters['movie_motioncor_sumrange_min'] == 0 and parameters['movie_motioncor_sumrange_max'] == 0:
+                shutil.move( name + "_DW.mrc", f"../{aligned_average}")
+            else:
+                shutil.move( name + "_DWS.mrc", f"../{aligned_average}")
         else:
             shutil.move( name + ".mrc", f"../{aligned_average}")
         
