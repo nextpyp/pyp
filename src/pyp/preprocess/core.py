@@ -181,22 +181,15 @@ def read_tilt_series(
                 shutil.copy2(project_raw_path / tilt_image_filename, ".")
             else:
                 raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
-    elif len( glob.glob(filename + "*.mrc") ) > 0 or os.path.isfile(
-        filename + "_001_0.00.mrc"
-    ):
+    elif len( glob.glob(filename + "*.mrc") ) > 0:
         for i in glob.glob(filename + "*.mrc"):
             try:
                 shutil.copy2(i, ".")
             except:
                 # ignore if file already exists
                 pass
-    elif os.path.isfile(filename + ".dm4"):
-        shutil.copy2(filename + ".dm4", ".")
-    elif len(glob.glob(filename + "*.dm4")) > 0:
-        for i in glob.glob(filename + "*.dm4"):
-            shutil.copy2(i, ".")
-    elif len(glob.glob(filename + "*.tif")) > 0:
-        for i in glob.glob(filename + "*.tif") + glob.glob(filename + "*.tif.mdoc"):
+    elif len(glob.glob(filename + "*.tif")) > 0 or len(glob.glob(filename + "*.tiff")) > 0:
+        for i in glob.glob(filename + "*.tif") + glob.glob(filename + "*.tif.mdoc") + glob.glob(filename + "*.tiff") + glob.glob(filename + "*.tiff.mdoc"):
             shutil.copy2(i, ".")
     elif len(glob.glob(filename + "*.eer")) > 0:
         for i in glob.glob(filename + "*.eer"):

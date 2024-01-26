@@ -1992,6 +1992,8 @@ def csp_extract_frames(
                         raw_image = filename + ".mrc"
                     elif os.path.exists(os.path.join(current_path, imagefile + ".tif")):
                         raw_image = filename + ".tif"
+                    elif os.path.exists(os.path.join(current_path, imagefile + ".tiff")):
+                        raw_image = filename + ".tiff"
                     else:
                         logger.error("Cannot figure out image filename")
 
@@ -2006,7 +2008,7 @@ def csp_extract_frames(
                         raw_image = [raw_image]
 
                 # convert tif to mrc so csp can read the tilt-series
-                if not use_frames and Path(raw_image).suffix == ".tif":
+                if not use_frames and (Path(raw_image).suffix == ".tif" or Path(raw_image).suffix == ".tiff"):
 
                     t = timer.Timer(text="Convert tif to mrc took: {}", logger=logger.info)
                     t.start()
@@ -2443,11 +2445,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         working_path,
         use_frames,
         parxfile,
-        stackfile,
         iteration,
-        allboxes_saved,
-        allparxs,
-        imagefile,
     )
 
     # save results
