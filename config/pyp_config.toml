@@ -509,14 +509,14 @@ default = 100
 
 [tabs.movie.motioncor_sumrange_min]
 name = "Minimum dose for summing frames (motioncor)"
-description = "Frames bwteen minimum and maximum dose are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
+description = "Frames between minimum and maximum dose are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
 type = "float"
 default = 3.0
 advanced = true
 
 [tabs.movie.motioncor_sumrange_max]
 name = "Maximum dose for summing frames (motioncor)"
-description = "Frames bwteen minimum and maximum dose are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
+description = "Frames between minimum and maximum dose are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
 type = "float"
 default = 25.0
 advanced = true
