@@ -1531,11 +1531,7 @@ def csp_refinement(
     working_path,
     use_frames,
     parxfile,
-    stackfile,
     iteration,
-    allboxes,
-    allparxs,
-    imagefile,
 ):
     """Unified stack-less single-particle refinement.
 
