@@ -3330,12 +3330,17 @@ if __name__ == "__main__":
             Web.init_env()
         else:
             # keep track of issued commands
-            with open(".pyp_history", "a") as f:
-                timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
-                    "%Y/%m/%d %H:%M:%S "
-                )
-                f.write(timestamp + " ".join(sys.argv) + "\n")
-
+            try:
+                with open(".pyp_history", "a") as f:
+                    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
+                        "%Y/%m/%d %H:%M:%S "
+                    )
+                    f.write(timestamp + " ".join(sys.argv) + "\n")
+            except:
+                logger.error(f"Can't write to {os.getcwd()}/.pyp_history")
+                trackback()
+                logger.error("Failed to launch PYP")
+                pass
         # daemon
         if "pypdaemon" in os.environ:
 
