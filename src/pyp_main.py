@@ -3278,13 +3278,7 @@ if __name__ == "__main__":
         else:
             os.environ["PYP_SCRATCH"] = scratch_config
         os.environ["OPENBLAS_NUM_THREADS"] = "1"
-        os.environ["TMPDIR"] = str(Path(os.environ["PYP_SCRATCH"]) / f"{os.environ['USER']}_TMPDIR")
         os.environ["PBS_O_WORKDIR"] = os.getcwd()
-        if not os.path.exists(os.environ["TMPDIR"]):
-            try:
-                os.mkdir(os.environ["TMPDIR"])
-            except:
-                pass
 
         if "SLURM_ARRAY_JOB_ID" in os.environ:
             subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
@@ -4634,10 +4628,6 @@ EOF
                 project_params.save_parameters(parameters)
 
                 split(parameters)
-
-                # clean up local scratch
-                if os.path.exists(os.environ["TMPDIR"]):
-                    shutil.rmtree(os.environ["TMPDIR"])
 
                 # clean up local scratch
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
