@@ -61,6 +61,17 @@ The following sections describe the main components and functionality of ``nextP
       :text: Neural-network picking
       :classes: btn-outline-primary btn-block stretched-link
 
+   ---
+
+   :fa:`eye fa-4x text-white`
+
+   +++
+
+   .. link-button:: guide/chimerax_artiax
+      :type: ref
+      :text: Visualization in ChimeraX/ArtiaX
+      :classes: btn-outline-primary btn-block stretched-link
+
 .. seealso::
 
    * :doc:`Installation<install>`

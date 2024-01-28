@@ -155,5 +155,6 @@ Inspect the results by clicking inside the :badge:`Pre-processing,badge-secondar
 .. seealso::
 
     * :doc:`Neural-network picking<neural_network>`
-    * :doc:`Filters<filters>`
+    * :doc:`Filter micrographs/tilt-series<filters>`
+    * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
     * :doc:`Overview<overview>`

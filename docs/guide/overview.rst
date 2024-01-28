@@ -239,4 +239,5 @@ Use the breadcrumb menu at the top of the page to navigate to the **Dashboard** 
 
     * :doc:`Particle picking<picking>`
     * :doc:`Neural-network picking<neural_network>`
-    * :doc:`Filters<filters>`
+    * :doc:`Filter micrographs/tilt-series<filters>`
+    * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
