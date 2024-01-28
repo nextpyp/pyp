@@ -516,7 +516,7 @@ def merge_movie_files_in_job_arr(
 
         # generate tsv files for Artix display
         if "tomo" in mp["data_mode"]:
-            star_output = os.path.join(project_path, "frealign", "display")
+            star_output = os.path.join(project_path, "frealign", "artiax")
             binning = mp["tomo_rec_binning"]
             z_thicknes = mp["tomo_rec_thickness"]
             generate_ministar(current_block_par, movie_list, z_thicknes, binning, cls=current_class, output_path=star_output)
