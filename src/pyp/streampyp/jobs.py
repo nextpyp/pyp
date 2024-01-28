@@ -24,9 +24,14 @@ def _absolutize_path(path):
 
 def get_gres_option(use_gpu,gres):
     if use_gpu:
-        gpu_gres = "--gres=gpu:1"
+        gpu_gres = f"--gres="
         if len(gres) > 0:
-            gpu_gres += f",{gres}"
+            if 'gpu:' in gres:
+                gpu_gres += f"{gres}"
+            else:
+                gpu_gres += f"gpu:1,{gres}"
+        else:
+            gpu_gres += "gpu:1"
     elif len(gres) > 0:
         gpu_gres = f"--gres={gres}"
     else:
