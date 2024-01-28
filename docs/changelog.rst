@@ -7,15 +7,15 @@ Changelog
 v0.6.1 (1/28/2024)
 *******************
 
-   :fa:`star,text-success` Produce metadata to map final structures into tomograms using `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_.
+   :fa:`star,text-success` Produce metadata to map final structures into tomograms using the `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_ plugin.
 
    :fa:`star,text-success` Enable dose weighting and magnification correction options during frame alignment and averaging.
 
    :fa:`plus-square,text-primary` Expose full set of options when using MotionCor3 for frame alignment.
 
-   :fa:`plus-square,text-primary` Allow specification of GPU resources using Gres option to allow selection of specific types of graphics cards.
+   :fa:`plus-square,text-primary` Allow specification of GPU resources using Gres option to allow selection of specific types of graphics cards, e.g., gpu:A100:1.
 
-   :fa:`bug,text-danger` Properly handle tif files that have a *.tiff extension.
+   :fa:`bug,text-danger` Fix issue with handling of tif files that have a *.tiff extension.
 
    :fa:`bug,text-danger` Fix issue with multiprocessing library when using NFS mounts as local scratch.
 
