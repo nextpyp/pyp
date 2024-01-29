@@ -3924,6 +3924,14 @@ default = ""
 hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
 advanced = true
 
+[tabs.slurm.account]
+name = "Slurm account"
+description = "Charge resources used by this job to specified account"
+type = "str"
+default = ""
+hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
 [tabs.slurm.walltime]
 name = "Walltime per task"
 description = "Limit running time for each task (dd-hh:mm:ss)"
@@ -3974,6 +3982,14 @@ default = ""
 hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process"]
 advanced = true
 
+[tabs.slurm.merge_account]
+name = "Slurm account (merge task)"
+description = "Charge resources used by this job to specified account"
+type = "str"
+default = ""
+hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process"]
+advanced = true
+
 [tabs.slurm.merge_walltime]
 name = "Walltime (merge task)"
 description = "Max running time for merging task (dd-hh:mm:ss)"
@@ -4004,8 +4020,16 @@ default = 2
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
 
 [tabs.slurm.daemon_gres]
-name = "Gres (refinement daemon)"
+name = "Gres (pre-processing daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+type = "str"
+default = ""
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
+[tabs.slurm.daemon_account]
+name = "Slurm account (pre-processing daemon)"
+description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
@@ -4043,6 +4067,14 @@ hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", 
 [tabs.slurm.class2d_gres]
 name = "Gres (refinement daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+type = "str"
+default = ""
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
+[tabs.slurm.class2d_account]
+name = "Slurm account (refinement daemon)"
+description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]

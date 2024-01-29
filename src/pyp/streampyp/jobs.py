@@ -47,6 +47,7 @@ def submit_commands(
     threads,
     memory,
     gres,
+    account,
     walltime,
     dependencies,
     tasks_per_arr,
@@ -217,7 +218,7 @@ done
                 cluster_name="pyp_"+jobtype,
                 commands=Web.CommandsScript(cmdlist, processes, bundle),
                 dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres),
+                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres, account=account),
                 deps=dependencies,
                 mpi=mpi,
             )
@@ -227,7 +228,7 @@ done
                 cluster_name="pyp_"+jobtype,
                 commands=Web.CommandsGrid(cmdgrid, bundle),
                 dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres),
+                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres, account=account),
                 deps=dependencies,
                 mpi=mpi,
             )
@@ -307,7 +308,7 @@ export CUDA_VISIBLE_DEVICES=$available_devs
             id = output.split()[-1]
         return id
 
-def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None):
+def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None, account = None):
     args = [
         ("--partition=%s" % queue) if queue != '' else '',
         "--cpus-per-task=%d" % threads,
@@ -317,6 +318,8 @@ def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None):
     ]
     if gres != None:
         args.append("--gres=%s" % gres)
+    if account != "" and account != None:
+        args.append("--account=%s" % account)
     return args
 
 def submit_script(
@@ -328,6 +331,7 @@ def submit_script(
     threads,
     memory,
     gres,
+    account,
     walltime,
     dependencies,
     is_script,
@@ -383,7 +387,7 @@ def submit_script(
             commands=Web.CommandsScript([cmd]),
             dir=_absolutize_path(submit_dir),
             env=[(jobtype, jobtype)],
-            args=get_slurm_args( queue, threads, walltime, memory, jobname, gpu_gres),
+            args=get_slurm_args( queue, threads, walltime, memory, jobname, gpu_gres, account),
             deps=dependencies,
             mpi=mpi,
         )
