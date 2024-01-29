@@ -11,7 +11,7 @@ v0.6.1 (1/28/2024)
 
    :fa:`star,text-success` Enable dose weighting and magnification correction options during frame alignment and averaging.
 
-   :fa:`star,text-success` Allow specification of custom SLURM options for all jobs to improve portability.
+   :fa:`star,text-success` Allow specification of SLURM account for all job types to improve portability.
 
    :fa:`plus-square,text-primary` Expose full set of options when using MotionCor3 for frame alignment.
 
