@@ -462,7 +462,7 @@ default = 0.5
 hidden = true
 
 [tabs.movie.bfactor]
-name = "Bfactor for alignment"
+name = "Bfactor for alignment (unblur)"
 description = "Bfactor to use during frame alignment (use larger values for noisier data)"
 type = "float"
 default = 1500
