@@ -11,6 +11,7 @@ User guide
    guide/filters
    guide/picking
    guide/neural_network
+   guide/chimerax_artiax
 
 The following sections describe the main components and functionality of ``nextPYP``.
 

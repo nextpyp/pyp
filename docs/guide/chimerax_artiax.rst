@@ -30,6 +30,7 @@ Step 2: Load data into ChimeraX/ArtiaX
 - Go to the ArtiaX options panel on the right, select the **Select/Manipulate** tab and set the ``Origin`` of the ``Pixelsize Factors`` to the unbinned pixel size of the data (1.35 for the EMPIAR-10164 tutorial)
 - From the **Geometric Models** section (main ArtiaX panel on the left), go to ``Open Geomodel ...`` and select the refined map
 - Go to the ArtiaX options panel on the right, in the **Visualization** tab, set the ``Use Model`` from the dropdown menu to the refined map and click ``Attach Model``
+- From the **Color Settings** section, select ``Colormap`` and choose the attribute ``rlnLogLikelihoodContribution`` from the dropdown menu
 
 If everything went well, you should obtain a result similar to this:
 
