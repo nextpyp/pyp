@@ -936,6 +936,7 @@ def split(parameters):
                     threads=parameters["slurm_merge_tasks"],
                     memory=parameters["slurm_merge_memory"],
                     gres=parameters["slurm_merge_gres"],
+                    account=parameters.get("slurm_merge_account"),
                     walltime=parameters["slurm_merge_walltime"],
                     tasks_per_arr=parameters["slurm_bundle_size"],
                     csp_no_stacks=parameters["csp_no_stacks"],
@@ -957,6 +958,7 @@ def split(parameters):
                 threads=parameters["slurm_tasks"],
                 memory=parameters["slurm_memory"],
                 gres=parameters["slurm_gres"],
+                account=parameters.get("slurm_account"),
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 dependencies=id_train,
@@ -974,6 +976,7 @@ def split(parameters):
                 scratch=0,
                 threads=parameters["slurm_merge_tasks"],
                 gres=parameters["slurm_merge_gres"],
+                account=parameters.get("slurm_merge_account"),
                 memory=parameters["slurm_merge_memory"],
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
@@ -3278,13 +3281,7 @@ if __name__ == "__main__":
         else:
             os.environ["PYP_SCRATCH"] = scratch_config
         os.environ["OPENBLAS_NUM_THREADS"] = "1"
-        os.environ["TMPDIR"] = str(Path(os.environ["PYP_SCRATCH"]) / f"{os.environ['USER']}_TMPDIR")
         os.environ["PBS_O_WORKDIR"] = os.getcwd()
-        if not os.path.exists(os.environ["TMPDIR"]):
-            try:
-                os.mkdir(os.environ["TMPDIR"])
-            except:
-                pass
 
         if "SLURM_ARRAY_JOB_ID" in os.environ:
             subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
@@ -3336,12 +3333,17 @@ if __name__ == "__main__":
             Web.init_env()
         else:
             # keep track of issued commands
-            with open(".pyp_history", "a") as f:
-                timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
-                    "%Y/%m/%d %H:%M:%S "
-                )
-                f.write(timestamp + " ".join(sys.argv) + "\n")
-
+            try:
+                with open(".pyp_history", "a") as f:
+                    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
+                        "%Y/%m/%d %H:%M:%S "
+                    )
+                    f.write(timestamp + " ".join(sys.argv) + "\n")
+            except:
+                logger.error(f"Can't write to {os.getcwd()}/.pyp_history")
+                trackback()
+                logger.error("Failed to launch PYP")
+                pass
         # daemon
         if "pypdaemon" in os.environ:
 
@@ -4634,10 +4636,6 @@ EOF
                 project_params.save_parameters(parameters)
 
                 split(parameters)
-
-                # clean up local scratch
-                if os.path.exists(os.environ["TMPDIR"]):
-                    shutil.rmtree(os.environ["TMPDIR"])
 
                 # clean up local scratch
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
