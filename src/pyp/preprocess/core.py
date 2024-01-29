@@ -871,6 +871,8 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
     tilt_angle = None
     frames_set = []
 
+    DATETIMES = ["%y-%b-%d  %H:%M:%S", "%Y-%b-%d  %H:%M:%S", "%d-%b-%y  %H:%M:%S", "%d-%b-%Y  %H:%M:%S"]
+
     for file in mdoc_files:
 
         with open(file, 'r') as f:
@@ -894,13 +896,17 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
 
                 elif line.startswith("DateTime"):
                     time = line.split("=")[-1].strip()
-                    date_pattern = "%y-%b-%d  %H:%M:%S"
-                    try:
-                        data_output = datetime.datetime.strptime(time, date_pattern)
-                    except:
-                        raise Exception(f"{time} cannot be matched by the pattern {date_pattern}")
-                    frames_set[-1][-1] = data_output # update its datetime
-
+                    
+                    for date_pattern in DATETIMES:
+                        try:
+                            data_output = datetime.datetime.strptime(time, date_pattern)
+                            frames_set[-1][-1] = data_output
+                            break
+                        except:
+                            continue
+                    
+                    assert frames_set[-1][-1] is not None, f"{time} cannot be matched by the pattern. "
+                
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
                     parameters["scope_tilt_axis"] = axis_angle
