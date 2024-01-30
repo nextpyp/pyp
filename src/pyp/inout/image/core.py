@@ -201,6 +201,7 @@ def get_gain_reference(parameters, x, y):
         # copy gain to local scratch
         try:
             shutil.copy2( gain_reference_file, "." )
+            gain_reference_file = Path(gain_reference_file).name
         except:
             pass
         extension = Path(gain_reference_file).suffix
