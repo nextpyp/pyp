@@ -4143,6 +4143,15 @@ if __name__ == "__main__":
                         else:
                             shutil.copy( image_file, image_file_average)
 
+                        # if using eer format, figure out binning factor
+                        if image_file.endswith(".eer"):
+                            gain_x, gain_y = gain_reference.shape
+                            binning = int(x / gain_x)
+                            if binning > 1:
+                                logger.warning(f"Binning eer frames {binning}x to match gain reference dimensions")
+                                com = f"{get_imod_path()}/bin/newstack {image_file_average} {image_file_average} -bin {binning}"
+                                local_run.run_shell_command(com)
+
                         if parameters["gain_remove_hot_pixels"]:
                             preprocess.remove_xrays_from_file(Path(image_file_average).stem)
 
