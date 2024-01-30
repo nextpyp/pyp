@@ -4,8 +4,8 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.6.1 (1/29/2024)
-*******************
+v0.6.1 (1/30/2024)
+******************
 
    :fa:`star,text-success` Produce metadata for 3D visualization using `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_ for all refinement blocks. See the :doc:`user guide<guide/chimerax_artiax>` for details.
 
@@ -19,13 +19,17 @@ v0.6.1 (1/29/2024)
 
    :fa:`plus-square,text-primary` Add support for multiple date formats when reading metadata from .mdoc files.
 
+   :fa:`plus-square,text-primary` Add support for .gain reference files and automatically resize corresponding .eer movies in data import blocks.
+
    :fa:`bug,text-danger` Fix issue when handling *.tif files that have a *.tiff extension.
 
    :fa:`bug,text-danger` Fix issue with multiprocessing library when using NFS mounts as local scratch.
 
    :fa:`bug,text-danger` Fix bug in single-particle sessions when using unbinned images for 2D classification.
 
-   :fa:`bug,text-danger` Fix bug that prevented GPU jobs from running because the jobs were sent to the CPU queue.
+   :fa:`bug,text-danger` Fix bug when picking particles using neural network-based approach on non-square tomograms.
+
+  :fa:`bug,text-danger` Fix bug that prevented GPU jobs from running because the jobs were sent to the CPU queue.
 
 v0.6.0 (1/21/2024)
 *******************
