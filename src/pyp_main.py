@@ -4139,6 +4139,7 @@ if __name__ == "__main__":
                         logger.info("Selecting image for preview: " + image_file)
                         x, y, z = get_image_dimensions(image_file)
                         image_file_average = Path(image_file).name
+                        logger.info(f"Image dimensions are {x} x {y} ({z} frames)")
 
                         gain_reference, gain_reference_file = get_gain_reference(
                             parameters, x, y
