@@ -181,22 +181,15 @@ def read_tilt_series(
                 shutil.copy2(project_raw_path / tilt_image_filename, ".")
             else:
                 raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
-    elif len( glob.glob(filename + "*.mrc") ) > 0 or os.path.isfile(
-        filename + "_001_0.00.mrc"
-    ):
+    elif len( glob.glob(filename + "*.mrc") ) > 0:
         for i in glob.glob(filename + "*.mrc"):
             try:
                 shutil.copy2(i, ".")
             except:
                 # ignore if file already exists
                 pass
-    elif os.path.isfile(filename + ".dm4"):
-        shutil.copy2(filename + ".dm4", ".")
-    elif len(glob.glob(filename + "*.dm4")) > 0:
-        for i in glob.glob(filename + "*.dm4"):
-            shutil.copy2(i, ".")
-    elif len(glob.glob(filename + "*.tif")) > 0:
-        for i in glob.glob(filename + "*.tif") + glob.glob(filename + "*.tif.mdoc"):
+    elif len(glob.glob(filename + "*.tif")) > 0 or len(glob.glob(filename + "*.tiff")) > 0:
+        for i in glob.glob(filename + "*.tif") + glob.glob(filename + "*.tif.mdoc") + glob.glob(filename + "*.tiff") + glob.glob(filename + "*.tiff.mdoc"):
             shutil.copy2(i, ".")
     elif len(glob.glob(filename + "*.eer")) > 0:
         for i in glob.glob(filename + "*.eer"):
@@ -655,6 +648,13 @@ def read_tilt_series(
                 parameters, dims[0], dims[1],
             )
 
+            # use local copy of gain reference and reset transformations since they were already applied
+            if gain_reference_file:
+                parameters["gain_reference"] = Path(os.getcwd()) / gain_reference_file
+                parameters["gain_rotation"] = 0
+                parameters["gain_flipv"] = False
+                parameters["gain_fliph"] = False
+
             # align frames in each tilt
             isfirst = True
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
@@ -878,6 +878,8 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
     tilt_angle = None
     frames_set = []
 
+    DATETIMES = ["%y-%b-%d  %H:%M:%S", "%Y-%b-%d  %H:%M:%S", "%d-%b-%y  %H:%M:%S", "%d-%b-%Y  %H:%M:%S"]
+
     for file in mdoc_files:
 
         with open(file, 'r') as f:
@@ -901,13 +903,17 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
 
                 elif line.startswith("DateTime"):
                     time = line.split("=")[-1].strip()
-                    date_pattern = "%y-%b-%d  %H:%M:%S"
-                    try:
-                        data_output = datetime.datetime.strptime(time, date_pattern)
-                    except:
-                        raise Exception(f"{time} cannot be matched by the pattern {date_pattern}")
-                    frames_set[-1][-1] = data_output # update its datetime
-
+                    
+                    for date_pattern in DATETIMES:
+                        try:
+                            data_output = datetime.datetime.strptime(time, date_pattern)
+                            frames_set[-1][-1] = data_output
+                            break
+                        except:
+                            continue
+                    
+                    assert frames_set[-1][-1] is not None, f"{time} cannot be matched by the pattern. "
+                
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
                     parameters["scope_tilt_axis"] = axis_angle

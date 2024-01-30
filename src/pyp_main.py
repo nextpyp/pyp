@@ -933,10 +933,11 @@ def split(parameters):
                     jobname="Train (gpu)",
                     queue=partition_name,
                     scratch=0,
-                    threads=parameters["slurm_merge_tasks"],
-                    memory=parameters["slurm_merge_memory"],
-                    gres=parameters["slurm_merge_gres"],
-                    walltime=parameters["slurm_merge_walltime"],
+                    threads=parameters["slurm_tasks"],
+                    memory=parameters["slurm_memory"],
+                    gres=parameters["slurm_gres"],
+                    account=parameters.get("slurm_account"),
+                    walltime=parameters["slurm_walltime"],
                     tasks_per_arr=parameters["slurm_bundle_size"],
                     csp_no_stacks=parameters["csp_no_stacks"],
                     use_gpu=gpu,
@@ -957,6 +958,7 @@ def split(parameters):
                 threads=parameters["slurm_tasks"],
                 memory=parameters["slurm_memory"],
                 gres=parameters["slurm_gres"],
+                account=parameters.get("slurm_account"),
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 dependencies=id_train,
@@ -974,6 +976,7 @@ def split(parameters):
                 scratch=0,
                 threads=parameters["slurm_merge_tasks"],
                 gres=parameters["slurm_merge_gres"],
+                account=parameters.get("slurm_merge_account"),
                 memory=parameters["slurm_merge_memory"],
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
@@ -1992,6 +1995,8 @@ def csp_extract_frames(
                         raw_image = filename + ".mrc"
                     elif os.path.exists(os.path.join(current_path, imagefile + ".tif")):
                         raw_image = filename + ".tif"
+                    elif os.path.exists(os.path.join(current_path, imagefile + ".tiff")):
+                        raw_image = filename + ".tiff"
                     else:
                         logger.error("Cannot figure out image filename")
 
@@ -2006,7 +2011,7 @@ def csp_extract_frames(
                         raw_image = [raw_image]
 
                 # convert tif to mrc so csp can read the tilt-series
-                if not use_frames and Path(raw_image).suffix == ".tif":
+                if not use_frames and (Path(raw_image).suffix == ".tif" or Path(raw_image).suffix == ".tiff"):
 
                     t = timer.Timer(text="Convert tif to mrc took: {}", logger=logger.info)
                     t.start()
@@ -2443,11 +2448,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         working_path,
         use_frames,
         parxfile,
-        stackfile,
         iteration,
-        allboxes_saved,
-        allparxs,
-        imagefile,
     )
 
     # save results
@@ -3280,13 +3281,7 @@ if __name__ == "__main__":
         else:
             os.environ["PYP_SCRATCH"] = scratch_config
         os.environ["OPENBLAS_NUM_THREADS"] = "1"
-        os.environ["TMPDIR"] = str(Path(os.environ["PYP_SCRATCH"]) / f"{os.environ['USER']}_TMPDIR")
         os.environ["PBS_O_WORKDIR"] = os.getcwd()
-        if not os.path.exists(os.environ["TMPDIR"]):
-            try:
-                os.mkdir(os.environ["TMPDIR"])
-            except:
-                pass
 
         if "SLURM_ARRAY_JOB_ID" in os.environ:
             subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
@@ -3338,12 +3333,17 @@ if __name__ == "__main__":
             Web.init_env()
         else:
             # keep track of issued commands
-            with open(".pyp_history", "a") as f:
-                timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
-                    "%Y/%m/%d %H:%M:%S "
-                )
-                f.write(timestamp + " ".join(sys.argv) + "\n")
-
+            try:
+                with open(".pyp_history", "a") as f:
+                    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
+                        "%Y/%m/%d %H:%M:%S "
+                    )
+                    f.write(timestamp + " ".join(sys.argv) + "\n")
+            except:
+                logger.error(f"Can't write to {os.getcwd()}/.pyp_history")
+                trackback()
+                logger.error("Failed to launch PYP")
+                pass
         # daemon
         if "pypdaemon" in os.environ:
 
@@ -4143,6 +4143,15 @@ if __name__ == "__main__":
                         else:
                             shutil.copy( image_file, image_file_average)
 
+                        # if using eer format, figure out binning factor
+                        if image_file.endswith(".eer"):
+                            gain_x, gain_y = gain_reference.shape
+                            binning = int(x / gain_x)
+                            if binning > 1:
+                                logger.warning(f"Binning eer frames {binning}x to match gain reference dimensions")
+                                com = f"{get_imod_path()}/bin/newstack {image_file_average} {image_file_average} -bin {binning}"
+                                local_run.run_shell_command(com)
+
                         if parameters["gain_remove_hot_pixels"]:
                             preprocess.remove_xrays_from_file(Path(image_file_average).stem)
 
@@ -4636,10 +4645,6 @@ EOF
                 project_params.save_parameters(parameters)
 
                 split(parameters)
-
-                # clean up local scratch
-                if os.path.exists(os.environ["TMPDIR"]):
-                    shutil.rmtree(os.environ["TMPDIR"])
 
                 # clean up local scratch
                 if os.path.exists(os.environ["PYP_SCRATCH"]):

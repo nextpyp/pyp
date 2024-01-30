@@ -172,11 +172,39 @@ type = "float"
 default = 0.07
 advanced = true
 
+[tabs.scope.init_dose]
+name = "Initial dose (e^-/A^2)"
+description = "Amount of pre-exposure before stack is acquired"
+type = "float"
+default = 0.0
+advanced = true
+
 [tabs.scope.dose_rate]
 name = "Dose rate (e^-/A^2)"
 description = "Number of electrons per unit area used during imaging"
 type = "float"
 default = 1.0
+advanced = true
+
+[tabs.scope.mag_major]
+name = "Magnification along major axis"
+description = "Magnification along major axis"
+type = "float"
+default = 1.0
+advanced = true
+
+[tabs.scope.mag_minor]
+name = "Magnification along minor axis"
+description = "Magnification along minor axis"
+type = "float"
+default = 1.0
+advanced = true
+
+[tabs.scope.distort_ang]
+name = "Distortion angle"
+description = "Angle of the major axis relative to the image x-axis in degrees"
+type = "float"
+default = 0.0
 advanced = true
 
 [tabs.scope.beam_tilt_x]
@@ -209,7 +237,7 @@ hidden = true
 
 [tabs.scope.tilt_axis]
 name = "Tilt-axis angle (degrees)"
-description = "Approximate orientation of tilt-axis with respect to the x-axis (counterclockwise positive). Use 90.0 if tilt-series are already aligned."
+description = "Approximate orientation of tilt-axis with respect to the x-axis (counterclockwise positive). Use 90.0 if tilt-series are already aligned"
 type = "float"
 default = 0.0
 hidden = [ "spr_import_raw", "spr_import_star", "stream_spr" ]
@@ -434,17 +462,10 @@ default = 0.5
 hidden = true
 
 [tabs.movie.bfactor]
-name = "Bfactor for alignment"
+name = "Bfactor for alignment (unblur)"
 description = "Bfactor to use during frame alignment (use larger values for noisier data)"
 type = "float"
 default = 1500
-
-[tabs.movie.patch]
-name = "Patches"
-description = "Number of patches to use during frame alignment (relion method only, 1=no patches)"
-type = "int"
-default = 1
-hidden = true
 
 [tabs.movie.force_integer]
 name = "Force integer shifts (unblur)"
@@ -466,11 +487,53 @@ type = "int"
 default = 15
 advanced = true
 
+[tabs.movie.motioncor_patch]
+name = "Patch alginment (motioncor)"
+description = "Number of patches used for frame alignment"
+type = "int"
+default = 1
+advanced = true
+
+[tabs.movie.motioncor_frameref]
+name = "Frame used for reference (motioncor)"
+description = "The frame used for reference during alignment (1 means the first frame; 0 means the center)"
+type = "int"
+default = 0
+advanced = true
+
+[tabs.movie.motioncor_bfactor]
+name = "Bfactor for alignment (motioncor)"
+description = "Bfactor to use during frame alignment (use larger values for noisier data)"
+type = "float"
+default = 100
+
+[tabs.movie.motioncor_sumrange_min]
+name = "Minimum dose for summing frames (motioncor)"
+description = "Frames between minimum and maximum dose are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
+type = "float"
+default = 3.0
+advanced = true
+
+[tabs.movie.motioncor_sumrange_max]
+name = "Maximum dose for summing frames (motioncor)"
+description = "Frames between minimum and maximum dose are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
+type = "float"
+default = 25.0
+advanced = true
+
 [tabs.movie.weights]
 name = "Exposure weighting"
 description = "Produce exposure-weighted frame averages (if frames are available)"
 type = "bool"
 default = false
+hidden = ["spr_import_star","spr_import","tomo_import_star","tomo_import","stream_tomo"]
+
+[tabs.movie.magcorr]
+name = "Correct anisotropic magnification"
+description = "Correct anisotropic magnification by stretching image along the major axis"
+type = "bool"
+default = false
+advanced = true
 hidden = ["spr_import_star","spr_import","tomo_import_star","tomo_import","stream_tomo"]
 
 # Contrast transfer function parameters
@@ -3855,7 +3918,15 @@ hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask"
 
 [tabs.slurm.gres]
 name = "Gres per task"
-description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
+type = "str"
+default = ""
+hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
+[tabs.slurm.account]
+name = "Slurm account"
+description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
 hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
@@ -3905,7 +3976,15 @@ hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_s
 
 [tabs.slurm.merge_gres]
 name = "Gres (merge task)"
-description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
+type = "str"
+default = ""
+hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process"]
+advanced = true
+
+[tabs.slurm.merge_account]
+name = "Slurm account (merge task)"
+description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
 hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process"]
@@ -3941,8 +4020,16 @@ default = 2
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
 
 [tabs.slurm.daemon_gres]
-name = "Gres (refinement daemon)"
-description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+name = "Gres (pre-processing daemon)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
+type = "str"
+default = ""
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
+[tabs.slurm.daemon_account]
+name = "Slurm account (pre-processing daemon)"
+description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
@@ -3979,7 +4066,15 @@ hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", 
 
 [tabs.slurm.class2d_gres]
 name = "Gres (refinement daemon)"
-description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
+type = "str"
+default = ""
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
+[tabs.slurm.class2d_account]
+name = "Slurm account (refinement daemon)"
+description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]

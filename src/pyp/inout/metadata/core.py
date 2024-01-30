@@ -29,7 +29,7 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
 from pyp.utils import get_relative_path, movie2regex
 from pyp.utils import timer, symlink_relative
-from pyp.analysis.geometry import get_vir_binning_boxsize
+from pyp.analysis.geometry import get_vir_binning_boxsize, alignment2Relion, spk2Relion
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -2882,3 +2882,99 @@ def array2formatstring(a, format):
     return format % tuple(a)
 
 
+def generate_ministar(parfile, image_list, z_thickness, tomo_binning, cls=1, output_path="." ):
+    # generate a mini star file for Artix display only
+    header = """
+    # version 30001 by xpytools
+
+    data_particles
+
+    loop_
+    _rlnTomoName #1
+    _rlnCoordinateX #2
+    _rlnCoordinateY #3
+    _rlnCoordinateZ #4
+    _rlnAngleRot #5
+    _rlnAngleTilt #6
+    _rlnAnglePsi #7
+    _rlnLogLikeliContribution #8
+    _rlnClassNumber #9"""
+
+    pardata = frealign_parfile.Parameters.from_file(parfile).data
+    image_film = 0
+    for mrcs in image_list:
+        film_data = pardata[pardata[:, 7]==image_film]
+        image_film += 1
+        name = mrcs.split("/")[0]
+        # box_str = np.loadtxt(os.path.join("csp", name + "_boxes3d.txt" ), dtype="str", comments="  PTLIDX" )
+        metafile = os.path.join(name, name + ".pkl")
+        pkl_data = pyp_metadata.LocalMetadata(metafile, is_spr=False).data
+        coordinats_all = pkl_data["box"].to_numpy()
+
+        if film_data.shape[1] > 45:
+            ptl_index = 17
+            score_col = 15
+            occ_col = 12
+
+            NOMRX_COL = 24
+            NORMZ_COL = 26
+            MATRIX0_COL = 27
+            MATRIX15_COL = 42
+            PPSI_COL = 43
+            PPHI_COL = 45
+
+        else:
+            ptl_index = 17 - 1
+            score_col = 15 - 1
+            occ_col = 12 - 1
+
+            NOMRX_COL = 24 - 1
+            NORMZ_COL = 26 - 1
+            MATRIX0_COL = 27 - 1
+            MATRIX15_COL = 42 - 1
+            PPSI_COL = 43 - 1
+            PPHI_COL = 45 - 1
+
+        # get unique lines by shift down rows by 1 
+        meta = film_data[:, occ_col:]
+        nan_row = np.full((1, meta.shape[1]), np.nan)
+        shifted_meta = np.vstack((nan_row, meta[:-1, :]))
+
+        unique_lines = meta[meta[:, ptl_index - occ_col ] != shifted_meta[:, ptl_index - occ_col]]
+        output = []
+        
+        full_thickness = z_thickness
+        tomo_x = pkl_data["tomo"].values[0][0]
+        tomo_y = pkl_data["tomo"].values[0][1]
+        tomo_z = pkl_data["tomo"].values[0][2]
+        full_tomo_x = tomo_x * tomo_binning
+        full_tomo_y = tomo_y * tomo_binning
+
+
+        for particle_lines in unique_lines:
+            
+            pid = int(particle_lines[ptl_index - occ_col ])
+            coords = coordinats_all[pid, :]
+            x, y, z = coords
+
+            relion_x, relion_y, relion_z = spk2Relion(x, y, z, tomo_binning, full_tomo_x, full_tomo_y, thickness=full_thickness, tomo_x_bin=tomo_x, tomo_y_bin=tomo_y, tomo_z_bin=tomo_z)
+
+            matrix = particle_lines[MATRIX0_COL - occ_col : MATRIX15_COL - occ_col + 1]
+            ppsi, ptheta, pphi = particle_lines[PPSI_COL - occ_col : PPHI_COL - occ_col + 1]
+            normX, normY, normZ = particle_lines[NOMRX_COL - occ_col : NORMZ_COL - occ_col + 1]
+            rot, tilt, psi, dx, dy, dz = alignment2Relion(matrix, ppsi, ptheta, pphi, normX, normY, normZ)
+            score = particle_lines[score_col - occ_col]
+            occ = particle_lines[0]
+
+            relion_z = z_thickness - relion_z
+            # relion_x = full_tomo_x - relion_x
+            # relion_y = full_tomo_y - relion_y
+            output.append([name, relion_x, relion_y, relion_z, rot, tilt, psi, score, occ])
+
+        alignment_array = np.array(output)
+        # output_array = np.hstack((clean_box, alignment_array))
+
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
+        np.savetxt(os.path.join(output_path, name + "_K%d.star" % cls), alignment_array, fmt="%s", header=header, delimiter="\t", comments="")

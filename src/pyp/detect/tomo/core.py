@@ -1149,7 +1149,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         if not os.path.exists("%s.vir" % name):
 
             if parameters["tomo_vir_method"] == "manual":
-                logger.info("Using manual picking")
+                logger.info("Using virion manual picking")
                 # reset virion binning since we are considering above it already
                 virion_binning = 1
 
@@ -1175,7 +1175,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                     os.system(f'cp -p *.vir {current_path}/next')
 
             elif parameters["tomo_vir_method"] == "pyp-eval":
-                logger.info("Using NN-picking")
+                logger.info("Using virion NN-picking")
 
                 # reset virion binning since we are considering above it already
                 virion_binning = 1
@@ -1213,7 +1213,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                         os.remove(name + ".next")
                     os.system(f'cp -p *.vir {current_path}/next')
             else:
-                logger.info("Using auto-picking")
+                logger.info("Using virion auto-picking")
 
         """Performs virion detection/extraction in tomogram then spike detection/extraction in virion."""
         process_virions(

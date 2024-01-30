@@ -596,19 +596,17 @@ def extract_particles_mpi(
         dims = get_image_dimensions(input[0])
 
         # convert tif movies to mrc files
-        # arguments = []
         commands = [] 
         for f in input:
-            # arguments.append((f, parameters, 1,))
-
-            com = "{0}/bin/newstack -mode 2 {1} {2}".format(
-                get_imod_path(), f, f.replace(".tif", ".mrc")
-            )
-            commands.append(com)
-        
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
-
-        input = [f.replace(".tif", ".mrc") for f in input]
+            if ".tif" in f:
+                com = "{0}/bin/newstack -mode 2 {1} {2}".format(
+                    get_imod_path(), f, f.replace(".tiff", ".mrc").replace(".tif", ".mrc")
+                )
+                commands.append(com)
+        if len(commands) > 0:
+            mpi.submit_jobs_to_workers(commands, os.getcwd())
+            
+        input = [f.replace(".tiff", ".mrc").replace(".tif", ".mrc") for f in input]
         
         # remove x-ray hot pixels
         """
