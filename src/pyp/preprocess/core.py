@@ -648,6 +648,13 @@ def read_tilt_series(
                 parameters, dims[0], dims[1],
             )
 
+            # use local copy of gain reference and reset transformations since they were already applied
+            if gain_reference_file:
+                parameters["gain_reference"] = Path(os.getcwd()) / gain_reference_file
+                parameters["gain_rotation"] = 0
+                parameters["gain_flipv"] = False
+                parameters["gain_fliph"] = False
+
             # align frames in each tilt
             isfirst = True
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
