@@ -29,7 +29,7 @@ v0.6.1 (1/30/2024)
 
    :fa:`bug,text-danger` Fix bug when picking particles using neural network-based approach on non-square tomograms.
 
-  :fa:`bug,text-danger` Fix bug that prevented GPU jobs from running because the jobs were sent to the CPU queue.
+   :fa:`bug,text-danger` Fix bug that prevented GPU jobs from running because the jobs were sent to the CPU queue.
 
 v0.6.0 (1/21/2024)
 *******************
