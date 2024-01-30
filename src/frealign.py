@@ -324,7 +324,7 @@ if __name__ == "__main__":
 
                     # scale and crop initial model
                     scaling = model_pixel_size / actual_pixel
-                    logger.info(f"Rescaling initial model {initial_model} to {scaling} A per pixel")
+                    logger.warning(f"Rescaling initial model {initial_model} to {scaling} A per pixel")
                     new_size = int(mparameters["extract_box"])
                     command = f"{get_imod_path()}/bin/matchvol -size {new_size},{new_size},{new_size} -3dxform {scaling},0,0,0,0,{scaling},0,0,0,0,{scaling},0 {initial_model} {frealign_initial_model}; rm {frealign_initial_model}~"
                     local_run.run_shell_command(command=command,verbose=mparameters["slurm_verbose"])

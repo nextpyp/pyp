@@ -851,7 +851,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         or scaling > 1.01
         or int(mparameters["extract_box"]) != model_box_size
     ):
-        logger.info(f"Rescaling {initial_model} pixel size to binning {1/scaling:.2f}, which would be {model_pixel_size/scaling:.2f}")
+        logger.warning(f"Rescaling {initial_model} pixel size to binning {1/scaling:.2f}, which would be {model_pixel_size/scaling:.2f}")
         command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 {4} {2}".format(
             get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, initial_model,
         )

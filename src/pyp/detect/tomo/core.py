@@ -1226,6 +1226,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             raise Exception("Please specify a particle radius > 0 (-tomo_spk_rad)")
 
         if parameters["tomo_spk_method"] == "manual":
+            logger.info("Using manual particle picking")
 
             # convert manually picked coordinates to spk file
             radius_in_pixels = int(parameters["tomo_spk_rad"] / parameters["scope_pixel"] / binning)
@@ -1247,6 +1248,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 logger.warning("No particles picked for this tomogram")
 
         elif parameters["tomo_spk_method"] == "pyp-eval":
+            logger.info("Using NN-based particle picking")
 
             if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
                 logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
@@ -1272,6 +1274,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                         os.remove( name + ".mod")
 
         elif parameters["tomo_spk_method"] == "auto":
+            logger.info("Using size-based particle picking")
 
             t = timer.Timer(text="Auto Gaussian picking took: {}", logger=logger.info)
             t.start()
