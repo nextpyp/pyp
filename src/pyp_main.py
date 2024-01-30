@@ -1988,7 +1988,19 @@ def csp_extract_frames(
                     for f in imagefile:
                         arguments.append((current_path + "/raw/" + f, f))
                     mpi.submit_function_to_workers(shutil.copy2, arguments, verbose=parameters["slurm_verbose"])
-                    raw_image = imagefile
+
+                    # convert eer files to mrc using movie_eer_reduce and movie_eer_frames parameters (flipping in x is required to match unblur/motioncorr convention)
+                    arguments = []
+                    for f in imagefile:
+                        if f.endswith(".eer"):
+                            # average eer frames
+                            command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {parameters['movie_eer_frames']} {f} {f.replace('.eer','.mrc')}; rm -f {f}"
+                            arguments.append(command)
+                    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+                    if imagefile[0].endswith(".eer"):
+                        raw_image = [ i.replace('.eer','.mrc') for i in imagefile ]
+                    else:
+                        raw_image = imagefile
 
                 else:
                     if os.path.exists(os.path.join(current_path, imagefile + ".mrc")):
