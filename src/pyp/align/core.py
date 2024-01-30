@@ -1136,16 +1136,16 @@ def csp_run_refinement(
                     if use_frames and parameters["csp_frame_refinement"]: 
                         frame_refinement = True
                     mode = 3  # micrograph trans
-                    
+
                 elif mode == 6:
                     mode = 0  # micrograph rot
-                   
+
                 elif mode == 7:
                     mode = 2  # particle trans
-                    
+
                 elif mode == 8:
                     mode = 1  # particle rot
-                    
+
                 elif mode == 4:
                     pass
 
@@ -1182,7 +1182,7 @@ def csp_run_refinement(
             if extract_only and current_class == 1:
                 # first check if every stack exists since we discard some particles in parfile
                 merged_stack = "frealign/%s_stack.mrc" % (name.split("_r")[0]) if mode == -2 else "frealign/%s_stack_weighted_average.mrc" % (name.split("_r")[0])
-                
+
                 movie_list = [stack for stack in movie_list if os.path.exists(stack)]
                 try:
                     mrc.merge_fast(movie_list,merged_stack,remove=True)
@@ -1200,8 +1200,8 @@ def csp_run_refinement(
 
                 # stop here if extracting particle stacks
                 continue
-            
-            
+
+
             # collate log files
             for f in sorted(
                 glob.glob("*_csp_*.log")
@@ -1274,7 +1274,7 @@ def csp_run_refinement(
 
 
             t.stop()
-            
+
             if starting_number_of_frames != current_number_of_frames:
                 message = "Number of frames before and after refinement differ: {} != {}".format(
                     starting_number_of_frames, current_number_of_frames
@@ -1357,14 +1357,14 @@ def postprocess_after_refinement(
     # frames = get_particles_from_par(new_par_file)
     stackfile = os.path.join(working_path, "frealign", name + "_stack.mrc")
     frames = mrc.readHeaderFromFile(stackfile)["nz"]
-    
+
     # create symlinks in scratch folder
     # new_par_file_class = new_par_file.replace("_r01_","_r%02d_" % current_class)
     # os.symlink( os.path.join( os.getcwd(), new_par_file_class ), os.path.join( "frealign", "scratch", name + "_r%02d_%02d.par" % ( current_class, iteration ) ) )
 
     # go to frealign directory
     os.chdir("frealign")
-    
+
     # create new frealign parameters with updated dataset field
     mp_local = mp.copy()
     mp_local["refine_dataset"] = name
@@ -1427,7 +1427,7 @@ def postprocess_after_refinement(
             refine_mask.append("1")
         else:
             refine_mask.append("0")
-        
+
         mp_local["refine_mask"] = ",".join(refine_mask)
 
     # run refinement (produces short_file_name)
@@ -2668,7 +2668,7 @@ EOF
                     tiltxcorr_options = "-first 0 -increment 1 -nostretch -binning 1 -shift 10,10 -rotation 0.000000 -radius1 0.010000 -sigma1 0.030000 -radius2 0.100000 -sigma2 0.030000 -border 64,64 -taper 256,256 -iterate 5"
                 else:
                     tiltxcorr_options = "-first 0 -increment 1 -nostretch -binning 1 -shift 3,3 -rotation 0.000000 -radius1 0.00000 -sigma1 0.00000 -radius2 0.1000 -sigma2 0.0250000 -border 32,32 -taper 64,64"
-                
+
                 error = 1
                 iteration = 0
                 scores = []
@@ -3784,7 +3784,7 @@ EOF
 
                     # XD testing: set metric_weights to metric
                     metric_weights = metric
-                
+
                     # call FREALIGN directly to improve performance
                     mp = parameters.copy()
                     mp['data_bin'] = 1
@@ -3805,7 +3805,7 @@ EOF
                     if not os.path.exists( local_model ):
                         os.symlink( os.getcwd() + '/' + os.path.split( parameters['class_ref'] )[-1], local_model )
                     # shutil.copy( frealign_parameter_file, frealign_path + '/maps/' + name + '_r01_02.par' )
-                
+
                     os.chdir( frealign_path + '/maps' )
 
                     import pdb; pdb.set_trace()
@@ -4182,7 +4182,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         -TiffOrder       1
         -CorrInterp      0
         """
-            
+
         if 'mrc' in suffix:
             input = f"-InMrc ../{movie_file}"
         elif 'tif' in suffix:
@@ -4192,15 +4192,15 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 
             eer_frames_perimage = int(parameters["movie_eer_frames"])
             eer_superres_factor = int(parameters["movie_eer_reduce"])
-            eer = f"{input} -EerSampling {eer_superres_factor}"
-        
+            input = f"{input} -EerSampling {eer_superres_factor} -Group {eer_frames_perimage}"
+
         if "gain_reference" in parameters.keys() and os.path.exists(
             project_params.resolve_path(parameters["gain_reference"])
             ):
             gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
             gain_file = os.path.basename(gain_reference_file)
             gain = f" -Gain ../{gain_file}"
-            
+
             # If both -RotGain and -FlipGain are enabled, the gain reference will be rotated first and flipped next.
             if "gain_flipv" in parameters.keys() and parameters["gain_flipv"]:
                 gain += f" -FlipGain 1"
@@ -4217,12 +4217,12 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             frame_options += f" -Throw {parameters['movie_first']}"
         if parameters["movie_last"] != -1:
             frame_options += f" -Trunc {total_frames - parameters['movie_last']}"
-        if parameters["movie_group"] > 1:
+        if parameters["movie_group"] > 1 and "EerSampling" not in input:
             frame_options += f" -Group {parameters['movie_group']}"
         frame_options += f" -Bft {parameters['movie_motioncor_bfactor']}"
         frame_options += f" -Tol {parameters['movie_motioncor_tol']} -Iter {parameters['movie_motioncor_iter']}"
         frame_options += f" -SumRange {parameters['movie_motioncor_sumrange_min']} {parameters['movie_motioncor_sumrange_max']}"
-        
+
         if parameters["movie_motioncor_frameref"] > 0:
             frame_ref = parameters['movie_motioncor_frameref'] if parameters['movie_motioncor_frameref'] <= total_frames else total_frames
             frame_options += f" -FmRef {frame_ref}"
@@ -4231,7 +4231,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         if parameters["movie_weights"]:
             dose_weighting_options += f" -InitDose {init_dose} -FmDose {dose_rate} -PixSize {pixel} -kV {voltage}" 
             dose_weighting_options += " -Cs 0" # NOT do CTF estimation
-        
+
         mag_correction_options = ""
         if parameters["movie_magcorr"]:
             mag_correction_options += f" -Mag {mag_major} {mag_minor} {distort_angle}"
@@ -4519,10 +4519,10 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
                 shutil.move( name + "_DWS.mrc", f"../{aligned_average}")
         else:
             shutil.move( name + ".mrc", f"../{aligned_average}")
-        
+
         # read shifts and save in txt format
         newf = open(f"{name}_clean.aln", "w")
-        
+
         # output file has header and footer (if patch is used)
         NUM_LINES_HEADER = 8
         with open(f"{name}.aln", "r") as f:
@@ -4531,6 +4531,9 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
                     newf.write(line)
         newf.close()
         shifts = np.loadtxt(f"{name}_clean.aln",ndmin=2)
+        # only keep shift values for integrated frames if using eer movies
+        if "EerSampling" in input:
+            shifts = shifts[::eer_frames_perimage,:]
         np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt="%.4f")
 
     elif 'unblur' in parameters["movie_ali"]:
