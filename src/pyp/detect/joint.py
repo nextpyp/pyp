@@ -77,7 +77,7 @@ def sprtrain(args):
 
     # check for failure if not output was produced
     if len(list(Path(os.getcwd()).rglob('*.training'))) == 0:
-        raise Exception("Failed to run training module")
+        raise Exception("Failed to run training module. Try increasing the memory per task")
 
     # move trained models to project folder
     logger.info(f"Copying results to {output_folder}")
@@ -252,7 +252,7 @@ def tomotrain(args):
 
     # check for failure if no output model was produced
     if len(list(Path(os.getcwd()).rglob('*.pth'))) == 0:
-        raise Exception("Failed to run training module")
+        raise Exception("Failed to run training module. Try increasing the memory per task")
 
     # move trained models to project folder
     logger.info(f"Copying results to {output_folder}")
