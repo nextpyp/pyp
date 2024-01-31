@@ -4122,8 +4122,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     if 'motioncor' in parameters["movie_ali"]:
 
         # patch tracking
-        if "movie_motioncor_patch" in parameters and parameters["movie_motioncor_patch"] > 1:
-            patches = f" -Patch {parameters['movie_motioncor_patch']} {parameters['movie_motioncor_patch']}"
+        if "movie_motioncor_patch_x" in parameters and "movie_motioncor_patch_y" in parameters and ( parameters["movie_motioncor_patch_x"] > 1 or parameters["movie_motioncor_patch_y"] > 1):
+            patches = f" -Patch {parameters['movie_motioncor_patch_x']} {parameters['movie_motioncor_patch_y']}"
         else:
             patches = ""
 
