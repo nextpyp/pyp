@@ -487,9 +487,16 @@ type = "int"
 default = 15
 advanced = true
 
-[tabs.movie.motioncor_patch]
-name = "Patch alginment (motioncor)"
-description = "Number of patches used for frame alignment"
+[tabs.movie.motioncor_patch_x]
+name = "Number of patches in X axis (motioncor)"
+description = "Number of patches in X axis used for frame alignment"
+type = "int"
+default = 1
+advanced = true
+
+[tabs.movie.motioncor_patch_y]
+name = "Number of patches in Y axis (motioncor)"
+description = "Number of patches in Y axis used for frame alignment"
 type = "int"
 default = 1
 advanced = true
