@@ -1160,7 +1160,7 @@ def particle_cleaning(parameters: dict):
             threshold = 1.075 * statistics.optimal_threshold(
                 samples=samples, criteria="optimal"
             )
-            logger.info(f"Using {threshold} as optimal threshold")
+            logger.info(f"Using {threshold:.2f} as optimal threshold")
         else:
             threshold = parameters["clean_threshold"]
 

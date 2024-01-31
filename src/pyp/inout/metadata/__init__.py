@@ -19,4 +19,5 @@ from .core import (
     get_image_particle_index,
     get_particles_tilt_index,
     compute_global_weights,
+    generate_ministar,
 )

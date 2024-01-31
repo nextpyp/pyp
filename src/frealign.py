@@ -15,6 +15,7 @@ import socket
 import subprocess
 import shutil
 import time
+import toml
 from pathlib import Path, PosixPath
 
 from pyp.inout.image import mrc
@@ -56,7 +57,15 @@ if __name__ == "__main__":
 
     mpi_tasks = mpi.initialize_worker_pool()
 
-    logger.info("PYP launching on host {} using {} task(s)".format(socket.gethostname(), mpi_tasks))
+    # retrieve version number
+    version = toml.load(os.path.join(os.environ['PYP_DIR'],"nextpyp.toml"))['version']
+    memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else ""
+
+    logger.info(
+        "Job (v{}) launching on {} using {} task(s) {}".format(
+        version, socket.gethostname(), mpi_tasks, memory
+        )
+    )
 
     os.environ["IMAGICDIR"] = "/usr/bin"
     os.environ["SHELLDIR"] = "{0}/shell".format(os.environ["PYP_DIR"])
@@ -315,7 +324,7 @@ if __name__ == "__main__":
 
                     # scale and crop initial model
                     scaling = model_pixel_size / actual_pixel
-                    logger.info(f"Rescaling initial model {initial_model} to {scaling} A per pixel")
+                    logger.warning(f"Rescaling initial model {initial_model} to {scaling} A per pixel")
                     new_size = int(mparameters["extract_box"])
                     command = f"{get_imod_path()}/bin/matchvol -size {new_size},{new_size},{new_size} -3dxform {scaling},0,0,0,0,{scaling},0,0,0,0,{scaling},0 {initial_model} {frealign_initial_model}; rm {frealign_initial_model}~"
                     local_run.run_shell_command(command=command,verbose=mparameters["slurm_verbose"])

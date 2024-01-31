@@ -984,6 +984,7 @@ def frealign_def_split(fp, parfile, tolerance):
         1,
         10,
         "",
+        "",
         "12:00:00",
     )
 
@@ -996,6 +997,7 @@ def frealign_def_split(fp, parfile, tolerance):
         0,
         1,
         10,
+        "",
         "",
         "12:00:00",
         id,
@@ -1241,6 +1243,7 @@ def frealign_rec(mparameters, fparameters, iteration, alignment_option):
                         threads,
                         58,
                         "",
+                        "",
                         "12:00:00",
                     )
                     slurm.submit_jobs(
@@ -1251,6 +1254,7 @@ def frealign_rec(mparameters, fparameters, iteration, alignment_option):
                         400,
                         0,
                         58,
+                        "",
                         "",
                         "12:00:00",
                         id,
@@ -1533,6 +1537,7 @@ def frealign_iterate(mp, fp, iteration, keep_previous_alignments=False):
                 1,
                 10,
                 "",
+                "",
                 "12:00:00",
             )
 
@@ -1550,6 +1555,7 @@ def frealign_iterate(mp, fp, iteration, keep_previous_alignments=False):
             0,
             70,
             690,
+            "",
             "",
             "12:00:00",
             id,
@@ -6191,6 +6197,7 @@ def rec_merge_check_error_and_resubmit(mparameters, fparameters, iteration):
             0,
             58,
             "",
+            "",
             "12:00:00",
         )
         slurm.submit_jobs(
@@ -6201,6 +6208,7 @@ def rec_merge_check_error_and_resubmit(mparameters, fparameters, iteration):
             400,
             0,
             58,
+            "",
             "",
             "12:00:00",
             id,
@@ -6301,6 +6309,7 @@ def ref_merge_check_error_and_resubmit(fp, iteration, machinefile):
                 1,
                 10,
                 "",
+                "",
                 "4:00:00",
             )
             slurm.submit_jobs(
@@ -6311,6 +6320,7 @@ def ref_merge_check_error_and_resubmit(fp, iteration, machinefile):
                 0,
                 2,
                 58,
+                "",
                 "",
                 "4:00:00",
                 id,

@@ -25,7 +25,7 @@ from pyp.analysis.occupancies import occupancies, occupancy_extended
 from pyp.analysis.scores import call_shape_phase_residuals
 from pyp.analysis.plot import pyp_frealign_plot_weights
 from pyp.inout.image import mrc, img2webp
-from pyp.inout.metadata import frealign_parfile, isfrealignx, pyp_metadata
+from pyp.inout.metadata import frealign_parfile, isfrealignx, pyp_metadata, generate_ministar
 from pyp.refine.frealign import frealign
 from pyp.streampyp.web import Web
 from pyp.streampyp.logging import TQDMLogger
@@ -513,6 +513,14 @@ def merge_movie_files_in_job_arr(
             current_class,
             iteration,
         )
+
+        # generate tsv files for Artix display
+        if "tomo" in mp["data_mode"]:
+            star_output = os.path.join(project_path, "frealign", "artiax")
+            binning = mp["tomo_rec_binning"]
+            z_thicknes = mp["tomo_rec_thickness"]
+            generate_ministar(current_block_par, movie_list, z_thicknes, binning, cls=current_class, output_path=star_output)
+
         if classes > 1:
             # backup the current par for later recovery
             shutil.copy(current_block_par, current_block_par.replace(".par", ".paro"))

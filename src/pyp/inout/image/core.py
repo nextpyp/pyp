@@ -201,6 +201,7 @@ def get_gain_reference(parameters, x, y):
         # copy gain to local scratch
         try:
             shutil.copy2( gain_reference_file, "." )
+            gain_reference_file = Path(gain_reference_file).name
         except:
             pass
         extension = Path(gain_reference_file).suffix
@@ -215,6 +216,11 @@ def get_gain_reference(parameters, x, y):
                 )
         elif extension == ".mrc":
             gain_reference = mrc.read(gain_reference_file)
+        elif extension == ".gain" or extension == ".tif" or extension == ".tiff":
+            new_gain_reference_file = gain_reference_file.replace(extension,".mrc")
+            com = f"{get_imod_path()}/bin/tif2mrc {gain_reference_file} {new_gain_reference_file}"
+            run_shell_command(com)
+            gain_reference = mrc.read(new_gain_reference_file)
         else:
             logger.warning("Can't recognize the gain reference extension")
 
