@@ -4107,7 +4107,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     aligned_average = name + ".avg"
 
     pixel = float(parameters["scope_pixel"])
-    binning = float(parameters["data_bin"])
+    binning = float(parameters["movie_bin"])
     voltage = float(parameters["scope_voltage"])
     init_dose = float(parameters["scope_init_dose"])
     dose_rate = float(parameters["scope_dose_rate"])
@@ -4122,7 +4122,9 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     if 'motioncor' in parameters["movie_ali"]:
 
         # patch tracking
-        if "movie_motioncor_patch_x" in parameters and "movie_motioncor_patch_y" in parameters and ( parameters["movie_motioncor_patch_x"] > 1 or parameters["movie_motioncor_patch_y"] > 1):
+        patches_x = parameters["movie_motioncor_patch_x"] if "movie_motioncor_patch_x" in parameters else 1
+        patches_y = parameters["movie_motioncor_patch_y"] if "movie_motioncor_patch_y" in parameters else 1
+        if patches_x > 1 or patches_y > 0:
             patches = f" -Patch {parameters['movie_motioncor_patch_x']} {parameters['movie_motioncor_patch_y']}"
         else:
             patches = ""
