@@ -23,19 +23,14 @@ def _absolutize_path(path):
         return os.path.join(os.getcwd(), path)
 
 def get_gres_option(use_gpu,gres):
-    if use_gpu:
-        gpu_gres = f"--gres="
-        if len(gres) > 0:
-            if 'gpu:' in gres:
-                gpu_gres += f"{gres}"
-            else:
-                gpu_gres += f"gpu:1,{gres}"
-        else:
-            gpu_gres += "gpu:1"
-    elif len(gres) > 0:
-        gpu_gres = f"--gres={gres}"
-    else:
-        gpu_gres = ""
+    options = []
+    if use_gpu and "gpu:" not in gres:
+        options.append("gpu:1")
+    if len(gres) > 0:
+        options.append(gres)
+    gpu_gres = ",".join(options)
+    if not Web.exists and len(gpu_gres) > 0:
+        gpu_gres = "--gres=" + gpu_gres
     return gpu_gres
 
 def submit_commands(
