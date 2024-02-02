@@ -216,6 +216,8 @@ class Parameters:
                BEAM_TILT_Y, 
                IMAGE_SHIFT_X, 
                IMAGE_SHIFT_Y, 
+               ORIGINAL_X_POSITION,
+               ORIGINAL_Y_POSITION,
                IMIND, 
                PIND, 
                TIND, 
@@ -294,7 +296,7 @@ class Parameters:
 
         assert (self.get_num_cols() > 0 and self.get_num_rows() > 0), f"Number of columns ({self.get_num_cols()}) and rows ({self.get_num_rows()}) should be larger than 0"
         assert len(self._active_columns) > 0, f"No column detected."
-        
+        assert len(self._active_columns) == self.get_data().shape[1], f"Number of columns does not match in the header ({len(self._active_columns)}) and data ({self.get_data().shape[1]})"
         assert filename.endswith(".cistem"), f"Filename of output ({filename}) better has .cistem extension."
 
         with open(filename, "wb") as f:
@@ -430,61 +432,63 @@ class ExtendedParameters():
     def from_binary(self, input_binary):
         
         with open(input_binary, "rb") as f:
-
-            # 1. read the block type (either particles or tilts data)
-            byte_str = read_byte_str(f, size=SIZE_LONG)
-            block_type = np.frombuffer(byte_str, dtype=DT_BLOCK)[0][0]
-
-            # 2. read number of columns and rows            
-            byte_str = read_byte_str(f, size=SIZE_INT+SIZE_INT)
-            num_columns, num_rows = np.frombuffer(byte_str, dtype=DT_DIMS)[0]
             
-            # 3. read headers to see which columns are active 
-            active_columns = []
-            bytes_per_line = 0
-            for _ in range(num_columns):
+            for _ in BLOCKS_EXTENDED:
+
+                # 1. read the block type (either particles or tilts data)
+                byte_str = read_byte_str(f, size=SIZE_LONG)
+                block_type = np.frombuffer(byte_str, dtype=DT_BLOCK)[0][0]
+
+                # 2. read number of columns and rows            
+                byte_str = read_byte_str(f, size=SIZE_INT+SIZE_INT)
+                num_columns, num_rows = np.frombuffer(byte_str, dtype=DT_DIMS)[0]
+            
+                # 3. read headers to see which columns are active 
+                active_columns = []
+                bytes_per_line = 0
+                for _ in range(num_columns):
                 
-                byte_str = read_byte_str(f, size=SIZE_LONG+SIZE_CHAR)
-                byte_str_order, byte_str_data = np.frombuffer(byte_str, dtype=DT_COLUMN)[0]
+                    byte_str = read_byte_str(f, size=SIZE_LONG+SIZE_CHAR)
+                    byte_str_order, byte_str_data = np.frombuffer(byte_str, dtype=DT_COLUMN)[0]
 
-                if byte_str_order in HEADER_LIST:
-                    data_type = MAPPING[HEADER_LIST[byte_str_order]]
-                    size_data_type, str_data_type = data_type[0], data_type[1]
-                    active_columns.append((str(byte_str_order), f'<{str_data_type}{size_data_type}'))
-                    bytes_per_line += size_data_type
-                else:
-                    raise Exception(f"Binary file contains unrecognized header. Column code = {byte_str_order}")
+                    if byte_str_order in HEADER_LIST:
+                        data_type = MAPPING[HEADER_LIST[byte_str_order]]
+                        size_data_type, str_data_type = data_type[0], data_type[1]
+                        active_columns.append((str(byte_str_order), f'<{str_data_type}{size_data_type}'))
+                        bytes_per_line += size_data_type
+                    else:
+                        raise Exception(f"Binary file contains unrecognized header. Column code = {byte_str_order}")
          
-            assert len(active_columns) > 0, f"No column detected. Binary file might be broken."
+                assert len(active_columns) > 0, f"No column detected. Binary file might be broken."
 
 
-            # 4. read the data and parse them into numpy array
-            bytes_to_read = num_rows * (bytes_per_line)
-            byte_str = read_byte_str(f, size=bytes_to_read)
-            dt_data = np.dtype(active_columns)
-            data = np.frombuffer(byte_str, 
-                                 dtype=dt_data, 
-                                 count=num_rows)
-            data = np.array(data.tolist())
+                # 4. read the data and parse them into numpy array
+                bytes_to_read = num_rows * (bytes_per_line)
+                byte_str = read_byte_str(f, size=bytes_to_read)
+                dt_data = np.dtype(active_columns)
+                data = np.frombuffer(byte_str, 
+                                    dtype=dt_data, 
+                                    count=num_rows)
+                data = np.array(data.tolist())
 
-            # sanity check
-            assert data.ndim == 2, "Data is not 2D" 
-            assert (data.shape[0] == num_rows), f"Number of rows does not match between data and header: {self.data.shape[0]} v.s. {num_rows}"
-            assert (data.shape[1] == num_columns), f"Number of columns does not match between data and header: {self.data.shape[1]} v.s. {num_columns}"
+                # sanity check
+                assert data.ndim == 2, "Data is not 2D" 
+                assert (data.shape[0] == num_rows), f"Number of rows does not match between data and header: {self.data.shape[0]} v.s. {num_rows}"
+                assert (data.shape[1] == num_columns), f"Number of columns does not match between data and header: {self.data.shape[1]} v.s. {num_columns}"
 
-            if block_type == PIND:
-                self._num_columns_particles = num_columns
-                self._num_rows_particles = num_rows
-                self._active_columns_particles = active_columns
-                self._particles = self.convert_particles_array_to_dict(data)
+                if block_type == PIND:
+                    self._num_columns_particles = num_columns
+                    self._num_rows_particles = num_rows
+                    self._active_columns_particles = active_columns
+                    self._particles = self.convert_particles_array_to_dict(data)
 
-            elif block_type == TIND:
-                self._num_columns_tilts = num_columns
-                self._num_rows_tilts = num_rows
-                self._active_columns_tilts = active_columns
-                self._tilts = self.convert_tilts_array_to_dict(data)
-    
-    
+                elif block_type == TIND:
+                    self._num_columns_tilts = num_columns
+                    self._num_rows_tilts = num_rows
+                    self._active_columns_tilts = active_columns
+                    self._tilts = self.convert_tilts_array_to_dict(data)
+        
+
     def to_binary(self, filename):
 
         assert filename.endswith(".cistem"), f"Filename of output ({filename}) better has .cistem extension."
@@ -509,6 +513,8 @@ class ExtendedParameters():
                     active_columns = self._active_columns_tilts
                     data = self.convert_tilts_dict_to_array(self._tilts)
 
+                assert len(active_columns) == data.shape[1], f"Number of columns does not match in the header ({len(active_columns)}) and data ({data.shape[1]})"
+
                 # 2. Write number of columns and rows
                 byte_str = np.array([(num_columns, num_rows)], dtype=DT_DIMS).tobytes()
                 f.write(byte_str)
@@ -526,8 +532,8 @@ class ExtendedParameters():
                 data_with_type = rf.unstructured_to_structured(data, dtype=dt_data)
                 f.write(data_with_type.tobytes())
     
-    def get_by_pind(self, pind: int) -> Particle:
-        """get_by_pind Get particle parameters by particle index
+    def get_particle_by_pind(self, pind: int) -> Particle:
+        """get_particle_by_pind Get particle parameters by particle index
 
         Parameters
         ----------
@@ -543,8 +549,8 @@ class ExtendedParameters():
             return None
         return self._particles[pind]
     
-    def get_by_tind_rind(self, tind: int, rind: int = 0) -> Tilt:
-        """get_by_tind_rind Get tilt parameters by tilt index and region index
+    def get_tilt_by_tind_rind(self, tind: int, rind: int = 0) -> Tilt:
+        """get_tilt_by_tind_rind Get tilt parameters by tilt index and region index
 
         Parameters
         ----------
@@ -707,7 +713,7 @@ class ExtendedParameters():
 
 def initialize_parameters_binary(): 
 
-    data = np.ones((100000000, 30))
+    data = np.ones((100, 32))
     # data = np.random.rand(100, 30)
 
     new = Parameters()
@@ -719,29 +725,30 @@ def initialize_parameters_binary():
 def initialize_extended_parameters_binary():
 
     new = ExtendedParameters()    
-    particles_arr = np.random.rand(10000, 12)
-    particles_arr[:, 0] = np.array([i for i in range(10000)])
-    tilts_arr = np.random.rand(10000, 6)
-    particles_arr[:, 0] = np.array([i for i in range(10000)])
+    particles_arr = np.random.rand(10, 12)
+    particles_arr[:, 0] = np.array([i for i in range(10)])
+    tilts_arr = np.random.rand(100, 6)
+    tilts_arr[:, 0] = np.array([i for i in range(100)])
+    tilts_arr[:, 1] = np.array([i for i in range(100)])
 
     particles = new.convert_particles_array_to_dict(particles_arr)
     tilts = new.convert_tilts_array_to_dict(tilts_arr)
-
+    
     new.set_data(particles=particles, tilts=tilts)
     new.to_binary(filename="extended.cistem")
 
     return 
 
 
-# test = Parameters.from_file("output.cistem")
+# test = Parameters.from_file("fresh.cistem")
+# print(test.get_data().shape)
 # test.to_binary("test.cistem")
 
 # test2 = Parameters.from_file("test.cistem")
 
-# test_ext = ExtendedParameters.from_file("extended.cistem")
-# particles = test_ext.get_particles_data()
-# tilts = test_ext.get_tilts_data()
-
+test_ext = ExtendedParameters.from_file("output.cistem")
 
 # initialize_parameters_binary()
 # initialize_extended_parameters_binary()
+
+
