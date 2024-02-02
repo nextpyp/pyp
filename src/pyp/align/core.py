@@ -4107,7 +4107,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     aligned_average = name + ".avg"
 
     pixel = float(parameters["scope_pixel"])
-    binning = float(parameters["movie_bin"])
+    binning = float(parameters["data_bin"])
     voltage = float(parameters["scope_voltage"])
     init_dose = float(parameters["scope_init_dose"])
     dose_rate = float(parameters["scope_dose_rate"])
