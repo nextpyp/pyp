@@ -497,7 +497,7 @@ def parse_arguments(block):
         parameters["refine_metric"] = "new"
 
     # enable _force depending on parameter changes
-    if parameters_existing != 0:
+    if parameters_existing != 0 and block == "pre_process":
         parameters = project_params.parameter_force_check(parameters_existing, parameters)
 
     if "extract_use_clean" in parameters.keys() and parameters["extract_use_clean"]:
