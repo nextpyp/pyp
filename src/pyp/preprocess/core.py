@@ -727,7 +727,12 @@ def read_tilt_series(
     else:
         logger.error("Cannot read %s", filename)
 
-    drift_metadata["drift"] = shifts
+    if metadata and metadata.get("drift"):
+        drift_metadata["drift"] = {}
+        for i in metadata["drift"]:
+            drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
+    else:
+        drift_metadata["drift"] = shifts
 
     if "eer" in parameters["data_path"] and parameters["movie_eer_reduce"] > 1:
         upsample = parameters["movie_eer_reduce"]

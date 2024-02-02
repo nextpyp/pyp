@@ -431,13 +431,6 @@ default = 1
 hidden = ["spr_import_star","tomo_import_star"]
 advanced = true
 
-[tabs.movie.bin]
-name = "Binning"
-description = "Binning factor to use during frame alignment"
-type = "int"
-default = 2
-hidden = ["spr_import_star","tomo_import_star"]
-
 [tabs.movie.iters]
 name = "Iterations"
 description = "Number of iterations used during frame alignment (if applicable)"
@@ -461,66 +454,6 @@ type = "float"
 default = 0.5
 hidden = true
 
-[tabs.movie.bfactor]
-name = "Bfactor for alignment (unblur)"
-description = "Bfactor to use during frame alignment (use larger values for noisier data)"
-type = "float"
-default = 1500
-
-[tabs.movie.force_integer]
-name = "Force integer shifts (unblur)"
-description = "Force integer shifts to preserve high-resolution information"
-type = "bool"
-default = false
-
-[tabs.movie.motioncor_tol]
-name = "Shifts tolerance (motioncor)"
-description = "Tolerance for shifts during iterative alignment"
-type = "float"
-default = 0.1
-advanced = true
-
-[tabs.movie.motioncor_iter]
-name = "Maximum iterations (motioncor)"
-description = "Maximum number of iterations during iterative alignment"
-type = "int"
-default = 15
-advanced = true
-
-[tabs.movie.motioncor_patch]
-name = "Patch alginment (motioncor)"
-description = "Number of patches used for frame alignment"
-type = "int"
-default = 1
-advanced = true
-
-[tabs.movie.motioncor_frameref]
-name = "Frame used for reference (motioncor)"
-description = "The frame used for reference during alignment (1 means the first frame; 0 means the center)"
-type = "int"
-default = 0
-advanced = true
-
-[tabs.movie.motioncor_bfactor]
-name = "Bfactor for alignment (motioncor)"
-description = "Bfactor to use during frame alignment (use larger values for noisier data)"
-type = "float"
-default = 100
-
-[tabs.movie.motioncor_sumrange_min]
-name = "Minimum dose for summing frames (motioncor)"
-description = "Frames between minimum and maximum dose are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
-type = "float"
-default = 3.0
-advanced = true
-
-[tabs.movie.motioncor_sumrange_max]
-name = "Maximum dose for summing frames (motioncor)"
-description = "Frames between minimum and maximum dose are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
-type = "float"
-default = 25.0
-advanced = true
-
 [tabs.movie.weights]
 name = "Exposure weighting"
 description = "Produce exposure-weighted frame averages (if frames are available)"
@@ -535,6 +468,120 @@ type = "bool"
 default = false
 advanced = true
 hidden = ["spr_import_star","spr_import","tomo_import_star","tomo_import","stream_tomo"]
+
+[tabs.movie.force_integer]
+name = "Force integer shifts"
+description = "Force integer shifts to preserve high-resolution information"
+type = "bool"
+default = false
+
+[tabs.movie.bin]
+name = "Binning (unblur)"
+description = "Binning factor to use during frame alignment"
+type = "int"
+default = 2
+hidden = ["spr_import_star","tomo_import_star"]
+
+[tabs.movie.bfactor]
+name = "Bfactor for alignment (unblur)"
+description = "Bfactor to use during frame alignment (use larger values for noisier data)"
+type = "float"
+default = 1500
+
+[tabs.movie.motioncor_tol]
+name = "Shifts tolerance (motioncor)"
+description = "Tolerance for shifts during iterative alignment"
+type = "float"
+default = 0.1
+advanced = true
+
+[tabs.movie.motioncor_iter]
+name = "Maximum iterations (motioncor)"
+description = "Maximum number of iterations during iterative alignment"
+type = "int"
+default = 7
+advanced = true
+
+[tabs.movie.motioncor_bin]
+name = "Image binning (motioncor)"
+description = "Binning factor in Fourier space (use values >= 1)"
+type = "float"
+default = 1.0
+
+[tabs.movie.motioncor_phase_only]
+name = "Use phase only (motioncor)"
+description = "Use phase only during cross-correlation"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.movie.motioncor_corr_interp]
+name = "Interpolation compensation (motioncor)"
+description = "Use interpolation compensation during alignment"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.movie.motioncor_in_frame_motion]
+name = "In frame motion (motioncor)"
+description = "Take into account motion-induced blurring of each frame"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.movie.motioncor_patch_x]
+name = "Number of patches in X axis (motioncor)"
+description = "Number of patches in X axis used for frame alignment"
+type = "int"
+default = 1
+advanced = true
+
+[tabs.movie.motioncor_patch_y]
+name = "Number of patches in Y axis (motioncor)"
+description = "Number of patches in Y axis used for frame alignment"
+type = "int"
+default = 1
+advanced = true
+
+[tabs.movie.motioncor_patch_overlap]
+name = "Overlap between patches (motioncor)"
+description = "Percent overlap between adjacent patches"
+type = "int"
+default = 50
+advanced = true
+
+[tabs.movie.motioncor_frameref]
+name = "Frame used for reference (motioncor)"
+description = "The frame used for reference during alignment (1 means the first frame; 0 means the center)"
+type = "int"
+default = 0
+advanced = true
+
+[tabs.movie.motioncor_bfactor_global]
+name = "Global Bfactor (motioncor)"
+description = "Global Bfactor to use during frame alignment (use larger values for noisier data)"
+type = "float"
+default = 500.0
+
+[tabs.movie.motioncor_bfactor_local]
+name = "Local Bfactor (motioncor)"
+description = "Local Bfactor to use during frame alignment (use larger values for noisier data)"
+type = "float"
+default = 150.0
+
+[tabs.movie.motioncor_sumrange_min]
+name = "Minimum dose (motioncor)"
+description = "Frames between minimum and maximum dose in e-/A^2 are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
+type = "float"
+default = 3.0
+advanced = true
+
+[tabs.movie.motioncor_sumrange_max]
+name = "Maximum dose (motioncor)"
+description = "Frames between minimum and maximum dose in e-/A^2 are used for averaging. Using [min=0, max=0] generates dose-weighted averages using all the frames."
+type = "float"
+default = 25.0
+advanced = true
 
 # Contrast transfer function parameters
 
@@ -3976,7 +4023,7 @@ hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_s
 
 [tabs.slurm.merge_gres]
 name = "Gres (merge task)"
-description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
 type = "str"
 default = ""
 hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process"]
@@ -4066,7 +4113,7 @@ hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", 
 
 [tabs.slurm.class2d_gres]
 name = "Gres (refinement daemon)"
-description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
+description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
 type = "str"
 default = ""
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]

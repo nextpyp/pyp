@@ -4122,8 +4122,12 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     if 'motioncor' in parameters["movie_ali"]:
 
         # patch tracking
-        if "movie_motioncor_patch" in parameters and parameters["movie_motioncor_patch"] > 1:
-            patches = f" -Patch {parameters['movie_motioncor_patch']} {parameters['movie_motioncor_patch']}"
+        patches_x = parameters["movie_motioncor_patch_x"] if "movie_motioncor_patch_x" in parameters else 1
+        patches_y = parameters["movie_motioncor_patch_y"] if "movie_motioncor_patch_y" in parameters else 1
+        if patches_x > 1 or patches_y > 0:
+            patches = f" -Patch {parameters['movie_motioncor_patch_x']} {parameters['movie_motioncor_patch_y']}"
+            if parameters.get("movie_motioncor_patch_overlap"):
+                patches += f" {parameters['movie_motioncor_patch_overlap']}"
         else:
             patches = ""
 
@@ -4219,9 +4223,15 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             frame_options += f" -Trunc {total_frames - parameters['movie_last']}"
         if parameters["movie_group"] > 1 and "EerSampling" not in input:
             frame_options += f" -Group {parameters['movie_group']}"
-        frame_options += f" -Bft {parameters['movie_motioncor_bfactor']}"
+        frame_options += f" -Bft {parameters['movie_motioncor_bfactor_global']} {parameters['movie_motioncor_bfactor_local']}"
         frame_options += f" -Tol {parameters['movie_motioncor_tol']} -Iter {parameters['movie_motioncor_iter']}"
         frame_options += f" -SumRange {parameters['movie_motioncor_sumrange_min']} {parameters['movie_motioncor_sumrange_max']}"
+        if parameters.get("movie_motioncor_phase_only"):
+            frame_options += " -PhaseOnly"
+        if parameters.get("movie_motioncor_corr_interp"):
+            frame_options += " -CorrInterp"
+        if parameters.get("movie_motioncor_in_frame_motion"):
+            frame_options += " -InFmMotion"
 
         if parameters["movie_motioncor_frameref"] > 0:
             frame_ref = parameters['movie_motioncor_frameref'] if parameters['movie_motioncor_frameref'] <= total_frames else total_frames
@@ -4491,7 +4501,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         command = f"{get_motioncor3_path()} \
 {input} \
 -OutMrc {name}.mrc \
--FtBin {binning} \
+-FtBin {parameters.get('movie_motioncor_bin')} \
 {gain} \
 -OutAln {os.getcwd()} \
 {frame_options} \
@@ -4534,6 +4544,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         # only keep shift values for integrated frames if using eer movies
         if "EerSampling" in input:
             shifts = shifts[::eer_frames_perimage,:]
+        if parameters.get("movie_force_integer"):
+            shifts = shifts.round()
         np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt="%.4f")
 
     elif 'unblur' in parameters["movie_ali"]:

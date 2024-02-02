@@ -1522,7 +1522,7 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, sav
         plt.savefig(f"{save_path}/{tiltseries}_scores.svgz")
         plt.close()
     else:
-        logger.info("No valide projections for tiltseries %s left" % tiltseries)
+        logger.warning("No valid projections for tilt-series %s are left" % tiltseries)
 
 
 
