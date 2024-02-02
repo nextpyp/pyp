@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import subprocess
@@ -306,9 +307,9 @@ def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None, acco
         "--job-name='%s'" % jobname,
     ]
     if gres != "" and gres != None:
-        args.append("--gres=%s" % gres)
+        args.append("--gres=%s" % json.dumps(gres))
     if account != "" and account != None:
-        args.append("--account=%s" % account)
+        args.append("--account=%s" % json.dumps(account))
     return args
 
 def submit_script(
