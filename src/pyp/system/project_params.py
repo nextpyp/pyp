@@ -537,6 +537,23 @@ def load_parameters(path=".", param_file_name=".pyp_config.toml"):
         my_namespace = 0
     return my_namespace
 
+# remove entries that are no longer defined in the configuration file
+def sanitize_parameters(parameters):
+
+    # read specification file
+    import toml
+    specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+
+    clean_parameters = {}
+
+    # figure out which parameters need to be reset to their default values
+    for t in specifications["tabs"].keys():
+        if not t.startswith("_"):
+            for p in specifications["tabs"][t].keys():
+                if not p.startswith("_"):
+                    if parameters.get(f"{t}_{p}"):
+                        clean_parameters[f"{t}_{p}"] = parameters[f"{t}_{p}"]
+    return clean_parameters
 
 def save_parameters(parameters, path=".", param_file_name=".pyp_config.toml"):
     # WARNING - toml.dump does not support saving entries that are None, so those will not be saved
@@ -546,7 +563,7 @@ def save_parameters(parameters, path=".", param_file_name=".pyp_config.toml"):
 
     # save parameters to website
     try:
-        save_parameters_to_website(parameters)
+        save_parameters_to_website(sanitize_parameters(parameters))
     except:
         logger.warning("Detected inconsistencies in pyp configuration file")
         type, value, traceback = sys.exc_info()
