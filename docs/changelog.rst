@@ -4,6 +4,23 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.6.2 (2/01/2024)
+******************
+
+   :fa:`plus-square,text-primary` Expose additional parameters for frame alignment when using MotionCor3.
+
+   :fa:`plus-square,text-primary` Remove unnecessary tabs from tomography refinement blocks.
+
+   :fa:`plus-square,text-primary` Display slurm job launch information in the logs window.
+
+   :fa:`plus-square,text-primary` Allow users to specify resources for the launch task on the Sessions side.
+
+   :fa:`bug,text-danger` Fix bugs in parameter definitions when running movie frame alignment.
+
+   :fa:`bug,text-danger` Fix bugs in the management of slurm's GRES options when submitting jobs to the scheduler.
+
+   :fa:`bug,text-danger` Fix bug with movie drifts being deleted from the database when tilt-series were re-processed.
+
 v0.6.1 (1/30/2024)
 ******************
 
