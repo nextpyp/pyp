@@ -855,7 +855,8 @@ def tomo_merge(parameters, check_for_missing_files=True):
         # plot dataset results
         # plot.plot_dataset(parameters)
 
-    if "tomo_ext_size" in parameters and parameters["tomo_ext_size"] > 0:
+    # launch sub-tomogram averaging (not currently enabled)
+    if False and "tomo_ext_size" in parameters and parameters["tomo_ext_size"] > 0:
 
         if "eman" in parameters["tomo_ext_fmt"].lower():
             eman.eman_3davg(parameters)
