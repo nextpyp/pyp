@@ -3297,6 +3297,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         name, dataset
     )
     local_run.run_shell_command(command, verbose=False)
+    img2webp(f"../maps/{name}_fyp.png",f"../maps/{name}_fyp.webp") 
 
     rec = mrc.read(scratch + name + ".mrc")
     cropped_volume = rec[ lim:-lim, lim:-lim, lim:-lim ]
@@ -3333,7 +3334,7 @@ EOF
         and "t" in mp["email"].lower()
         and int(project_params.param(fp["class_num"], iter)) == 1
     ):
-        png_plot = "../maps/%s_fyp.png" % name
+        png_plot = "../maps/%s_fyp.webp" % name
 
         attach = os.getcwd() + "/" + png_plot
         user_comm.notify(name + " (3D)", attach)
