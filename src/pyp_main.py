@@ -3422,11 +3422,12 @@ if __name__ == "__main__":
                 parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = False
                 project_params.save_pyp_parameters(parameters)
 
-                spa_Tlog.update(timer.Timer.timers)
-                spa_Tlog = {k:v for k, v in spa_Tlog.items() if v}
-                json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_sprmerge.json"
-                with open(json_file, 'w') as fp:
-                    json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
+                if parameters.get("slurm_verbose"):
+                    spa_Tlog.update(timer.Timer.timers)
+                    spa_Tlog = {k:v for k, v in spa_Tlog.items() if v}
+                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_sprmerge.json"
+                    with open(json_file, 'w') as fp:
+                        json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
 
                 logger.info("PYP (sprmerge) finished successfully")
             except:
@@ -3913,11 +3914,12 @@ if __name__ == "__main__":
 
                 csp_swarm(args.file, parameters, int(args.iter), args.skip, args.debug)
 
-                csp_Tlog.update(timer.Timer.timers)
-                csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
-                json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspswarm.json"
-                with open(json_file, 'w') as fp:
-                    json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
+                if parameters.get("slurm_verbose"):
+                    csp_Tlog.update(timer.Timer.timers)
+                    csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
+                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspswarm.json"
+                    with open(json_file, 'w') as fp:
+                        json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
 
                 # disable_profiler(pr)
                 logger.info("PYP (cspswarm) finished successfully")
@@ -3954,11 +3956,12 @@ if __name__ == "__main__":
 
                 csp_merge(parameters)
 
-                csp_Tlog.update(timer.Timer.timers)
-                csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
-                json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspmerge.json"
-                with open(json_file, 'w') as fp:
-                    json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
+                if parameters.get("slurm_verbose"):
+                    csp_Tlog.update(timer.Timer.timers)
+                    csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
+                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspmerge.json"
+                    with open(json_file, 'w') as fp:
+                        json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
 
                 # clean up local scratch
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
@@ -3999,11 +4002,12 @@ if __name__ == "__main__":
                 )
 
                 # for time
-                cspm_Tlog.update(timer.Timer.timers)
-                cspm_Tlog = {k:v for k, v in cspm_Tlog.items() if v}
-                json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_csp_local_merge.json"
-                with open(json_file, 'w') as fp:
-                    json.dump(cspm_Tlog, fp, indent=4,separators=(',', ': '))
+                if parameters.get("slurm_verbose"):
+                    cspm_Tlog.update(timer.Timer.timers)
+                    cspm_Tlog = {k:v for k, v in cspm_Tlog.items() if v}
+                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_csp_local_merge.json"
+                    with open(json_file, 'w') as fp:
+                        json.dump(cspm_Tlog, fp, indent=4,separators=(',', ': '))
 
                 logger.info("PYP (csp_local_merge) finished successfully")
 
@@ -4670,7 +4674,7 @@ EOF
         else:
             folder = current_directory
         parameters = project_params.load_parameters(folder)
-        if job_name and parameters and "slurm_verbose" in parameters and parameters["slurm_verbose"]:
+        if job_name and parameters.get("slurm_verbose"):
             timers = timer.Timer().timers
             with open(Path(folder) / "swarm" / f"{job_name}.json", "w") as f:
                 f.write(json.dumps(timers, indent=2))
