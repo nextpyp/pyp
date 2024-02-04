@@ -572,6 +572,12 @@ class ExtendedParameters():
         # return the filename of input file
         return self._input_file
 
+    def get_index_of_column_particle(self, column_code: int):
+        return self.HEADERS_PARTICLES.index(column_code)
+
+    def get_index_of_column_tilt(self, column_code: int):
+        return self.HEADERS_TILTS.index(column_code)
+
     def convert_particles_array_to_dict(self, particles_data: np.ndarray) -> dict:
 
         assert type(particles_data) == np.ndarray, f"Tilt data type is not Numpy array, it is {type(particles_data)}"
@@ -669,6 +675,7 @@ class ExtendedParameters():
             for region_index in tilts[tilt_index]:
 
                 tilt = tilts[tilt_index][region_index]
+                print(tilt.tilt_index, tilt.region_index, tilt.shift_x, tilt.shift_y, tilt.angle, tilt.axis)
                 tilts_arr[line_counter, :] = np.array([tilt.tilt_index,
                                                        tilt.region_index, 
                                                        tilt.shift_x,
@@ -746,7 +753,7 @@ def initialize_extended_parameters_binary():
 
 # test2 = Parameters.from_file("test.cistem")
 
-test_ext = ExtendedParameters.from_file("output.cistem")
+# test_ext = ExtendedParameters.from_file("output.cistem")
 
 # initialize_parameters_binary()
 # initialize_extended_parameters_binary()

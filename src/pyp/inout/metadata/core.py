@@ -23,6 +23,7 @@ from pyp.analysis.geometry import (
 )
 from pyp.inout.image import mrc
 from pyp.inout.metadata import frealign_parfile, pyp_metadata
+from pyp.inout.metadata.cistem_star_file import *
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.system import local_run, project_params
 from pyp.system.logging import initialize_pyp_logger
@@ -2002,6 +2003,9 @@ def tomo_extract_coordinates(
     """
     name = os.path.basename(filename)
     # distance_from_equator = float(parameters["tomo_vir_detect_band"])
+    voltage = parameters["scope_voltage"]
+    cs = parameters["scope_cs"]
+    wgh = parameters["scope_wgh"]
     min_tilt = float(parameters["reconstruct_mintilt"])
     max_tilt = float(parameters["reconstruct_maxtilt"])
     refinement = project_params.resolve_path(parameters["refine_parfile_tomo"])
@@ -2042,9 +2046,7 @@ def tomo_extract_coordinates(
 
     # tomogram binning factor with respect to raw micrographs
     micrographsize_x, micrographsize_y = metadata["image"].at[0, "x"], metadata["image"].at[0, "y"] 
-    # binning = get_tomo_binning(micrographsize_x, micrographsize_y, int(parameters["tomo_rec_size"]), squared_image=parameters["tomo_rec_square"])
     binning = parameters["tomo_rec_binning"]
-    # logger.info(f"Detected binning factor is {binning}")
 
     pixel = (
         float(parameters["scope_pixel"])
@@ -2062,6 +2064,20 @@ def tomo_extract_coordinates(
     allparxs = []
     allparxs.append([])
     allimodboxes = []
+
+    cistem_parameters = []
+    particle_parameters = dict()
+    tilt_parameters = dict()
+
+    phase_shift = 0.0
+    image_activity = 1
+    beam_tilt_x = beam_tilt_y = 0.0
+    image_shift_x = image_shift_y = 0.0
+    image_index = 0
+    region_index = 0
+    frame_index = 0
+    frame_shift_x = 0
+    frame_shift_y = 0
 
     # get size of full unbinned reconstruction from .rec file
     rec_X, rec_Y, rec_Z = metadata["tomo"].at[0, "x"], metadata["tomo"].at[0, "y"], metadata["tomo"].at[0, "z"]
@@ -2178,9 +2194,6 @@ EOF
 
     logger.info(f"The height of specimen in the tomogram is {height_specimen:.2f} A")
 
-    if Path(refinement).exists() and parameters["refine_parfile_tomo"].endswith(".par"):
-        input = frealign_parfile.Parameters.from_file(refinement).data
-
     # traverse all virions in tilt series
     for vir in range(virion_coordinates.shape[0]):
 
@@ -2224,7 +2237,8 @@ EOF
 
         # for all spikes in current virion
         for spike in range(spikes_in_virion.shape[0]):
-            # for spike in range(1):
+            
+            particle_index = global_spike_counter
 
             # extract local spike coordinates [0-479]
             spike_x, spike_y, spike_z = spikes_in_virion[spike, 3:6]
@@ -2326,6 +2340,9 @@ EOF
             # traverse all images in tilt series
             for tilt in tilts:
 
+                tilt_index = int(scan_order_list[tilt_image_counter - 1])
+                tilt_angle = tilt[0]
+
                 # check if tilt angle is valid and within acceptable range
                 if tilt < min_tilt or tilt > max_tilt:
                     logger.debug(
@@ -2380,8 +2397,6 @@ EOF
                         )
                         tilt_image_counter += 1
                         continue
-
-                distance_to_tilt_axis = tilt_x
 
                 T = inverse_xf_file[tilt_image_counter - 1, :6]
 
@@ -2465,22 +2480,6 @@ EOF
                     tilt_image_counter += 1
                     continue
 
-                # retrieve shifts from previous run
-                x_correction = y_correction = 0
-                if Path(refinement).exists() and refinement.endswith(".par"):
-                    local = input[input[:, 7] == film]
-                    x_correction = local[image_counter - 1, 4] / pixel
-                    y_correction = local[image_counter - 1, 5] / pixel
-
-                    # undo in-plane rotation
-                    # psi = -math.radians( local[image_counter-1, 1 ] )
-                    # c, s = np.cos(psi), np.sin(psi)
-                    # R = np.array(((c,-s),(s,c)))
-                    # x = np.array(( x_correction, y_correction ))
-                    # correction = np.matmul( R, x )
-                    # x_correction, y_correction = correction[0], correction[1]
-
-                    # print 'corrections for particle', film, image_counter-1, x_correction, y_correction
                 """
                 # check if too close to previously selected projections
                 if len(allboxes) > 0:
@@ -2514,10 +2513,8 @@ EOF
                 allimodboxes.append(
                     "%2.0f\t%2.0f\t%2.0f\n"
                     % (
-                        tilt_X  # - min_micrograph_x + cutboxsize / 2
-                        + x_correction,
-                        tilt_Y  # - min_micrograph_y # + cutboxsize / 2
-                        + y_correction,
+                        tilt_X,  # - min_micrograph_x + cutboxsize / 2
+                        tilt_Y,  # - min_micrograph_y # + cutboxsize / 2
                         tilt_image_counter - 1,
                     )
                 )
@@ -2583,30 +2580,6 @@ EOF
                 # score = 0.5
                 logp = change = 0
 
-                # reset shifts and re-use parameters if we are re-centering boxes
-                if Path(refinement).exists() and ".par" in refinement:
-                    local = input[input[:, 7] == film]
-                    fp[0] = local[image_counter - 1, 3]
-                    fp[1] = local[image_counter - 1, 2]
-                    fp[2] = local[image_counter - 1, 1]
-                    fp[3] = fp[4] = 0
-                    mag = local[image_counter - 1, 6]
-                    film = local[image_counter - 1, 7]
-                    df1 = local[image_counter - 1, 8]
-                    df2 = local[image_counter - 1, 9]
-                    angast = local[image_counter - 1, 10]
-                    # occ = local[image_counter-1,11]
-                    logp = local[image_counter - 1, 12]
-                    sigma = local[image_counter - 1, 13]
-                    score = local[image_counter - 1, 14]
-                    change = local[image_counter - 1, 15]
-
-                    tilt = local[image_counter - 1, 17]
-                    axis = -local[image_counter - 1, 22]
-                    ppsi = local[image_counter - 1, -3]
-                    ptheta = local[image_counter - 1, -2]
-                    pphi = local[image_counter - 1, -1]
-
                 # AB - 0verride film number if we are processing each movie independently
                 if parameters["csp_no_stacks"]:
                     film = 0
@@ -2615,144 +2588,133 @@ EOF
                 ptheta = particle_orientation[1]
                 pphi = particle_orientation[2]
 
-                if use_frames:
-                    # if using frames
-
-                    for idx_frame, frame_shifts in enumerate(
-                        xf_frames[tilt_image_counter - 1]
-                    ):
-                        # store frame index in confidence column
-                        confidence = idx_frame
-
-                        frame_tilt_X_err = tilt_X_err - (
-                            frame_shifts[4] * float(parameters["scope_pixel"])
-                        )
-                        frame_tilt_Y_err = tilt_Y_err - (
-                            frame_shifts[5] * float(parameters["scope_pixel"])
-                        )
-
-                        allparxs[0].append(
-                            frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
-                            % (
-                                fp[0],
-                                fp[1],
-                                fp[2],
-                                fp[3] * pixel,
-                                fp[4] * pixel,
-                                mag,
-                                film,
-                                df1,
-                                df2,
-                                angast,
-                                occ,
-                                logp,
-                                sigma,
-                                score,
-                                change,
-                                ptl_index,
-                                tilt,
-                                dose,
-                                scan_order,
-                                confidence,
-                                ptl_CCX,
-                                -axis,
-                                norm0,
-                                norm1,
-                                norm2,
-                                m00,
-                                m01,
-                                m02,
-                                m03 * pixel, # 0.0,
-                                m04,
-                                m05,
-                                m06,
-                                m07 * pixel, # 0.0,
-                                m08,
-                                m09,
-                                m10,
-                                m11 * pixel, # 0.0,
-                                m12,
-                                m13,
-                                frame_tilt_X_err,
-                                frame_tilt_Y_err,
-                                ppsi,
-                                ptheta,
-                                pphi,
-                            )
-                        )
-                        allboxes.append(
-                            [
-                                tilt_X + x_correction,
-                                tilt_Y + y_correction,
-                                tilt_image_counter - 1,
-                                idx_frame,
-                            ]
-                        )
-
-                else:
-                    # if NOT using frames
-                    allparxs[0].append(
-                        frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
-                        % (
-                            fp[0],
-                            fp[1],
-                            fp[2],
-                            fp[3] * pixel,
-                            fp[4] * pixel,
-                            mag,
-                            film,
-                            df1,
-                            df2,
-                            angast,
-                            occ,
-                            logp,
-                            sigma,
-                            score,
-                            change,
-                            ptl_index,
-                            tilt,
-                            dose,
-                            scan_order,
-                            confidence,
-                            ptl_CCX,
-                            -axis,
-                            0, # norm0,
-                            0, # norm1,
-                            0, # norm2,
-                            1, # m00,
-                            0, # m01,
-                            0, # m02,
-                            0.0, # m03 * pixel, # 0.0,
-                            0, # m04,
-                            1, # m05,
-                            0, # m06,
-                            0.0, # m07 * pixel, # 0.0,
-                            0, # m08,
-                            0, # m09,
-                            1, # m10,
-                            0.0, # m11 * pixel, # 0.0,
-                            m12,
-                            m13,
-                            tilt_X_err,
-                            tilt_Y_err,
-                            ppsi,
-                            ptheta,
-                            pphi,
-                        )
+                # if NOT using frames
+                allparxs[0].append(
+                    frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
+                    % (
+                        fp[0],
+                        fp[1],
+                        fp[2],
+                        fp[3] * pixel,
+                        fp[4] * pixel,
+                        mag,
+                        film,
+                        df1,
+                        df2,
+                        angast,
+                        occ,
+                        logp,
+                        sigma,
+                        score,
+                        change,
+                        ptl_index,
+                        tilt,
+                        dose,
+                        scan_order,
+                        confidence,
+                        ptl_CCX,
+                        -axis,
+                        0, # norm0,
+                        0, # norm1,
+                        0, # norm2,
+                        1, # m00,
+                        0, # m01,
+                        0, # m02,
+                        0.0, # m03 * pixel, # 0.0,
+                        0, # m04,
+                        1, # m05,
+                        0, # m06,
+                        0.0, # m07 * pixel, # 0.0,
+                        0, # m08,
+                        0, # m09,
+                        1, # m10,
+                        0.0, # m11 * pixel, # 0.0,
+                        m12,
+                        m13,
+                        tilt_X_err,
+                        tilt_Y_err,
+                        ppsi,
+                        ptheta,
+                        pphi,
                     )
-                    allboxes.append(
-                        [
-                            tilt_X + x_correction,
-                            tilt_Y + y_correction,
-                            tilt_image_counter - 1,
-                        ]
-                    )
+                )
+                allboxes.append(
+                    [
+                        tilt_X,
+                        tilt_Y,
+                        tilt_image_counter - 1,
+                    ]
+                )
+                cistem_parameters.append([image_counter,
+                                          fp[0],
+                                          fp[1],
+                                          fp[2],
+                                          fp[3] * pixel,
+                                          fp[4] * pixel,
+                                          df1,
+                                          df2,
+                                          angast,
+                                          phase_shift, 
+                                          image_activity, 
+                                          occ, 
+                                          logp, 
+                                          sigma, 
+                                          score, 
+                                          actual_pixel, 
+                                          voltage, 
+                                          cs, 
+                                          wgh, 
+                                          beam_tilt_x, 
+                                          beam_tilt_y, 
+                                          image_shift_x, 
+                                          image_shift_y, 
+                                          tilt_X,
+                                          tilt_Y,
+                                          image_index, 
+                                          particle_index,
+                                          tilt_index,
+                                          region_index, 
+                                          frame_index, 
+                                          frame_shift_x, 
+                                          frame_shift_y,
+                                          ])
+                
+                tilt_parameters[tilt_index] = {}
+                tilt_parameters[tilt_index][region_index] = Tilt(tilt_index=tilt_index, 
+                                                                 region_index=region_index, 
+                                                                 shift_x=0.0, 
+                                                                 shift_y=0.0, 
+                                                                 angle=tilt_angle, 
+                                                                 axis=-axis)
 
                 tilt_image_counter += 1
                 image_counter += 1
 
+            
+            particle_parameters[particle_index] = Particle(particle_index=particle_index, 
+                                                           shift_x=particle_orientation[3], 
+                                                           shift_y=particle_orientation[4], 
+                                                           shift_z=particle_orientation[5], 
+                                                           psi=ppsi, 
+                                                           theta=ptheta, 
+                                                           phi=pphi, 
+                                                           x_position_3d=transformed_3d_loc[0], 
+                                                           y_position_3d=transformed_3d_loc[1], 
+                                                           z_position_3d=transformed_3d_loc[2], 
+                                                           score=0.0, 
+                                                           occ=100.0)
             global_spike_counter += 1
 
+    cistem_parameters = np.array(cistem_parameters, ndmin=2)
+    
+    parameters = Parameters()
+    extended_parameters = ExtendedParameters()
+    parameters.set_data(data=cistem_parameters)
+    extended_parameters.set_data(particles=particle_parameters,
+                                 tilts=tilt_parameters)
+    
+    parameters.to_binary(filename=f"{name}_r01_02.cistem")
+    extended_parameters.to_binary(filename=f"{name}_r01_02_extend.cistem")
 
     if len(allimodboxes) > 0:
         with open("%s_boxes.txt" % (name), "w") as f:
