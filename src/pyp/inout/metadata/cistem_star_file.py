@@ -191,177 +191,6 @@ def check_valid(byte_string: str):
         raise Exception("Binary file is broken.") 
     
 
-class Parameters:
-
-    HEADERS = [POSITION_IN_STACK, 
-               PSI, 
-               THETA, 
-               PHI, 
-               X_SHIFT, 
-               Y_SHIFT, 
-               DEFOCUS_1, 
-               DEFOCUS_2, 
-               DEFOCUS_ANGLE, 
-               PHASE_SHIFT, 
-               IMAGE_IS_ACTIVE, 
-               OCCUPANCY, 
-               LOGP, 
-               SIGMA, 
-               SCORE, 
-               PIXEL_SIZE, 
-               MICROSCOPE_VOLTAGE, 
-               MICROSCOPE_CS, 
-               AMPLITUDE_CONTRAST, 
-               BEAM_TILT_X, 
-               BEAM_TILT_Y, 
-               IMAGE_SHIFT_X, 
-               IMAGE_SHIFT_Y, 
-               ORIGINAL_X_POSITION,
-               ORIGINAL_Y_POSITION,
-               IMIND, 
-               PIND, 
-               TIND, 
-               RIND, 
-               FIND, 
-               FSHIFT_X, 
-               FSHIFT_Y
-               ]
-
-    def __init__(self, input_file: str = ""):
-        
-        self._input_file: Path = None
-        self._data: np.ndarray = None
-        self._num_columns: int = -1
-        self._num_rows: int = -1
-        self._active_columns = []
-
-        if input_file.endswith(".cistem"):
-            self.from_binary(input_binary=input_file)
-        elif input_file.endswith(".star"):
-            self.from_star(input_star=input_file)
-        else:
-            # create the class from scratch (given array and header)
-            pass
-
-        self._input_file = Path(input_file).absolute()
-
-    @classmethod
-    def from_file(cls, input_file: str): 
-        return cls(input_file=input_file)
-
-    def from_binary(self, input_binary):
-        
-        with open(input_binary, "rb") as f:
-
-            # 1. read number of columns and rows            
-            byte_str = read_byte_str(f, size=SIZE_INT+SIZE_INT)
-            self._num_columns, self._num_rows = np.frombuffer(byte_str, dtype=DT_DIMS)[0]
-
-            # 2. read headers to see which columns are active 
-            for _ in range(self._num_columns):
-                
-                byte_str = read_byte_str(f, size=SIZE_LONG+SIZE_CHAR)
-                byte_str_order, byte_str_data = np.frombuffer(byte_str, dtype=DT_COLUMN)[0]
-
-                if byte_str_order in HEADER_LIST:
-                    data_type = MAPPING[HEADER_LIST[byte_str_order]]
-                    size_data_type, str_data_type = data_type[0], data_type[1]
-                    self._active_columns.append((str(byte_str_order), f'<{str_data_type}{size_data_type}'))
-                else:
-                    raise Exception(f"Binary file contains unrecognized header. Column code = {byte_str_order}")
-         
-            assert len(self._active_columns) > 0, f"No column detected. Binary file might be broken."
-
-            # 3. read the data and parse them into numpy array
-            byte_str = read_byte_str(f)
-            dt_data = np.dtype(self._active_columns)
-            data = np.frombuffer(byte_str, 
-                                 dtype=dt_data, 
-                                 count=self.get_num_rows())
-            data = np.array(data.tolist())
-
-            # sanity check
-            assert data.ndim == 2, "Data is not 2D" 
-            assert (data.shape[0] == self.get_num_rows()), f"Number of rows does not match between data and header: {self.data.shape[0]} v.s. {self.get_num_rows()}"
-            assert (data.shape[1] == self.get_num_cols()), f"Number of columns does not match between data and header: {self.data.shape[1]} v.s. {self.get_num_cols()}"
-
-            self._data = data
-
-
-
-    def from_star(self, input_star):
-        raise Exception("Currently reading star file is not supported")
- 
-    def to_binary(self, filename):
-
-        assert (self.get_num_cols() > 0 and self.get_num_rows() > 0), f"Number of columns ({self.get_num_cols()}) and rows ({self.get_num_rows()}) should be larger than 0"
-        assert len(self._active_columns) > 0, f"No column detected."
-        assert len(self._active_columns) == self.get_data().shape[1], f"Number of columns does not match in the header ({len(self._active_columns)}) and data ({self.get_data().shape[1]})"
-        assert filename.endswith(".cistem"), f"Filename of output ({filename}) better has .cistem extension."
-
-        with open(filename, "wb") as f:
-            
-            # 1. Write number of columns and rows
-            byte_str = np.array([(self.get_num_cols(), self.get_num_rows())], dtype=DT_DIMS).tobytes()
-            f.write(byte_str)
-
-            # 2. Write headers
-            for col in self._active_columns:
-                str_data_order, str_data_type = col[0], col[1]
-                bitmask_identifier = int(str_data_order)
-                data_type = HEADER_LIST[bitmask_identifier]
-                byte_str = np.array([(bitmask_identifier, data_type)], dtype=DT_COLUMN).tobytes()
-                f.write(byte_str)
-            
-            # 3. Write data
-            dt_data = np.dtype(self._active_columns)
-            data_with_type = rf.unstructured_to_structured(self.get_data(), dtype=dt_data)
-            f.write(data_with_type.tobytes())
-
-
-    def to_star(self, filename):
-        # TODO: simply call convert_binary_to_star executable
-        return
-    def get_data(self):
-        return self._data
-    def get_num_rows(self):
-        return self._num_rows
-    def get_num_cols(self):
-        return self._num_columns
-    def get_input_file(self): 
-        # return the filename of input file
-        return self._input_file
-    
-    def get_index_of_column(self, column_code: int):
-        return self.HEADERS.index(column_code)
-    
-    def set_data(self, data: np.ndarray):
-
-        assert type(data) == np.ndarray, f"Input data type is not Numpy array, it is {type(data)}"
-        assert data.ndim == 2, "Input data is not 2D"
-        assert type(data[0]) == np.ndarray, f"First row of input data type is not Numpy array, it is {type(data[0])}"
-        assert (self.get_data() is None or data.shape[1] == self.get_data().shape[1]), "Input data must have the same number of columns as original data."
-        
-        headers = self.HEADERS
-
-        if len(headers) > 0:
-            assert len(headers) == data.shape[1], f"Headers ({len(headers)}) do not have the same number of columns in the data ({data.shape[1]}). "
-            # check if all the columns exist 
-            for column_code in headers:
-                assert (column_code in HEADER_LIST), f"{column_code} not in the Header List. "
-
-            # reset the columns 
-            self._active_columns.clear()
-
-            for byte_str_order in headers:
-                data_type = MAPPING[HEADER_LIST[byte_str_order]]
-                size_data_type, str_data_type = data_type[0], data_type[1]
-                self._active_columns.append((str(byte_str_order), f'<{str_data_type}{size_data_type}'))
-
-        self._data = data
-        self._num_rows = data.shape[0]
-        self._num_columns = data.shape[1]
-
 class Particle:
 
     """ Class storing particle data (3D sub-volumes)
@@ -675,7 +504,6 @@ class ExtendedParameters():
             for region_index in tilts[tilt_index]:
 
                 tilt = tilts[tilt_index][region_index]
-                print(tilt.tilt_index, tilt.region_index, tilt.shift_x, tilt.shift_y, tilt.angle, tilt.axis)
                 tilts_arr[line_counter, :] = np.array([tilt.tilt_index,
                                                        tilt.region_index, 
                                                        tilt.shift_x,
@@ -714,6 +542,194 @@ class ExtendedParameters():
         self._num_columns_particles = len(self.HEADERS_PARTICLES)
         self._num_rows_tilts = len([True for tilt_index in tilts for region_index in tilts[tilt_index]])
         self._num_columns_tilts = len(self.HEADERS_TILTS)
+
+
+class Parameters:
+
+    HEADERS = [POSITION_IN_STACK, 
+               PSI, 
+               THETA, 
+               PHI, 
+               X_SHIFT, 
+               Y_SHIFT, 
+               DEFOCUS_1, 
+               DEFOCUS_2, 
+               DEFOCUS_ANGLE, 
+               PHASE_SHIFT, 
+               IMAGE_IS_ACTIVE, 
+               OCCUPANCY, 
+               LOGP, 
+               SIGMA, 
+               SCORE, 
+               PIXEL_SIZE, 
+               MICROSCOPE_VOLTAGE, 
+               MICROSCOPE_CS, 
+               AMPLITUDE_CONTRAST, 
+               BEAM_TILT_X, 
+               BEAM_TILT_Y, 
+               IMAGE_SHIFT_X, 
+               IMAGE_SHIFT_Y, 
+               ORIGINAL_X_POSITION,
+               ORIGINAL_Y_POSITION,
+               IMIND, 
+               PIND, 
+               TIND, 
+               RIND, 
+               FIND, 
+               FSHIFT_X, 
+               FSHIFT_Y
+               ]
+
+    def __init__(self, input_file: str = "", extended_input_file: str = ""):
+        
+        self._input_file: Path = None
+        self._data: np.ndarray = None
+        self._num_columns: int = -1
+        self._num_rows: int = -1
+        self._active_columns = []
+        self._extended: ExtendedParameters = None
+
+        if input_file.endswith(".cistem"):
+            self.from_binary(input_binary=input_file, 
+                             extended_binary=extended_input_file)
+        else:
+            # create the class from scratch (given array and header)
+            pass
+
+        self._input_file = Path(input_file).absolute()
+
+    @classmethod
+    def from_file(cls, input_file: str): 
+        return cls(input_file=input_file)
+
+    def from_binary(self, input_binary: str, extended_binary: str = ""):
+        
+        with open(input_binary, "rb") as f:
+
+            # 1. read number of columns and rows            
+            byte_str = read_byte_str(f, size=SIZE_INT+SIZE_INT)
+            self._num_columns, self._num_rows = np.frombuffer(byte_str, dtype=DT_DIMS)[0]
+
+            # 2. read headers to see which columns are active 
+            for _ in range(self._num_columns):
+                
+                byte_str = read_byte_str(f, size=SIZE_LONG+SIZE_CHAR)
+                byte_str_order, byte_str_data = np.frombuffer(byte_str, dtype=DT_COLUMN)[0]
+
+                if byte_str_order in HEADER_LIST:
+                    data_type = MAPPING[HEADER_LIST[byte_str_order]]
+                    size_data_type, str_data_type = data_type[0], data_type[1]
+                    self._active_columns.append((str(byte_str_order), f'<{str_data_type}{size_data_type}'))
+                else:
+                    raise Exception(f"Binary file contains unrecognized header. Column code = {byte_str_order}")
+         
+            assert len(self._active_columns) > 0, f"No column detected. Binary file might be broken."
+
+            # 3. read the data and parse them into numpy array
+            byte_str = read_byte_str(f)
+            dt_data = np.dtype(self._active_columns)
+            data = np.frombuffer(byte_str, 
+                                 dtype=dt_data, 
+                                 count=self.get_num_rows())
+            data = np.array(data.tolist())
+
+            # sanity check
+            assert data.ndim == 2, "Data is not 2D" 
+            assert (data.shape[0] == self.get_num_rows()), f"Number of rows does not match between data and header: {self.data.shape[0]} v.s. {self.get_num_rows()}"
+            assert (data.shape[1] == self.get_num_cols()), f"Number of columns does not match between data and header: {self.data.shape[1]} v.s. {self.get_num_cols()}"
+
+            self._data = data
+
+        # 4. Get exteneded data 
+        possible_extended = input_binary.replace(".cistem", "_extended.cistem")
+        if Path(extended_binary).exists():
+            self._extended.from_binary(extended_binary)
+        elif Path(possible_extended).exists():
+            self._extended.from_binary(possible_extended)
+ 
+ 
+    def to_binary(self, output: str, extended_output: str = ""):
+
+        assert (self.get_num_cols() > 0 and self.get_num_rows() > 0), f"Number of columns ({self.get_num_cols()}) and rows ({self.get_num_rows()}) should be larger than 0"
+        assert len(self._active_columns) > 0, f"No column detected."
+        assert len(self._active_columns) == self.get_data().shape[1], f"Number of columns does not match in the header ({len(self._active_columns)}) and data ({self.get_data().shape[1]})"
+        assert output.endswith(".cistem"), f"Filename of output ({output}) better has .cistem extension."
+
+        with open(output, "wb") as f:
+            
+            # 1. Write number of columns and rows
+            byte_str = np.array([(self.get_num_cols(), self.get_num_rows())], dtype=DT_DIMS).tobytes()
+            f.write(byte_str)
+
+            # 2. Write headers
+            for col in self._active_columns:
+                str_data_order, str_data_type = col[0], col[1]
+                bitmask_identifier = int(str_data_order)
+                data_type = HEADER_LIST[bitmask_identifier]
+                byte_str = np.array([(bitmask_identifier, data_type)], dtype=DT_COLUMN).tobytes()
+                f.write(byte_str)
+            
+            # 3. Write data
+            dt_data = np.dtype(self._active_columns)
+            data_with_type = rf.unstructured_to_structured(self.get_data(), dtype=dt_data)
+            f.write(data_with_type.tobytes())
+        
+        # 4. generate exteneded data file 
+        if self._extended is not None:
+            if len(extended_output) > 0:
+                self._extended.to_binary(extended_output)
+            else:
+                possible_extended = output.replace(".cistem", "_extended.cistem")
+                self._extended.to_binary(possible_extended)
+
+
+    def to_star(self, filename):
+        # TODO: simply call convert_binary_to_star executable
+        return
+    def get_data(self) -> np.ndarray:
+        return self._data
+    def get_extended_data(self) -> ExtendedParameters:
+        return self._extended
+    def get_num_rows(self):
+        return self._num_rows
+    def get_num_cols(self):
+        return self._num_columns
+    def get_input_file(self): 
+        # return the filename of input file
+        return self._input_file
+    
+    def get_index_of_column(self, column_code: int):
+        return self.HEADERS.index(column_code)
+    
+    def set_data(self, data: np.ndarray, extended_data: ExtendedParameters):
+
+        assert type(data) == np.ndarray, f"Input data type is not Numpy array, it is {type(data)}"
+        assert data.ndim == 2, "Input data is not 2D"
+        assert type(data[0]) == np.ndarray, f"First row of input data type is not Numpy array, it is {type(data[0])}"
+        assert (self.get_data() is None or data.shape[1] == self.get_data().shape[1]), "Input data must have the same number of columns as original data."
+        assert type(extended_data) == ExtendedParameters, f"Extended data must be ExtendedParameter class. It is now {type(extended_data)}."
+        
+        headers = self.HEADERS
+
+        if len(headers) > 0:
+            assert len(headers) == data.shape[1], f"Headers ({len(headers)}) do not have the same number of columns in the data ({data.shape[1]}). "
+            # check if all the columns exist 
+            for column_code in headers:
+                assert (column_code in HEADER_LIST), f"{column_code} not in the Header List. "
+
+            # reset the columns 
+            self._active_columns.clear()
+
+            for byte_str_order in headers:
+                data_type = MAPPING[HEADER_LIST[byte_str_order]]
+                size_data_type, str_data_type = data_type[0], data_type[1]
+                self._active_columns.append((str(byte_str_order), f'<{str_data_type}{size_data_type}'))
+
+        self._data = data
+        self._num_rows = data.shape[0]
+        self._num_columns = data.shape[1]
+        
+        self._extended = extended_data
         
 
 

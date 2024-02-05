@@ -2709,12 +2709,11 @@ EOF
     
     parameters = Parameters()
     extended_parameters = ExtendedParameters()
-    parameters.set_data(data=cistem_parameters)
     extended_parameters.set_data(particles=particle_parameters,
                                  tilts=tilt_parameters)
-    
-    parameters.to_binary(filename=f"{name}_r01_02.cistem")
-    extended_parameters.to_binary(filename=f"{name}_r01_02_extend.cistem")
+    parameters.set_data(data=cistem_parameters, extended_data=extended_parameters)
+
+    parameters.to_binary(output=f"{name}_r01_02.cistem")
 
     if len(allimodboxes) > 0:
         with open("%s_boxes.txt" % (name), "w") as f:
