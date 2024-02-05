@@ -763,25 +763,23 @@ def get_weight_from_projects(weight_folder: Path, parameters: dict) -> str:
 
     if weight_current.exists():
         return str(weight_current)
-    
-    elif weight_parent.exists(): 
+
+    elif weight_parent.exists():
         return str(weight_parent)
-    
+
     return None
 
 def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
 
-    differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and 'force' not in k}
+    all_differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and 'force' not in k}
 
-    if "gain_reference" in differences:
-        if resolve_path(previous_parameters["gain_reference"]) == resolve_path(new_parameters["gain_reference"]):
-            differences.remove("gain_reference")
-    if "data_path" in differences:
-        if resolve_path(previous_parameters["data_path"]) == resolve_path(new_parameters["data_path"]):
-            differences.remove("data_path")
+    differences = {d for d in all_differences if not ( ( isinstance(previous_parameters[d],PosixPath) or isinstance(previous_parameters[d],str) ) and project_params.resolve_path(previous_parameters[d]) == project_params.resolve_path(new_parameters[d]) ) }
 
-    if "slurm_verbose" in previous_parameters and previous_parameters["slurm_verbose"]:
-        logger.info(f"Parameters changed: {differences}")
+    if previous_parameters.get("slurm_verbose"):
+        if len(differences):
+            logger.info(f"Parameters changed: {differences}")
+        else:
+            logger.info("No parameter changes detected")
 
     try:
         data_set = previous_parameters["data_set"]

@@ -500,7 +500,6 @@ def load_csp_results(name, parameters, project_path, working_path, verbose=False
     file_patterns = [
         "box/{0}.box",  # needed by trajectory plotting after regularization 
         "box/{0}.boxx",
-        "csp/{0}.allparxs",
         "csp/{0}.allboxes",
         "csp/{0}_local.allboxes",
         "csp/{0}_boxes3d.txt"
@@ -530,7 +529,7 @@ def save_csp_results(name, parameters, current_path, verbose=False):
     if iteration == 2:
         files[
         "csp"
-        ] = "{0}.allparxs {0}_local.allparxs {0}.allboxes {0}_local.allboxes".format(name)
+        ] = "{0}.allboxes {0}_local.allboxes".format(name)
     else:
         files[
             "csp"

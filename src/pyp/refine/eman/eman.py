@@ -3,6 +3,7 @@ import subprocess
 
 from pyp.inout.image import mrc
 from pyp.system import project_params
+from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import eman_load_command, qos
 from pyp.utils import get_relative_path
@@ -41,7 +42,6 @@ def eman_2d_classify(parameters, new_name, imagic_stack, radius):
 
 
 def eman_3davg(parameters):
-    # HF Liu: do eman subtomogram averaging
     # clean up the last vol lst
     if os.path.exists("eman/subvols.lst"):
         os.remove("eman/subvols.lst")
@@ -60,20 +60,13 @@ def eman_3davg(parameters):
             command = "{0}; cd eman; e2proclst.py ../sva/{1}_*.rec --create {1}_subvols.lst".format(
                 load_eman_cmd, tilt_name,
             )
-            logger.info(command)
-            logger.info(
-                subprocess.check_output(
-                    command, stderr=subprocess.STDOUT, shell=True, text=True
-                )
-            )
+            run_shell_command(command,verbose=parameters.get("slurm_verbose"))
+
     # merge sub-list as one subvols.lst
     com = "{0}; cd eman; e2proclst.py *_subvols.lst --merge subvols_all.lst".format(
         load_eman_cmd
     )
-    logger.info(com)
-    logger.info(
-        subprocess.check_output(com, stderr=subprocess.STDOUT, shell=True, text=True)
-    )
+    run_shell_command(com,verbose=parameters.get("slurm_verbose"))
 
     # Submit the subtomogram avg to queue and rewrite parameter file for CSPT
     command_e2avg = "e2spt_refine.py subvols_all.lst --reference={0} --niter=5 --sym={1} --mass={2} --goldstandard=30 --pkeep=0.8 --maxtilt=90.0 --parallel=mpi:280:/scratch".format(
@@ -90,8 +83,4 @@ def eman_3davg(parameters):
         command_e2avg,
         os.environ["PYP_DIR"],
     )
-    logger.info(
-        subprocess.check_output(
-            command, stderr=subprocess.STDOUT, shell=True, text=True
-        )
-    )
+    run_shell_command(command,verbose=parameters.get("slurm_verbose"))

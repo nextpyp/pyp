@@ -305,7 +305,9 @@ Step 6: Reference-based refinement
 
         - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search, text-primary`, navigating to the folder where you downloaded the data for the tutorial, and selecting the file `EMPIAR-10164_init_ref.mrc`
 
-        - Click :fa:`search,text-primary` in ``Input parameter file`` to select the initial parameters text file ``tomo-preprocessing-*_original_volumes.txt`` from :badge:`Pre-processing,badge-secondary`
+        - Check ``Show advanced options``
+
+        - Click :fa:`search,text-primary` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-preprocessing-*_original_volumes.txt`` from :badge:`Pre-processing,badge-secondary`
 
         - Check ``Skip refinement``
 
@@ -318,8 +320,6 @@ Step 6: Reference-based refinement
       .. tabbed:: Constrained refinement
 
         - Set ``Last exposure for refinement`` to 10
-
-        - Check ``Show advanced options``
 
         - Set ``Optimizer - Exhaustive search points`` to 50000
 

@@ -1218,7 +1218,7 @@ def run_mpi_reconstruction(
         # save statistics file
         stats_file_name = os.path.join(output_folder, f"{dataset_name}_statistics.txt")
         res_file_name = f"{dataset_name}.res"
-                
+
         # smooth part FSC curves
         """
         if project_params.param(mp["refine_metric"], iteration) == "new" and os.path.exists(stats_file_name):
@@ -1240,11 +1240,11 @@ def run_mpi_reconstruction(
 
         elif os.path.exists(f"{dataset_name}_statistics.txt"):
             shutil.copy2(f"{dataset_name}_statistics.txt", stats_file_name)
-        
+
 
         # save what is worth to original frealing/maps
         for file in (
-            ["../maps/" + dataset_name + "_fyp.png", "../maps/" + dataset_name + "_map.webp", "../maps/" + dataset_name + ".mrc", "../maps/" + dataset_name + "_raw.mrc"]
+            ["../maps/" + dataset_name + "_fyp.webp", "../maps/" + dataset_name + "_map.webp", "../maps/" + dataset_name + ".mrc", "../maps/" + dataset_name + "_raw.mrc"]
             + glob.glob(f"../maps/*_r{ref:02d}_???.txt")
             + glob.glob("../maps/*half*.mrc")
             + glob.glob("../maps/*crop.mrc")
