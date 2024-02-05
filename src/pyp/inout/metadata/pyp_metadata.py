@@ -1440,7 +1440,7 @@ _rlnOriginZAngst #3
                     except OSError:
                         pass
                 try:
-                    os.symlink(os.path.join(input_dir,"mrc",imagename + ".mrc", target))
+                    os.symlink(os.path.join(input_dir,"mrc",imagename + ".mrc"), target)
                 except OSError:
                     pass
 
