@@ -1413,6 +1413,15 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             # convert next file to imod model
             com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
             local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+
+            # detect if there were changes in the excluded tilts
+            if metadata and 'exclude' in metadata:
+                new_angles = np.sort(np.loadtxt(f'{name}_exclude_views.next',ndmin=2)).astype('int')[:,2]+1
+                angles = np.sort(metadata.get('exclude').to_numpy()[:,1].astype('int') + 1)
+                if not np.array_equal(angles, np.sort(new_angles)):
+                    logger.warning("Excluded tilts have changed, will re-calculate reconstrucion")
+                    parameters["tomo_rec_force"] = True
+
     else:
         logger.info("Ignoring existing results")
 
