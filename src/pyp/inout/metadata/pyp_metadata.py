@@ -106,6 +106,13 @@ FILES_TOMO= {"image":
                     "header": ["m00", "m01", "m02", "m03", "dx", "dy"],
                     "index": None
                 }, 
+            "frames": 
+                {
+                    "path": "frame_list.txt", 
+                    "format": "text-str", 
+                    "header": ["filename"],
+                    "index": None
+                },
             "tlt": 
                 {
                     "path": "%s.tlt", 
@@ -304,7 +311,8 @@ class LocalMetadata:
             file_type = self.files[key]["format"]
             file_path = self.files[key]["path"]
             transpose = False
-           
+            files = []
+
             if "%s" in file_path:
                 if key == "ctf_avrot":
                     # sort by indexes given by ctffind tilt ({micrograph}_{index}_ctffind4_avrot.txt)
@@ -323,17 +331,29 @@ class LocalMetadata:
                 else:
                     files = glob.glob(file_path % (self.micrograph))
             elif key == "drift":
-                assert (key == "drift"), "Only drift supports using pyp config pattern"
-                try:
-                    pattern = self.parameters["movie_pattern"]
-                    root_template, format_template = os.path.splitext(pattern)
-                    root_file, format_file = os.path.splitext(file_path)
-                    pattern = pattern.replace(format_template, format_file)
+                # assert (key == "drift"), "Only drift supports using pyp config pattern"
+                # try:
+                #     pattern = self.parameters["movie_pattern"]
+                #     root_template, format_template = os.path.splitext(pattern)
+                #     root_file, format_file = os.path.splitext(file_path)
+                #     pattern = pattern.replace(format_template, format_file)
 
-                except:
-                    pattern = os.path.basename(file_path)
+                # except:
+                #     pattern = os.path.basename(file_path)
 
-                files = getFilesByPattern(pattern, file_path, self.micrograph)
+                # files = getFilesByPattern(pattern, file_path, self.micrograph)
+                if Path("frame_list.txt").exists():
+                    files = open("frame_list.txt", "r").read().split("\n")
+                    # it contains the name of movie frames instead of .xf
+                    files = [str(Path(f).stem) + ".xf" for f in files]
+                else:
+                    logger.warning("Tilt-series do not have frames. ")
+                    
+            elif key == "frames":
+                if Path(file_path).exists():
+                    files = [file_path]
+                else:
+                    logger.warning("Tilt-series do not have frames. ")
 
             multiple_files = True if len(files) > 1 else False
             for f in files:
@@ -347,6 +367,8 @@ class LocalMetadata:
                     self.loadImageDim(key, f)
                 elif file_type == "pickle":
                     self.loadPickleFile(key, f)
+                elif file_type == "text-str":
+                    self.loadTextStr(key, f)
                 else:
                     raise Exception(f"File type {file_type} not recognized")
 
@@ -421,6 +443,8 @@ class LocalMetadata:
                     pass
                 elif file_type == "pickle":
                     self.writePickleFile(data, os.path.join(path, file_path))
+                elif file_type == "text-str":
+                    self.writeTextStr(data, os.path.join(path, file_path))
                 else:
                     raise Exception(f"File type {file_type} not recognized")
         else:
@@ -514,7 +538,12 @@ class LocalMetadata:
         df = pd.DataFrame(arr, columns=header)
         self.data[key] = df
 
+    def loadTextStr(self, key, file):
+        assert (key in self.files), f"{key} not in the schema"
+        assert (os.path.exists(file)), f"{file} does not exist"
 
+        lst = [file for file in open(file, 'r').read().split("\n")]
+        self.data[key] = lst
 
     def loadParFile(self, key, file):
         """ Load data from parfile
@@ -592,6 +621,11 @@ class LocalMetadata:
         # if we have multiple files to output (i.e. frame alignment .xf in tomo)
         with open( path % (self.micrograph), 'wb') as f:
             pickle.dump(data, f)
+
+    def writeTextStr(self, data, path):
+
+        with open(path, "w") as f:
+            f.write("\n".join(data))
 
     def writeModelFile(self, data, path):
 

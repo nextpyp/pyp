@@ -616,9 +616,12 @@ def read_tilt_series(
         mag = parameters["scope_mag"]
         tilt_axis = parameters["scope_tilt_axis"] - 90.0
 
-
         # sort the list based on tilt angle
         sorted_tilts = sorted(tilts, key=lambda x: x[1])
+
+        # write a file that contains frame filenames (sorted by tilt angle)
+        with open("frame_list.txt", "w") as f:
+            f.write("\n".join([f[0] for f in sorted_tilts]))
 
         # check if 0 is in the scanorder list
         if 0 not in [item[2] for item in sorted_tilts]:
