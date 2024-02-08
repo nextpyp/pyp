@@ -2330,7 +2330,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             metadata = pyp_metadata.LocalMetadata(metafile, is_spr=is_spr)
             metadata.meta2PYP()
             
-            frame_list = metadata.data["frames"] if "frames" in metadata.data else []
+            frame_list = metadata.data["frames"] if "frames" in metadata.data else frame_list
 
             os.chdir(current_path)
         except:
@@ -2365,30 +2365,6 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
 
     if is_tomo:
         if use_frames:
-
-            # TODO: add movie filenames into pkl
-            # this solution won't work if not using movie_pattern during preprocessing (i.e. using mdoc)
-
-            # os.chdir(working_path)
-            # # compile movie_pattern used during preprocessing into RegEx
-            # pattern = parameters["movie_pattern"]
-            # regex = movie2regex(pattern, filename)
-            # r = re.compile(regex)
-
-            # # look for the position of tilt angle in the filename
-            # labels = ["TILTSERIES", "SCANORD", "ANGLE"]
-            # labels = [l for l in labels if pattern.find(l) >= 0]
-            # labels.sort(key=lambda x: int(pattern.find(x)))
-            # pos_tiltangle = labels.index("ANGLE") + 1
-
-            # # search files in project directory and sort the list based on tilt angle
-            # detected_movies = [
-            #         [r.match(f).group(0), float(r.match(f).group(pos_tiltangle))] 
-            #         for f in os.listdir(os.path.join(current_path, "raw")) 
-            #         if r.match(f)
-            #         ]
-            # sorted_tilts = sorted(detected_movies, key=lambda x: x[1])
-            # imagefile = [_[0] for _ in sorted_tilts]
 
             if len(frame_list) > 0:
                 imagefile = frame_list

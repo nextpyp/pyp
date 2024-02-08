@@ -331,21 +331,15 @@ class LocalMetadata:
                 else:
                     files = glob.glob(file_path % (self.micrograph))
             elif key == "drift":
-                # assert (key == "drift"), "Only drift supports using pyp config pattern"
-                # try:
-                #     pattern = self.parameters["movie_pattern"]
-                #     root_template, format_template = os.path.splitext(pattern)
-                #     root_file, format_file = os.path.splitext(file_path)
-                #     pattern = pattern.replace(format_template, format_file)
-
-                # except:
-                #     pattern = os.path.basename(file_path)
-
-                # files = getFilesByPattern(pattern, file_path, self.micrograph)
+                
                 if Path("frame_list.txt").exists():
+                    
                     files = open("frame_list.txt", "r").read().split("\n")
+                    
                     # it contains the name of movie frames instead of .xf
                     files = [str(Path(f).stem) + ".xf" for f in files]
+                    files = [f for f in files if Path(f).exists()]
+                
                 else:
                     logger.warning("Tilt-series do not have frames. ")
                     
@@ -420,7 +414,8 @@ class LocalMetadata:
                     transpose = False
                     template = None
                     if key == "drift" and self.parameters is not None:
-                        template = getFilesByPattern(self.parameters["movie_pattern"], data_path, self.micrograph)
+                        files = self.data["frames"]
+                        template = [str(Path(f).stem) + ".xf" for f in files]
                     elif key == "ctf_avrot" and self.parameters is not None:
                         template = [str(self.files[key]["path"] % (self.micrograph)).replace("*", "%04d" % (index)) for index in data.keys()]
                         transpose = True
