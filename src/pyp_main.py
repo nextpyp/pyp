@@ -2351,25 +2351,14 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             )
             pass
 
-    # extract/retrieve particle coordinates
-    [allboxes, allparxs] = csp_extract_coordinates(
-        filename,
-        parameters,
-        working_path,
-        current_path,
-        skip,
-        only_inside=False,
-        use_frames=use_frames,
-        use_existing_frame_alignments=True,
-    )
-
     if is_tomo:
         if use_frames:
 
             if len(frame_list) > 0:
                 imagefile = frame_list
             else:
-                raise Exception("Either data do not have frames or pre-processing was incomplate. ")
+                logger.error("Either data do not have frames or pre-processing was incomplate. ")
+                raise Exception("Frames not found.")
 
         elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
             imagefile = "mrc/" + filename
@@ -2385,6 +2374,17 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         imagefile = "mrc/" + filename
         parameters["gain_reference"] = None
 
+    # extract/retrieve particle coordinates
+    [allboxes, allparxs] = csp_extract_coordinates(
+        filename,
+        parameters,
+        working_path,
+        current_path,
+        skip,
+        only_inside=False,
+        use_frames=use_frames,
+        use_existing_frame_alignments=True,
+    )
 
     parxfile = os.path.join(
         working_path, "frealign", "maps", filename + "_r01_%02d.parx" % (iteration - 1)
