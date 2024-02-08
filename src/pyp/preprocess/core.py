@@ -729,11 +729,14 @@ def read_tilt_series(
 
     else:
         logger.error("Cannot read %s", filename)
-
-    if metadata and metadata.get("drift"):
+    if metadata:
         drift_metadata["drift"] = {}
-        for i in metadata["drift"]:
-            drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
+        if metadata.get("drift"):
+            for i in metadata["drift"]:
+                drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
+        elif metadata.get("web").get("drift"):
+            for i in metadata.get("web")["drift"]:
+                drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
     else:
         drift_metadata["drift"] = shifts
 
@@ -911,7 +914,7 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
 
                 elif line.startswith("DateTime"):
                     time = line.split("=")[-1].strip()
-                    
+
                     for date_pattern in DATETIMES:
                         try:
                             data_output = datetime.datetime.strptime(time, date_pattern)
@@ -919,12 +922,13 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
                             break
                         except:
                             continue
-                    
+
                     assert frames_set[-1][-1] is not None, f"{time} cannot be matched by the pattern. "
-                
+
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
-                    parameters["scope_tilt_axis"] = axis_angle
+                    if parameters:
+                        parameters["scope_tilt_axis"] = axis_angle
 
     # sort the frames by scanning orders
     frames_set = sorted(frames_set, key=lambda x: x[-1])
