@@ -2329,43 +2329,21 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
     if not skip:
         load_csp_results(filename, parameters, Path(current_path), Path(working_path), verbose=parameters["slurm_verbose"])
 
-    metafile = os.path.join(current_path, "pkl", filename + ".pkl")
+    metafile = os.path.join(working_path, filename + ".pkl")
+    frame_list = []
     if os.path.exists(metafile):
         try:
-            shutil.copy2(metafile, working_path)
-            metafile = os.path.join(working_path, filename + ".pkl")
+            os.chdir(working_path) # local scratch
 
-            # TODO: just a test, delete later
-            if "spr" in parameters["data_mode"]:
-                is_spr = True
-            else:
-                is_spr = False
+            is_spr = True if "spr" in parameters["data_mode"] else False
             metadata = pyp_metadata.LocalMetadata(metafile, is_spr=is_spr)
+            metadata.meta2PYP()
+            
+            frame_list = metadata.data["frames"] if "frames" in metadata.data else frame_list
 
-            metadata.meta2PYP(path=working_path)
-            """
-            # only pickle file, need boxx file in ./box first time to run csp
-            boxxfile = os.path.join(current_path, "box", filename + ".boxx")
-            boxfrompkl = os.path.join(working_path, filename + ".boxx")
-            if not os.path.exists(boxxfile) and os.path.isfile(boxfrompkl):
-                shutil.copy2(boxfrompkl, boxxfile)
-
-            # ctf file from pickle
-            ctffile = os.path.join(current_path, "ctf", filename + ".ctf")
-            ctffrompkl = os.path.join(working_path, filename + ".ctf")
-            if not os.path.exists(ctffile) and os.path.isfile(ctffrompkl):
-                shutil.copy2(ctffrompkl, ctffile)
-
-            # xf file from pickle
-            xffile = os.path.join(current_path, "ali", filename + ".xf")
-            xffrompkl = os.path.join(working_path, filename + ".xf")
-            if not os.path.exists(xffile) and os.path.isfile(xffrompkl):
-                shutil.copy2(xffrompkl, xffile)
-            """
+            os.chdir(current_path)
         except:
             logger.warning("Unable to retrieve metadata")
-            trackback()
-            pass
 
     statistic_file = glob.glob(
             current_path + "/frealign/" + "maps/" + f"{dataset}_r01_{(iteration-1):02d}_statistics.txt"
@@ -2382,44 +2360,14 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             )
             pass
 
-    # extract/retrieve particle coordinates
-    [allboxes, allparxs] = csp_extract_coordinates(
-        filename,
-        parameters,
-        working_path,
-        current_path,
-        skip,
-        only_inside=False,
-        use_frames=use_frames,
-        use_existing_frame_alignments=True,
-    )
-
     if is_tomo:
         if use_frames:
 
-            # TODO: add movie filenames into pkl
-            # this solution won't work if not using movie_pattern during preprocessing (i.e. using mdoc)
-
-            os.chdir(working_path)
-            # compile movie_pattern used during preprocessing into RegEx
-            pattern = parameters["movie_pattern"]
-            regex = movie2regex(pattern, filename)
-            r = re.compile(regex)
-
-            # look for the position of tilt angle in the filename
-            labels = ["TILTSERIES", "SCANORD", "ANGLE"]
-            labels = [l for l in labels if pattern.find(l) >= 0]
-            labels.sort(key=lambda x: int(pattern.find(x)))
-            pos_tiltangle = labels.index("ANGLE") + 1
-
-            # search files in project directory and sort the list based on tilt angle
-            detected_movies = [
-                    [r.match(f).group(0), float(r.match(f).group(pos_tiltangle))] 
-                    for f in os.listdir(os.path.join(current_path, "raw")) 
-                    if r.match(f)
-                    ]
-            sorted_tilts = sorted(detected_movies, key=lambda x: x[1])
-            imagefile = [_[0] for _ in sorted_tilts]
+            if len(frame_list) > 0:
+                imagefile = frame_list
+            else:
+                logger.error("Either data do not have frames or pre-processing was incomplate. ")
+                raise Exception("Frames not found.")
 
         elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
             imagefile = "mrc/" + filename
@@ -2435,6 +2383,17 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         imagefile = "mrc/" + filename
         parameters["gain_reference"] = None
 
+    # extract/retrieve particle coordinates
+    [allboxes, allparxs] = csp_extract_coordinates(
+        filename,
+        parameters,
+        working_path,
+        current_path,
+        skip,
+        only_inside=False,
+        use_frames=use_frames,
+        use_existing_frame_alignments=True,
+    )
 
     parxfile = os.path.join(
         working_path, "frealign", "maps", filename + "_r01_%02d.parx" % (iteration - 1)
