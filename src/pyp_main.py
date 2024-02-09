@@ -1421,6 +1421,9 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 if not np.array_equal(angles, np.sort(new_angles)):
                     logger.warning("Excluded tilts have changed, will re-calculate reconstrucion")
                     parameters["tomo_rec_force"] = True
+            else:
+                logger.warning("Excluded tilts, will re-calculate reconstrucion")
+                parameters["tomo_rec_force"] = True
 
     else:
         logger.info("Ignoring existing results")
