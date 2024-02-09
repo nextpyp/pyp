@@ -1933,6 +1933,14 @@ input = { type="initialModel" }
 required = true
 copyToNewBlock = false
 
+[tabs.refine.parfile_tomo]
+name = "Alignments from sub-volume averaging"
+description = "Parameter file containing poses from sub-volume averaging (*.txt)"
+type = "path"
+path = { type="files" }
+input = { type="txtfile" }
+hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine"]
+
 [tabs.refine.parfile]
 name = "Input parameter file"
 description = "Parameter file to initialize refinement (*.par.bz2)"
@@ -1956,15 +1964,6 @@ description = "Update all metadata in csp allparx"
 type = "bool"
 default = true
 hidden = true
-
-[tabs.refine.parfile_tomo]
-name = "Alignments from sub-volume averaging"
-description = "Parameter file containing poses from sub-volume averaging (*.txt)"
-type = "path"
-path = { type="files" }
-input = { type="txtfile" }
-advanced = true
-hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine"]
 
 [tabs.refine.resume]
 name = "Resume refinement"
