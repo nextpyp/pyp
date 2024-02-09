@@ -4,6 +4,23 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.6.3 (2/10/2024)
+******************
+
+   :fa:`plus-square,text-primary` Stop saving unnecessary metadata files during constrained refinement.
+
+   :fa:`plus-square,text-primary` Implement particle list picker that was missing from some import blocks.
+
+   :fa:`bug,text-danger` Fix bug in function used to export sessions to .star format.
+
+   :fa:`bug,text-danger` Fix inconsistencies in the determination of parameter changes between consecutive runs.
+
+   :fa:`bug,text-danger` Do not try to launch external programs for sub-tomogram averaging after particle extraction.
+
+   :fa:`bug,text-danger` Fix issue with missing metadata entries during tilt-series re-processing.
+
+   :fa:`bug,text-danger` Correctly discard particles that are too close to gold fiducials (tomography pipeline).
+
 v0.6.2 (2/01/2024)
 ******************
 
