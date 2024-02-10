@@ -1873,7 +1873,7 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
 
     for angle in tilt_angles:
         if (lower_tilt <= angle and angle <= upper_tilt) or (-upper_tilt <= angle and angle <= -lower_tilt):
-            angle_used =+ 1 
+            angle_used += 1 
             candidates.append(detect_handedness(name=name, 
                                                 tiltang_file=Path(f"{name}.tlt"), 
                                                 xf_file=Path(f"{name}.xf"), 
