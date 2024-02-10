@@ -1405,8 +1405,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 logger.info(
                     f"Tomogram will be recomputed"
                 )
-
-                del metadata["gold"]
+                if "gold" in metadata.keys():
+                    del metadata["gold"]
 
             # convert metadata to files
             metadata_object.meta2PYP(path=working_path,data_path=os.path.join(current_path,"raw/"))
