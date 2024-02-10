@@ -7,6 +7,8 @@ Changelog
 v0.6.3 (2/10/2024)
 ******************
 
+   :fa:`plus-square,text-primary` Allow import of clean particles obtained after 3D classification into pre-processing block.
+
    :fa:`plus-square,text-primary` Stop saving unnecessary metadata files during constrained refinement.
 
    :fa:`plus-square,text-primary` Implement particle list picker that was missing from some import blocks.
