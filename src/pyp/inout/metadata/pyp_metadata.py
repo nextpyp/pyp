@@ -409,8 +409,9 @@ class LocalMetadata:
                     transpose = False
                     template = None
                     if key == "drift" and self.parameters is not None:
-                        files = self.data["frames"]
-                        template = [str(Path(f).stem) + ".xf" for f in files]
+                        if "frames" in self.data:
+                            files = self.data["frames"]
+                            template = [str(Path(f).stem) + ".xf" for f in files]
                     elif key == "ctf_avrot" and self.parameters is not None:
                         template = [str(self.files[key]["path"] % (self.micrograph)).replace("*", "%04d" % (index)) for index in data.keys()]
                         transpose = True

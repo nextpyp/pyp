@@ -2147,14 +2147,16 @@ EOF
             particle_name = os.path.basename(line.split()[-1])
             alignmentSVA[particle_name] = line.split()
 
-    if os.path.exists(f"mod/{name}_gold.mod"):
-        command = "{0}/bin/model2point mod/{1}_gold.mod {2}_gold.txt".format(
+    if os.path.exists(f"{name}_gold.mod"):
+        command = "{0}/bin/model2point {1}_gold.mod {2}_gold.txt".format(
             get_imod_path(), name, Path(os.environ["PYP_SCRATCH"]) / name
         )
         local_run.run_shell_command(command)
         fiducials = np.loadtxt(
             Path(os.environ["PYP_SCRATCH"]) / f"{name}_gold.txt", ndmin=2
         )
+    elif "gold" in metadata:
+        fiducials = metadata["gold"].to_numpy()
     else:
         fiducials = np.empty([0])
 

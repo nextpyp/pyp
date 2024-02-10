@@ -1869,9 +1869,11 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
     assert lower_tilt <= upper_tilt, f"Lower tilt ({lower_tilt}) needs to be <= upper tilt ({upper_tilt})"
     logger.info(f"Using tilts between {lower_tilt} and {upper_tilt} to determine CTF handedness")
     candidates = []
+    angle_used = 0
 
     for angle in tilt_angles:
         if (lower_tilt <= angle and angle <= upper_tilt) or (-upper_tilt <= angle and angle <= -lower_tilt):
+            angle_used =+ 1 
             candidates.append(detect_handedness(name=name, 
                                                 tiltang_file=Path(f"{name}.tlt"), 
                                                 xf_file=Path(f"{name}.xf"), 
@@ -1881,8 +1883,12 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
     candidates = [_ for _ in candidates if _ is not None]
     if len(candidates) > 0:
         candidates.sort() # False is the first element after sorting
-        median = candidates[math.ceil(len(candidates)/2)]
+        median = candidates[math.floor(len(candidates)/2)]
         handedness = "" if median is True else "NOT "
         logger.warning(f"Invert CTF handedness option should {handedness}be selected during refinement")
+
+        true_count = candidates.count(True)
+        false_count = candidates.count(False)
+        logger.info(f"{angle_used} Angles used for CTF handedness detection. Inverting detected in {true_count} angles, no inverting detected in {false_count} angles")
     else:
         logger.warning("Not enough tilts to detect CTF handedness")
