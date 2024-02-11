@@ -1222,7 +1222,8 @@ def particle_cleaning(parameters: dict):
                 shutil.copy2(filmlist_file, filmlist_file.replace(".films", ".micrographs"))
 
             binning = parameters["tomo_rec_binning"]
-            generate_clean_spk(binning=binning)
+            thickness = parameters["tomo_rec_thickness"]
+            generate_clean_spk(binning=binning, thickness=thickness)
 
     return parameters 
 
@@ -1819,7 +1820,7 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
     return pardata
 
 
-def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/selected_particles", is_tomo=True):
+def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/selected_particles", is_tomo=True, thickness=2048):
     
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -1835,16 +1836,21 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
             read_array = np.loadtxt(file, dtype='str', comments="  PTLIDX", ndmin=2, usecols=(1,2,3,5))
 
             clean_array = read_array[read_array[:, -1]=="Yes"][:, :-1].astype('float')
+            
+            clean_array[:, -1] = thickness - clean_array[:, -1]
             clean_array = clean_array / binning
+            
 
             np.savetxt(file.replace("_boxes3d.txt", ".box"), clean_array, fmt='%.1f')
 
-            outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.spk'))
+            outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.mod'))
             command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_boxes3d.txt', '.box')} {outfile}"
-            run_shell_command(command, verbose=False)
+            run_shell_command(command, verbose=True)
+
+            run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
     
     else:
         for file in inputfiles:
             outfile = os.path.join(output_path, os.path.basename(file).replace('.allboxes', '.spk'))
             command = f"{get_imod_path()}/bin/point2model -scat -circle 5 {file} {outfile}"
-            run_shell_command(command, verbose=False)
+            run_shell_command(command, verbose=True)
