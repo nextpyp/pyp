@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import shutil
 import sys
+import glob
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,7 @@ from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path, timer, symlink_relative
 from pyp.inout.utils.pyp_edit_box_files import read_boxx_file_async, write_boxx_file_async
+from pyp.system.utils import get_imod_path
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -1187,6 +1189,8 @@ def particle_cleaning(parameters: dict):
             # update extract selection after cleaning
             parameters["extract_cls"] += 1
 
+            generate_clean_spk(is_tomo=False)
+
     # we don't have box3d in spr, so this only works for tomo so far
     elif "tomo" in parameters["data_mode"]:
         
@@ -1216,6 +1220,9 @@ def particle_cleaning(parameters: dict):
                 os.rename(filmlist_file, filmlist_file.replace(".films", ".films_original"))
                 np.savetxt(filmlist_file, newfilms, fmt="%s")
                 shutil.copy2(filmlist_file, filmlist_file.replace(".films", ".micrographs"))
+
+            binning = parameters["tomo_rec_binning"]
+            generate_clean_spk(binning=binning)
 
     return parameters 
 
@@ -1810,3 +1817,34 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
                 valid_points = np.vstack((valid_points, coordinate))
     
     return pardata
+
+
+def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/selected_particles", is_tomo=True):
+    
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    if is_tomo:
+        coordinates = "*_boxes3d.txt"
+    else:
+        coordinates = "*.allboxes"
+    inputfiles = glob.glob(os.path.join(input_path, coordinates))
+
+    if is_tomo:
+        for file in inputfiles:
+            read_array = np.loadtxt(file, dtype='str', comments="  PTLIDX", ndmin=2, usecols=(1,2,3,5))
+
+            clean_array = read_array[read_array[:, -1]=="Yes"][:, :-1].astype('float')
+            clean_array = clean_array / binning
+
+            np.savetxt(file.replace("_boxes3d.txt", ".box"), clean_array, fmt='%.1f')
+
+            outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.spk'))
+            command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_boxes3d.txt', '.box')} {outfile}"
+            run_shell_command(command, verbose=False)
+    
+    else:
+        for file in inputfiles:
+            outfile = os.path.join(output_path, os.path.basename(file).replace('.allboxes', '.spk'))
+            command = f"{get_imod_path()}/bin/point2model -scat -circle 5 {file} {outfile}"
+            run_shell_command(command, verbose=False)
