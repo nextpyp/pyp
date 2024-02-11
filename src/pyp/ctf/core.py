@@ -1882,13 +1882,16 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
     # remove tilted images that can be used 
     candidates = [_ for _ in candidates if _ is not None]
     if len(candidates) > 0:
+
+        # report how many tilts are consistent with inverson/no-inversion
+        true_count = candidates.count(True)
+        false_count = candidates.count(False)
+        logger.info(f"From a total of {angle_used} tilt images used for CTF handedness detection, {true_count} indicate that inversion is required, and {false_count} that it is not")
+
         candidates.sort() # False is the first element after sorting
         median = candidates[math.floor(len(candidates)/2)]
         handedness = "" if median is True else "NOT "
         logger.warning(f"Invert CTF handedness option should {handedness}be selected during refinement")
 
-        true_count = candidates.count(True)
-        false_count = candidates.count(False)
-        logger.info(f"{angle_used} Angles used for CTF handedness detection. Inverting detected in {true_count} angles, no inverting detected in {false_count} angles")
     else:
         logger.warning("Not enough tilts to detect CTF handedness")

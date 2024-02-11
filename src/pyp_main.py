@@ -572,9 +572,8 @@ def spr_merge(parameters, check_for_missing_files=True):
         with open(films, "w") as f:
             f.write("\n".join(inputlist))
     else:
-        logger.error("Either all micrographs failed or no particles were found, stopping")
         inputlist = input_all_list
-        raise
+        raise Exception("Either all micrographs failed or no particles were found, stopping")
 
     # use given naming convention when extracting frames for relion
     if False:
@@ -788,9 +787,8 @@ def tomo_merge(parameters, check_for_missing_files=True):
             f.write("\n".join(inputlist))
             f.close()
     else:
-        logger.error("Either all micrographs failed or no particles were found, stopping")
         inputlist = input_all_list
-        raise
+        raise Exception("Either all tilt-series failed or no particles were found, stopping")
 
     if detect.tomo_spk_is_required(parameters) > 0:
         # produce .txt file for 3DAVG
