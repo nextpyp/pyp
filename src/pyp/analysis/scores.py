@@ -1840,7 +1840,6 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
             clean_array[:, -1] = thickness - clean_array[:, -1]
             clean_array = clean_array / binning
             
-
             np.savetxt(file.replace("_boxes3d.txt", ".box"), clean_array, fmt='%.1f')
 
             outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.mod'))
@@ -1848,7 +1847,7 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
             run_shell_command(command, verbose=True)
 
             run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
-    
+            os.remove(outfile)
     else:
         for file in inputfiles:
             outfile = os.path.join(output_path, os.path.basename(file).replace('.allboxes', '.spk'))
