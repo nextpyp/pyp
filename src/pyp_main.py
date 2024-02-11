@@ -1403,8 +1403,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 logger.info(
                     f"Tomogram will be recomputed"
                 )
-
-                del metadata["gold"]
+                if "gold" in metadata.keys():
+                    del metadata["gold"]
 
             # convert metadata to files
             metadata_object.meta2PYP(path=working_path,data_path=os.path.join(current_path,"raw/"))
@@ -1612,7 +1612,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if parameters["tomo_ali_method"] == "imod_gold":
         gold_mod = "f{name}_gold.mod"
 
-        if not os.path.exists(gold_mod) or parameters["tomo_rec_force"]:
+        if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
             # create binned aligned stack
             if not os.path.exists(f'{name}_bin.ali'):
                 command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
