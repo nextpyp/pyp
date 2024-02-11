@@ -1844,7 +1844,7 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
 
             outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.mod'))
             command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_boxes3d.txt', '.box')} {outfile}"
-            run_shell_command(command, verbose=True)
+            run_shell_command(command, verbose=False)
 
             run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
             os.remove(outfile)
@@ -1852,4 +1852,4 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
         for file in inputfiles:
             outfile = os.path.join(output_path, os.path.basename(file).replace('.allboxes', '.spk'))
             command = f"{get_imod_path()}/bin/point2model -scat -circle 5 {file} {outfile}"
-            run_shell_command(command, verbose=True)
+            run_shell_command(command, verbose=False)
