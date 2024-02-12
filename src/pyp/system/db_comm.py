@@ -288,7 +288,8 @@ def load_spr_results(name, parameters, project_path, working_path, verbose=False
         "raw/{0}.xml",
         "mrc/{0}.mrc",
         "webp/{0}.webp",
-        "pkl/{0}.pkl"
+        "pkl/{0}.pkl",
+        "next/{0}.next"
     ]
 
     try:

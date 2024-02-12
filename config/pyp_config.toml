@@ -701,7 +701,7 @@ hidden = true
 name = "Detection method"
 description = "Strategy to use for particle picking"
 type = "enum"
-enum = { none="none", auto="auto", all="all", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)", topaz-train="topaz-train (list of positions required)", topaz-eval="topaz-eval (trained model required)" }
+enum = { none="none", auto="auto", all="all", manual="manual (list of positions required)", import="import (path to particle coordinates required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)", topaz-train="topaz-train (list of positions required)", topaz-eval="topaz-eval (trained model required)" }
 default = "none"
 
 [tabs.detect.ref]
@@ -1633,7 +1633,7 @@ _description = "Sub-tomogram detection parameters"
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", auto="auto", import="import", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)" }
+enum = { none="none", auto="auto", import="import (path to particle coordinates required)", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)" }
 default = "none"
 
 [tabs.tomo_spk.files]
