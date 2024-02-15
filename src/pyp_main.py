@@ -1382,8 +1382,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 logger.info("Virion segmentation thresholds changed, will re-pick particles")
                 updating_virion = True
                 logger.info("Removing virion spike txt files")
-                [ os.remove(f) for f in glob.glob( os.path.join(current_path, "sva", "*_cut.txt") ) ]
-                [ os.remove(f) for f in glob.glob( os.path.join(working_path, "*_cut.txt") ) ]
+                [ os.remove(f) for f in glob.glob( os.path.join(current_path, "sva", name + "*_cut.txt") ) ]
+                [ os.remove(f) for f in glob.glob( os.path.join(working_path, name + "*_cut.txt") ) ]
 
         else:
             updating_virion = False
