@@ -4,7 +4,7 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.6.3 (2/10/2024)
+v0.6.3 (2/16/2024)
 ******************
 
    :fa:`plus-square,text-primary` Allow import of clean particles obtained after 3D classification into pre-processing block.
@@ -22,6 +22,8 @@ v0.6.3 (2/10/2024)
    :fa:`bug,text-danger` Fix issue with missing metadata entries during tilt-series re-processing.
 
    :fa:`bug,text-danger` Correctly discard particles that are too close to gold fiducials (tomography pipeline).
+
+   :fa:`bug,text-danger` Fix issue with management of virion selection thresholds that affected geometric particle picking.
 
 v0.6.2 (2/01/2024)
 ******************
