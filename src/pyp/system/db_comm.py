@@ -288,7 +288,8 @@ def load_spr_results(name, parameters, project_path, working_path, verbose=False
         "raw/{0}.xml",
         "mrc/{0}.mrc",
         "webp/{0}.webp",
-        "pkl/{0}.pkl"
+        "pkl/{0}.pkl",
+        "next/{0}.next"
     ]
 
     try:
@@ -384,7 +385,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
         initial_files.remove("mrc/{0}.rec")
 
     # no need to transfer tomogram if re-doing reconstruction
-    elif 'tomo_rec_force' in parameters and parameters['tomo_rec_force'] or "tomo_rec_erase_fiducials" in parameters and parameters["tomo_rec_erase_fiducials"]:
+    elif 'tomo_rec_force' in parameters and parameters['tomo_rec_force']:
         initial_files.remove("mrc/{0}.rec")
 
     if "tomo_spk_files" in parameters:

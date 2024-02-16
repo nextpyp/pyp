@@ -290,8 +290,8 @@ class LocalMetadata:
 
             output += "\n\n"
         return output
-    
-    
+
+
     def loadPYPConfig(self, file=".pyp_config.toml"):
         if os.path.exists(file):
             self.parameters = project_params.load_parameters()
@@ -307,7 +307,7 @@ class LocalMetadata:
         """ Load all the data based on data mode (spr or tomo)
         """
         for key in self.files:
-            
+
             file_type = self.files[key]["format"]
             file_path = self.files[key]["path"]
             transpose = False
@@ -331,23 +331,18 @@ class LocalMetadata:
                 else:
                     files = glob.glob(file_path % (self.micrograph))
             elif key == "drift":
-                
+
                 if Path("frame_list.txt").exists():
-                    
+
                     files = open("frame_list.txt", "r").read().split("\n")
-                    
+
                     # it contains the name of movie frames instead of .xf
                     files = [str(Path(f).stem) + ".xf" for f in files]
                     files = [f for f in files if Path(f).exists()]
-                
-                else:
-                    logger.warning("Tilt-series do not have frames. ")
-                    
+
             elif key == "frames":
                 if Path(file_path).exists():
                     files = [file_path]
-                else:
-                    logger.warning("Tilt-series do not have frames. ")
 
             multiple_files = True if len(files) > 1 else False
             for f in files:
@@ -414,8 +409,9 @@ class LocalMetadata:
                     transpose = False
                     template = None
                     if key == "drift" and self.parameters is not None:
-                        files = self.data["frames"]
-                        template = [str(Path(f).stem) + ".xf" for f in files]
+                        if "frames" in self.data:
+                            files = self.data["frames"]
+                            template = [str(Path(f).stem) + ".xf" for f in files]
                     elif key == "ctf_avrot" and self.parameters is not None:
                         template = [str(self.files[key]["path"] % (self.micrograph)).replace("*", "%04d" % (index)) for index in data.keys()]
                         transpose = True

@@ -572,9 +572,8 @@ def spr_merge(parameters, check_for_missing_files=True):
         with open(films, "w") as f:
             f.write("\n".join(inputlist))
     else:
-        logger.error("Either all micrographs failed or no particles were found, stopping")
         inputlist = input_all_list
-        raise
+        raise Exception("Either all micrographs failed or no particles were found, stopping")
 
     # use given naming convention when extracting frames for relion
     if False:
@@ -788,9 +787,8 @@ def tomo_merge(parameters, check_for_missing_files=True):
             f.write("\n".join(inputlist))
             f.close()
     else:
-        logger.error("Either all micrographs failed or no particles were found, stopping")
         inputlist = input_all_list
-        raise
+        raise Exception("Either all tilt-series failed or no particles were found, stopping")
 
     if detect.tomo_spk_is_required(parameters) > 0:
         # produce .txt file for 3DAVG
@@ -1384,8 +1382,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 logger.info("Virion segmentation thresholds changed, will re-pick particles")
                 updating_virion = True
                 logger.info("Removing virion spike txt files")
-                [ os.remove(f) for f in glob.glob( os.path.join(current_path, "sva", "*_cut.txt") ) ]
-                [ os.remove(f) for f in glob.glob( os.path.join(working_path, "*_cut.txt") ) ]
+                [ os.remove(f) for f in glob.glob( os.path.join(current_path, "sva", name + "*_cut.txt") ) ]
+                [ os.remove(f) for f in glob.glob( os.path.join(working_path, name + "*_cut.txt") ) ]
 
         else:
             updating_virion = False
@@ -1401,9 +1399,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             metadata = metadata_object.data
 
             if "tomo_rec_force" in parameters and parameters["tomo_rec_force"]:
+                
                 logger.info(
                     f"Tomogram will be recomputed"
                 )
+                if "gold" in metadata.keys():
+                    del metadata["gold"]
 
             # convert metadata to files
             metadata_object.meta2PYP(path=working_path,data_path=os.path.join(current_path,"raw/"))
@@ -1421,6 +1422,9 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 if not np.array_equal(angles, np.sort(new_angles)):
                     logger.warning("Excluded tilts have changed, will re-calculate reconstrucion")
                     parameters["tomo_rec_force"] = True
+            else:
+                logger.warning("Excluded tilts, will re-calculate reconstrucion")
+                parameters["tomo_rec_force"] = True
 
     else:
         logger.info("Ignoring existing results")
@@ -1605,43 +1609,47 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     tilt_metadata["ctf_profiles"] = ctf_profiles
 
     # erase fiducials if needed
-    if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
+    if parameters["tomo_ali_method"] == "imod_gold":
+        gold_mod = "f{name}_gold.mod"
 
-        # create binned aligned stack
-        if not os.path.exists(f'{name}_bin.ali'):
-            command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
-                get_imod_path(), name, binning
-            )
-            local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+        if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
+            # create binned aligned stack
+            if not os.path.exists(f'{name}_bin.ali'):
+                command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
+                    get_imod_path(), name, binning
+                )
+                local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
-        detect.detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+            detect.detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
 
-        # save projected gold coordinates as txt file
-        com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+        if parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
 
-        # calculate unbinned tilt-series coordinates
-        gold_coordinates = np.loadtxt(name + "_gold_ccderaser.txt",ndmin=2)
-        gold_coordinates[:,:2] *= binning
-        np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
+            # save projected gold coordinates as txt file
+            com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
+            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 
-        # convert back to imod model using one point per contour
-        com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+            # calculate unbinned tilt-series coordinates
+            gold_coordinates = np.loadtxt(name + "_gold_ccderaser.txt",ndmin=2)
+            gold_coordinates[:,:2] *= binning
+            np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
 
-        # erase gold on (unbinned) aligned tilt-series
-        erase_factor = parameters["tomo_rec_erase_factor"]
-        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand 5 -order 0 -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+            # convert back to imod model using one point per contour
+            com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
+            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 
-        try:
-            os.remove(name + "_gold_ccderaser.txt")
-            os.remove(name + "_gold_ccderaser.mod")
-        except:
-            pass
+            # erase gold on (unbinned) aligned tilt-series
+            erase_factor = parameters["tomo_rec_erase_factor"]
+            com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand 5 -order 0 -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
+            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 
-        # re-calculate reconstruction using gold-erased tilt-series
-        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
+            try:
+                os.remove(name + "_gold_ccderaser.txt")
+                os.remove(name + "_gold_ccderaser.mod")
+            except:
+                pass
+
+            # re-calculate reconstruction using gold-erased tilt-series
+            merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
