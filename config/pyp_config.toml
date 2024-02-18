@@ -3679,7 +3679,7 @@ copyToNewBlock = false
 
 [tabs.clean.class_selection]
 name = "Classes to keep"
-description = "Coma separated list of classes to keep"
+description = "Comma separated list of classes to keep"
 type = "str"
 default = ""
 required = false
@@ -3751,7 +3751,7 @@ hidden = true
 
 [tabs.stream.transfer_fileset]
 name = "Additional files to transfer"
-description = "Coma separated list of additional files to tranfer (e.g., *.txt,*.mdoc)"
+description = "Comma separated list of additional files to tranfer (e.g., *.txt,*.mdoc)"
 type = "str"
 default = ""
 required = false
@@ -3766,14 +3766,14 @@ hidden = ["stream_spr"]
 
 [tabs.stream.tilt_angles]
 name = "Tilt-angles"
-description="Coma separated list of tilt-angles"
+description="Comma separated list of tilt-angles"
 type = "str"
 default = ""
 hidden = ["stream_spr"]
 
 [tabs.stream.tilt_order]
 name = "Tilt-order"
-description="Coma separated list of tilt-order"
+description="Comma separated list of tilt-order"
 type = "str"
 default = ""
 hidden = ["stream_spr"]
