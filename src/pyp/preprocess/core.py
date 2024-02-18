@@ -36,23 +36,13 @@ def invert_contrast(name):
     local_run.run_shell_command(command)
 
 
-def remove_xrays(image, name):
-    # dump image to file
-    imageio.mrc.write(image, "{0}.mrc".format(name))
-
-    remove_xrays_from_file(name)
-
-    # reload clean stack from file
-    image[:] = imageio.mrc.read("{0}.st".format(name))
-
-
-def remove_xrays_from_file(name):
+def remove_xrays_from_file(name,verbose=False):
     logger.info("Removing xrays")
     # Hot-pixel removal using IMOD's ccderaser
     command = "{0}/bin/ccderaser -input {1}.mrc -output {1}.st -find -points {1}_xray.mod -scan 4.50 -xyscan 128".format(
         get_imod_path(), name
     )
-    local_run.run_shell_command(command)
+    local_run.run_shell_command(command,verbose=verbose)
 
 
 def remove_xrays_from_movie_file(name, inplace=False):

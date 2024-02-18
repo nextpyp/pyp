@@ -1476,7 +1476,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if 'movie_no_frames' in parameters and parameters['movie_no_frames'] and "gain_remove_hot_pixels" in parameters and parameters["gain_remove_hot_pixels"]:
         t = timer.Timer(text="Removing hot pixels took: {}", logger=logger.info)
         t.start()
-        preprocess.remove_xrays_from_file(name)
+        preprocess.remove_xrays_from_file(name,parameters['slurm_verbose'])
         t.stop()
     else:
         os.symlink(name + ".mrc", name + ".st")
@@ -4147,7 +4147,7 @@ if __name__ == "__main__":
                                 local_run.run_shell_command(com)
 
                         if parameters["gain_remove_hot_pixels"]:
-                            preprocess.remove_xrays_from_file(Path(image_file_average).stem)
+                            preprocess.remove_xrays_from_file(Path(image_file_average).stem,parameters['slurm_verbose'])
 
                         if gain_reference_file is not None:
 
