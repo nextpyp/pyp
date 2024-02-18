@@ -1303,6 +1303,13 @@ description = "Numer of patches in x and y to use for tilt-series alignment"
 type = "int"
 default = 10
 
+[tabs.tomo_ali.patches_size]
+name = "Patch size"
+description = "Size of patches to track by correlation (0=auto)"
+type = "int"
+condition = { arg="method", value="imod_patch" }
+default = 0
+
 [tabs.tomo_ali.force]
 name = "Force re-calculation"
 description = "Force re-calculation of tilt-series alignment"

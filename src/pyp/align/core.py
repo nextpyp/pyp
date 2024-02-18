@@ -5302,10 +5302,12 @@ EOF
                 "Align tilt-series using patch tracking (IMOD)"
             )
 
-            max_size = min(
-                tilt_series_size_x - 2 * tapper_size,
-                min(tilt_series_size_y - 2 * tapper_size, 1280),
-            )
+            max_size = parameters.get("tomo_ali_patches_size")
+            if max_size == None or max_size == 0:
+                max_size = min(
+                    tilt_series_size_x - 2 * tapper_size,
+                    min(tilt_series_size_y - 2 * tapper_size, 1280),
+                )
 
             # patch tracking
             command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{3} -number {4},{4}".format(
