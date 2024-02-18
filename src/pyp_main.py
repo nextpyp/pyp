@@ -3161,6 +3161,7 @@ def disable_profiler(profiler,path=os.getcwd()):
 
 
 def trackback():
+    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
     type, value, traceback = sys.exc_info()
     sys.__excepthook__(type, value, traceback)
 
