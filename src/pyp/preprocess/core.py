@@ -333,9 +333,7 @@ def read_tilt_series(
                 tilt_angles = np.sort(tilt_angles)
                 np.savetxt(f"{name}.rawtlt", fmt="%.2f")
             else:
-                local_run.run_shell_command(
-                    "{0}/bin/extracttilts {1}.mrc > {1}.rawtlt".format(get_imod_path(), name)
-                )
+                raise Exception("Please provide .rawtlt or .mdoc for initial tilt angles.")
 
             # process multi-tilt to single_movie file in order of tilt angles
             tilts = [

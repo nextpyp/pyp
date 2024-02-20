@@ -1349,7 +1349,7 @@ def extract_spk_direct(
     spike_name.rec
         Extracted spk volume
     """
-    pad_factor = parameters["tomo_ext_padd"]
+    pad_factor = parameters["tomo_ext_padd"] if "tomo_ext_padd" in parameters else 1
 
     spike_size = pad_factor * ( parameters["tomo_ext_size"] if "tomo_ext_size" in parameters  else 0 ) * parameters["tomo_ext_binn"]
 
