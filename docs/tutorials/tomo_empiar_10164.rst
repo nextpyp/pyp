@@ -134,26 +134,26 @@ Step 3: Pre-processing
 
         - Set ``Max resolution`` to 5.0
 
+        - Click on the **Tomogram reconstruction** tab
+
+      .. tabbed:: Tomogram reconstruction
+
+        - Set ``Binning factor for reconstruction`` to 8
+
+        - Click ``Show advanced options``
+
+        - Set ``Thickness of reconstruction (unbinned voxels)`` to 2048
+
         - Click on the **Virion/spike detection** tab
 
       .. tabbed:: Virion/spike detection
 
-        - Set ``Virion detection method`` to auto
-
         - Set ``Virion radius (A)`` to 500.0
 
-        - Click on the **Tomogram reconstruction** tab
-
-      .. tabbed:: Tomogram reconstruction
-        
-        - Click ``Show advanced options``
-
-        - Set ``Binning factor for reconstruction`` to 8
-
-        - Set ``Thickness of reconstruction (unbinned voxels)`` to 2048
+        - Set ``Virion detection method`` to auto
 
         - Click on the **Resources** tab
-      
+
       .. tabbed:: Resources
 
         - Set ``Threads per task`` to 7
@@ -305,15 +305,13 @@ Step 6: Reference-based refinement
 
         - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search, text-primary`, navigating to the folder where you downloaded the data for the tutorial, and selecting the file `EMPIAR-10164_init_ref.mrc`
 
-        - Check ``Show advanced options``
-
         - Click :fa:`search,text-primary` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-preprocessing-*_original_volumes.txt`` from :badge:`Pre-processing,badge-secondary`
-
-        - Check ``Skip refinement``
 
         - Set ``Max resolution (A)`` to 8.0
 
         - Check ``Use signed correlation``
+
+        - Check ``Skip refinement``
 
         - Click on the **Constrained refinement** tab
 
@@ -321,23 +319,25 @@ Step 6: Reference-based refinement
 
         - Set ``Last exposure for refinement`` to 10
 
+        - Check ``Show advanced options``
+
         - Set ``Optimizer - Exhaustive search points`` to 50000
 
         - Check ``Refine particle alignments``
 
-        - Set ``Particle Phi range (degrees)`` and ``Particle Theta range (degrees)`` to 10
+        - Set ``Phi range (degrees)`` and ``Theta range (degrees)`` to 10
 
-        - Set ``Particle translation range (voxels)`` to 50
+        - Set ``Translation range (voxels)`` to 50
 
-        - Click on the **Resources** tab
+        - Click on the **Reconstruction** tab
 
       .. tabbed:: Reconstruction
-
-        - Check ``Show advanced options``
 
         - Set ``Max tilt-angle`` to 50
 
         - Set ``Min tilt-angle`` to -50
+
+        - Click on the **Resources** tab
 
       .. tabbed:: Resources
 
@@ -367,9 +367,9 @@ Step 7. Fully constrained refinement
 
       .. tabbed:: Refinement
 
-        - Set ``Last iteration`` to 5
-
         - Set ``Max resolution (A)`` to 8:10:8:6
+
+        - Set ``Last iteration`` to 5
 
         - Click on the **Constrained refinement** tab
 
@@ -383,7 +383,7 @@ Step 7. Fully constrained refinement
 
         - Set ``Optimizer - Exhaustive search points`` to 0
 
-        - Set ``Particle Phi range``, ``Particle Psi range`` and ``Particle Theta range`` to 20.0
+        - Set ``Phi range``, ``Psi range`` and ``Theta range`` to 20.0
 
         - Click on the **Exposure weighting** tab
 
@@ -491,11 +491,11 @@ Step 10. Region-based local refinement (before masking)
 
         - Select the location of the ``Initial parameter file`` by clicking on the icon :fa:`search,text-primary` and selecting the file `tomo-fine-refinement-*_r01_02.par.bz2` (select the file ``tomo-fine-refinement-*_r01_02_clean.par.bz2`` if bad particles were permanently removed in the previous step)
 
+        - Set ``Max resolution (A)`` to 6:5
+
         - Set ``Last iteration`` to 3
 
         - Check ``Skip refinement``
-
-        - Set ``Max resolution (A)`` to 6:5
 
         - Click on the **Constrained refinement** tab
 
@@ -505,9 +505,7 @@ Step 10. Region-based local refinement (before masking)
 
         - Set ``Number of regions`` to 8,8,2
 
-        - Check ``Show advanced options``
-
-        - Set ``Particle translation range (voxels)`` to 20.0
+        - Set ``Translation range (voxels)`` to 20.0
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to run the job
 
@@ -559,11 +557,13 @@ Step 12: Region-based constrained refinement
 
       .. tabbed:: Refinement
 
+        - Set ``Max resolution (A)`` to 6:5:5:4:3.5
+
+        - Uncheck ``Resume refinement``
+
         - Set ``First iteration`` to 4
 
         - Set ``Last iteration`` to 6
-
-        - Set ``Max resolution (A)`` to 6:5:5:4:3.5
 
         - Specify the location of the ``Shape mask`` produced in Step 11 by clicking on the icon :fa:`search, text-primary`, navigating to the location of the :badge:`Masking,badge-secondary` block by copying the path we saved above, and selecting the file `frealign/maps/mask.mrc`
 
@@ -588,23 +588,21 @@ Step 13: Particle-based CTF refinement
 
       .. tabbed:: Refinement
 
-        - Set ``Last iteration`` to 7
-
         - Set ``Max resolution (A)`` to 3.1
+
+        - Set ``Last iteration`` to 7
 
         - Click on the **Constrained refinement** tab
 
       .. tabbed:: Constrained refinement
+
+        - Set ``Last exposure for refinement`` to 10
 
         - Uncheck ``Refine tilt-geometry``
 
         - Uncheck ``Refine particle alignments``
 
         - Check ``Refine CTF per-particle``
-
-        - Check ``Show advanced options``
-
-        - Set ``Last exposure for refinement`` to 10
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
@@ -643,13 +641,11 @@ Step 14: Movie frame refinement
 
       .. tabbed:: Constrained refinement
 
+        - Set ``Last exposure for refinement`` to 4
+
         - Uncheck ``Refine CTF per-particle``
 
         - Check ``Movie frame refinement``
-
-        - Check ``Show advanced options``
-
-        - Set ``Last exposure for refinement`` to 4
 
         - Check ``Regularize translations``
 
@@ -673,7 +669,7 @@ Step 15: Refinement after movie frame refinement
     * Click on the menu icon :fa:`bars, text-primary` from the :badge:`Movie refinement,badge-secondary` block and choose the :fa:`edit, text-primary` Edit option.
 
     * Go to the **Refinement** tab:
-        
+
       .. tabbed:: Refinement
 
         - Set ``Max resolution (A)`` to 3.3
@@ -682,25 +678,27 @@ Step 15: Refinement after movie frame refinement
 
       .. tabbed:: Constrained refinement
 
+        - Check ``Show advanced options``
+
+        - Set ``Min number of projections for refinement`` to 2
+
         - Check ``Refine tilt-geometry``
+
+        - Set ``Translation range (pixels)`` to 10.0
+
+        - Set ``Tilt-angle range (degrees)`` and ``Tilt-axis range (degrees)`` to 1.0
 
         - Check ``Refine particle alignments``
 
+        - Set ``Phi range (degrees)`` to 1.0
+
+        - Set ``Psi range (degrees)`` to 1.0
+
+        - Set ``Theta range (degrees)`` to 1.0
+
+        - Set ``Translation range (voxels)`` to 10.0
+
         - Uncheck ``Movie frame refinement``
-        
-        - Set ``Micrograph translation range (pixels)`` to 10.0
-
-        - Set ``Micrograph tilt-angle range (degrees)`` and ``Micrograph tilt-axis range (degrees)`` to 1.0
-
-        - Set ``Particle Phi range (degrees)`` to 1.0
-
-        - Set ``Particle Psi range (degrees)`` to 1.0
-
-        - Set ``Particle Theta range (degrees)`` to 1.0
-
-        - Set ``Particle translation range (voxels)`` to 10.0
-        
-        - Set ``Min number of projections for refinement`` to 2
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
