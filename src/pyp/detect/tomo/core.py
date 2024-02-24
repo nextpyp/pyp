@@ -1276,11 +1276,8 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         elif parameters["tomo_spk_method"] == "auto":
             logger.info("Using size-based particle picking")
 
-            t = timer.Timer(text="Auto Gaussian picking took: {}", logger=logger.info)
-            t.start()
             from pyp.detect.tomo import picker
             picker.pick(name,radius=parameters["tomo_spk_rad"],pixelsize=parameters["scope_pixel"],auto_binning = binning,contract_times=parameters["tomo_spk_contract_times_3d"],gaussian=parameters["tomo_spk_gaussian_3d"],sigma=parameters["tomo_spk_sigma_3d"],stdtimes_cont=parameters["tomo_spk_stdtimes_cont_3d"],min_size=parameters["tomo_spk_min_size_3d"],dilation=parameters["tomo_spk_dilation_3d"],radius_times=parameters["tomo_spk_radiustimes_3d"],inhibit=parameters["tomo_spk_inhibit_3d"],detection_width=parameters["tomo_spk_detection_width_3d"],stdtimes_filt=parameters["tomo_spk_stdtimes_filt_3d"],remove_edge=parameters["tomo_spk_remove_edge_3d"],show=False)
-            t.stop()
 
     # Directly extract spikes from tomogram
     if (

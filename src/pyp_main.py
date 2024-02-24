@@ -1655,10 +1655,10 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if not os.path.exists(f"{name}.rec"):
         symlink_relative(os.path.join(project_path, "mrc", f"{name}.rec"), f"{name}.rec")
 
-    t = timer.Timer(text="Virion and spike detection took: {}", logger=logger.info)
+    t = timer.Timer(text="Virion/particle detection took: {}", logger=logger.info)
     t.start()
     # remove environment LD_LIBRARY_PATH conflicts
-    
+
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
         name,

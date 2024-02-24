@@ -1845,7 +1845,7 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
                         handedness = FLIP
                 return handedness
             else:
-                logger.warning(f"Estimated tilt-angle ({estimated_tilt_angle}) is very different from expected value ({tilt_angles[index]}). Skip handedness detection for this tilt")
+                logger.warning(f"Estimated tilt-angle ({estimated_tilt_angle}) is very different from expected value ({tilt_angles[index]}). Skipping handedness detection for this tilt")
     else:
         logger.warning(f"{estimated_tilt} does not exist. Skipping detecting handedness using tilt angle {angle_to_detect}... ")
 
@@ -1886,7 +1886,7 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
         # report how many tilts are consistent with inverson/no-inversion
         true_count = candidates.count(True)
         false_count = candidates.count(False)
-        logger.info(f"From a total of {angle_used} tilt images used for CTF handedness detection, {true_count} indicate that inversion is required, and {false_count} that it is not")
+        logger.info(f"From a total of {angle_used} tilt images used for CTF handedness detection, {true_count} indicate that inversion is required, and {false_count} that is not")
 
         candidates.sort() # False is the first element after sorting
         median = candidates[math.floor(len(candidates)/2)]
