@@ -4071,6 +4071,14 @@ default = 0
 hidden = [ "map_post_process", "stream_spr", "stream_tomo", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
 advanced = true
 
+[tabs.slurm.max_memory]
+name = "Max amount of memory"
+description = "Limit the total amount of memory in GB that can be used simultaneously (0=follow slurm limits)"
+type = "int"
+default = 0
+hidden = [ "map_post_process", "stream_spr", "stream_tomo", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+advanced = true
+
 [tabs.slurm.gres]
 name = "Gres per task"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
