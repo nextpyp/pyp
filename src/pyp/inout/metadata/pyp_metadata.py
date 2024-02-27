@@ -994,7 +994,7 @@ class GlobalMetadata:
         self.extended = pd.DataFrame(pardata[:, 16:], columns=PAREXTENDED)
 
 
-    def meta2Star(self, filename, imagelist, select=1, stack="stack.mrcs", parfile="", frame_refinement=False, version="30001"):
+    def meta2Star(self, filename, imagelist, select=1, stack="stack.mrcs", parfile="", frame_refinement=False, version="30001", output_path="."):
         """
         From metadata to star file for relion import
         """
@@ -1008,7 +1008,7 @@ class GlobalMetadata:
             newfilm = self.refinement["FILM"].copy()
             for id, imagename in enumerate(imagelist):
                 
-                relion_image_path = "Micrographs/"
+                relion_image_path = os.path.join(output_path, "Micrographs")
                 relion_image = os.path.join(relion_image_path, imagename + ".mrc")
                 
                 mask = self.refinement["FILM"].astype(int).isin([id])
@@ -1062,7 +1062,8 @@ _rlnOpticsGroup #14
 _rlnGroupNumber #15 
 _rlnRandomSubset #16 
         """
-
+            
+            saved_file = os.path.join(output_path, filename)
             if not frame_refinement:
                 ac = self.scope_data["AC"].values[0]
                 cs = self.scope_data["CS"].values[0]
@@ -1100,12 +1101,13 @@ _rlnRandomSubset #16
                     star_columns = pd.concat(columns, axis=1)
                     star_header = data_optics_str + version + data_particles_header
                     npvalue = star_columns.to_numpy(dtype=str, copy=True)
-                    np.savetxt(filename, npvalue, fmt='%s', header=star_header, delimiter="\t", comments='')
+                    
+                    np.savetxt(saved_file, npvalue, fmt='%s', header=star_header, delimiter="\t", comments='')
 
                 else:
 
                     comm = "par2star.py --stack {0} --apix {1} --ac {2} --cs {3} --voltage {4} {5} {6}".format(
-                        stack, ptl_pxl, ac, cs, voltage, parfile, filename
+                        stack, ptl_pxl, ac, cs, voltage, parfile, saved_file
                     )
                     run_shell_command(comm, verbose=True)
             else:
@@ -1251,8 +1253,12 @@ _rlnOriginZAngst #3
             dose_rate = self.scope_data["dose_rate"].values[0]
 
             dataset, format = os.path.splitext(filename)
-            tomogram_file = f"./relion/{dataset}_tomograms{format}"
-            particle_file = f"./relion/{dataset}_particles{format}"
+
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
+
+            tomogram_file = os.path.join(output_path, f"relion/{dataset}_tomograms{format}")
+            particle_file = os.path.join(output_path, f"relion/{dataset}_particles{format}")
 
             EXTEND_START = 16
 
@@ -1285,10 +1291,10 @@ _rlnOriginZAngst #3
                 data = self.data[micrograph]
 
                 # link tilt-series .mrc to relion folder if needed
-                if not os.path.exists(os.path.join("relion", "Movies")):
-                    os.makedirs(os.path.join("relion", "Movies"))
-                if not os.path.exists(os.path.join("relion", "Movies", f"{micrograph}.mrc")):
-                    os.symlink(os.path.join(os.getcwd(), "mrc", f"{micrograph}.mrc"), os.path.join("relion", "Movies", f"{micrograph}.mrc"))
+                if not os.path.exists(os.path.join(output_path, "relion", "Movies")):
+                    os.makedirs(os.path.join(output_path, "relion", "Movies"))
+                if not os.path.exists(os.path.join(output_path, "relion", "Movies", f"{micrograph}.mrc")):
+                    os.symlink(os.path.join(os.getcwd(), "mrc", f"{micrograph}.mrc"), os.path.join(output_path, "relion", "Movies", f"{micrograph}.mrc"))
                 
                 # raw image size
                 num_tilts = data["image"].values[0][-1]
