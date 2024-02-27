@@ -1661,17 +1661,12 @@ def csp_refinement(
 
         # execute refinement
         if is_tomo:
-            if (
-                mp["csp_refine_particles"] 
-                or mp["csp_refine_micrographs"] 
-                or mp["csp_refine_ctf"] 
-                or mp["csp_frame_refinement"]
-                ):
-                # set SCANORD back to normal (without having frame index added) before going to csp
-                t = Timer(text="Modifying scanning order took: {}", logger=logger.info)
-                t.start()
-                frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
-                t.stop()
+            
+            # set SCANORD back to normal (without having frame index added) before going to csp
+            t = Timer(text="Modifying scanning order took: {}", logger=logger.info)
+            t.start()
+            frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
+            t.stop()
 
             new_par_file = csp_run_refinement(
                 class_parxfile,
@@ -1690,17 +1685,11 @@ def csp_refinement(
 
             shutil.copy2(new_par_file, class_parxfile)
 
-            if (
-                mp["csp_refine_particles"] 
-                or mp["csp_refine_micrographs"] 
-                or mp["csp_refine_ctf"] 
-                or mp["csp_frame_refinement"]
-                ):
-                t = Timer(text="Modifying scanning order 2 took: {}", logger=logger.info)
-                t.start()
-                # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
-                frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
-                t.stop() 
+            t = Timer(text="Modifying scanning order 2 took: {}", logger=logger.info)
+            t.start()
+            # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
+            frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
+            t.stop() 
 
         elif use_frames or mp["csp_refine_ctf"]: # run csp for only refine ctf or frame refinement 
 
@@ -5313,10 +5302,12 @@ EOF
                 "Align tilt-series using patch tracking (IMOD)"
             )
 
-            max_size = min(
-                tilt_series_size_x - 2 * tapper_size,
-                min(tilt_series_size_y - 2 * tapper_size, 1280),
-            )
+            max_size = parameters.get("tomo_ali_patches_size")
+            if max_size == None or max_size == 0:
+                max_size = min(
+                    tilt_series_size_x - 2 * tapper_size,
+                    min(tilt_series_size_y - 2 * tapper_size, 1280),
+                )
 
             # patch tracking
             command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{3} -number {4},{4}".format(

@@ -1476,7 +1476,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if 'movie_no_frames' in parameters and parameters['movie_no_frames'] and "gain_remove_hot_pixels" in parameters and parameters["gain_remove_hot_pixels"]:
         t = timer.Timer(text="Removing hot pixels took: {}", logger=logger.info)
         t.start()
-        preprocess.remove_xrays_from_file(name)
+        preprocess.remove_xrays_from_file(name,parameters['slurm_verbose'])
         t.stop()
     else:
         os.symlink(name + ".mrc", name + ".st")
@@ -1655,10 +1655,10 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if not os.path.exists(f"{name}.rec"):
         symlink_relative(os.path.join(project_path, "mrc", f"{name}.rec"), f"{name}.rec")
 
-    t = timer.Timer(text="Virion and spike detection took: {}", logger=logger.info)
+    t = timer.Timer(text="Virion/particle detection took: {}", logger=logger.info)
     t.start()
     # remove environment LD_LIBRARY_PATH conflicts
-    
+
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
         name,
@@ -3161,6 +3161,7 @@ def disable_profiler(profiler,path=os.getcwd()):
 
 
 def trackback():
+    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
     type, value, traceback = sys.exc_info()
     sys.__excepthook__(type, value, traceback)
 
@@ -4120,7 +4121,7 @@ if __name__ == "__main__":
                         logger.info("Selecting image for preview: " + image_file)
                         x, y, z = get_image_dimensions(image_file)
                         image_file_average = Path(image_file).name
-                        logger.info(f"Image dimensions are {x} x {y} ({z} frames)")
+                        logger.info(f"Image dimensions are {x} x {y} ({z} frames/tilts)")
 
                         gain_reference, gain_reference_file = get_gain_reference(
                             parameters, x, y
@@ -4147,7 +4148,7 @@ if __name__ == "__main__":
                                 local_run.run_shell_command(com)
 
                         if parameters["gain_remove_hot_pixels"]:
-                            preprocess.remove_xrays_from_file(Path(image_file_average).stem)
+                            preprocess.remove_xrays_from_file(Path(image_file_average).stem,parameters['slurm_verbose'])
 
                         if gain_reference_file is not None:
 

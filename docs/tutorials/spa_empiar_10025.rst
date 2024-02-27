@@ -223,11 +223,11 @@ Step 4: Reference-based refinement
 
       - Set the location of the ``Initial model`` by clicking on the icon :fa:`search, text-primary`, navigating to the folder where you downloaded the data for the tutorial, selecting the file  `EMPIAR-10025_init_ref.mrc`, and clicking :badge:`Choose File,badge-primary`
 
-      - Set ``Last iteration`` to 5
-
       - Set ``Max resolution (A)`` to 8:7:6
 
       - Check ``Use signed correlation``
+
+      - Set ``Last iteration`` to 5
 
       - Check ``Show advanced options``
 
@@ -346,13 +346,13 @@ Step 7: Particle refinement
 
       - Select the ``Input parameter file`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-fine-refinement-*_r01_02_clean.par.bz2`
 
-      - Set ``Last iteration`` to 6
-
-      - Set ``Search mode`` to local
-
       - Set ``Max resolution (A)`` to 6:4:3
 
       - Check ``Use signed correlation``
+
+      - Set ``Last iteration`` to 6
+
+      - Set ``Search mode`` to local
 
   * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to launch the job
 
@@ -461,11 +461,11 @@ Step 11: Movie frame refinement
 
       - Select the ``Input parameter`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-coarse-refinement-*_r01_07.par.bz2`
 
+      - Set ``Max resolution (A)`` to 3
+
       - Set ``Last iteration`` to 3
 
       - Check ``Skip refinement``
-
-      - Set ``Max resolution (A)`` to 3
 
       - Go to the **Constrained refinement** tab
 
@@ -474,8 +474,6 @@ Step 11: Movie frame refinement
       - Set ``Last exposure for refinement`` to 60
 
       - Check ``Movie frame refinement``
-
-      - Check ``Show advanced options``
 
       - Check ``Regularize translations``
 

@@ -2894,6 +2894,7 @@ def build_map_montage( map_file, radius, output ):
 
     #
     lim = int(z / 2 - radius)
+    lim = 1 if lim == 0 else lim
     # lim = int(z / 2 * (1 - 0.75))
     nz = z - 2 * lim
     montage = np.zeros([nz * 2, nz * 3])

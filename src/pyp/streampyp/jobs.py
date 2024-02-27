@@ -143,8 +143,17 @@ done
     else:
         raise Exception("can't find .pyp_config.toml")
 
+    # enforce max number of threads
     all_cpu_nodes = int(project_params.load_parameters(par_dir)["slurm_max_cpus"])
     bundle_size = all_cpu_nodes / threads
+
+    # enforce max amount of memory
+    all_memory_nodes = int(project_params.load_parameters(par_dir)["slurm_max_memory"])
+    bundle_by_memory = all_memory_nodes / memory
+
+    # keep the most limiting of the two
+    bundle_size = min( bundle_size, bundle_by_memory )
+
     net_processes = int(math.ceil(float(processes) / tasks_per_arr))
     if bundle_size > 0 and net_processes < bundle_size:
         if Web.exists:
