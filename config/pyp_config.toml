@@ -3948,6 +3948,7 @@ hidden = true
 [tabs.export]
 _name = "Export"
 _description = "Export results to other packages"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.export.enable]
 name = "Export metadata"
