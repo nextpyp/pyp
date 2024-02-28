@@ -1371,7 +1371,6 @@ description = "Z height of specimen (not tomogram), critical for the alignment"
 type = "int"
 default = 600
 condition = { arg="method", value="aretomo" }
-advanced = true
 
 [tabs.tomo_ali.aretomo_tiltoff]
 name = "Add tilt offset"
@@ -1379,7 +1378,6 @@ description = "Add tilt offset to the tilt angle before alignment, instead of me
 type = "float"
 default = 0.0
 condition = { arg="method", value="aretomo" }
-advanced = true
 
 [tabs.tomo_ali.aretomo_measure_tiltoff]
 name = "Measure tilt offset"
@@ -1387,7 +1385,6 @@ description = "Measure the tilt offset automatically. Note that the tilt angles 
 type = "bool"
 default = true
 condition = { arg="method", value="aretomo" }
-advanced = true
 
 [tabs.tomo_ali.aretomo_bft]
 name = "B-factors for low-pass filter"
@@ -1395,7 +1392,6 @@ description = "Used in the cross correlation. The first value is used for global
 type = "str"
 default = "0,0"
 condition = { arg="method", value="aretomo" }
-advanced = true
 
 [tabs.tomo_ali.aretomo_dark_tol]
 name = "Threshold to remove dark images"
@@ -1403,7 +1399,6 @@ description = "Threshold to remove dark images (lower values remove fewer images
 type = "float"
 default = 0.0
 condition = { arg="method", value="aretomo" }
-advanced = true
 
 [tabs.tomo_rec]
 _name = "Tomogram reconstruction"
@@ -1505,7 +1500,6 @@ description = "Use Simultaneous Algebraic Reconstruction Technique (SART) to rec
 type = "bool"
 default = false
 condition = { arg="method", value="aretomo" }
-advanced = true
 
 [tabs.tomo_rec.aretomo_sart_iter]
 name = "Number of iterations"
@@ -1513,7 +1507,6 @@ description = "Number of iterations for SART reconstruction, "
 type = "int"
 default = 20
 condition = { arg="aretomo_sart", value="true" }
-advanced = true
 
 [tabs.tomo_rec.aretomo_sart_num_projs]
 name = "Number of projections per subet"
@@ -1521,7 +1514,6 @@ description = "Number of projections per subet for SART reconstruction"
 type = "int"
 default = 5
 condition = { arg="aretomo_sart", value="true" }
-advanced = true
 
 [tabs.tomo_rec.topaz_denoise]
 name = "Denoise tomograms using Topaz denoise"
@@ -1536,7 +1528,6 @@ type = "enum"
 enum = { unet-3d-10a="unet-3d-10a", unet-3d="unet-3d", unet-3d-20a="unet-3d-20a" }
 default = "unet-3d-10a"
 condition = { arg="topaz_denoise", value="true" }
-advanced = true
 
 [tabs.tomo_rec.topaz_gaussian]
 name = "Gaussian filter"
@@ -1544,7 +1535,6 @@ description = "Standard deviation of Gaussian filter for post-processing (0 mean
 type = "float"
 default = 0.0
 condition = { arg="topaz_denoise", value="true" }
-advanced = true
 
 [tabs.tomo_rec.topaz_patch_size]
 name = "Patch size"
@@ -1552,7 +1542,6 @@ description = "Denoises volumes in patches of this size"
 type = "int"
 default = 96
 condition = { arg="topaz_denoise", value="true" }
-advanced = true
 
 [tabs.tomo_rec.topaz_patch_padding]
 name = "Patch padding size"
@@ -1560,7 +1549,6 @@ description = "Padding around each patch to remove edge artifacts"
 type = "int"
 default = 48
 condition = { arg="topaz_denoise", value="true" }
-advanced = true
 
 [tabs.tomo_rec.topaz_use_gpu]
 name = "Use GPU"
@@ -1568,7 +1556,6 @@ description = "Request a GPU to run Topaz denoise"
 type = "bool"
 default = false
 condition = { arg="topaz_denoise", value="true" }
-advanced = true
 
 [tabs.tomo_vir]
 _name = "Virion/spike detection"
@@ -1688,7 +1675,6 @@ name = "Spike height offset (A)"
 description = "Cut particles above membrane surface by this amount"
 type = "int"
 default = 0
-advanced = true
 condition = { arg="detect_method", value=["template","mesh"] }
 
 [tabs.tomo_vir.force]
@@ -1735,7 +1721,6 @@ description = "Filter tomograms using a Gaussian filter before contamination det
 type = "bool"
 default=false
 condition = { arg="method", value="auto" }
-advanced = true
 
 [tabs.tomo_spk.sigma_3d]
 name = "Sigma (voxels)"
@@ -1743,7 +1728,6 @@ description = "Standard deviation used for the Gaussian filter"
 type = "int"
 default = 15
 condition = { arg="gaussian_3d", value="true" }
-advanced = true
 
 [tabs.tomo_spk.stdtimes_cont_3d]
 name = "Threshold for contamination detection"
