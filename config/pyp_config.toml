@@ -122,7 +122,7 @@ tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "detect", "detect_nn
 [blocks.stream_tomo]
 name= "Tomography Streaming"
 description = "Data streaming mode for tomography sessions"
-tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "slurm" ]
+tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_ext", "tomo_vir", "tomo_spk", "detect_nn3d", "slurm" ]
 
 ########
 # Tabs #
@@ -1811,6 +1811,7 @@ condition = { arg="method", value=["auto","import","manual","pyp-eval"] }
 [tabs.tomo_ext]
 _name = "Sub-tomogram extraction"
 _description = "Sub-tomogram extraction parameters"
+_hidden = [ "stream_tomo" ]
 
 [tabs.tomo_ext.fmt]
 name = "Extraction format"
@@ -3855,7 +3856,7 @@ default = false
 
 [tabs.stream.transfer_fileset]
 name = "Additional files to transfer"
-description = "Comma separated list of additional files to tranfer (e.g., *.txt,*.mdoc)"
+ description = "Comma separated list of additional files to transfer (e.g., .rawtlt,.mdoc)"
 type = "str"
 default = ""
 required = false
