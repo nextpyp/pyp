@@ -3245,10 +3245,7 @@ if __name__ == "__main__":
         os.environ["PYP_PYTHON"] = "Anaconda2/2.7.13"
         scratch_config = config["pyp"]["scratch"]
         if "$" in scratch_config:
-            scratch_split = config["pyp"]["scratch"].split("$")
-            os.environ["PYP_SCRATCH"] = os.path.join(
-                scratch_split[0], os.environ[scratch_split[1]]
-            )
+            os.environ["PYP_SCRATCH"] = os.path.expandvars(config["pyp"]["scratch"])
         else:
             os.environ["PYP_SCRATCH"] = scratch_config
         os.environ["OPENBLAS_NUM_THREADS"] = "1"
