@@ -3177,27 +3177,8 @@ def get_free_space(scratch):
         if len(line) > 0:
             logger.info(line)
 
-"""
-def clear_scratch(scratch):
-    # clear up local scratch directory from non-running jobs
-    command = run_ssh(run_slurm(command="squeue --me -o %i --noheader"))
-    [ running_jobs, error ] = local_run.run_shell_command(command, verbose=True)
-    logger.info("running_jobs")
-    logger.info(command)
-    logger.info(running_jobs)
-    for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
-        # check if directory is in the form {SLURM_JOB_ID}_{SLURM_ARRAY_TASK_ID}
-        if bool(re.match('[\d/_]+$',dir)) and dir not in running_jobs:
-            try:
-                logger.warning(f"Slurm job {dir} is no longer running. Attempting to delete")
-                os.rmdir(dir)
-            except:
-                logger.error(f"Failed to delete folder {dir}")
-                pass
-"""
-
 # remove any leftover scratch directories that are older than 1 hour
-def clear_scratch(scratch):
+def clear_scratch(scratch,timeout=60):
     # list all top level directories under scratch folder
     if os.path.exists(scratch):
         for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
@@ -3211,7 +3192,7 @@ def clear_scratch(scratch):
                         latest_file = max(list_of_files, key=os.path.getctime)
                         age_in_minutes = ( time.time() - os.path.getctime(latest_file) ) / 60.
                         # if age of most recent file is more than 1 hour, assume this is a zombie folder
-                        if age_in_minutes > 60:
+                        if age_in_minutes > timeout:
                             try:
                                 logger.warning(f"Detected zombie run at {dir}, clearing up files")
                                 shutil.rmtree(os.path.join(scratch,dir), ignore_errors=True)
@@ -3425,14 +3406,14 @@ if __name__ == "__main__":
             # spr_swarm(args.path, args.file, args.debug, args.keep, args.skip)
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
                 cwd = os.getcwd()
                 # spa_Tlog = {}
                 args = project_params.parse_arguments("sprswarm")
                 parameters = project_params.load_pyp_parameters(path="../")
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 spr_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
@@ -3460,11 +3441,12 @@ if __name__ == "__main__":
 
             try:
 
+                args = project_params.parse_arguments("tomoswarm")
+                parameters = project_params.load_pyp_parameters(project_params.resolve_path(args.path))
+
                 # clear local scratch and report free space
                 clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
-                args = project_params.parse_arguments("tomoswarm")
 
                 tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
@@ -3874,11 +3856,12 @@ if __name__ == "__main__":
 
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
                 args = project_params.parse_arguments("cspswarm")
+                parameters = project_params.load_pyp_parameters(project_params.resolve_path(args.path))
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 working_path = os.path.join(os.environ["PYP_SCRATCH"], args.file)
                 cwd = os.getcwd()
@@ -4073,11 +4056,12 @@ if __name__ == "__main__":
             del os.environ["sprtrain"]
             try:
 
+                args = project_params.load_pyp_parameters()
+
                 # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],args["slurm_zombie"])
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
-                args = project_params.load_pyp_parameters()
                 if args["detect_method"].startswith("topaz"):
                     topaz.sprtrain(args)
                 else:
@@ -4092,10 +4076,11 @@ if __name__ == "__main__":
             try:
 
                 # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                args = project_params.load_pyp_parameters()
+
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],args["slurm_zombie"])
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
-                args = project_params.load_pyp_parameters()
                 joint.tomotrain(args)
                 logger.info("PYP (tomotrain) finished successfully")
             except:
@@ -4200,11 +4185,11 @@ if __name__ == "__main__":
             del os.environ["clean"]
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
                 parameters = parse_arguments("spr_tomo_map_clean")
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 # prepare frealign directory
                 os.makedirs("frealign", exist_ok=True)

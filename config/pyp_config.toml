@@ -4049,6 +4049,13 @@ type = "int"
 default = 4
 hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
 
+[tabs.slurm.zombie]
+name = "Timeout to delete zombie runs (minutes)"
+description = "Timeout to delete scratch folders from jobs that have been idle"
+type = "int"
+default = 60
+advanced = true
+
 [tabs.slurm.max_cpus]
 name = "Max number of threads"
 description = "Limit the total number of threads that can run simultaneously (0=follow slurm limits)"
