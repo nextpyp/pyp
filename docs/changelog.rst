@@ -25,6 +25,8 @@ v0.6.3 (3/01/2024)
 
    :fa:`plus-square,text-primary` Upgrade program versions to MotionCor3 1.1.1 and AreTomo2 1.1.2.
 
+   :fa:`plus-square,text-primary` Allow use of environment variables when specifying the local scratch directory.
+
    :fa:`bug,text-danger` Hide the export tab from particle filtering blocks for tomography projects.
 
    :fa:`bug,text-danger` Fix bug in function used to export sessions to .star format.
