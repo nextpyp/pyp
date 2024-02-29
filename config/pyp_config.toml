@@ -1344,16 +1344,30 @@ type = "int"
 condition = { arg="method", value="imod_gold" }
 default = -1
 
-[tabs.tomo_ali.patches]
-name = "Number of patches"
-description = "Numer of patches in x and y to use for tilt-series alignment"
+[tabs.tomo_ali.patches_x]
+name = "Number of patches in X"
+description = "Numer of patches in X to use for tilt-series alignment"
 type = "int"
-condition = { arg="method", value="imod_patch" }
+condition = { arg="method", value=["imod_patch","aretomo"] }
 default = 10
 
-[tabs.tomo_ali.patches_size]
-name = "Patch size"
-description = "Size of patches to track by correlation (0=auto)"
+[tabs.tomo_ali.patches_size_x]
+name = "Patch size in X"
+description = "Size of patches in X to track by correlation (0=auto)"
+type = "int"
+condition = { arg="method", value="imod_patch" }
+default = 0
+
+[tabs.tomo_ali.patches_y]
+name = "Number of patches in Y"
+description = "Numer of patches in Y to use for tilt-series alignment"
+type = "int"
+condition = { arg="method", value=["imod_patch","aretomo"] }
+default = 10
+
+[tabs.tomo_ali.patches_size_y]
+name = "Patch size in Y"
+description = "Size of patches in Y to track by correlation (0=auto)"
 type = "int"
 condition = { arg="method", value="imod_patch" }
 default = 0

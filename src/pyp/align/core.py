@@ -4950,8 +4950,8 @@ def align_tilt_series(name, parameters, rotation=0):
             tilt_offset_option = "1" if parameters['tomo_ali_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_ali_aretomo_tiltoff']}"
 
             # local motion by giving the number of patches
-            if parameters["tomo_ali_method"] == "imod_patch":
-                patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
+            if parameters.get("tomo_ali_patches_x") and parameters.get("tomo_ali_patches_y"):
+                patches = f" -Patch {parameters['tomo_ali_patches_x']} {parameters['tomo_ali_patches_y']}"
             else:
                 patches = ""
 
@@ -5302,20 +5302,26 @@ EOF
                 "Align tilt-series using patch tracking (IMOD)"
             )
 
-            max_size = parameters.get("tomo_ali_patches_size")
-            if max_size == None or max_size == 0:
-                max_size = min(
-                    tilt_series_size_x - 2 * tapper_size,
-                    min(tilt_series_size_y - 2 * tapper_size, 1280),
+            max_size_x = parameters.get("tomo_ali_patches_size_x")
+            max_size_y = parameters.get("tomo_ali_patches_size_y")
+            if max_size_x == None or max_size_x == 0:
+                max_size_x = min(
+                    tilt_series_size_x - 2 * tapper_size,1280
+                )
+            if max_size_y == None or max_size_y == 0:
+                max_size_y = min(
+                    tilt_series_size_y - 2 * tapper_size, 1280
                 )
 
             # patch tracking
-            command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{3} -number {4},{4}".format(
+            command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{4} -number {5},{6}".format(
                 get_imod_path(),
                 name,
                 tiltxcorr_options,
-                max_size,
-                parameters["tomo_ali_patches"],
+                max_size_x,
+                max_size_y,
+                parameters["tomo_ali_patches_x"],
+                parameters["tomo_ali_patches_y"],
             )
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
