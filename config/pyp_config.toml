@@ -3727,7 +3727,7 @@ copyToNewBlock = false
 condition = { arg="spr_auto", value="false" }
 
 [tabs.clean.dist]
-name = "Min distance between particles (pixel)"
+name = "Min distance between particles (pixels)"
 description = "Distance cutoff to remove neighboring particles"
 type = "float"
 default = 0.0
