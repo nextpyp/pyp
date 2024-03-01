@@ -4067,7 +4067,7 @@ hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask"
 name = "Timeout to delete zombie runs (minutes)"
 description = "Timeout to delete scratch folders from jobs that have been idle"
 type = "int"
-default = 60
+default = 600
 advanced = true
 
 [tabs.slurm.max_cpus]
