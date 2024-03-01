@@ -2452,7 +2452,7 @@ def align_stack_super(
                         bfactor = "800"
 
                     tmp_directory = name
-                    os.mkdir(tmp_directory)
+                    os.makedirs(tmp_directory)
                     os.chdir(tmp_directory)
 
                     # run unblur

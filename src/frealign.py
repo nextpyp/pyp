@@ -81,7 +81,7 @@ if __name__ == "__main__":
         os.environ["PYP_SCRATCH"] = str(Path(os.environ["PYP_SCRATCH"]) / os.environ["SLURM_JOB_ID"])
 
     if not os.path.exists(os.environ["PYP_SCRATCH"]):
-        os.mkdir(os.environ["PYP_SCRATCH"])
+        os.makedirs(os.environ["PYP_SCRATCH"])
     if not os.environ.get("PBS_O_WORKDIR"):
         os.environ["PBS_O_WORKDIR"] = os.getcwd()
     os.environ["MPI_BIN"] = "/opt/apps/rhel7/anaconda2/bin"
@@ -104,7 +104,7 @@ if __name__ == "__main__":
                 else:
                     if flag["type"] == "clear":
                         shutil.rmtree(local_scratch)
-                        os.mkdir(local_scratch)
+                        os.makedirs(local_scratch)
                         os.chdir(frealign_directory)
                         logger.warning("Clean local scratch and re-start 2D classification")
                         flag = fyp_daemon.fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict())

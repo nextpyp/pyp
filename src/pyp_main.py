@@ -1847,7 +1847,7 @@ def csp_split(parameters, iteration):
             # create weights folder for storing weights.txt
             weights_folder = Path.cwd() / "frealign" / "weights"
             if not weights_folder.exists():
-                os.mkdir(weights_folder)
+                os.makedirs(weights_folder)
 
             # compute global weights using enitre parfile
             if parameters["dose_weighting_global"] and parfile != None:
@@ -3030,7 +3030,7 @@ def cryolo_3d(
 
         yolo_ini_dir = "picked_input"
         if not os.path.isdir(yolo_ini_dir):
-            os.mkdir(yolo_ini_dir)
+            os.makedirs(yolo_ini_dir)
 
         picked_files = [
             s.replace("../next/", "").replace(".next", "")
@@ -3780,7 +3780,7 @@ if __name__ == "__main__":
                             "frealign/maps",
                             "frealign/log",
                         ]
-                        null = [os.mkdir(f) for f in folders if not os.path.exists(f)]
+                        null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
 
                         if parameters["refine_iter"] == 2:
 
