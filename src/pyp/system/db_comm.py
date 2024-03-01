@@ -26,7 +26,7 @@ def save_parameters_to_website(parameters):
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
-    else:
+    elif "data_set" in parameters:
         try:
             # actually send the micrograph to the website
             Web().write_parameters(parameter_id=parameters["data_set"], parameters=parameters)
