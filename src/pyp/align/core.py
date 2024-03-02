@@ -5194,7 +5194,7 @@ def align_tilt_series(name, parameters, rotation=0):
 -AlignZ {specimen_thickness} \
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
--OutImod 1 {patches} \
+-OutImod 2 {patches} \
 -Gpu {get_gpu_id()}"
             [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 

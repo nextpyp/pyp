@@ -312,7 +312,7 @@ def read_tilt_series(
                 try:
                     shutil.copy2(rawtlt, "{0}.rawtlt".format(name))
                 except:
-                    # ignore of file already exists
+                    # ignore if file already exists
                     pass
             elif os.path.isfile(filename + ".mrc.mdoc"):
                 local_run.run_shell_command(
