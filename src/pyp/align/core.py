@@ -4088,10 +4088,11 @@ EOF
 # sum all frames acording to parameter values without aligning
 def sum_gain_correct_frames(movie, average, parameters):
 
-    if parameters["gain_remove_hot_pixels"] and Path(movie).suffix == '.mrc':
-        preprocess.remove_xrays_from_file(Path(movie).stem,parameters['slurm_verbose'])
-    else:
-        logger.warning(f"Skipping hot pixel removal on images of format {Path(movie).suffix}")
+    if parameters["gain_remove_hot_pixels"]:
+        if Path(movie).suffix == '.mrc':
+            preprocess.remove_xrays_from_file(Path(movie).stem,parameters['slurm_verbose'])
+        else:
+            logger.warning(f"Skipping hot pixel removal on images of format {Path(movie).suffix}")
 
     # get image dimensions
     x, y, z = get_image_dimensions(movie)
@@ -4127,12 +4128,12 @@ def sum_gain_correct_frames(movie, average, parameters):
             binning = int(x / gain_x)
         if binning > 1:
             com = f"{get_imod_path()}/bin/newstack {average} {average} -bin {binning}"
-            run_shell_command(com,verbose=parameters['slurm_verbose'])
+            run_shell_command(com)
 
     # apply gain reference if we are using one
     if gain_reference_file != None:
         com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}"; rm -f {average}~'
-        output, error = run_shell_command(com,verbose=parameters['slurm_verbose'])
+        output, error = run_shell_command(com)
 
         if "error" in output.lower():
             logger.error(output)
@@ -4143,7 +4144,7 @@ def sum_gain_correct_frames(movie, average, parameters):
                 x, y, z = get_image_dimensions(gain_reference_file)
                 logger.info(f"{gain_reference_file} dimensions are {x} x {y}")
             raise Exception("Failed to apply gain reference")
- 
+
 def align_movie_super(parameters, name, suffix, isfirst = False):
 
     tmp_directory = name
