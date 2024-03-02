@@ -29,6 +29,8 @@ v0.6.3 (3/01/2024)
 
    :fa:`bug,text-danger` Hide the export tab from particle filtering blocks for tomography projects.
 
+   :fa:`bug,text-danger` Fix bug that ocurred when skipping frame alignment during movie processing.
+
    :fa:`bug,text-danger` Fix bug in function used to export sessions to .star format.
 
    :fa:`bug,text-danger` Fix bug in tomography sessions that ocurred when using size-based particle picking.
