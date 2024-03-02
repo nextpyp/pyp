@@ -407,7 +407,7 @@ name = "EER SR reduction factor"
 description = "Amount of super-resolution information to retain (1=none, 2=2x, 4=4x)"
 type = "int"
 default = 1
-condition = { arg="ali", value=[ "unblur", "motioncor" ] }
+condition = { arg="ali", value=[ "unblur", "motioncor", "skip" ] }
 
 [tabs.movie.eer_frames]
 name = "EER frames to average"
@@ -421,14 +421,14 @@ name = "First frame"
 description = "Discard frames lower than this value (0=do not discard early frames)"
 type = "int"
 default = 0
-condition = { arg="ali", value=[ "unblur", "motioncor" ] }
+condition = { arg="ali", value=[ "unblur", "motioncor", "skip" ] }
 
 [tabs.movie.last]
 name = "Last frame"
 description = "Discard frames higher than this value (-1=do not discard late frames)"
 type = "int"
 default = -1
-condition = { arg="ali", value=[ "unblur", "motioncor" ] }
+condition = { arg="ali", value=[ "unblur", "motioncor", "skip" ] }
 
 [tabs.movie.group]
 name = "Frame grouping"
