@@ -25,7 +25,7 @@ from pyp.analysis.image import (
     normalize_volume,
 )
 from pyp.analysis.scores import per_frame_scoring
-from pyp.inout.image import mrc, writepng, img2webp
+from pyp.inout.image import mrc, writepng, img2webp, get_gain_reference
 from pyp.inout.image.core import get_image_dimensions
 from pyp.inout.metadata import (
     csp_extract_coordinates,
@@ -4115,6 +4115,10 @@ def sum_gain_correct_frames(movie, average, parameters):
         gain = f"../{gain_file}"
         if os.path.exists(gain):
             gain_reference_file = gain
+        else:
+            gain_reference, gain_reference_file = get_gain_reference(
+                parameters, x, y
+            )
     else:
         gain_reference_file = None
 
