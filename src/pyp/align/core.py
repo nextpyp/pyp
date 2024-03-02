@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import scipy
 
-from pyp import extract, merge
+from pyp import extract, merge, preprocess
 from pyp.analysis import fit, plot
 from pyp.analysis.geometry import transformations as vtk
 from pyp.analysis.image import (
@@ -4085,7 +4085,65 @@ EOF
 
     return aligned_average
 
+# sum all frames acording to parameter values without aligning
+def sum_gain_correct_frames(movie, average, parameters):
 
+    if parameters["gain_remove_hot_pixels"] and Path(movie).suffix == '.mrc':
+        preprocess.remove_xrays_from_file(Path(movie).stem,parameters['slurm_verbose'])
+    else:
+        logger.warning(f"Skipping hot pixel removal on images of format {Path(movie).suffix}")
+
+    # get image dimensions
+    x, y, z = get_image_dimensions(movie)
+
+    # figure out range of frames to average
+    first_frame = parameters["movie_first"] if "movie_first" in parameters else 0
+    last_frame = parameters["movie_last"] if "movie_last" in parameters and parameters["movie_last"] != -1 else z
+
+    # average frames in the specified range
+    output, error = avgstack(
+        movie, average, f"{first_frame},{last_frame}"
+    )
+
+    # are we using a gain reference?
+    if "gain_reference" in parameters.keys() and parameters["gain_reference"] and os.path.exists(
+        project_params.resolve_path(parameters["gain_reference"])
+        ):
+        gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
+        gain_file = os.path.basename(gain_reference_file)
+        gain = f"../{gain_file}"
+        if os.path.exists(gain):
+            gain_reference_file = gain
+    else:
+        gain_reference_file = None
+
+    # if using eer format, figure out the reduce factor
+    if movie.endswith(".eer"):
+        binning = 1
+        if 'movie_eer_reduce' in parameters:
+            binning = int(4/parameters['movie_eer_reduce'])
+        elif gain_reference_file != None:
+            gain_x, gain_y, gain_z = get_image_dimensions(gain_reference_file)
+            binning = int(x / gain_x)
+        if binning > 1:
+            com = f"{get_imod_path()}/bin/newstack {average} {average} -bin {binning}"
+            run_shell_command(com,verbose=parameters['slurm_verbose'])
+
+    # apply gain reference if we are using one
+    if gain_reference_file != None:
+        com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}"; rm -f {average}~'
+        output, error = run_shell_command(com,verbose=parameters['slurm_verbose'])
+
+        if "error" in output.lower():
+            logger.error(output)
+            if "sizes must be equal" in output.lower():
+                logger.error("Did you apply the correct transformation to the gain reference?")
+                x, y, z = get_image_dimensions(average)
+                logger.info(f"{average} dimensions are {x} x {y}")
+                x, y, z = get_image_dimensions(gain_reference_file)
+                logger.info(f"{gain_reference_file} dimensions are {x} x {y}")
+            raise Exception("Failed to apply gain reference")
+ 
 def align_movie_super(parameters, name, suffix, isfirst = False):
 
     tmp_directory = name
@@ -4599,7 +4657,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             forceinteger = "yes"
         else:
             forceinteger = "no"
-       
+
         if "movie_magcorr" in parameters.keys() and parameters["movie_magcorr"]:
             mag_corrections = "yes\n%s\n%s\n%s" % (
                 distort_angle,
@@ -4691,6 +4749,14 @@ EOF
         if "Segmentation fault" in error or "Killed" in error:
             logger.error("Try increasing the Memory per task in the Resources tab (or --slurm_memory parameter in the CLI)")
             raise Exception(error)
+
+    elif 'skip' in parameters["movie_ali"]:
+
+        # write identity matrix for null shifts
+        x, y, total_frames = get_image_dimensions(f"../{movie_file}")
+        shifts = np.zeros([total_frames,2])
+        np.savetxt(f"../{name}_shifts.txt",shifts,fmt="%.4f")
+        sum_gain_correct_frames(f"../{movie_file}", f"../{aligned_average}", parameters)
 
     # go back to parent directory and cleanup
     os.chdir("..")

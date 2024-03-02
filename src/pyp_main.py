@@ -4098,64 +4098,16 @@ if __name__ == "__main__":
                     )
 
                     if len(all_files) > 0:
-
                         image_file = all_files[np.random.randint(0,high=len(all_files))]
                         logger.info("Selecting image for preview: " + image_file)
+
                         x, y, z = get_image_dimensions(image_file)
-                        image_file_average = Path(image_file).name
                         logger.info(f"Image dimensions are {x} x {y} ({z} frames/tilts)")
 
-                        gain_reference, gain_reference_file = get_gain_reference(
-                            parameters, x, y
-                        )
-
                         output_file = "gain_corrected_image.mrc"
+                        align.sum_gain_correct_frames(image_file, output_file, parameters)
 
-                        if z > 1:
-                            image_file_average = Path(image_file).stem + "_avg.mrc"
-                            output, error = avgstack(
-                                image_file, image_file_average, "/"
-                            )
-                            # os.remove(image_file_average + "~")
-                        else:
-                            shutil.copy( image_file, image_file_average)
-
-                        # if using eer format, figure out binning factor
-                        if image_file.endswith(".eer"):
-                            gain_x, gain_y = gain_reference.shape
-                            binning = int(x / gain_x)
-                            if binning > 1:
-                                logger.warning(f"Binning eer frames {binning}x to match gain reference dimensions")
-                                com = f"{get_imod_path()}/bin/newstack {image_file_average} {image_file_average} -bin {binning}"
-                                local_run.run_shell_command(com)
-
-                        if parameters["gain_remove_hot_pixels"]:
-                            preprocess.remove_xrays_from_file(Path(image_file_average).stem,parameters['slurm_verbose'])
-
-                        if gain_reference_file is not None:
-
-                            com = '{0}/bin/clip multiply "{1}" "{2}" "{3}"; rm -f {3}~'.format(
-                                get_imod_path(),
-                                image_file_average,
-                                gain_reference_file,
-                                output_file,
-                            )
-                            output, error = local_run.run_shell_command(
-                                com, verbose=False
-                            )
-                            os.remove(gain_reference_file)
-                            if "error" in output.lower():
-                                logger.error(output)
-                                os.remove(output_file)
-                                output_file = image_file_average
-                                if "sizes must be equal" in output.lower():
-                                    logger.error("Did you apply the correct transformation to the gain reference?")
-                                raise Exception("Failed to apply gain reference")
-                            else:
-                                os.remove(image_file_average)
-                        else:
-                            output_file = image_file_average
-
+                        x, y, z = get_image_dimensions(output_file)
                         binning = int(math.floor(x / 768))
                         com = f"{get_imod_path()}/bin/newstack {output_file} {output_file} -bin {binning} -float 2"
                         local_run.run_shell_command(com)
