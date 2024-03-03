@@ -7,13 +7,17 @@ Visualization in ChimeraX/ArtiaX
 Step 1: Download the necessary files
 ------------------------------------
 
-Select the refinement block where you will extract the particle locations from. Click on the ``Edit`` menu for that block and select the ``Show filesystem location`` to find out the location of the project in the filesystem.
+You will need to download the following files to your local computer:
 
-From this location, you will need to download the following files to your local computer:
+- Tomogram reconstruction (``*.rec``)
+- Refined map (``*.mrc``)
+- Corresponding particle orientations (``*.star``)
 
-- Tomogram reconstruction (``mrc/tile_series_name.rec``)
-- Refined map (``frealign/maps/block_name_r{class_number}_{iteration_number}_crop.mrc``)
-- Corresponding particle orientations (``frealign/artiax/tile_series_name_K1.star``)
+You can get these files as follows:
+
+- Go to the Pre-processing block, click on the **Tilt-series** tab, select a tilt-series and go to the **Reconstruction** tab. Download the ``.rec`` file by clicking on the gray/green badge
+- Go to the Particle refinement block, select the **Reconstruction** tab and select the ``Cropped Map`` option from the dropdown menu
+- In the same Particle refinement block, go the **Metadata** tab, type the name of the tilt-series and click ``Search``. Download the ``.star`` file by clicking on the gray/green badge
 
 Step 2: Load data into ChimeraX/ArtiaX
 --------------------------------------

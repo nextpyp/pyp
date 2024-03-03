@@ -39,7 +39,7 @@ IncludeCmd: no
 	rm -rf /opt/pyp/.git
 	# install packages required by ETTK
 	yum -y update
-	yum install -y which openssh gcc-4.8.5 gcc-c++-4.8.5 libXt-devel freeglut-devel git make vim nano bzip2 bzip2-libs bzip2-devel numactl-devel libjpeg ImageMagick wget epel-release graphviz fftw_devel libtiff-devel
+	yum install -y which openssh gcc-4.8.5 gcc-c++-4.8.5 libXt-devel freeglut-devel git make vim nano bzip2 bzip2-libs bzip2-devel numactl-devel libjpeg ImageMagick wget epel-release graphviz fftw fftw_devel libtiff-devel
 	yum groupinstall -y "Development Tools"
 	yum clean all
 

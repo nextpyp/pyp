@@ -36,23 +36,13 @@ def invert_contrast(name):
     local_run.run_shell_command(command)
 
 
-def remove_xrays(image, name):
-    # dump image to file
-    imageio.mrc.write(image, "{0}.mrc".format(name))
-
-    remove_xrays_from_file(name)
-
-    # reload clean stack from file
-    image[:] = imageio.mrc.read("{0}.st".format(name))
-
-
-def remove_xrays_from_file(name):
+def remove_xrays_from_file(name,verbose=False):
     logger.info("Removing xrays")
     # Hot-pixel removal using IMOD's ccderaser
     command = "{0}/bin/ccderaser -input {1}.mrc -output {1}.st -find -points {1}_xray.mod -scan 4.50 -xyscan 128".format(
         get_imod_path(), name
     )
-    local_run.run_shell_command(command)
+    local_run.run_shell_command(command,verbose=verbose)
 
 
 def remove_xrays_from_movie_file(name, inplace=False):
@@ -322,7 +312,7 @@ def read_tilt_series(
                 try:
                     shutil.copy2(rawtlt, "{0}.rawtlt".format(name))
                 except:
-                    # ignore of file already exists
+                    # ignore if file already exists
                     pass
             elif os.path.isfile(filename + ".mrc.mdoc"):
                 local_run.run_shell_command(
@@ -333,9 +323,7 @@ def read_tilt_series(
                 tilt_angles = np.sort(tilt_angles)
                 np.savetxt(f"{name}.rawtlt", fmt="%.2f")
             else:
-                local_run.run_shell_command(
-                    "{0}/bin/extracttilts {1}.mrc > {1}.rawtlt".format(get_imod_path(), name)
-                )
+                raise Exception("Please provide .rawtlt or .mdoc for initial tilt angles.")
 
             # process multi-tilt to single_movie file in order of tilt angles
             tilts = [
@@ -616,9 +604,12 @@ def read_tilt_series(
         mag = parameters["scope_mag"]
         tilt_axis = parameters["scope_tilt_axis"] - 90.0
 
-
         # sort the list based on tilt angle
         sorted_tilts = sorted(tilts, key=lambda x: x[1])
+
+        # write a file that contains frame filenames (sorted by tilt angle)
+        with open("frame_list.txt", "w") as f:
+            f.write("\n".join([f[0] for f in sorted_tilts]))
 
         # check if 0 is in the scanorder list
         if 0 not in [item[2] for item in sorted_tilts]:
@@ -726,11 +717,14 @@ def read_tilt_series(
 
     else:
         logger.error("Cannot read %s", filename)
-
-    if metadata and metadata.get("drift"):
+    if metadata:
         drift_metadata["drift"] = {}
-        for i in metadata["drift"]:
-            drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
+        if metadata.get("drift"):
+            for i in metadata["drift"]:
+                drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
+        elif metadata.get("web").get("drift"):
+            for i in metadata.get("web")["drift"]:
+                drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
     else:
         drift_metadata["drift"] = shifts
 
@@ -908,7 +902,7 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
 
                 elif line.startswith("DateTime"):
                     time = line.split("=")[-1].strip()
-                    
+
                     for date_pattern in DATETIMES:
                         try:
                             data_output = datetime.datetime.strptime(time, date_pattern)
@@ -916,12 +910,13 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
                             break
                         except:
                             continue
-                    
+
                     assert frames_set[-1][-1] is not None, f"{time} cannot be matched by the pattern. "
-                
+
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
-                    parameters["scope_tilt_axis"] = axis_angle
+                    if parameters:
+                        parameters["scope_tilt_axis"] = axis_angle
 
     # sort the frames by scanning orders
     frames_set = sorted(frames_set, key=lambda x: x[-1])

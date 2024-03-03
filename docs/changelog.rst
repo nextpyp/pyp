@@ -4,6 +4,57 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.6.3 (3/01/2024)
+******************
+
+   :fa:`plus-square,text-primary` Allow import of clean particles obtained after 3D classification into pre-processing block.
+
+   :fa:`plus-square,text-primary` Stop saving unnecessary metadata files during constrained refinement.
+
+   :fa:`plus-square,text-primary` Implement particle list picker that was missing from some import blocks.
+
+   :fa:`plus-square,text-primary` Implement parameter groups in UI to better handle conditional parameters.
+
+   :fa:`plus-square,text-primary` Add links to download tomograms and metadata for ArtiaX plugin.
+
+   :fa:`plus-square,text-primary` Provide more granular information when determining handedness of tilt-series.
+
+   :fa:`plus-square,text-primary` Allow users to control the timeout for deleting the scratch folder of zombie jobs.
+
+   :fa:`plus-square,text-primary` Add new parameter to control size of patches during patch-tracking to prevent tiltxcorr errors.
+
+   :fa:`plus-square,text-primary` Upgrade program versions to MotionCor3 1.1.1 and AreTomo2 1.1.2.
+
+   :fa:`plus-square,text-primary` Allow use of environment variables when specifying the local scratch directory.
+
+   :fa:`bug,text-danger` Hide the export tab from particle filtering blocks for tomography projects.
+
+   :fa:`bug,text-danger` Fix bug that ocurred when skipping frame alignment during movie processing.
+
+   :fa:`bug,text-danger` Fix bug in function used to export sessions to .star format.
+
+   :fa:`bug,text-danger` Fix bug in tomography sessions that ocurred when using size-based particle picking.
+
+   :fa:`bug,text-danger` Fix bug when exporting metadata in star format that saved the files to the incorrect folder.
+
+   :fa:`bug,text-danger` Fix bug when setting number of patches when running AreTomo2.
+
+   :fa:`bug,text-danger` Fix inconsistencies in the determination of parameter changes between consecutive runs.
+
+   :fa:`bug,text-danger` Stop trying to launch external programs for sub-tomogram averaging after particle extraction.
+
+   :fa:`bug,text-danger` Fix issue with missing metadata entries during tilt-series re-processing.
+
+   :fa:`bug,text-danger` Correctly discard particles that are too close to gold fiducials.
+
+   :fa:`bug,text-danger` Fix issue with management of virion selection thresholds that affected geometric particle picking.
+
+   :fa:`bug,text-danger` Fix bug when creating montages that ocurred when particle radius was equal to half the box size.
+
+   :fa:`bug,text-danger` Fix bug when re-running pre-processing after virion selection.
+
+   :fa:`bug,text-danger` Fix bug with links used to download maps for older iterations.
+
 v0.6.2 (2/01/2024)
 ******************
 

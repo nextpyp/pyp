@@ -116,13 +116,13 @@ Step 3: Pre-processing
 
       .. tabbed:: Tomogram reconstruction
 
-        - Click ``Show advanced options``
-
         - Check ``Erase fiducials``
 
         - Set ``Binning factor for reconstruction`` to 12
 
         - Set ``Thickness of reconstruction (unbinned voxels)`` to 3072
+
+        - Click ``Show advanced options``
 
         - Uncheck ``Resize squares to closest multiple of 512``
 
@@ -153,9 +153,9 @@ Step 4: Particle detection
 
       .. tabbed:: Particle detection
 
-        - Set ``Detection method`` to auto
-
         - Set ``Detection radius (A)`` to 80
+
+        - Set ``Detection method`` to auto
 
         - Set ``Threshold for contamination detection`` to 2.0
 
@@ -164,8 +164,6 @@ Step 4: Particle detection
         - Set ``Minimum distance between particles`` to 2
 
         - Check ``Local refinement``
-
-        - Click ``Show advanced options``
 
         - Set ``Z-axis detection range (binned voxels)`` to 40
 
@@ -207,13 +205,13 @@ Step 5: Reference-based refinement
 
         - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search, text-primary`, navigating to the folder where you downloaded the data for the tutorial, and selecting the file `EMPIAR-10304_init_ref.mrc`
 
-        - Click :fa:`search,text-primary` in ``Input parameter file`` to select the initial parameters text file ``tomo-preprocessing-*_original_volumes.txt`` from :badge:`Pre-processing,badge-secondary`
-
-        - Check ``Skip refinement``
+        - Click :fa:`search,text-primary` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-preprocessing-*_original_volumes.txt`` from :badge:`Pre-processing,badge-secondary`
 
         - Set ``Max resolution (A)`` to 22.0
 
         - Check ``Use signed correlation``
+
+        - Check ``Skip refinement``
 
         - Click on the **Constrained refinement** tab
 
@@ -223,15 +221,15 @@ Step 5: Reference-based refinement
 
         - Set ``Last exposure for refinement`` to 25
 
-        - Check ``Show advanced options``
+        - Click ``Show advanced options``
 
         - Set ``Optimizer - Exhaustive search points`` to 5000000
 
         - Check ``Refine particle alignments``
 
-        - Set ``Particle Phi range (degrees)``, ``Particle Psi range (degrees)`` and ``Particle Theta range (degrees)`` to 180
+        - Set ``Phi range (degrees)``, ``Psi range (degrees)`` and ``Theta range (degrees)`` to 180
 
-        - Set ``Particle translation range (voxels)`` to 50
+        - Set ``Translation range (voxels)`` to 50
 
         - Check ``Invert CTF handedness``
 
@@ -342,13 +340,13 @@ Step 8. Fully constrained refinement
 
         - Select the location of the ``Initial parameter file`` by clicking on the icon :fa:`search,text-primary` and selecting the file `tomo-fine-refinement-*_r01_02.par.bz2` (select the file ``tomo-fine-refinement-*_r01_02_clean.par.bz2`` if bad particles were permanently removed in the previous step)
 
-        - Set ``Last iteration`` to 3
-
-        - Check ``Skip refinement``
-
         - Set ``Max resolution (A)`` to 18:14
 
         - Check ``Use signed correlation``
+
+        - Set ``Last iteration`` to 3
+
+        - Check ``Skip refinement``
 
         - Click on the **Constrained refinement** tab
 
@@ -358,19 +356,19 @@ Step 8. Fully constrained refinement
 
         - Set ``Last exposure for refinement`` to 25
 
-        - Check ``Refine tilt-geometry``
-
-        - Check ``Refine particle alignments``
-
         - Check ``Show advanced options``
 
         - Set ``Optimizer - Exhaustive search points`` to 0
 
         - Set ``Optimizer - Max step length`` to 100
 
-        - Set ``Particle Phi range``, ``Particle Psi range`` and ``Particle Theta range`` to 30.0
+        - Check ``Refine tilt-geometry``
 
-        - Set ``Particle translation range (voxels)`` to 30.0
+        - Check ``Refine particle alignments``
+
+        - Set ``Phi range``, ``Psi range`` and ``Theta range`` to 30.0
+
+        - Set ``Translation range (voxels)`` to 30.0
 
         - Click on the **Exposure weighting** tab
 
@@ -429,9 +427,9 @@ Step 10. Region-based local refinement
 
       .. tabbed:: Refinement
 
-        - Set ``Last iteration`` to 8
-
         - Set ``Max resolution (A)`` to 18:14:12:10:8:6:5
+
+        - Set ``Last iteration`` to 8
 
         - Specify the location of the ``Shape mask`` produced in Step 10 by clicking on the icon :fa:`search, text-primary`, navigating to the location of the :badge:`Masking,badge-secondary` block by copying the path we saved above, and selecting the file `frealign/maps/mask.mrc`
 
@@ -445,13 +443,11 @@ Step 10. Region-based local refinement
 
         - Set ``Number of regions`` to 8,8,2
 
-        - Check ``Show advanced options``
+        - Set ``Tilt-angle range (degrees)`` and ``Tilt-axis range (degrees)`` to 5.0 
 
-        - Set ``Micrograph tilt-angle range (degrees)`` and ``Micrograph tilt-axis range (degrees)`` to 5.0 
+        - Set ``Phi range``, ``Psi range`` and ``Theta range`` to 5.0
 
-        - Set ``Particle Phi range``, ``Particle Psi range`` and ``Particle Theta range`` to 5.0
-
-        - Set ``Particle translation range (voxels)`` to 20.0
+        - Set ``Translation range (voxels)`` to 20.0
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to run the job
 
@@ -471,9 +467,9 @@ Step 11: Particle-based CTF refinement
 
       .. tabbed:: Refinement
 
-        - Set ``Last iteration`` to 9
-
         - Set ``Max resolution (A)`` to 18:14:12:10:8:6:5:4.5
+
+        - Set ``Last iteration`` to 9
 
         - Click on the **Constrained refinement** tab
 
@@ -488,8 +484,6 @@ Step 11: Particle-based CTF refinement
         - Uncheck ``Refine particle alignments``
 
         - Check ``Refine CTF per-particle``
-
-        - Check ``Show advanced options``
 
         - Set ``Defocus 1 range (A)`` and ``Defocus 2 range (A)`` to 2000.0
 
@@ -509,9 +503,9 @@ Step 12: Region-based refinement after CTF refinement
 
       .. tabbed:: Refinement
 
-        - Set ``Last iteration`` to 12
-
         - Set ``Max resolution (A)`` to 18:14:12:10:8:6:5:4.5:6:5:4.5
+
+        - Set ``Last iteration`` to 12
 
         - Click on the **Constrained refinement** tab
 
@@ -523,17 +517,17 @@ Step 12: Region-based refinement after CTF refinement
 
         - Set ``Number of regions`` to 16,16,4
 
-        - Check ``Refine tilt-geometry``
-
-        - Check ``Refine particle alignments``
-
-        - Uncheck ``Refine CTF per-particle``
-
         - Check ``Show advanced options``
 
         - Set ``Optimizer - Max step length`` to 20.0
 
-        - Set ``Micrograph translation range (pixels)`` to 20.0
+        - Check ``Refine tilt-geometry``
+
+        - Set ``Translation range (pixels)`` to 20.0
+
+        - Check ``Refine particle alignments``
+
+        - Uncheck ``Refine CTF per-particle``
 
         - Click on the **Exposure weighting** tab
 
@@ -563,9 +557,9 @@ Step 13: 3D classification
 
         - Select the location of the ``Initial parameter file`` by clicking on the icon :fa:`search,text-primary` and selecting the file `tomo-coarse-refinement-*_r01_12.par.bz2`
 
-        - Set ``Last iteration`` to 20
-
         - Set ``Max resolution (A)`` to 8
+
+        - Set ``Last iteration`` to 20
 
         - Click on the **Constrained refinement** tab
 

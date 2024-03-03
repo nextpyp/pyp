@@ -5,6 +5,7 @@ from .core import (
     align_spr_local,
     align_spr_local_inner,
     align_stack,
+    sum_gain_correct_frames,
     align_stack_super,
     align_movie_super,
     align_tilt_series,

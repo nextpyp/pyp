@@ -572,9 +572,8 @@ def spr_merge(parameters, check_for_missing_files=True):
         with open(films, "w") as f:
             f.write("\n".join(inputlist))
     else:
-        logger.error("Either all micrographs failed or no particles were found, stopping")
         inputlist = input_all_list
-        raise
+        raise Exception("Either all micrographs failed or no particles were found, stopping")
 
     # use given naming convention when extracting frames for relion
     if False:
@@ -788,9 +787,8 @@ def tomo_merge(parameters, check_for_missing_files=True):
             f.write("\n".join(inputlist))
             f.close()
     else:
-        logger.error("Either all micrographs failed or no particles were found, stopping")
         inputlist = input_all_list
-        raise
+        raise Exception("Either all tilt-series failed or no particles were found, stopping")
 
     if detect.tomo_spk_is_required(parameters) > 0:
         # produce .txt file for 3DAVG
@@ -855,7 +853,8 @@ def tomo_merge(parameters, check_for_missing_files=True):
         # plot dataset results
         # plot.plot_dataset(parameters)
 
-    if "tomo_ext_size" in parameters and parameters["tomo_ext_size"] > 0:
+    # launch sub-tomogram averaging (not currently enabled)
+    if False and "tomo_ext_size" in parameters and parameters["tomo_ext_size"] > 0:
 
         if "eman" in parameters["tomo_ext_fmt"].lower():
             eman.eman_3davg(parameters)
@@ -1383,8 +1382,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 logger.info("Virion segmentation thresholds changed, will re-pick particles")
                 updating_virion = True
                 logger.info("Removing virion spike txt files")
-                [ os.remove(f) for f in glob.glob( os.path.join(current_path, "sva", "*_cut.txt") ) ]
-                [ os.remove(f) for f in glob.glob( os.path.join(working_path, "*_cut.txt") ) ]
+                [ os.remove(f) for f in glob.glob( os.path.join(current_path, "sva", name + "*_cut.txt") ) ]
+                [ os.remove(f) for f in glob.glob( os.path.join(working_path, name + "*_cut.txt") ) ]
 
         else:
             updating_virion = False
@@ -1400,9 +1399,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             metadata = metadata_object.data
 
             if "tomo_rec_force" in parameters and parameters["tomo_rec_force"]:
+                
                 logger.info(
                     f"Tomogram will be recomputed"
                 )
+                if "gold" in metadata.keys():
+                    del metadata["gold"]
 
             # convert metadata to files
             metadata_object.meta2PYP(path=working_path,data_path=os.path.join(current_path,"raw/"))
@@ -1412,6 +1414,18 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             # convert next file to imod model
             com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
             local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+
+            # detect if there were changes in the excluded tilts
+            if metadata and 'exclude' in metadata:
+                new_angles = np.sort(np.loadtxt(f'{name}_exclude_views.next',ndmin=2)).astype('int')[:,2]+1
+                angles = np.sort(metadata.get('exclude').to_numpy()[:,1].astype('int') + 1)
+                if not np.array_equal(angles, np.sort(new_angles)):
+                    logger.warning("Excluded tilts have changed, will re-calculate reconstrucion")
+                    parameters["tomo_rec_force"] = True
+            else:
+                logger.warning("Excluded tilts, will re-calculate reconstrucion")
+                parameters["tomo_rec_force"] = True
+
     else:
         logger.info("Ignoring existing results")
 
@@ -1462,7 +1476,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if 'movie_no_frames' in parameters and parameters['movie_no_frames'] and "gain_remove_hot_pixels" in parameters and parameters["gain_remove_hot_pixels"]:
         t = timer.Timer(text="Removing hot pixels took: {}", logger=logger.info)
         t.start()
-        preprocess.remove_xrays_from_file(name)
+        preprocess.remove_xrays_from_file(name,parameters['slurm_verbose'])
         t.stop()
     else:
         os.symlink(name + ".mrc", name + ".st")
@@ -1595,52 +1609,56 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     tilt_metadata["ctf_profiles"] = ctf_profiles
 
     # erase fiducials if needed
-    if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
+    if parameters["tomo_ali_method"] == "imod_gold":
+        gold_mod = "f{name}_gold.mod"
 
-        # create binned aligned stack
-        if not os.path.exists(f'{name}_bin.ali'):
-            command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
-                get_imod_path(), name, binning
-            )
-            local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+        if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
+            # create binned aligned stack
+            if not os.path.exists(f'{name}_bin.ali'):
+                command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
+                    get_imod_path(), name, binning
+                )
+                local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
-        detect.detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+            detect.detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
 
-        # save projected gold coordinates as txt file
-        com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+        if parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
 
-        # calculate unbinned tilt-series coordinates
-        gold_coordinates = np.loadtxt(name + "_gold_ccderaser.txt",ndmin=2)
-        gold_coordinates[:,:2] *= binning
-        np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
+            # save projected gold coordinates as txt file
+            com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
+            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 
-        # convert back to imod model using one point per contour
-        com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+            # calculate unbinned tilt-series coordinates
+            gold_coordinates = np.loadtxt(name + "_gold_ccderaser.txt",ndmin=2)
+            gold_coordinates[:,:2] *= binning
+            np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
 
-        # erase gold on (unbinned) aligned tilt-series
-        erase_factor = parameters["tomo_rec_erase_factor"]
-        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand 5 -order 0 -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+            # convert back to imod model using one point per contour
+            com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
+            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 
-        try:
-            os.remove(name + "_gold_ccderaser.txt")
-            os.remove(name + "_gold_ccderaser.mod")
-        except:
-            pass
+            # erase gold on (unbinned) aligned tilt-series
+            erase_factor = parameters["tomo_rec_erase_factor"]
+            com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand 5 -order 0 -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
+            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 
-        # re-calculate reconstruction using gold-erased tilt-series
-        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
+            try:
+                os.remove(name + "_gold_ccderaser.txt")
+                os.remove(name + "_gold_ccderaser.mod")
+            except:
+                pass
+
+            # re-calculate reconstruction using gold-erased tilt-series
+            merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
         symlink_relative(os.path.join(project_path, "mrc", f"{name}.rec"), f"{name}.rec")
 
-    t = timer.Timer(text="Virion and spike detection took: {}", logger=logger.info)
+    t = timer.Timer(text="Virion/particle detection took: {}", logger=logger.info)
     t.start()
     # remove environment LD_LIBRARY_PATH conflicts
-    
+
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
         name,
@@ -1829,7 +1847,7 @@ def csp_split(parameters, iteration):
             # create weights folder for storing weights.txt
             weights_folder = Path.cwd() / "frealign" / "weights"
             if not weights_folder.exists():
-                os.mkdir(weights_folder)
+                os.makedirs(weights_folder)
 
             # compute global weights using enitre parfile
             if parameters["dose_weighting_global"] and parfile != None:
@@ -2319,43 +2337,21 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
     if not skip:
         load_csp_results(filename, parameters, Path(current_path), Path(working_path), verbose=parameters["slurm_verbose"])
 
-    metafile = os.path.join(current_path, "pkl", filename + ".pkl")
+    metafile = os.path.join(working_path, filename + ".pkl")
+    frame_list = []
     if os.path.exists(metafile):
         try:
-            shutil.copy2(metafile, working_path)
-            metafile = os.path.join(working_path, filename + ".pkl")
+            os.chdir(working_path) # local scratch
 
-            # TODO: just a test, delete later
-            if "spr" in parameters["data_mode"]:
-                is_spr = True
-            else:
-                is_spr = False
+            is_spr = True if "spr" in parameters["data_mode"] else False
             metadata = pyp_metadata.LocalMetadata(metafile, is_spr=is_spr)
+            metadata.meta2PYP()
+            
+            frame_list = metadata.data["frames"] if "frames" in metadata.data else frame_list
 
-            metadata.meta2PYP(path=working_path)
-            """
-            # only pickle file, need boxx file in ./box first time to run csp
-            boxxfile = os.path.join(current_path, "box", filename + ".boxx")
-            boxfrompkl = os.path.join(working_path, filename + ".boxx")
-            if not os.path.exists(boxxfile) and os.path.isfile(boxfrompkl):
-                shutil.copy2(boxfrompkl, boxxfile)
-
-            # ctf file from pickle
-            ctffile = os.path.join(current_path, "ctf", filename + ".ctf")
-            ctffrompkl = os.path.join(working_path, filename + ".ctf")
-            if not os.path.exists(ctffile) and os.path.isfile(ctffrompkl):
-                shutil.copy2(ctffrompkl, ctffile)
-
-            # xf file from pickle
-            xffile = os.path.join(current_path, "ali", filename + ".xf")
-            xffrompkl = os.path.join(working_path, filename + ".xf")
-            if not os.path.exists(xffile) and os.path.isfile(xffrompkl):
-                shutil.copy2(xffrompkl, xffile)
-            """
+            os.chdir(current_path)
         except:
             logger.warning("Unable to retrieve metadata")
-            trackback()
-            pass
 
     statistic_file = glob.glob(
             current_path + "/frealign/" + "maps/" + f"{dataset}_r01_{(iteration-1):02d}_statistics.txt"
@@ -2372,44 +2368,14 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             )
             pass
 
-    # extract/retrieve particle coordinates
-    [allboxes, allparxs] = csp_extract_coordinates(
-        filename,
-        parameters,
-        working_path,
-        current_path,
-        skip,
-        only_inside=False,
-        use_frames=use_frames,
-        use_existing_frame_alignments=True,
-    )
-
     if is_tomo:
         if use_frames:
 
-            # TODO: add movie filenames into pkl
-            # this solution won't work if not using movie_pattern during preprocessing (i.e. using mdoc)
-
-            os.chdir(working_path)
-            # compile movie_pattern used during preprocessing into RegEx
-            pattern = parameters["movie_pattern"]
-            regex = movie2regex(pattern, filename)
-            r = re.compile(regex)
-
-            # look for the position of tilt angle in the filename
-            labels = ["TILTSERIES", "SCANORD", "ANGLE"]
-            labels = [l for l in labels if pattern.find(l) >= 0]
-            labels.sort(key=lambda x: int(pattern.find(x)))
-            pos_tiltangle = labels.index("ANGLE") + 1
-
-            # search files in project directory and sort the list based on tilt angle
-            detected_movies = [
-                    [r.match(f).group(0), float(r.match(f).group(pos_tiltangle))] 
-                    for f in os.listdir(os.path.join(current_path, "raw")) 
-                    if r.match(f)
-                    ]
-            sorted_tilts = sorted(detected_movies, key=lambda x: x[1])
-            imagefile = [_[0] for _ in sorted_tilts]
+            if len(frame_list) > 0:
+                imagefile = frame_list
+            else:
+                logger.error("Either data do not have frames or pre-processing was incomplate. ")
+                raise Exception("Frames not found.")
 
         elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
             imagefile = "mrc/" + filename
@@ -2425,6 +2391,17 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         imagefile = "mrc/" + filename
         parameters["gain_reference"] = None
 
+    # extract/retrieve particle coordinates
+    [allboxes, allparxs] = csp_extract_coordinates(
+        filename,
+        parameters,
+        working_path,
+        current_path,
+        skip,
+        only_inside=False,
+        use_frames=use_frames,
+        use_existing_frame_alignments=True,
+    )
 
     parxfile = os.path.join(
         working_path, "frealign", "maps", filename + "_r01_%02d.parx" % (iteration - 1)
@@ -3053,7 +3030,7 @@ def cryolo_3d(
 
         yolo_ini_dir = "picked_input"
         if not os.path.isdir(yolo_ini_dir):
-            os.mkdir(yolo_ini_dir)
+            os.makedirs(yolo_ini_dir)
 
         picked_files = [
             s.replace("../next/", "").replace(".next", "")
@@ -3184,6 +3161,7 @@ def disable_profiler(profiler,path=os.getcwd()):
 
 
 def trackback():
+    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
     type, value, traceback = sys.exc_info()
     sys.__excepthook__(type, value, traceback)
 
@@ -3199,27 +3177,8 @@ def get_free_space(scratch):
         if len(line) > 0:
             logger.info(line)
 
-"""
-def clear_scratch(scratch):
-    # clear up local scratch directory from non-running jobs
-    command = run_ssh(run_slurm(command="squeue --me -o %i --noheader"))
-    [ running_jobs, error ] = local_run.run_shell_command(command, verbose=True)
-    logger.info("running_jobs")
-    logger.info(command)
-    logger.info(running_jobs)
-    for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
-        # check if directory is in the form {SLURM_JOB_ID}_{SLURM_ARRAY_TASK_ID}
-        if bool(re.match('[\d/_]+$',dir)) and dir not in running_jobs:
-            try:
-                logger.warning(f"Slurm job {dir} is no longer running. Attempting to delete")
-                os.rmdir(dir)
-            except:
-                logger.error(f"Failed to delete folder {dir}")
-                pass
-"""
-
 # remove any leftover scratch directories that are older than 1 hour
-def clear_scratch(scratch):
+def clear_scratch(scratch,timeout=60):
     # list all top level directories under scratch folder
     if os.path.exists(scratch):
         for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
@@ -3233,7 +3192,7 @@ def clear_scratch(scratch):
                         latest_file = max(list_of_files, key=os.path.getctime)
                         age_in_minutes = ( time.time() - os.path.getctime(latest_file) ) / 60.
                         # if age of most recent file is more than 1 hour, assume this is a zombie folder
-                        if age_in_minutes > 60:
+                        if age_in_minutes > timeout:
                             try:
                                 logger.warning(f"Detected zombie run at {dir}, clearing up files")
                                 shutil.rmtree(os.path.join(scratch,dir), ignore_errors=True)
@@ -3286,10 +3245,7 @@ if __name__ == "__main__":
         os.environ["PYP_PYTHON"] = "Anaconda2/2.7.13"
         scratch_config = config["pyp"]["scratch"]
         if "$" in scratch_config:
-            scratch_split = config["pyp"]["scratch"].split("$")
-            os.environ["PYP_SCRATCH"] = os.path.join(
-                scratch_split[0], os.environ[scratch_split[1]]
-            )
+            os.environ["PYP_SCRATCH"] = os.path.expandvars(config["pyp"]["scratch"])
         else:
             os.environ["PYP_SCRATCH"] = scratch_config
         os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -3422,11 +3378,12 @@ if __name__ == "__main__":
                 parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = False
                 project_params.save_pyp_parameters(parameters)
 
-                spa_Tlog.update(timer.Timer.timers)
-                spa_Tlog = {k:v for k, v in spa_Tlog.items() if v}
-                json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_sprmerge.json"
-                with open(json_file, 'w') as fp:
-                    json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
+                if parameters.get("slurm_verbose"):
+                    spa_Tlog.update(timer.Timer.timers)
+                    spa_Tlog = {k:v for k, v in spa_Tlog.items() if v}
+                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_sprmerge.json"
+                    with open(json_file, 'w') as fp:
+                        json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
 
                 logger.info("PYP (sprmerge) finished successfully")
             except:
@@ -3446,14 +3403,14 @@ if __name__ == "__main__":
             # spr_swarm(args.path, args.file, args.debug, args.keep, args.skip)
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
                 cwd = os.getcwd()
                 # spa_Tlog = {}
                 args = project_params.parse_arguments("sprswarm")
                 parameters = project_params.load_pyp_parameters(path="../")
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 spr_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
@@ -3481,11 +3438,12 @@ if __name__ == "__main__":
 
             try:
 
+                args = project_params.parse_arguments("tomoswarm")
+                parameters = project_params.load_pyp_parameters(project_params.resolve_path(args.path))
+
                 # clear local scratch and report free space
                 clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
-                args = project_params.parse_arguments("tomoswarm")
 
                 tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
@@ -3733,9 +3691,9 @@ if __name__ == "__main__":
                         parfile=parfile,
                         path="./pkl"
                         )
-
+                    output_path = parameters["export_location"]
                     select = parameters["extract_cls"]
-                    globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
+                    globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile, output_path=output_path)
 
                 logger.info("PYP (export_star) finished successfully")
             except:
@@ -3822,7 +3780,7 @@ if __name__ == "__main__":
                             "frealign/maps",
                             "frealign/log",
                         ]
-                        null = [os.mkdir(f) for f in folders if not os.path.exists(f)]
+                        null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
 
                         if parameters["refine_iter"] == 2:
 
@@ -3895,11 +3853,12 @@ if __name__ == "__main__":
 
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
                 args = project_params.parse_arguments("cspswarm")
+                parameters = project_params.load_pyp_parameters(project_params.resolve_path(args.path))
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 working_path = os.path.join(os.environ["PYP_SCRATCH"], args.file)
                 cwd = os.getcwd()
@@ -3913,11 +3872,12 @@ if __name__ == "__main__":
 
                 csp_swarm(args.file, parameters, int(args.iter), args.skip, args.debug)
 
-                csp_Tlog.update(timer.Timer.timers)
-                csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
-                json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspswarm.json"
-                with open(json_file, 'w') as fp:
-                    json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
+                if parameters.get("slurm_verbose"):
+                    csp_Tlog.update(timer.Timer.timers)
+                    csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
+                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspswarm.json"
+                    with open(json_file, 'w') as fp:
+                        json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
 
                 # disable_profiler(pr)
                 logger.info("PYP (cspswarm) finished successfully")
@@ -3954,11 +3914,12 @@ if __name__ == "__main__":
 
                 csp_merge(parameters)
 
-                csp_Tlog.update(timer.Timer.timers)
-                csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
-                json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspmerge.json"
-                with open(json_file, 'w') as fp:
-                    json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
+                if parameters.get("slurm_verbose"):
+                    csp_Tlog.update(timer.Timer.timers)
+                    csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
+                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspmerge.json"
+                    with open(json_file, 'w') as fp:
+                        json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
 
                 # clean up local scratch
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
@@ -3999,11 +3960,12 @@ if __name__ == "__main__":
                 )
 
                 # for time
-                cspm_Tlog.update(timer.Timer.timers)
-                cspm_Tlog = {k:v for k, v in cspm_Tlog.items() if v}
-                json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_csp_local_merge.json"
-                with open(json_file, 'w') as fp:
-                    json.dump(cspm_Tlog, fp, indent=4,separators=(',', ': '))
+                if parameters.get("slurm_verbose"):
+                    cspm_Tlog.update(timer.Timer.timers)
+                    cspm_Tlog = {k:v for k, v in cspm_Tlog.items() if v}
+                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_csp_local_merge.json"
+                    with open(json_file, 'w') as fp:
+                        json.dump(cspm_Tlog, fp, indent=4,separators=(',', ': '))
 
                 logger.info("PYP (csp_local_merge) finished successfully")
 
@@ -4091,11 +4053,12 @@ if __name__ == "__main__":
             del os.environ["sprtrain"]
             try:
 
+                args = project_params.load_pyp_parameters()
+
                 # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],args["slurm_zombie"])
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
-                args = project_params.load_pyp_parameters()
                 if args["detect_method"].startswith("topaz"):
                     topaz.sprtrain(args)
                 else:
@@ -4110,10 +4073,11 @@ if __name__ == "__main__":
             try:
 
                 # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                args = project_params.load_pyp_parameters()
+
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],args["slurm_zombie"])
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
-                args = project_params.load_pyp_parameters()
                 joint.tomotrain(args)
                 logger.info("PYP (tomotrain) finished successfully")
             except:
@@ -4134,64 +4098,16 @@ if __name__ == "__main__":
                     )
 
                     if len(all_files) > 0:
-
                         image_file = all_files[np.random.randint(0,high=len(all_files))]
                         logger.info("Selecting image for preview: " + image_file)
-                        x, y, z = get_image_dimensions(image_file)
-                        image_file_average = Path(image_file).name
-                        logger.info(f"Image dimensions are {x} x {y} ({z} frames)")
 
-                        gain_reference, gain_reference_file = get_gain_reference(
-                            parameters, x, y
-                        )
+                        x, y, z = get_image_dimensions(image_file)
+                        logger.info(f"Image dimensions are {x} x {y} ({z} frames/tilts)")
 
                         output_file = "gain_corrected_image.mrc"
+                        align.sum_gain_correct_frames(image_file, output_file, parameters)
 
-                        if z > 1:
-                            image_file_average = Path(image_file).stem + "_avg.mrc"
-                            output, error = avgstack(
-                                image_file, image_file_average, "/"
-                            )
-                            # os.remove(image_file_average + "~")
-                        else:
-                            shutil.copy( image_file, image_file_average)
-
-                        # if using eer format, figure out binning factor
-                        if image_file.endswith(".eer"):
-                            gain_x, gain_y = gain_reference.shape
-                            binning = int(x / gain_x)
-                            if binning > 1:
-                                logger.warning(f"Binning eer frames {binning}x to match gain reference dimensions")
-                                com = f"{get_imod_path()}/bin/newstack {image_file_average} {image_file_average} -bin {binning}"
-                                local_run.run_shell_command(com)
-
-                        if parameters["gain_remove_hot_pixels"]:
-                            preprocess.remove_xrays_from_file(Path(image_file_average).stem)
-
-                        if gain_reference_file is not None:
-
-                            com = '{0}/bin/clip multiply "{1}" "{2}" "{3}"; rm -f {3}~'.format(
-                                get_imod_path(),
-                                image_file_average,
-                                gain_reference_file,
-                                output_file,
-                            )
-                            output, error = local_run.run_shell_command(
-                                com, verbose=False
-                            )
-                            os.remove(gain_reference_file)
-                            if "error" in output.lower():
-                                logger.error(output)
-                                os.remove(output_file)
-                                output_file = image_file_average
-                                if "sizes must be equal" in output.lower():
-                                    logger.error("Did you apply the correct transformation to the gain reference?")
-                                raise Exception("Failed to apply gain reference")
-                            else:
-                                os.remove(image_file_average)
-                        else:
-                            output_file = image_file_average
-
+                        x, y, z = get_image_dimensions(output_file)
                         binning = int(math.floor(x / 768))
                         com = f"{get_imod_path()}/bin/newstack {output_file} {output_file} -bin {binning} -float 2"
                         local_run.run_shell_command(com)
@@ -4218,11 +4134,11 @@ if __name__ == "__main__":
             del os.environ["clean"]
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
                 parameters = parse_arguments("spr_tomo_map_clean")
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 # prepare frealign directory
                 os.makedirs("frealign", exist_ok=True)
@@ -4670,7 +4586,7 @@ EOF
         else:
             folder = current_directory
         parameters = project_params.load_parameters(folder)
-        if job_name and parameters and "slurm_verbose" in parameters and parameters["slurm_verbose"]:
+        if job_name and parameters.get("slurm_verbose"):
             timers = timer.Timer().timers
             with open(Path(folder) / "swarm" / f"{job_name}.json", "w") as f:
                 f.write(json.dumps(timers, indent=2))
