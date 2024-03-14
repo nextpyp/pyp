@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import scipy
 
-from pyp import extract, merge
+from pyp import extract, merge, preprocess
 from pyp.analysis import fit, plot
 from pyp.analysis.geometry import transformations as vtk
 from pyp.analysis.image import (
@@ -25,7 +25,7 @@ from pyp.analysis.image import (
     normalize_volume,
 )
 from pyp.analysis.scores import per_frame_scoring
-from pyp.inout.image import mrc, writepng, img2webp
+from pyp.inout.image import mrc, writepng, img2webp, get_gain_reference
 from pyp.inout.image.core import get_image_dimensions
 from pyp.inout.metadata import (
     csp_extract_coordinates,
@@ -1661,17 +1661,12 @@ def csp_refinement(
 
         # execute refinement
         if is_tomo:
-            if (
-                mp["csp_refine_particles"] 
-                or mp["csp_refine_micrographs"] 
-                or mp["csp_refine_ctf"] 
-                or mp["csp_frame_refinement"]
-                ):
-                # set SCANORD back to normal (without having frame index added) before going to csp
-                t = Timer(text="Modifying scanning order took: {}", logger=logger.info)
-                t.start()
-                frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
-                t.stop()
+            
+            # set SCANORD back to normal (without having frame index added) before going to csp
+            t = Timer(text="Modifying scanning order took: {}", logger=logger.info)
+            t.start()
+            frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
+            t.stop()
 
             new_par_file = csp_run_refinement(
                 class_parxfile,
@@ -1690,17 +1685,11 @@ def csp_refinement(
 
             shutil.copy2(new_par_file, class_parxfile)
 
-            if (
-                mp["csp_refine_particles"] 
-                or mp["csp_refine_micrographs"] 
-                or mp["csp_refine_ctf"] 
-                or mp["csp_frame_refinement"]
-                ):
-                t = Timer(text="Modifying scanning order 2 took: {}", logger=logger.info)
-                t.start()
-                # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
-                frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
-                t.stop() 
+            t = Timer(text="Modifying scanning order 2 took: {}", logger=logger.info)
+            t.start()
+            # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
+            frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
+            t.stop() 
 
         elif use_frames or mp["csp_refine_ctf"]: # run csp for only refine ctf or frame refinement 
 
@@ -2463,7 +2452,7 @@ def align_stack_super(
                         bfactor = "800"
 
                     tmp_directory = name
-                    os.mkdir(tmp_directory)
+                    os.makedirs(tmp_directory)
                     os.chdir(tmp_directory)
 
                     # run unblur
@@ -4096,6 +4085,69 @@ EOF
 
     return aligned_average
 
+# sum all frames acording to parameter values without aligning
+def sum_gain_correct_frames(movie, average, parameters):
+
+    if parameters["gain_remove_hot_pixels"]:
+        if Path(movie).suffix == '.mrc':
+            preprocess.remove_xrays_from_file(Path(movie).stem,parameters['slurm_verbose'])
+        else:
+            logger.warning(f"Skipping hot pixel removal on images of format {Path(movie).suffix}")
+
+    # get image dimensions
+    x, y, z = get_image_dimensions(movie)
+
+    # figure out range of frames to average
+    first_frame = parameters["movie_first"] if "movie_first" in parameters else 0
+    last_frame = parameters["movie_last"] if "movie_last" in parameters and parameters["movie_last"] != -1 else z
+
+    # average frames in the specified range
+    output, error = avgstack(
+        movie, average, f"{first_frame},{last_frame}"
+    )
+
+    # are we using a gain reference?
+    if "gain_reference" in parameters.keys() and parameters["gain_reference"] and os.path.exists(
+        project_params.resolve_path(parameters["gain_reference"])
+        ):
+        gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
+        gain_file = os.path.basename(gain_reference_file)
+        gain = f"../{gain_file}"
+        if os.path.exists(gain):
+            gain_reference_file = gain
+        else:
+            gain_reference, gain_reference_file = get_gain_reference(
+                parameters, x, y
+            )
+    else:
+        gain_reference_file = None
+
+    # if using eer format, figure out the reduce factor
+    if movie.endswith(".eer"):
+        binning = 1
+        if 'movie_eer_reduce' in parameters:
+            binning = int(4/parameters['movie_eer_reduce'])
+        elif gain_reference_file != None:
+            gain_x, gain_y, gain_z = get_image_dimensions(gain_reference_file)
+            binning = int(x / gain_x)
+        if binning > 1:
+            com = f"{get_imod_path()}/bin/newstack {average} {average} -bin {binning}"
+            run_shell_command(com)
+
+    # apply gain reference if we are using one
+    if gain_reference_file != None:
+        com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}"; rm -f {average}~'
+        output, error = run_shell_command(com)
+
+        if "error" in output.lower():
+            logger.error(output)
+            if "sizes must be equal" in output.lower():
+                logger.error("Did you apply the correct transformation to the gain reference?")
+                x, y, z = get_image_dimensions(average)
+                logger.info(f"{average} dimensions are {x} x {y}")
+                x, y, z = get_image_dimensions(gain_reference_file)
+                logger.info(f"{gain_reference_file} dimensions are {x} x {y}")
+            raise Exception("Failed to apply gain reference")
 
 def align_movie_super(parameters, name, suffix, isfirst = False):
 
@@ -4122,8 +4174,12 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
     if 'motioncor' in parameters["movie_ali"]:
 
         # patch tracking
-        if "movie_motioncor_patch" in parameters and parameters["movie_motioncor_patch"] > 1:
-            patches = f" -Patch {parameters['movie_motioncor_patch']} {parameters['movie_motioncor_patch']}"
+        patches_x = parameters["movie_motioncor_patch_x"] if "movie_motioncor_patch_x" in parameters else 1
+        patches_y = parameters["movie_motioncor_patch_y"] if "movie_motioncor_patch_y" in parameters else 1
+        if patches_x > 1 or patches_y > 0:
+            patches = f" -Patch {parameters['movie_motioncor_patch_x']} {parameters['movie_motioncor_patch_y']}"
+            if parameters.get("movie_motioncor_patch_overlap"):
+                patches += f" {parameters['movie_motioncor_patch_overlap']}"
         else:
             patches = ""
 
@@ -4219,9 +4275,15 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             frame_options += f" -Trunc {total_frames - parameters['movie_last']}"
         if parameters["movie_group"] > 1 and "EerSampling" not in input:
             frame_options += f" -Group {parameters['movie_group']}"
-        frame_options += f" -Bft {parameters['movie_motioncor_bfactor']}"
+        frame_options += f" -Bft {parameters['movie_motioncor_bfactor_global']} {parameters['movie_motioncor_bfactor_local']}"
         frame_options += f" -Tol {parameters['movie_motioncor_tol']} -Iter {parameters['movie_motioncor_iter']}"
         frame_options += f" -SumRange {parameters['movie_motioncor_sumrange_min']} {parameters['movie_motioncor_sumrange_max']}"
+        if parameters.get("movie_motioncor_phase_only"):
+            frame_options += " -PhaseOnly"
+        if parameters.get("movie_motioncor_corr_interp"):
+            frame_options += " -CorrInterp"
+        if parameters.get("movie_motioncor_in_frame_motion"):
+            frame_options += " -InFmMotion"
 
         if parameters["movie_motioncor_frameref"] > 0:
             frame_ref = parameters['movie_motioncor_frameref'] if parameters['movie_motioncor_frameref'] <= total_frames else total_frames
@@ -4491,7 +4553,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         command = f"{get_motioncor3_path()} \
 {input} \
 -OutMrc {name}.mrc \
--FtBin {binning} \
+-FtBin {parameters.get('movie_motioncor_bin')} \
 {gain} \
 -OutAln {os.getcwd()} \
 {frame_options} \
@@ -4534,6 +4596,8 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         # only keep shift values for integrated frames if using eer movies
         if "EerSampling" in input:
             shifts = shifts[::eer_frames_perimage,:]
+        if parameters.get("movie_force_integer"):
+            shifts = shifts.round()
         np.savetxt(f"../{name}_shifts.txt",shifts[:,1:],fmt="%.4f")
 
     elif 'unblur' in parameters["movie_ali"]:
@@ -4598,7 +4662,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
             forceinteger = "yes"
         else:
             forceinteger = "no"
-       
+
         if "movie_magcorr" in parameters.keys() and parameters["movie_magcorr"]:
             mag_corrections = "yes\n%s\n%s\n%s" % (
                 distort_angle,
@@ -4690,6 +4754,14 @@ EOF
         if "Segmentation fault" in error or "Killed" in error:
             logger.error("Try increasing the Memory per task in the Resources tab (or --slurm_memory parameter in the CLI)")
             raise Exception(error)
+
+    elif 'skip' in parameters["movie_ali"]:
+
+        # write identity matrix for null shifts
+        x, y, total_frames = get_image_dimensions(f"../{movie_file}")
+        shifts = np.zeros([total_frames,2])
+        np.savetxt(f"../{name}_shifts.txt",shifts,fmt="%.4f")
+        sum_gain_correct_frames(f"../{movie_file}", f"../{aligned_average}", parameters)
 
     # go back to parent directory and cleanup
     os.chdir("..")
@@ -4949,8 +5021,8 @@ def align_tilt_series(name, parameters, rotation=0):
             tilt_offset_option = "1" if parameters['tomo_ali_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_ali_aretomo_tiltoff']}"
 
             # local motion by giving the number of patches
-            if parameters["tomo_ali_method"] == "imod_patch":
-                patches = f" -Patch {parameters['tomo_ali_patches']} {parameters['tomo_ali_patches']}"
+            if parameters.get("tomo_ali_patches_x") and parameters.get("tomo_ali_patches_y"):
+                patches = f" -Patch {parameters['tomo_ali_patches_x']} {parameters['tomo_ali_patches_y']}"
             else:
                 patches = ""
 
@@ -5126,7 +5198,7 @@ def align_tilt_series(name, parameters, rotation=0):
 -AlignZ {specimen_thickness} \
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
--OutImod 1 {patches} \
+-OutImod 2 {patches} \
 -Gpu {get_gpu_id()}"
             [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
@@ -5301,18 +5373,26 @@ EOF
                 "Align tilt-series using patch tracking (IMOD)"
             )
 
-            max_size = min(
-                tilt_series_size_x - 2 * tapper_size,
-                min(tilt_series_size_y - 2 * tapper_size, 1280),
-            )
+            max_size_x = parameters.get("tomo_ali_patches_size_x")
+            max_size_y = parameters.get("tomo_ali_patches_size_y")
+            if max_size_x == None or max_size_x == 0:
+                max_size_x = min(
+                    tilt_series_size_x - 2 * tapper_size,1280
+                )
+            if max_size_y == None or max_size_y == 0:
+                max_size_y = min(
+                    tilt_series_size_y - 2 * tapper_size, 1280
+                )
 
             # patch tracking
-            command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{3} -number {4},{4}".format(
+            command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{4} -number {5},{6}".format(
                 get_imod_path(),
                 name,
                 tiltxcorr_options,
-                max_size,
-                parameters["tomo_ali_patches"],
+                max_size_x,
+                max_size_y,
+                parameters["tomo_ali_patches_x"],
+                parameters["tomo_ali_patches_y"],
             )
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 

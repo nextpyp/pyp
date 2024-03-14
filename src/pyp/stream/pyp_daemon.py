@@ -386,7 +386,7 @@ def pyp_daemon(args):
                                 tilt[0],
                             )
                             if not os.path.exists(signal_file):
-                                logger.warning("doesnt exist")
+                                logger.warning(f"{signal_file} doesn't exist")
                                 condition = False
                                 break
                     else:

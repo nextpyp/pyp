@@ -2168,16 +2168,18 @@ EOF
             particle_name = os.path.basename(line.split()[-1])
             alignmentSVA[particle_name] = line.split()
 
-    if os.path.exists(f"mod/{name}_gold.mod"):
-        command = "{0}/bin/model2point mod/{1}_gold.mod {2}_gold.txt".format(
-            get_imod_path(), name, Path(os.environ["PYP_SCRATCH"]) / name
-        )
-        local_run.run_shell_command(command)
-        fiducials = np.loadtxt(
-            Path(os.environ["PYP_SCRATCH"]) / f"{name}_gold.txt", ndmin=2
-        )
-    else:
-        fiducials = np.empty([0])
+    fiducials = np.empty([0])
+    if parameters.get("extract_gold"):
+        if os.path.exists(f"mod/{name}_gold.mod"):
+            command = "{0}/bin/model2point mod/{1}_gold.mod {2}_gold.txt".format(
+                get_imod_path(), name, Path(os.environ["PYP_SCRATCH"]) / name
+            )
+            local_run.run_shell_command(command)
+            fiducials = np.loadtxt(
+                Path(os.environ["PYP_SCRATCH"]) / f"{name}_gold.txt", ndmin=2
+            )
+        elif "gold" in metadata:
+            fiducials = metadata["gold"].to_numpy()
 
     # pre-load tilt-series alignment
     tilt_series_alignment = metadata["ali"].to_numpy()
@@ -2231,7 +2233,7 @@ EOF
                     "File {0} contains no spikes. Skipping".format(virion_file)
                 )
                 continue
-        elif "box" in metadata or os.path.exists("mod/%s.spk" % name) or os.path.exists("mod/%s.txt" % name):
+        elif ("box" in metadata or os.path.exists("mod/%s.spk" % name) or os.path.exists("mod/%s.txt" % name) ) and not "vir" in metadata:
             # use origin if we are using isolated particles
             spikes_in_virion = np.zeros([1, 7])
             virion_bin = 1

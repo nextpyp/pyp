@@ -106,6 +106,13 @@ FILES_TOMO= {"image":
                     "header": ["m00", "m01", "m02", "m03", "dx", "dy"],
                     "index": None
                 }, 
+            "frames": 
+                {
+                    "path": "frame_list.txt", 
+                    "format": "text-str", 
+                    "header": ["filename"],
+                    "index": None
+                },
             "tlt": 
                 {
                     "path": "%s.tlt", 
@@ -283,8 +290,8 @@ class LocalMetadata:
 
             output += "\n\n"
         return output
-    
-    
+
+
     def loadPYPConfig(self, file=".pyp_config.toml"):
         if os.path.exists(file):
             self.parameters = project_params.load_parameters()
@@ -300,11 +307,12 @@ class LocalMetadata:
         """ Load all the data based on data mode (spr or tomo)
         """
         for key in self.files:
-            
+
             file_type = self.files[key]["format"]
             file_path = self.files[key]["path"]
             transpose = False
-           
+            files = []
+
             if "%s" in file_path:
                 if key == "ctf_avrot":
                     # sort by indexes given by ctffind tilt ({micrograph}_{index}_ctffind4_avrot.txt)
@@ -323,17 +331,18 @@ class LocalMetadata:
                 else:
                     files = glob.glob(file_path % (self.micrograph))
             elif key == "drift":
-                assert (key == "drift"), "Only drift supports using pyp config pattern"
-                try:
-                    pattern = self.parameters["movie_pattern"]
-                    root_template, format_template = os.path.splitext(pattern)
-                    root_file, format_file = os.path.splitext(file_path)
-                    pattern = pattern.replace(format_template, format_file)
 
-                except:
-                    pattern = os.path.basename(file_path)
+                if Path("frame_list.txt").exists():
 
-                files = getFilesByPattern(pattern, file_path, self.micrograph)
+                    files = open("frame_list.txt", "r").read().split("\n")
+
+                    # it contains the name of movie frames instead of .xf
+                    files = [str(Path(f).stem) + ".xf" for f in files]
+                    files = [f for f in files if Path(f).exists()]
+
+            elif key == "frames":
+                if Path(file_path).exists():
+                    files = [file_path]
 
             multiple_files = True if len(files) > 1 else False
             for f in files:
@@ -347,6 +356,8 @@ class LocalMetadata:
                     self.loadImageDim(key, f)
                 elif file_type == "pickle":
                     self.loadPickleFile(key, f)
+                elif file_type == "text-str":
+                    self.loadTextStr(key, f)
                 else:
                     raise Exception(f"File type {file_type} not recognized")
 
@@ -398,7 +409,9 @@ class LocalMetadata:
                     transpose = False
                     template = None
                     if key == "drift" and self.parameters is not None:
-                        template = getFilesByPattern(self.parameters["movie_pattern"], data_path, self.micrograph)
+                        if "frames" in self.data:
+                            files = self.data["frames"]
+                            template = [str(Path(f).stem) + ".xf" for f in files]
                     elif key == "ctf_avrot" and self.parameters is not None:
                         template = [str(self.files[key]["path"] % (self.micrograph)).replace("*", "%04d" % (index)) for index in data.keys()]
                         transpose = True
@@ -421,6 +434,8 @@ class LocalMetadata:
                     pass
                 elif file_type == "pickle":
                     self.writePickleFile(data, os.path.join(path, file_path))
+                elif file_type == "text-str":
+                    self.writeTextStr(data, os.path.join(path, file_path))
                 else:
                     raise Exception(f"File type {file_type} not recognized")
         else:
@@ -514,7 +529,12 @@ class LocalMetadata:
         df = pd.DataFrame(arr, columns=header)
         self.data[key] = df
 
+    def loadTextStr(self, key, file):
+        assert (key in self.files), f"{key} not in the schema"
+        assert (os.path.exists(file)), f"{file} does not exist"
 
+        lst = [file for file in open(file, 'r').read().split("\n")]
+        self.data[key] = lst
 
     def loadParFile(self, key, file):
         """ Load data from parfile
@@ -592,6 +612,11 @@ class LocalMetadata:
         # if we have multiple files to output (i.e. frame alignment .xf in tomo)
         with open( path % (self.micrograph), 'wb') as f:
             pickle.dump(data, f)
+
+    def writeTextStr(self, data, path):
+
+        with open(path, "w") as f:
+            f.write("\n".join(data))
 
     def writeModelFile(self, data, path):
 
@@ -969,7 +994,7 @@ class GlobalMetadata:
         self.extended = pd.DataFrame(pardata[:, 16:], columns=PAREXTENDED)
 
 
-    def meta2Star(self, filename, imagelist, select=1, stack="stack.mrcs", parfile="", frame_refinement=False, version="30001"):
+    def meta2Star(self, filename, imagelist, select=1, stack="stack.mrcs", parfile="", frame_refinement=False, version="30001", output_path="."):
         """
         From metadata to star file for relion import
         """
@@ -983,7 +1008,7 @@ class GlobalMetadata:
             newfilm = self.refinement["FILM"].copy()
             for id, imagename in enumerate(imagelist):
                 
-                relion_image_path = "Micrographs/"
+                relion_image_path = os.path.join(output_path, "Micrographs")
                 relion_image = os.path.join(relion_image_path, imagename + ".mrc")
                 
                 mask = self.refinement["FILM"].astype(int).isin([id])
@@ -1037,7 +1062,8 @@ _rlnOpticsGroup #14
 _rlnGroupNumber #15 
 _rlnRandomSubset #16 
         """
-
+            
+            saved_file = os.path.join(output_path, filename)
             if not frame_refinement:
                 ac = self.scope_data["AC"].values[0]
                 cs = self.scope_data["CS"].values[0]
@@ -1075,12 +1101,13 @@ _rlnRandomSubset #16
                     star_columns = pd.concat(columns, axis=1)
                     star_header = data_optics_str + version + data_particles_header
                     npvalue = star_columns.to_numpy(dtype=str, copy=True)
-                    np.savetxt(filename, npvalue, fmt='%s', header=star_header, delimiter="\t", comments='')
+                    
+                    np.savetxt(saved_file, npvalue, fmt='%s', header=star_header, delimiter="\t", comments='')
 
                 else:
 
                     comm = "par2star.py --stack {0} --apix {1} --ac {2} --cs {3} --voltage {4} {5} {6}".format(
-                        stack, ptl_pxl, ac, cs, voltage, parfile, filename
+                        stack, ptl_pxl, ac, cs, voltage, parfile, saved_file
                     )
                     run_shell_command(comm, verbose=True)
             else:
@@ -1226,8 +1253,12 @@ _rlnOriginZAngst #3
             dose_rate = self.scope_data["dose_rate"].values[0]
 
             dataset, format = os.path.splitext(filename)
-            tomogram_file = f"./relion/{dataset}_tomograms{format}"
-            particle_file = f"./relion/{dataset}_particles{format}"
+
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
+
+            tomogram_file = os.path.join(output_path, f"relion/{dataset}_tomograms{format}")
+            particle_file = os.path.join(output_path, f"relion/{dataset}_particles{format}")
 
             EXTEND_START = 16
 
@@ -1260,10 +1291,10 @@ _rlnOriginZAngst #3
                 data = self.data[micrograph]
 
                 # link tilt-series .mrc to relion folder if needed
-                if not os.path.exists(os.path.join("relion", "Movies")):
-                    os.makedirs(os.path.join("relion", "Movies"))
-                if not os.path.exists(os.path.join("relion", "Movies", f"{micrograph}.mrc")):
-                    os.symlink(os.path.join(os.getcwd(), "mrc", f"{micrograph}.mrc"), os.path.join("relion", "Movies", f"{micrograph}.mrc"))
+                if not os.path.exists(os.path.join(output_path, "relion", "Movies")):
+                    os.makedirs(os.path.join(output_path, "relion", "Movies"))
+                if not os.path.exists(os.path.join(output_path, "relion", "Movies", f"{micrograph}.mrc")):
+                    os.symlink(os.path.join(os.getcwd(), "mrc", f"{micrograph}.mrc"), os.path.join(output_path, "relion", "Movies", f"{micrograph}.mrc"))
                 
                 # raw image size
                 num_tilts = data["image"].values[0][-1]
@@ -1440,7 +1471,7 @@ _rlnOriginZAngst #3
                     except OSError:
                         pass
                 try:
-                    os.symlink(os.path.join(input_dir,"mrc",imagename + ".mrc", target))
+                    os.symlink(os.path.join(input_dir,"mrc",imagename + ".mrc"), target)
                 except OSError:
                     pass
 

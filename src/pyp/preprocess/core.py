@@ -36,23 +36,13 @@ def invert_contrast(name):
     local_run.run_shell_command(command)
 
 
-def remove_xrays(image, name):
-    # dump image to file
-    imageio.mrc.write(image, "{0}.mrc".format(name))
-
-    remove_xrays_from_file(name)
-
-    # reload clean stack from file
-    image[:] = imageio.mrc.read("{0}.st".format(name))
-
-
-def remove_xrays_from_file(name):
+def remove_xrays_from_file(name,verbose=False):
     logger.info("Removing xrays")
     # Hot-pixel removal using IMOD's ccderaser
     command = "{0}/bin/ccderaser -input {1}.mrc -output {1}.st -find -points {1}_xray.mod -scan 4.50 -xyscan 128".format(
         get_imod_path(), name
     )
-    local_run.run_shell_command(command)
+    local_run.run_shell_command(command,verbose=verbose)
 
 
 def remove_xrays_from_movie_file(name, inplace=False):
@@ -318,48 +308,30 @@ def read_tilt_series(
 
         elif os.path.isfile(name + ".mrc"):
             rawtlt = filename + ".rawtlt"
-            if os.path.isfile(rawtlt):
-                try:
+            order_file = filename + ".order"
+            
+            if not parameters["movie_mdoc"]:
+                
+                if Path(rawtlt).exists(): 
                     shutil.copy2(rawtlt, "{0}.rawtlt".format(name))
-                except:
-                    # ignore of file already exists
-                    pass
-            elif os.path.isfile(filename + ".mrc.mdoc"):
-                local_run.run_shell_command(
-                    "cat %s.mrc.mdoc | grep TiltAngle | awk '{ print $NF }' > %s.rawtlt" % (filename, name)
-                )
-                # sort the angle because sequence in mdoc may not be in sorted order
-                tilt_angles = np.loadtxt(f"{name}.rawtlt")
-                tilt_angles = np.sort(tilt_angles)
-                np.savetxt(f"{name}.rawtlt", fmt="%.2f")
+
+                if Path(order_file).exists():  
+                    shutil.copy2(order_file, "{0}.order".format(name))
+                           
+            elif len(mdocs) > 0 and parameters["movie_mdoc"]:
+                
+                tilts = frames_from_mdoc(mdocs, parameters)
+                tilts.sort(key=lambda x: x[1])
+
+                tilt_angles = [_[1] for _ in tilts]
+                order = [_[-1] for _ in tilts]
+
+                np.savetxt(f"{name}.rawtlt", tilt_angles, fmt="%.2f")
+                np.savetxt(f"{name}.order", order, fmt="%d")
+        
             else:
-                local_run.run_shell_command(
-                    "{0}/bin/extracttilts {1}.mrc > {1}.rawtlt".format(get_imod_path(), name)
-                )
-
-            # process multi-tilt to single_movie file in order of tilt angles
-            tilts = [
-                [f, 0] for f in list(glob.glob(name + "_" + "*.mrc")) if "nad" not in f
-            ]
-            index = 0
-
-            for t in tilts:
-
-                tilt_name = t[0] + ".mdoc"
-                if os.path.exists(tilt_name):
-                    with open(tilt_name) as f:
-                        text = f.read()
-                        tilts[index][1] = float(
-                            [p for p in text.split("\n") if "TiltAngle" in p][0].split()[-1]
-                        )
-                        index += 1
-                else:
-                    # assume last element in the filename is tilt angle
-                    t[1] = float(t[0].strip(".mrc").split("_")[-1])
-                    index += 1
-
-            # sort the list based on tilt angle
-            sorted_tilts = sorted(tilts, key=lambda x: x[1])
+                raise Exception("Please either provide .rawtlt/.order files or .mdoc file(s) for initial tilt angles and acquisition order.")
+  
 
             if not os.path.isfile("{0}.rawtlt".format(name)):
                 # write to .rawtlt
@@ -376,107 +348,10 @@ def read_tilt_series(
             for i in range(tilts.size):
                 shifts[i] = np.zeros([1, 2])
 
-            # always assume frames
-            if not os.path.isfile(name + "_001_0.00.mrc"):
+            x, y, z = imageio.readMoviefileandsave(name + ".mrc", parameters, binning)
 
-                x, y, z = imageio.readMoviefileandsave(name + ".mrc", parameters, binning)
-
-                # sanity check if number of tilts derived from .rawtlt is correct
-                assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"
-            else:
-
-                shifts = np.zeros([len(sorted_tilts)])
-
-                # parallelize frame alignment
-                if int(parameters["slurm_tasks"]) == 0:
-                    pool = multiprocessing.Pool()
-                else:
-                    pool = multiprocessing.Pool(int(parameters["slurm_tasks"]))
-
-                # align frames in each tilt
-                for tilt in sorted_tilts:
-
-                    logger.info("Aligning frames for tilt angle %.2f" % tilt[1])
-
-                    frame_name = tilt[0].strip(".mrc")
-                    # print 'FRAME NAME =', frame_name
-                    x, y, z = imageio.readMoviefileandsave(
-                        frame_name + ".mrc", parameters, binning
-                    )
-                    if not os.path.exists(frame_name + ".xf"):
-
-                        if not any(
-                            x in parameters["movie_ali"]
-                            for x in ("tiltxcorr_average", "unblur", "skip", "relion")
-                        ):
-                            pool.apply_async(
-                                align.align_stack, args=(frame_name, parameters)
-                            )
-                            # aligned_tilt = align_stack( frame_name, parameters )
-                        else:
-                             logger.info(f"Processing individual frames using {parameters['movie_ali']}")
-                             pool.apply_async(
-                                align.align_stack_super,
-                                args=(
-                                    frame_name,
-                                    parameters,
-                                    current_path,
-                                    working_path,
-                                    parameters["movie_ali"],
-                                ),
-                            )
-                    else:
-                        com = "{0}/bin/newstack -input {1}.mrc -output {1}.mrc -xform {1}.xf -linear".format(
-                            get_imod_path(), frame_name
-                        )
-                        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-                        # remove xrays from movie frames
-                        preprocess.remove_xrays_from_movie_file(frame_name)
-
-                        input_fname = f"{frame_name}.mrc"
-                        output_fname = f"{frame_name}.avg"
-                        start_end_section = "/"
-
-                        output, error = avgstack(
-                            input_fname, output_fname, start_end_section
-                        )
-                        logger.info(output)
-
-                pool.close()
-                pool.join()
-
-                for idx, tilt in enumerate(sorted_tilts):
-
-                    frame_name = tilt[0].strip(".mrc")
-                    s = np.loadtxt(glob.glob(frame_name + "*.xf")[0], dtype=float)[:, -2:]
-                    shifts[idx] = np.hypot(s[:, 0], s[:, 1]).sum()
-
-                # compose drift-corrected tilt-series
-                aligned_tilts = " ".join(
-                    [sorted_tilt[0] for sorted_tilt in sorted_tilts]
-                ).replace(".mrc", ".avg")
-
-                command = "{0}/bin/newstack {2} {1}.mrc".format(
-                    get_imod_path(), name, aligned_tilts
-                )
-                local_run.run_shell_command(command)
-                # index_order = '-secs ' + ','.join( [ str(f) for f in sorted_indexes ] )
-                # command = '{0}/bin/newstack {1}.avg {2} {1}.mrc'.format( os.environ['IMOD_DIR'], name, index_order )
-                # print command
-                # print commands.getoutput(command)
-
-                # plot shifts as function of tilt angle
-                # plot shifts as function of tilt angle
-                import matplotlib.pyplot as plt
-
-                fig, ax = plt.subplots(figsize=(2.56, 2.56), dpi=100)
-                ax.bar(
-                    [tilt[1] for tilt in sorted_tilts], shifts, 2, label="Mean drift/tilt"
-                )
-                plt.legend()
-                plt.savefig("{}_frames_xf.png".format(name))
-                plt.close()
+            # sanity check if number of tilts derived from .rawtlt is correct
+            assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"      
 
             pixel_size = parameters["scope_pixel"]
             voltage = parameters["scope_voltage"]
@@ -616,9 +491,12 @@ def read_tilt_series(
         mag = parameters["scope_mag"]
         tilt_axis = parameters["scope_tilt_axis"] - 90.0
 
-
         # sort the list based on tilt angle
         sorted_tilts = sorted(tilts, key=lambda x: x[1])
+
+        # write a file that contains frame filenames (sorted by tilt angle)
+        with open("frame_list.txt", "w") as f:
+            f.write("\n".join([f[0] for f in sorted_tilts]))
 
         # check if 0 is in the scanorder list
         if 0 not in [item[2] for item in sorted_tilts]:
@@ -726,8 +604,16 @@ def read_tilt_series(
 
     else:
         logger.error("Cannot read %s", filename)
-
-    drift_metadata["drift"] = shifts
+    if metadata:
+        drift_metadata["drift"] = {}
+        if metadata.get("drift"):
+            for i in metadata["drift"]:
+                drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
+        elif metadata.get("web").get("drift"):
+            for i in metadata.get("web")["drift"]:
+                drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
+    else:
+        drift_metadata["drift"] = shifts
 
     if "eer" in parameters["data_path"] and parameters["movie_eer_reduce"] > 1:
         upsample = parameters["movie_eer_reduce"]
@@ -903,7 +789,7 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
 
                 elif line.startswith("DateTime"):
                     time = line.split("=")[-1].strip()
-                    
+
                     for date_pattern in DATETIMES:
                         try:
                             data_output = datetime.datetime.strptime(time, date_pattern)
@@ -911,12 +797,13 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
                             break
                         except:
                             continue
-                    
+
                     assert frames_set[-1][-1] is not None, f"{time} cannot be matched by the pattern. "
-                
+
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
-                    parameters["scope_tilt_axis"] = axis_angle
+                    if parameters:
+                        parameters["scope_tilt_axis"] = axis_angle
 
     # sort the frames by scanning orders
     frames_set = sorted(frames_set, key=lambda x: x[-1])

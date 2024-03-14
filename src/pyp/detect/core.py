@@ -282,6 +282,35 @@ def pick_particles(
                     np.savetxt(
                         "{}.box".format(name), boxes * data_bin, fmt="%i\t"
                     )
+        elif mparameters["detect_method"] == "manual":
+            # convert manually picked coordinates to spk file
+            radius_in_pixels = int(mparameters["detect_rad"] / mparameters["scope_pixel"] / binning)
+            # convert coordinates from next to pyp format
+            try:
+
+                coordinate_file = np.loadtxt( "{0}.next".format(name), dtype='str', ndmin=2)
+                next_coordinates = coordinate_file.astype("float")
+
+                # clean up
+                with open("project_folder.txt") as f:
+                    project_folder = f.read()
+
+                remote_next_file = os.path.join( project_folder, 'next', name + '.next' )
+                if os.path.exists(remote_next_file):
+                    os.remove(remote_next_file)
+                os.remove( name + ".next")
+
+                pyp_coordinates = np.zeros( [ next_coordinates.shape[0], next_coordinates.shape[1] + 2 ] )
+                pyp_coordinates[:,:2] = next_coordinates[:,:2]
+
+                # save positions to box file
+                if len(pyp_coordinates) > 0:
+                    np.savetxt(
+                        "{}.box".format(name), pyp_coordinates * data_bin, fmt="%i\t"
+                    )
+                logger.info(f"{pyp_coordinates.shape[0]} particles found")
+            except:
+                logger.warning("No particles picked for this micrograph")
         elif (
             "all" in mparameters["detect_method"].lower()
             or "auto" in mparameters["detect_method"].lower()
@@ -1064,8 +1093,7 @@ def pick_particles(
 
         else:
             logger.error(
-                "Particle picking strategy not recognized:",
-                mparameters["detect_method"],
+                f"Particle picking strategy not recognized: {mparameters['detect_method']}"
             )
 
     if not os.path.isfile("{}.box".format(name)):

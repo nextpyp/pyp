@@ -26,7 +26,7 @@ def save_parameters_to_website(parameters):
     # if there's no website, don't bother saving anything
     if not Web.exists:
         return
-    else:
+    elif "data_set" in parameters:
         try:
             # actually send the micrograph to the website
             Web().write_parameters(parameter_id=parameters["data_set"], parameters=parameters)
@@ -288,7 +288,8 @@ def load_spr_results(name, parameters, project_path, working_path, verbose=False
         "raw/{0}.xml",
         "mrc/{0}.mrc",
         "webp/{0}.webp",
-        "pkl/{0}.pkl"
+        "pkl/{0}.pkl",
+        "next/{0}.next"
     ]
 
     try:
@@ -384,7 +385,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
         initial_files.remove("mrc/{0}.rec")
 
     # no need to transfer tomogram if re-doing reconstruction
-    elif 'tomo_rec_force' in parameters and parameters['tomo_rec_force'] or "tomo_rec_erase_fiducials" in parameters and parameters["tomo_rec_erase_fiducials"]:
+    elif 'tomo_rec_force' in parameters and parameters['tomo_rec_force']:
         initial_files.remove("mrc/{0}.rec")
 
     if "tomo_spk_files" in parameters:
@@ -500,7 +501,6 @@ def load_csp_results(name, parameters, project_path, working_path, verbose=False
     file_patterns = [
         "box/{0}.box",  # needed by trajectory plotting after regularization 
         "box/{0}.boxx",
-        "csp/{0}.allparxs",
         "csp/{0}.allboxes",
         "csp/{0}_local.allboxes",
         "csp/{0}_boxes3d.txt"
@@ -530,7 +530,7 @@ def save_csp_results(name, parameters, current_path, verbose=False):
     if iteration == 2:
         files[
         "csp"
-        ] = "{0}.allparxs {0}_local.allparxs {0}.allboxes {0}_local.allboxes".format(name)
+        ] = "{0}.allboxes {0}_local.allboxes".format(name)
     else:
         files[
             "csp"

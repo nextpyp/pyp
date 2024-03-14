@@ -3,4 +3,4 @@
 # It is shown directly to the user in micromon's user interface.
 # To the extent that is feasible, it should follow Semantic Versioning conventions:
 # https://semver.org/
-version = "0.6.1"
+version = "0.6.3"

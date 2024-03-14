@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import subprocess
@@ -23,19 +24,14 @@ def _absolutize_path(path):
         return os.path.join(os.getcwd(), path)
 
 def get_gres_option(use_gpu,gres):
-    if use_gpu:
-        gpu_gres = f"--gres="
-        if len(gres) > 0:
-            if 'gpu:' in gres:
-                gpu_gres += f"{gres}"
-            else:
-                gpu_gres += f"gpu:1,{gres}"
-        else:
-            gpu_gres += "gpu:1"
-    elif len(gres) > 0:
-        gpu_gres = f"--gres={gres}"
-    else:
-        gpu_gres = ""
+    options = []
+    if use_gpu and "gpu:" not in gres:
+        options.append("gpu:1")
+    if len(gres) > 0:
+        options.append(gres)
+    gpu_gres = ",".join(options)
+    if not Web.exists and len(gpu_gres) > 0:
+        gpu_gres = "--gres=" + gpu_gres
     return gpu_gres
 
 def submit_commands(
@@ -147,8 +143,17 @@ done
     else:
         raise Exception("can't find .pyp_config.toml")
 
+    # enforce max number of threads
     all_cpu_nodes = int(project_params.load_parameters(par_dir)["slurm_max_cpus"])
     bundle_size = all_cpu_nodes / threads
+
+    # enforce max amount of memory
+    all_memory_nodes = int(project_params.load_parameters(par_dir)["slurm_max_memory"])
+    bundle_by_memory = all_memory_nodes / memory
+
+    # keep the most limiting of the two
+    bundle_size = min( bundle_size, bundle_by_memory )
+
     net_processes = int(math.ceil(float(processes) / tasks_per_arr))
     if bundle_size > 0 and net_processes < bundle_size:
         if Web.exists:
@@ -206,19 +211,13 @@ done
             mpi = {"oversubscribe": True, "cpus": threads}
 
         # launch job via streampyp
-        gpu_gres = "gpu:1" if use_gpu else None
-        if len(gres) > 0:
-            if gpu_gres:
-                gpu_gres += f",{gres}"
-            else:
-                gpu_gres = gres
         if len(csp_local_merge_command) == 0:
             return Web().slurm_sbatch(
                 web_name=jobname,
                 cluster_name="pyp_"+jobtype,
                 commands=Web.CommandsScript(cmdlist, processes, bundle),
                 dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres, account=account),
+                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
                 deps=dependencies,
                 mpi=mpi,
             )
@@ -228,7 +227,7 @@ done
                 cluster_name="pyp_"+jobtype,
                 commands=Web.CommandsGrid(cmdgrid, bundle),
                 dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=gpu_gres, account=account),
+                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
                 deps=dependencies,
                 mpi=mpi,
             )
@@ -316,10 +315,10 @@ def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None, acco
         "--mem=%sG" % memory,
         "--job-name='%s'" % jobname,
     ]
-    if gres != None:
-        args.append("--gres=%s" % gres)
+    if gres != "" and gres != None:
+        args.append("--gres=%s" % json.dumps(gres))
     if account != "" and account != None:
-        args.append("--account=%s" % account)
+        args.append("--account=%s" % json.dumps(account))
     return args
 
 def submit_script(
@@ -373,13 +372,6 @@ def submit_script(
         else:
             dependencies = dependencies.split(",")
 
-        gpu_gres = "gpu:1" if use_gpu else None
-        if len(gres) > 0:
-            if gpu_gres:
-                gpu_gres += f",{gres}"
-            else:
-                gpu_gres = gres
-
         # launch job via streampyp
         return Web().slurm_sbatch(
             web_name=jobname,
@@ -387,7 +379,7 @@ def submit_script(
             commands=Web.CommandsScript([cmd]),
             dir=_absolutize_path(submit_dir),
             env=[(jobtype, jobtype)],
-            args=get_slurm_args( queue, threads, walltime, memory, jobname, gpu_gres, account),
+            args=get_slurm_args( queue, threads, walltime, memory, jobname, get_gres_option(use_gpu,gres), account),
             deps=dependencies,
             mpi=mpi,
         )

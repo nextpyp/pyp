@@ -153,26 +153,30 @@ def get_relevant_films(parameters, array_job_num):
 def get_missing_files(parameters, inputlist, verbose=True):
     missing_files = []
     for sname in inputlist:
-        command = "cat swarm/pre_process.swarm | grep %s.log | awk '{print $NF}'" % sname
-        [output, error] = run_shell_command(command, verbose=False)
-        logfile = output.replace("../", "").strip()
-        if (
-            not os.path.exists(logfile)
-            or not "finished successfully" in open(logfile).read()
-        ):
-            if not os.path.exists(logfile):
-                logger.info("%s does not exist", logfile)
-            else:
-                logger.info(f"{sname} did not terminate successfully")
+        try:
+            command = "cat swarm/pre_process.swarm | grep %s.log | awk '{print $NF}'" % sname
+            [output, error] = run_shell_command(command, verbose=False)
+            logfile = output.replace("../", "").strip()
+            if (
+                not os.path.exists(logfile)
+                or not "finished successfully" in open(logfile).read()
+            ):
+                if not os.path.exists(logfile):
+                    logger.info(f"{logfile} does not exist")
+                else:
+                    logger.info(f"{sname} did not terminate successfully")
 
-            if "csp_no_stacks" in parameters.keys() and parameters["csp_no_stacks"]:
-                # find all movies that were part of the array job and add to missing files
-                series = project_params.get_film_order(parameters, sname)
-                array_job_num = slurm.get_array_job(parameters, series)
-                all_files = project_params.get_relevant_films(parameters, array_job_num)
-                [missing_files.append(f) for f in all_files if f not in missing_files]
-            else:
-                missing_files.append(sname)
+                if "csp_no_stacks" in parameters.keys() and parameters["csp_no_stacks"]:
+                    # find all movies that were part of the array job and add to missing files
+                    series = project_params.get_film_order(parameters, sname)
+                    array_job_num = slurm.get_array_job(parameters, series)
+                    all_files = project_params.get_relevant_films(parameters, array_job_num)
+                    [missing_files.append(f) for f in all_files if f not in missing_files]
+                else:
+                    missing_files.append(sname)
+        except:
+            logger.error("File swarm/pre_process.swarm not found")
+            pass
 
     return missing_files
 
@@ -268,7 +272,7 @@ def create_micrographs_list(parameters):
             elif parameters["movie_mdoc"] and len(mdocs) > 0:
                 files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
                 logger.info("Create micrograph list using mdocs files")
-                # NOTE: one mdoc for one tilt-series (rather than one tilt)    
+                # NOTE: one mdoc for one tilt-series (rather than one tilt)
             else:
                 logger.info("Create micrograph list using detected files (one mrc per tilt-series)")
 
@@ -533,6 +537,23 @@ def load_parameters(path=".", param_file_name=".pyp_config.toml"):
         my_namespace = 0
     return my_namespace
 
+# remove entries that are no longer defined in the configuration file
+def sanitize_parameters(parameters):
+
+    # read specification file
+    import toml
+    specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+
+    clean_parameters = {}
+
+    # figure out which parameters need to be reset to their default values
+    for t in specifications["tabs"].keys():
+        if not t.startswith("_"):
+            for p in specifications["tabs"][t].keys():
+                if not p.startswith("_"):
+                    if parameters.get(f"{t}_{p}"):
+                        clean_parameters[f"{t}_{p}"] = parameters[f"{t}_{p}"]
+    return clean_parameters
 
 def save_parameters(parameters, path=".", param_file_name=".pyp_config.toml"):
     # WARNING - toml.dump does not support saving entries that are None, so those will not be saved
@@ -542,7 +563,7 @@ def save_parameters(parameters, path=".", param_file_name=".pyp_config.toml"):
 
     # save parameters to website
     try:
-        save_parameters_to_website(parameters)
+        save_parameters_to_website(sanitize_parameters(parameters))
     except:
         logger.warning("Detected inconsistencies in pyp configuration file")
         type, value, traceback = sys.exc_info()
@@ -742,25 +763,23 @@ def get_weight_from_projects(weight_folder: Path, parameters: dict) -> str:
 
     if weight_current.exists():
         return str(weight_current)
-    
-    elif weight_parent.exists(): 
+
+    elif weight_parent.exists():
         return str(weight_parent)
-    
+
     return None
 
 def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
 
-    differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and 'force' not in k}
+    all_differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and 'force' not in k}
 
-    if "gain_reference" in differences:
-        if resolve_path(previous_parameters["gain_reference"]) == resolve_path(new_parameters["gain_reference"]):
-            differences.remove("gain_reference")
-    if "data_path" in differences:
-        if resolve_path(previous_parameters["data_path"]) == resolve_path(new_parameters["data_path"]):
-            differences.remove("data_path")
+    differences = {d for d in all_differences if not ( ( isinstance(previous_parameters[d],PosixPath) or isinstance(previous_parameters[d],str) ) and project_params.resolve_path(previous_parameters[d]) == project_params.resolve_path(new_parameters[d]) ) }
 
-    if "slurm_verbose" in previous_parameters and previous_parameters["slurm_verbose"]:
-        logger.info(f"Parameters changed: {differences}")
+    if previous_parameters.get("slurm_verbose"):
+        if len(differences):
+            logger.info(f"Parameters changed: {differences}")
+        else:
+            logger.info("No parameter changes detected")
 
     try:
         data_set = previous_parameters["data_set"]
@@ -892,7 +911,6 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             clean_picking_files(project_dir)
 
             if "tomo" in previous_parameters["data_mode"]:
-                logger.info("Forcing tomo related procedure")
                 new_parameters["tomo_ali_force"] = True
                 new_parameters["tomo_vir_force"] = True
                 new_parameters["tomo_rec_force"] = True
