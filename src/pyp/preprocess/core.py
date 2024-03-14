@@ -142,10 +142,14 @@ def read_tilt_series(
     aligned_tilts = []
 
     data_path = Path(resolve_path(parameters["data_path"])).parent
+    mdoc_path = Path(resolve_path(parameters["data_path_mdoc"])).parent if "data_path_mdoc" in parameters else Path()
     project_raw_path = Path(filename).parent
 
     name = os.path.basename(filename)
-    mdocs = list(data_path.glob(f"{name}*.mdoc"))
+    mdocs = list(mdoc_path.glob(f"{name}*.mdoc"))
+    if len(mdocs) == 0:
+        # get the mdoc files from the path of raw data if it couldn't find them in mdoc path
+        mdocs = list(data_path.glob(f"{name}*.mdoc"))
 
     # escape special character in case it contains [
     filename = glob.escape(filename)
@@ -312,11 +316,14 @@ def read_tilt_series(
             
             if not parameters["movie_mdoc"]:
                 
-                if Path(rawtlt).exists(): 
+                if not Path(f"{name}.rawtlt").exists() and Path(rawtlt).exists(): 
                     shutil.copy2(rawtlt, "{0}.rawtlt".format(name))
-
-                if Path(order_file).exists():  
+                
+                if not Path(f"{name}.order").exists() and Path(order_file).exists():  
                     shutil.copy2(order_file, "{0}.order".format(name))
+
+                assert Path(f"{name}.rawtlt").exists(), "Please provide .rawtlt file containing the initial tilt angles."
+                assert Path(f"{name}.order").exists(), "Please provide .order file containing the acquisition order."
                            
             elif len(mdocs) > 0 and parameters["movie_mdoc"]:
                 
