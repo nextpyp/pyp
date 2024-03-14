@@ -1867,7 +1867,10 @@ def csp_extract_coordinates(
                     parx_object_no_frames, allboxes, xf_frames, parameters, scanords
                 )
             else:
-                [allboxes, allparxs] = tomo_extract_coordinates(
+                # [allboxes, allparxs] = tomo_extract_coordinates(
+                #     filename, parameters, use_frames, extract_projections=False
+                # )
+                allparxs = tomo_extract_coordinates(
                     filename, parameters, use_frames, extract_projections=False
                 )
 
@@ -1888,7 +1891,7 @@ def csp_extract_coordinates(
                         allparxs.append(extracted_rows[:, 1:])
 
             # copy boxes3d and ctf files to local scratch
-            shutil.copy2("csp/{}_boxes3d.txt".format(filename), working_path)
+            # shutil.copy2("csp/{}_boxes3d.txt".format(filename), working_path)
 
         else:
 
@@ -1964,18 +1967,20 @@ def csp_extract_coordinates(
                 )
 
         # save frame coordinates to file
-        np.savetxt(
-            os.path.join(working_path, filename + frame_tag + ".allboxes"),
-            np.array(allboxes).astype(int),
-            fmt="%i",
-        )
+        # np.savetxt(
+        #     os.path.join(working_path, filename + frame_tag + ".allboxes"),
+        #     np.array(allboxes).astype(int),
+        #     fmt="%i",
+        # )
 
         # save metadata to file and only initialize for 1 class
         with open(
             os.path.join(working_path, filename + frame_tag + ".allparxs"), "w"
         ) as f:
             f.writelines("%s\n" % item for item in allparxs[0])
-
+        logger.info(working_path)
+        import sys
+        sys.exit()
 
     return allboxes, allparxs
 
@@ -2713,7 +2718,7 @@ EOF
                                  tilts=tilt_parameters)
     parameters.set_data(data=cistem_parameters, extended_data=extended_parameters)
 
-    parameters.to_binary(output=f"{name}_r01_02.cistem")
+    # parameters.to_binary(output=f"{name}_r01_02.cistem")
 
     if len(allimodboxes) > 0:
         with open("%s_boxes.txt" % (name), "w") as f:
@@ -2722,17 +2727,17 @@ EOF
         for f in glob.glob("%s_boxes.txt" % name):
             os.remove(f)
 
-    if len(allboxes_3d) > 0:
-        with open("csp/%s_boxes3d.txt" % (name), "w") as f:
-            f.write(
-                "%8s\t%8s\t%8s\t%8s\t%8s\t%8s\n"
-                % ("PTLIDX", "X", "Y", "Z", "Score", "Keep_CSP")
-            )
-            f.writelines(
-                "%8d\t%8.1f\t%8.1f\t%8.1f\t%8.2f\t%8s\n"
-                % (idx, item[0], item[1], item[2], 0.0, "Yes")
-                for idx, item in enumerate(allboxes_3d)
-            )
+    # if len(allboxes_3d) > 0:
+    #     with open("csp/%s_boxes3d.txt" % (name), "w") as f:
+    #         f.write(
+    #             "%8s\t%8s\t%8s\t%8s\t%8s\t%8s\n"
+    #             % ("PTLIDX", "X", "Y", "Z", "Score", "Keep_CSP")
+    #         )
+    #         f.writelines(
+    #             "%8d\t%8.1f\t%8.1f\t%8.1f\t%8.2f\t%8s\n"
+    #             % (idx, item[0], item[1], item[2], 0.0, "Yes")
+    #             for idx, item in enumerate(allboxes_3d)
+    #         )
 
     # convert coordinates to IMOD models
     if os.path.exists(name + "_boxes.txt"):
@@ -2749,7 +2754,11 @@ EOF
         local_run.run_shell_command(com)
         os.remove(name + "_ali_boxes.txt")
 
-    return allboxes, allparxs
+
+    allparxs = [parameters]
+
+    # return allboxes, allparxs
+    return allparxs
 
 @timer.Timer(
     "get image particle index", text="Get image particles index took: {}", logger=logger.info
