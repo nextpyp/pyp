@@ -311,17 +311,9 @@ def read_tilt_series(
                 plt.close()
 
         elif os.path.isfile(name + ".mrc"):
-            rawtlt = filename + ".rawtlt"
-            order_file = filename + ".order"
             
             if not parameters["movie_mdoc"]:
-                
-                if not Path(f"{name}.rawtlt").exists() and Path(rawtlt).exists(): 
-                    shutil.copy2(rawtlt, "{0}.rawtlt".format(name))
-                
-                if not Path(f"{name}.order").exists() and Path(order_file).exists():  
-                    shutil.copy2(order_file, "{0}.order".format(name))
-
+                # .rawtlt and .order should be moved to the local scratch at this point
                 assert Path(f"{name}.rawtlt").exists(), "Please provide .rawtlt file containing the initial tilt angles."
                 assert Path(f"{name}.order").exists(), "Please provide .order file containing the acquisition order."
                            
