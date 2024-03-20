@@ -146,10 +146,10 @@ def read_tilt_series(
     project_raw_path = Path(filename).parent
 
     name = os.path.basename(filename)
-    mdocs = list(mdoc_path.glob(f"{name}.*.mdoc"))
+    mdocs = list(mdoc_path.glob(f"{name}.mdoc")) + list(mdoc_path.glob(f"{name}.mrc.mdoc"))
     if len(mdocs) == 0:
         # get the mdoc files from the path of raw data if it couldn't find them in mdoc path
-        mdocs = list(data_path.glob(f"{name}.*.mdoc"))
+        mdocs = list(data_path.glob(f"{name}.mdoc")) + list(mdoc_path.glob(f"{name}.mrc.mdoc"))
 
     # escape special character in case it contains [
     filename = glob.escape(filename)
