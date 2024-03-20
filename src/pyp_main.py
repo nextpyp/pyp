@@ -1941,7 +1941,6 @@ def csp_split(parameters, iteration):
     "csp_extract_frames", text="Particle extraction took: {}", logger=logger.info
 )
 def csp_extract_frames(
-    allboxes,
     allparxs,
     parameters,
     filename,
@@ -1951,34 +1950,34 @@ def csp_extract_frames(
     working_path,
     current_path,
 ):
-
-    totalboxes = len(allboxes)
+    particles = 0
+    totalboxes = allparxs[0].get_num_rows()
     iteration = parameters["refine_iter"]
     metric = project_params.param(parameters["refine_metric"], iteration)
     if totalboxes > 0:
-         # write .parx file for each class
-        if type(allparxs[0]) == np.ndarray:
-            par_col = allparxs[0].shape[1]
-            if par_col > 15:
-                if par_col < 45:
-                    metricfmt = "new"
-                    format = frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
-                else:
-                    metricfmt = "frealignx"
-                    format = frealign_parfile.EXTENDED_FREALIGNX_PAR_STRING_TEMPLATE_WO_NO
-            else:
-                format = frealign_parfile.NEW_PAR_STRING_TEMPLATE_WO_NO
-            with timer.Timer(
-                "write_allparx", text = "Writing parx file from allparxs took: {}", logger=logger.info
-            ):
-                for current_class in range(len(allparxs)):
-                    parfilename = parxfile.replace("_r01", "_r%02d" % (current_class + 1))
-                    np.savetxt(parfilename.replace(".parx", ""), allparxs[current_class], fmt=format)
-        else:
-            for current_class in range(len(allparxs)):
-                parfilename = parxfile.replace("_r01", "_r%02d" % (current_class + 1))
-                with open(parfilename.replace(".parx", ""), "w") as f:
-                    f.writelines("%s\n" % item for item in allparxs[current_class])
+        # write .parx file for each class
+        # if type(allparxs[0]) == np.ndarray:
+        #     par_col = allparxs[0].shape[1]
+        #     if par_col > 15:
+        #         if par_col < 45:
+        #             metricfmt = "new"
+        #             format = frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
+        #         else:
+        #             metricfmt = "frealignx"
+        #             format = frealign_parfile.EXTENDED_FREALIGNX_PAR_STRING_TEMPLATE_WO_NO
+        #     else:
+        #         format = frealign_parfile.NEW_PAR_STRING_TEMPLATE_WO_NO
+        #     with timer.Timer(
+        #         "write_allparx", text = "Writing parx file from allparxs took: {}", logger=logger.info
+        #     ):
+        #         for current_class in range(len(allparxs)):
+        #             parfilename = parxfile.replace("_r01", "_r%02d" % (current_class + 1))
+        #             np.savetxt(parfilename.replace(".parx", ""), allparxs[current_class], fmt=format)
+        # else:
+        #     for current_class in range(len(allparxs)):
+        #         parfilename = parxfile.replace("_r01", "_r%02d" % (current_class + 1))
+        #         with open(parfilename.replace(".parx", ""), "w") as f:
+        #             f.writelines("%s\n" % item for item in allparxs[current_class])
 
         if not parameters["csp_parx_only"]:
 
@@ -2073,7 +2072,7 @@ def csp_extract_frames(
                 particles = extract.extract_particles(
                     raw_image,
                     stackfile,
-                    allboxes,
+                    allparxs,
                     parameters["particle_rad"] * float(parameters["data_bin"]),
                     parameters["extract_box"],
                     parameters["extract_bin"],
@@ -2087,192 +2086,21 @@ def csp_extract_frames(
                     use_frames=use_frames,
                 )
 
-                # remove original image to save space
-                """
-                if use_frames:
-                    [
-                        os.remove(f)
-                        for frame in raw_image
-                        for f in glob.glob(frame + "*")
-                    ]
-                    [
-                        os.remove(f)
-                        for frame in raw_image
-                        for f in glob.glob("frealign/" + frame + "*")
-                    ]
-                else:
-                    [os.remove(f) for f in glob.glob(raw_image + "*")]
-                    [os.remove(f) for f in glob.glob("frealign/" + raw_image + "*")]
-                """
-                if True:  # "tomo" in parameters["data_mode"]:
-                    actual_number_of_particles = particles
-                else:
-                    actual_number_of_particles = mrc.readHeaderFromFile(stackfile)["nz"]
-
                 # check if all particles extracted correctly
-                if totalboxes != actual_number_of_particles:
+                if totalboxes != particles:
                     logger.error(
                         "Only {0} particles extracted from requested {1}".format(
-                            actual_number_of_particles, totalboxes
+                            particles, totalboxes
                         )
                     )
                 else:
                     logger.info(
                         f"Total number of particle frames extracted: {totalboxes:,}"
                     )
-
-                # fix empty particles
-                # logger.info("Detecting empty particles")
-                # temp_stack = filename + "_temp_stack.mrc"
-                # fix_empty_particles(stackfile, actual_number_of_particles, temp_stack)
-
-                imod_path = get_imod_path()
-
-                # create individual per-particle, per-micrograph stacks
-                if (
-                    False
-                    and "frealign" in parameters["extract_fmt"].lower()
-                    and "tomo" in parameters["data_mode"].lower()
-                ):
-
-                    root_stack = os.path.join(
-                        working_path,
-                        "frealign",
-                        "data",
-                        parameters["data_set"] + "_frames_T%04d" % (film),
-                    )
-
-                    # convert metadata to numpy array
-                    allparxs_array = np.genfromtxt(allparxs[0])
-
-                    # get the particle indexes
-                    local_particle = np.unique(allparxs_array[:, 15].astype("int"))
-
-                    num_particles = len(local_particle)
-
-                    logger.info("Found {} particles.".format(num_particles))
-
-                    command_list = []
-
-                    # template to use for naming the per-particle stacks
-                    root_particle_stack = root_stack + "_P??????_stack.mrc"
-
-                    for particle in local_particle:
-
-                        # find all lines corresponding to current particle
-                        indexes = np.argwhere(allparxs_array[:, 15] == particle)
-
-                        # name of output stack
-                        particle_stack = root_particle_stack.replace(
-                            "??????", "%06d" % particle
-                        )
-
-                        # format slice numbers for extraction with newstack
-                        if len(indexes) == 1:
-
-                            sections = str(indexes.squeeze())
-
-                            # newstack command
-                            command = "{0}/bin/newstack {1} {2} -secs {3}".format(
-                                get_imod_path(), stackfile, particle_stack, sections
-                            )
-
-                            command_list.append(command)
-
-                        else:
-                            # work around newstack's -secs limitation
-                            chunk_size = 50
-                            list = indexes.astype("str").squeeze().tolist()
-                            chunks = [
-                                list[i : i + chunk_size]
-                                for i in range(0, len(list), chunk_size)
-                            ]
-                            split_sections = ""
-                            for chunk in chunks:
-                                split_sections += " -secs " + ",".join(chunk)
-
-                            # newstack command
-                            command = "{0}/bin/newstack {1} {2} {3}".format(
-                                get_imod_path(),
-                                stackfile,
-                                split_sections,
-                                particle_stack,
-                            )
-
-                            command_list.append(command)
-
-                    local_frames = np.unique(allparxs_array[:, 18].astype("int"))
-
-                    logger.info("Found {} micrographs.".format(len(local_frames)))
-
-                    # template to use for naming the per-micrograph stacks
-                    root_micrograph_stack = root_stack + "_M??????_stack.mrc"
-
-                    for frame in local_frames:
-
-                        # find all lines corresponding to current micrograph
-                        indexes = np.argwhere(allparxs_array[:, 18] == frame)
-
-                        # name of output stack
-                        name = root_micrograph_stack.replace("??????", "%06d" % frame)
-
-                        # work around newstack's -secs limitation
-                        chunk_size = 50
-                        list = indexes.astype("str").squeeze().tolist()
-                        chunks = [
-                            list[i : i + chunk_size]
-                            for i in range(0, len(list), chunk_size)
-                        ]
-                        split_sections = ""
-                        for chunk in chunks:
-                            split_sections += " -secs " + ",".join(chunk)
-
-                        # newstack command
-                        command = "{0}/bin/newstack {1} {2} {3}".format(
-                            get_imod_path(), stackfile, split_sections, name
-                        )
-
-                        command_list.append(command)
-
-                    cpus = int(parameters["slurm_tasks"])
-
-                    logger.info(
-                        "Writing {} per-particle, per-micrograph stacks using {} cores".format(
-                            len(command_list), cpus - 1
-                        )
-                    )
-
-                    # run multirun on list of commands
-                    mpi.submit_jobs_to_workers(command_list, os.getcwd())
-
-                elif "relion" in parameters["extract_fmt"].lower():
-                    # write one stack per micrograph
-                    mrc.write(
-                        -particles,
-                        current_path + "/" + "relion/" + filename + "_stack.mrcs",
-                    )
-
-                os.chdir(current_path)
-
-                if not parameters["csp_stacks"]:
-                    # clear up space
-                    # shutil.rmtree(working_path)
-
-                    # only remove unnecesary files
-                    [os.remove(f) for f in glob.glob(filename + ".*")]
-                else:
-                    [
-                        shutil.copy2(f, os.path.join(current_path, "frealign", "data"))
-                        for f in glob.glob(
-                            os.path.join(
-                                working_path, "frealign", "data", "*_P??????_stack.mrc"
-                            )
-                        )
-                    ]
             else:
                 logger.info("{}.films does not exist".format(parameters["data_set"]))
 
-            return actual_number_of_particles
+            return particles
 
 
 @timer.Timer(
@@ -2392,7 +2220,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         parameters["gain_reference"] = None
 
     # extract/retrieve particle coordinates
-    [allboxes, allparxs] = csp_extract_coordinates(
+    allparxs = csp_extract_coordinates(
         filename,
         parameters,
         working_path,
@@ -2411,13 +2239,12 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
     os.chdir(current_path)
 
     # save copy of all boxes
-    allboxes_saved = allboxes.copy()
+    # allboxes_saved = allboxes.copy()
 
     # extract paticle frames and write parameter and stack files:
     # 1) parxfile's: working_path/frealign/maps/filename_r??_??.parx
     # 2) stackfile: working_path/filename_stack.mrc
     actual_number_of_frames = csp_extract_frames(
-        allboxes,
         allparxs,
         parameters,
         filename,
@@ -2437,6 +2264,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         working_path,
         use_frames,
         parxfile,
+        allparxs, 
         iteration,
     )
 

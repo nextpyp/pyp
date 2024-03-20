@@ -396,6 +396,19 @@ class ExtendedParameters():
         if tind not in self._tilts or rind not in self._tilts[tind]:
             return None
         return self._tilts[tind][rind]
+
+    def get_num_particles(self) -> int:
+        return len(self._particles.keys())
+    def get_num_tilts(self) -> int:
+        return len(self._tilts.keys())
+    def get_particle_list(self) -> list:
+        particle_list = list(self._particles.keys())
+        particle_list.sort()
+        return particle_list
+    def get_tilt_list(self) -> list:
+        tilt_list = list(self._tilts.keys())
+        tilt_list.sort()
+        return tilt_list
     
     def get_input_file(self): 
         # return the filename of input file

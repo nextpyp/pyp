@@ -659,7 +659,7 @@ def extract_particles_mpi(
         else:
             shutil.copy2(input, "frealign/" + input)
 
-    number_of_particles = len(boxes)
+    number_of_particles = boxes[0].get_num_rows()# len(boxes)
 
     # bypass extraction
     if not extract:

@@ -1974,16 +1974,14 @@ def csp_extract_coordinates(
         # )
 
         # save metadata to file and only initialize for 1 class
-        with open(
-            os.path.join(working_path, filename + frame_tag + ".allparxs"), "w"
-        ) as f:
-            f.writelines("%s\n" % item for item in allparxs[0])
-        logger.info(working_path)
-        import sys
-        sys.exit()
+        # with open(
+        #     os.path.join(working_path, filename + frame_tag + ".allparxs"), "w"
+        # ) as f:
+        #     f.writelines("%s\n" % item for item in allparxs[0])
+        
 
-    return allboxes, allparxs
-
+    # return allboxes, allparxs
+    return allparxs
 
 def tomo_extract_coordinates(
     filename, parameters, use_frames=True, extract_projections=False

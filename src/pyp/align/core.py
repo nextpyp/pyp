@@ -877,6 +877,7 @@ def prepare_to_run_frealign(
 
 def csp_run_refinement(
     parxfile,
+    alignment_parameters, 
     parameters,
     dataset,
     name,
@@ -901,6 +902,8 @@ def csp_run_refinement(
         os.path.join("frealign", "maps", "%s_frames_CSP_01.parx" % dataset),
     )
 
+    alignment_parameters.to_binary(output=f"frealign/maps/{dataset}.cistem")
+
     # reconstruction
     source = os.path.join(
         os.getcwd(), "frealign", "scratch", "%s_%02d.mrc" % (name, iteration - 1)
@@ -921,9 +924,9 @@ def csp_run_refinement(
 
     # get number of tilts and particles
     allparxs = get_non_empty_lines_from_par(parxfile)
-    ptlind_list = np.sort(np.unique(np.asarray([int(round(float(f.split()[16]))) for f in allparxs])))
-    scanord_list = np.sort(np.unique(np.asarray([int(round(float(f.split()[19]))) for f in allparxs])))
-    frame_list = np.sort(np.unique(np.asarray([int(round(float(f.split()[20]))) for f in allparxs])))
+    ptlind_list = alignment_parameters.get_extended_data().get_particle_list() # np.sort(np.unique(np.asarray([int(round(float(f.split()[16]))) for f in allparxs])))
+    scanord_list = alignment_parameters.get_extended_data().get_tilt_list() # np.sort(np.unique(np.asarray([int(round(float(f.split()[19]))) for f in allparxs])))
+    frame_list = np.sort(np.unique(alignment_parameters.get_data()[:, -3])) # np.sort(np.unique(np.asarray([int(round(float(f.split()[20]))) for f in allparxs])))
 
     stackfile = "frealign/" + name[:-4] + "_stack.mrc"
 
@@ -1019,13 +1022,11 @@ def csp_run_refinement(
         parx_object.write_file(new_par_file)
 
     # check if the number of rows in parfile matches allboxes before proceeding
-    check_parfile_match_allboxes(par_file=new_par_file, allboxes_file=allboxes_file)
+    # check_parfile_match_allboxes(par_file=new_par_file, allboxes_file=allboxes_file)
 
     for i in range(1):
 
-        starting_number_of_frames = frealign_parfile.Parameters.from_file(
-            parxfile
-        ).data.shape[0]
+        starting_number_of_projections = alignment_parameters.get_num_rows()
 
         ###############################
         # The available modes in CSPT #
@@ -1050,7 +1051,7 @@ def csp_run_refinement(
                 t = Timer(text="Particle refinement (mode 2) took: {}", logger=logger.info)
                 t.start()
 
-            parx_object = Parameters.from_file(new_par_file)
+            # parx_object = Parameters.from_file(new_par_file)
             merged_stack = "frealign/%s_stack.mrc" % (name.split("_r")[0])
             frame_refinement = False
 
@@ -1063,7 +1064,6 @@ def csp_run_refinement(
                 )
             )
 
-            # TODO:
             if not use_frames:
                 if mode != -2 and mode != 7 and mode != 2 and mode != 4:
                     parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = 0, -1
@@ -1275,7 +1275,7 @@ def csp_run_refinement(
 
             t.stop()
 
-            if starting_number_of_frames != current_number_of_frames:
+            if starting_number_of_projections != current_number_of_frames:
                 message = "Number of frames before and after refinement differ: {} != {}".format(
                     starting_number_of_frames, current_number_of_frames
                 )
@@ -1531,6 +1531,7 @@ def csp_refinement(
     working_path,
     use_frames,
     parxfile,
+    allparxs,
     iteration,
 ):
     """Unified stack-less single-particle refinement.
@@ -1647,14 +1648,6 @@ def csp_refinement(
         # apply shape masking if needed
         shape_mask_reference(mp, iteration, target, target)
 
-        # re-normalize reference
-        """
-        normalize_volume(
-            target,
-            radius=float(mp["particle_rad"]),
-            pixelsize=float(mp["scope_pixel"]) * float(mp["extract_bin"]),
-        )
-        """
         is_tomo = "tomo" in mp["data_mode"].lower()
 
         class_parxfile = parxfile.replace("_r01_", "_r%02d_" % current_class)
@@ -1665,11 +1658,12 @@ def csp_refinement(
             # set SCANORD back to normal (without having frame index added) before going to csp
             t = Timer(text="Modifying scanning order took: {}", logger=logger.info)
             t.start()
-            frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
+            # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
             t.stop()
 
             new_par_file = csp_run_refinement(
                 class_parxfile,
+                allparxs[class_index],
                 mp,
                 dataset,
                 new_name,
@@ -1688,7 +1682,7 @@ def csp_refinement(
             t = Timer(text="Modifying scanning order 2 took: {}", logger=logger.info)
             t.start()
             # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
-            frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
+            # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
             t.stop() 
 
         elif use_frames or mp["csp_refine_ctf"]: # run csp for only refine ctf or frame refinement 
