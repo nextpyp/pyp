@@ -4675,7 +4675,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         bfactor = float(parameters["movie_bfactor"])
         first_frame = int(parameters["movie_first"]) + 1 # pyp from 0, unblur starts from 1
         last_frame = int(parameters["movie_last"]) + 1 if int(parameters["movie_last"]) != -1 else 0 # pyp's end is -1, unblur's end is 0
-        running_average = 1
+        running_average = parameters["movie_group"]
         maximum_shifts_in_A = 40.0
         minimum_shifts_in_A = 0.0
         threads = min(6,parameters["slurm_tasks"]) if "spr" in parameters["data_mode"].lower() else 1

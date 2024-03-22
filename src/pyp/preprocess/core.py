@@ -347,8 +347,8 @@ def read_tilt_series(
             for i in range(tilts.size):
                 shifts[i] = np.zeros([1, 2])
 
-            x, y, z = imageio.readMoviefileandsave(name + ".mrc", parameters, binning)
-
+            x, y, z = get_image_dimensions(name + ".mrc")
+            
             # sanity check if number of tilts derived from .rawtlt is correct
             assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"      
 

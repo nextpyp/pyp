@@ -432,7 +432,7 @@ condition = { arg="ali", value=[ "unblur", "motioncor", "skip" ] }
 
 [tabs.movie.group]
 name = "Frame grouping"
-description = "Number of frames to average together (1=no averaging)"
+description = "Number of frames to average together (1=no averaging, odd number for unblur)"
 type = "int"
 default = 1
 condition = { arg="ali", value=[ "unblur", "motioncor" ] }

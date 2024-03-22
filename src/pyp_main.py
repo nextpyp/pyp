@@ -3650,7 +3650,12 @@ if __name__ == "__main__":
                     output = os.path.join( output_dir, data_set + ".star")
 
                     os.chdir(current_dir)
-                    coords = False
+                    if ("detect_method" in session_parameters and not "none" in session_parameters["detect_method"] and not "train" in session_parameters["detect_method"] and session_parameters["detect_rad"] > 0
+                        or "tomo_vir_method" in session_parameters and not "none" in session_parameters["tomo_vir_method"] and not "train" in session_parameters["tomo_vir_method"]
+                        ):
+                        coords = True
+                    else:
+                        coords = False
                     globalmeta.weak_meta2Star(imagelist, output, session_path, coords=coords)
 
                 logger.info("PYP (export_session) finished successfully")
