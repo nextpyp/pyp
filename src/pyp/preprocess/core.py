@@ -372,7 +372,7 @@ def read_tilt_series(
 
             # read image dimensions
             [micrographinfo, error] = local_run.run_shell_command(
-                "{0}/bin/header -size {1}.mrc".format(get_imod_path(), name), verbose=parameters["slurm_verbose"]
+                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=parameters["slurm_verbose"]
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
@@ -596,7 +596,7 @@ def read_tilt_series(
 
         # read image dimensions
         [micrographinfo, error] = local_run.run_shell_command(
-            "{0}/bin/header -size {1}.mrc".format(get_imod_path(), name),verbose=False
+            "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name),verbose=False
         )
         x, y, z = list(map(int, micrographinfo.split()))
         drift_metadata["tilts"] = [tilt[1] for tilt in sorted_tilts]
@@ -737,7 +737,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         or int(mparameters["extract_box"]) != model_box_size
     ):
         logger.warning(f"Rescaling {initial_model} pixel size to binning {1/scaling:.2f}, which would be {model_pixel_size/scaling:.2f}")
-        command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 {4} {2}".format(
+        command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
             get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, initial_model,
         )
         local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])

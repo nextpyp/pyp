@@ -567,7 +567,7 @@ class Parameters:
         assert "/" not in input, f"Input(s) to pbzip2 should only contain basename, please go to the file directory before compressing"
 
         threads = 7 if threads > 7 else threads
-        command = f"tar -v -c -h -v {input} | pbzip2 -c -v -p{threads} > {output}"
+        command = f"tar -v -c -h -v {input} | pbzip2 -c -v -p{threads} > '{output}'"
         run_shell_command(command, verbose=False)
 
     # compress
@@ -584,8 +584,8 @@ class Parameters:
         """
         # thread greater than 10 is actually slower
         threads = 7 if threads > 7 else threads
-        
-        command = f"pbzip2 -v -d -c -p{threads} {input} | tar x"
+
+        command = f"pbzip2 -v -d -c -p{threads} '{input}' | tar x"
         run_shell_command(command, verbose=False)
 
     # decompress paramater file in scratch directory
@@ -1735,7 +1735,7 @@ class Parameters:
             fieldstring = EXTENDED_CCLIN_PAR_STRING_TEMPLATE + "\n"
         else:
             logger.error(
-                "Could not figure out file format. Columns = {0}".format(columns)
+                "Could not figure out file format for {1}. Columns = {0}".format(columns,par_filename)
             )
 
         return fieldwidths, fieldstring, version, extended

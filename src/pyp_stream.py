@@ -366,17 +366,17 @@ def create_paths(server, path):
         Path(path).mkdir(parents=True, exist_ok=True)
 
         # set permissions
-        com = "chmod g+w {1}".format(server, path)
+        com = "chmod g+w '{1}'".format(server, path)
         run_shell_command(com)
 
     # do over ssh
     else:
 
-        com = "ssh {0} mkdir -p {1}".format(server, path)
+        com = "ssh {0} mkdir -p '{1}'".format(server, path)
         [output, error] = run_shell_command(com)
 
         # set permissions
-        com = "ssh {0} chmod g+w {1}".format(server, path)
+        com = "ssh {0} chmod g+w '{1}'".format(server, path)
         run_shell_command(com)
 
 
@@ -397,11 +397,11 @@ def launch_preprocessing(args, autoprocess):
 
             f.write("#!/bin/bash\n")
             f.write(
-                "#SBATCH --output=%s\n"
+                "#SBATCH --output=\"%s\"\n"
                 % (os.path.join(target_path, swarm_file.replace(".swarm", ".out")))
             )
             f.write(
-                "#SBATCH --error=%s\n"
+                "#SBATCH --error=\"%s\"\n"
                 % (os.path.join(target_path, swarm_file.replace(".swarm", ".err")))
             )
 
@@ -413,7 +413,7 @@ def launch_preprocessing(args, autoprocess):
             # f.write("{0} > {1}\n".format( pyp_command, os.path.join( target_path, swarm_file.replace('.swarm','.log') ) ) )
             f.write("{0}\n".format(pyp_command))
 
-        run_shell_command(f"chmod u+x {swarm_file}")
+        run_shell_command(f"chmod u+x '{swarm_file}'")
 
         # transfer swarm file to remote server
         move_to_destination(file=swarm_file, server=server, path=target_path)
@@ -623,7 +623,7 @@ if __name__ == "__main__":
         for f in [transferred_filename, filelist_filename, transfer_filename]:
             try:
                 if args["slurm_verbose"]:
-                    logger.warning("Deleting " + f)
+                    logger.info("Deleting " + Path(f).name)
                 os.remove(f)
             except:
                 if args["slurm_verbose"]:

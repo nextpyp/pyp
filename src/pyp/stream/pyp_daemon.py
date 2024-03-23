@@ -153,7 +153,7 @@ def pyp_daemon(args):
 
     # set write access to group
     run_shell_command(
-        "chmod g+w %s" % pyp_config_file, verbose=False
+        "chmod g+w '%s'" % pyp_config_file, verbose=False
     )
 
     # SKIP: launch incremental 2D classification
@@ -470,7 +470,7 @@ def pyp_daemon(args):
                 f.write(
                     "\n".join(
                         [
-                            "export sess_img=sess_img; {0} --stream_file {1} > {2}/log/{1}_pypd.log".format(
+                            "export sess_img=sess_img; {0} --stream_file {1} > '{2}/log/{1}_pypd.log'".format(
                                 run_pyp("pyp", script=True), s, session_dir,
                             )
                             for s in tobesubmitted
@@ -478,7 +478,7 @@ def pyp_daemon(args):
                     )
                 )
 
-            run_shell_command("chmod u+x {0}".format(swarm_file),verbose=False)
+            run_shell_command("chmod u+x '{0}'".format(swarm_file),verbose=False)
 
             # submit jobs to batch system
             gpu = needs_gpu(parameters)

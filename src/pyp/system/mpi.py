@@ -102,10 +102,10 @@ def submit_jobs_to_workers(commands, working_path=os.getcwd(), verbose=False, si
         current_directory = os.getcwd()
 
         if silent:
-            parallel(delayed(run_shell_command)(f"cd {current_directory} && " + i) for i in commands)
+            parallel(delayed(run_shell_command)(f"cd '{current_directory}' && " + i) for i in commands)
         else:
             with tqdm_joblib(tqdm(desc="Progress", total=len(commands), miniters=1, file=TQDMLogger())) as progress_bar:
-                parallel(delayed(run_shell_command)(f"cd {current_directory} && " + i) for i in commands)
+                parallel(delayed(run_shell_command)(f"cd '{current_directory}' && " + i) for i in commands)
 
         if not silent:
             logger.info(f"{len(commands):,} command(s) finished")

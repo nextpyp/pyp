@@ -3558,7 +3558,7 @@ EOF
                         )
 
                         # launch FREALIGN refinement (skip reconstruction, score evaluation only)
-                        command = "cd {0}; export MYCORES={1}; echo {2} > `pwd`/mynode; export MYNODES=`pwd`/mynode; {3}/bin/fyp -dataset {4} -iter 2 -maxiter {5} -metric {6} -mode 1 -mask 0,0,0,0,0 -cutoff -1 -rlref {7} -rhref {8} -rrec {9} -fmatch F".format(
+                        command = "cd '{0}'; export MYCORES={1}; echo {2} > `pwd`/mynode; export MYNODES=`pwd`/mynode; {3}/bin/fyp -dataset {4} -iter 2 -maxiter {5} -metric {6} -mode 1 -mask 0,0,0,0,0 -cutoff -1 -rlref {7} -rhref {8} -rrec {9} -fmatch F".format(
                             frealign_path,
                             cores_for_frealign,
                             socket.gethostname(),
@@ -3812,7 +3812,7 @@ EOF
 
                     # parse parameter file
 
-                    command = "cd {0}; export MYCORES={1}; echo {2} > `pwd`/mynode; export MYNODES=`pwd`/mynode; {3}/bin/fyp -dataset {4} -iter 2 -maxiter {5} -metric {6} -mode 1 -mask 0,0,0,1,1 -cutoff -1 -rlref {7} -rhref {8} -rrec {9} -fmatch T".format(
+                    command = "cd '{0}'; export MYCORES={1}; echo {2} > `pwd`/mynode; export MYNODES=`pwd`/mynode; {3}/bin/fyp -dataset {4} -iter 2 -maxiter {5} -metric {6} -mode 1 -mask 0,0,0,1,1 -cutoff -1 -rlref {7} -rhref {8} -rrec {9} -fmatch T".format(
                         frealign_path,
                         cores_for_frealign,
                         socket.gethostname(),

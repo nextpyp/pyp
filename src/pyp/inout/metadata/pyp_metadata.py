@@ -516,7 +516,7 @@ class LocalMetadata:
 
         header = self.files[key]["header"]
 
-        command = f"{get_imod_path()}/bin/header -size {file}"
+        command = f"{get_imod_path()}/bin/header -size '{file}'"
         [output, error] = run_shell_command(command, verbose=False)
 
         x, y, z = list(map(int, output.split()))
@@ -1935,7 +1935,7 @@ _rlnRandomSubset #14
                     dst_name = os.path.join("mrc", os.path.basename(avg))
                     # update image size - from .mrc images
                     assert (os.path.exists(avg_src)), f"{avg_src} does not exist"
-                    command = f"{get_imod_path()}/bin/header -size {avg_src}"
+                    command = f"{get_imod_path()}/bin/header -size '{avg_src}'"
                     [output, error] = run_shell_command(command, verbose=False)
                     x, y, z = list(map(int, output.split()))
                     arr = np.array([[x, y, z]])
@@ -2063,7 +2063,7 @@ _rlnRandomSubset #14
                 # update image size - from .mrc images
                 assert (os.path.exists(Path(rln_path) / path)), f"{Path(rln_path) / path} does not exist"
 
-                command = f"{get_imod_path()}/bin/header -size {Path(rln_path) / path}"
+                command = f"{get_imod_path()}/bin/header -size '{Path(rln_path) / path}'"
                 [output, error] = run_shell_command(command, verbose=False)
                 x, y, z = list(map(int, output.split()))
                 arr = np.array([[x, y, z]])
