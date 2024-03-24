@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import glob
+from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
@@ -21,6 +22,7 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path, timer, symlink_relative
 from pyp.inout.utils.pyp_edit_box_files import read_boxx_file_async, write_boxx_file_async
 from pyp.system.utils import get_imod_path
+from pyp.streampyp.logging import TQDMLogger
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -1816,12 +1818,12 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
                 pardata[int(line[0]-1)][occ_field] = 0.0
             else:
                 valid_points = np.vstack((valid_points, coordinate))
-    
+
     return pardata
 
 
 def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/selected_particles", is_tomo=True, thickness=2048):
-    
+
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -1832,24 +1834,34 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
     inputfiles = glob.glob(os.path.join(input_path, coordinates))
 
     if is_tomo:
-        for file in inputfiles:
-            read_array = np.loadtxt(file, dtype='str', comments="  PTLIDX", ndmin=2, usecols=(1,2,3,5))
 
-            clean_array = read_array[read_array[:, -1]=="Yes"][:, :-1].astype('float')
-            
-            if clean_array.size > 0:
-                clean_array[:, -1] = thickness - clean_array[:, -1]
-                clean_array = clean_array / binning
-                
-                np.savetxt(file.replace("_boxes3d.txt", ".box"), clean_array, fmt='%.1f')
+        logger.info(f"Exporting clean particle coordinates for {len(inputfiles)} tomograms")
+        with tqdm(desc="Progress", total=len(inputfiles), file=TQDMLogger()) as pbar:
+            for file in inputfiles:
+                read_array = np.loadtxt(file, dtype='str', comments="  PTLIDX", ndmin=2, usecols=(1,2,3,5))
 
-                outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.mod'))
-                command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_boxes3d.txt', '.box')} {outfile}"
-                run_shell_command(command, verbose=True)
+                clean_array = read_array[read_array[:, -1]=="Yes"][:, :-1].astype('float')
 
-                run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
+                if clean_array.size > 0:
+                    clean_array[:, -1] = thickness - clean_array[:, -1]
+                    clean_array = clean_array / binning
 
-                os.remove(outfile)
+                    np.savetxt(file.replace("_boxes3d.txt", ".box"), clean_array, fmt='%.1f')
+
+                    outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.mod'))
+                    command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_boxes3d.txt', '.box')} {outfile}"
+                    run_shell_command(command, verbose=False)
+
+                    run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
+
+                    os.remove(outfile)
+
+                pbar.update(1)
+        spk_files = len(glob.glob(os.path.join(output_path, "*.spk")))
+        if spk_files > 0:
+            logger.info(f"Clean particle coordinates in *.spk format exported to {os.path.abspath(output_path)}")
+        else:
+            logger.warning("Unable to export clean particle coordiantes")
     else:
         for file in inputfiles:
             outfile = os.path.join(output_path, os.path.basename(file).replace('.allboxes', '.spk'))
