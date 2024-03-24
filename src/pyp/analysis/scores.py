@@ -1835,6 +1835,12 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
 
     if is_tomo:
 
+        # clean previously exported coordinates
+        try:
+            [ os.remove(f) for f in glob.glob(os.path.join(output_path, "*.spk")) ]
+        except:
+            pass
+
         logger.info(f"Exporting clean particle coordinates for {len(inputfiles)} tomograms")
         with tqdm(desc="Progress", total=len(inputfiles), file=TQDMLogger()) as pbar:
             for file in inputfiles:
@@ -1859,7 +1865,7 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
                 pbar.update(1)
         spk_files = len(glob.glob(os.path.join(output_path, "*.spk")))
         if spk_files > 0:
-            logger.info(f"Clean particle coordinates in *.spk format exported to {os.path.abspath(output_path)}")
+            logger.info(f"Clean particle coordinates in spk format exported to {os.path.abspath(output_path)}")
         else:
             logger.warning("Unable to export clean particle coordiantes")
     else:
