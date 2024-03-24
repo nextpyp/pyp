@@ -795,13 +795,13 @@ class Parameters:
             splits = [inputlist[i:i+batch_size] for i in range(0, len(inputlist), batch_size)]
             for batch in splits:
                 command = "cat {0} >> {1}".format(" ".join(f'"{w}"' for w in batch), filename)
-                run_shell_command(command, verbose=True)
+                run_shell_command(command, verbose=False)
         else:
             command = "cat {0} >> '{1}'".format(" ".join(f'"{w}"' for w in inputlist), filename)
-            run_shell_command(command, verbose=True)
-        
+            run_shell_command(command, verbose=False)
+
         [os.remove(f) for f in os.listdir(".") if f.endswith(".tmp")]
-        
+
         """
         input_arr = [
             pd.DataFrame(
