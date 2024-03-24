@@ -83,7 +83,7 @@ def submit_commands(
     if "sess_" in jobtype:
         cmdlist = [
             # filter the commands list: pick the line of the script that matches the task id
-            "eval `cat %s | awk -v line=$SLURM_ARRAY_TASK_ID '{if (NR == line) print $0}'`"
+            "eval `cat '%s' | awk -v line=$SLURM_ARRAY_TASK_ID '{if (NR == line) print $0}'`"
             % command_file,
         ]
     else:
@@ -118,7 +118,7 @@ END_NUM=$(( $MAX_TASK < $END_NUM ? $MAX_TASK : $END_NUM ))
 for (( run=$START_NUM; run<=END_NUM; run++ )); do
 # echo This is SLURM task $SLURM_ARRAY_TASK_ID, run number $run
 #Do your stuff here
-eval `cat %s | awk -v line=$run '{if (NR == line) print $0}'`
+eval `cat '%s' | awk -v line=$run '{if (NR == line) print $0}'`
 done
             """
             % command_file,
@@ -127,7 +127,7 @@ done
         if csp_no_stacks and "classmerge" not in jobtype:
             cmdlist.append("unset %s \n" % jobtype)
             cmdlist.append(
-                "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path {1}/$OUTPUT_BASENAME\n".format(
+                "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path '{1}/$OUTPUT_BASENAME'\n".format(
                     run_pyp(command="pyp", script=True, cpus=threads),
                     Path(get_pyp_configuration()["pyp"]["scratch"]),
                 ),
@@ -186,7 +186,7 @@ done
                 output_basename = "${SLURM_JOB_ID}_1"
 
             scratch = Path(os.environ["PYP_SCRATCH"]).parent
-            csp_local_merge_command = f"export OPENBLAS_NUM_THREADS=1; unset {jobtype}; export csp_local_merge=csp_local_merge; {run_pyp(command='pyp', script=True, cpus=threads)} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename {output_basename} --path {scratch}/{output_basename}"
+            csp_local_merge_command = f"export OPENBLAS_NUM_THREADS=1; unset {jobtype}; export csp_local_merge=csp_local_merge; {run_pyp(command='pyp', script=True, cpus=threads)} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename {output_basename} --path '{scratch}/{output_basename}'"
 
         cmdgrid = [[]]
         job_counter = array_counter = array_job_counter = 0
@@ -248,8 +248,8 @@ done
         with open(multirun_file, "w") as f:
             f.write("#!/bin/bash --login\n")
             f.write("#SBATCH --open-mode=append\n")
-            f.write(f"#SBATCH --output={submit_dir}/slurm-%A.out\n")
-            f.write("cd %s\n" % (submit_dir))
+            f.write(f"#SBATCH --output='{submit_dir}/slurm-%A.out'\n")
+            f.write("cd '%s'\n" % (submit_dir))
 
             if False and "gres=gpu" in queue:
                 f.write("""
@@ -273,7 +273,7 @@ export CUDA_VISIBLE_DEVICES=$available_devs
             for line in cmdlist:
                 f.write(line)
 
-            run_shell_command("chmod u+x {0}".format(multirun_file), verbose=False)
+            run_shell_command("chmod u+x '{0}'".format(multirun_file), verbose=False)
 
         # format dependencies based on the environment/batch system
         if len(dependencies) == 0:
@@ -358,6 +358,8 @@ def submit_script(
     cmd = command_file
     if not cmd.startswith("/"):
         cmd = "./%s" % cmd
+    if os.path.exists(cmd):
+        cmd = "'%s'" % cmd
 
     if Web.exists:
 

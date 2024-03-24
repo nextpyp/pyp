@@ -77,7 +77,7 @@ def downsample_stack(input, output, binning, method):
     if "imod" in method.lower():
 
         os.environ["IMOD_DIR"] = get_imod_path()
-        command = "{0}/bin/newstack -ftreduce {1} {2} {3}".format(
+        command = "{0}/bin/newstack -ftreduce {1} '{2}' {3}".format(
             get_imod_path(), binning, input, output
         )
 

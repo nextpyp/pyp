@@ -1242,8 +1242,12 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
 
     # generate a GIF using these pngs
     square_size = int(math.ceil(math.sqrt(len(pngList))))
+    if max(dimensions[1:]) * square_size > 16383:
+        rec_output = output.replace(".webp",".png")
+    else:
+        rec_output = output
     command = "/usr/bin/montage -resize {0}x{1} -geometry +0+0 -tile {2}x {3} {4}".format(
-        dimensions[2], dimensions[1], square_size, " ".join(pngList), output
+        dimensions[2], dimensions[1], square_size, " ".join(pngList), rec_output
     )
     run_shell_command(command, verbose=verbose)
 
@@ -1552,6 +1556,6 @@ def par2bild(parfile, output, parameters):
     else:
         is_tomo = ""
 
-    comm= os.environ["PYP_DIR"] + f"/external/postprocessing/par_to_bild.py --input {parfile} --output {output} {is_tomo} --apix {parameters['scope_pixel']*parameters['data_bin']*parameters['extract_bin']} --healpix_order 4 --boxsize {parameters['extract_box']} --height_scale 0.3 --width_scale 0.5 --occ_cutoff {parameters['reconstruct_cutoff']} --sym {parameters['particle_sym']} "
+    comm= os.environ["PYP_DIR"] + f"/external/postprocessing/par_to_bild.py --input '{parfile}' --output '{output}' {is_tomo} --apix {parameters['scope_pixel']*parameters['data_bin']*parameters['extract_bin']} --healpix_order 4 --boxsize {parameters['extract_box']} --height_scale 0.3 --width_scale 0.5 --occ_cutoff {parameters['reconstruct_cutoff']} --sym {parameters['particle_sym']} "
 
     run_shell_command(comm, verbose=False)

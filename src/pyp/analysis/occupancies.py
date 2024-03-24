@@ -260,7 +260,7 @@ def occupancy_extended(parameters, dataset, iteration, nclasses, path=".", is_fr
             inputfile = parxfile.replace(".par", ".paro")
             os.rename(parxfile, inputfile)
             
-            writecom = f"""/bin/bash -c "paste -d '' <(cut -b 1-{preocc} {inputfile}) <(cut -b 8-15 {occ_sigmafile}) <(cut -b {logpstart}-{logpend} {inputfile}) <(cut -b 16-26 {occ_sigmafile}) <(cut -b {postsigma}-{parend} {inputfile}) > {parxfile}" """
+            writecom = f"""/bin/bash -c "paste -d '' <(cut -b 1-{preocc} '{inputfile}') <(cut -b 8-15 '{occ_sigmafile}') <(cut -b {logpstart}-{logpend} '{inputfile}') <(cut -b 16-26 '{occ_sigmafile}') <(cut -b {postsigma}-{parend} {inputfile}) > {parxfile}" """
             [output, error] = local_run.run_shell_command(writecom, verbose=False)
             os.remove(occ_sigmafile)
             os.remove(inputfile)

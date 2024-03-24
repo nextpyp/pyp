@@ -140,8 +140,6 @@ Step 3: Pre-processing
 
         - Set ``Binning factor for reconstruction`` to 8
 
-        - Click ``Show advanced options``
-
         - Set ``Thickness of reconstruction (unbinned voxels)`` to 2048
 
         - Click on the **Virion/spike detection** tab
@@ -319,8 +317,6 @@ Step 6: Reference-based refinement
 
         - Set ``Last exposure for refinement`` to 10
 
-        - Check ``Show advanced options``
-
         - Set ``Optimizer - Exhaustive search points`` to 50000
 
         - Check ``Refine particle alignments``
@@ -376,8 +372,6 @@ Step 7. Fully constrained refinement
       .. tabbed:: Constrained refinement
 
         - Check ``Refine tilt-geometry``
-
-        - Check ``Show advanced options``
 
         - Set ``Optimizer - Max step length`` to 100
 
@@ -677,8 +671,6 @@ Step 15: Refinement after movie frame refinement
         - Click on the **Constrained refinement** tab
 
       .. tabbed:: Constrained refinement
-
-        - Check ``Show advanced options``
 
         - Set ``Min number of projections for refinement`` to 2
 

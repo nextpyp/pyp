@@ -993,7 +993,7 @@ def split(parameters):
             parameters, files, timestamp, nodes
         )
 
-        local_run.run_shell_command("chmod u+x {0}/{1}".format(os.getcwd(), mpirunfile),verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),verbose=parameters["slurm_verbose"])
 
         mpirun = get_mpirun_command()
 
@@ -3650,7 +3650,12 @@ if __name__ == "__main__":
                     output = os.path.join( output_dir, data_set + ".star")
 
                     os.chdir(current_dir)
-                    coords = False
+                    if ("detect_method" in session_parameters and not "none" in session_parameters["detect_method"] and not "train" in session_parameters["detect_method"] and session_parameters["detect_rad"] > 0
+                        or "tomo_vir_method" in session_parameters and not "none" in session_parameters["tomo_vir_method"] and not "train" in session_parameters["tomo_vir_method"]
+                        ):
+                        coords = True
+                    else:
+                        coords = False
                     globalmeta.weak_meta2Star(imagelist, output, session_path, coords=coords)
 
                 logger.info("PYP (export_session) finished successfully")
@@ -3691,9 +3696,8 @@ if __name__ == "__main__":
                         parfile=parfile,
                         path="./pkl"
                         )
-                    output_path = parameters["export_location"]
                     select = parameters["extract_cls"]
-                    globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile, output_path=output_path)
+                    globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
 
                 logger.info("PYP (export_star) finished successfully")
             except:
@@ -4408,7 +4412,7 @@ if __name__ == "__main__":
                     refine_res_lim = ""
 
                 comm_exe = os.environ["PYP_DIR"] + "/external/postprocessing/postprocessing.py "
-                basic = f"{half1} {half2} {mask} --angpix {pixel_size} --out {output} {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
+                basic = f"'{half1}' '{half2}' '{mask}' --angpix {pixel_size} --out '{output}' {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
                 comm = comm_exe + basic + bfac + filter + fsc + automask + randomize_phase
                 local_run.run_shell_command(comm, verbose=False)
                 if not os.path.exists(output_map):
