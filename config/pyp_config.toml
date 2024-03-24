@@ -2001,7 +2001,7 @@ description = "Parameter file containing poses from sub-volume averaging"
 type = "path"
 path = { type="files" }
 input = { type="txtfile" }
-hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine"]
+hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.parfile]
 name = "Input parameter file (*.par.bz2)"
@@ -2010,6 +2010,7 @@ type = "path"
 path = { type="files" }
 input = { type="parfile" }
 copyToNewBlock = false
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.parfile_compress]
 name = "Compress par files"
@@ -2032,18 +2033,21 @@ name = "Min resolution (A)"
 description = "Minimum resolution used during refinement"
 type = "float"
 default = 100.0
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.rhref]
 name = "Max resolution (A)"
 description = "Maximum resolution used during refinement (per iteration, colon separated)"
 type = "str"
 default = "10"
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.fboost]
 name = "Use signed correlation"
 description = "May increase the chance of overfitting"
 type = "bool"
 default = false
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.fboostlim]
 name = "Resolution limit for signed correlation"
@@ -2051,6 +2055,7 @@ description = "Resolution limit to use for signed correlation coefficient (0=no 
 type = "float"
 default = 0.0
 condition = { arg="fboost", value="true" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.resume]
 name = "Resume refinement"
@@ -2058,6 +2063,7 @@ description = "Resume refinement from most recent iteration"
 type = "bool"
 default = true
 copyToNewBlock = false
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.first_iter]
 name = "First iteration"
@@ -2066,6 +2072,7 @@ type = "int"
 default = 2
 copyToNewBlock = false
 condition = { arg="resume", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.iter]
 name = "Starting iteration"
@@ -2081,6 +2088,7 @@ description = "Number of last refinement iteration"
 type = "int"
 default = 2
 copyToNewBlock = false
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.skip]
 name = "Skip refinement"
@@ -2088,6 +2096,7 @@ description = "Skip refinement step, only do reconstruction"
 type = "bool"
 default = false
 copyToNewBlock = false
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.metric]
 name = "Search metric"
@@ -2104,6 +2113,7 @@ description = "Use SSNR table during evaluation of refinement metric"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.mode]
 name = "Search mode"
@@ -2112,7 +2122,7 @@ type = "enum"
 enum = { 0="global", 1="local" }
 default = "0"
 condition = { arg="skip", value="false" }
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine"]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.itmax]
 name = "Random search cycles"
@@ -2120,6 +2130,7 @@ description = "Number of cycles of randomised search used during global search"
 type = "int"
 default = 50
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.dang]
 name = "Angular sampling step (degrees)"
@@ -2127,6 +2138,7 @@ description = "There is a program default value calculated taking resolution int
 type = "str"
 default = "20.0"
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.priors]
 name = "Use alignment priors"
@@ -2134,6 +2146,7 @@ description = "Using priors during refinement may reduce the chance of overfitti
 type = "bool"
 default = false
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_angle_phi]
 name = "Refine Phi angle"
@@ -2141,6 +2154,7 @@ description = "Refine angle parameter Phi"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_angle_theta]
 name = "Refine Theta angle"
@@ -2148,6 +2162,7 @@ description = "Refine angle parameter Theta"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_angle_psi]
 name = "Refine Psi angle"
@@ -2155,6 +2170,7 @@ description = "Refine angle parameter Psi"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_shiftx]
 name = "Refine X shifts"
@@ -2162,6 +2178,7 @@ description = "Refine translation in the X dimension"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_shifty]
 name = "Refine Y shifts"
@@ -2169,6 +2186,7 @@ description = "Refine translation in the Y dimension"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.searchx]
 name = "Search range in X (A)"
@@ -2176,6 +2194,7 @@ description = "Search range in the X-axis (0.0=mask radius)"
 type = "float"
 default = 0.0
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.searchy]
 name = "Search range in Y (A)"
@@ -2183,6 +2202,7 @@ description = "Search range in the Y-axis (0.0=mask radius)"
 type = "float"
 default = 0.0
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.score_weighting]
 name = "Score weighting"
@@ -2190,6 +2210,7 @@ description = "Use score weighting during refinement (higher score, stronger con
 type = "bool"
 default = false
 condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.beamtilt]
 name = "Refine beam-tilt"
@@ -2280,6 +2301,7 @@ name = "Mask for focused refinement (A)"
 description = "Four numbers describing a spherical mask (X, Y, Z for mask center and R for mask radius)"
 type = "str"
 default = "0,0,0,0"
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.fpart]
 name = "FPART"
@@ -2293,6 +2315,7 @@ name = "Mask radius (A)"
 description = "Radius of spherical mask applied during global search"
 type = "float"
 default =  0.0
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.maskth]
 name = "Shape mask (*.mrc)"
@@ -2300,6 +2323,7 @@ description = "Shape mask to use during refinement"
 type = "path"
 path = { type="files" }
 input = { type="initialModel" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.merge_normalize]
 name = "Frame normalization"
