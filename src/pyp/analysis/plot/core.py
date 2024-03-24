@@ -1242,8 +1242,12 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
 
     # generate a GIF using these pngs
     square_size = int(math.ceil(math.sqrt(len(pngList))))
+    if max(dimensions[1:]) * square_size > 16383:
+        rec_output = output.replace(".webp",".png")
+    else:
+        rec_output = output
     command = "/usr/bin/montage -resize {0}x{1} -geometry +0+0 -tile {2}x {3} {4}".format(
-        dimensions[2], dimensions[1], square_size, " ".join(pngList), output
+        dimensions[2], dimensions[1], square_size, " ".join(pngList), rec_output
     )
     run_shell_command(command, verbose=verbose)
 
