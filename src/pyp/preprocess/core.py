@@ -339,6 +339,7 @@ def read_tilt_series(
                         f.write("%s\n" % item[1])
 
             tilts = np.loadtxt("{0}.rawtlt".format(name))
+            order = np.loadtxt("{0}.order".format(name))
             sorted_tilts = sorted(tilts)
             drift_metadata["tilts"] = [tilt for tilt in sorted_tilts]
             sorted_tilts = [("dummpy", tilt) for tilt in sorted_tilts]
@@ -351,6 +352,7 @@ def read_tilt_series(
 
             # sanity check if number of tilts derived from .rawtlt is correct
             assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"      
+            assert (z == len(order)), f"{z} tilts in {name+'.mrc'} != {len(order)} from .order"
 
             pixel_size = parameters["scope_pixel"]
             voltage = parameters["scope_voltage"]
