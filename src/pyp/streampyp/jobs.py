@@ -358,7 +358,8 @@ def submit_script(
     cmd = command_file
     if not cmd.startswith("/"):
         cmd = "./%s" % cmd
-    cmd = "'%s'" % cmd
+    if os.path.exists(cmd):
+        cmd = "'%s'" % cmd
 
     if Web.exists:
 

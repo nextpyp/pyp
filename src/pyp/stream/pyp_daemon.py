@@ -470,7 +470,7 @@ def pyp_daemon(args):
                 f.write(
                     "\n".join(
                         [
-                            "export sess_img=sess_img; {0} --stream_file {1} > '{2}/log/{1}_pypd.log'".format(
+                            "export sess_img=sess_img; {0} --stream_file '{1}' > '{2}/log/{1}_pypd.log'".format(
                                 run_pyp("pyp", script=True), s, session_dir,
                             )
                             for s in tobesubmitted

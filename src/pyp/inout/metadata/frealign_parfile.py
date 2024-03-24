@@ -744,7 +744,7 @@ class Parameters:
         # create new parfile without having header, footer
         # trim the two sections (index - film, film - end) by character position 
         for idx, parfile in enumerate(inputlist):
-            commands.append("grep '^[^C]' %s > %s && cut -c%d-%d %s > %s && cut -c%d-%d %s > %s" % (parfile, parfile + '.tmp',
+            commands.append("grep '^[^C]' '%s' > '%s' && cut -c%d-%d '%s' > '%s' && cut -c%d-%d '%s' > '%s'" % (parfile, parfile + '.tmp',
                                                                                                     section1_start, section1_end, parfile + '.tmp', f"{idx}_1.tmp",
                                                                                                     section2_start, section2_end, parfile + '.tmp', f"{idx}_2.tmp"))
         mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
@@ -777,7 +777,7 @@ class Parameters:
             cur_index += num_rows
 
             # concatenate first column, film column with the rest of parfiles
-            command = "paste -d '' {0} > {1}".format(" ".join([ 'indexes.tmp', f"{idx}_1.tmp", 'films.tmp', f"{idx}_2.tmp"]), 
+            command = "paste -d '' {0} > '{1}'".format(" ".join([ 'indexes.tmp', f"{idx}_1.tmp", 'films.tmp', f"{idx}_2.tmp"]), 
                                                     parfile)
             run_shell_command(command, verbose=False)
 
@@ -790,14 +790,15 @@ class Parameters:
         with open(filename, "w") as f:
             f.writelines(header)
         # command = "cat {0} >> {1}".format(" ".join(inputlist), filename)
-        if len(inputlist) > 500:
-            splits = [inputlist[i:i+500] for i in range(0, len(inputlist), 500)]
+        batch_size = 500
+        if len(inputlist) > batch_size:
+            splits = [inputlist[i:i+batch_size] for i in range(0, len(inputlist), batch_size)]
             for batch in splits:
-                command = "cat {0} >> {1}".format(" ".join(batch), filename)
-                run_shell_command(command, verbose=False)
+                command = "cat {0} >> {1}".format(" ".join(f'"{w}"' for w in batch), filename)
+                run_shell_command(command, verbose=True)
         else:
-            command = "cat {0} >> {1}".format(" ".join(inputlist), filename)
-            run_shell_command(command, verbose=False)
+            command = "cat {0} >> '{1}'".format(" ".join(f'"{w}"' for w in inputlist), filename)
+            run_shell_command(command, verbose=True)
         
         [os.remove(f) for f in os.listdir(".") if f.endswith(".tmp")]
         
