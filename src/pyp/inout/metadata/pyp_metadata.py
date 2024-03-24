@@ -1495,7 +1495,7 @@ _rlnOriginZAngst #3
                         coord.append(boxx.loc[(boxx["inside"] >= 1) & (boxx["selection"] >= 0), "x" : "y"])
 
                         # repeat the ctf information to match particles rows
-                        repeat = len(coord)
+                        repeat = len(coord[-1])
                         ctf_per_image = pd.concat([ctf_mic] * repeat, ignore_index=True)
 
                         # repeat image names
