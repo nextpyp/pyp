@@ -93,8 +93,6 @@ This tutorial shows how to import and export single-particle and tomography proj
 
   - Set the location of the ``Input parfile`` you want to export by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
 
-  - Set the location of the ``Output folder`` by clicking on the icon :fa:`search,text-primary` and browsing to the directory where you want the data to be saved
-
 * Click :badge:`Save,badge-primary`
 
 * Click :badge:`Run,badge-primary` followed by :badge:`Start Run for 1 block,badge-primary` to launch the export process
