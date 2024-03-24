@@ -2344,7 +2344,8 @@ EOF
 
             # traverse all images in tilt series
             for tilt in tilts:
-
+                
+                image_index = tilt_image_counter - 1
                 tilt_index = int(scan_order_list[tilt_image_counter - 1])
                 tilt_angle = tilt[0]
 
