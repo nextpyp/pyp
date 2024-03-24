@@ -526,7 +526,6 @@ description = "Tolerance for shifts during iterative alignment"
 type = "float"
 default = 0.1
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_iter]
 name = "Maximum iterations"
@@ -534,7 +533,6 @@ description = "Maximum number of iterations during iterative alignment"
 type = "int"
 default = 7
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_phase_only]
 name = "Use phase only"
@@ -542,7 +540,6 @@ description = "Use phase only during cross-correlation"
 type = "bool"
 default = true
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_corr_interp]
 name = "Interpolation compensation"
@@ -550,7 +547,6 @@ description = "Use interpolation compensation during alignment"
 type = "bool"
 default = false
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_in_frame_motion]
 name = "In frame motion"
@@ -558,7 +554,6 @@ description = "Take into account motion-induced blurring of each frame"
 type = "bool"
 default = false
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_patch_x]
 name = "Number of patches in X axis"
@@ -566,7 +561,6 @@ description = "Number of patches in X axis used for frame alignment"
 type = "int"
 default = 1
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_patch_y]
 name = "Number of patches in Y axis"
@@ -574,7 +568,6 @@ description = "Number of patches in Y axis used for frame alignment"
 type = "int"
 default = 1
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_patch_overlap]
 name = "Overlap between patches"
@@ -582,7 +575,6 @@ description = "Percent overlap between adjacent patches"
 type = "int"
 default = 50
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_frameref]
 name = "Frame used for reference"
@@ -590,7 +582,6 @@ description = "The frame used for reference during alignment (1 means the first 
 type = "int"
 default = 0
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_sumrange_min]
 name = "Minimum dose"
@@ -598,7 +589,6 @@ description = "Frames between minimum and maximum dose in e-/A^2 are used for av
 type = "float"
 default = 3.0
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 [tabs.movie.motioncor_sumrange_max]
 name = "Maximum dose"
@@ -606,7 +596,6 @@ description = "Frames between minimum and maximum dose in e-/A^2 are used for av
 type = "float"
 default = 25.0
 condition = { arg="ali", value="motioncor" }
-advanced = true
 
 # Contrast transfer function parameters
 
@@ -1161,7 +1150,6 @@ description = "Run validation every this number of epochs"
 type = "int"
 default = 5
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-advanced = true
 
 [tabs.detect_nn3d.temp]
 name = "inforNCE temperature"
@@ -1169,7 +1157,6 @@ description = "inforNCE temperature"
 type = "float"
 default = 0.07
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-advanced = true
 
 [tabs.detect_nn3d.tau]
 name = "Class prior probability"
@@ -1177,14 +1164,12 @@ description = "Class prior probability (tau)"
 type = "float"
 default = 0.01
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-advanced = true
 
 [tabs.detect_nn3d.debug]
 name = "Debug mode"
 description = "Save intermediate results to output folder train/"
 type = "bool"
 default = false
-advanced = true
 
 # Particle parameters
 
@@ -1313,7 +1298,6 @@ name = "Auto binning"
 description = "Automatically determine binning factor to use for alignment"
 type = "bool"
 default = true
-advanced = true
 
 [tabs.tomo_ali.binning]
 name = "Binning for tilt-series alignment"
@@ -1478,7 +1462,6 @@ name = "Reshape tilt-images into squares"
 description = "Tilt images will be reshaped into squares before processing"
 type = "bool"
 default = true
-advanced = true
 
 [tabs.tomo_rec.format]
 name = "Resize squares to closest multiple of 512"
@@ -1486,14 +1469,12 @@ description = "Tilt images will be reshaped into squares using the closest multi
 type = "bool"
 default = true
 condition = { arg="square", value="true" }
-advanced = true
 
 [tabs.tomo_rec.thickness]
 name = "Thickness of reconstruction (unbinned voxels)"
 description = "Height of tomograms (z-dimension) to use during tomographic reconstruction"
 type = "int"
 default = 2048
-advanced = true
 
 [tabs.tomo_rec.binning]
 name = "Binning factor for reconstruction"
@@ -1600,7 +1581,6 @@ name = "Tolerance for virion radius during detection"
 description = "Allow virion radius variations within this tolerance (percentage)"
 type = "float"
 default = 20.0
-advanced = true
 condition = { arg="method", value="auto" }
 
 [tabs.tomo_vir.seg_tol]
@@ -1608,7 +1588,6 @@ name = "Tolerance for virion radius during segmentation"
 description = "Allow virion radius variations within this tolerance (percentage)"
 type = "float"
 default = 20.0
-advanced = true
 condition = { arg="method", value="auto" }
 
 [tabs.tomo_vir.iterations]
@@ -1616,7 +1595,6 @@ name = "Denoising iterations before virion detection"
 description = "Number denoising iterations (anisotropic diffusion)"
 type = "int"
 default = 25
-advanced = true
 condition = { arg="method", value="auto" }
 
 [tabs.tomo_vir.canny_low]
@@ -1624,7 +1602,6 @@ name = "Low threshold for Canny edge detector"
 description = "Allows to control the performance of virion detection"
 type = "float"
 default = 0.2
-advanced = true
 condition = { arg="method", value="auto" }
 
 [tabs.tomo_vir.canny_high]
@@ -1632,7 +1609,6 @@ name = "High threshold for Canny edge detector"
 description = "Allows to control the performance of virion detection"
 type = "float"
 default = 0.5
-advanced = true
 condition = { arg="method", value="auto" }
 
 [tabs.tomo_vir.binn]
@@ -2851,7 +2827,6 @@ name = "Min number of projections for refinement"
 description = "Only refine particles that have at least this number of projections (0=all)"
 type = "int"
 default = 0
-advanced = true
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
 
 [tabs.csp.NumberOfRandomIterations]
@@ -2859,7 +2834,6 @@ name = "Optimizer - Exhaustive search points"
 description = "Number of points to evalaute during reference-based exhaustive search"
 type = "int"
 default = 0
-advanced = true
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'tomo_flexible_refine' ]
 copyToNewBlock = false
 
@@ -2868,28 +2842,24 @@ name = "Optimizer - Number of iterations"
 description = "Max number of iterations to use in Powell optimization"
 type = "int"
 default = 5
-advanced = true
 
 [tabs.csp.OptimizerStepLength]
 name = "Optimizer - Max step length"
 description = "Max step length to use in Powell optimization"
 type = "float"
 default = 20.0
-advanced = true
 
 [tabs.csp.OptimizerStepTolerance]
 name = "Optimizer - Step tolerance"
 description = "Step tolerance to use in Powell optimization"
 type = "float"
 default = 0.01
-advanced = true
 
 [tabs.csp.OptimizerValueTolerance]
 name = "Optimizer - Tolerance value"
 description = "Tolerance value to use in Powell optimization"
 type = "float"
 default = 0.0001
-advanced = true
 
 [tabs.csp.refine_micrographs]
 name = "Refine tilt-geometry"
@@ -3268,14 +3238,12 @@ name = "Skip FSC weighting"
 description = "Do not apply FSC weighting"
 type = "bool"
 default = false
-advanced = true
 
 [tabs.sharpen.apply_fsc2]
 name = "Apply FSC square filter"
 description = "Apply the square of the FSC curve as a filter"
 type = "bool"
 default = false
-advanced = true
 
 # bfactor
 [tabs.sharpen.auto_bfac]
@@ -3295,14 +3263,12 @@ name = "Randomize phases (FSC threshold)"
 description = "Randomize phases beyond the point where the FSC drops below this value"
 type = "float"
 default = 1
-advanced = true
 
 [tabs.sharpen.randomize_beyond]
 name = "Randomize phases (resolution limit, A)"
 description = "Randomize phases beyond this resolution"
 type = "float"
 default = 10
-advanced = true
 
 [tabs.sharpen.flip_x]
 name = "Invert handedness along x-axis"
