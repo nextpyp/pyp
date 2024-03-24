@@ -3696,9 +3696,8 @@ if __name__ == "__main__":
                         parfile=parfile,
                         path="./pkl"
                         )
-                    output_path = parameters["export_location"]
                     select = parameters["extract_cls"]
-                    globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile, output_path=output_path)
+                    globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
 
                 logger.info("PYP (export_star) finished successfully")
             except:

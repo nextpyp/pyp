@@ -3957,13 +3957,7 @@ name = "Input parfile"
 description = "Parfile input for the alignment parameters"
 type = "path"
 path = { type="files" }
-condition = { arg="enable", value="true" }
-
-[tabs.export.location]
-name = "Output folder"
-description = "Specify location for output files"
-type = "path"
-path = { type="folders" }
+input = { type="parfile" }
 condition = { arg="enable", value="true" }
 
 #####################
