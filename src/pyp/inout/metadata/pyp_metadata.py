@@ -1529,7 +1529,7 @@ _rlnSphericalAberration #4
 _rlnVoltage #5 
 _rlnImagePixelSize #6 
 _rlnMicrographOriginalPixelSize #7 
-
+_rlnImageSize #8
 """
             if coords:
                 data_particles_header = """
@@ -1544,12 +1544,11 @@ _rlnDefocusU #5
 _rlnDefocusV #6 
 _rlnDefocusAngle #7 
 _rlnCtfFigureOfMerit #8 
-_rlnCtfMaxResolution $9
+_rlnCtfMaxResolution #9
 _rlnPhaseShift #10
 _rlnOpticsGroup #11
 _rlnGroupNumber #12 
-_rlnRandomSubset #13 
-"""
+_rlnRandomSubset #13 """
             else:
                 data_particles_header = """
 data_particles
@@ -1560,8 +1559,7 @@ _rlnDefocusU #2
 _rlnDefocusV #3 
 _rlnDefocusAngle #4 
 _rlnCtfFigureOfMerit #5 
-_rlnCtfMaxResolution $6
-"""
+_rlnCtfMaxResolution $6 """
 
             ac = self.scope_data["AC"].values[0]
             cs = self.scope_data["CS"].values[0]
@@ -1574,7 +1572,7 @@ _rlnCtfMaxResolution $6
             image_original_pxl = self.micrograph_global["image_pixel_size"].values[0]
 
             data_optics = version  +  optics_header 
-            data_optics_value = f"\n{optics_group}  {optics_groupname}  {ac}    {cs}    {voltage}   {ptl_pxl}   {image_original_pxl} \n\n"
+            data_optics_value = f"\n{optics_group}  {optics_groupname}  {ac}    {cs}    {voltage}   {ptl_pxl}   {image_original_pxl}    64 \n\n"
             data_optics_str = data_optics + data_optics_value
 
             # shifts = - (self.refinement[["SHX", "SHY"]].astype(int))
