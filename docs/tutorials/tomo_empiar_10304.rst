@@ -122,8 +122,6 @@ Step 3: Pre-processing
 
         - Set ``Thickness of reconstruction (unbinned voxels)`` to 3072
 
-        - Click ``Show advanced options``
-
         - Uncheck ``Resize squares to closest multiple of 512``
 
         - Click on the **Resources** tab
@@ -220,8 +218,6 @@ Step 5: Reference-based refinement
         - Set ``First exposure for refinement`` to 15
 
         - Set ``Last exposure for refinement`` to 25
-
-        - Click ``Show advanced options``
 
         - Set ``Optimizer - Exhaustive search points`` to 5000000
 
@@ -355,8 +351,6 @@ Step 8. Fully constrained refinement
         - Set ``First exposure for refinement`` to 15
 
         - Set ``Last exposure for refinement`` to 25
-
-        - Check ``Show advanced options``
 
         - Set ``Optimizer - Exhaustive search points`` to 0
 
@@ -516,8 +510,6 @@ Step 12: Region-based refinement after CTF refinement
         - Set ``Last exposure for refinement`` to 22
 
         - Set ``Number of regions`` to 16,16,4
-
-        - Check ``Show advanced options``
 
         - Set ``Optimizer - Max step length`` to 20.0
 

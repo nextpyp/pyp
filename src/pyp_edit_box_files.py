@@ -739,7 +739,7 @@ if __name__ == "__main__":
                 # create clean relion parameter file
                 star_file = args.parfile
                 clean_star_file = star_file.replace(".star", "_clean.star")
-                com = "cat {0} | grep -v @ > {1}".format(star_file, clean_star_file)
+                com = "cat '{0}' | grep -v @ > '{1}'".format(star_file, clean_star_file)
                 run_shell_command(com)
 
                 sorted_input = input[numpy.argsort(input[:, rlnImageName])]

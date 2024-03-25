@@ -97,7 +97,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
             f.write(
                 "\n".join(
                     [
-                        "cd {3}/swarm; export {2}swarm={2}swarm; {0} --keep --file raw/{1} --path {3} 2>&1 | tee ../log/{1}_per_particle_refinement.log".format(
+                        "cd '{3}/swarm'; export {2}swarm={2}swarm; {0} --keep --file raw/{1} --path '{3}' 2>&1 | tee ../log/{1}_per_particle_refinement.log".format(
                             run_pyp(command="pyp", script=True, gpu=gpu),
                             s,
                             parameters["data_mode"],
@@ -112,7 +112,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
             f.write(
                 "\n".join(
                     [
-                        "cd {4}/swarm; export {3}swarm={3}swarm; {0} --file raw/{2} --path {4} 2>&1 | tee ../log/{2}.log".format(
+                        "cd '{4}/swarm'; export {3}swarm={3}swarm; {0} --file raw/{2} --path '{4}' 2>&1 | tee ../log/{2}.log".format(
                             run_pyp(
                                 command="pyp",
                                 script=True,
@@ -136,7 +136,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
 def create_train_swarm_file(parameters, timestamp, swarm_file="train.swarm"):
     with open(os.path.join("swarm", swarm_file), "w") as f:
         f.write(
-            "cd {2}; export {1}train={1}train; {0} 2>&1 | tee log/{3}_{1}train.log".format(
+            "cd '{2}'; export {1}train={1}train; {0} 2>&1 | tee log/{3}_{1}train.log".format(
                 run_pyp(command="pyp", script=True),
                 parameters["data_mode"],
                 os.getcwd(),
@@ -153,7 +153,7 @@ def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swa
     f.write(
         "\n".join(
             [
-                "cd {0}; export cspswarm=cspswarm; {1} --file {2} --iter {3} --no-skip --no-debug 2>&1 | tee ../log/{2}_csp.log".format(
+                "cd '{0}'; export cspswarm=cspswarm; {1} --file {2} --iter {3} --no-skip --no-debug 2>&1 | tee ../log/{2}_csp.log".format(
                     os.getcwd(),
                     run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"]),
                     s,
@@ -176,7 +176,7 @@ def create_csp_classmerge_file(iteration, parameters, swarm_file="csp_class_merg
     f.write(
         "\n".join(
             [
-                "cd {0}; export classmerge=classmerge; {1} --iter {3} --classId {2} --no-skip --no-debug 2>&1 | tee ../log/r{2:02d}_csp_classmerge.log".format(
+                "cd '{0}'; export classmerge=classmerge; {1} --iter {3} --classId {2} --no-skip --no-debug 2>&1 | tee ../log/r{2:02d}_csp_classmerge.log".format(
                     os.getcwd(),
                     run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"]),
                     class_id+1, 
@@ -195,7 +195,7 @@ def create_csp_classmerge_file(iteration, parameters, swarm_file="csp_class_merg
 def create_script_file(swarm_file, command, path):
     with open(swarm_file, "w") as f:
         f.write("#!/bin/bash\n")
-        f.write("cd %s\n" % path)
+        f.write("cd '%s'\n" % path)
         f.write(command)
         f.write("\n")
 
@@ -221,7 +221,7 @@ def create_def_swarm_file(
             for t in tilts:
 
                 fsave.write(
-                    "cd {0}/swarm; umask=33; export frealign_def=frealign_def; {1} --parfile {2} --film {3} --scanor {4} --tolerance {5}".format(
+                    "cd '{0}/swarm'; umask=33; export frealign_def=frealign_def; {1} --parfile {2} --film {3} --scanor {4} --tolerance {5}".format(
                         os.getcwd(),
                         run_pyp(command="fyp", script=True),
                         parfile,
@@ -240,7 +240,7 @@ def create_def_merge_file(
 ):
     with open(def_merge_file, "w") as f:
         f.write(
-            "#!/bin/bash\ncd {0}/swarm; export frealign_def_merge=frealign_def_merge; {1} --parfile {2} --tolerance {3}".format(
+            "#!/bin/bash\ncd '{0}/swarm'; export frealign_def_merge=frealign_def_merge; {1} --parfile {2} --tolerance {3}".format(
                 os.getcwd(), run_pyp(command="fyp", script=True), parfile, tolerance
             )
         )
@@ -252,7 +252,7 @@ def create_rec_swarm_file(iteration, alignment_option):
     rec_swarm_file = "swarm/frealign_mrecons_%02d.swarm" % (iteration)
     f = open(rec_swarm_file, "w")
     f.write(
-        "#!/bin/bash\ncd {3}/swarm; export frealign_rec=frealign_rec; {0} --iteration {1} --alignment_option {2}".format(
+        "#!/bin/bash\ncd '{3}/swarm'; export frealign_rec=frealign_rec; {0} --iteration {1} --alignment_option {2}".format(
             run_pyp(command="fyp", script=True),
             iteration,
             alignment_option,
@@ -260,7 +260,7 @@ def create_rec_swarm_file(iteration, alignment_option):
         )
     )
     f.close()
-    run_shell_command("chmod u+x %s" % rec_swarm_file)
+    run_shell_command("chmod u+x '%s'" % rec_swarm_file)
 
     return rec_swarm_file
 
@@ -278,7 +278,7 @@ def create_rec_split_swarm_file(iteration, particles, classes, increment):
             if particles - last < increment / 2:
                 last = particles
             f.write(
-                "cd {0}/swarm; export frealign_rec_split=frealign_rec_split; {1} --iteration {2} --ref {3} --first {4} --last {5} --count {6}\n".format(
+                "cd '{0}/swarm'; export frealign_rec_split=frealign_rec_split; {1} --iteration {2} --ref {3} --first {4} --last {5} --count {6}\n".format(
                     os.getcwd(),
                     run_pyp(command="fyp", script=True),
                     iteration,
@@ -302,12 +302,12 @@ def create_rec_merge_swarm_file(iteration):
     rec_swarm_file = "swarm/frealign_mrecons_%02d.swarm" % (iteration)
     f = open(rec_swarm_file, "w")
     f.write(
-        "#!/bin/bash\ncd {0}/swarm; export frealign_rec_merge=frealign_rec_merge; {1} --iteration {2}".format(
+        "#!/bin/bash\ncd '{0}/swarm'; export frealign_rec_merge=frealign_rec_merge; {1} --iteration {2}".format(
             os.getcwd(), run_pyp(command="fyp", script=True), iteration
         )
     )
     f.close()
-    run_shell_command("chmod u+x %s" % rec_swarm_file)
+    run_shell_command("chmod u+x '%s'" % rec_swarm_file)
 
     return rec_swarm_file
 
@@ -323,7 +323,7 @@ def create_ref_swarm_file(fp, iteration, classes, particles, metric, increment):
         last = min(first + increment - 1, particles)
         for ref in range(classes):
             f.write(
-                "cd {6}/swarm; umask=33; export frealign_ref=frealign_ref; {0} --iteration {1} --ref {2} --first {3} --last {4} -metric {5}".format(
+                "cd '{6}/swarm'; umask=33; export frealign_ref=frealign_ref; {0} --iteration {1} --ref {2} --first {3} --last {4} -metric {5}".format(
                     run_pyp(command="fyp", script=True),
                     iteration,
                     ref + 1,

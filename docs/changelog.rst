@@ -4,6 +4,35 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.6.4 (3/24/2024)
+******************
+
+   :fa:`plus-square,text-primary` Implement mechanism to isolate logs from failed jobs in the Logs tab.
+
+   :fa:`plus-square,text-primary` Add support for project names with special characters.
+
+   :fa:`plus-square,text-primary` Remove many commonly used parameters from the advanced category.
+
+   :fa:`plus-square,text-primary` Add progress bars during export of metadata to .star format.
+
+   :fa:`plus-square,text-primary` Allow export of particle coordinates from streaming sessions.
+
+   :fa:`plus-square,text-primary` Check that .order files have the same number of entries as images in the tilt-series.
+
+   :fa:`bug,text-danger` Fix bugs when reading metadata from *.mdoc files.
+
+   :fa:`bug,text-danger` Prevent dragging of multiple connections from block outputs in project view.
+
+   :fa:`bug,text-danger` Fix bug when managing GPU resources in standalone mode.
+
+   :fa:`bug,text-danger` Fix bug when using grouping of frames during movie processing.
+
+   :fa:`bug,text-danger` Fix bug in single-particle pipeline during hot pixel removal.
+
+   :fa:`bug,text-danger` Fix bug in Table view that caused content to overlap when resizing columns.
+
+   :fa:`bug,text-danger` Always export metadata in .star format to current project directory (user specified location is no longer supported).
+
 v0.6.3 (3/01/2024)
 ******************
 

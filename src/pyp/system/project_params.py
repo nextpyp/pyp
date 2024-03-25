@@ -272,7 +272,7 @@ def create_micrographs_list(parameters):
             elif parameters["movie_mdoc"] and len(mdocs) > 0:
                 files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
                 logger.info("Create micrograph list using mdocs files")
-                # NOTE: one mdoc for one tilt-series (rather than one tilt)    
+                # NOTE: one mdoc for one tilt-series (rather than one tilt)
             else:
                 logger.info("Create micrograph list using detected files (one mrc per tilt-series)")
 

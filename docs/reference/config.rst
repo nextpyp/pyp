@@ -675,3 +675,14 @@ Minimal example:
 
 :Examples:
 	``workflowDirs = ['/storage/workflows']``
+
+|
+
+``minPasswordLength``
+~~~~~~~~~~~~~~~~~~~~~
+
+:Type: integer
+:Required: no
+:Default: 12
+:Description:
+	The minimum length accepted for new passwords.
