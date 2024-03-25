@@ -90,8 +90,8 @@ def sprtrain(args):
     command = f"{utils.get_topaz_path()}/topaz train \
 -n {args['detect_topaz2d_num_particles']} \
 --num-workers={args['slurm_tasks']} \
---train-images {scratch_train} \
---train-targets {train_coords} \
+--train-images '{scratch_train}' \
+--train-targets '{train_coords}' \
 {pretrained} \
 --method {args['detect_topaz2d_train_method']} \
 --num-epochs {args['detect_topaz2d_epochs']} \
@@ -104,7 +104,7 @@ def sprtrain(args):
 --minibatch-balance {args['detect_topaz2d_train_batchbalance']} \
 --epoch-size {args['detect_topaz2d_train_epochsize']} \
 --save-prefix=topaz_train \
--o model_training.txt 2>&1 | tee {os.path.join(train_folder, time_stamp + '_topaz_train.log')}"
+-o model_training.txt 2>&1 | tee '{os.path.join(train_folder, time_stamp + '_topaz_train.log')}'"
 # --model {args['detect_topaz2d_model']} \
 # --units {args['detect_topaz2d_units']} \
 # --dropout {args['detect_topaz2d_dropout']} \
@@ -135,7 +135,7 @@ def spreval(args,name):
 
     if 'detect_topaz2d_ref' in args.keys() and os.path.isfile(project_params.resolve_path(args['detect_topaz2d_ref'])):
         logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_topaz2d_ref'])).name}")
-        model_arg = f"-m {project_params.resolve_path(args['detect_topaz2d_ref'])}"
+        model_arg = f"-m '{project_params.resolve_path(args['detect_topaz2d_ref'])}'"
     else:
         logger.info(f"Evaluating using pre-trained model")
         model_arg = f"--model {args['detect_topaz2d_pretrained_model']}"
@@ -173,9 +173,9 @@ def spreval(args,name):
 --max-radius {args['detect_topaz2d_extract_max_rad']} \
 --step-radius {args['detect_topaz2d_extract_step_rad']} \
 -x {binning} \
--o {coordinates_file} \
-{Path().cwd() / f'{name}_bin.mrc'} \
-2>&1 | tee {os.path.join(project_folder, 'log', time_stamp + '_topaz_extract.log')}"
+-o '{coordinates_file}' \
+'{Path().cwd() / f'{name}_bin.mrc'}' \
+2>&1 | tee '{os.path.join(project_folder, 'log', time_stamp + '_topaz_extract.log')}'"
 
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
@@ -216,7 +216,7 @@ def spreval(args,name):
         return np.array([])
 
 def bin_next_coordinates(coordinates,coordinates_bin, binning, verbose=False):
-    command = f"{utils.get_topaz_path()}/topaz convert -s {binning} -o {coordinates_bin} {coordinates}"
+    command = f"{utils.get_topaz_path()}/topaz convert -s {binning} -o '{coordinates_bin}' '{coordinates}'"
     local_run.run_shell_command(command, verbose=verbose)
 
 
