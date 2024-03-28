@@ -1625,9 +1625,10 @@ def split_reconstruction(
     fp = mp
 
     dataset = fp["refine_dataset"]
-    name = dataset + "_r%02d_%02d" % (ref, i)
+    name = dataset + "_r%02d" % (ref)
 
-    parfile = "%s_used.par" % (name)
+    parfile = f"../{name}.cistem" # "%s_used.par" % (name)
+    reference = parfile.replace(".cistem", ".mrc")
 
     ranger = "%07d_%07d" % (first, last)
 
@@ -1665,6 +1666,7 @@ def split_reconstruction(
         ranger,
     )
     reclogfile = "../log/%s_%s_mreconst.log" % (name, ranger)
+    reclogfile = "%s_%s_mreconst.log" % (name, ranger)
     if os.path.exists("log"):
         reclogfile = reclogfile.replace("../", "")
 
@@ -1684,7 +1686,8 @@ def split_reconstruction(
         if scratch_transfer_stack:
             stack = "/scratch/%s_stack.mrc" % dataset
         else:
-            stack = stack_dir + "%s_stack.mrc" % dataset
+            # stack = stack_dir + "%s_stack.mrc" % dataset
+            stack = parfile.split("_r")[0] + "_stack.mrc"
 
         with open(reclogfile, "w") as f:
             f.write("Using particle stack {0}\n".format(stack))
@@ -1881,7 +1884,7 @@ eot
                 + "eot\n"
             )
 
-        elif "cistem2" in project_params.param(fp["refine_metric"], i).lower():
+        elif True: #"cistem2" in project_params.param(fp["refine_metric"], i).lower():
 
             res_ref = "0"
             smoothing = "1"
@@ -1898,10 +1901,8 @@ eot
                 "{0}/reconstruct3d << eot >> {1} 2>&1\n".format(
                     frealign_paths["cistem2"], reclogfile
                 )
-                + "{0}\n{1}.star\n{1}.mrc\n{1}_map1.mrc\n{1}_map2.mrc\n{1}.mrc\n{1}_n{2}.res\n".format(
-                    stack, Path(os.environ["PYP_SCRATCH"]) / name, str(first)
-                )
-                + project_params.param(fp["particle_sym"], i)
+                + f"{stack}\n{parfile}\n{reference}\n{name}_map1.mrc\n{name}_map2.mrc\noutput.mrc\n{name}_n{first}.res\n"
+                + str(project_params.param(fp["particle_sym"], i))
                 + "\n"
                 + str(first)
                 + "\n"
@@ -1909,7 +1910,7 @@ eot
                 + "\n"
                 + str(pixel)
                 + "\n"
-                + mp["particle_mw"]
+                + str(mp["particle_mw"])
                 + "\n"
                 + "0\n"
                 + str(rad_rec)
@@ -1918,7 +1919,7 @@ eot
                 + "\n"
                 + str(res_ref)
                 + "\n"
-                + project_params.param(fp["refine_bsc"], i)
+                + str(project_params.param(fp["refine_bsc"], i))
                 + "\n"
                 + "%f\n" % thresh
                 + smoothing
@@ -2837,48 +2838,50 @@ def get_phase_residuals(input,parfile,fp,i):
 )
 def mreconstruct_pre(mp, fp, i, ref=1):
 
-    if "cc" in project_params.param(fp["refine_metric"], i).lower():
-        parfile = "%s_r%02d_%02d.par" % (fp["refine_dataset"], ref, i)
-    else:
-        parfile = "%s_r%02d_%02d_used.par" % (fp["refine_dataset"], ref, i)
+    # if "cc" in project_params.param(fp["refine_metric"], i).lower():
+    #     parfile = "%s_r%02d_%02d.par" % (fp["refine_dataset"], ref, i)
+    # else:
+    #     parfile = "%s_r%02d_%02d_used.par" % (fp["refine_dataset"], ref, i)
 
-    if int(project_params.param(fp["class_num"], i)) > 1:
-        cutoff = 1
-    else:
-        cutoff = float(project_params.param(fp["reconstruct_cutoff"], i))
+    # if int(project_params.param(fp["class_num"], i)) > 1:
+    #     cutoff = 1
+    # else:
+    #     cutoff = float(project_params.param(fp["reconstruct_cutoff"], i))
 
-    # use the middle point between the cutoff and the minimum PR value as BOFF
-    # input = np.array( [line.split() for line in open( parfile ) if not line.startswith('C') ], dtype=float )
-    input = frealign_parfile.Parameters.from_file(parfile).data
+    # # use the middle point between the cutoff and the minimum PR value as BOFF
+    # input = frealign_parfile.Parameters.from_file(parfile).data
 
-    prs = get_phase_residuals(input,parfile,fp,i)
+    # prs = get_phase_residuals(input,parfile,fp,i)
 
-    if len(prs) > 0:
-        minpr = float(prs[0])
-        maxpr = float(prs[-1])
-        if cutoff < 1 and cutoff > 0:
-            thresh = prs[min(int(len(prs) *(1 - cutoff)), len(prs) - 1)]
-        elif cutoff == 1: 
-            thresh = max(0, minpr)
-        elif cutoff == 0:
-            thresh = 0
-    else:
-        minpr = maxpr = 90
-        thresh = 90
+    # if len(prs) > 0:
+    #     minpr = float(prs[0])
+    #     maxpr = float(prs[-1])
+    #     if cutoff < 1 and cutoff > 0:
+    #         thresh = prs[min(int(len(prs) *(1 - cutoff)), len(prs) - 1)]
+    #     elif cutoff == 1: 
+    #         thresh = max(0, minpr)
+    #     elif cutoff == 0:
+    #         thresh = 0
+    # else:
+    #     minpr = maxpr = 90
+    #     thresh = 90
 
-    if float(project_params.param(fp["refine_boff"], i)) == 0:
-        boff = (maxpr + minpr) / 2.0
-    else:
-        boff = float(project_params.param(fp["refine_boff"], i))
+    # if float(project_params.param(fp["refine_boff"], i)) == 0:
+    #     boff = (maxpr + minpr) / 2.0
+    # else:
+    #     boff = float(project_params.param(fp["refine_boff"], i))
 
-    # OVERRIDE (input .par file is already shaped by the cutoff)
-    if input.shape[1] > 13:
-        thresh = max(0, minpr)
-        if (
-            "new" in project_params.param(fp["refine_metric"], i)
-            or "frealignx" in project_params.param(fp["refine_metric"], i)
-        ) and thresh < 1:
-            thresh = 0
+    # # OVERRIDE (input .par file is already shaped by the cutoff)
+    # if input.shape[1] > 13:
+    #     thresh = max(0, minpr)
+    #     if (
+    #         "new" in project_params.param(fp["refine_metric"], i)
+    #         or "frealignx" in project_params.param(fp["refine_metric"], i)
+    #     ) and thresh < 1:
+    #         thresh = 0
+    # FIXME
+    boff = 0.0
+
     thresh = 0
     return boff, thresh
 

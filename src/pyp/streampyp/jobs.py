@@ -129,7 +129,8 @@ done
             cmdlist.append(
                 "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path {1}/$OUTPUT_BASENAME\n".format(
                     run_pyp(command="pyp", script=True, cpus=threads),
-                    Path(get_pyp_configuration()["pyp"]["scratch"]),
+                    Path(os.environ["PYP_SCRATCH"]).parent, 
+                    # Path(get_pyp_configuration()["pyp"]["scratch"]),
                 ),
             )
 

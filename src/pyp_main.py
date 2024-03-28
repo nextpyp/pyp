@@ -3804,7 +3804,7 @@ if __name__ == "__main__":
 
             # clean up local scratch
             if os.path.exists(local_scratch):
-                shutil.rmtree(local_scratch)
+                # shutil.rmtree(local_scratch)
                 logger.info("Deleted temporary files from " + local_scratch)
 
         # cryolo_picking tomo

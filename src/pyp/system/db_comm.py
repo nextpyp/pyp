@@ -526,15 +526,15 @@ def save_csp_results(name, parameters, current_path, verbose=False):
     """Save sp swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
-    iteration = parameters["refine_iter"]
-    if iteration == 2:
-        files[
-        "csp"
-        ] = "{0}.allboxes {0}_local.allboxes".format(name)
-    else:
-        files[
-            "csp"
-        ] = "{0}.allboxes {0}_local.allboxes".format(name)
-    files["csp"] += " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
+    # iteration = parameters["refine_iter"]
+    # if iteration == 2:
+    #     files[
+    #     "csp"
+    #     ] = "{0}.allboxes {0}_local.allboxes".format(name)
+    # else:
+    #     files[
+    #         "csp"
+    #     ] = "{0}.allboxes {0}_local.allboxes".format(name)
+    files["csp"] = " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
 
     save_results(files, current_path, verbose=verbose)

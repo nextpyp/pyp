@@ -2717,7 +2717,7 @@ EOF
     extended_parameters = ExtendedParameters()
     extended_parameters.set_data(particles=particle_parameters,
                                  tilts=tilt_parameters)
-    parameters.set_data(data=cistem_parameters, extended_data=extended_parameters)
+    parameters.set_data(data=cistem_parameters, extended_parameters=extended_parameters)
 
     # parameters.to_binary(output=f"{name}_r01_02.cistem")
 

@@ -236,10 +236,10 @@ class ExtendedParameters():
         self._input_file: Path = None
         self._particles: dict = {}
         self._tilts: dict = {}
-        self._num_columns_particles: int = -1
-        self._num_rows_particles: int = -1
-        self._num_columns_tilts: int = -1
-        self._num_rows_tilts: int = -1
+        self._num_columns_particles: int = 0
+        self._num_rows_particles: int = 0
+        self._num_columns_tilts: int = 0
+        self._num_rows_tilts: int = 0
         self._active_columns_particles = []
         self._active_columns_tilts = []
 
@@ -261,7 +261,7 @@ class ExtendedParameters():
     def from_binary(self, input_binary):
         
         with open(input_binary, "rb") as f:
-            
+
             for _ in BLOCKS_EXTENDED:
 
                 # 1. read the block type (either particles or tilts data)
@@ -287,35 +287,39 @@ class ExtendedParameters():
                         bytes_per_line += size_data_type
                     else:
                         raise Exception(f"Binary file contains unrecognized header. Column code = {byte_str_order}")
-         
+                    
                 assert len(active_columns) > 0, f"No column detected. Binary file might be broken."
 
 
                 # 4. read the data and parse them into numpy array
-                bytes_to_read = num_rows * (bytes_per_line)
-                byte_str = read_byte_str(f, size=bytes_to_read)
-                dt_data = np.dtype(active_columns)
-                data = np.frombuffer(byte_str, 
-                                    dtype=dt_data, 
-                                    count=num_rows)
-                data = np.array(data.tolist())
+                if num_rows > 0:
+                    bytes_to_read = num_rows * (bytes_per_line)
+                    byte_str = read_byte_str(f, size=bytes_to_read)
+                    dt_data = np.dtype(active_columns)
+                    data = np.frombuffer(byte_str, 
+                                        dtype=dt_data, 
+                                        count=num_rows)
+                    data = np.array(data.tolist())
 
-                # sanity check
-                assert data.ndim == 2, "Data is not 2D" 
-                assert (data.shape[0] == num_rows), f"Number of rows does not match between data and header: {self.data.shape[0]} v.s. {num_rows}"
-                assert (data.shape[1] == num_columns), f"Number of columns does not match between data and header: {self.data.shape[1]} v.s. {num_columns}"
+                    assert data.ndim == 2, "Data is not 2D" 
+                    assert (data.shape[0] == num_rows), f"Number of rows does not match between data and header: {self.data.shape[0]} v.s. {num_rows}"
+                    assert (data.shape[1] == num_columns), f"Number of columns does not match between data and header: {self.data.shape[1]} v.s. {num_columns}"
+                else:
+                    # it is possible that either particle or tilt parameter is missing in the file
+                    data = None
+
 
                 if block_type == PIND:
                     self._num_columns_particles = num_columns
                     self._num_rows_particles = num_rows
                     self._active_columns_particles = active_columns
-                    self._particles = self.convert_particles_array_to_dict(data)
+                    self._particles = self.convert_particles_array_to_dict(data) if data is not None else self._particles
 
                 elif block_type == TIND:
                     self._num_columns_tilts = num_columns
                     self._num_rows_tilts = num_rows
                     self._active_columns_tilts = active_columns
-                    self._tilts = self.convert_tilts_array_to_dict(data)
+                    self._tilts = self.convert_tilts_array_to_dict(data) if data is not None else self._tilts
         
 
     def to_binary(self, filename):
@@ -361,6 +365,11 @@ class ExtendedParameters():
                 data_with_type = rf.unstructured_to_structured(data, dtype=dt_data)
                 f.write(data_with_type.tobytes())
     
+    def get_particles(self) -> dict:
+        return self._particles
+    def get_tilts(self) -> dict:
+        return self._tilts
+
     def get_particle_by_pind(self, pind: int) -> Particle:
         """get_particle_by_pind Get particle parameters by particle index
 
@@ -401,6 +410,8 @@ class ExtendedParameters():
         return len(self._particles.keys())
     def get_num_tilts(self) -> int:
         return len(self._tilts.keys())
+    def get_num_rows_tilts(self) -> int:
+        return self._num_rows_tilts
     def get_particle_list(self) -> list:
         particle_list = list(self._particles.keys())
         particle_list.sort()
@@ -615,6 +626,42 @@ class Parameters:
     def from_file(cls, input_file: str): 
         return cls(input_file=input_file)
 
+    @classmethod
+    def merge(cls, input_files: list, input_extended_files: list):
+        assert (len(input_files) > 0), "No cistem binary file to merge. " 
+        assert (len(input_extended_files) > 0), "No cistem extended binary file to merge. " 
+
+        merged_parameters = Parameters()
+
+        # Convert binary files into objects 
+        parameters = [Parameters.from_file(input_file=file) for file in input_files]
+        params = [p.get_data() for p in parameters]
+        extended_parameters = [ExtendedParameters.from_file(input_file=file) for file in input_extended_files]
+        params_particles = [p.get_particles() for p in extended_parameters]
+        params_tilts = [p.get_tilts() for p in extended_parameters]
+        
+        # Merge data in array and re-number the first column in sequence (parameters for projections)
+        merged_array = np.vstack(params)
+        merged_array[:, merged_parameters.get_index_of_column(POSITION_IN_STACK)] = np.arange(1, merged_array.shape[0]+1)
+        
+        # Merge extended data in dictionary (particle and tilt parameters)
+        merged_extended_parameters = ExtendedParameters()
+        particles = {}
+        tilts = {}
+        for particle in params_particles:
+            particles.update(particle)
+        for tilt in params_tilts:
+            for tilt_index in tilt.keys():
+                if tilt_index not in tilts:
+                    tilts[tilt_index] = {}
+                tilts[tilt_index].update(tilt[tilt_index])
+
+        merged_extended_parameters.set_data(particles=particles, tilts=tilts)
+        merged_parameters.set_data(data=merged_array,
+                                   extended_parameters=merged_extended_parameters)
+
+        return merged_parameters
+
     def from_binary(self, input_binary: str, extended_binary: str = ""):
         
         with open(input_binary, "rb") as f:
@@ -655,10 +702,10 @@ class Parameters:
 
         # 4. Get exteneded data 
         possible_extended = input_binary.replace(".cistem", "_extended.cistem")
-        if Path(extended_binary).exists():
-            self._extended.from_binary(extended_binary)
+        if len(extended_binary) > 0 and Path(extended_binary).exists():
+            self._extended = ExtendedParameters.from_file(extended_binary)
         elif Path(possible_extended).exists():
-            self._extended.from_binary(possible_extended)
+            self._extended = ExtendedParameters.from_file(possible_extended)
  
  
     def to_binary(self, output: str, extended_output: str = ""):
@@ -707,6 +754,9 @@ class Parameters:
         return self._num_rows
     def get_num_cols(self):
         return self._num_columns
+    def get_num_frames(self):
+        assert (self.get_data() is not None), "No data in Parameters"
+        return int(max(self.get_data()[:, self.get_index_of_column(FIND)]) + 1)
     def get_input_file(self): 
         # return the filename of input file
         return self._input_file
@@ -714,13 +764,13 @@ class Parameters:
     def get_index_of_column(self, column_code: int):
         return self.HEADERS.index(column_code)
     
-    def set_data(self, data: np.ndarray, extended_data: ExtendedParameters):
+    def set_data(self, data: np.ndarray, extended_parameters: ExtendedParameters):
 
         assert type(data) == np.ndarray, f"Input data type is not Numpy array, it is {type(data)}"
         assert data.ndim == 2, "Input data is not 2D"
         assert type(data[0]) == np.ndarray, f"First row of input data type is not Numpy array, it is {type(data[0])}"
         assert (self.get_data() is None or data.shape[1] == self.get_data().shape[1]), "Input data must have the same number of columns as original data."
-        assert type(extended_data) == ExtendedParameters, f"Extended data must be ExtendedParameter class. It is now {type(extended_data)}."
+        assert type(extended_parameters) == ExtendedParameters, f"Extended data must be ExtendedParameter class. It is now {type(extended_parameters)}."
         
         headers = self.HEADERS
 
@@ -742,7 +792,7 @@ class Parameters:
         self._num_rows = data.shape[0]
         self._num_columns = data.shape[1]
         
-        self._extended = extended_data
+        self._extended = extended_parameters
         
 
 

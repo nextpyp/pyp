@@ -199,7 +199,7 @@ def num_particles_per_core(particles: int, tilts: int, frames: int, boxsize: int
 
 
 def create_csp_split_commands(
-    csp_command, parxfile, mode, cores, name, merged_stack, ptlind_list, scanord_list, frame_list, parameters, use_frames=False, cutoff=0
+    csp_command, alignment_parameters, mode, cores, name, merged_stack, ptlind_list, scanord_list, frame_list, parameters, use_frames=False, cutoff=0
 ):
 
     """Within frealign_rec, create rec split file"""
@@ -219,7 +219,7 @@ def create_csp_split_commands(
         images = os.path.join("frealign", "%s.mrc" % (name))
 
     # Patch-based csp refinement - parfile is splitted into pieces 
-    if isinstance(parxfile, list):
+    if isinstance(alignment_parameters, list):
         
         refine_frames = '1' if not use_frames or (use_frames and parameters["csp_frame_refinement"]) else '0'
 
@@ -228,8 +228,7 @@ def create_csp_split_commands(
         if mode == 2:
             mode = 5
         
-        # data structure of each element in variable "parxfile" is ( name_of_sub_parfile: string, particle_indexes: ndarray, scanord_indexes: ndarray )
-        for core, region in enumerate(parxfile[::-1]):
+        for core, region in enumerate(alignment_parameters[::-1]):
                 
             stack = merged_stack
 
@@ -301,6 +300,7 @@ def create_csp_split_commands(
     # Global refinement 
     else:
         extract_frame = 1
+        extended_parameters = alignment_parameters.replace(".cistem", "_extended.cistem")
 
         if mode == 2 or mode == -2:
             # refine particle parameters & particle extraction 
@@ -344,20 +344,20 @@ def create_csp_split_commands(
             commands.append(
                 "{0} {1} {2} {3} {4} {5} {6} {7} {8} > {9}".format(
                     csp_command,
-                    parxfile.replace("frealign/maps/", ""),
+                    alignment_parameters,
+                    extended_parameters,
                     mode,
                     first,
                     last,
                     extract_frame,
                     images,
-                    name + frame_tag + ".allboxes",
                     stack,
                     logfile,
                 )
             )
             movie_list.append("frealign/%s_stack_%04d_%04d.mrc" % (name, first, last))
             count += 1
-
+            
     return commands, count, movie_list
 
 @timer.Timer(
