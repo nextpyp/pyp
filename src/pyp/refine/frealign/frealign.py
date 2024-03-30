@@ -2530,7 +2530,7 @@ eot
             [
                 f
                 for f in os.listdir(os.environ["PYP_SCRATCH"])
-                if f.startswith(name + "_map1_n")
+                if f.startswith(dataset + "_map1_n")
             ]
         )
 
@@ -2581,7 +2581,7 @@ eot
         elif True:
             command = (
                 "{0}/merge3d << eot >> {1} 2>&1\n".format(
-                    frealign_paths["frealignx"], reclogfile
+                    frealign_paths["cistem2"], reclogfile
                 )
                 + "{0}_half1.mrc\n{0}_half2.mrc\n{0}.mrc\n{0}_statistics.txt\n".format(
                     name
@@ -2592,7 +2592,7 @@ eot
                 + str(rad_rec)
                 + "\n"
                 + "{0}_map1_n.mrc\n{0}_map2_n.mrc\n".format(
-                    Path(os.environ["PYP_SCRATCH"]) / name
+                    Path(os.environ["PYP_SCRATCH"]) / dataset
                 )
                 + str(num_dump)
                 + "\n"
