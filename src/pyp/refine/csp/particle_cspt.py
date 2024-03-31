@@ -171,6 +171,7 @@ def merge_alignment_parameters(
         Particle metadata in numpy array (before written to parfile)
     """
     extended_parameter_file = parameter_file.replace(".cistem", "_extended.cistem")
+    # The alignment for projections has to be ordered 
     outputs = sorted(
         [
             file
@@ -179,14 +180,13 @@ def merge_alignment_parameters(
             )
         ]
     )
-    outputs_extended = sorted(
-        [
-            file
-            for file in glob.glob(
-                extended_parameter_file.strip("_extended.cistem") + output_pattern + "_extended.cistem"
-            ) + [extended_parameter_file] 
-        ]
-    )
+    # original extended parameter file has to be the first one as the starting template, 
+    # otherwise, the updated parameters will be overwritten by the old ones
+    outputs_extended = [extended_parameter_file] + [file for file in 
+                                                    glob.glob(
+                                                        extended_parameter_file.strip("_extended.cistem") + output_pattern + "_extended.cistem"
+                                                        )
+                                                    ]
 
     assert (len(outputs) > 0), "No output parameter file is generated."
 
