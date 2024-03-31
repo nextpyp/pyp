@@ -1688,108 +1688,140 @@ def csp_extract_coordinates(
         frame_tag = "_local"
 
     micrographs = f"{parameters['data_set']}.films"
+    
     with open(micrographs) as f:
         micrograph_list = [line.strip() for line in f]
-    if filename in micrograph_list:
-        micrograph_index = micrograph_list.index(filename)
-        film_col = 7
-    else:
-        raise Exception(
-            "{} is not in {}".format(filename,micrographs)
-        )
+    # if filename in micrograph_list:
+    #     micrograph_index = micrograph_list.index(filename)
+    #     film_col = 7
+    # else:
+    #     raise Exception(
+    #         "{} is not in {}".format(filename,micrographs)
+    #     )
 
-    if not skip and project_params.csp_is_done(
-        os.path.join(working_path, filename), use_frames
-    ):
-        logger.info(
-            "Skipping coordinate extraction (using existing frame coordinates)"
-        )
+    allparxs = []
+    dataset = parameters["data_set"]
+    is_spr = "spr" in parameters["data_mode"]
+    iteration = parameters["refine_iter"]
+    classes = 1 if iteration == 2 else int(project_params.param(parameters["class_num"], iteration))
 
-        with timer.Timer(
-            "read_boxfiles", text = "Reading allboxes, boxxs took: {}", logger=logger.info
-        ):
-            # retrieve from files
-            allboxes = (
-                np.loadtxt(
-                    os.path.join(working_path, filename + frame_tag + ".allboxes"), ndmin=2
-                )
-                .astype(int)
-                .tolist()
-            )
+    # if this folder exist, we have valid external parameter files
+    parameter_file_folder = Path().cwd() / "frealign" / "maps" / f"{dataset}_r01_{iteration-1:02d}" 
+            
+    if not skip and (iteration > 2 or parameter_file_folder.exists()):
 
-        allparxs = []
-        iteration = parameters["refine_iter"]
-        if iteration == 2:
-            classes = 1
-        else:
-            classes = int(project_params.param(parameters["class_num"], iteration))
+        logger.info("Skipping coordinate extraction (using existing frame coordinates)")
+
+        # we can use the parameter file already in the frealign/maps (properly dealt with by csp_split())
         for current_class in range(classes):
+            name = f"{dataset}_r{current_class+1:02d}"
+            
+            # check if folder exists
+            parameter_file_folder = Path().cwd() / "frealign" / "maps" / f"{name}_{iteration-1:02d}"        
+            assert parameter_file_folder.exists(), f"{parameter_file_folder} does not exist, please re-launch refinement/classification."
+            
+            # check if the corresponding cistem parameter files exist
+            parameter_file = parameter_file_folder / f"{filename}_r{current_class+1:02d}.cistem"
+            extended_parameter_file = parameter_file_folder / f"{filename}_r{current_class+1:02d}_extended.cistem"
+            assert (parameter_file.exists()), f"{parameter_file} does not exist, please check."
+            assert (extended_parameter_file.exists()), f"{extended_parameter_file} does not exist, please check."
 
-            # now get latest metadata from merged par file in frealign/maps folder
-            if iteration == 2:
-                merged_par_file = project_params.resolve_path(
-                    parameters["refine_parfile"]
-                ) if "refine_parfile" in parameters else "none"
-            else:
-                if classes > 1:
-                    # we want to read the occ updated .par instead of the original compressed par
-                    merged_par_file = os.path.join(
-                        os.getcwd(),
-                        "frealign",
-                        "maps",
-                        "%s_r%02d_%02d.par"
-                        % (parameters["data_set"], current_class + 1, iteration - 1),
-                    )
-                else:
-                    merged_par_file = os.path.join(
-                        os.getcwd(),
-                        "frealign",
-                        "maps",
-                        "%s_r%02d_%02d.par.bz2"
-                        % (parameters["data_set"], current_class + 1, iteration - 1),
-                    )
+            # simply add it to the list
+            alignment_parameters = Parameters.from_file(str(parameter_file))
+            allparxs.append(alignment_parameters)
 
-            if os.path.exists(merged_par_file) and ".par" in merged_par_file:
-                par_alignment = True
-            else:
-                par_alignment = False
+    # if not skip and project_params.csp_is_done(
+    #     os.path.join(working_path, filename), use_frames
+    # ):
+    #     logger.info(
+    #         "Skipping coordinate extraction (using existing frame coordinates)"
+    #     )
 
-            if par_alignment:
-                logger.info("Retrieving alignments from " + Path(merged_par_file).name)
-                # decompress file if needed
-                if ".bz2" in merged_par_file:
-                    with timer.Timer(
-                        "Decompressing_parfile", text = "Decompressing " + Path(merged_par_file).name + " took: {}", logger=logger.info
-                    ):
-                        merged_par_file = frealign_parfile.Parameters.decompress_parameter_file(
-                            merged_par_file, parameters["slurm_tasks"]
-                        )
+    #     with timer.Timer(
+    #         "read_boxfiles", text = "Reading allboxes, boxxs took: {}", logger=logger.info
+    #     ):
+    #         # retrieve from files
+    #         allboxes = (
+    #             np.loadtxt(
+    #                 os.path.join(working_path, filename + frame_tag + ".allboxes"), ndmin=2
+    #             )
+    #             .astype(int)
+    #             .tolist()
+    #         )
 
-                with timer.Timer(
-                    "read_alignment", text = "Reading alignments from parfile took: {}", logger=logger.info
-                ):
-                    index_file = os.path.join( current_path, "csp" , "micrograph_particle.index" )
-                    assert os.path.exists(index_file), f"Index file is missing: {index_file}"
-                    with open(index_file) as f:
-                        index_dict = json.load(f)
-                    start, end = index_dict[str(micrograph_index)]
-                    step = end - start
-                    start += 3
-                    extracted_rows = np.loadtxt(merged_par_file, dtype=float, comments="C", skiprows=start, max_rows=step, ndmin=2)
-                    allparxs.append(extracted_rows[:, 1:])
+    #     allparxs = []
+    #     iteration = parameters["refine_iter"]
+    #     if iteration == 2:
+    #         classes = 1
+    #     else:
+    #         classes = int(project_params.param(parameters["class_num"], iteration))
+    #     for current_class in range(classes):
 
-            # else, fall back to canonical extended parameters
-            else:
-                allparxs.append([])
-                allparxs_file = os.path.join(working_path, filename + ".allparxs")
+    #         # now get latest metadata from merged par file in frealign/maps folder
+    #         if iteration == 2:
+    #             merged_par_file = project_params.resolve_path(
+    #                 parameters["refine_parfile"]
+    #             ) if "refine_parfile" in parameters else "none"
+    #         else:
+    #             if classes > 1:
+    #                 # we want to read the occ updated .par instead of the original compressed par
+    #                 merged_par_file = os.path.join(
+    #                     os.getcwd(),
+    #                     "frealign",
+    #                     "maps",
+    #                     "%s_r%02d_%02d.par"
+    #                     % (parameters["data_set"], current_class + 1, iteration - 1),
+    #                 )
+    #             else:
+    #                 merged_par_file = os.path.join(
+    #                     os.getcwd(),
+    #                     "frealign",
+    #                     "maps",
+    #                     "%s_r%02d_%02d.par.bz2"
+    #                     % (parameters["data_set"], current_class + 1, iteration - 1),
+    #                 )
 
-                if len(allparxs[current_class]) != len(allboxes) and os.path.exists(
-                    allparxs_file
-                ):
-                    logger.info("Loading refined parameters from " + allparxs_file)
-                    with open(allparxs_file) as f:
-                        for line in f:
-                            allparxs[current_class].append(line[:-1])
+    #         if os.path.exists(merged_par_file) and ".par" in merged_par_file:
+    #             par_alignment = True
+    #         else:
+    #             par_alignment = False
+
+    #         if par_alignment:
+    #             logger.info("Retrieving alignments from " + Path(merged_par_file).name)
+    #             # decompress file if needed
+    #             if ".bz2" in merged_par_file:
+    #                 with timer.Timer(
+    #                     "Decompressing_parfile", text = "Decompressing " + Path(merged_par_file).name + " took: {}", logger=logger.info
+    #                 ):
+    #                     merged_par_file = frealign_parfile.Parameters.decompress_parameter_file(
+    #                         merged_par_file, parameters["slurm_tasks"]
+    #                     )
+
+    #             with timer.Timer(
+    #                 "read_alignment", text = "Reading alignments from parfile took: {}", logger=logger.info
+    #             ):
+    #                 index_file = os.path.join( current_path, "csp" , "micrograph_particle.index" )
+    #                 assert os.path.exists(index_file), f"Index file is missing: {index_file}"
+    #                 with open(index_file) as f:
+    #                     index_dict = json.load(f)
+    #                 start, end = index_dict[str(micrograph_index)]
+    #                 step = end - start
+    #                 start += 3
+    #                 extracted_rows = np.loadtxt(merged_par_file, dtype=float, comments="C", skiprows=start, max_rows=step, ndmin=2)
+    #                 allparxs.append(extracted_rows[:, 1:])
+
+    #         # else, fall back to canonical extended parameters
+    #         else:
+    #             allparxs.append([])
+    #             allparxs_file = os.path.join(working_path, filename + ".allparxs")
+
+    #             if len(allparxs[current_class]) != len(allboxes) and os.path.exists(
+    #                 allparxs_file
+    #             ):
+    #                 logger.info("Loading refined parameters from " + allparxs_file)
+    #                 with open(allparxs_file) as f:
+    #                     for line in f:
+    #                         allparxs[current_class].append(line[:-1])
 
     else:
 

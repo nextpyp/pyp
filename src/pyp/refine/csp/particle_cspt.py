@@ -1469,13 +1469,15 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     maxiter = fp["refine_maxiter"]
     fp["refine_iter"] = iteration + 1
     fp["refine_dataset"] = mp["data_set"]
-
     if "refine_skip" in fp.keys() and fp["refine_skip"] and fp["class_num"] > 1:
         fp["refine_skip"] = False
-
     fp["slurm_merge_only"] = False
-
     project_params.save_parameters(fp, ".")
+
+    # clean-up the previous parameter file folders if they exist
+    refinement_path = Path().cwd() / "frealign" / "maps"
+    parameter_file_folders = refinement_path.glob(f"{fp['data_set']}_r??_??")
+    [shutil.rmtree(folder) for folder in parameter_file_folders]
 
     # launch next iteration if needed
     if iteration < maxiter:

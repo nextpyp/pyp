@@ -1800,7 +1800,7 @@ def csp_split(parameters, iteration):
             line.strip() for line in f
         ]
     workdir = os.getcwd()
-
+    
     # cleanup any previous runs
     if not parameters["slurm_merge_only"]:
         try:
@@ -1814,32 +1814,84 @@ def csp_split(parameters, iteration):
     path_to_webps = Path(os.getcwd(), "frealign")
     [os.remove(path_to_webps / f) for f in os.listdir(path_to_webps) if f.endswith("_weights_local.webp")]
 
+    is_spr = "spr" in parameters["data_mode"]
     classes = int(project_params.param(parameters["class_num"], iteration))
     dataset = parameters["data_set"]
     use_frames = "local" in parameters["extract_fmt"].lower()
-    # collect FREALIGN statistics
+    current_dir = Path().cwd()
+
     for ref in range(classes):
-        name = "%s_r%02d" % (dataset, ref + 1)
-        compressed_par = Path(os.getcwd(), "frealign", "maps", f"{name}_{iteration-1:02d}.par.bz2")
+        name = f"{dataset}_r{ref+1:02d}"
 
-        parfile = None
-        if compressed_par.exists():
-            decompressed_par = frealign_parfile.Parameters.decompress_parameter_file(str(compressed_par), parameters["slurm_tasks"])
-            parfile = decompressed_par
-            if classes > 1:
-                shutil.copy2(parfile, Path(compressed_par.parent, os.path.basename(parfile)))
+        # Decompress parameter file if needed, and put them to the frealign/maps
+        # so that csp_swarm() can get the corresponding parameter file 
+        # parmaeter file can be specified in "refine_parfile" parameter or from the previous iteration in frealign/maps
 
-        elif "refine_parfile" in parameters and parameters["refine_parfile"] != None and os.path.exists(project_params.resolve_path(parameters["refine_parfile"])) and ".par" in project_params.resolve_path(parameters["refine_parfile"]):
-            refine_parfile = frealign_parfile.Parameters.decompress_parameter_file(project_params.resolve_path(parameters["refine_parfile"]), parameters["slurm_tasks"])
-            parfile = refine_parfile
+        # decompress the file if needed
+        parameter_file_folder = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}.bz2"
+        decompressed_parameter_file_folder = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}"
 
-        if use_frames and ref == 0 or iteration == 2:
-            try:
-                os.unlink("./csp/micrograph_particle.index")
-            except:
+        if iteration == 2:
+            # from the external parameter file (.txt or .bz2)
+            # we only move .bz2 to frealign/maps
+            assert "refine_parfile" in parameters and parameters["refine_parfile"] is not None, "Parameter file is not provided."
+            external_parameter_file = parameters["refine_parfile"]
+            assert external_parameter_file.exists(), f"{external_parameter_file} does not exist."
+
+            if str(external_parameter_file).endswith(".bz2"):
+                frealign_parfile.Parameters.decompress_parameter_file_and_move(file=external_parameter_file, 
+                                                                               new_file=decompressed_parameter_file_folder, 
+                                                                               micrograph_list=[f"{f}_r{ref+1:02d}" for f in files],
+                                                                               threads=parameters["slurm_tasks"])
+            elif os.path.isdir(external_parameter_file):
+                # if it is already a folder
+                if decompressed_parameter_file_folder.exists():
+                    shutil.rmtree(decompressed_parameter_file_folder)
+                shutil.copy2(external_parameter_file, decompressed_parameter_file_folder)
+
+            elif is_spr or str(external_parameter_file).endswith(".txt"):
+                # single-particle does not need a txt file like tomo to start the refinement
+                # However, if not provided, it will re-produce a new set of parameter files
+                
+                # if txt file (tomo), do not copy it over to the current project 
                 pass
-        if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)):
-            get_image_particle_index(parameters, parfile, path="./csp")
+            else:
+                raise Exception("An initial particle orientation (txt file from pre-processing or bz2 file from particle refinement) is required.")
+
+        else:
+            if parameter_file_folder.exists():
+                # from the previous iteration
+                frealign_parfile.Parameters.decompress_parameter_file_and_move(file=parameter_file_folder, 
+                                                                            new_file=decompressed_parameter_file_folder, 
+                                                                            micrograph_list=[f"{f}_r{ref+1:02d}" for f in files],
+                                                                            threads=parameters["slurm_tasks"])
+            elif decompressed_parameter_file_folder.exists():
+                pass
+            else:
+                raise Exception(f"{decompressed_parameter_file_folder} is required to proceed. ")
+
+        
+        # # NOTE: we probably don't need this, because currently parameter files are separated
+        # compressed_par = Path(os.getcwd(), "frealign", "maps", f"{name}_{iteration-1:02d}.par.bz2")
+
+        # parfile = None
+        # if compressed_par.exists():
+        #     decompressed_par = frealign_parfile.Parameters.decompress_parameter_file(str(compressed_par), parameters["slurm_tasks"])
+        #     parfile = decompressed_par
+        #     if classes > 1:
+        #         shutil.copy2(parfile, Path(compressed_par.parent, os.path.basename(parfile)))
+
+        # elif "refine_parfile" in parameters and parameters["refine_parfile"] != None and os.path.exists(project_params.resolve_path(parameters["refine_parfile"])) and ".par" in project_params.resolve_path(parameters["refine_parfile"]):
+        #     refine_parfile = frealign_parfile.Parameters.decompress_parameter_file(project_params.resolve_path(parameters["refine_parfile"]), parameters["slurm_tasks"])
+        #     parfile = refine_parfile
+
+        # if use_frames and ref == 0 or iteration == 2:
+        #     try:
+        #         os.unlink("./csp/micrograph_particle.index")
+        #     except:
+        #         pass
+        # if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)):
+        #     get_image_particle_index(parameters, parfile, path="./csp")
 
 
         if parameters["dose_weighting_enable"] and ref == 0:
@@ -1864,13 +1916,13 @@ def csp_split(parameters, iteration):
                     parameters["dose_weighting_weights"] = weight_file
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
 
-        if (classes > 1
-        and iteration > 2
-        and not os.path.isfile("./csp/particle_tilt.index")
-        and "tomo" in parameters["data_mode"]
-        and ref == 0
-        ):
-            get_particles_tilt_index(parfile, path="./csp")
+        # if (classes > 1
+        # and iteration > 2
+        # and not os.path.isfile("./csp/particle_tilt.index")
+        # and "tomo" in parameters["data_mode"]
+        # and ref == 0
+        # ):
+        #     get_particles_tilt_index(parfile, path="./csp")
 
         previous = "frealign/maps/%s_%02d.par" % (name, iteration - 1)
         current = "%s_%02d" % (name, iteration)
@@ -1878,14 +1930,14 @@ def csp_split(parameters, iteration):
         smooth_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt"
 
         # smooth part FSC curves
-        if project_params.param(parameters["refine_metric"], iteration) == "new" and parameters["refine_fssnr"]:
+        # if project_params.param(parameters["refine_metric"], iteration) == "new" and parameters["refine_fssnr"]:
 
-            plot_name = "frealign/maps/" + current + "_snr.png"
+        #     plot_name = "frealign/maps/" + current + "_snr.png"
 
-            if not os.path.exists(raw_stats_file) and os.path.exists(smooth_stats_file):
-                postprocess.smooth_part_fsc(smooth_stats_file, plot_name)
-            elif os.path.exists(raw_stats_file):
-                postprocess.smooth_part_fsc(raw_stats_file, plot_name)
+        #     if not os.path.exists(raw_stats_file) and os.path.exists(smooth_stats_file):
+        #         postprocess.smooth_part_fsc(smooth_stats_file, plot_name)
+        #     elif os.path.exists(raw_stats_file):
+        #         postprocess.smooth_part_fsc(raw_stats_file, plot_name)
 
     if classes > 1 and iteration > 2:
 
@@ -2124,11 +2176,6 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
     is_tomo = "tomo" in parameters["data_mode"].lower()
 
     dataset = parameters["data_set"]
-
-    # remove _local.allboxes automatically
-    local_allboxes = Path(current_path, "csp", f"{filename}_local.allboxes")
-    if iteration == 2 and use_frames and local_allboxes.exists() and not local_allboxes.is_symlink():
-        os.remove(local_allboxes)
 
     # setup frealign enviroment in local scratch
     working_path = os.path.join(os.environ["PYP_SCRATCH"], filename)

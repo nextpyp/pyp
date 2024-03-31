@@ -613,6 +613,24 @@ class Parameters:
         else:
             output = input
         return output
+    
+    @staticmethod
+    def decompress_parameter_file_and_move(file: Path, new_file: Path, micrograph_list: list = [], threads=1):
+        # decompress the file into folder
+        assert (str(file).endswith(".bz2")), f"{file} needs to be compressed in .bz2 format."
+        decompressed_file = Parameters.decompress_parameter_file(str(file), threads)
+        assert (os.path.isdir(decompressed_file)), f"{file} is not a folder after decompression."
+
+        # check if the folder contains all the parameter files
+        if len(micrograph_list) > 0:
+            for micrograph in micrograph_list:
+                assert ((Path(decompressed_file) / f"{micrograph}.cistem").exists()), f"{micrograph}.cistem is not in {file}."
+                assert ((Path(decompressed_file) / f"{micrograph}_extended.cistem").exists()), f"{micrograph}_extended.cistem is not in {file}."
+
+        # delete the file if it already exists in the new path
+        if new_file.exists(): 
+            shutil.rmtree(new_file)
+        shutil.move(decompressed_file, new_file)
 
     @staticmethod
     def write_parameter_file(output_fname, contents, parx=False, frealignx=False):
