@@ -1476,7 +1476,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
     # clean-up the previous parameter file folders if they exist
     refinement_path = Path().cwd() / "frealign" / "maps"
-    parameter_file_folders = refinement_path.glob(f"{fp['data_set']}_r??_??")
+    parameter_file_folders = refinement_path.glob(f"{fp['data_set']}_r??_{iteration-1:02d}")
     [shutil.rmtree(folder) for folder in parameter_file_folders]
 
     # launch next iteration if needed
