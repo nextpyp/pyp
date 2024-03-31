@@ -1226,24 +1226,24 @@ def run_mpi_reconstruction(
 
         # write compressed file to maps directory
         output_folder = os.path.join(os.path.dirname(input_dir), "maps")
+        
+        saved_path = os.getcwd()
+        os.chdir(local_input_dir)
+        parameter_files = glob.glob("*.cistem")
+        os.mkdir(parameter_file_folder)
+        [os.rename(f, Path(parameter_file_folder) / f) for f in parameter_files]
+
         if fp["refine_parfile_compress"]:
             compressed_file = os.path.join(
                 output_folder, parameter_file_folder + ".bz2"
             )
-            saved_path = os.getcwd()
-            os.chdir(local_input_dir)
-            parameter_files = glob.glob("*.cistem")
-
-            # create a folder and put them all into it
-            os.mkdir(parameter_file_folder)
-            [os.rename(f, Path(parameter_file_folder) / f) for f in parameter_files]
-
             frealign_parfile.Parameters.compress_parameter_file(
                 parameter_file_folder, compressed_file, fp["slurm_merge_tasks"]
             )
-            os.chdir(saved_path)
         else:
-            shutil.copy2(output_merge_parfile, output_folder)
+            os.rename(parameter_file_folder, Path(output_folder) / parameter_file_folder)
+        
+        os.chdir(saved_path)
 
         # append merge log
         reclogfile = "../log/%s_%02d_mreconst.log" % (dataset_name, iteration)
