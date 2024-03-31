@@ -3052,56 +3052,56 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         local_run.run_shell_command(com, verbose=False)
 
     # v9.11
-    if fp["refine_fssnr"] and os.path.exists(scratch + name + "_statistics.txt"):
-        com = """sed -i -e 's/RING RAD/RING_RAD/g' """ + "../maps/" + name + ".par"
-        local_run.run_shell_command(com, verbose=False)
+    # if fp["refine_fssnr"] and os.path.exists(scratch + name + "_statistics.txt"):
+    #     com = """sed -i -e 's/RING RAD/RING_RAD/g' """ + "../maps/" + name + ".par"
+    #     local_run.run_shell_command(com, verbose=False)
 
-        if not "cistem" in project_params.param(fp["refine_metric"], i).lower():
-            # read par file
-            #current_par_file = "../maps/{0}.par".format(name)
-            current_par_file = "{0}.par".format(name)
-            with open(current_par_file) as f:
-                all_lines = f.read().split("\n")
+    #     if not "cistem" in project_params.param(fp["refine_metric"], i).lower():
+    #         # read par file
+    #         #current_par_file = "../maps/{0}.par".format(name)
+    #         current_par_file = "{0}.par".format(name)
+    #         with open(current_par_file) as f:
+    #             all_lines = f.read().split("\n")
 
-            # remove existing resolution table
-            with open(current_par_file, "w") as f:
-                for line in range(len(all_lines) - 1):
-                    if line < 7 or all_lines[line][0] != "C":
-                        f.write(all_lines[line] + "\n")
+    #         # remove existing resolution table
+    #         with open(current_par_file, "w") as f:
+    #             for line in range(len(all_lines) - 1):
+    #                 if line < 7 or all_lines[line][0] != "C":
+    #                     f.write(all_lines[line] + "\n")
 
-        com = """echo "C" >> """ + "../maps/" + name + ".par"
-        local_run.run_shell_command(com, verbose=False)
-        if os.path.exists(scratch + name + "_n1.res"):
-            com = "grep C %s >> %s" % (
-                scratch + name + "_n1.res",
-                "../maps/" + name + ".par",
-            )
-            local_run.run_shell_command(com, verbose=False)
-        com = (
-            """echo "C                                                 sqrt       sqrt" >> """
-            + "../maps/"
-            + name
-            + ".par"
-        )
-        local_run.run_shell_command(com, verbose=False)
-        com = (
-            """echo "C  NO.  RESOL  RING RAD   FSPR    FSC  Part_FSC  Part_SSNR  Rec_SSNR       CC   EXP. C    SIG C  ERFC  TOTVOX" >> """
-            + "../maps/"
-            + name
-            + ".par"
-        )
-        local_run.run_shell_command(com, verbose=False)
-        com = (
-            "grep -v C "
-            + "{0}_statistics.txt".format(scratch + name)
-            + """ | awk '{printf "C%4d%8.2f%10.4f%7.2f%7.3f%10.3f%11.4f%10.2f%9.4f%9.4f%9.4f%6.2f%8d\\n", $1, $2, $3, 0.0, $4, $5, $6, $7, 0.0, 0.0, 0.0, 0.0, 0}' >> """
-            + "../maps/"
-            + name
-            + ".par"
-        )
-        local_run.run_shell_command(com, verbose=False)
-        com = """echo "C  Averages not calculated" >> """ + "../maps/" + name + ".par"
-        local_run.run_shell_command(com, verbose=False)
+    #     com = """echo "C" >> """ + "../maps/" + name + ".par"
+    #     local_run.run_shell_command(com, verbose=False)
+    #     if os.path.exists(scratch + name + "_n1.res"):
+    #         com = "grep C %s >> %s" % (
+    #             scratch + name + "_n1.res",
+    #             "../maps/" + name + ".par",
+    #         )
+    #         local_run.run_shell_command(com, verbose=False)
+    #     com = (
+    #         """echo "C                                                 sqrt       sqrt" >> """
+    #         + "../maps/"
+    #         + name
+    #         + ".par"
+    #     )
+    #     local_run.run_shell_command(com, verbose=False)
+    #     com = (
+    #         """echo "C  NO.  RESOL  RING RAD   FSPR    FSC  Part_FSC  Part_SSNR  Rec_SSNR       CC   EXP. C    SIG C  ERFC  TOTVOX" >> """
+    #         + "../maps/"
+    #         + name
+    #         + ".par"
+    #     )
+    #     local_run.run_shell_command(com, verbose=False)
+    #     com = (
+    #         "grep -v C "
+    #         + "{0}_statistics.txt".format(scratch + name)
+    #         + """ | awk '{printf "C%4d%8.2f%10.4f%7.2f%7.3f%10.3f%11.4f%10.2f%9.4f%9.4f%9.4f%6.2f%8d\\n", $1, $2, $3, 0.0, $4, $5, $6, $7, 0.0, 0.0, 0.0, 0.0, 0}' >> """
+    #         + "../maps/"
+    #         + name
+    #         + ".par"
+    #     )
+    #     local_run.run_shell_command(com, verbose=False)
+    #     com = """echo "C  Averages not calculated" >> """ + "../maps/" + name + ".par"
+    #     local_run.run_shell_command(com, verbose=False)
 
     # RELION postprocessing plots
     # get current pixel size

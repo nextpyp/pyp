@@ -1001,6 +1001,8 @@ def merge_check_err_and_resubmit(
 def run_mpi_reconstruction(
     ref, pattern, dataset_name, iteration, mp, fp, input_dir, orderings,
 ):
+    # $PYP_SCRATCH/frealign/scratch
+    # NOTE: intermediate reconstructions and parameter files (.cistem) are all in this directory
     local_input_dir = os.getcwd()
 
     # check if there are any symlinks from previous iterations and remove them
@@ -1051,6 +1053,9 @@ def run_mpi_reconstruction(
     merge_parfile = f"{dataset_name}.cistem"
     output_merge_parfile = "../maps/" + dataset_name + ".par"
     merge_used_parfile = dataset_name + "_used.par"
+
+    # a folder storing all the parameter files (instead of merged one)
+    parameter_file_folder = f"{dataset_name}_{iteration:02d}"
 
     # output_parfile = os.path.join(os.path.dirname(input_dir), "maps", merged_parfile)
     if False and "frealignx" in metric: # Always saving NEW format
@@ -1223,12 +1228,18 @@ def run_mpi_reconstruction(
         output_folder = os.path.join(os.path.dirname(input_dir), "maps")
         if fp["refine_parfile_compress"]:
             compressed_file = os.path.join(
-                output_folder, Path(merged_parfile).name + ".bz2"
+                output_folder, parameter_file_folder + ".bz2"
             )
             saved_path = os.getcwd()
-            os.chdir(Path(output_merge_parfile).parent)
+            os.chdir(local_input_dir)
+            parameter_files = glob.glob("*.cistem")
+
+            # create a folder and put them all into it
+            os.mkdir(parameter_file_folder)
+            [os.rename(f, Path(parameter_file_folder) / f) for f in parameter_files]
+
             frealign_parfile.Parameters.compress_parameter_file(
-                Path(output_merge_parfile).name, compressed_file, fp["slurm_merge_tasks"]
+                parameter_file_folder, compressed_file, fp["slurm_merge_tasks"]
             )
             os.chdir(saved_path)
         else:
