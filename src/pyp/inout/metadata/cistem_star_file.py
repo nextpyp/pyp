@@ -640,10 +640,10 @@ class Parameters:
         params_particles = [p.get_particles() for p in extended_parameters]
         params_tilts = [p.get_tilts() for p in extended_parameters]
         
-        # Merge data in array and re-number the first column in sequence (parameters for projections)
+        # Merge data in array and sort based on the first column
         merged_array = np.vstack(params)
-        merged_array[:, merged_parameters.get_index_of_column(POSITION_IN_STACK)] = np.arange(1, merged_array.shape[0]+1)
-        
+        merged_array = merged_array[np.argsort(merged_array[:, merged_parameters.get_index_of_column(POSITION_IN_STACK)])]
+
         # Merge extended data in dictionary (particle and tilt parameters)
         merged_extended_parameters = ExtendedParameters()
         particles = {}

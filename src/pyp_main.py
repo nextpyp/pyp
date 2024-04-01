@@ -1830,11 +1830,10 @@ def csp_split(parameters, iteration):
         # decompress the file if needed
         parameter_file_folder = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}.bz2"
         decompressed_parameter_file_folder = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}"
-        print(type(parameters["refine_parfile"]))
 
         if iteration == 2:
             # if we have txt
-            if "refine_parfile_tomo" in parameters and parameters["refine_parfile_tomo"].exists():
+            if ("refine_parfile_tomo" in parameters) and (parameters["refine_parfile_tomo"]) and (parameters["refine_parfile_tomo"].exists()):
                 parameters["refine_parfile"] = parameters["refine_parfile_tomo"]
 
             # from the external parameter file (.txt or .bz2)

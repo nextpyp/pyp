@@ -335,8 +335,8 @@ def create_csp_split_commands(
         for first_index in range(0, max_index+1, increment):
             last_index = min(first_index+increment-1, max_index)
             
-            first = list_to_iterate[first_index]
-            last = list_to_iterate[last_index]
+            first = int(list_to_iterate[first_index])
+            last = int(list_to_iterate[last_index])
 
             logfile = "%s_csp_%06d_%06d.log" % (name, first, last) if first == 0 else "/dev/null"
             

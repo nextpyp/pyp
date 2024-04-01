@@ -1174,7 +1174,7 @@ def csp_run_refinement(
 
             if not (extract_only and current_class > 1): 
                 mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=parameters["slurm_verbose"])
-                # csp frealign/maps/TS_01_r01.cistem frealign/maps/TS_01_r01_extended.cistem 5 1536 1599 1 frealign/TS_01.mrc frealign/TS_01_stack.mrc
+
             time.sleep(3)
 
             if extract_only and current_class == 1:
