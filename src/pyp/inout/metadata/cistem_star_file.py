@@ -629,14 +629,14 @@ class Parameters:
     @classmethod
     def merge(cls, input_files: list, input_extended_files: list):
         assert (len(input_files) > 0), "No cistem binary file to merge. " 
-        assert (len(input_extended_files) > 0), "No cistem extended binary file to merge. " 
+        # assert (len(input_extended_files) > 0), "No cistem extended binary file to merge. " 
 
         merged_parameters = Parameters()
 
         # Convert binary files into objects 
         parameters = [Parameters.from_file(input_file=file) for file in input_files]
         params = [p.get_data() for p in parameters]
-        extended_parameters = [ExtendedParameters.from_file(input_file=file) for file in input_extended_files]
+        extended_parameters = [ExtendedParameters.from_file(input_file=file) for file in input_extended_files] if len(input_extended_files) > 0 else []
         params_particles = [p.get_particles() for p in extended_parameters]
         params_tilts = [p.get_tilts() for p in extended_parameters]
         
@@ -645,18 +645,21 @@ class Parameters:
         merged_array = merged_array[np.argsort(merged_array[:, merged_parameters.get_index_of_column(POSITION_IN_STACK)])]
 
         # Merge extended data in dictionary (particle and tilt parameters)
-        merged_extended_parameters = ExtendedParameters()
-        particles = {}
-        tilts = {}
-        for particle in params_particles:
-            particles.update(particle)
-        for tilt in params_tilts:
-            for tilt_index in tilt.keys():
-                if tilt_index not in tilts:
-                    tilts[tilt_index] = {}
-                tilts[tilt_index].update(tilt[tilt_index])
+        merged_extended_parameters = None
+        if len(input_extended_files) > 0:
+            merged_extended_parameters = ExtendedParameters() 
+            particles = {}
+            tilts = {}
+            for particle in params_particles:
+                particles.update(particle)
+            for tilt in params_tilts:
+                for tilt_index in tilt.keys():
+                    if tilt_index not in tilts:
+                        tilts[tilt_index] = {}
+                    tilts[tilt_index].update(tilt[tilt_index])
 
-        merged_extended_parameters.set_data(particles=particles, tilts=tilts)
+            merged_extended_parameters.set_data(particles=particles, tilts=tilts)
+        
         merged_parameters.set_data(data=merged_array,
                                    extended_parameters=merged_extended_parameters)
 
@@ -770,7 +773,7 @@ class Parameters:
         assert data.ndim == 2, "Input data is not 2D"
         assert type(data[0]) == np.ndarray, f"First row of input data type is not Numpy array, it is {type(data[0])}"
         assert (self.get_data() is None or data.shape[1] == self.get_data().shape[1]), "Input data must have the same number of columns as original data."
-        assert type(extended_parameters) == ExtendedParameters, f"Extended data must be ExtendedParameter class. It is now {type(extended_parameters)}."
+        # assert type(extended_parameters) == ExtendedParameters, f"Extended data must be ExtendedParameter class. It is now {type(extended_parameters)}."
         
         headers = self.HEADERS
 
@@ -795,7 +798,8 @@ class Parameters:
         self._extended = extended_parameters
         
 
-
+    def update_pixel_size(self, pixel_size):
+        self.get_data()[:, self.get_index_of_column(PIXEL_SIZE)] = pixel_size
 
 def initialize_parameters_binary(): 
 

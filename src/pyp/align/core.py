@@ -33,6 +33,7 @@ from pyp.inout.metadata import (
     frealign_parfile,
     get_non_empty_lines_from_par,
     get_particles_from_par,
+    cistem_star_file,
 )
 from pyp.inout.metadata.frealign_parfile import ParameterEntry, Parameters
 from pyp.refine.csp.particle_cspt import (
@@ -1368,7 +1369,7 @@ def postprocess_after_refinement(
 
     # create symlinks in scratch folder
     symlink_relative(
-        new_par_file, os.path.join("scratch", new_name + "_%02d.par" % iteration)
+        new_par_file, os.path.join("scratch", f"{new_name}.cistem")
     )
 
     # reset occupancies if not doing classification
@@ -1639,14 +1640,16 @@ def csp_refinement(
 
         class_parxfile = parxfile.replace("_r01_", "_r%02d_" % current_class)
 
+
+        # Everything that modifies parameter files falls here
+        allparxs[class_index].update_pixel_size(mp["scope_pixel"] * mp["extract_bin"]) # data_bin?
+        parameter_file = Path().cwd() / "frealign" / "maps" / f"{new_name}.cistem"
+
         # execute refinement
         if is_tomo:
             
             # set SCANORD back to normal (without having frame index added) before going to csp
-            t = Timer(text="Modifying scanning order took: {}", logger=logger.info)
-            t.start()
             # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
-            t.stop()
 
             parameter_file = csp_run_refinement(
                 class_parxfile,
@@ -1659,18 +1662,10 @@ def csp_refinement(
                 current_path,
                 use_frames,
             )
-            try:
-                os.remove(class_parxfile)
-            except:
-                pass
+            allparxs[class_index] = cistem_star_file.Parameters.from_file(str(parameter_file))
 
-            # shutil.copy2(new_par_file, class_parxfile)
-
-            t = Timer(text="Modifying scanning order 2 took: {}", logger=logger.info)
-            t.start()
             # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
             # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
-            t.stop() 
 
         elif use_frames or mp["csp_refine_ctf"]: # run csp for only refine ctf or frame refinement 
 
@@ -1679,6 +1674,7 @@ def csp_refinement(
 
             parameter_file = csp_run_refinement(
                 class_parxfile,
+                allparxs[class_index],
                 mp,
                 dataset,
                 new_name,
@@ -1687,34 +1683,35 @@ def csp_refinement(
                 current_path,
                 use_frames,
             )
-            try:
-                os.remove(class_parxfile)
-            except:
-                pass
+
+            allparxs[class_index] = cistem_star_file.Parameters.from_file(str(parameter_file))
 
             # SCANORD has to be set to frame index to make dose weighting working
             # frealign_parfile.Parameters.populateFrameIndexInScanord(new_par_file, class_parxfile)
+        else:
+            # we need parameter file on disk for spr
+            allparxs[class_index].to_binary(str(parameter_file))
 
         # run frealign refinement
         is_frealignx = False
         if (classes > 1 or not use_frames) and not mp["refine_skip"]:
 
             # check if not frealignx format par but want to refine with frealignx
-            input_par_data = frealign_parfile.Parameters.from_file(class_parxfile).data
-            if (
-                "frealignx" in project_params.param(mp["refine_metric"], iteration)
-                and input_par_data[0].shape[0] < 46
-            ) :
-                logger.info("Changing parfile format to frealign")
-                is_frealignx = True
-                if input_par_data[0, 7] == 0:
-                    # add 1 for film column, frealignx start from 1
-                    input_par_data[:, 7] += 1
+            # input_par_data = frealign_parfile.Parameters.from_file(class_parxfile).data
+            # if (
+            #     "frealignx" in project_params.param(mp["refine_metric"], iteration)
+            #     and input_par_data[0].shape[0] < 46
+            # ) :
+            #     logger.info("Changing parfile format to frealign")
+            #     is_frealignx = True
+            #     if input_par_data[0, 7] == 0:
+            #         # add 1 for film column, frealignx start from 1
+            #         input_par_data[:, 7] += 1
 
-                # add the pshift column
-                pshift = np.zeros((input_par_data.shape[0], 1), dtype='float')
-                frealignx_pardata = np.hstack((input_par_data[:, :11], pshift, input_par_data[:, 11:]))
-                frealign_parfile.Parameters.write_parameter_file(class_parxfile, frealignx_pardata, parx=True, frealignx=True)
+            #     # add the pshift column
+            #     pshift = np.zeros((input_par_data.shape[0], 1), dtype='float')
+            #     frealignx_pardata = np.hstack((input_par_data[:, :11], pshift, input_par_data[:, 11:]))
+            #     frealign_parfile.Parameters.write_parameter_file(class_parxfile, frealignx_pardata, parx=True, frealignx=True)
 
             film_total = np.loadtxt(os.path.join(current_path, mp["data_set"] + ".films"), dtype=str, ndmin=2)
             if classes > 1 and film_total.shape[0] > 1 and iteration > 2:
@@ -1730,7 +1727,7 @@ def csp_refinement(
                 logger.info("Skip modifying metadata to change statistics")
 
             postprocess_after_refinement(
-                class_parxfile,
+                str(parameter_file),
                 name,
                 mp,
                 current_class,

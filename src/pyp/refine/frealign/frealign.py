@@ -27,6 +27,7 @@ from pyp.analysis import plot, statistics
 from pyp.analysis.occupancies import occupancies, occupancy_extended
 from pyp.inout.image import mrc, writepng, img2webp
 from pyp.inout.metadata import create_curr_iter_par, frealign_parfile, isfrealignx
+from pyp.inout.metadata.cistem_star_file import *
 from pyp.refine.csp import cspty
 from pyp.system import local_run, mpi, project_params, slurm, user_comm
 from pyp.system.db_comm import save_classes_to_website
@@ -3622,7 +3623,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
 
     fp = mp
 
-    name = "%s_r%02d_%02d" % (fp["refine_dataset"], ref, i)
+    name = "%s_r%02d" % (fp["refine_dataset"], ref)
     ranger = "%07d_%07d" % (first, last)
     if fp["refine_debug"] or first == 1:
         logfile = "%s_msearch_n.log_%s" % (name, ranger)
@@ -3661,8 +3662,8 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
         mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=mp["slurm_verbose"])
 
         # combine all the refined parfile
-        short_file_name = name + ".par_%07d_%07d" % (1, last)
-        all_refined_par = [par for par in glob.glob(name + ".par_*_*")]
+        short_file_name = name + "_%07d_%07d.cistem" % (1, last)
+        all_refined_par = [par for par in glob.glob(name + "_*_*.cistem")]
 
         # first check if the number of refined par is equal to count
         if len(all_refined_par) != count:
@@ -3676,22 +3677,29 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
                 f"The number of refined parfiles ({len(all_refined_par)}) != the number of jobs ({count})."
             )
 
-        if "frealignx" in metric:
-            frealignx = True
-            short_column = 17
-        else:
-            frealignx = False
-            short_column = 16
+        # if "frealignx" in metric:
+        #     frealignx = True
+        #     short_column = 17
+        # else:
+        #     frealignx = False
+        #     short_column = 16
 
-        merged_short_par = np.empty((0, short_column))
-        for refined_par in sorted(all_refined_par, key=lambda x: x.split("_")[-1]):
-            # changed_par = refined_par.replace(".par", "_changed.par")
-            refined = np.loadtxt(refined_par, ndmin=2, comments="C")
-            # changed = np.loadtxt(changed_par, ndmin=2, comments="C")
-            # refined[:, -2] = refined[:, -2] + refined[:, -1]
-            merged_short_par = np.vstack((merged_short_par, refined))
+        # merged_short_par = np.empty((0, short_column))
+        # for refined_par in sorted(all_refined_par, key=lambda x: x.split("_")[-1]):
+        #     # changed_par = refined_par.replace(".par", "_changed.par")
+        #     refined = np.loadtxt(refined_par, ndmin=2, comments="C")
+        #     # changed = np.loadtxt(changed_par, ndmin=2, comments="C")
+        #     # refined[:, -2] = refined[:, -2] + refined[:, -1]
+        #     merged_short_par = np.vstack((merged_short_par, refined))
 
-        frealign_parfile.Parameters.write_parameter_file(short_file_name, merged_short_par, parx=False, frealignx=frealignx)
+        # frealign_parfile.Parameters.write_parameter_file(short_file_name, merged_short_par, parx=False, frealignx=frealignx)
+
+        # TODO: Ye, not sure if this is what you wanna do?
+        merged_alignment = Parameters.merge(input_files=all_refined_par,
+                                            input_extended_files=[])
+        merged_alignment.to_binary(short_file_name)
+        import sys
+        sys.exit()
 
         """
         sort_allpar = sorted(
@@ -3712,7 +3720,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
         # cleanup
         [
             os.remove(i)
-            for i in glob.glob(str(scratch / f"{name}.par_*_*"))
+            for i in glob.glob(str(scratch / f"{name}_*_*.cistem"))
             if i != short_file_name
         ]
 
@@ -4731,7 +4739,7 @@ eot
         else:
             stack = "stack.mrc"
 
-        if "new" in metric:
+        if False and "new" in metric:
             command = (
                 f"{frealign_paths['new']}/bin/refine3d << eot >>{logfile} 2>&1\n"
                 f"{stack_dir}/{fp['refine_dataset']}_{stack}\n"
@@ -5023,44 +5031,44 @@ eot
                     frealign_paths["cistem2"], logfile
                 )
                 + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-                + "{0}.star\n{1}_{2}.mrc\n".format(name, dataset, "%02d" % (i - 1))
+                + "{0}.cistem\n{0}.mrc\n".format(name)
                 + "statistics_r%02d.txt\n" % ref
                 + stats
                 + "\n"
-                + "{0}_match.mrc_{1}\n{0}_{1}.star\n{0}_{1}_changes.star\n".format(
+                + "{0}_match.mrc_{1}\n{0}_{1}.cistem\n{0}_{1}_changes.cistem\n".format(
                     name, ranger
                 )
-                + project_params.param(fp["particle_sym"], i)
+                + str(project_params.param(fp["particle_sym"], i))
                 + "\n"
                 + "{0}\n{1}\n1\n".format(first, last)
                 + "{0}\n{1}\n".format(pixel, mp["particle_mw"])
                 + "0\n"
-                + mp["particle_rad"]
+                + str(mp["particle_rad"])
                 + "\n"
-                + project_params.param(mp["refine_rlref"], i)
+                + str(project_params.param(mp["refine_rlref"], i))
                 + "\n"
                 + str(postprocess.get_rhref(mp, i))
                 + "\n"
                 + boost
                 + "\n"
-                + project_params.param(mp["class_rhcls"], i)
+                + str(project_params.param(mp["class_rhcls"], i))
                 + "\n"
                 + srad
                 + "\n"
                 + str(postprocess.get_rhref(mp, i))
                 + "\n"
-                + project_params.param(mp["refine_dang"], i)
+                + str(project_params.param(mp["refine_dang"], i))
                 + "\n"
                 + "20\n"
-                + project_params.param(mp["refine_searchx"], i)
+                + str(project_params.param(mp["refine_searchx"], i))
                 + "\n"
-                + project_params.param(mp["refine_searchy"], i)
+                + str(project_params.param(mp["refine_searchy"], i))
                 + "\n"
                 + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
                 + "\n"
-                + "500.0\n"
-                + "50.0\n"
-                + project_params.param(mp["refine_iblow"], i)
+                + "500.0\n" # defocus_search_range
+                + "50.0\n" # defocus_step
+                + str(project_params.param(mp["refine_iblow"], i))
                 + "\n"
                 + globally
                 + "\n"
@@ -5091,8 +5099,7 @@ eot
                 + normalize_rec
                 + "\n"
                 + thresh_rec
-                + "\n1\n"
-                + "eot\n"
+                + "\neot\n"
             )
     else:
 
