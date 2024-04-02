@@ -17,6 +17,8 @@ v0.6.4 (3/24/2024)
 
    :fa:`plus-square,text-primary` Allow export of particle coordinates from streaming sessions.
 
+   :fa:`plus-square,text-primary` Check that .order files have the same number of entries as images in the tilt-series.
+
    :fa:`bug,text-danger` Fix bugs when reading metadata from *.mdoc files.
 
    :fa:`bug,text-danger` Prevent dragging of multiple connections from block outputs in project view.
