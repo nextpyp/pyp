@@ -4,6 +4,11 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.6.5 (4/24/2024)
+******************
+
+   :fa:`bug,text-danger` Prevent error during tilt-series alignment with AreTomo2 when number of patches = 1.
+
 v0.6.4 (3/24/2024)
 ******************
 
