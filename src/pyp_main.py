@@ -3230,9 +3230,7 @@ if __name__ == "__main__":
             )
         else:
             logger.info(
-                "Job {} (v{}) launching on {} using {} task(s) {}".format(
-                jobid, version, socket.gethostname(), mpi_tasks, memory
-                )
+                f"nextPYP v{version} launching job {jobid} on {socket.gethostname()} using {mpi_tasks} task(s) {memory}"
             )
 
         config = get_pyp_configuration()
