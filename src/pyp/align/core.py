@@ -4176,7 +4176,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         # patch tracking
         patches_x = parameters["movie_motioncor_patch_x"] if "movie_motioncor_patch_x" in parameters else 1
         patches_y = parameters["movie_motioncor_patch_y"] if "movie_motioncor_patch_y" in parameters else 1
-        if patches_x > 1 or patches_y > 0:
+        if patches_x + patches_y > 2:
             patches = f" -Patch {parameters['movie_motioncor_patch_x']} {parameters['movie_motioncor_patch_y']}"
             if parameters.get("movie_motioncor_patch_overlap"):
                 patches += f" {parameters['movie_motioncor_patch_overlap']}"
