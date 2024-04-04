@@ -1335,7 +1335,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     os.chdir(project_path)
 
     parameters = project_params.load_pyp_parameters()
-
+    
     # get file name
     name = os.path.basename(filename)
 
