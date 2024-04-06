@@ -148,6 +148,7 @@ def read_tilt_series(
     name = os.path.basename(filename)
     mdoc_pattern = "*.mdoc"
 
+    mdocs = []
     if mdoc_path is not None:
         mdoc_pattern = Path(resolve_path(parameters["data_path_mdoc"])).name
         mdocs = list(mdoc_path.glob(str(mdoc_pattern)))
