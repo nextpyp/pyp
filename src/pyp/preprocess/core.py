@@ -618,7 +618,7 @@ def read_tilt_series(
         if metadata.get("drift"):
             for i in metadata["drift"]:
                 drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
-        elif metadata.get("web").get("drift"):
+        elif metadata.get("web") and metadata.get("web").get("drift"):
             for i in metadata.get("web")["drift"]:
                 drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
     else:
