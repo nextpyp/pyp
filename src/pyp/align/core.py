@@ -5196,7 +5196,7 @@ def align_tilt_series(name, parameters, rotation=0):
 -AngFile {name}.rawtlt \
 -VolZ {thickness} \
 -OutBin {binning_tomo} \
--TiltAxis {parameters['scope_tilt_axis']} \
+-TiltAxis {rotation} \
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 -AlignZ {specimen_thickness} \
 {reconstruct_option} \
