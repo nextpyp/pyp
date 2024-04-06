@@ -5021,8 +5021,11 @@ def align_tilt_series(name, parameters, rotation=0):
             tilt_offset_option = "1" if parameters['tomo_ali_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_ali_aretomo_tiltoff']}"
 
             # local motion by giving the number of patches
-            if parameters.get("tomo_ali_patches_x") and parameters.get("tomo_ali_patches_y"):
-                patches = f" -Patch {parameters['tomo_ali_patches_x']} {parameters['tomo_ali_patches_y']}"
+            # patch tracking
+            patches_x = parameters["tomo_ali_patches_x"] if "tomo_ali_patches_x" in parameters else 1
+            patches_y = parameters["tomo_ali_patches_y"] if "tomo_ali_patches_y" in parameters else 1
+            if patches_x + patches_y > 2:
+                patches = f" -Patch {patches_x} {patches_y}"
             else:
                 patches = ""
 
