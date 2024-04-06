@@ -142,14 +142,22 @@ def read_tilt_series(
     aligned_tilts = []
 
     data_path = Path(resolve_path(parameters["data_path"])).parent
-    mdoc_path = Path(resolve_path(parameters["data_path_mdoc"])).parent if "data_path_mdoc" in parameters else Path()
+    mdoc_path = Path(resolve_path(parameters["data_path_mdoc"])).parent if "data_path_mdoc" in parameters and parameters["data_path_mdoc"] != None else None
     project_raw_path = Path(filename).parent
 
     name = os.path.basename(filename)
-    mdocs = list(mdoc_path.glob(f"{name}.mdoc")) + list(mdoc_path.glob(f"{name}.mrc.mdoc"))
+    mdoc_pattern = "*.mdoc"
+
+    mdocs = []
+    if mdoc_path is not None:
+        mdoc_pattern = Path(resolve_path(parameters["data_path_mdoc"])).name
+        mdocs = list(mdoc_path.glob(str(mdoc_pattern)))
+        mdocs = [str(file) for file in mdocs if str(file.name).replace(".mrc", "").replace(".mdoc", "") == name]
+
     if len(mdocs) == 0:
         # get the mdoc files from the path of raw data if it couldn't find them in mdoc path
-        mdocs = list(data_path.glob(f"{name}.mdoc")) + list(mdoc_path.glob(f"{name}.mrc.mdoc"))
+        mdocs = list(data_path.glob(mdoc_pattern))
+        mdocs = [str(file) for file in mdocs if str(file.name).replace(".mrc", "").replace(".mdoc", "") == name]
 
     # escape special character in case it contains [
     filename = glob.escape(filename)
@@ -610,7 +618,7 @@ def read_tilt_series(
         if metadata.get("drift"):
             for i in metadata["drift"]:
                 drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
-        elif metadata.get("web").get("drift"):
+        elif metadata.get("web") and metadata.get("web").get("drift"):
             for i in metadata.get("web")["drift"]:
                 drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
     else:

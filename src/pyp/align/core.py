@@ -4176,7 +4176,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         # patch tracking
         patches_x = parameters["movie_motioncor_patch_x"] if "movie_motioncor_patch_x" in parameters else 1
         patches_y = parameters["movie_motioncor_patch_y"] if "movie_motioncor_patch_y" in parameters else 1
-        if patches_x > 1 or patches_y > 0:
+        if patches_x + patches_y > 2:
             patches = f" -Patch {parameters['movie_motioncor_patch_x']} {parameters['movie_motioncor_patch_y']}"
             if parameters.get("movie_motioncor_patch_overlap"):
                 patches += f" {parameters['movie_motioncor_patch_overlap']}"
@@ -5021,8 +5021,11 @@ def align_tilt_series(name, parameters, rotation=0):
             tilt_offset_option = "1" if parameters['tomo_ali_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_ali_aretomo_tiltoff']}"
 
             # local motion by giving the number of patches
-            if parameters.get("tomo_ali_patches_x") and parameters.get("tomo_ali_patches_y"):
-                patches = f" -Patch {parameters['tomo_ali_patches_x']} {parameters['tomo_ali_patches_y']}"
+            # patch tracking
+            patches_x = parameters["tomo_ali_patches_x"] if "tomo_ali_patches_x" in parameters else 1
+            patches_y = parameters["tomo_ali_patches_y"] if "tomo_ali_patches_y" in parameters else 1
+            if patches_x + patches_y > 2:
+                patches = f" -Patch {patches_x} {patches_y}"
             else:
                 patches = ""
 
@@ -5193,7 +5196,7 @@ def align_tilt_series(name, parameters, rotation=0):
 -AngFile {name}.rawtlt \
 -VolZ {thickness} \
 -OutBin {binning_tomo} \
--TiltAxis {parameters['scope_tilt_axis']} \
+-TiltAxis {rotation} \
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 -AlignZ {specimen_thickness} \
 {reconstruct_option} \

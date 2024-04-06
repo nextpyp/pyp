@@ -249,14 +249,16 @@ def create_micrographs_list(parameters):
 
         # look for mdoc files in mdoc folder
         mdocs = list()
-        if "data_path_mdoc" in parameters and parameters["data_path_mdoc"] != None and Path(resolve_path(parameters["data_path_mdoc"])).exists:
-            mdoc_folder = Path(resolve_path(parameters["data_path_mdoc"])).parent
-            mdocs = list(mdoc_folder.glob("*.mdoc"))
+        mdoc_pattern = "*.mdoc"
+        if "data_path_mdoc" in parameters and parameters["data_path_mdoc"] != None:
+            mdoc_folder = parameters["data_path_mdoc"].parent
+            mdoc_pattern = parameters["data_path_mdoc"].name
+            mdocs = list(mdoc_folder.glob(str(mdoc_pattern)))
         # if none found, look in raw data folder
         if len(mdocs) == 0:
             data_path = Path(resolve_path(parameters["data_path"]))
             data_folder = data_path.parent
-            mdocs = list(data_folder.glob("*.mdoc"))
+            mdocs = list(data_folder.glob(mdoc_pattern))
 
         if parameters["data_mode"] == "tomo": 
             if not parameters["movie_mdoc"] and len(parameters["movie_pattern"]) > 0 and len(glob.glob("raw/*" + movie_extension)) > 0:

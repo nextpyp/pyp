@@ -1335,7 +1335,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     os.chdir(project_path)
 
     parameters = project_params.load_pyp_parameters()
-
+    
     # get file name
     name = os.path.basename(filename)
 
@@ -3230,9 +3230,7 @@ if __name__ == "__main__":
             )
         else:
             logger.info(
-                "Job {} (v{}) launching on {} using {} task(s) {}".format(
-                jobid, version, socket.gethostname(), mpi_tasks, memory
-                )
+                f"nextPYP v{version} launching job {jobid} on {socket.gethostname()} using {mpi_tasks} task(s) {memory}"
             )
 
         config = get_pyp_configuration()
@@ -3269,12 +3267,6 @@ if __name__ == "__main__":
         # TODO: switch to pyp.system.utils.get_imod_path()
         os.environ["IMAGICDIR"] = "/usr/bin"
         os.environ["IMOD_DIR"] = get_imod_path()
-        if "LD_LIBRARY_PATH" in os.environ:
-            os.environ["LD_LIBRARY_PATH"] = "{0}/qtlib:{0}/lib:{1}".format(
-                get_imod_path(), os.environ["LD_LIBRARY_PATH"]
-            )
-        else:
-            os.environ["LD_LIBRARY_PATH"] = "{0}/qtlib:{0}/lib".format(get_imod_path())
 
         os.environ["LD_LIBRARY_PATH"] = "{0}:{1}".format(
                 os.environ["LD_LIBRARY_PATH"], '/usr/local/pkgs/fftw-3.3.10-nompi_hf0379b8_106/lib/'
