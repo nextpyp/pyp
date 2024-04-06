@@ -4,16 +4,24 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.6.5 (4/24/2024)
+v0.6.5 (4/6/2024)
 ******************
 
    :fa:`plus-square,text-primary` Update format of logger messages to more clearly show the nextPYP version and resources assigned to each job.
+
+   :fa:`plus-square,text-primary` Use same tilt-axis angle convention for aligning tilt-series using IMOD and AreTomo2.
 
    :fa:`bug,text-danger` Prevent error during tilt-series alignment with AreTomo2 when number of patches = 1.
 
    :fa:`bug,text-danger` Fix bug in command line interface that ocurred when launching constrained refinement.
 
-   :fa:`bug,text-danger` Fix bug that was causing the server startup routines to be called during the CLI processing of the config file.
+   :fa:`bug,text-danger` Fix bug that was causing the server startup routines to be called during the CLI processing of the configuration file.
+
+   :fa:`bug,text-danger` Fix bug that ocurred when retrieving metadata from mdoc files.
+
+   :fa:`bug,text-danger` Fix bug when trying to retrieve tilt-series metadata from failed runs.
+
+   :fa:`bug,text-danger` Fix conflicts with library paths when running external executables.
 
 v0.6.4 (3/24/2024)
 ******************
