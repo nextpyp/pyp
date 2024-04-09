@@ -1886,66 +1886,82 @@ eot
             )
 
         elif True: #"cistem2" in project_params.param(fp["refine_metric"], i).lower():
+            
+            if project_params.param(mp["dose_weighting_enable"], i):
+                dose_weighting = "yes"
 
+                # if dose weighting is enabled, we will go into this block
+                weight_files = project_params.resolve_path(mp["dose_weighting_weights"]) if "dose_weighting_weights" in mp else ""
+                external_weight = "/scratch/not_provided"
+
+                if ".txt" in weight_files:
+                    tag = "_" + name.split("_")[1] + "_" if "*" in weight_files else "txt"
+                    files = [f for f in glob.glob(weight_files) if tag in f]
+                    external_weight = files[0]
+
+                dose_weighting_multiply = "yes" if mp["dose_weighting_multiply"] else "no"
+                dose_weighting_fraction = str(fp["dose_weighting_fraction"])
+                dose_weighting_transition = str(fp["dose_weighting_transition"])
+
+                dose_weighting = "\n".join([dose_weighting, 
+                                            external_weight, 
+                                            dose_weighting_multiply, 
+                                            dose_weighting_fraction, 
+                                            dose_weighting_transition])
+            else:
+                dose_weighting = "no"
+
+            score_weighting = "yes" if fp["refine_score_weighting"] else "no"
+            min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
+            max_tilt_particle_score = fp["csp_UseImagesForRefinementMax"]
+            per_particle_splitting = "yes" if fp["reconstruct_per_particle_splitting"] else "no"
             res_ref = "0"
             smoothing = "1"
             padding = "1"
             exclude = "no"
             center = "no"
-            if fp["reconstruct_lblur"]:
-                blurring = "yes"
-            else:
-                blurring = "no"
+            blurring = "yes" if fp["reconstruct_lblur"] else "no"
             th_input = "no"
 
             command = (
                 "{0}/reconstruct3d << eot >> {1} 2>&1\n".format(
                     frealign_paths["cistem2"], reclogfile
                 )
-                + f"{stack}\n{parfile}\n{reference}\n{name}_map1.mrc\n{name}_map2.mrc\noutput.mrc\n{name}_n{first}.res\n"
-                + str(project_params.param(fp["particle_sym"], i))
-                + "\n"
-                + str(first)
-                + "\n"
-                + str(last)
-                + "\n"
-                + str(pixel)
-                + "\n"
-                + str(mp["particle_mw"])
-                + "\n"
-                + "0\n"
-                + str(rad_rec)
-                + "\n"
-                + str(res_rec)
-                + "\n"
-                + str(res_ref)
-                + "\n"
-                + str(project_params.param(fp["refine_bsc"], i))
-                + "\n"
-                + "%f\n" % thresh
-                + smoothing
-                + "\n"
-                + padding
-                + "\n"
-                + normalize
-                + "\n"
-                + adjust
-                + "\n"
-                + invert
-                + "\n"
-                + exclude
-                + "\n"
-                + crop
-                + "\n"
-                + "yes\n"
-                + center
-                + "\n"
-                + blurring
-                + "\n"
-                + th_input
-                + "\n"
-                + dump_intermediate
-                + "\n"
+                + f"{stack}\n"
+                + f"{parfile}\n"
+                + f"{reference}\n"
+                + f"{name}_map1.mrc\n"
+                + f"{name}_map2.mrc\n"
+                + f"output.mrc\n"
+                + f"{name}_n{first}.res\n"
+                + f"{project_params.param(fp['particle_sym'], i)}\n"
+                + f"{first}\n"
+                + f"{last}\n"
+                + f"{pixel}\n"
+                + f"{mp['particle_mw']}\n"
+                + "0\n" # inner radius
+                + f"{rad_rec}\n"
+                + f"{res_rec}\n"
+                + f"{res_ref}\n"
+                + f"{project_params.param(fp['refine_bsc'], i)}\n"
+                + f"{score_weighting}\n"
+                + f"{min_tilt_particle_score}\n"
+                + f"{max_tilt_particle_score}\n"
+                + f"{dose_weighting}\n"
+                + f"{thresh}\n"
+                + f"{smoothing}\n"
+                + f"{padding}\n"
+                + f"{normalize}\n"
+                + f"{adjust}\n"
+                + f"{invert}\n"
+                + f"{exclude}\n"
+                + f"{crop}\n"
+                + "yes\n" # split even odd
+                + f"{per_particle_splitting}\n"
+                + f"{center}\n"
+                + f"{blurring}\n"
+                + f"{th_input}\n"
+                + f"{dump_intermediate}\n"
                 + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n1\n".format(
                     Path(os.environ["PYP_SCRATCH"]) / name, str(count)
                 )
