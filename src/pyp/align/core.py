@@ -1004,7 +1004,7 @@ def csp_run_refinement(
     # reg_par_file = new_par_file.replace(".parx", "_reg.parx")
     # local_par_file = new_par_file.replace(".parx", "_local.parx")
 
-
+    # FIXME (HF): new cistem binary
     # clean particles by modifying OCC in the parfile
     # boxes3d = "{}_boxes3d.txt".format(name.split("_r")[0])
 
@@ -1228,7 +1228,8 @@ def csp_run_refinement(
             if frame_refinement and not only_evaluate:
 
                 if parameters["csp_rotreg"] or parameters["csp_transreg"]:
-
+                    
+                    # FIXME (HF): new cistem binary 
                     # fit.regularize( name.split("_r")[0], new_par_file, prev_par_file, reg_par_file, parameters )
 
                     csp_modes.append(5)
@@ -1648,6 +1649,7 @@ def csp_refinement(
         # execute refinement
         if is_tomo:
             
+            # FIXME (HF): new cistem binary
             # set SCANORD back to normal (without having frame index added) before going to csp
             # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
 
@@ -1696,6 +1698,7 @@ def csp_refinement(
         is_frealignx = False
         if (classes > 1 or not use_frames) and not mp["refine_skip"]:
 
+            # FIXME: new cistem binary (don't think we need it now)
             # check if not frealignx format par but want to refine with frealignx
             # input_par_data = frealign_parfile.Parameters.from_file(class_parxfile).data
             # if (

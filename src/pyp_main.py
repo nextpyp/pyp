@@ -1834,7 +1834,7 @@ def csp_split(parameters, iteration):
         if iteration == 2:
             # if we have txt
             if ("refine_parfile_tomo" in parameters) and (parameters["refine_parfile_tomo"]) and (Path(project_params.resolve_path(parameters["refine_parfile_tomo"])).exists()):
-                parameters["refine_parfile"] = Path(project_params.resolve_path(parameters["refine_parfile_tomo"]))
+                parameters["refine_parfile"] = Path(project_params.resolve_path(parameters["refine_parfile_tomo"]))csp_extract_coordi
 
             # from the external parameter file (.txt or .bz2)
             # we only move .bz2 to frealign/maps
@@ -1933,6 +1933,8 @@ def csp_split(parameters, iteration):
         raw_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt_raw"
         smooth_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt"
 
+        # FIXME: new cistem binary 
+
         # smooth part FSC curves
         # if project_params.param(parameters["refine_metric"], iteration) == "new" and parameters["refine_fssnr"]:
 
@@ -2011,6 +2013,7 @@ def csp_extract_frames(
     iteration = parameters["refine_iter"]
     metric = project_params.param(parameters["refine_metric"], iteration)
     if totalboxes > 0:
+        # FIXME: I think we do not need to convert between different versions
         # write .parx file for each class
         # if type(allparxs[0]) == np.ndarray:
         #     par_col = allparxs[0].shape[1]

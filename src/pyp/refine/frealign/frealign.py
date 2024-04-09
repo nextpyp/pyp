@@ -1633,9 +1633,6 @@ def split_reconstruction(
 
     ranger = "%07d_%07d" % (first, last)
 
-    # TODO - fix this, it takes too much time
-    # boff, thresh = mreconstruct_pre(mp, fp, i, ref)
-
     pixel = float(mp["scope_pixel"]) * float(mp["data_bin"]) * float(mp["extract_bin"])
     dstep = pixel * float(mp["scope_mag"]) / 10000.0
 
@@ -2855,6 +2852,8 @@ def get_phase_residuals(input,parfile,fp,i):
 )
 def mreconstruct_pre(mp, fp, i, ref=1):
 
+    # FIXME: new cistem binary
+
     # if "cc" in project_params.param(fp["refine_metric"], i).lower():
     #     parfile = "%s_r%02d_%02d.par" % (fp["refine_dataset"], ref, i)
     # else:
@@ -2896,7 +2895,7 @@ def mreconstruct_pre(mp, fp, i, ref=1):
     #         or "frealignx" in project_params.param(fp["refine_metric"], i)
     #     ) and thresh < 1:
     #         thresh = 0
-    # FIXME
+    # FIXME: once the code above is fixed, remove the things below
     boff = 0.0
 
     thresh = 0
@@ -3008,31 +3007,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
     else:
         shutil.copy2(scratch + name + ".mrc", "../maps")
 
-    """
-    # remove PSHIFT column if only doing dose-weighting
-    if (
-        fp["dose_weighting_enable"]
-        and "new" in project_params.param(fp["refine_metric"], i).lower()
-    ):
-        scratch_parfile = "%s.par" % name
-        parfile = "../maps/%s.par" % name
-        shutil.copy2(scratch_parfile , parfile)
-
-        # read parfile
-        comments = [line for line in open(parfile) if line.startswith("C")]
-        lines = [line for line in open(parfile) if not line.startswith("C")]
-
-        # overwrite with new one
-        with open(parfile, "w") as f:
-
-            [f.write(line) for line in comments]
-
-            for l in lines:
-                f.write(l[:92] + l[100:])
-    """
     # copy resolution table to maps directory
-
-    # v9.10
     if fp["refine_fssnr"] and os.path.exists(scratch + name + ".res"):
         shutil.copy2(scratch + name + ".res", "../maps")
 
@@ -3067,6 +3042,8 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         # replace original par file with modified file
         com = "mv %s %s" % (scratch + name + ".part", "../maps/" + name + ".par")
         local_run.run_shell_command(com, verbose=False)
+
+    # FIXME: new cistem binary
 
     # v9.11
     # if fp["refine_fssnr"] and os.path.exists(scratch + name + "_statistics.txt"):
@@ -3693,12 +3670,16 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
                 f"The number of refined parfiles ({len(all_refined_par)}) != the number of jobs ({count})."
             )
 
+        # FIXME: I don't think we need to convert between different versions now
+
         # if "frealignx" in metric:
         #     frealignx = True
         #     short_column = 17
         # else:
         #     frealignx = False
         #     short_column = 16
+
+        # FIXME: I think the code below can be removed, as we perform new merging mechanism
 
         # merged_short_par = np.empty((0, short_column))
         # for refined_par in sorted(all_refined_par, key=lambda x: x.split("_")[-1]):

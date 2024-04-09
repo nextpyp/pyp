@@ -463,7 +463,7 @@ def merge_movie_files_in_job_arr(
     #         new_par_list, merged_par_file, metric, update_film=True, parx=True, frealignx=is_frealignx
     #     )
 
-        # FIXME: merge all the cistem binary files in a bundle
+        # FIXME (HF): merge all the cistem binary files in a bundle, re-number the film (using image_activity column)
         # now I simply copy it over 
         shutil.copy2(new_par_list[0], merged_par_file)
         shutil.copy2(new_par_list[0].replace(".cistem", "_extended.cistem"), merged_par_file.replace(".cistem", "_extended.cistem"))
@@ -475,6 +475,8 @@ def merge_movie_files_in_job_arr(
             .replace("_r01_", "_r%02d_" % current_class),
             str(output_basename) + "_r%02d.mrc" % (current_class),
         )
+
+        # FIXME: Don't think we need to convert between different versions now
     #     # if dose weighting is enabled and we are not in metric frealignx, we need to add PSHIFT column, film column start from 0 is OK
     #     current_pardata = frealign_parfile.Parameters.from_file(merged_par_file).data
     #     if current_pardata.shape[-1] < 46:
@@ -520,6 +522,7 @@ def merge_movie_files_in_job_arr(
 
         current_class = class_index + 1
 
+        # FIXME (Ye): new cistem binary
         # # append other rows to the current block from previous iteration
         # film_col = 7
         # current_block_par = "%s_r%02d_%02d.par" % (
@@ -569,6 +572,7 @@ def merge_movie_files_in_job_arr(
         )
 
         # move back the original par with current rows
+        # FIXME (Ye): classification
         if classes > 1 and film_total.shape[0] > 1 and iteration > 2:
              with timer.Timer(
                 "remove_hacking", text="Removing additional lines from parfile took: {}", logger=logger.info
@@ -703,9 +707,6 @@ def save_reconstruction(
 
     all_files = os.listdir(output_folder)
 
-    # output_name = Path(
-    #     [f for f in all_files if f.endswith(".par") and not "_used" in f][0]
-    # ).stem
     output_name = output_basename
     
     # move over all the binary files (each represent on tilt-series) in a given bundle to output folder
@@ -808,6 +809,7 @@ def run_reconstruction(
     parameter_file = name + "_r%02d.cistem" % (ref)
     alignment_parameters = Parameters.from_file(parameter_file)
 
+    # FIXME: new cistem binary
     # necessary symlink for reconstruction
     # create shaped _used par file
     # par_obj = call_shape_phase_residuals(
@@ -1068,6 +1070,7 @@ def run_mpi_reconstruction(
     else:
         saved_frealignx = False
 
+    # FIXME: new cistem binary 
     # # save new iteration par without changing occ to frealign/maps
     # with timer.Timer(
     #     "global_merge_parfile", text = "Merge all parfiles took: {}", logger=logger.info
@@ -1136,6 +1139,8 @@ def run_mpi_reconstruction(
         arg_scores = False
         arg_frealignx = True
     """
+
+    # FIXME: new cistem binary
     # with timer.Timer(
     #     "plot_used_png", text = "Plot used particles pngs took: {}", logger=logger.info
     # ):
@@ -1293,6 +1298,7 @@ def run_mpi_reconstruction(
             fsc_file = os.path.join("../maps", fp["refine_dataset"] + "_r%02d_fsc.txt" % ref)
             FSCs = np.loadtxt(fsc_file, ndmin=2, dtype=float)
 
+            # FIXME: new cistem binary
             # send reconstruction to website
             # save_reconstruction_to_website(
             #     dataset_name, FSCs, consolidated_plot_outputs, consolidated_metadata
