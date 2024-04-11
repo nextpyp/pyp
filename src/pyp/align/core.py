@@ -1122,7 +1122,7 @@ def csp_run_refinement(
                     MODE = "P"
 
                 split_parx_list = prepare_particle_cspt(
-                    name[:-4], dataset, alignment_parameters, stackfile, parx_object, MODE, cpus, parameters, grids=grids, use_frames=use_frames
+                    name[:-4], alignment_parameters, parameters, grids=grids, use_frames=use_frames
                 )
                 if not split_parx_list:
                     logger.error("Mode %d stops running." % mode)

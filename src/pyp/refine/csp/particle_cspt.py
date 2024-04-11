@@ -261,7 +261,7 @@ def split_parx_particle_cspt(p_object, main_parxfile, regions_list, metric="new"
 
 
 def prepare_particle_cspt(
-    name, dataset, main_parxfile, main_stackfile, parx_object, mode, cpus, parameters, grids=[1,1,1], use_frames=False
+    name, main_parxfile, alignment_parameters, parameters, grids=[1,1,1], use_frames=False
 ):
     """ This function prepares stuffs for frame refinement (CSP mode 5 & 6)
         1. Compute specimen bounds in xyz

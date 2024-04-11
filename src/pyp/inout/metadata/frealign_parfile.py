@@ -608,10 +608,12 @@ class Parameters:
             folder = Path(input).parent
             current_dir = os.getcwd()
             try:
+                # try to go to local scratch first
                 os.chdir(os.environ["PYP_SCRATCH"])
             except: 
+                # if we don't have permission or it does not exist, 
+                # try to go to the folder where the input is 
                 os.chdir(folder)
-                print(folder)
             Parameters.decompress_file(input, threads)
             output = os.path.join(os.getcwd(), Path(input).name[:-4])
             os.chdir(current_dir)
