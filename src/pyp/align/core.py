@@ -958,13 +958,13 @@ def csp_run_refinement(
 
     # check if we wanna do patch-based refinement 
     if 'tomo' in parameters["data_mode"].lower():
-        for ind, numGrid in enumerate(grids):
+        for i, numGrid in enumerate(grids):
             if numGrid > 1: 
                 patch_refinement = True
             elif numGrid <= 0:
                 grids[i] = 1 # it shouldn't be 0 
     else:
-        for ind, numGrid in enumerate(grids):
+        for i, numGrid in enumerate(grids):
             if numGrid <= 0:
                 grids[i] = 1 # it shouldn't be 0 
 
@@ -1054,14 +1054,7 @@ def csp_run_refinement(
             merged_stack = "frealign/%s_stack.mrc" % (name.split("_r")[0])
             frame_refinement = False
 
-            logger.info(
-                "Running CSPT (mode %s) using exposures %d to %d"
-                % (
-                    int(mode),
-                    int(use_images_for_refinement_min),
-                    int(use_images_for_refinement_max)
-                )
-            )
+            logger.info(f"Running CSPT (mode {mode}) using exposures {use_images_for_refinement_min} to {use_images_for_refinement_max}")
 
             if not use_frames:
                 if mode != -2 and mode != 7 and mode != 2 and mode != 4:
@@ -1122,7 +1115,7 @@ def csp_run_refinement(
                     MODE = "P"
 
                 split_parx_list = prepare_particle_cspt(
-                    name[:-4], alignment_parameters, parameters, grids=grids, use_frames=use_frames
+                    name[:-4], parameter_file, alignment_parameters, parameters, grids=grids, use_frames=use_frames
                 )
                 if not split_parx_list:
                     logger.error("Mode %d stops running." % mode)
@@ -1246,17 +1239,6 @@ def csp_run_refinement(
                 parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = csp_refine_min, csp_refine_max
                 project_params.save_parameters(parameters)
                 only_evaluate = False
-
-            # os.remove(prev_par_file)
-
-            # overwrite inputs with new output
-            old_par_file = "frealign/maps/%s_frames_r01_%02d.par" % (dataset, i + 1)
-            if os.path.exists(old_par_file):
-                os.remove(old_par_file)
-
-            # shutil.copy2(new_par_file, old_par_file)
-
-
 
             t.stop()
 

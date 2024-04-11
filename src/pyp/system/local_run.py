@@ -199,7 +199,7 @@ def num_particles_per_core(particles: int, tilts: int, frames: int, boxsize: int
 
 
 def create_csp_split_commands(
-    csp_command, alignment_parameters, mode, cores, name, merged_stack, ptlind_list, scanord_list, frame_list, parameters, use_frames=False, cutoff=0
+    csp_command, parameter_file, mode, cores, name, merged_stack, ptlind_list, scanord_list, frame_list, parameters, use_frames=False, cutoff=0
 ):
 
     """Within frealign_rec, create rec split file"""
@@ -218,8 +218,9 @@ def create_csp_split_commands(
     else:
         images = os.path.join("frealign", "%s.mrc" % (name))
 
+
     # Patch-based csp refinement - parfile is splitted into pieces 
-    if isinstance(alignment_parameters, list):
+    if isinstance(parameter_file, list):
         
         refine_frames = '1' if not use_frames or (use_frames and parameters["csp_frame_refinement"]) else '0'
 
@@ -228,9 +229,11 @@ def create_csp_split_commands(
         if mode == 2:
             mode = 5
         
-        for core, region in enumerate(alignment_parameters[::-1]):
-                
+        for core, region in enumerate(parameter_file[::-1]):
+            
             stack = merged_stack
+            split_parameter_file = region[0]
+            extended_parameter_file = split_parameter_file.split("_region")[0] + "_extended.cistem"
 
             # Micrograph patch-based refinement 
             if mode == 3 or mode == 6 or mode == 4:
@@ -252,17 +255,16 @@ def create_csp_split_commands(
                         micrograph_first_index,
                         micrograph_last_index,
                     ) if core == 0 else "/dev/null"
-                    
                     commands.append(
                         "{0} {1} {2} {3} {4} {5} {6} {7} {8} > {9}".format(
                             csp_command,
-                            region[0].replace("frealign/maps/", ""),
+                            split_parameter_file,
+                            extended_parameter_file,
                             patch_micrograph_mode,
                             micrograph_first_index,
                             micrograph_last_index,
                             refine_frames,
                             images,
-                            name + frame_tag + ".allboxes",
                             stack,
                             logfile,
                         )
@@ -281,17 +283,16 @@ def create_csp_split_commands(
                         particle_first_index,
                         particle_last_index,
                     ) if core == 0 else "/dev/null"
-                    
                     commands.append(
                         "{0} {1} {2} {3} {4} {5} {6} {7} {8} > {9}".format(
                             csp_command,
-                            region[0].replace("frealign/maps/", ""),
+                            split_parameter_file,
+                            extended_parameter_file,
                             mode,
                             particle_first_index,
                             particle_last_index,
-                            refine_frames, 
+                            refine_frames,
                             images,
-                            name + frame_tag + ".allboxes",
                             stack,
                             logfile,
                         )
@@ -300,7 +301,7 @@ def create_csp_split_commands(
     # Global refinement 
     else:
         extract_frame = 1
-        extended_parameters = alignment_parameters.replace(".cistem", "_extended.cistem")
+        extended_parameter_file = parameter_file.replace(".cistem", "_extended.cistem")
 
         if mode == 2 or mode == -2:
             # refine particle parameters & particle extraction 
@@ -344,8 +345,8 @@ def create_csp_split_commands(
             commands.append(
                 "{0} {1} {2} {3} {4} {5} {6} {7} {8} > {9}".format(
                     csp_command,
-                    alignment_parameters,
-                    extended_parameters,
+                    parameter_file,
+                    extended_parameter_file,
                     mode,
                     first,
                     last,

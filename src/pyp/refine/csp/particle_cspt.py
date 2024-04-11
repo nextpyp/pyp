@@ -5,6 +5,7 @@ import json
 import math
 import os
 import re
+import copy
 import shutil
 import sys
 import time
@@ -91,7 +92,7 @@ def clean_tomo_particles(par_data, boxes3d_file, metric="new"):
 
 
 def sort_particles_regions(
-    particle_coordinates, corners_squares, squaresize, per_particle=False
+    particle_parameters, corners_squares, squaresize, per_particle=False
 ):
     """ Sort particles by sub-regions 
 
@@ -114,13 +115,13 @@ def sort_particles_regions(
     if not per_particle:
         ret = [[] for i in range(len(corners_squares) + 1)]
 
-    for idx, par in enumerate(particle_coordinates):
+    for particle_index in particle_parameters:
 
-        x, y, z = float(par[1]), float(par[2]), float(par[3])
+        particle = particle_parameters[particle_index]
+        x, y, z = particle.x_position_3d, particle.y_position_3d, particle.z_position_3d
 
         if per_particle:
-            ret.append([int(par[0])])
-
+            ret.append([particle_index])
         else:
             find_square = False
             for idx_square, square in enumerate(corners_squares):
@@ -134,14 +135,13 @@ def sort_particles_regions(
                     and y <= square[1] + squaresize[1]
                     and z <= square[2] + squaresize[2]
                 ):
-
                     # add particle index to the list
-                    ret[idx_square].append(int(par[0]))
+                    ret[idx_square].append(particle_index)
                     find_square = True
                     break
 
             if not find_square:
-                ret[-1].append(int(par[0]))
+                ret[-1].append(particle_index)
                 logger.debug(
                     "Particle [x = %f, y = %f, z = %f] is possibly out of bound."
                     % (x, y, z)
@@ -198,7 +198,7 @@ def merge_alignment_parameters(
     return Parameters.merge(input_files=outputs, input_extended_files=outputs_extended)    
 
 
-def split_parx_particle_cspt(p_object, main_parxfile, regions_list, metric="new"):
+def split_parx_particle_cspt(alignment_parameters, parameter_file, regions_list):
     """ Before frame refinement (CSP mode 5 & 6), this function splits the main parfile, which contains all particles in a tilt-series,
     into several sub-parfiles based on their 3D locations
 
@@ -210,36 +210,25 @@ def split_parx_particle_cspt(p_object, main_parxfile, regions_list, metric="new"
         The relative path of the main_parxfile
     regions_list : list[list]
         A nested list containing particle indexes in squares
-    metric : str, optional
-        Alignment metric, by default "new"
 
     Returns
     -------
     list
         A list containing the names of splitted sub-parfiles that each will be read by CSP binary
     """
-    if metric == "new":
-        film_col = 7
-        score_col = 14
-        ptlidx_col = 16
-        scanord_col = 19
-        occ_col = 11
-    else:
-        logger.error("Currently not support other metrics except metric new")
-        sys.exit()
-
-    # first read the main parfile in numpy array
-    par_data = p_object.data
 
     parinfo_regions = []
-    
+    projection_data: np.ndarray = alignment_parameters.get_data()
+    # have a copy of parameter data structure, in case we modify the original data
+    template = copy.deepcopy(alignment_parameters)
+
     # go through each square to find parlines based on the particle index
-    for region_idx, region in enumerate(regions_list):
+    for region in regions_list:
         # if this square is not empty
         if len(region) > 0:
             # filter based on the list of particle index in this region
-            parlines_filter = np.isin(par_data[:, ptlidx_col], region)
-            parlines_region = par_data[:][parlines_filter]
+            parlines_filter = np.isin(projection_data[:, alignment_parameters.get_index_of_column(PIND)], region)
+            parlines_region = projection_data[:][parlines_filter]
 
             if parlines_region.size != 0:
                 parinfo_regions.append(parlines_region)
@@ -247,21 +236,27 @@ def split_parx_particle_cspt(p_object, main_parxfile, regions_list, metric="new"
     split_files_list = []
 
     # write out splitted parfiles
-    for idx, parinfo in enumerate(parinfo_regions):
+    for idx, region_projection_data in enumerate(parinfo_regions):
+        split_filename = parameter_file.replace(".cistem", "_region%04d.cistem" % (idx))
 
-        split_filename = main_parxfile.replace(".parx", "_region%04d.parx" % (idx))
-        p_object.data = parinfo
-        p_object.write_file(split_filename)
+        # put None for extended data cuz we don't want to overwrite the extended binary
+        template.set_data(data=region_projection_data, extended_parameters=None)
+        template.to_binary(split_filename)
 
+        # add (filename, list_of_pind, list_of_tind)
         split_files_list.append(
-                (split_filename, np.unique(parinfo[:, ptlidx_col].astype("int")), np.unique(parinfo[:, scanord_col].astype("int")))
+                (
+                    split_filename, 
+                    np.unique(region_projection_data[:, template.get_index_of_column(PIND)].astype("int")), 
+                    np.unique(region_projection_data[:, template.get_index_of_column(TIND)].astype("int"))
+                )
         )
 
     return split_files_list
 
 
 def prepare_particle_cspt(
-    name, main_parxfile, alignment_parameters, parameters, grids=[1,1,1], use_frames=False
+    name, parameter_file, alignment_parameters, parameters, grids=[1,1,1], use_frames=False
 ):
     """ This function prepares stuffs for frame refinement (CSP mode 5 & 6)
         1. Compute specimen bounds in xyz
@@ -291,7 +286,6 @@ def prepare_particle_cspt(
         list containing the names of splitted sub-parfiles that each will be independently read by CSP processes
     """
     
-    ptlidx_col = 16
     metafile = "{}.pkl".format(name)
     if not os.path.exists(metafile):
         raise Exception(f"Metadata is required to run patch-based local refinement")
@@ -300,25 +294,15 @@ def prepare_particle_cspt(
 
 
     if "tomo" in parameters["data_mode"].lower():
-        # First read 3D particle coordinates
-        boxes3d = "{}_boxes3d.txt".format(name)
-        if os.path.exists(boxes3d):
-            coord_3d = read_3dbox(boxes3d)
-        else:
-            logger.error("{} not found".format(os.path.join(os.getcwd(), boxes3d)))
-            logger.error("Frame refinement mode 5 & 6 require boxes3d files!")
-            return None
+        
+        particle_parameters: dict = alignment_parameters.get_extended_data().get_particles()
 
-        # Figure out the dimension of un-binned tomogram (use the exact same way in csp_tomo_swarm)
-        micrographsize_x, micrographsize_y = metadata["image"].at[0, "x"], metadata["image"].at[0, "y"]
-        # binning = get_tomo_binning(micrographsize_x, micrographsize_y, int(parameters["tomo_rec_size"]), squared_image=parameters["tomo_rec_square"])
         binning = parameters["tomo_rec_binning"]
         tomox, tomoy, tomoz = metadata["tomo"].at[0, "x"] * binning, metadata["tomo"].at[0, "y"] * binning, metadata["tomo"].at[0, "z"] * binning
 
-
         # find out the bounds of the specimen (where particles are actually located)
         bottom_left_corner, top_right_corner = findSpecimenBounds(
-            coord_3d, [tomox, tomoy, tomoz]
+            particle_parameters, [tomox, tomoy, tomoz]
         )
 
         # divide the specimen into several sub-regions
@@ -333,7 +317,7 @@ def prepare_particle_cspt(
             per_particle = False
         
         ptlidx_regions_list = sort_particles_regions(
-            coord_3d, corners, size_region, per_particle
+            particle_parameters, corners, size_region, per_particle
         )
 
     else:
@@ -365,7 +349,7 @@ def prepare_particle_cspt(
 
     # split the main parxfile into several sub-parxfile based on the regions
     split_parx_list = split_parx_particle_cspt(
-        parx_object, main_parxfile, ptlidx_regions_list
+        alignment_parameters, parameter_file, ptlidx_regions_list
     )
 
     return split_parx_list

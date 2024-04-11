@@ -632,7 +632,7 @@ def divide2regions(
     return corners_squares, [patchsize_x, patchsize_y, patchsize_z]
 
 
-def findSpecimenBounds(particle_coordinates, dim_tomogram):
+def findSpecimenBounds(particle_parameters, dim_tomogram):
     """ Find the boundaries in x, y, z of 'specimen', which will be used to divide a tomogram into several grids for frame refinement
         (z is determined by the particle coordinates)
 
@@ -656,8 +656,9 @@ def findSpecimenBounds(particle_coordinates, dim_tomogram):
     max_x, max_y, max_z = 0, 0, 0
 
     # particle coordinates - x, y, z are in index 1, 2, 3 respectively
-    for coord in particle_coordinates:
-        x, y, z = float(coord[1]), float(coord[2]), float(coord[3])
+    for particle_index in particle_parameters:
+        particle = particle_parameters[particle_index]
+        x, y, z = particle.x_position_3d, particle.y_position_3d, particle.z_position_3d
 
         if x < min_x:
             min_x = math.floor(x)
