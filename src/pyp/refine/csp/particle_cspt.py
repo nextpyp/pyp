@@ -44,53 +44,6 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 
-def clean_tomo_particles(par_data, boxes3d_file, metric="new"):
-    """Clean particles by setting occ to zero based on boxes3d files
-
-    Parameters
-    ----------
-    par_data : numpy array 
-        Array that stores particle information in parfile
-    boxes3d_file : str
-        The filename of boxes3d file
-    metric : str, optional
-        The alignment metric for parfile formatting, by default "new"
-
-    Returns
-    -------
-    numpy array 
-        A new numpy array where occ of some particles is set to zero
-    """
-    if metric == "new":
-        film_col = 7
-        score_col = 14
-        ptlidx_col = 16
-        scanord_col = 19
-        occ_col = 11
-    else:
-        logger.error("Currently not support other metrics except metric new")
-        sys.exit()
-
-    try:
-        clean_boxes3d = read_3dbox(boxes3d_file)
-    except:
-        logger.warning(f"{boxes3d_file} canot be read successfully.")
-
-    # Modify OCCs on a 3d sub-volume basis depending on the Keep_CSP in 3d box file
-    for par in par_data:
-        ptlind = int(par[ptlidx_col])
-        if "n" in clean_boxes3d[ptlind][5].lower():
-            par[occ_col] = 0.0
-        elif "y" in clean_boxes3d[ptlind][5].lower():
-            pass
-        else:
-            logger.warning(
-                f"Cannot recognize if keeping this sub-volume or not. {clean_boxes3d[ptlind][5]}"
-            )
-
-    return par_data
-
-
 def sort_particles_regions(
     particle_parameters, corners_squares, squaresize, per_particle=False
 ):

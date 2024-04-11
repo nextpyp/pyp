@@ -37,7 +37,6 @@ from pyp.inout.metadata import (
 )
 from pyp.inout.metadata.frealign_parfile import ParameterEntry, Parameters
 from pyp.refine.csp.particle_cspt import (
-    clean_tomo_particles,
     merge_alignment_parameters,
     prepare_particle_cspt,
 )
@@ -901,6 +900,10 @@ def csp_run_refinement(
 
     parameter_file = f"frealign/maps/{name}.cistem"
     extended_parameter_file = parameter_file.replace(".cistem", "_extended.cistem")
+
+    # sync projection occ with particle occ
+    alignment_parameters.sync_particle_occ()
+
     alignment_parameters.to_binary(output=parameter_file)
 
     # reconstruction
@@ -995,30 +998,6 @@ def csp_run_refinement(
                 csp_modes += [5]
             if not parameters["refine_skip"] and parameters["class_num"] == 1:
                 csp_modes += [3]
-
-
-
-
-    # prev is input and reg is output of regularization function
-    # prev_par_file = new_par_file.replace(".parx", "_prev.parx")
-    # reg_par_file = new_par_file.replace(".parx", "_reg.parx")
-    # local_par_file = new_par_file.replace(".parx", "_local.parx")
-
-    # FIXME (HF): new cistem binary
-    # clean particles by modifying OCC in the parfile
-    # boxes3d = "{}_boxes3d.txt".format(name.split("_r")[0])
-
-    # if os.path.exists(boxes3d):
-    #     parx_object = Parameters.from_file(new_par_file)
-    #     cleaned_input = clean_tomo_particles(
-    #         parx_object.data, boxes3d, metric="new"
-    #     )
-    #     parx_object.data = cleaned_input
-
-    #     parx_object.write_file(new_par_file)
-
-    # check if the number of rows in parfile matches allboxes before proceeding
-    # check_parfile_match_allboxes(par_file=new_par_file, allboxes_file=allboxes_file)
 
     for i in range(1):
 
@@ -1121,7 +1100,6 @@ def csp_run_refinement(
                     logger.error("Mode %d stops running." % mode)
                     continue
 
-                use_images_for_refinement_min, use_images_for_refinement_max = 0, -1
                 outputs_pattern = "_region????_??????_??????"
 
                 if mode == 5:
@@ -1209,6 +1187,8 @@ def csp_run_refinement(
             # merge updated parameter files
             if not extract_only:
                 alignment_parameters = merge_alignment_parameters(parameter_file, mode, outputs_pattern)
+                alignment_parameters.update_particle_score(min_tind=int(use_images_for_refinement_min), 
+                                                           max_tind=int(use_images_for_refinement_max))
                 alignment_parameters.to_binary(output=parameter_file)
 
             # clean-up intermediate results after merge

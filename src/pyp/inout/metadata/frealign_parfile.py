@@ -605,7 +605,7 @@ class Parameters:
             input += ".bz2"
         if input.endswith(".bz2"):
             # decompress file in local scratch directory
-            folder = Path(input).parent
+            folder = Path(input).absolute().parent
             current_dir = os.getcwd()
             try:
                 # try to go to local scratch first

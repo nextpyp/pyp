@@ -767,13 +767,12 @@ class Parameters:
     def get_index_of_column(self, column_code: int):
         return self.HEADERS.index(column_code)
     
-    def set_data(self, data: np.ndarray, extended_parameters: ExtendedParameters):
+    def set_data(self, data: np.ndarray, extended_parameters: ExtendedParameters = None):
 
         assert type(data) == np.ndarray, f"Input data type is not Numpy array, it is {type(data)}"
         assert data.ndim == 2, "Input data is not 2D"
         assert type(data[0]) == np.ndarray, f"First row of input data type is not Numpy array, it is {type(data[0])}"
-        assert (self.get_data() is None or data.shape[1] == self.get_data().shape[1]), "Input data must have the same number of columns as original data."
-        # assert type(extended_parameters) == ExtendedParameters, f"Extended data must be ExtendedParameter class. It is now {type(extended_parameters)}."
+        assert (self.get_data() is None or data.shape[1] == self.get_data().shape[1]), "Input data must have the same number of columns as original data." 
         
         headers = self.HEADERS
 
@@ -795,12 +794,68 @@ class Parameters:
         self._num_rows = data.shape[0]
         self._num_columns = data.shape[1]
         
-        self._extended = extended_parameters
+        if extended_parameters is not None:
+            assert type(extended_parameters) == ExtendedParameters, f"Extended data must be ExtendedParameter class. It is now {type(extended_parameters)}."
+            self._extended = extended_parameters
         
 
     def update_pixel_size(self, pixel_size):
         self.get_data()[:, self.get_index_of_column(PIXEL_SIZE)] = pixel_size
 
+    def update_particle_score(self, min_tind=0, max_tind=-1):
+        assert (self.get_extended_data()), f"Extended data is not included in the Parameters data structure."
+
+        particle_parameters = self.get_extended_data().get_particles()
+        tilt_parameters = self.get_extended_data().get_tilts()
+        data = self.get_data()
+        
+        col_pind = self.get_index_of_column(PIND)
+        col_score = self.get_index_of_column(SCORE)
+        col_tind = self.get_index_of_column(TIND)
+        particle_scores = dict()
+        
+        # first build the score list for each particle using array
+        def build_particle_scores_from_arr(row):
+            pind = row[col_pind]
+            score = row[col_score]
+            tind = row[col_tind]
+            if pind not in particle_scores:
+                particle_scores[pind] = list()
+            
+            # only if the projection falls in the range 
+            if not ((tind < min_tind) or ((tind > max_tind) and (max_tind != -1))):
+                particle_scores[pind].append(score)
+        
+        [build_particle_scores_from_arr(row) for row in data]
+
+        # update the mean score of particle
+        for particle_index in particle_parameters.keys():   
+            print(particle_index, particle_scores[particle_index])         
+            if particle_index in particle_scores and len(particle_scores[particle_index]) > 0:
+                mean_score = np.mean(particle_scores[particle_index])
+                particle_parameters[particle_index].score = mean_score 
+                print(particle_parameters[particle_index].score)
+            else:
+                particle_parameters[particle_index].score = 0.0
+
+        self.get_extended_data().set_data(particles=particle_parameters, tilts=tilt_parameters)
+
+    def sync_particle_occ(self):
+        assert (self.get_extended_data()), f"Extended data is not included in the Parameters data structure."
+        
+        particle_parameters = self.get_extended_data().get_particles()
+
+        data = self.get_data()
+
+        # update scores of projection with the ones from particle parameters
+        def sync_projection_occ(row):
+            pind = row[self.get_index_of_column(PIND)]
+            row[self.get_index_of_column(OCCUPANCY)] = particle_parameters[pind].occ
+  
+        [sync_projection_occ(row) for row in data]
+
+        self.set_data(data=data)
+    
 def initialize_parameters_binary(): 
 
     data = np.ones((100, 32))
