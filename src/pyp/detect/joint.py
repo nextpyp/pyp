@@ -185,7 +185,7 @@ def coordinates_next2pyp(coordinates,binning,radius=0):
     pyp_coordinates[:,0] = next_coordinates[:,0] / binning
 
     # apply 2x binning in z-dimension
-    pyp_coordinates[:,1] = next_coordinates[:,2]
+    pyp_coordinates[:,1] = next_coordinates[:,2] / binning
 
     # apply binning and flip in y-dimension
     pyp_coordinates[:,2] = next_coordinates[:,1] / binning

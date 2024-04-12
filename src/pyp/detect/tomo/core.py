@@ -1158,7 +1158,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 else:
                     logger.info("Using manually picked coordinates")
                     # convert coordinates from next to pyp format
-                    joint.coordinates_next2pyp("{0}.next".format(name),binning=1,radius=radius_in_pixels)
+                    joint.coordinates_next2pyp("{0}.next".format(name),binning=binning/8.,radius=radius_in_pixels)
                     local_run.run_shell_command("{0}/bin/point2model -scat -sphere {2} -values 1 {1}.next {1}.mod".format(get_imod_path(), name,radius_in_pixels),verbose=parameters["slurm_verbose"])
 
                     # adjust geometry of models to match tomogram dimensions
