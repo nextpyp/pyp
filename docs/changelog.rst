@@ -4,6 +4,13 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.6.6 (4/24/2024)
+******************
+
+   :fa:`bug,text-danger` Fix bug where incorrect binning was applied when picking virions manually.
+
+   :fa:`bug,text-danger` Fix bug where tomogram dimensions and binning were not properly updated.
+
 v0.6.5 (4/6/2024)
 ******************
 
