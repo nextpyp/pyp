@@ -1575,12 +1575,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 mpi_funcs.append(ctf_mod.ctffind_tilt_multiprocessing)
                 mpi_args.append(ctffind_tilt_args)
 
-            # write global ctf file
-            ctf[6] = originalx
-            ctf[7] = originaly
-            ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
-            ctf[11] = parameters['tomo_rec_binning']
-            np.savetxt("{}.ctf".format(name), ctf)
+        # write global ctf file
+        ctf[6] = originalx
+        ctf[7] = originaly
+        ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
+        ctf[11] = parameters['tomo_rec_binning']
+        np.savetxt("{}.ctf".format(name), ctf)
 
     if len(mpi_funcs) > 0:
         t = timer.Timer(text="Tomogram reconstruction + ctffind tilt took: {}", logger=logger.info)
