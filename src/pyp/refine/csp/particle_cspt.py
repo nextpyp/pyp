@@ -151,27 +151,16 @@ def merge_alignment_parameters(
     return Parameters.merge(input_files=outputs, input_extended_files=outputs_extended)    
 
 
-def split_parx_particle_cspt(alignment_parameters, parameter_file, regions_list):
+def split_parameter_file(alignment_parameters, parameter_file, regions_list):
     """ Before frame refinement (CSP mode 5 & 6), this function splits the main parfile, which contains all particles in a tilt-series,
     into several sub-parfiles based on their 3D locations
 
-    Parameters
-    ----------
-    p_object : Parameters
-        Frealign parameter file object
-    main_parxfile : str
-        The relative path of the main_parxfile
-    regions_list : list[list]
-        A nested list containing particle indexes in squares
-
-    Returns
-    -------
-    list
-        A list containing the names of splitted sub-parfiles that each will be read by CSP binary
     """
 
     parinfo_regions = []
     projection_data: np.ndarray = alignment_parameters.get_data()
+    particle_parameters: dict = alignment_parameters.get_extended_data().get_particles()
+    tilt_parameters: dict = alignment_parameters.get_extended_data().get_tilts()
     # have a copy of parameter data structure, in case we modify the original data
     template = copy.deepcopy(alignment_parameters)
 
@@ -188,18 +177,36 @@ def split_parx_particle_cspt(alignment_parameters, parameter_file, regions_list)
 
     split_files_list = []
 
-    # write out splitted parfiles
-    for idx, region_projection_data in enumerate(parinfo_regions):
-        split_filename = parameter_file.replace(".cistem", "_region%04d.cistem" % (idx))
+    # write out split binary file for each region
+    # re-assign each region with a new region index (for both data)
+    for new_rind, region_projection_data in enumerate(parinfo_regions):
+        split_parameter_file = parameter_file.replace(".cistem", "_region%04d.cistem" % (new_rind))
 
-        # put None for extended data cuz we don't want to overwrite the extended binary
-        template.set_data(data=region_projection_data, extended_parameters=None)
-        template.to_binary(split_filename)
+        # get unique pair of (tind, rind) in the projection data
+        tind_rind = np.unique(region_projection_data[:, [template.get_index_of_column(TIND), template.get_index_of_column(RIND)]].astype("int"), axis=0)
+
+        # add the tilt parameters to the region extended data and assign new region index
+        region_tilt_parameters = dict()
+        for pair in tind_rind:
+            tind, rind = pair[0], pair[1]
+            if tind not in region_tilt_parameters:
+                region_tilt_parameters[tind] = dict()
+            region_tilt_parameters[tind][new_rind] = tilt_parameters[tind][rind]
+
+        extended_parameters = ExtendedParameters()
+        extended_parameters.set_data(particles=particle_parameters, 
+                                     tilts=region_tilt_parameters) 
+
+        # modify RIND
+        region_projection_data[:, template.get_index_of_column(RIND)] = new_rind
+
+        template.set_data(data=region_projection_data, extended_parameters=extended_parameters)
+        template.to_binary(split_parameter_file)
 
         # add (filename, list_of_pind, list_of_tind)
         split_files_list.append(
                 (
-                    split_filename, 
+                    split_parameter_file,
                     np.unique(region_projection_data[:, template.get_index_of_column(PIND)].astype("int")), 
                     np.unique(region_projection_data[:, template.get_index_of_column(TIND)].astype("int"))
                 )
@@ -300,8 +307,8 @@ def prepare_particle_cspt(
             boxes, corners, size_region, per_particle=use_frames # do per particle only for frame refinement 
         )
 
-    # split the main parxfile into several sub-parxfile based on the regions
-    split_parx_list = split_parx_particle_cspt(
+    # split the parameter file based on regions
+    split_parx_list = split_parameter_file(
         alignment_parameters, parameter_file, ptlidx_regions_list
     )
 

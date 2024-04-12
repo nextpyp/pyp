@@ -233,7 +233,7 @@ def create_csp_split_commands(
             
             stack = merged_stack
             split_parameter_file = region[0]
-            extended_parameter_file = split_parameter_file.split("_region")[0] + "_extended.cistem"
+            extended_parameter_file = split_parameter_file.replace(".cistem", "_extended.cistem")
 
             # Micrograph patch-based refinement 
             if mode == 3 or mode == 6 or mode == 4:

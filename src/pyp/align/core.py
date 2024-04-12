@@ -925,9 +925,9 @@ def csp_run_refinement(
     symlink_force(source, target3)
 
     # get number of tilts and particles
-    ptlind_list = alignment_parameters.get_extended_data().get_particle_list() # np.sort(np.unique(np.asarray([int(round(float(f.split()[16]))) for f in allparxs])))
-    scanord_list = alignment_parameters.get_extended_data().get_tilt_list() # np.sort(np.unique(np.asarray([int(round(float(f.split()[19]))) for f in allparxs])))
-    frame_list = np.sort(np.unique(alignment_parameters.get_data()[:, -3])) # np.sort(np.unique(np.asarray([int(round(float(f.split()[20]))) for f in allparxs])))
+    ptlind_list = alignment_parameters.get_extended_data().get_particle_list() 
+    scanord_list = alignment_parameters.get_extended_data().get_tilt_list() 
+    frame_list = np.sort(np.unique(alignment_parameters.get_data()[:, alignment_parameters.get_index_of_column(cistem_star_file.FIND)])) 
 
     stackfile = "frealign/" + name[:-4] + "_stack.mrc"
 
@@ -1153,18 +1153,17 @@ def csp_run_refinement(
                 # first check if every stack exists since we discard some particles in parfile
                 merged_stack = "frealign/%s_stack.mrc" % (name.split("_r")[0]) if mode == -2 else "frealign/%s_stack_weighted_average.mrc" % (name.split("_r")[0])
                 movie_list = [stack for stack in movie_list if os.path.exists(stack)]
+
                 try:
                     mrc.merge_fast(movie_list,merged_stack,remove=True)
                 except:
                     raise Exception("Particle extraction fails. Perhaps your slurm_memory is not enough. (currently %d G)" % (parameters["slurm_memory"]))
-
                 [
                     os.remove(f)
                     for f in glob.glob(
                         "%s_csp%s.log" % (name.split("_r")[0], outputs_pattern)
                     )
                 ]
-
                 t.stop()
 
                 # stop here if extracting particle stacks
@@ -1230,8 +1229,7 @@ def csp_run_refinement(
             assert (starting_num_projections == num_projections), f"Number of projections (in {parameter_file}) before and after refinement differ: {starting_num_projections} != {num_projections}"
             assert (starting_num_particles == num_particles), f"Number of particles (in {extended_parameter_file}) before and after refinement differ: {starting_num_particles} != {num_particles}"
             assert (starting_num_tilts == num_tilts), f"Number of tilts (in {extended_parameter_file}) before and after refinement differ: {starting_num_tilts} != {num_tilts}"
-            assert (starting_num_rows_tilts == num_rows_tilts), f"Number of rows in tilt metadata (in {extended_parameter_file}) before and after refinement differ: {starting_num_rows_tilts} != {num_rows_tilts}"
-    
+            
     return Path().cwd() / parameter_file
 
 

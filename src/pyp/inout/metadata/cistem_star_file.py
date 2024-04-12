@@ -830,11 +830,9 @@ class Parameters:
 
         # update the mean score of particle
         for particle_index in particle_parameters.keys():   
-            print(particle_index, particle_scores[particle_index])         
             if particle_index in particle_scores and len(particle_scores[particle_index]) > 0:
                 mean_score = np.mean(particle_scores[particle_index])
                 particle_parameters[particle_index].score = mean_score 
-                print(particle_parameters[particle_index].score)
             else:
                 particle_parameters[particle_index].score = 0.0
 
