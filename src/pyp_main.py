@@ -1560,7 +1560,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     need_recalculation = parameters["tomo_rec_force"]
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
-        mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
+        mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options, need_recalculation)] )
 
     ctffind_tilt = False
     if ctf_mod.is_required_3d(parameters):
