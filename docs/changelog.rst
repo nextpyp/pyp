@@ -11,6 +11,8 @@ v0.6.6 (4/24/2024)
 
    :fa:`bug,text-danger` Fix bug where tomogram dimensions and binning were not properly updated.
 
+   :fa:`bug,text-danger` Fix bug that prevented the recalculation of tomograms when using AreTomo if the reconstruction parameters changed.
+
 v0.6.5 (4/6/2024)
 ******************
 
