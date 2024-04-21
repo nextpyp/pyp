@@ -14,8 +14,9 @@ from pyp import merge
 from pyp.analysis import statistics, plot, geometry
 from pyp.inout.image import mrc
 from pyp.inout.metadata import frealign_parfile, pyp_metadata 
+from pyp.inout.metadata.cistem_star_file import *
 from pyp.refine.frealign import frealign
-from pyp.system import project_params, user_comm
+from pyp.system import project_params, mpi
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path, timer, symlink_relative
@@ -941,100 +942,60 @@ def eval_phase_residual(
     return -scores.mean()
 
 
-def score_particles_fromparx(par_data, mintilt: float, maxtilt: float, min_num_projections: int, pixel_size: float, metric="new"):
+def filter_particles(parameter_file: str, mintilt: float, maxtilt: float, dist: float, threshold: float, pixel_size: float):
     """ Compute scores of sub-volume from their corresponding projections in the parfile
         Scores will be updated in box3d files, which will be later used for CSP
+    """        
+    tiltseries = str(Path(parameter_file).name).split("_r")[0]
+    alignment_parameters = Parameters.from_file(input_file=parameter_file)
+    data = alignment_parameters.get_data()
+    alignment_parameters.update_particle_score(tind_range=[], tiltang_range=[mintilt, maxtilt])
 
-    Parameters:
-    ----------
-        par_data (numpy array): 
-            information from parx file
-        metric (str): 
-            The format of the input parfile (currently only support extended metric new)
-    """
-    scores = {}
-    shifts_3d = {}
-    weights = []
-
-    if metric == "new":
-        film_col = 7
-        occ_col = 11
-        score_col = 14
-        ptlidx_col = 16
-        tiltan_col = 17
-        scanord_col = 19
-        normx_col = 24 - 1
-        normy_col = 25 - 1
-        normz_col = 26 - 1
-        matrix0_col = 27 - 1
-        matrix15_col = 42 - 1
-    else:
-        logger.error("Currently not support other metrics except metric new")
+    extended_parameters = alignment_parameters.get_extended_data()
+    tilt_parameters = extended_parameters.get_tilts()
+    particle_parameters = extended_parameters.get_particles()
+    
+    if dist < 0.0:
+        logger.error(
+            "Distance cutoff has to be greater than 0. Dist of 0 to keep ALL particles,"
+        )
         sys.exit()
 
-    # First, compute the weights for scoring
-    max_scanord = max(np.unique(par_data[:, scanord_col].astype("int")))
-    # prepare weights data structure
-    # while len(weights) < max_scanord + 1:
-    #     weights.append([])
+    # sort based on scores
+    particles = [particle_parameters[pind] for pind in particle_parameters.keys()]
+    particles.sort(key=lambda x: x.score, reverse=True)
 
-    # # # compute average score per tilt
-    # # for scanord, average in enumerate(weights):
+    # save valid points in 3D
+    best_particle = particles[0]
+    valid_particles = np.array([best_particle.x_position_3d, best_particle.y_position_3d, best_particle.z_position_3d], ndmin=2)
 
-    # #     scores = par_data[par_data[:, scanord_col] == scanord]
-
-    # #     if len(scores) > 0 and scores.ndim != 1:
-    # #         scores = scores[:, score_col]
-    # #         weights[scanord] = sum(scores) / len(scores)
-    # #     else:
-    # #         weights[scanord] = 0.0
-
-    # iterate through particles (ptlidx) in different tilt-series (film)
-    films = np.unique(par_data[:, film_col].astype("int"))
-
-    for film in films:
-
-        tiltseries = par_data[par_data[:, film_col] == film]
-        particles = np.unique(tiltseries[:, ptlidx_col].astype("int"))
-        scores[film] = [-1.0 for _ in range(max(particles)+1)]
-        shifts_3d[film] = [[0,0,0] for _ in range(max(particles)+1)]
+    for idx, particle in enumerate(particles):
+        pind = particle.particle_index
+        if idx == 0:
+            particle_parameters[pind].occ = particle_parameters[pind].occ if particle.score >= threshold else 0.0
+            continue
         
-        for ptl in particles:
+        posx_with_shift = particle.x_position_3d - (particle.shift_x/pixel_size)
+        posy_with_shift = particle.y_position_3d - (particle.shift_y/pixel_size)
+        posz_with_shift = particle.z_position_3d - (particle.shift_z/pixel_size)
 
-            particle = tiltseries[tiltseries[:, ptlidx_col] == ptl]
-            
-            sum_score = 0.0
-            if particle.ndim != 1:
+        # check if the point is close to previous evaluated points
+        dmin = scipy.spatial.distance.cdist(
+            np.array([posx_with_shift, posy_with_shift, posz_with_shift], ndmin=2), valid_particles
+        ).min()
+        if particle.score < threshold or dmin <= dist:
+            particle_parameters[pind].occ = 0.0
+            particle_parameters[pind].score = -1.0
+        else:
+            valid_particles = np.vstack((valid_particles, np.array([posx_with_shift, posy_with_shift, posz_with_shift])))
 
-                # take care of particle that does not have complete enough tilt coverage
-                tilt_angles = particle[:, tiltan_col]
-                valid_tilt_angles = [
-                    angle for angle in tilt_angles if mintilt <= angle and angle <= maxtilt 
-                ]
-                if len(valid_tilt_angles) >= min_num_projections:
-                    sum_weight = 0.0
-                    for proj in particle:
-                        weight = 1.0 
-                        if proj[tiltan_col] <= maxtilt and proj[tiltan_col] >= mintilt:
-                            sum_score += weight * proj[score_col]
-                            sum_weight += weight
-                    
-                    if sum_weight > 0 and particle[0, occ_col] > 0:
-                        sum_score /= sum_weight
-                    else: 
-                        sum_score = -1
-                    
-                    scores[film][ptl] = sum_score
-                
-                matrix = particle[0,matrix0_col: matrix15_col+1]
-                matrix[12: 16] = np.array([0,0,0,1])
-                dx, dy, dz = -matrix[3], -matrix[7], -matrix[11] # They are particle 3D shifts in A
-                dx, dy, dz = dx/pixel_size, dy/pixel_size, dz/pixel_size
-                shifts_3d[film][ptl] = [dx, dy, dz]
-            else:
-                scores[film][ptl] = -1.0
+    scores = [particle_parameters[pind].score for pind in particle_parameters.keys()]
 
-    return scores, shifts_3d
+    extended_parameters.set_data(particles=particle_parameters, tilts=tilt_parameters)
+    alignment_parameters.set_data(data=data, extended_parameters=extended_parameters)
+    alignment_parameters.to_binary(output=parameter_file)
+
+    plot.histogram_particle_tomo(scores, threshold, tiltseries, "csp")
 
 
 def clean_particles_tomo(box3dfile, dist: float, threshold: float, shifts_3d_film: list):
@@ -1130,7 +1091,7 @@ def particle_cleaning(parameters: dict):
             "{} does not exists".format("{}.films".format(parameters["data_set"]))
         )
 
-    parfile = project_params.resolve_path(parameters["clean_parfile"])
+    parameter_folder = project_params.resolve_path(parameters["clean_parfile"])
 
     # first check class selection, and generate one parfile with occ=0 to mark the discarded particles
     if parameters["clean_class_selection"] and not parameters["clean_discard"]:
@@ -1144,9 +1105,20 @@ def particle_cleaning(parameters: dict):
         parfile = output_parfile
 
         parameters["refine_parfile"] = parfile
- 
-    if os.path.exists(parfile) and parfile.endswith(".bz2"):
-        parfile = frealign_parfile.Parameters.decompress_parameter_file(parfile, parameters["slurm_tasks"])
+    
+    # decompress the parametere file (if needed), and copy it over to the particle filtering block
+    parameter_folder_current_block = Path("frealign", "maps", f"{parameters['data_set']}_r01_01") 
+
+    assert Path(parameter_folder).exists(), f"{parameter_folder} does not exists."
+
+    if os.path.exists(parameter_folder) and parameter_folder.endswith(".bz2"):
+        ref = int(parameter_folder.split("_r")[-1].split("_")[0]) 
+        frealign_parfile.Parameters.decompress_parameter_file_and_move(file=Path(parameter_folder), 
+                                                                       new_file=parameter_folder_current_block, 
+                                                                       micrograph_list=[f"{f}_r{ref:02d}" for f in films],
+                                                                       threads=parameters["slurm_tasks"])
+        parameter_folder = str(parameter_folder_current_block)  
+        
 
     # single class cleaning regard to box files
     if "spr" in parameters["data_mode"]:
@@ -1195,21 +1167,38 @@ def particle_cleaning(parameters: dict):
     elif "tomo" in parameters["data_mode"]:
         
         if not parameters["clean_discard"]:
+            
+            mpi_args = []
 
-            # update mean scores if parfile is provided
-            if os.path.exists(parfile):
+            parameter_files = [str(f) for f in Path(parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f)]
 
-                par_data = frealign_parfile.Parameters.from_file(parfile).data
-                scores, shifts_3d = score_particles_fromparx(par_data, parameters["clean_mintilt"], 
-                                                            parameters["clean_maxtilt"], 
-                                                            parameters["clean_min_num_projections"],
-                                                            parameters["scope_pixel"] 
-                                                            )
-                # update mean scores in boxes3d
-                update_scores(films, scores)
+            for parameter_file in parameter_files:
+                mpi_args.append((parameter_file, 
+                                parameters["clean_mintilt"], 
+                                parameters["clean_maxtilt"], 
+                                parameters["clean_dist"], 
+                                parameters["clean_threshold"],
+                                parameters["scope_pixel"]))
+            if len(mpi_args) > 0:
+                mpi.submit_function_to_workers(filter_particles, mpi_args, verbose=parameters["slurm_verbose"])
 
-            # remove bad particles with threshold and distance, and plot histograms
-            thresholding_and_plot(films, shifts_3d, parameters)
+            # Statistics             
+            clean_particle_count = 0
+            all_particle_count = 0
+
+            for parameter_file in parameter_files:
+                extended_parameters = Parameters.from_file(parameter_file).get_extended_data()
+                clean_particle_count += extended_parameters.get_num_clean_particles()
+                all_particle_count += extended_parameters.get_num_particles()
+
+            logger.warning(
+                "{:,} particles ({:.1f}%) from {} tilt-series will be used".format(
+                    clean_particle_count,
+                    (clean_particle_count / all_particle_count * 100),
+                    len(parameter_files),
+                )
+            )
+
 
         else:
             # completely remove particle projections from parfile and allboxes coordinate

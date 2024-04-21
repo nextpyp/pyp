@@ -421,6 +421,14 @@ class ExtendedParameters():
         tilt_list.sort()
         return tilt_list
     
+    def get_num_clean_particles(self) -> int:
+        clean_particles = 0
+        for pind in self.get_particle_list():
+            particle = self.get_particle_by_pind(pind)
+            if particle.occ > 0.0:
+                clean_particles += 1
+        return clean_particles
+    
     def get_input_file(self): 
         # return the filename of input file
         return self._input_file
@@ -802,8 +810,11 @@ class Parameters:
     def update_pixel_size(self, pixel_size):
         self.get_data()[:, self.get_index_of_column(PIXEL_SIZE)] = pixel_size
 
-    def update_particle_score(self, min_tind=0, max_tind=-1):
+    def update_particle_score(self, tind_range=[0,-1], tiltang_range=[-90, 90]):
         assert (self.get_extended_data()), f"Extended data is not included in the Parameters data structure."
+        use_tind: bool = len(tind_range) > 0
+        use_tiltang: bool = len(tiltang_range) > 0
+        assert (use_tind or use_tiltang), "To compute particle score, you need to either provide range for TIND or TILT_ANGLE"
 
         particle_parameters = self.get_extended_data().get_particles()
         tilt_parameters = self.get_extended_data().get_tilts()
@@ -812,6 +823,7 @@ class Parameters:
         col_pind = self.get_index_of_column(PIND)
         col_score = self.get_index_of_column(SCORE)
         col_tind = self.get_index_of_column(TIND)
+        col_rind = self.get_index_of_column(RIND)
         particle_scores = dict()
         
         # first build the score list for each particle using array
@@ -819,12 +831,21 @@ class Parameters:
             pind = row[col_pind]
             score = row[col_score]
             tind = row[col_tind]
+            rind = row[col_rind]
             if pind not in particle_scores:
                 particle_scores[pind] = list()
             
-            # only if the projection falls in the range 
-            if not ((tind < min_tind) or ((tind > max_tind) and (max_tind != -1))):
-                particle_scores[pind].append(score)
+            # only if the projection falls in the range (first try tind, then tilt angles)
+            if use_tind:
+                min_tind, max_tind = tind_range[0], tind_range[1]
+                if not ((tind < min_tind) or ((tind > max_tind) and (max_tind != -1))):
+                    particle_scores[pind].append(score)
+            elif use_tiltang:
+                min_angle, max_angle = tiltang_range[0], tiltang_range[1]
+                assert (min_angle <= max_angle), f"Min angle ({min_angle}) should be smaller than max angle ({max_angle})."
+                tilt_angle = tilt_parameters[tind][rind].angle
+                if min_angle <= tilt_angle and tilt_angle <= max_angle:
+                    particle_scores[pind].append(score)
         
         [build_particle_scores_from_arr(row) for row in data]
 
@@ -834,7 +855,8 @@ class Parameters:
                 mean_score = np.mean(particle_scores[particle_index])
                 particle_parameters[particle_index].score = mean_score 
             else:
-                particle_parameters[particle_index].score = 0.0
+                particle_parameters[particle_index].score = -1.0
+                particle_parameters[particle_index].occ = 0.0
 
         self.get_extended_data().set_data(particles=particle_parameters, tilts=tilt_parameters)
 

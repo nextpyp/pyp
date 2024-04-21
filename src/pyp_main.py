@@ -46,7 +46,7 @@ from pyp.analysis.image import (
 )
 from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
-from pyp.analysis.scores import clean_particles_tomo, score_particles_fromparx, particle_cleaning
+from pyp.analysis.scores import clean_particles_tomo, particle_cleaning
 from pyp.ctf import utils as ctf_utils
 from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required
 from pyp.detect import tomo as detect_tomo
@@ -340,7 +340,7 @@ def parse_arguments(block):
                         parent_project_name + "_r01_02.par.bz2",
                     )
                     # find out what is the most recent parameter file
-                    reference_par_file = sorted(glob.glob(os.path.join(parent_parameters["data_parent"],"frealign","maps","*_r01_??.par*") ))
+                    reference_par_file = sorted(glob.glob(os.path.join(parent_parameters["data_parent"],"frealign","maps","*_r01_??*") ))
                     if len(reference_par_file) > 0:
                         reference_par_file = reference_par_file[-1]
                         reference_model_file = reference_par_file.replace(".bz2","").replace(".par",".mrc")
@@ -348,6 +348,8 @@ def parse_arguments(block):
                         reference_par_file = sorted(glob.glob( os.path.join(parent_parameters["data_parent"],"frealign","tomo-preprocessing-*.txt") ))
                         if len(reference_par_file) > 0:
                             reference_par_file = reference_par_file[-1]
+                        else:
+                            reference_par_file = ""
                         reference_model_file = ""
                     else:
                         reference_par_file = ""
@@ -4029,14 +4031,14 @@ if __name__ == "__main__":
                 os.chdir("..")
 
                 if project_params.resolve_path(parameters["clean_parfile"]) == "auto":
-                    reference_par_file = sorted(glob.glob( os.path.join(parameters["data_parent"],"frealign","maps","*_r01*.par*") ))
+                    reference_par_file = sorted(glob.glob( os.path.join(parameters["data_parent"],"frealign","maps","*_r01_??*") ))
                     if len(reference_par_file) > 0:
                         parameters["clean_parfile"] = reference_par_file[-1]
                         parameters["refine_parfile"] = reference_par_file[-1]
-                        parameters["refine_model"] = reference_par_file[-1].replace(".bz2","").replace(".par",".mrc")
+                        parameters["refine_model"] = reference_par_file[-1].replace(".bz2","") + ".mrc"
 
                 if parameters["clean_discard"]:
-                    parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.par.bz2")
+                    parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.bz2")
                     parameters["clean_parfile"] = parfile_occ_zero if parfile_occ_zero.exists() else parameters["clean_parfile"]
 
                 assert (Path(parameters["clean_parfile"]).exists()), f"{parameters['clean_parfile']} does not exist"
@@ -4044,7 +4046,7 @@ if __name__ == "__main__":
                 # copy reconstruction to current frealign/maps
                 filename_init = parameters["data_set"] + "_r01_01"
                 parfile = project_params.resolve_path(parameters["clean_parfile"])
-                reference = parfile.replace(".par.bz2", ".mrc").replace(".par", ".mrc")
+                reference = parfile.replace(".bz2", "") + ".mrc"
                 if os.path.exists(reference):
                     shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
 

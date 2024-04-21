@@ -1186,14 +1186,13 @@ def csp_run_refinement(
             # merge updated parameter files
             if not extract_only:
                 alignment_parameters = merge_alignment_parameters(parameter_file, mode, outputs_pattern)
-                alignment_parameters.update_particle_score(min_tind=int(use_images_for_refinement_min), 
-                                                           max_tind=int(use_images_for_refinement_max))
+                alignment_parameters.update_particle_score(tind_range=[use_images_for_refinement_min, use_images_for_refinement_max])
                 alignment_parameters.to_binary(output=parameter_file)
 
             # clean-up intermediate results after merge
             [
                 os.remove(f)
-                for f in glob.glob(f"frealign/maps/{name}{outputs_pattern}*.cistem")
+                for f in glob.glob(f"frealign/maps/{name}{outputs_pattern}*.cistem") + glob.glob(f"frealign/maps/{name}*region*.cistem")
             ]
 
             # regularize particle trajectories if we're doing particle frame refinement
@@ -1224,7 +1223,6 @@ def csp_run_refinement(
             num_projections = alignment_parameters.get_num_rows()
             num_particles = alignment_parameters.get_extended_data().get_num_tilts()
             num_tilts = alignment_parameters.get_extended_data().get_num_tilts()
-            num_rows_tilts = alignment_parameters.get_extended_data().get_num_rows_tilts()
             
             assert (starting_num_projections == num_projections), f"Number of projections (in {parameter_file}) before and after refinement differ: {starting_num_projections} != {num_projections}"
             assert (starting_num_particles == num_particles), f"Number of particles (in {extended_parameter_file}) before and after refinement differ: {starting_num_particles} != {num_particles}"
