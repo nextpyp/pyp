@@ -11,6 +11,7 @@ from pyp import analysis
 from pyp.system import mpi
 from pyp.inout.image import img2webp
 from pyp.inout.metadata import frealign_parfile, pyp_metadata, isfrealignx, tomo_load_frame_xf
+from pyp.inout.metadata.cistem_star_file import *
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.system import project_params
 from pyp.system.logging import initialize_pyp_logger
@@ -974,11 +975,10 @@ def regularize_film(
 
 
 def regularize(
-    filename,
-    parfile,
-    prev_parfile,
-    output,
-    parameters,
+    filename: str,
+    prev_alignment_parameters: Parameters,
+    alignment_parameters: Parameters,
+    parameters: dict,
 ):
 
     if parameters["csp_rotreg"] or parameters["csp_transreg"]:
@@ -993,9 +993,7 @@ def regularize(
             parameters["data_bin"]
         )
 
-        # prev_arr = np.array( [line.split() for line in open( prev_parfile ) if not line.startswith('C') ], dtype=float)
         prev_arr = frealign_parfile.Parameters.from_file(prev_parfile).data
-        # input_arr = np.array( [line.split() for line in open( parfile ) if not line.startswith('C') ], dtype=float )
         input_arr = frealign_parfile.Parameters.from_file(parfile).data
         
         if "tomo" in parameters["data_mode"].lower():
@@ -1011,10 +1009,7 @@ def regularize(
             # traverse micrographs/tilt-series
             # use multiprocessing
             
-            arguments = []
             for tilt_count in range(len(np.unique(input_arr[:, tilt_col]))):
-                # pool.apply_async( regularize_film, args=(parfile, rotational_refinement, translational_refinement,rotational_method, translational_method, save_plots, spatial_sigma, time_sigma, \
-                # mparameters, fparameters, film_col, ptlind_col, scanor_col, actual_pixel, prev_arr, input_arr, film_count) )
                  
                 if not (tilt_count >= parameters["csp_UseImagesForRefinementMin"] and ( parameters["csp_UseImagesForRefinementMax"] == -1 or tilt_count <= parameters["csp_UseImagesForRefinementMax"] )):
                     continue
@@ -1032,29 +1027,9 @@ def regularize(
                     tilt_count,
                     xf_frames,
                 )
-                """
-                arguments.append(
-                    (
-                    filename,
-                    parfile,
-                    parameters,
-                    tilt_col,
-                    ptlind_col,
-                    scanor_col,
-                    actual_pixel,
-                    prev_arr,
-                    input_arr,
-                    tilt_count,
-                    xf_frames,
-                    )
-                )
-
-            mpi.submit_function_to_workers(regularize_film, arguments)
-            """
 
             allparxs = deque()
 
-            # frealignx = isfrealignx(parfile)
             (
                 fieldwidths,
                 fieldstring,
@@ -1073,11 +1048,6 @@ def regularize(
                     f.write(line)
                 else:
                     break
-
-            # write header information
-            # f.write("""C FREALIGN parameter file for CSP\n""")
-            # f.write("""C     1       2       3       4         5         6       7     8        9       10      11      12        13         14      15      16       17        18        19        20        21        22        23        24        25        26        27        28        29        30        31        32        33        34        35        36        37        38        39        40        41        42        43        44        45\n""")
-            # f.write("""C    NO     PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC      LOGP      SIGMA   SCORE  CHANGE   PTLIND    TILTAN    DOSEXX    SCANOR    CNFDNC    PTLCCX      AXIS     NORM0     NORM1     NORM2  MATRIX00  MATRIX01  MATRIX02  MATRIX03  MATRIX04  MATRIX05  MATRIX06  MATRIX07  MATRIX08  MATRIX09  MATRIX10  MATRIX11  MATRIX12  MATRIX13  MATRIX14  MATRIX15      PPSI    PTHETA      PPHI\n""")
 
             f.writelines("%s\n" % item for item in allparxs)
             f.close()

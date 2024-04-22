@@ -46,7 +46,7 @@ from pyp.analysis.image import (
 )
 from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
-from pyp.analysis.scores import clean_particles_tomo, particle_cleaning
+from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
 from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required
 from pyp.detect import tomo as detect_tomo

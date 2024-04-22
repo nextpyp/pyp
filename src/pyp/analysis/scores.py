@@ -987,7 +987,6 @@ def filter_particles(parameter_file: str, mintilt: float, maxtilt: float, dist: 
         ).min()
         if particle.score < threshold or dmin <= dist:
             particle_parameters[pind].occ = 0.0
-            particle_parameters[pind].score = -1.0
         else:
             valid_particles = np.vstack((valid_particles, np.array([posx_with_shift, posy_with_shift, posz_with_shift])))
 
