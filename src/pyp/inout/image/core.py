@@ -39,7 +39,7 @@ def mrc2png(mrcfile, pngfile):
     writepng(data, pngfile)
 
 def img2webp(pngfile, webpfile, options=""):
-    command = f"{os.environ['IMAGICDIR']}/convert {pngfile} {options} -quality 100 -define webp:lossless=true {webpfile}"
+    command = f"{os.environ['IMAGICDIR']}/convert '{pngfile}' {options} -quality 100 -define webp:lossless=true '{webpfile}'"
     run_shell_command(command, verbose=False)
 
 def mrc2webp(mrcfile, webpfile):
@@ -866,7 +866,7 @@ def get_image_dimensions(name):
     
     assert Path(name), f"{name} does not exist."
 
-    command = "{0}/bin/header -size {1}".format(get_imod_path(), name)
+    command = "{0}/bin/header -size '{1}'".format(get_imod_path(), name)
     [output, error] = run_shell_command(command, verbose=False)
     return [int(num) for num in output.split()]
 
@@ -1515,7 +1515,7 @@ def cistem_mask_create(parameters: dict, model: str, output: str):
     assert (os.path.exists(model)), f"{model} does not exist"
     assert ("particle_rad" in parameters), "Please provide particle radius"
 
-    command = f"{get_imod_path()}/bin/header -pixel {model}"
+    command = f"{get_imod_path()}/bin/header -pixel '{model}'"
     [stdo, stdr] = run_shell_command(command)
     model_pixel = float(stdo.split()[0])
     logger.info(f"{model} has pixel size {model_pixel}")

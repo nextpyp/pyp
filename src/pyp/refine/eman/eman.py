@@ -75,7 +75,7 @@ def eman_3davg(parameters):
         parameters["particle_mw"],
     )
 
-    command = "{0}; cd eman; sbatch --ntasks=280 --cpus-per-task=1 --mem=600G --job-name=e2avg_{2} --output=%x.out --error=%x.err --wrap='{4} && python {5}/pyp/eman2cspt.py'".format(
+    command = "{0}; cd eman; sbatch --ntasks=280 --cpus-per-task=1 --mem=600G --job-name=e2avg_{2} --output='%x.out' --error='%x.err' --wrap='{4} && python {5}/pyp/eman2cspt.py'".format(
         load_eman_cmd,
         parameters["data_set"][-6:],
         parameters["data_set"],

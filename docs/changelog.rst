@@ -4,6 +4,63 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
+v0.6.6 (4/24/2024)
+******************
+
+   :fa:`bug,text-danger` Fix bug where incorrect binning was applied when picking virions manually.
+
+   :fa:`bug,text-danger` Fix bug where tomogram dimensions and binning were not properly updated.
+
+   :fa:`bug,text-danger` Fix bug that prevented the recalculation of tomograms when using AreTomo if the reconstruction parameters changed.
+
+v0.6.5 (4/6/2024)
+******************
+
+   :fa:`plus-square,text-primary` Update format of logger messages to more clearly show the nextPYP version and resources assigned to each job.
+
+   :fa:`plus-square,text-primary` Use same tilt-axis angle convention for aligning tilt-series using IMOD and AreTomo2.
+
+   :fa:`bug,text-danger` Prevent error during tilt-series alignment with AreTomo2 when number of patches = 1.
+
+   :fa:`bug,text-danger` Fix bug in command line interface that ocurred when launching constrained refinement.
+
+   :fa:`bug,text-danger` Fix bug that was causing the server startup routines to be called during the CLI processing of the configuration file.
+
+   :fa:`bug,text-danger` Fix bug that ocurred when retrieving metadata from mdoc files.
+
+   :fa:`bug,text-danger` Fix bug when trying to retrieve tilt-series metadata from failed runs.
+
+   :fa:`bug,text-danger` Fix conflicts with library paths when running external executables.
+
+v0.6.4 (3/24/2024)
+******************
+
+   :fa:`plus-square,text-primary` Implement mechanism to isolate logs from failed jobs in the Logs tab.
+
+   :fa:`plus-square,text-primary` Add support for project names with special characters.
+
+   :fa:`plus-square,text-primary` Remove many commonly used parameters from the advanced category.
+
+   :fa:`plus-square,text-primary` Add progress bars during export of metadata to .star format.
+
+   :fa:`plus-square,text-primary` Allow export of particle coordinates from streaming sessions.
+
+   :fa:`plus-square,text-primary` Check that .order files have the same number of entries as images in the tilt-series.
+
+   :fa:`bug,text-danger` Fix bugs when reading metadata from *.mdoc files.
+
+   :fa:`bug,text-danger` Prevent dragging of multiple connections from block outputs in project view.
+
+   :fa:`bug,text-danger` Fix bug when managing GPU resources in standalone mode.
+
+   :fa:`bug,text-danger` Fix bug when using grouping of frames during movie processing.
+
+   :fa:`bug,text-danger` Fix bug in single-particle pipeline during hot pixel removal.
+
+   :fa:`bug,text-danger` Fix bug in Table view that caused content to overlap when resizing columns.
+
+   :fa:`bug,text-danger` Always export metadata in .star format to current project directory (user specified location is no longer supported).
+
 v0.6.3 (3/01/2024)
 ******************
 

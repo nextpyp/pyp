@@ -488,7 +488,7 @@ def sva_iterate(mp, sp, iter):
         f.write(f"{executable} {xmlexe} && 3davg -plot")
 
     # submit job using slurm
-    sbatch_com = f"sbatch --partition={queue} --mem=600g --cpus-per-task=1 --output=swarm/%x_iter{iter}_mode{mode}_%j.out --error=swarm/%x_iter{iter}_mode{mode}_%j.err --ntasks={sp['cpu']} --job-name=3DAVG {command_file}"
+    sbatch_com = f"sbatch --partition={queue} --mem=600g --cpus-per-task=1 --output='swarm/%x_iter{iter}_mode{mode}_%j.out' --error=swarm/%x_iter{iter}_mode{mode}_%j.err --ntasks={sp['cpu']} --job-name=3DAVG {command_file}"
     """
     id = slurm.submit_jobs(
         ".",

@@ -1710,7 +1710,7 @@ def csp_has_error(path_to_logs: Path, micrographs: dict) -> bool:
         micrograph_log = Path(path_to_logs, f"{micrograph}_csp.log")
         if micrograph_log.exists():
             # use "grep" to check if log files contain any error message
-            command = "grep -E %s %s" % ("'" + "|".join(ERROR_KEYWORDS) + "'", str(micrograph_log))
+            command = "grep -E %s '%s'" % ("'" + "|".join(ERROR_KEYWORDS) + "'", str(micrograph_log))
             [output, error] = local_run.run_shell_command(command, verbose=False)
 
             if len(output) > 0:

@@ -567,7 +567,7 @@ class Parameters:
         assert "/" not in input, f"Input(s) to pbzip2 should only contain basename, please go to the file directory before compressing"
 
         threads = 7 if threads > 7 else threads
-        command = f"tar -v -c -h -v {input} | pbzip2 -c -v -p{threads} > {output}"
+        command = f"tar -v -c -h -v {input} | pbzip2 -c -v -p{threads} > '{output}'"
         run_shell_command(command, verbose=False)
 
     # compress
@@ -584,8 +584,8 @@ class Parameters:
         """
         # thread greater than 10 is actually slower
         threads = 7 if threads > 7 else threads
-        
-        command = f"pbzip2 -v -d -c -p{threads} {input} | tar x"
+
+        command = f"pbzip2 -v -d -c -p{threads} '{input}' | tar x"
         run_shell_command(command, verbose=False)
 
     # decompress paramater file in scratch directory
@@ -770,7 +770,7 @@ class Parameters:
         # create new parfile without having header, footer
         # trim the two sections (index - film, film - end) by character position 
         for idx, parfile in enumerate(inputlist):
-            commands.append("grep '^[^C]' %s > %s && cut -c%d-%d %s > %s && cut -c%d-%d %s > %s" % (parfile, parfile + '.tmp',
+            commands.append("grep '^[^C]' '%s' > '%s' && cut -c%d-%d '%s' > '%s' && cut -c%d-%d '%s' > '%s'" % (parfile, parfile + '.tmp',
                                                                                                     section1_start, section1_end, parfile + '.tmp', f"{idx}_1.tmp",
                                                                                                     section2_start, section2_end, parfile + '.tmp', f"{idx}_2.tmp"))
         mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
@@ -803,7 +803,7 @@ class Parameters:
             cur_index += num_rows
 
             # concatenate first column, film column with the rest of parfiles
-            command = "paste -d '' {0} > {1}".format(" ".join([ 'indexes.tmp', f"{idx}_1.tmp", 'films.tmp', f"{idx}_2.tmp"]), 
+            command = "paste -d '' {0} > '{1}'".format(" ".join([ 'indexes.tmp', f"{idx}_1.tmp", 'films.tmp', f"{idx}_2.tmp"]), 
                                                     parfile)
             run_shell_command(command, verbose=False)
 
@@ -816,17 +816,18 @@ class Parameters:
         with open(filename, "w") as f:
             f.writelines(header)
         # command = "cat {0} >> {1}".format(" ".join(inputlist), filename)
-        if len(inputlist) > 500:
-            splits = [inputlist[i:i+500] for i in range(0, len(inputlist), 500)]
+        batch_size = 500
+        if len(inputlist) > batch_size:
+            splits = [inputlist[i:i+batch_size] for i in range(0, len(inputlist), batch_size)]
             for batch in splits:
-                command = "cat {0} >> {1}".format(" ".join(batch), filename)
+                command = "cat {0} >> {1}".format(" ".join(f'"{w}"' for w in batch), filename)
                 run_shell_command(command, verbose=False)
         else:
-            command = "cat {0} >> {1}".format(" ".join(inputlist), filename)
+            command = "cat {0} >> '{1}'".format(" ".join(f'"{w}"' for w in inputlist), filename)
             run_shell_command(command, verbose=False)
-        
+
         [os.remove(f) for f in os.listdir(".") if f.endswith(".tmp")]
-        
+
         """
         input_arr = [
             pd.DataFrame(
@@ -1761,7 +1762,7 @@ class Parameters:
             fieldstring = EXTENDED_CCLIN_PAR_STRING_TEMPLATE + "\n"
         else:
             logger.error(
-                "Could not figure out file format. Columns = {0}".format(columns)
+                "Could not figure out file format for {1}. Columns = {0}".format(columns,par_filename)
             )
 
         return fieldwidths, fieldstring, version, extended

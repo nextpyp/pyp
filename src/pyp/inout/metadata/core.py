@@ -609,15 +609,15 @@ def use_existing_alignments(parameters, new_name):
         symlink_relative(parameters["class_par"], new_par_file)
     else:
         # assemble new par file with most current set of defocuses
-        com = "cat {0} | grep C > {1}".format(parameters["class_par"], new_par_file)
+        com = "cat '{0}' | grep C > {1}".format(parameters["class_par"], new_par_file)
         local_run.run_shell_command(com)
-        com = "cat {0} | grep -v C | cut -c1-65 > orientations".format(
+        com = "cat '{0}' | grep -v C | cut -c1-65 > orientations".format(
             parameters["class_par"]
         )
         local_run.run_shell_command(com)
-        com = "cat {0} | grep -v C | cut -c92-136 > prs".format(parameters["class_par"])
+        com = "cat '{0}' | grep -v C | cut -c92-136 > prs".format(parameters["class_par"])
         local_run.run_shell_command(com)
-        com = "cat {0} | grep -v C | cut -c66-91 > defocuses".format(new_par_file + "o")
+        com = "cat '{0}' | grep -v C | cut -c66-91 > defocuses".format(new_par_file + "o")
         local_run.run_shell_command(com)
         com = 'paste -d "" orientations defocuses prs >> {0}'.format(new_par_file)
         local_run.run_shell_command(com)

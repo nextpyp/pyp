@@ -3497,7 +3497,7 @@ EOF
                         )
 
                         # launch FREALIGN refinement (skip reconstruction, score evaluation only)
-                        command = "cd {0}; export MYCORES={1}; echo {2} > `pwd`/mynode; export MYNODES=`pwd`/mynode; {3}/bin/fyp -dataset {4} -iter 2 -maxiter {5} -metric {6} -mode 1 -mask 0,0,0,0,0 -cutoff -1 -rlref {7} -rhref {8} -rrec {9} -fmatch F".format(
+                        command = "cd '{0}'; export MYCORES={1}; echo {2} > `pwd`/mynode; export MYNODES=`pwd`/mynode; {3}/bin/fyp -dataset {4} -iter 2 -maxiter {5} -metric {6} -mode 1 -mask 0,0,0,0,0 -cutoff -1 -rlref {7} -rhref {8} -rrec {9} -fmatch F".format(
                             frealign_path,
                             cores_for_frealign,
                             socket.gethostname(),
@@ -3751,7 +3751,7 @@ EOF
 
                     # parse parameter file
 
-                    command = "cd {0}; export MYCORES={1}; echo {2} > `pwd`/mynode; export MYNODES=`pwd`/mynode; {3}/bin/fyp -dataset {4} -iter 2 -maxiter {5} -metric {6} -mode 1 -mask 0,0,0,1,1 -cutoff -1 -rlref {7} -rhref {8} -rrec {9} -fmatch T".format(
+                    command = "cd '{0}'; export MYCORES={1}; echo {2} > `pwd`/mynode; export MYNODES=`pwd`/mynode; {3}/bin/fyp -dataset {4} -iter 2 -maxiter {5} -metric {6} -mode 1 -mask 0,0,0,1,1 -cutoff -1 -rlref {7} -rhref {8} -rrec {9} -fmatch T".format(
                         frealign_path,
                         cores_for_frealign,
                         socket.gethostname(),
@@ -4115,7 +4115,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         # patch tracking
         patches_x = parameters["movie_motioncor_patch_x"] if "movie_motioncor_patch_x" in parameters else 1
         patches_y = parameters["movie_motioncor_patch_y"] if "movie_motioncor_patch_y" in parameters else 1
-        if patches_x > 1 or patches_y > 0:
+        if patches_x + patches_y > 2:
             patches = f" -Patch {parameters['movie_motioncor_patch_x']} {parameters['movie_motioncor_patch_y']}"
             if parameters.get("movie_motioncor_patch_overlap"):
                 patches += f" {parameters['movie_motioncor_patch_overlap']}"
@@ -4614,7 +4614,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
         bfactor = float(parameters["movie_bfactor"])
         first_frame = int(parameters["movie_first"]) + 1 # pyp from 0, unblur starts from 1
         last_frame = int(parameters["movie_last"]) + 1 if int(parameters["movie_last"]) != -1 else 0 # pyp's end is -1, unblur's end is 0
-        running_average = 1
+        running_average = parameters["movie_group"]
         maximum_shifts_in_A = 40.0
         minimum_shifts_in_A = 0.0
         threads = min(6,parameters["slurm_tasks"]) if "spr" in parameters["data_mode"].lower() else 1
@@ -4960,8 +4960,11 @@ def align_tilt_series(name, parameters, rotation=0):
             tilt_offset_option = "1" if parameters['tomo_ali_aretomo_measure_tiltoff'] else f"1 {parameters['tomo_ali_aretomo_tiltoff']}"
 
             # local motion by giving the number of patches
-            if parameters.get("tomo_ali_patches_x") and parameters.get("tomo_ali_patches_y"):
-                patches = f" -Patch {parameters['tomo_ali_patches_x']} {parameters['tomo_ali_patches_y']}"
+            # patch tracking
+            patches_x = parameters["tomo_ali_patches_x"] if "tomo_ali_patches_x" in parameters else 1
+            patches_y = parameters["tomo_ali_patches_y"] if "tomo_ali_patches_y" in parameters else 1
+            if patches_x + patches_y > 2:
+                patches = f" -Patch {patches_x} {patches_y}"
             else:
                 patches = ""
 
@@ -5132,7 +5135,7 @@ def align_tilt_series(name, parameters, rotation=0):
 -AngFile {name}.rawtlt \
 -VolZ {thickness} \
 -OutBin {binning_tomo} \
--TiltAxis {parameters['scope_tilt_axis']} \
+-TiltAxis {rotation} \
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 -AlignZ {specimen_thickness} \
 {reconstruct_option} \

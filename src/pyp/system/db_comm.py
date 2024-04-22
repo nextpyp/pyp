@@ -368,6 +368,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
         "raw/{0}.rawtlt",
         "webp/{0}.webp",
         "webp/{0}_rec.webp",
+        "webp/{0}_rec.png",
         "webp/{0}_ali.webp",
         "webp/{0}_sides.webp",
         "webp/{0}_raw.webp",
@@ -477,7 +478,7 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
 
     files[
         "webp"
-    ] = "{0}.webp {0}_?D_ctftilt.webp {0}_raw.webp {0}_ali.webp {0}_sides.webp {0}_rec.webp {0}_vir????_binned_nad.webp".format(
+    ] = "{0}.webp {0}_?D_ctftilt.webp {0}_raw.webp {0}_ali.webp {0}_sides.webp {0}_rec.webp {0}_rec.png {0}_vir????_binned_nad.webp".format(
         name
     )
     files[

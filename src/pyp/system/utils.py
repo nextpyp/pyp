@@ -44,9 +44,9 @@ def phenix_load_command():
 def get_slurm_path():
     return "/opt/slurm/bin/"
 
-
 def get_imod_path():
-    return "/opt/IMOD".format(os.environ["PYP_DIR"])
+    return "/opt/IMOD"
+    # return "export LD_LIBRARY_PATH=/opt/IMOD/qtlib:/opt/IMOD/lib:$LD_LIBRARY_PATH /opt/IMOD"
 
 def cuda_path_prefix(command):
     config = get_pyp_configuration()

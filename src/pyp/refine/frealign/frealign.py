@@ -3025,7 +3025,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         except:
             pass
         # append resolution table to temp file
-        com = "cat %s >> %s" % (scratch + name + ".res", scratch + name + ".part")
+        com = "cat '%s' >> '%s'" % (scratch + name + ".res", scratch + name + ".part")
         try:
             local_run.run_shell_command(com, verbose=False)
         except:

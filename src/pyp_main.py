@@ -995,7 +995,7 @@ def split(parameters):
             parameters, files, timestamp, nodes
         )
 
-        local_run.run_shell_command("chmod u+x {0}/{1}".format(os.getcwd(), mpirunfile),verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),verbose=parameters["slurm_verbose"])
 
         mpirun = get_mpirun_command()
 
@@ -1337,7 +1337,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     os.chdir(project_path)
 
     parameters = project_params.load_pyp_parameters()
-
+    
     # get file name
     name = os.path.basename(filename)
 
@@ -1562,7 +1562,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     need_recalculation = parameters["tomo_rec_force"]
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
-        mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
+        mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options, need_recalculation)] )
 
     ctffind_tilt = False
     if ctf_mod.is_required_3d(parameters):
@@ -1577,12 +1577,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 mpi_funcs.append(ctf_mod.ctffind_tilt_multiprocessing)
                 mpi_args.append(ctffind_tilt_args)
 
-            # write global ctf file
-            ctf[6] = originalx
-            ctf[7] = originaly
-            ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
-            ctf[11] = parameters['tomo_rec_binning']
-            np.savetxt("{}.ctf".format(name), ctf)
+        # write global ctf file
+        ctf[6] = originalx
+        ctf[7] = originaly
+        ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
+        ctf[11] = parameters['tomo_rec_binning']
+        np.savetxt("{}.ctf".format(name), ctf)
 
     if len(mpi_funcs) > 0:
         t = timer.Timer(text="Tomogram reconstruction + ctffind tilt took: {}", logger=logger.info)
@@ -3114,9 +3114,7 @@ if __name__ == "__main__":
             )
         else:
             logger.info(
-                "Job {} (v{}) launching on {} using {} task(s) {}".format(
-                jobid, version, socket.gethostname(), mpi_tasks, memory
-                )
+                f"nextPYP v{version} launching job {jobid} on {socket.gethostname()} using {mpi_tasks} task(s) {memory}"
             )
 
         config = get_pyp_configuration()
@@ -3153,12 +3151,6 @@ if __name__ == "__main__":
         # TODO: switch to pyp.system.utils.get_imod_path()
         os.environ["IMAGICDIR"] = "/usr/bin"
         os.environ["IMOD_DIR"] = get_imod_path()
-        if "LD_LIBRARY_PATH" in os.environ:
-            os.environ["LD_LIBRARY_PATH"] = "{0}/qtlib:{0}/lib:{1}".format(
-                get_imod_path(), os.environ["LD_LIBRARY_PATH"]
-            )
-        else:
-            os.environ["LD_LIBRARY_PATH"] = "{0}/qtlib:{0}/lib".format(get_imod_path())
 
         os.environ["LD_LIBRARY_PATH"] = "{0}:{1}".format(
                 os.environ["LD_LIBRARY_PATH"], '/usr/local/pkgs/fftw-3.3.10-nompi_hf0379b8_106/lib/'
@@ -3534,7 +3526,12 @@ if __name__ == "__main__":
                     output = os.path.join( output_dir, data_set + ".star")
 
                     os.chdir(current_dir)
-                    coords = False
+                    if ("detect_method" in session_parameters and not "none" in session_parameters["detect_method"] and not "train" in session_parameters["detect_method"] and session_parameters["detect_rad"] > 0
+                        or "tomo_vir_method" in session_parameters and not "none" in session_parameters["tomo_vir_method"] and not "train" in session_parameters["tomo_vir_method"]
+                        ):
+                        coords = True
+                    else:
+                        coords = False
                     globalmeta.weak_meta2Star(imagelist, output, session_path, coords=coords)
 
                 logger.info("PYP (export_session) finished successfully")
@@ -3575,9 +3572,8 @@ if __name__ == "__main__":
                         parfile=parfile,
                         path="./pkl"
                         )
-                    output_path = parameters["export_location"]
                     select = parameters["extract_cls"]
-                    globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile, output_path=output_path)
+                    globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
 
                 logger.info("PYP (export_star) finished successfully")
             except:
@@ -4292,7 +4288,7 @@ if __name__ == "__main__":
                     refine_res_lim = ""
 
                 comm_exe = os.environ["PYP_DIR"] + "/external/postprocessing/postprocessing.py "
-                basic = f"{half1} {half2} {mask} --angpix {pixel_size} --out {output} {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
+                basic = f"'{half1}' '{half2}' '{mask}' --angpix {pixel_size} --out '{output}' {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
                 comm = comm_exe + basic + bfac + filter + fsc + automask + randomize_phase
                 local_run.run_shell_command(comm, verbose=False)
                 if not os.path.exists(output_map):

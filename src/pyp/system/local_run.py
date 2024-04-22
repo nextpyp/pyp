@@ -18,7 +18,7 @@ def create_pyp_multirun_file(
 ):
     f = open(mpirunfile, "w")
     f.write("#\!/bin/bash\n")
-    f.write("cd {0}/swarm\n".format(os.getcwd()))
+    f.write("cd '{0}/swarm'\n".format(os.getcwd()))
     f.write("export {0}swarm={0}swarm\n".format(parameters["data_mode"]))
     f.write("case $MP_CHILD in\n")
     group = 0
@@ -101,7 +101,7 @@ def create_initial_multirun_file(
                 f.write(";;\n")
             group += 1
         f.write("esac\n")
-    run_shell_command("chmod u+x {0}".format(multirun_file),)
+    run_shell_command("chmod u+x '{0}'".format(multirun_file),)
 
     return nodes, multirun_file
 
@@ -116,7 +116,7 @@ def create_rec_split_multirun_file(
 
     if legacy:
         f.write("#\!/bin/bash\n")
-        f.write("cd {0}/swarm\n".format(os.getcwd()))
+        f.write("cd '{0}/swarm'\n".format(os.getcwd()))
         f.write("unset frealign_rec\n")
         f.write("export frealign_rec_split=frealign_rec_split\n")
         f.write("case $MP_CHILD in\n")
@@ -133,7 +133,7 @@ def create_rec_split_multirun_file(
             f.write("{0})\n".format(count))
         for ref in range(classes):
             f.write(
-                "cd {0}/swarm; ".format(os.getcwd())
+                "cd '{0}/swarm'; ".format(os.getcwd())
                 + "{0} --iteration {1} --ref {2} --first {3} --last {4} --count {5}\n".format(
                     run_pyp(command="fyp", script=False),
                     iteration,
@@ -152,7 +152,7 @@ def create_rec_split_multirun_file(
         f.write("esac\n")
     f.close()
 
-    run_shell_command("chmod u+x {0}/{1}".format(os.getcwd(), mpirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),)
 
     # manage enviroment variables
     my_env = os.environ.copy()
@@ -479,7 +479,7 @@ def create_stack_multirun_file(csp_command, mode, particles, cmin, cmax, cores):
             count += 1
         f.write("esac\n")
 
-    run_shell_command("chmod u+x {0}/{1}".format(os.getcwd(), mpirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),)
 
     return mpirunfile, count
 
@@ -497,7 +497,7 @@ def create_ref_multirun_file(
     f = open(mpirunfile, "w")
 
     f.write("#\!/bin/bash\n")
-    f.write("cd {0}/swarm\n".format(os.getcwd()))
+    f.write("cd '{0}/swarm'\n".format(os.getcwd()))
     f.write("export frealign_ref=frealign_ref\n")
 
     if cores < 50:
@@ -545,7 +545,7 @@ def create_ref_multirun_file(
         f.write("esac\n")
     f.close()
 
-    run_shell_command("chmod u+x {0}/{1}".format(os.getcwd(), mpirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),)
 
     return mpirunfile
 
@@ -565,7 +565,7 @@ def create_ref_multirun_file_from_missing(
 
     f = open(mpirunfile, "w")
     f.write("#\!/bin/bash\n")
-    f.write("cd {0}/../swarm\n".format(os.getcwd()))
+    f.write("cd '{0}/../swarm'\n".format(os.getcwd()))
     f.write("export frealign_ref=frealign_ref\n")
     f.write("case $MP_CHILD in\n")
 
@@ -585,7 +585,7 @@ def create_ref_multirun_file_from_missing(
     f.write("esac\n")
     f.close()
 
-    run_shell_command("chmod u+x {0}/{1}".format(os.getcwd(), mpirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),)
 
     return count, cores, mpirunfile
 
@@ -639,7 +639,7 @@ def run_multirun(command_list, cpus=0, logfile="/dev/null"):
             f.write(";;\n")
         f.write("esac\n")
 
-    run_shell_command("chmod u+x {0}/{1}".format(os.getcwd(), multirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), multirunfile),)
 
     command = "{0} -machinefile {1} -np {2} {3}/external/multirun/multirun -m {4} > {5}".format(
         get_mpirun_command(),

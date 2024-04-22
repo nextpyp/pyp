@@ -142,14 +142,22 @@ def read_tilt_series(
     aligned_tilts = []
 
     data_path = Path(resolve_path(parameters["data_path"])).parent
-    mdoc_path = Path(resolve_path(parameters["data_path_mdoc"])).parent if "data_path_mdoc" in parameters else Path()
+    mdoc_path = Path(resolve_path(parameters["data_path_mdoc"])).parent if "data_path_mdoc" in parameters and parameters["data_path_mdoc"] != None else None
     project_raw_path = Path(filename).parent
 
     name = os.path.basename(filename)
-    mdocs = list(mdoc_path.glob(f"{name}*.mdoc"))
+    mdoc_pattern = "*.mdoc"
+
+    mdocs = []
+    if mdoc_path is not None:
+        mdoc_pattern = Path(resolve_path(parameters["data_path_mdoc"])).name
+        mdocs = list(mdoc_path.glob(str(mdoc_pattern)))
+        mdocs = [str(file) for file in mdocs if str(file.name).replace(".mrc", "").replace(".mdoc", "") == name]
+
     if len(mdocs) == 0:
         # get the mdoc files from the path of raw data if it couldn't find them in mdoc path
-        mdocs = list(data_path.glob(f"{name}*.mdoc"))
+        mdocs = list(data_path.glob(mdoc_pattern))
+        mdocs = [str(file) for file in mdocs if str(file.name).replace(".mrc", "").replace(".mdoc", "") == name]
 
     # escape special character in case it contains [
     filename = glob.escape(filename)
@@ -339,6 +347,7 @@ def read_tilt_series(
                         f.write("%s\n" % item[1])
 
             tilts = np.loadtxt("{0}.rawtlt".format(name))
+            order = np.loadtxt("{0}.order".format(name))
             sorted_tilts = sorted(tilts)
             drift_metadata["tilts"] = [tilt for tilt in sorted_tilts]
             sorted_tilts = [("dummpy", tilt) for tilt in sorted_tilts]
@@ -347,10 +356,11 @@ def read_tilt_series(
             for i in range(tilts.size):
                 shifts[i] = np.zeros([1, 2])
 
-            x, y, z = imageio.readMoviefileandsave(name + ".mrc", parameters, binning)
-
+            x, y, z = get_image_dimensions(name + ".mrc")
+            
             # sanity check if number of tilts derived from .rawtlt is correct
             assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"      
+            assert (z == len(order)), f"{z} tilts in {name+'.mrc'} != {len(order)} from .order"
 
             pixel_size = parameters["scope_pixel"]
             voltage = parameters["scope_voltage"]
@@ -372,7 +382,7 @@ def read_tilt_series(
 
             # read image dimensions
             [micrographinfo, error] = local_run.run_shell_command(
-                "{0}/bin/header -size {1}.mrc".format(get_imod_path(), name), verbose=parameters["slurm_verbose"]
+                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=parameters["slurm_verbose"]
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
@@ -596,7 +606,7 @@ def read_tilt_series(
 
         # read image dimensions
         [micrographinfo, error] = local_run.run_shell_command(
-            "{0}/bin/header -size {1}.mrc".format(get_imod_path(), name),verbose=False
+            "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name),verbose=False
         )
         x, y, z = list(map(int, micrographinfo.split()))
         drift_metadata["tilts"] = [tilt[1] for tilt in sorted_tilts]
@@ -608,7 +618,7 @@ def read_tilt_series(
         if metadata.get("drift"):
             for i in metadata["drift"]:
                 drift_metadata["drift"][i] = metadata["drift"][i].to_numpy()[:,-2:]
-        elif metadata.get("web").get("drift"):
+        elif metadata.get("web") and metadata.get("web").get("drift"):
             for i in metadata.get("web")["drift"]:
                 drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
     else:
@@ -737,7 +747,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         or int(mparameters["extract_box"]) != model_box_size
     ):
         logger.warning(f"Rescaling {initial_model} pixel size to binning {1/scaling:.2f}, which would be {model_pixel_size/scaling:.2f}")
-        command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 {4} {2}".format(
+        command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
             get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, initial_model,
         )
         local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])

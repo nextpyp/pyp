@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import glob
+from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
@@ -22,6 +23,7 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path, timer, symlink_relative
 from pyp.inout.utils.pyp_edit_box_files import read_boxx_file_async, write_boxx_file_async
 from pyp.system.utils import get_imod_path
+from pyp.streampyp.logging import TQDMLogger
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -993,6 +995,7 @@ def filter_particles(parameter_file: str, mintilt: float, maxtilt: float, dist: 
 
     extended_parameters.set_data(particles=particle_parameters, tilts=tilt_parameters)
     alignment_parameters.set_data(data=data, extended_parameters=extended_parameters)
+    alignment_parameters.sync_particle_occ()
     alignment_parameters.to_binary(output=parameter_file)
 
     plot.histogram_particle_tomo(scores, threshold, tiltseries, "csp")
@@ -1202,19 +1205,26 @@ def particle_cleaning(parameters: dict):
         else:
             clean_parameter_folder = Path(str(parameter_folder_current) + "_clean")
             if clean_parameter_folder.exists():
-                os.remove(clean_parameter_folder)
+                shutil.rmtree(clean_parameter_folder)
+            os.mkdir(clean_parameter_folder)
             
             mpi_args = []
 
             # completely remove particle projections from parfile and allboxes coordinate
             for parameter_file in parameter_files:
-                deep_clean_particles(parameter_file, clean_parameter_folder)
+                mpi_args.append((parameter_file, clean_parameter_folder))
+            
+            if len(mpi_args) > 0:
+                mpi.submit_function_to_workers(deep_clean_particles, mpi_args, verbose=parameters["slurm_verbose"])
 
             clean_micrograph_list = np.array([str(f.name).split("_r")[0] for f in Path(clean_parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f)])
             
-            frealign_parfile.Parameters.compress_parameter_file(str(clean_parameter_folder), 
-                                                                str(clean_parameter_folder) + ".bz2", 
+            current_dir = Path().cwd()
+            os.chdir(Path("frealign", "maps"))
+            frealign_parfile.Parameters.compress_parameter_file(str(clean_parameter_folder.name), 
+                                                                str(clean_parameter_folder.name) + ".bz2", 
                                                                 parameters["slurm_merge_tasks"])
+            os.chdir(current_dir)
 
             # update film file
             if len(clean_micrograph_list) < len(parameter_files):
@@ -1330,6 +1340,8 @@ def update_scores(films, scores: list):
 def deep_clean_particles(parameter_file: str, clean_parameter_folder: Path):
 
     alignment_parameters = Parameters.from_file(input_file=parameter_file)
+    alignment_parameters.sync_particle_occ()
+
     data = alignment_parameters.get_data()
     extended_parameters = alignment_parameters.get_extended_data()
     particle_parameters = extended_parameters.get_particles()
@@ -1359,116 +1371,6 @@ def deep_clean_particles(parameter_file: str, clean_parameter_folder: Path):
     alignment_parameters.to_binary(output=str(clean_parameter_folder / Path(parameter_file).name))
     return 
 
-    FILM_COL = 8 - 1
-    OCC_COL = 12 - 1
-    ORI_TAG = "_original"
-    parx_name, parx_format = os.path.splitext(parfile)
-    par = frealign_parfile.Parameters.from_file(parfile)
-    par_data = par.data
-
-    par_data_clean = par_data[par_data[:, OCC_COL] != 0.0]
-    allboxes_line_count = 0
-    empty_films = []
-
-    for idx, film in enumerate(films):
-        # check which allboxes we should use: frame format (*local.allboxes) is the first priority
-        if os.path.exists(os.path.join("csp", film + "_local.allboxes")):
-            allboxes_file = os.path.join("csp", film + "_local.allboxes")
-            allboxes = np.loadtxt(
-                os.path.join("csp", film + "_local.allboxes"), ndmin=2
-            )
-        elif os.path.exists(os.path.join("csp", film + ".allboxes")):
-            allboxes_file = os.path.join("csp", film + ".allboxes")
-            allboxes = np.loadtxt(
-                os.path.join("csp", film + ".allboxes"), ndmin=2
-            )
-        else:
-            raise Exception(f"{film} allboxes not found")
-
-        allboxes_name, allboxes_format = os.path.splitext(allboxes_file)
-
-        par_data_film = par_data[par_data[:, FILM_COL] == idx]
-
-        if par_data_film.shape[0] != allboxes.shape[0]:
-            raise Exception(
-                f"The number of lines in {parfile} and {allboxes_file} does not match - {par_data_film.shape[0]} v.s. {allboxes.shape[0]}\n\
-                        You probably deep-clean particles already. Try to look for *_clean.par.bz2 from a downstream block"
-            )
-
-        allboxes = np.delete(
-            allboxes, np.argwhere(par_data_film[:, OCC_COL] == 0), axis=0
-        )
-
-        if allboxes.shape[0] == 0:
-            empty_films.append(film)
-            os.remove(allboxes_file)
-        else:
-            allboxes_line_count += allboxes.shape[0]
-        
-        if allboxes.shape[0] > 0:
-            os.rename(allboxes_file, allboxes_name + ORI_TAG + allboxes_format)
-            np.savetxt(allboxes_file, allboxes.astype(int), fmt="%i")
-
-    if par_data_clean.shape[0] != allboxes_line_count:
-        [
-            os.rename(f, f.replace(ORI_TAG + allboxes_format, allboxes_format))
-            for f in [
-                os.path.join("csp", file)
-                for file in os.listdir("csp")
-                if file.endswith(ORI_TAG + allboxes_format)
-            ]
-        ]
-        raise Exception(
-            f"After cleaning the total number of lines in {parfile} and allboxes does not match - {par_data_clean.shape[0]} v.s. {allboxes_line_count}"
-        )
-
-    par_data_clean[:, 0] = np.array(
-        [(_i + 1) % 10000000 for _i in range(par_data_clean.shape[0])]
-    )
-
-    # re-number films start from 0
-    new_film_ids = par_data_clean[:, 7]
-    uniquefilm = np.unique(new_film_ids)
-    for i, old_id in enumerate(uniquefilm):
-        film_mask = par_data_clean[:, 7] == old_id
-        par_data_clean[film_mask, 7] = i
-
-    par.data = par_data_clean
-    current_dir = os.getcwd()
-    
-    clean_parfile = f"{dataset}_r01_02_clean.par"
-    parfile = clean_parfile.replace("_clean", "")
-    
-    os.chdir("./frealign/maps/")
-    par.write_file(clean_parfile)
-
-    compressed_clean_parfile = clean_parfile.replace(".par", ".par.bz2")
-    compressed_parfile = compressed_clean_parfile.replace("_clean", "")
-    reference = compressed_parfile.replace(".par.bz2", ".mrc")
-    prev_reference = reference.replace("_02.mrc", "_01.mrc")
-
-    frealign_parfile.Parameters.compress_parameter_file(clean_parfile, compressed_clean_parfile)
-
-    # link the parfile and reference for workflows
-    if not Path(compressed_parfile).exists():
-        shutil.copy2(clean_parfile, parfile)
-        frealign_parfile.Parameters.compress_parameter_file(parfile, compressed_parfile)
-        os.remove(parfile)
-    if not Path(reference).exists() and Path(prev_reference).exists():
-        shutil.copy2(prev_reference, reference)
-
-    os.remove(clean_parfile)
-    os.chdir(current_dir)
-    
-    logger.info("Successfully remove particles from the parfile and allboxes!")
-
-    # remove empty film from original film list
-    if len(empty_films) > 0:
-        indices = np.where(np.isin(films, empty_films))
-        newfilms = np.delete(films, indices)
-        return newfilms
-    else:
-        return films
 
 def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapath="./pkl"):
 
@@ -1842,12 +1744,12 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
                 pardata[int(line[0]-1)][occ_field] = 0.0
             else:
                 valid_points = np.vstack((valid_points, coordinate))
-    
+
     return pardata
 
 
 def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/selected_particles", is_tomo=True, thickness=2048):
-    
+
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -1858,24 +1760,40 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
     inputfiles = glob.glob(os.path.join(input_path, coordinates))
 
     if is_tomo:
-        for file in inputfiles:
-            read_array = np.loadtxt(file, dtype='str', comments="  PTLIDX", ndmin=2, usecols=(1,2,3,5))
 
-            clean_array = read_array[read_array[:, -1]=="Yes"][:, :-1].astype('float')
-            
-            if clean_array.size > 0:
-                clean_array[:, -1] = thickness - clean_array[:, -1]
-                clean_array = clean_array / binning
-                
-                np.savetxt(file.replace("_boxes3d.txt", ".box"), clean_array, fmt='%.1f')
+        # clean previously exported coordinates
+        try:
+            [ os.remove(f) for f in glob.glob(os.path.join(output_path, "*.spk")) ]
+        except:
+            pass
 
-                outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.mod'))
-                command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_boxes3d.txt', '.box')} {outfile}"
-                run_shell_command(command, verbose=True)
+        logger.info(f"Exporting clean particle coordinates for {len(inputfiles)} tomograms")
+        with tqdm(desc="Progress", total=len(inputfiles), file=TQDMLogger()) as pbar:
+            for file in inputfiles:
+                read_array = np.loadtxt(file, dtype='str', comments="  PTLIDX", ndmin=2, usecols=(1,2,3,5))
 
-                run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
+                clean_array = read_array[read_array[:, -1]=="Yes"][:, :-1].astype('float')
 
-                os.remove(outfile)
+                if clean_array.size > 0:
+                    clean_array[:, -1] = thickness - clean_array[:, -1]
+                    clean_array = clean_array / binning
+
+                    np.savetxt(file.replace("_boxes3d.txt", ".box"), clean_array, fmt='%.1f')
+
+                    outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.mod'))
+                    command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_boxes3d.txt', '.box')} {outfile}"
+                    run_shell_command(command, verbose=False)
+
+                    run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
+
+                    os.remove(outfile)
+
+                pbar.update(1)
+        spk_files = len(glob.glob(os.path.join(output_path, "*.spk")))
+        if spk_files > 0:
+            logger.info(f"Clean particle coordinates in spk format exported to {os.path.abspath(output_path)}")
+        else:
+            logger.warning("Unable to export clean particle coordiantes")
     else:
         for file in inputfiles:
             outfile = os.path.join(output_path, os.path.basename(file).replace('.allboxes', '.spk'))
