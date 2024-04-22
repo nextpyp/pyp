@@ -1107,17 +1107,18 @@ def particle_cleaning(parameters: dict):
         parameters["refine_parfile"] = parfile
     
     # decompress the parametere file (if needed), and copy it over to the particle filtering block
-    parameter_folder_current_block = Path("frealign", "maps", f"{parameters['data_set']}_r01_01") 
+    parameter_folder_init = f"{parameters['data_set']}_r01_02" if parameters["clean_discard"] else f"{parameters['data_set']}_r01_01"
+    parameter_folder_current = Path("frealign", "maps", parameter_folder_init) 
 
     assert Path(parameter_folder).exists(), f"{parameter_folder} does not exists."
 
     if os.path.exists(parameter_folder) and parameter_folder.endswith(".bz2"):
         ref = int(parameter_folder.split("_r")[-1].split("_")[0]) 
         frealign_parfile.Parameters.decompress_parameter_file_and_move(file=Path(parameter_folder), 
-                                                                       new_file=parameter_folder_current_block, 
+                                                                       new_file=parameter_folder_current, 
                                                                        micrograph_list=[f"{f}_r{ref:02d}" for f in films],
                                                                        threads=parameters["slurm_tasks"])
-        parameter_folder = str(parameter_folder_current_block)  
+        parameter_folder = str(parameter_folder_current)  
         
 
     # single class cleaning regard to box files
@@ -1165,12 +1166,12 @@ def particle_cleaning(parameters: dict):
 
     # we don't have box3d in spr, so this only works for tomo so far
     elif "tomo" in parameters["data_mode"]:
-        
+
+        parameter_files = [str(f) for f in Path(parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f)]
+
         if not parameters["clean_discard"]:
             
             mpi_args = []
-
-            parameter_files = [str(f) for f in Path(parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f)]
 
             for parameter_file in parameter_files:
                 mpi_args.append((parameter_file, 
@@ -1194,20 +1195,31 @@ def particle_cleaning(parameters: dict):
             logger.warning(
                 "{:,} particles ({:.1f}%) from {} tilt-series will be used".format(
                     clean_particle_count,
-                    (clean_particle_count / all_particle_count * 100),
+                    (float(clean_particle_count) / all_particle_count * 100),
                     len(parameter_files),
                 )
             )
-
-
         else:
-            # completely remove particle projections from parfile and allboxes coordinate
-            newfilms = deep_clean_parfile(parfile,films,parameters["data_set"])
+            clean_parameter_folder = Path(str(parameter_folder_current) + "_clean")
+            if clean_parameter_folder.exists():
+                os.remove(clean_parameter_folder)
             
+            mpi_args = []
+
+            # completely remove particle projections from parfile and allboxes coordinate
+            for parameter_file in parameter_files:
+                deep_clean_particles(parameter_file, clean_parameter_folder)
+
+            clean_micrograph_list = np.array([str(f.name).split("_r")[0] for f in Path(clean_parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f)])
+            
+            frealign_parfile.Parameters.compress_parameter_file(str(clean_parameter_folder), 
+                                                                str(clean_parameter_folder) + ".bz2", 
+                                                                parameters["slurm_merge_tasks"])
+
             # update film file
-            if newfilms.shape[0] < films.shape[0]:
+            if len(clean_micrograph_list) < len(parameter_files):
                 os.rename(filmlist_file, filmlist_file.replace(".films", ".films_original"))
-                np.savetxt(filmlist_file, newfilms, fmt="%s")
+                np.savetxt(filmlist_file, clean_micrograph_list, fmt="%s")
                 shutil.copy2(filmlist_file, filmlist_file.replace(".films", ".micrographs"))
 
             binning = parameters["tomo_rec_binning"]
@@ -1315,8 +1327,37 @@ def update_scores(films, scores: list):
             shutil.copy2(newbox3dfile, box3dfile)
             os.remove(newbox3dfile)
 
-def deep_clean_parfile(parfile: str, films, dataset: str):
-    assert (os.path.exists(parfile)), f"{parfile} is required to remove particle projections from parfile and allboxes"
+def deep_clean_particles(parameter_file: str, clean_parameter_folder: Path):
+
+    alignment_parameters = Parameters.from_file(input_file=parameter_file)
+    data = alignment_parameters.get_data()
+    extended_parameters = alignment_parameters.get_extended_data()
+    particle_parameters = extended_parameters.get_particles()
+    tilt_parameters = extended_parameters.get_tilts()
+
+    # remove projections that have 0 occ
+    data = np.delete(
+        data, np.argwhere(data[:, alignment_parameters.get_index_of_column(OCCUPANCY)] == 0.0), axis=0
+    )
+
+    # remove both binary files if there is no particle left
+    if data.shape[0] == 0:
+        return 
+    
+    data[:, alignment_parameters.get_index_of_column(POSITION_IN_STACK)] = np.array(
+        [(_ + 1) for _ in range(data.shape[0])]
+    )
+
+    # remove particles that have 0 occ (occ should be sync between projections and particles)
+    for pind in extended_parameters.get_particle_list():
+        particle = particle_parameters[pind]
+        if particle.occ == 0.0:
+            particle_parameters.pop(pind)
+        
+    extended_parameters.set_data(particles=particle_parameters, tilts=tilt_parameters)
+    alignment_parameters.set_data(data=data, extended_parameters=extended_parameters)
+    alignment_parameters.to_binary(output=str(clean_parameter_folder / Path(parameter_file).name))
+    return 
 
     FILM_COL = 8 - 1
     OCC_COL = 12 - 1
@@ -1394,12 +1435,9 @@ def deep_clean_parfile(parfile: str, films, dataset: str):
 
     par.data = par_data_clean
     current_dir = os.getcwd()
-    # clean_parfile = os.path.join(os.getcwd() , "frealign", "maps" + os.path.basename(parfile).replace(".par", "_clean.par").replace(".bz2", ""))
     
     clean_parfile = f"{dataset}_r01_02_clean.par"
     parfile = clean_parfile.replace("_clean", "")
-    # clean_parfile = os.path.basename(parfile).replace(".par", "_clean.par").replace(".bz2", "")
-    # os.rename(parfile, parfile.replace(parx_format, ORI_TAG + parx_format))
     
     os.chdir("./frealign/maps/")
     par.write_file(clean_parfile)
@@ -1431,7 +1469,6 @@ def deep_clean_parfile(parfile: str, films, dataset: str):
         return newfilms
     else:
         return films
-    # return clean_parfile.replace(".par", ".par.bz2") 
 
 def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapath="./pkl"):
 
