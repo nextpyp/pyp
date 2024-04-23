@@ -875,6 +875,13 @@ class Parameters:
         [sync_projection_occ(row) for row in data]
 
         self.set_data(data=data)
+
+    def has_frames(self) -> bool:
+        assert self.get_data(), "No data in the Parameters data structure."
+        frame_indexes = np.unique(self.get_data()[:, self.get_index_of_column(FIND)].astype(int))
+        if len(frame_indexes) == 1 and frame_indexes[0] == 0:
+            return True
+        return False
     
 def initialize_parameters_binary(): 
 

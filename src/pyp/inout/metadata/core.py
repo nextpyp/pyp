@@ -1953,21 +1953,7 @@ def csp_extract_coordinates(
                 # same as single particle to check boxx selection
                 if os.path.exists(os.path.join(working_path, filename + ".pkl")):
                     metadata = pyp_metadata.LocalMetadata(os.path.join(working_path, filename + ".pkl")).data
-                """
-                    boxx = metadata["box"].to_numpy()
-                else:
-                    boxx_file = os.path.join(working_path, filename + ".boxx")
-                    if os.path.exists(boxx_file):
-                        boxx = np.loadtxt(boxx_file, ndmin=2)
-
-                indexes = np.argwhere(
-                    np.logical_and(
-                        boxx[:, 4] == 1, boxx[:, 5] >= int(parameters["extract_cls"])
-                    )
-                )
-                if len(allboxes) > len(indexes):
-                    allboxes = [allboxes[i[0]] for i in indexes]
-                """
+                
                 if len(allboxes) != parx_object_no_frames.data.shape[0]:
                     raise Exception(
                         "The allboxes and parxfile DO NOT have the same length. (%d v.s. %d)"

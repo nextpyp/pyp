@@ -1201,7 +1201,9 @@ def csp_run_refinement(
                 if parameters["csp_rotreg"] or parameters["csp_transreg"]:
                     
                     # FIXME (HF): new cistem binary 
-                    fit.regularize( name.split("_r")[0], new_par_file, prev_par_file, reg_par_file, parameters )
+                    fit.regularize(name.split("_r")[0], prev_alignment_parameters, alignment_parameters, parameters)
+                    # NOTE: regularize() function updates the shifts in "alignment_parameters", so we just need to write a new file
+                    alignment_parameters.to_binary(output=parameter_file)
 
                     csp_modes.append(5)
                     parameters["csp_UseImagesForRefinementMin"] = int(len(scanord_list))
@@ -1209,9 +1211,6 @@ def csp_run_refinement(
                     only_evaluate = True 
 
                     project_params.save_parameters(parameters)
-
-                    # os.remove(new_par_file)
-                    # os.rename(reg_par_file, new_par_file)
 
             elif only_evaluate:
                 parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = csp_refine_min, csp_refine_max

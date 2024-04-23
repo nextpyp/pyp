@@ -243,19 +243,24 @@ def rot_spl(frames, psi, theta, phi):
     return psi_splined, theta_splined, phi_splined
 
 
-def regularize_film(
-    filename,
-    parfile,
-    parameters,
-    tilt_col,
-    ptlind_col,
-    scanor_col,
-    actual_pixel,
-    prev_arr,
-    input_arr,
-    tilt_count,
-    xf_frames=np.array([])
+def regularize_image(
+    filename: str,
+    prev_alignment_parameters: Parameters,
+    alignment_parameters: Parameters,
+    parameters: dict,
+    actual_pixel: float,
+    tilt_count: int,
+    xf_frames: np.ndarray = np.array([])
 ):
+
+    prev_arr = prev_alignment_parameters.get_data()
+    input_arr = alignment_parameters.get_data()
+
+    tilt_col = alignment_parameters.get_index_of_column(TIND)
+    scanor_col = alignment_parameters.get_index_of_column(FIND)
+    ptlind_col = alignment_parameters.get_index_of_column(PIND)
+    frame_shift_x_col = alignment_parameters.get_index_of_column(FSHIFT_X)
+    frame_shift_y_col = alignment_parameters.get_index_of_column(FSHIFT_Y)
 
     logger.info("Now processing tilt %d", tilt_count)
     tilt_idx = np.where(input_arr[:, tilt_col].astype(int) == tilt_count)[0]
@@ -298,17 +303,6 @@ def regularize_film(
             tilt_arr[:, ptlind_col].astype(int) == ptlind
         )[0]
 
-        # XD: SCANOR starts from 0
-        """
-        XD note 2020 10 31: Rethink regularization for tomography. Removed valid_indexes to make it easier for SPR.
-        """
-        # valid_indexes = ( film_arr[particle_indices,scanor_col] - 1 ).astype('i')
-
-        # frame_order = np.argsort( film_arr[particle_indices,scanor_col] )
-
-        # valid_indexes = np.sort( film_arr[particle_indices,scanor_col] ).astype('i')
-        # import pdb; pdb.set_trace()
-        # XD: Possible issues
         particle_arr = tilt_arr[particle_indices]
         prev_particle_arr = prev_tilt_arr[particle_indices]
 
@@ -324,8 +318,7 @@ def regularize_film(
             )
         )
 
-        # xf_d_shx, xf_d_shy = -d_shx / actual_pixel, -d_shy / actual_pixel
-        xf_d_shx, xf_d_shy = - particle_arr[:, -5] / actual_pixel, - particle_arr[:, -4] / actual_pixel
+        xf_d_shx, xf_d_shy = - particle_arr[:, frame_shift_x_col] / actual_pixel, - particle_arr[:, frame_shift_y_col] / actual_pixel
 
         if parameters["csp_rotreg"]:
             # two_rotations = np.concatenate((d_phi.reshape((-1,1)), d_theta.reshape((-1,1))), axis=1)
@@ -340,15 +333,6 @@ def regularize_film(
                 axis=1,
             )
             noisy_shifts[particle_count, :, :3] = three_rotations
-
-            # using old AB's method
-            # d_psi_splined = np.degrees( np.arctanh( fit_spline_trajectory_1D( np.tanh(np.radians(d_psi)),1,3,1) ))
-            # d_theta_splined = np.degrees( np.arctanh( fit_spline_trajectory_1D(np.tanh(np.radians(d_theta)),1,3,1) ))
-            # d_phi_splined = np.degrees( np.arctanh( fit_spline_trajectory_1D(np.tanh(np.radians(d_phi)),1,3,1) ))
-
-            # d_psi_splined = fit_angular_trajectory_1D_new( d_psi, time_sigma )
-            # d_theta_splined = fit_angular_trajectory_1D_new( d_theta, time_sigma )
-            # d_phi_splined = fit_angular_trajectory_1D_new( d_phi, time_sigma )
 
             d_rot1, d_rot2, d_rot3 = d_psi, d_theta, d_phi
 
@@ -393,20 +377,6 @@ def regularize_film(
                 d_theta_splined = d_theta
                 d_phi_splined = d_phi
 
-            # d_rot1 = d_psi
-            # d_rot2 = d_theta
-            # d_rot3 = d_phi
-            # d_rot2_splined = d_theta_splined
-            # d_rot1_splined = d_phi_splined
-
-            # if save_plots and particle_count % 100 == 0 and len(psi) > 3:
-            #     angles_before = np.array( ( d_rot1, d_rot2 ) ).transpose()
-            #     angles_after = np.array( ( d_rot1_splined, d_rot2_splined ) ).transpose()
-            #     try:
-            #         analysis.plot.plot_angular_trajectory( angles_after, '../scratch/' + parfile.replace('.par','') + '_rot_F%04d_P%04d.png' % ( film_count, particle_count ), angles_before )
-            #     except:
-            #         pass
-
             noisy_regularized_shifts[particle_count, :, :3] = np.stack(
                 (d_psi_splined, d_theta_splined, d_phi_splined)
             ).T
@@ -424,8 +394,6 @@ def regularize_film(
                     new_trans_shifts = fit_spline_trajectory(
                         translations, k=5, factor=0.6
                     )
-                    # d_x_splined = new_trans_shifts[:, 0]
-                    # d_y_splined = new_trans_shifts[:, 1]
                     d_x_splined = new_trans_shifts[:, -2]
                     d_y_splined = new_trans_shifts[:, -1]
 
@@ -434,8 +402,6 @@ def regularize_film(
                     splined_shifts = fit_spline_trajectory(
                         noisy_shifts[particle_count, :, :]
                     )
-                    # d_x_splined = splined_shifts[:, 0]
-                    # d_y_splined = splined_shifts[:, 1]
                     d_x_splined = splined_shifts[:, -2]
                     d_y_splined = splined_shifts[:, -1]
 
@@ -476,28 +442,23 @@ def regularize_film(
     name = box_path.strip(".mrc")
 
     if "tomo" in parameters["data_mode"].lower():
-        # retrieve 3D particle positions
-        # box = imod.coordinates_from_mod_file(
-        #     project_dir + "/mod/%s.spk" % movie_name.strip(".mrc")
-        # )
-
-        # # HF Liu: correct the binning
-        # ctf = np.loadtxt(project_dir + "/ctf/%s.ctf" % movie_name.strip(".mrc"))
-        # micrographsize_x, micrographsize_y = ctf[6], ctf[7]
-        # squarex = int(math.pow(2, math.ceil(math.log(micrographsize_x, 2))))
-        # squarey = int(math.pow(2, math.ceil(math.log(micrographsize_y, 2))))
-        # square = max(micrographsize_x, micrographsize_y)
-        # binning = int(math.ceil(square / 512))
 
         micrograph_drift = np.round(xf_frames[tilt_index_xf_files])
-
-        # box *= binning
-        boxes3d_file = f"{name}_boxes3d.txt"
-        box = np.array(read_3dbox(boxes3d_file))
+        particles = alignment_parameters.get_extended_data().get_particles()
+        
+        box = []
+        for pind in range(max(particles.keys())+1):
+            if pind not in particles:
+                box.append([-1, -1, -1])
+            else:
+                particle = particles[pind]
+                box.append([particle.x_position_3d, particle.y_position_3d, particle.z_position_3d])
+        
+        box = np.array(box)
 
         particles_indexes_in_tilt_series = np.unique(tilt_arr[:, ptlind_col])
 
-        box = box[particles_indexes_in_tilt_series.astype("int"), 1:4]
+        box = box[particles_indexes_in_tilt_series.astype("int"), :]
         box = box.astype(float)
 
         assert (
@@ -509,12 +470,6 @@ def regularize_film(
         micrograph_drift = np.round(np.loadtxt(ali_path.replace(".mrc", ".xf"), ndmin=2))
 
         boxx = pyp_metadata.LocalMetadata(name + ".pkl", is_spr=True).data["box"].to_numpy()
-
-        # logger.info("boxx path:", name)
-        # logger.info("boxx shape:", boxx.shape)
-        # logger.info(np.logical_and( boxx[:,4] == 1, boxx[:,5] >= int( mparameters['extract_cls']) ))
-        # logger.info(np.__version__)
-        # logger.info("particle cls: ", mparameters['extract_cls'])
 
         # XD: added this to account for possible error in updating box files
         box = boxx[
@@ -535,7 +490,6 @@ def regularize_film(
 
     # set zero weights for missing particle projections
     particle_indices = set(np.unique(tilt_arr[:, ptlind_col]).astype("i"))
-    # mask = np.array([(i in particle_indices) for i in range(box.shape[0])])
     mask = np.array([True for i in range(box.shape[0])])
 
     # XD: decide on the iter we will perform this for
@@ -549,7 +503,6 @@ def regularize_film(
             distances = scipy.spatial.distance.cdist(
                 box[:, :2], np.array(box[particle_count][:2], ndmin=2)
             )
-
 
         if spatial_sigma > 0:
             # At a minimum, average this number of particles
@@ -594,10 +547,6 @@ def regularize_film(
                 clean_shifts[particle_count, :, -2] = np.multiply(
                     noisy_shifts[:, :, -2], weights
                 ).sum(axis=0)
-
-                # add global translations
-                # logger.info("clean shifts before global")
-                # logger.info(clean_shifts[ particle_count, :, -2: ])
                 
                 if distances.size > minimum_particles_to_average:
                     clean_shifts[particle_count, :, -2:] += micrograph_drift[:, -2:]
@@ -605,12 +554,6 @@ def regularize_film(
                     # revert to global drift values
                     clean_shifts[particle_count, :, -2:] = micrograph_drift[:, -2:]
                 
-                
-                # logger.info("global movements")
-                # logger.info(micrograph_drift[ :, -2: ])
-
-                # logger.info("clean shifts after global")
-                # logger.info(clean_shifts[ particle_count, :, -2: ])
 
                 if "tomo" in parameters["data_mode"].lower():
                     global_unrounded = xf_frames[tilt_index_xf_files]
@@ -645,36 +588,18 @@ def regularize_film(
             tilt_arr[:, ptlind_col].astype(int) == ptlind
         )[0]
 
-        # XD: SCANOR starts from 0
-
-        # valid_indexes = ( film_arr[particle_indices,scanor_col] - 1 ).astype('i')
-        """
-        XD 2020 10 31: refer to comment above on the use of valid_indexes
-        """
-        # valid_indexes = np.sort( film_arr[particle_indices,scanor_col] ).astype('i')
-        # logger.info("valid indexes", valid_indexes)
-
-        # XD: potential issues here
         particle_arr = tilt_arr[particle_indices]
         prev_particle_arr = prev_tilt_arr[particle_indices]
-
-        # import pdb; pdb.set_trace()
 
         psi, theta, phi, shx, shy = [particle_arr[:, i] for i in range(1, 6)]
 
         if parameters["csp_rotreg"] and len(psi) > 3:
-            # d_rot1, d_rot2 = clean_shifts[particle_count,valid_indexes,0], clean_shifts[particle_count,valid_indexes,1]
-            # two_rotations = np.concatenate((d_rot1.reshape((-1,1)), d_rot2.reshape((-1,1))), axis=1)
 
             d_rot1, d_rot2, d_rot3 = (
                 clean_shifts[particle_count, :, 0],
                 clean_shifts[particle_count, :, 1],
                 clean_shifts[particle_count, :, 2],
             )
-
-            # new_rot_shifts = fit_spline_trajectory(two_rotations, k=5, factor=0.6)
-            # d_rot1_splined = new_rot_shifts[:,0]
-            # d_rot2_splined = new_rot_shifts[:,1]
 
             if time_sigma > 0:
                 # using XD method
@@ -715,23 +640,6 @@ def regularize_film(
                 d_theta_splined = d_rot2
                 d_phi_splined = d_rot3
 
-            # d_psi_splined, d_theta_splined, d_phi_splined = d_rot1, d_rot2, d_rot3
-
-            # d_rot2 = d_theta
-            # d_rot1 = d_phi
-            # d_rot2_splined = d_theta_splined
-            # d_rot1_splined = d_phi_splined
-
-            # print "Doing rotational regularization"
-            # psi_splined, theta_splined, phi_splined = rot_spl(frames, psi, theta, phi)
-            # psi_splined = np.degrees( np.arctanh( fit_spline_trajectory_1D( np.tanh(np.radians(psi)),1,3,1) ))
-            # theta_splined = np.degrees( np.arctanh( fit_spline_trajectory_1D(np.tanh(np.radians(theta)),1,3,1) ))
-            # phi_splined = np.degrees( np.arctanh( fit_spline_trajectory_1D(np.tanh(np.radians(phi)),1,3,1) ))
-
-            # phi_splined = d_rot1_splined + prev_particle_arr[:,3]
-            # theta_splined = d_rot2_splined + prev_particle_arr[:,2]
-            # psi_splined = psi
-
             mask = parameters["refine_mask"].split(":")[-1].split(",")
             if int(mask[0]) > 0:
                 psi_splined = d_psi_splined
@@ -766,9 +674,6 @@ def regularize_film(
             )
             phi_splined = np.where(phi_splined > 360, phi_splined % 360, phi_splined)
             phi_splined = np.where(phi_splined < 0, phi_splined + 360, phi_splined)
-
-            # if particle_count == 10:
-            #    print 'psi_splined, theta_splined, phi_splined (after normalization)', psi_splined, theta_splined, phi_splined
 
             clean_regularized_poses[particle_count, :, :3] = np.stack(
                 (psi_splined, theta_splined, phi_splined)
@@ -828,14 +733,11 @@ def regularize_film(
                 else:
                     d_x_splined = fit_spatial_trajectory_1D_new(xf_d_shx, time_sigma)
                     d_y_splined = fit_spatial_trajectory_1D_new(xf_d_shy, time_sigma)
-                # import pdb; pdb.set_trace()
-                # logger.info("d x y splined stacked", np.stack((d_x_splined, d_y_splined)).T)
             else:
                 d_x_splined = xf_d_shx
                 d_y_splined = xf_d_shy
-            # import pdb; pdb.set_trace()
+
             if save_plots:
-                # translations_before = np.array( ( noisy_shifts[particle_count,valid_indexes,-2], noisy_shifts[particle_count,valid_indexes,-1] ) ).transpose()
                 translations_before = np.array((xf_d_shx, xf_d_shy)).transpose()
                 translations_after = np.array((d_x_splined, d_y_splined)).transpose()
                 try:
@@ -858,12 +760,6 @@ def regularize_film(
                 d_y_splined = d_y_splined - micrograph_drift[:, -1]
                 xf_d_shx -= micrograph_drift[:, -2]
                 xf_d_shy -= micrograph_drift[:, -1]
-            
-            # import pdb; pdb.set_trace()
-
-            # clean_regularized_shifts[particle_count, :, -2:] = np.stack(
-            #     (d_x_splined, d_y_splined)
-            # ).T
 
             if save_plots:
                 translations_before = np.array(
@@ -903,9 +799,8 @@ def regularize_film(
                 img2webp(combined_xf_name, combined_xf_name.replace(".png", ".webp"))
 
             # convert from stack size pixels to FREALIGN shifts
-            x_splined = ( -d_x_splined * actual_pixel - prev_particle_arr[:,-5] ) + prev_particle_arr[:, 4]
-            y_splined = ( -d_y_splined * actual_pixel - prev_particle_arr[:,-4] ) + prev_particle_arr[:, 5]
-            # import pdb; pdb.set_trace()
+            x_splined = (-d_x_splined * actual_pixel - prev_particle_arr[:, frame_shift_x_col]) + prev_particle_arr[:, 4]
+            y_splined = (-d_y_splined * actual_pixel - prev_particle_arr[:, frame_shift_y_col]) + prev_particle_arr[:, 5]
 
         else:
             x_splined, y_splined = shx, shy
@@ -914,10 +809,9 @@ def regularize_film(
             (x_splined, y_splined)
         ).T
 
-        clean_regularized_dx = x_splined - prev_particle_arr[:, 4] + prev_particle_arr[:, -5] 
-        clean_regularized_dy = y_splined - prev_particle_arr[:, 5] + prev_particle_arr[:, -4]
+        clean_regularized_dx = x_splined - prev_particle_arr[:, 4] + prev_particle_arr[:, frame_shift_x_col] 
+        clean_regularized_dy = y_splined - prev_particle_arr[:, 5] + prev_particle_arr[:, frame_shift_y_col]
 
-        # import pdb; pdb.set_trace()
         new_poses = np.stack(
             (psi_splined, theta_splined, phi_splined, x_splined, y_splined)
         )
@@ -927,7 +821,7 @@ def regularize_film(
 
         particle_arr[:, 1:6] = np.around(new_poses, decimals=2).T
 
-        particle_arr[:, -5:-3] = new_dshisfts.T
+        particle_arr[:, frame_shift_x_col: frame_shift_y_col+1] = new_dshisfts.T
 
         tilt_arr[particle_indices, :] = particle_arr
 
@@ -946,7 +840,6 @@ def regularize_film(
         else: 
             box_2d = box 
 
-        # logger.info("regularized shifts", clean_regularized_shifts[-1])
         if parameters["csp_rotreg"]:
             analysis.plot.plot_trajectories(
                 name_png,
@@ -970,6 +863,9 @@ def regularize_film(
 
     input_arr[tilt_idx, :] = tilt_arr
 
+    # update the Parameters data structure 
+    alignment_parameters.set_data(data=input_arr)
+
     
     
 
@@ -983,19 +879,9 @@ def regularize(
 
     if parameters["csp_rotreg"] or parameters["csp_transreg"]:
 
-        tilt_col = 20 - 1
-        ptlind_col = 17 - 1
-            
-        # NOTE : lets use CNFDNC as film col
-        scanor_col = 21 - 1
-
         actual_pixel = float(parameters["scope_pixel"]) * float(
             parameters["data_bin"]
         )
-
-        prev_arr = frealign_parfile.Parameters.from_file(prev_parfile).data
-        input_arr = frealign_parfile.Parameters.from_file(parfile).data
-        
         if "tomo" in parameters["data_mode"].lower():
             try:
                 xf_frames, xf_files = tomo_load_frame_xf(parameters, filename, xf_path="./")
@@ -1003,52 +889,23 @@ def regularize(
                 metadata = pyp_metadata.LocalMetadata(f"{filename}.pkl").data
                 xf_frames = [metadata["drift"][tilt_idx].to_numpy() for tilt_idx in sorted(metadata["drift"].keys())]
         else: xf_frames = np.array([])
-        
-        if input_arr.shape[1] > 20:
 
-            # traverse micrographs/tilt-series
-            # use multiprocessing
-            
-            for tilt_count in range(len(np.unique(input_arr[:, tilt_col]))):
-                 
-                if not (tilt_count >= parameters["csp_UseImagesForRefinementMin"] and ( parameters["csp_UseImagesForRefinementMax"] == -1 or tilt_count <= parameters["csp_UseImagesForRefinementMax"] )):
-                    continue
+        tind_list = alignment_parameters.get_extended_data().get_tilt_list()
+        for tilt_count in tind_list:
 
-                regularize_film(
-                    filename,
-                    parfile,
-                    parameters,
-                    tilt_col,
-                    ptlind_col,
-                    scanor_col,
-                    actual_pixel,
-                    prev_arr,
-                    input_arr,
-                    tilt_count,
-                    xf_frames,
-                )
-
-            allparxs = deque()
-
-            (
-                fieldwidths,
-                fieldstring,
-                _,
-                _,
-            ) = frealign_parfile.Parameters.format_from_parfile(parfile)
-
-            for row in input_arr:
-
-                allparxs.append(fieldstring[:-1] % tuple(row.tolist()))
-
-            f = open(output, "w")
-
-            for line in open(parfile):
-                if line.startswith("C"):
-                    f.write(line)
-                else:
-                    break
-
-            f.writelines("%s\n" % item for item in allparxs)
-            f.close()
+            # skip if this tilted image does not fall inside the range     
+            if not (tilt_count >= parameters["csp_UseImagesForRefinementMin"] and 
+                    (parameters["csp_UseImagesForRefinementMax"] == -1 or tilt_count <= parameters["csp_UseImagesForRefinementMax"])):
+                continue
+                
+            # regularize particles in an image at a time
+            regularize_image(
+                filename,
+                prev_alignment_parameters, 
+                alignment_parameters,
+                parameters,
+                actual_pixel,
+                tilt_count,
+                xf_frames,
+            )
 
