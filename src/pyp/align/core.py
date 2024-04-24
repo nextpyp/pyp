@@ -1192,7 +1192,8 @@ def csp_run_refinement(
             # clean-up intermediate results after merge
             [
                 os.remove(f)
-                for f in glob.glob(f"frealign/maps/{name}{outputs_pattern}*.cistem") + glob.glob(f"frealign/maps/{name}*region*.cistem")
+                for f in set(glob.glob(f"frealign/maps/{name}{outputs_pattern}*.cistem") 
+                + glob.glob(f"frealign/maps/*region*.cistem"))
             ]
 
             # regularize particle trajectories if we're doing particle frame refinement

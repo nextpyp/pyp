@@ -1683,9 +1683,6 @@ def csp_extract_coordinates(
     use_frames=False,
     use_existing_frame_alignments=False,
 ):
-    frame_tag = ""
-    if use_frames:
-        frame_tag = "_local"
 
     micrographs = f"{parameters['data_set']}.films"
     
@@ -1728,6 +1725,20 @@ def csp_extract_coordinates(
 
             # simply add it to the list
             alignment_parameters = Parameters.from_file(str(parameter_file))
+
+            # convert the array into the one with frames (FIND >= 0)
+            if use_frames and not alignment_parameters.has_frames():
+                
+                logger.info("Expanding data with frames")
+
+                metadata = pyp_metadata.LocalMetadata(f"pkl/{filename}.pkl").data
+                image_alignments = [metadata["drift"][image_idx].to_numpy() for image_idx in sorted(metadata["drift"].keys())]
+
+                # expand the data array with frames
+                alignment_parameters.convert_data_to_frames(image_alignment=image_alignments,
+                                                            parameters=parameters,
+                                                            is_spr=is_spr)
+
             allparxs.append(alignment_parameters)
 
     # if not skip and project_params.csp_is_done(
@@ -1840,7 +1851,7 @@ def csp_extract_coordinates(
         if "tomo" in parameters["data_mode"].lower():
 
             # generate new parx file from previous parx (not containing frame)
-            if use_frames and (
+            if False and use_frames and (
                 refinement.endswith(".par")
                 or refinement.endswith(".parx")
                 or refinement.endswith(".bz2")

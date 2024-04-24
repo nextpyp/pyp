@@ -877,12 +877,87 @@ class Parameters:
         self.set_data(data=data)
 
     def has_frames(self) -> bool:
-        assert self.get_data(), "No data in the Parameters data structure."
+        assert self.get_data() is not None, "No data in the Parameters data structure."
         frame_indexes = np.unique(self.get_data()[:, self.get_index_of_column(FIND)].astype(int))
         if len(frame_indexes) == 1 and frame_indexes[0] == 0:
             return True
         return False
-    
+
+    def convert_data_to_frames(self, image_alignment: list, parameters: dict, is_spr: bool = True):
+        assert (self.get_data() is not None), "Parameters data structure does not have data."
+        assert (len(image_alignment) > 0), "Image alignment is not provided."
+
+        num_frames_per_image = -1
+        for image in image_alignment:
+            num_frames = image.shape[0]
+            num_frames_per_image = max(num_frames, num_frames_per_image)
+            assert (num_frames == num_frames_per_image), f"Tilted images do not have the same number of frames. "
+
+
+        prealloc_data = np.zeros(num_frames_per_image * self.get_num_rows(), self.get_num_cols())
+        
+        X_SHIFT_COL = self.get_extended_data(X_SHIFT)
+        Y_SHIFT_COL = self.get_extended_data(Y_SHIFT)
+        FSHIFT_X_COL = self.get_extended_data(FSHIFT_X)
+        FSHIFT_Y_COL = self.get_extended_data(FSHIFT_Y)
+
+        X_POSITION_COL = self.get_index_of_column(ORIGINAL_X_POSITION)
+        Y_POSITION_COL = self.get_index_of_column(ORIGINAL_Y_POSITION)
+
+        IMIND_COL = self.get_index_of_column(IMIND)
+        TIND_COL = self.get_index_of_column(TIND)
+        FIND_COL = self.get_index_of_column(FIND)
+        
+        frame_idxs = np.reshape(
+            np.array([i for i in range(num_frames_per_image)]), (1, num_frames_per_image)
+        )
+        
+        current_row = 0
+
+        def populate(row):
+            
+            imind = row[IMIND_COL]
+            expanded_line = np.tile(row, (num_frames_per_image, 1))
+            expanded_line[:, FIND_COL] = frame_idxs[0]
+
+            if is_spr:
+                expanded_line[:, IMIND_COL] = 0
+                expanded_line[:, TIND_COL] = 0
+
+                # TODO: modify extended data
+                # # preserve original shift x/y (obtained using normal refine3d) 
+                # parlines[:, MICROGRAPH_X_COL] = parlines[:, SHIFTX_COL] 
+                # parlines[:, MICROGRAPH_Y_COL] = parlines[:, SHIFTY_COL] 
+                
+                # # preserve original rotation (obtained using normal refine3d) 
+                # parlines[:, PPSI_COL] = - parlines[:, PSI_COL]
+                # parlines[:, PTHETA_COL] = - parlines[:, THETA_COL]
+                # parlines[:, PPHI_COL] = - parlines[:, PHI_COL]
+
+                expanded_line[:, FSHIFT_X_COL] = 0.0
+                expanded_line[:, FSHIFT_Y_COL] = 0.0
+                
+
+            else:
+                x_err = image_alignment[imind][:, 4] - np.round_(image_alignment[imind][:, 4])
+                y_err = image_alignment[imind][:, 5] - np.round_(image_alignment[imind][:, 5])
+                
+                expanded_line[:, X_SHIFT_COL] -= x_err * parameters["scope_pixel"]
+                expanded_line[:, Y_SHIFT_COL] -= y_err * parameters["scope_pixel"]
+                expanded_line[:, FSHIFT_X_COL] -= x_err * parameters["scope_pixel"]
+                expanded_line[:, FSHIFT_Y_COL] -= y_err * parameters["scope_pixel"]
+
+
+            expanded_line[:, X_POSITION_COL] = expanded_line[:, X_POSITION_COL] - np.round_(image_alignment[imind][:, 4])
+            expanded_line[:, Y_POSITION_COL] = expanded_line[:, Y_POSITION_COL] - np.round_(image_alignment[imind][:, 5])
+
+            prealloc_data[current_row : current_row+num_frames_per_image, :] = expanded_line
+            current_row += num_frames_per_image
+
+        [populate(row) for row in self.get_data()]
+
+        self.set_data(data=prealloc_data)
+
 def initialize_parameters_binary(): 
 
     data = np.ones((100, 32))
