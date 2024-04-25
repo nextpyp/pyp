@@ -2001,6 +2001,7 @@ description = "Parameter file containing poses from sub-volume averaging"
 type = "path"
 path = { type="files" }
 input = { type="txtfile" }
+copyToNewBlock = false
 hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.parfile]

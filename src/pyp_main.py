@@ -341,10 +341,13 @@ def parse_arguments(block):
                         parent_project_name + "_r01_02.par.bz2",
                     )
                     # find out what is the most recent parameter file
-                    reference_par_file = sorted(glob.glob(os.path.join(parent_parameters["data_parent"],"frealign","maps","*_r01_??*") ))
+                    potential_parameter_files = glob.glob(os.path.join(parent_parameters["data_parent"],"frealign","maps","*_r01_??.bz2")) \
+                        + glob.glob(os.path.join(parent_parameters["data_parent"],"frealign","maps","*_r01_??"))
+
+                    reference_par_file = sorted(potential_parameter_files)
                     if len(reference_par_file) > 0:
                         reference_par_file = reference_par_file[-1]
-                        reference_model_file = reference_par_file.replace(".bz2","").replace(".par",".mrc")
+                        reference_model_file = reference_par_file.replace(".bz2","") + ".mrc"
                     elif data_mode == "tomo":
                         reference_par_file = sorted(glob.glob( os.path.join(parent_parameters["data_parent"],"frealign","tomo-preprocessing-*.txt") ))
                         if len(reference_par_file) > 0:
@@ -1837,12 +1840,14 @@ def csp_split(parameters, iteration):
         if iteration == 2:
             # if we have txt
             if ("refine_parfile_tomo" in parameters) and (parameters["refine_parfile_tomo"]) and (Path(project_params.resolve_path(parameters["refine_parfile_tomo"])).exists()):
-                parameters["refine_parfile"] = Path(project_params.resolve_path(parameters["refine_parfile_tomo"]))
+                # only copy the path to txt file when first time running csp
+                if "refine_parfile" not in parameters or not parameters["refine_parfile"] or not Path(project_params.resolve_path(parameters["refine_parfile"])).exists():
+                    parameters["refine_parfile"] = parameters["refine_parfile_tomo"]
 
             # from the external parameter file (.txt or .bz2)
             # we only move .bz2 to frealign/maps
             assert "refine_parfile" in parameters and parameters["refine_parfile"] is not None, "Parameter file is not provided."
-            external_parameter_file = parameters["refine_parfile"]
+            external_parameter_file = Path(project_params.resolve_path(parameters["refine_parfile"]))
             assert external_parameter_file.exists(), f"{external_parameter_file} does not exist."
 
             if str(external_parameter_file).endswith(".bz2"):

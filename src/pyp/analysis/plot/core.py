@@ -1498,10 +1498,22 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, sav
 
     # remove -1 (i.e. particles that do not have enough projections, missing in parifle etc.)
     scores = [_ for _ in scores if _ >= 0.0]
+    
     if len(scores) > 0:
+        good_scores = [_ for _ in scores if _ >= 0.0 and _ >= threshold]
+        bad_scores = [_ for _ in scores if _ >= 0.0 and _ < threshold]
+
+        bins = 80
+        interval = (max(scores) - min(scores)) / bins 
+        good_bins = int((max(good_scores) - min(good_scores)) / interval) if len(good_scores) > 0 else 0
+        bad_bins = int((max(bad_scores) - min(bad_scores)) / interval) if len(bad_scores) > 0 else 0
+
         fig, axs =  plt.subplots(1, 1, tight_layout=True)
-        axs.set_xlim([-0.5, max(max(scores)+1,threshold)])
-        axs.hist(scores, bins=100)
+        axs.set_xlim([-0.5, max(max(scores)+1, threshold)])
+        if len(good_scores) > 0:
+            axs.hist(good_scores, bins=good_bins, color="royalblue", alpha=1.0)
+        if len(bad_scores) > 0:
+            axs.hist(bad_scores, bins=bad_bins, color="royalblue", alpha=0.5)
 
         axs.set_xlabel('Mean score', fontsize=12, labelpad=10)
         axs.set_ylabel('Population', fontsize=12, labelpad=10)
@@ -1511,6 +1523,7 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, sav
         axs.spines["left"].set_linewidth(1)
         axs.tick_params(axis='both', which='major', labelsize=10)
 
+        plt.axvline(x=threshold, linestyle="dashed", linewidth=2.0, color='black')
         plt.savefig(f"{save_path}/{tiltseries}_scores.svgz")
         plt.close()
     else:

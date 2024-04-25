@@ -7,6 +7,7 @@ import os
 import random
 import shutil
 import socket
+import copy
 import sys
 import time
 import datetime
@@ -928,8 +929,6 @@ def csp_run_refinement(
     scanord_list = alignment_parameters.get_extended_data().get_tilt_list() 
     frame_list = np.sort(np.unique(alignment_parameters.get_data()[:, alignment_parameters.get_index_of_column(cistem_star_file.FIND)])) 
 
-    stackfile = "frealign/" + name[:-4] + "_stack.mrc"
-
     cpus = int(parameters["slurm_tasks"])
 
     use_images_for_refinement_min = project_params.param(
@@ -1000,10 +999,11 @@ def csp_run_refinement(
 
     for i in range(1):
 
+        prev_alignment_parameters = copy.deepcopy(alignment_parameters)
+
         starting_num_projections = alignment_parameters.get_num_rows()
         starting_num_particles = alignment_parameters.get_extended_data().get_num_tilts()
         starting_num_tilts = alignment_parameters.get_extended_data().get_num_tilts()
-        starting_num_rows_tilts = alignment_parameters.get_extended_data().get_num_rows_tilts()
 
         ###############################
         # The available modes in CSPT #
@@ -1191,7 +1191,8 @@ def csp_run_refinement(
             # clean-up intermediate results after merge
             [
                 os.remove(f)
-                for f in glob.glob(f"frealign/maps/{name}{outputs_pattern}*.cistem") + glob.glob(f"frealign/maps/{name}*region*.cistem")
+                for f in set(glob.glob(f"frealign/maps/{name}{outputs_pattern}*.cistem") 
+                + glob.glob(f"frealign/maps/*region*.cistem"))
             ]
 
             # regularize particle trajectories if we're doing particle frame refinement
@@ -1200,7 +1201,9 @@ def csp_run_refinement(
                 if parameters["csp_rotreg"] or parameters["csp_transreg"]:
                     
                     # FIXME (HF): new cistem binary 
-                    # fit.regularize( name.split("_r")[0], new_par_file, prev_par_file, reg_par_file, parameters )
+                    fit.regularize(name.split("_r")[0], prev_alignment_parameters, alignment_parameters, parameters)
+                    # NOTE: regularize() function updates the shifts in "alignment_parameters", so we just need to write a new file
+                    alignment_parameters.to_binary(output=parameter_file)
 
                     csp_modes.append(5)
                     parameters["csp_UseImagesForRefinementMin"] = int(len(scanord_list))
@@ -1208,9 +1211,6 @@ def csp_run_refinement(
                     only_evaluate = True 
 
                     project_params.save_parameters(parameters)
-
-                    # os.remove(new_par_file)
-                    # os.rename(reg_par_file, new_par_file)
 
             elif only_evaluate:
                 parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = csp_refine_min, csp_refine_max
