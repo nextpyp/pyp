@@ -1201,9 +1201,11 @@ def csp_run_refinement(
 
                 if parameters["csp_rotreg"] or parameters["csp_transreg"]:
                     
-                    # FIXME (HF): new cistem binary 
-                    fit.regularize(name.split("_r")[0], prev_alignment_parameters, alignment_parameters, parameters)
-                    # NOTE: regularize() function updates the shifts in "alignment_parameters", so we just need to write a new file
+                    fit.regularize(filename=name.split("_r")[0], 
+                                   prev_alignment_parameters=prev_alignment_parameters, 
+                                   alignment_parameters=alignment_parameters, 
+                                   parameters=parameters)
+                    # NOTE: regularize() function updates the shifts in "alignment_parameters", so we just need to write a new file so that csp can read it
                     alignment_parameters.to_binary(output=parameter_file)
 
                     csp_modes.append(5)

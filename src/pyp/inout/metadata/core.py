@@ -1684,18 +1684,6 @@ def csp_extract_coordinates(
     use_existing_frame_alignments=False,
 ):
 
-    micrographs = f"{parameters['data_set']}.films"
-    
-    with open(micrographs) as f:
-        micrograph_list = [line.strip() for line in f]
-    # if filename in micrograph_list:
-    #     micrograph_index = micrograph_list.index(filename)
-    #     film_col = 7
-    # else:
-    #     raise Exception(
-    #         "{} is not in {}".format(filename,micrographs)
-    #     )
-
     allparxs = []
     dataset = parameters["data_set"]
     is_spr = "spr" in parameters["data_mode"]
@@ -1709,7 +1697,7 @@ def csp_extract_coordinates(
 
         logger.info("Skipping coordinate extraction (using existing frame coordinates)")
 
-        # we can use the parameter file already in the frealign/maps (properly dealt with by csp_split())
+        # we can use the parameter file already in the frealign/maps (decompressed by csp_split())
         for current_class in range(classes):
             name = f"{dataset}_r{current_class+1:02d}"
             
@@ -1731,7 +1719,10 @@ def csp_extract_coordinates(
                 
                 logger.info("Expanding data with frames")
 
-                metadata = pyp_metadata.LocalMetadata(f"pkl/{filename}.pkl").data
+                # retrieve tiltseries alignment parameters from pkl file
+                pkl_file = f"pkl/{filename}.pkl"
+                assert Path(pkl_file).exists(), f"{pkl_file} does not exist."
+                metadata = pyp_metadata.LocalMetadata(pkl_file).data
                 image_alignments = [metadata["drift"][image_idx].to_numpy() for image_idx in sorted(metadata["drift"].keys())]
 
                 # expand the data array with frames
@@ -1740,99 +1731,6 @@ def csp_extract_coordinates(
                                                             is_spr=is_spr)
 
             allparxs.append(alignment_parameters)
-
-    # if not skip and project_params.csp_is_done(
-    #     os.path.join(working_path, filename), use_frames
-    # ):
-    #     logger.info(
-    #         "Skipping coordinate extraction (using existing frame coordinates)"
-    #     )
-
-    #     with timer.Timer(
-    #         "read_boxfiles", text = "Reading allboxes, boxxs took: {}", logger=logger.info
-    #     ):
-    #         # retrieve from files
-    #         allboxes = (
-    #             np.loadtxt(
-    #                 os.path.join(working_path, filename + frame_tag + ".allboxes"), ndmin=2
-    #             )
-    #             .astype(int)
-    #             .tolist()
-    #         )
-
-    #     allparxs = []
-    #     iteration = parameters["refine_iter"]
-    #     if iteration == 2:
-    #         classes = 1
-    #     else:
-    #         classes = int(project_params.param(parameters["class_num"], iteration))
-    #     for current_class in range(classes):
-
-    #         # now get latest metadata from merged par file in frealign/maps folder
-    #         if iteration == 2:
-    #             merged_par_file = project_params.resolve_path(
-    #                 parameters["refine_parfile"]
-    #             ) if "refine_parfile" in parameters else "none"
-    #         else:
-    #             if classes > 1:
-    #                 # we want to read the occ updated .par instead of the original compressed par
-    #                 merged_par_file = os.path.join(
-    #                     os.getcwd(),
-    #                     "frealign",
-    #                     "maps",
-    #                     "%s_r%02d_%02d.par"
-    #                     % (parameters["data_set"], current_class + 1, iteration - 1),
-    #                 )
-    #             else:
-    #                 merged_par_file = os.path.join(
-    #                     os.getcwd(),
-    #                     "frealign",
-    #                     "maps",
-    #                     "%s_r%02d_%02d.par.bz2"
-    #                     % (parameters["data_set"], current_class + 1, iteration - 1),
-    #                 )
-
-    #         if os.path.exists(merged_par_file) and ".par" in merged_par_file:
-    #             par_alignment = True
-    #         else:
-    #             par_alignment = False
-
-    #         if par_alignment:
-    #             logger.info("Retrieving alignments from " + Path(merged_par_file).name)
-    #             # decompress file if needed
-    #             if ".bz2" in merged_par_file:
-    #                 with timer.Timer(
-    #                     "Decompressing_parfile", text = "Decompressing " + Path(merged_par_file).name + " took: {}", logger=logger.info
-    #                 ):
-    #                     merged_par_file = frealign_parfile.Parameters.decompress_parameter_file(
-    #                         merged_par_file, parameters["slurm_tasks"]
-    #                     )
-
-    #             with timer.Timer(
-    #                 "read_alignment", text = "Reading alignments from parfile took: {}", logger=logger.info
-    #             ):
-    #                 index_file = os.path.join( current_path, "csp" , "micrograph_particle.index" )
-    #                 assert os.path.exists(index_file), f"Index file is missing: {index_file}"
-    #                 with open(index_file) as f:
-    #                     index_dict = json.load(f)
-    #                 start, end = index_dict[str(micrograph_index)]
-    #                 step = end - start
-    #                 start += 3
-    #                 extracted_rows = np.loadtxt(merged_par_file, dtype=float, comments="C", skiprows=start, max_rows=step, ndmin=2)
-    #                 allparxs.append(extracted_rows[:, 1:])
-
-    #         # else, fall back to canonical extended parameters
-    #         else:
-    #             allparxs.append([])
-    #             allparxs_file = os.path.join(working_path, filename + ".allparxs")
-
-    #             if len(allparxs[current_class]) != len(allboxes) and os.path.exists(
-    #                 allparxs_file
-    #             ):
-    #                 logger.info("Loading refined parameters from " + allparxs_file)
-    #                 with open(allparxs_file) as f:
-    #                     for line in f:
-    #                         allparxs[current_class].append(line[:-1])
 
     else:
 
@@ -1851,6 +1749,8 @@ def csp_extract_coordinates(
         if "tomo" in parameters["data_mode"].lower():
 
             # generate new parx file from previous parx (not containing frame)
+            # NOTE: we move this part above (converting data into frames))
+            # TODO: do the same thing for SPR
             if False and use_frames and (
                 refinement.endswith(".par")
                 or refinement.endswith(".parx")
@@ -1910,31 +1810,9 @@ def csp_extract_coordinates(
                     parx_object_no_frames, allboxes, xf_frames, parameters, scanords
                 )
             else:
-                # [allboxes, allparxs] = tomo_extract_coordinates(
-                #     filename, parameters, use_frames, extract_projections=False
-                # )
                 allparxs = tomo_extract_coordinates(
                     filename, parameters, use_frames, extract_projections=False
                 )
-
-                # use external alignments if available
-                if parameters["refine_iter"] == 2 and refinement.endswith(".par"):
-                    with timer.Timer(
-                        "read_alignment", text = "Reading alignments from parfile took: {}", logger=logger.info
-                    ):
-                        allparxs = []
-                        index_file = os.path.join( current_path, "csp" , "micrograph_particle.index" )
-                        assert os.path.exists(index_file), f"Index file is missing: {index_file}"
-                        with open(index_file) as f:
-                            index_dict = json.load(f)
-                        start, end = index_dict[str(micrograph_index)]
-                        step = end - start
-                        start += 3
-                        extracted_rows = np.loadtxt(refinement, dtype=float, comments="C", skiprows=start, max_rows=step, ndmin=2)
-                        allparxs.append(extracted_rows[:, 1:])
-
-            # copy boxes3d and ctf files to local scratch
-            # shutil.copy2("csp/{}_boxes3d.txt".format(filename), working_path)
 
         else:
 
@@ -1995,21 +1873,6 @@ def csp_extract_coordinates(
                     working_path
                 )
 
-        # save frame coordinates to file
-        # np.savetxt(
-        #     os.path.join(working_path, filename + frame_tag + ".allboxes"),
-        #     np.array(allboxes).astype(int),
-        #     fmt="%i",
-        # )
-
-        # save metadata to file and only initialize for 1 class
-        # with open(
-        #     os.path.join(working_path, filename + frame_tag + ".allparxs"), "w"
-        # ) as f:
-        #     f.writelines("%s\n" % item for item in allparxs[0])
-        
-
-    # return allboxes, allparxs
     return allparxs
 
 def tomo_extract_coordinates(

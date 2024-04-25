@@ -187,11 +187,17 @@ def split_parameter_file(alignment_parameters, parameter_file, regions_list):
 
         # add the tilt parameters to the region extended data and assign new region index
         region_tilt_parameters = dict()
+        
         for pair in tind_rind:
             tind, rind = pair[0], pair[1]
+
             if tind not in region_tilt_parameters:
                 region_tilt_parameters[tind] = dict()
-            region_tilt_parameters[tind][new_rind] = tilt_parameters[tind][rind]
+            
+            # update region_index in the dictionary and Tilt object
+            tilt_object = tilt_parameters[tind][rind]
+            tilt_object.region_index = new_rind
+            region_tilt_parameters[tind][new_rind] = tilt_object
 
         extended_parameters = ExtendedParameters()
         extended_parameters.set_data(particles=particle_parameters, 

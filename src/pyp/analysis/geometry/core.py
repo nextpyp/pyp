@@ -624,11 +624,7 @@ def divide2regions(
                         curr_z + (increment_z * k),
                     ]
                 )
-
-    logger.info(
-        f"Tomogram is divided into {len(corners_squares)} grid(s) for CSPT region-based refinement."
-    )
-
+                
     return corners_squares, [patchsize_x, patchsize_y, patchsize_z]
 
 
@@ -684,83 +680,6 @@ def findSpecimenBounds(particle_parameters, dim_tomogram):
     top_right_corner = [max_x, max_y, max_z]
 
     return [bottom_left_corner, top_right_corner]
-
-
-def divide2regions(
-    bottom_left_corner, top_right_corner, split_x=4, split_y=4, split_z=1, overlap=0.0
-):
-    """Divide the tomogram into several grids to sort local particles for frame refinement
-
-    Parameters
-    ----------
-    bottom_left_corner : list[float]
-        The 3D coordinate of one corner of tomogram
-    top_right_corner : list[float]
-        The 3D coordinate of the other corner of tomogram
-    split_x : int, optional
-        The number of grids to be divided in x direction, by default 4
-    split_y : int, optional
-        The number of grids to be divided in y direction, by default 4
-    split_z : int, optional
-        The number of grids to be divided in z direction, by default 1
-    overlap : float, optional
-        The percentage of overlapped area between grids, 0.0 - 1.0, by default 0.2
-
-    Returns
-    -------
-    list[list[float]], list[float]]
-        The first list stores 3D coordinate of the bottom-left corners for every divided square
-        The second list stores the size of squares [ x, y, z ]
-    """
-
-    if split_x < 1 or split_y < 1 or split_z < 1:
-        logger.error(f"Split x/y/z has to be greater than zero.")
-        sys.exit()
-
-    corners_squares = []
-
-    tomosize_x = top_right_corner[0] - bottom_left_corner[0]
-    tomosize_y = top_right_corner[1] - bottom_left_corner[1]
-    tomosize_z = top_right_corner[2] - bottom_left_corner[2]
-
-    if split_x - split_x * overlap + overlap != 0:
-        patchsize_x = tomosize_x / (split_x - split_x * overlap + overlap)
-    else:
-        patchsize_x = tomosize_x
-
-    if split_y - split_y * overlap + overlap != 0:
-        patchsize_y = tomosize_y / (split_y - split_y * overlap + overlap)
-    else:
-        patchsize_y = tomosize_y
-
-    if split_z - split_z * overlap + overlap != 0:
-        patchsize_z = tomosize_z / (split_z - split_z * overlap + overlap)
-    else:
-        patchsize_z = tomosize_z
-
-    curr_x, curr_y, curr_z = bottom_left_corner
-    increment_x, increment_y, increment_z = (
-        patchsize_x * (1 - overlap),
-        patchsize_y * (1 - overlap),
-        patchsize_z * (1 - overlap),
-    )
-
-    for i in range(split_x):
-        for j in range(split_y):
-            for k in range(split_z):
-                corners_squares.append(
-                    [
-                        curr_x + (increment_x * i),
-                        curr_y + (increment_y * j),
-                        curr_z + (increment_z * k),
-                    ]
-                )
-
-    logger.info(
-        f"Dividing into {len(corners_squares)} region(s) for CSPT region-based refinement"
-    )
-
-    return corners_squares, [patchsize_x, patchsize_y, patchsize_z]
 
 
 def DefocusOffsetFromCenter(

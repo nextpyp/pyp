@@ -656,16 +656,16 @@ class Parameters:
         merged_extended_parameters = None
         if len(input_extended_files) > 0:
             merged_extended_parameters = ExtendedParameters() 
-            particles = {}
-            tilts = {}
+            particles = dict()
+            tilts = dict()
             for particle in params_particles:
                 particles.update(particle)
             for tilt in params_tilts:
                 for tilt_index in tilt.keys():
                     if tilt_index not in tilts:
-                        tilts[tilt_index] = {}
+                        tilts[tilt_index] = dict()
                     tilts[tilt_index].update(tilt[tilt_index])
-
+ 
             merged_extended_parameters.set_data(particles=particles, tilts=tilts)
         
         merged_parameters.set_data(data=merged_array,
@@ -880,8 +880,8 @@ class Parameters:
         assert self.get_data() is not None, "No data in the Parameters data structure."
         frame_indexes = np.unique(self.get_data()[:, self.get_index_of_column(FIND)].astype(int))
         if len(frame_indexes) == 1 and frame_indexes[0] == 0:
-            return True
-        return False
+            return False
+        return True
 
     def convert_data_to_frames(self, image_alignment: list, parameters: dict, is_spr: bool = True):
         assert (self.get_data() is not None), "Parameters data structure does not have data."
@@ -894,12 +894,12 @@ class Parameters:
             assert (num_frames == num_frames_per_image), f"Tilted images do not have the same number of frames. "
 
 
-        prealloc_data = np.zeros(num_frames_per_image * self.get_num_rows(), self.get_num_cols())
+        prealloc_data = np.zeros((num_frames_per_image * self.get_num_rows(), self.get_num_cols()))
         
-        X_SHIFT_COL = self.get_extended_data(X_SHIFT)
-        Y_SHIFT_COL = self.get_extended_data(Y_SHIFT)
-        FSHIFT_X_COL = self.get_extended_data(FSHIFT_X)
-        FSHIFT_Y_COL = self.get_extended_data(FSHIFT_Y)
+        X_SHIFT_COL = self.get_index_of_column(X_SHIFT)
+        Y_SHIFT_COL = self.get_index_of_column(Y_SHIFT)
+        FSHIFT_X_COL = self.get_index_of_column(FSHIFT_X)
+        FSHIFT_Y_COL = self.get_index_of_column(FSHIFT_Y)
 
         X_POSITION_COL = self.get_index_of_column(ORIGINAL_X_POSITION)
         Y_POSITION_COL = self.get_index_of_column(ORIGINAL_Y_POSITION)
@@ -912,11 +912,11 @@ class Parameters:
             np.array([i for i in range(num_frames_per_image)]), (1, num_frames_per_image)
         )
         
-        current_row = 0
+        ctr = 0
 
-        def populate(row):
+        for row in self.get_data():
             
-            imind = row[IMIND_COL]
+            imind = int(row[IMIND_COL])
             expanded_line = np.tile(row, (num_frames_per_image, 1))
             expanded_line[:, FIND_COL] = frame_idxs[0]
 
@@ -951,12 +951,12 @@ class Parameters:
             expanded_line[:, X_POSITION_COL] = expanded_line[:, X_POSITION_COL] - np.round_(image_alignment[imind][:, 4])
             expanded_line[:, Y_POSITION_COL] = expanded_line[:, Y_POSITION_COL] - np.round_(image_alignment[imind][:, 5])
 
-            prealloc_data[current_row : current_row+num_frames_per_image, :] = expanded_line
-            current_row += num_frames_per_image
-
-        [populate(row) for row in self.get_data()]
-
+            prealloc_data[ctr : ctr + num_frames_per_image, :] = expanded_line
+            ctr += num_frames_per_image
+        
+        prealloc_data[:, self.get_index_of_column(POSITION_IN_STACK)] = np.arange(start=1, stop=prealloc_data.shape[0]+1)
         self.set_data(data=prealloc_data)
+
 
 def initialize_parameters_binary(): 
 

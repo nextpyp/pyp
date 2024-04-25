@@ -4032,7 +4032,8 @@ if __name__ == "__main__":
                 os.chdir("..")
 
                 if project_params.resolve_path(parameters["clean_parfile"]) == "auto":
-                    reference_par_file = sorted(glob.glob( os.path.join(parameters["data_parent"],"frealign","maps","*_r01_??*") ))
+                    reference_par_file = sorted(glob.glob( os.path.join(parameters["data_parent"],"frealign","maps","*_r01_??.bz2")) +\
+                                                glob.glob( os.path.join(parameters["data_parent"],"frealign","maps","*_r01_??") ))
                     if len(reference_par_file) > 0:
                         parameters["clean_parfile"] = reference_par_file[-1]
                         parameters["refine_parfile"] = reference_par_file[-1]

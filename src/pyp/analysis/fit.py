@@ -256,11 +256,15 @@ def regularize_image(
     prev_arr = prev_alignment_parameters.get_data()
     input_arr = alignment_parameters.get_data()
 
+    imind_col = alignment_parameters.get_index_of_column(IMIND)    
     tilt_col = alignment_parameters.get_index_of_column(TIND)
-    scanor_col = alignment_parameters.get_index_of_column(FIND)
+    scanor_col = alignment_parameters.get_index_of_column(FIND) # this is actually frame index (scanord was used as frame index previously)
     ptlind_col = alignment_parameters.get_index_of_column(PIND)
     frame_shift_x_col = alignment_parameters.get_index_of_column(FSHIFT_X)
     frame_shift_y_col = alignment_parameters.get_index_of_column(FSHIFT_Y)
+    position_x_col = alignment_parameters.get_index_of_column(ORIGINAL_X_POSITION)
+    position_y_col = alignment_parameters.get_index_of_column(ORIGINAL_Y_POSITION)
+
 
     logger.info("Now processing tilt %d", tilt_count)
     tilt_idx = np.where(input_arr[:, tilt_col].astype(int) == tilt_count)[0]
@@ -271,11 +275,10 @@ def regularize_image(
 
     tilt_arr = input_arr[tilt_idx, :]
     prev_tilt_arr = prev_arr[tilt_idx]
-
-    # get the index of tilt to obtain global frame alignment from the right file
-    tilt_list_indexes = np.unique(input_arr[:, tilt_col], return_index=True)[1]
-    tilt_list = np.array([input_arr[:, tilt_col][index] for index in sorted(tilt_list_indexes)])
-    tilt_index_xf_files = np.where(tilt_list == tilt_count)[0][0]
+    
+    image_indexes = np.unique(tilt_arr[:, imind_col])
+    assert len(image_indexes) == 1, f"Tilted projections have more than one image index: [{', '.join(list(image_indexes))}]"
+    tilt_index_xf_files = int(np.unique(tilt_arr[:, imind_col])[0])
 
     # get total number of particles
     ptlind_list = np.sort(np.unique(tilt_arr[:, ptlind_col]).astype(int))
@@ -447,7 +450,7 @@ def regularize_image(
         particles = alignment_parameters.get_extended_data().get_particles()
         
         box = []
-        for pind in range(max(particles.keys())+1):
+        for pind in range(int(max(particles.keys())+1)):
             if pind not in particles:
                 box.append([-1, -1, -1])
             else:
@@ -832,11 +835,12 @@ def regularize_image(
 
         if "tomo" in parameters["data_mode"].lower():
             # use positions of the middle frame to plot trajectories
-            allboxes = np.loadtxt(f"{filename}_local.allboxes", dtype=int)
-            frame_indexes = np.unique(allboxes[:, -1])
-            middle_frame_index = int(np.median(frame_indexes))
-            box_2d = allboxes[tilt_idx, :]
-            box_2d = box_2d[box_2d[:, -1] == middle_frame_index]
+            # allboxes = np.loadtxt(f"{filename}_local.allboxes", dtype=int)
+            # frame_indexes = np.unique(allboxes[:, -1])
+            # middle_frame_index = int(np.median(frame_indexes))
+            # box_2d = allboxes[tilt_idx, :]
+            # box_2d = box_2d[box_2d[:, -1] == middle_frame_index]
+            box_2d = tilt_arr[tilt_arr[:, scanor_col] == 0][:, [position_x_col, position_y_col]]
         else: 
             box_2d = box 
 
@@ -883,11 +887,10 @@ def regularize(
             parameters["data_bin"]
         )
         if "tomo" in parameters["data_mode"].lower():
-            try:
-                xf_frames, xf_files = tomo_load_frame_xf(parameters, filename, xf_path="./")
-            except:
-                metadata = pyp_metadata.LocalMetadata(f"{filename}.pkl").data
-                xf_frames = [metadata["drift"][tilt_idx].to_numpy() for tilt_idx in sorted(metadata["drift"].keys())]
+
+            metadata = pyp_metadata.LocalMetadata(f"{filename}.pkl").data
+            xf_frames = [metadata["drift"][tilt_idx].to_numpy() for tilt_idx in sorted(metadata["drift"].keys())]
+
         else: xf_frames = np.array([])
 
         tind_list = alignment_parameters.get_extended_data().get_tilt_list()
