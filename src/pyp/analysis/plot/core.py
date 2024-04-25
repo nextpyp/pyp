@@ -14,7 +14,7 @@ import pyp.analysis.scores
 import pyp.inout.image as imageio
 import pyp.inout.metadata as metaio
 from pyp.inout.image import img2webp
-from pyp.inout.metadata import pyp_metadata
+from pyp.inout.metadata import pyp_metadata, cistem_star_file
 from pyp.analysis.image import contrast_stretch
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
@@ -556,7 +556,7 @@ def plot_trajectory_raw(xf, output_name="", noisy=np.empty([0])):
 
 
 def generate_plots(
-    parfile, angles=25, defocuses=25, scores=False, frealignx=False, dump=False
+    pardata, output_name, angles=25, defocuses=25, scores=False, is_tomo=False, dump=False
 ):
     import matplotlib as mpl
 
@@ -564,40 +564,32 @@ def generate_plots(
     import matplotlib.pyplot as plt
     from matplotlib import cm
     
-
     (
-        par_obj,
         angular_group,
         defocus_group,
     ) = pyp.analysis.scores.assign_angular_defocus_groups(
-        parfile, angles, defocuses, frealignx
+        pardata, angles, defocuses
     )
-    input = par_obj.data
-    
-    if scores:
-        field = 14
-    elif frealignx:
-        field = 15
-    else:
-        field = 11
+    input = pardata
 
-    # figure out tomo or spr by check tilt angles
-    tltangle = field + 3
-    ptlindex = field + 2
-    film_id = 7
-    occ_col = field - 3
-    
-    if np.any(input[:, tltangle] !=0 ):
-        is_tomo = True
-    else:
-        is_tomo = False
+    par_obj = cistem_star_file.Parameters()
+    field = par_obj.get_index_of_column(cistem_star_file.SCORE)
+
+    ptlindex = par_obj.get_index_of_column(cistem_star_file.PIND)
+    film_id = par_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+    occ_col = par_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
+    tind_col = par_obj.get_index_of_column(cistem_star_file.TIND)
+    df1_col = par_obj.get_index_of_column(cistem_star_file.DEFOCUS_1)
+    theta_col = par_obj.get_index_of_column(cistem_star_file.THETA)
+    lgp_col = par_obj.get_index_of_column(cistem_star_file.LOGP)
+    sgm_col = par_obj.get_index_of_column(cistem_star_file.SIGMA)
 
     defocus_values = np.zeros(defocuses)
     for f in range(defocuses):
         if input.shape[0] > 0:
             defocus_values[f] = np.where(
                 np.logical_and(defocus_group == f, np.isfinite(input[:, field])),
-                input[:, 8],
+                input[:, df1_col],
                 0,
             ).max()
         else:
@@ -608,7 +600,7 @@ def generate_plots(
         if input.shape[0] > 0:
             angular_values[g] = np.where(
                 np.logical_and(angular_group == g, np.isfinite(input[:, field])),
-                input[:, 8],
+                input[:, df1_col],
                 0,
             ).max()
         else:
@@ -668,14 +660,13 @@ def generate_plots(
                     # plt.subplots_adjust(left=0.02, right=.98, top=0.9, bottom=0.1)
                     plt.savefig(
                         "../maps/%s_V%04d_D%04d_hist.png"
-                        % (os.path.splitext(parfile)[0], g, f)
+                        % (output_name, g, f)
                     )
 
                     # create fmatch stack
-                    name = parfile[:-4]
-                    fmatch_stack = "/scratch/{0}_match.mrc".format(name)
-                    # fmatch_stack = '../maps/{0}_match.mrc'.format( name )
-                    fmatch_stack = "../maps/{0}_match_unsorted.mrc".format(name)
+                    fmatch_stack = "/scratch/{0}_match.mrc".format(output_name)
+                    # fmatch_stack = '../maps/{0}_match.mrc'.format( output_name )
+                    fmatch_stack = "../maps/{0}_match_unsorted.mrc".format(output_name)
 
                     if os.path.exists(fmatch_stack):
                         A = np.transpose(
@@ -691,7 +682,7 @@ def generate_plots(
                         B = A[np.argsort(-A[:, -1])]
                         sorted_indexes = (B[:, 0] - 1).tolist()  # 0-based indexes
                         fmatch_stack_group = "../maps/%s_V%04d_D%04d_match.mrc" % (
-                            os.path.splitext(parfile)[0],
+                            output_name,
                             g,
                             f,
                         )
@@ -708,9 +699,9 @@ def generate_plots(
         plt.xlabel("Defocus Group")
         plt.ylabel("Orientation Group")
         plt.colorbar(cax, ticks=[np.nanmin(thresholds), np.nanmax(thresholds)])
-        plt.savefig("../maps/%s_thresholds.png" % os.path.splitext(parfile)[0])
+        plt.savefig("../maps/%s_thresholds.png" % output_name)
         np.savetxt(
-            "../maps/%s_thresholds.txt" % os.path.splitext(parfile)[0],
+            "../maps/%s_thresholds.txt" % output_name,
             thresholds,
             fmt="%10.5f",
         )
@@ -718,11 +709,7 @@ def generate_plots(
     if scores:
         # number of particles in this class (Occ>50%)
         # total = np.logical_and( input[:,11]>50, np.isfinite(input[:,field]) ).sum()
-        total = int(np.where(np.isfinite(input[:, field]), input[:, 11], 0).sum() / 100)
-    elif frealignx:
-        # number of particles in this class (Occ>50%)
-        # total = np.logical_and( input[:,11]>50, np.isfinite(input[:,field]) ).sum()
-        total = int(np.where(np.isfinite(input[:, field]), input[:, 12], 0).sum() / 100)
+        total = int(np.where(np.isfinite(input[:, field]), input[:, occ_col], 0).sum() / 100)
     else:
         total = count.sum()
 
@@ -730,7 +717,7 @@ def generate_plots(
     fig.subplots_adjust(left=0.075, right=0.925, top=0.95, bottom=0.05)
     fig.suptitle(
         "%s\n(%i of %i)"
-        % (os.path.splitext(parfile)[0], total, angular_group.shape[0]),
+        % (output_name, total, angular_group.shape[0]),
         fontsize=12,
         fontweight="bold",
     )
@@ -765,20 +752,20 @@ def generate_plots(
     grid[1].set_xlabel("Defocus (%d, %d)" % (defocus_values[0], defocus_values[-1]))
     grid[1].set_ylabel("Orientations")
 
-    plt.savefig("{}_prs.png".format(os.path.splitext(parfile)[0]))
+    plt.savefig("{}_prs.png".format(output_name))
 
-    angular_group = np.floor(np.mod(input[:, 2], 180) * angles / 180)
+    angular_group = np.floor(np.mod(input[:, theta_col], 180) * angles / 180)
     if input.shape[0] > 0:
         mind, maxd = (
-            int(math.floor(input[:, 8].min())),
-            int(math.ceil(input[:, 8].max())),
+            int(math.floor(input[:, df1_col].min())),
+            int(math.ceil(input[:, df1_col].max())),
         )
     else:
         mind = maxd = 0
     if maxd == mind:
         defocus_group = np.zeros(angular_group.shape)
     else:
-        defocus_group = np.round((input[:, 8] - mind) / (maxd - mind) * (defocuses - 1))
+        defocus_group = np.round((input[:, df1_col] - mind) / (maxd - mind) * (defocuses - 1))
 
     fig, ax = plt.subplots(2, 3, figsize=(8, 4))
     rot_n, rot_bins, rot_patches = ax[0, 0].hist(
@@ -791,6 +778,8 @@ def generate_plots(
     )
     ax[0, 1].set_title("Defocus")
     ax[0, 1].set_yticks([])
+
+    # used = np.logical_and( input[:,occ_col]>50, np.isfinite(input[:,field]) )
     prs = sorted(input[:, field])
 
     scores_n, scores_bins, scores_patches = ax[0, 2].hist(
@@ -808,7 +797,7 @@ def generate_plots(
     # particle score plot for tomo
     try:
         if is_tomo:
-            use_sub_block = input[input[:, occ_col] > 50][:, [film_id, field, ptlindex, tltangle]]
+            use_sub_block = input[input[:, occ_col] > 50][:, [film_id, field, ptlindex, tind_col]]
             take_mean = []
             for film in np.unique(use_sub_block[:,0]):
                 ptl_in_image = use_sub_block[use_sub_block[:,0] == film ]
@@ -816,48 +805,48 @@ def generate_plots(
                 for p in ptl:
                     take_score = ptl_in_image[np.logical_and(ptl_in_image[:, 2]== p, np.abs(ptl_in_image[:, 3]) < 10)][:, 1]
                     take_mean.append(np.mean(take_score))
-            histogram_particle_tomo(take_mean, threshold=0, tiltseries=os.path.splitext(parfile)[0], save_path="../maps")
+            histogram_particle_tomo(take_mean, threshold=0, tiltseries=output_name, save_path="../maps")
     except:
         logger.info("Per particle score plot for tomo was not successful")
         pass
 
     occ_n, occ_bins, occ_patches = ax[1, 0].hist(
-        input[:, 11], angles, density=1, facecolor="yellow", alpha=0.75
+        input[:, occ_col], angles, density=1, facecolor="yellow", alpha=0.75
     )
-    occupancies = input[:, 11].mean()
+    occupancies = input[:, occ_col].mean()
     metadata["occ"] = occupancies
     ax[1, 0].set_xlabel("Occupancies = %.2f" % occupancies )
     ax[1, 0].set_yticks([])
     ax[1, 0].set_xticks([])
 
     logp_n, logp_bins, logp_patches = ax[1, 1].hist(
-        input[:, 12], angles, density=1, facecolor="cyan", alpha=0.75
+        input[:, lgp_col], angles, density=1, facecolor="cyan", alpha=0.75
     )
-    logp = input[:, 12].mean()
+    logp = input[:, lgp_col].mean()
     metadata["logp"] = logp
     ax[1, 1].set_xlabel("LogP = %.2f" % logp)
     ax[1, 1].set_yticks([])
     ax[1, 1].set_xticks([])
 
     sigma_n, sigma_bins, sigma_patches = ax[1, 2].hist(
-        input[:, 13], angles, density=1, facecolor="magenta", alpha=0.75
+        input[:, sgm_col], angles, density=1, facecolor="magenta", alpha=0.75
     )
-    sigma = input[:, 13].mean()
+    sigma = input[:, sgm_col].mean()
     metadata["sigma"] = sigma
     ax[1, 2].set_xlabel("Sigma = %.2f" % sigma)
     ax[1, 2].set_yticks([])
     ax[1, 2].set_xticks([])
 
     plt.subplots_adjust(left=0.02, right=0.98, top=0.9, bottom=0.1)
-    plt.savefig("%s_hist.png" % os.path.splitext(parfile)[0])
+    plt.savefig("%s_hist.png" % output_name)
 
     # combine the two plos
     command = "montage {0}_prs.png {0}_hist.png -tile 1x2 -geometry +0+0 {0}_prs.png".format(
-        os.path.splitext(parfile)[0]
+        output_name
     )
     run_shell_command(command, verbose=False)
 
-    os.remove("%s_hist.png" % os.path.splitext(parfile)[0])
+    os.remove("%s_hist.png" % output_name)
 
     # outputs: counts, plot, orientations, defocus, scores, occ, logp and sigma (n, bins)
     output = {}
@@ -887,13 +876,12 @@ def generate_plots(
         output["occ_plot"] = np.sort(input[::spacing, 11])[::-1].tolist()
 
     # save dict to pikle for parallel run
-    output_file = parfile.replace(".par", "_temp.pkl")
-    meta_file = parfile.replace(".par", "_meta_temp.pkl")
+    output_file = output_name + "_temp.pkl"
+    meta_file = output_name + "_meta_temp.pkl"
     with open(output_file, 'wb') as f1:
         pickle.dump(output, f1)
     with open(meta_file, 'wb') as f2:
         pickle.dump(metadata, f2)
-
     # return output, metadata
 
 

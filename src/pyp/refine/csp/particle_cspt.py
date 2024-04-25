@@ -22,7 +22,7 @@ from pyp import align, postprocess
 from pyp.analysis import plot, statistics
 from pyp.analysis.geometry import divide2regions, findSpecimenBounds, get_tomo_binning
 from pyp.analysis.geometry.pyp_convert_coord import read_3dbox
-from pyp.analysis.occupancies import occupancies, occupancy_extended
+from pyp.analysis.occupancies import occupancy_extended, merge_all_binary_with_filmid
 from pyp.analysis.scores import call_shape_phase_residuals
 from pyp.analysis.plot import pyp_frealign_plot_weights
 from pyp.inout.image import mrc, img2webp
@@ -358,16 +358,14 @@ def merge_movie_files_in_job_arr(
             logger.info("Merging movie files")
             mrc.merge_fast(movie_list,f"{output_basename}_stack.mrc",remove=True)
         else:
-            os.rename(movie_list[0], str(output_basename) + "_stack.mrc")
+            try:
+                os.symlink(movie_list[0], str(output_basename) + "_stack.mrc")
+            except:
+                pass
 
     project_path = open(project_dir_file).read()
     mp = project_params.load_pyp_parameters(project_path)
     fp = mp
-
-    if "frealignx" in mp["refine_metric"]:
-        is_frealignx = True
-    else:
-        is_frealignx = False
 
     if fp["extract_stacks"]:
         shutil.copy2(
@@ -381,8 +379,6 @@ def merge_movie_files_in_job_arr(
     logger.info("Merging parameter files")
 
     iteration = fp["refine_iter"]
-
-    convert_parfile = False
 
     if iteration == 2:
         classes = 1
@@ -399,17 +395,36 @@ def merge_movie_files_in_job_arr(
         for p in par_list:
             new_par_list.append(p.replace("_r01_", "_r%02d_" % current_class))
 
-        metric = project_params.param(mp["refine_metric"], iteration)
-        
-
-
-    #     frealign_parfile.Parameters.merge_parameters(
-    #         new_par_list, merged_par_file, metric, update_film=True, parx=True, frealignx=is_frealignx
-    #     )
+        # metric = project_params.param(mp["refine_metric"], iteration)
+        # frealign_parfile.Parameters.merge_parameters(
+        #      new_par_list, merged_par_file, metric, update_film=True, parx=True, frealignx=is_frealignx
+        # )
 
         # FIXME (HF): merge all the cistem binary files in a bundle, re-number the film (using image_activity column)
-        # now I simply copy it over 
-        shutil.copy2(new_par_list[0], merged_par_file)
+        tilt_json = merged_par_file.replace(".cistem", ".json") # a dictinary file for tilt parameters 
+        tilts_dict = {}
+        if len(new_par_list) == 1:
+            shutil.copy2(new_par_list[0], merged_par_file)
+            extended_cistem = ExtendedParameters.from_file(new_par_list[0].replace(".cistem", "_extended.cistem"))
+            tilt_dict = extended_cistem.get_tilts()
+            tind_angle_dict = {int(t): tilt_dict[t][0].angle for t in tilt_dict.keys()}
+            tilts_dict[0] = tind_angle_dict # film id start from 0
+
+        else:
+            merged_pardata = merge_all_binary_with_filmid(new_par_list, read_extend=False)
+            merge_par_obj = Parameters()
+            merge_par_obj.set_data(data=merged_pardata)
+            merge_par_obj.to_binary(merged_par_file)
+            for i, f in enumerate(new_par_list):
+                extended_cistem = ExtendedParameters.from_file(f.replace(".cistem", "_extended.cistem"))
+                tilt_dict = extended_cistem.get_tilts()
+                tind_angle_dict = {int(t): tilt_dict[t][0].angle for t in tilt_dict.keys()}
+                tilts_dict[i] = tind_angle_dict
+        
+        with open(tilt_json, 'w') as j:
+            json.dump(tilts_dict, j, indent=4)
+
+        # TODO: for bundle size > 1, this may cause issue
         shutil.copy2(new_par_list[0].replace(".cistem", "_extended.cistem"), merged_par_file.replace(".cistem", "_extended.cistem"))
 
         shutil.copy2(
@@ -451,16 +466,14 @@ def merge_movie_files_in_job_arr(
     if classes > 1 and not mp["refine_skip"]:
 
         # keep copies of original par files before updating occupancies
-        for class_index in range(classes):
-            par_file = str(output_basename) + "_r%02d_%02d.par" % (
-                class_index + 1,
-                iteration,
-            )
-            shutil.copy2(par_file, par_file.replace(".par", "_pre.par"))
+        # for class_index in range(classes):
+            
+            # shutil.copy2(par_binary, par_binary.replace(".cistem", "_pre.cistem"))
+            # shutil.copy2(par_ext_binary, par_ext_binary.replace(".cistem", "_pre.cistem"))
 
         logger.info("Updating occupancies after local merge")
         # update occupancies using LogP values
-        occupancy_extended(mp, output_basename, iteration, classes, ".", is_frealignx=is_frealignx, local=True)
+        occupancy_extended(mp, output_basename, iteration, classes, image_list=None, decompressed_parameter_file_folder=".", local=True)
 
     for class_index in range(classes):
 
@@ -474,36 +487,41 @@ def merge_movie_files_in_job_arr(
         #     current_class,
         #     iteration,
         # )
+        par_binary = str(output_basename) + "_r%02d.cistem" % (class_index + 1)
+        current_block_par_obj = Parameters.from_file(par_binary)
 
-        # # generate tsv files for Artix display
-        # if "tomo" in mp["data_mode"]:
-        #     star_output = os.path.join(project_path, "frealign", "artiax")
-        #     binning = mp["tomo_rec_binning"]
-        #     z_thicknes = mp["tomo_rec_thickness"]
-        #     generate_ministar(current_block_par, movie_list, z_thicknes, binning, cls=current_class, output_path=star_output)
-
-        # if classes > 1:
-        #     # backup the current par for later recovery
-        #     shutil.copy(current_block_par, current_block_par.replace(".par", ".paro"))
-
-        # current_block_data = frealign_parfile.Parameters.from_file(
-        #     current_block_par
-        # ).data
-
-        # # ptl_id_now = current_block_data[-1, 0]
-        # film_id_now = current_block_data[-1, film_col]
-        # film_total = np.loadtxt(os.path.join(project_path, mp["data_set"] + ".films"), dtype=str, ndmin=2)
-        # if classes > 1 and film_total.shape[0] > 1 and iteration > 2:
-
-        #     frealign_parfile.Parameters.add_lines_with_statistics(
-        #         current_block_par, 
-        #         current_class, 
-        #         project_path, 
-        #         is_frealignx=is_frealignx, 
-        #         )
+        # generate tsv files for Artix display
+        if False and "tomo" in mp["data_mode"]:
+            star_output = os.path.join(project_path, "frealign", "artiax")
+            binning = mp["tomo_rec_binning"]
+            z_thicknes = mp["tomo_rec_thickness"]
+            generate_ministar(current_block_par_obj, movie_list, z_thicknes, binning, cls=current_class, output_path=star_output)
         
-        # else:
-        #     logger.info("Skip modifying metadata for 1 film only")
+        """
+        if classes > 1:
+            # backup the current par for later recovery
+            shutil.copy(current_block_par, current_block_par.replace(".par", ".paro"))
+
+        current_block_data = frealign_parfile.Parameters.from_file(
+            current_block_par
+        ).data
+
+        # ptl_id_now = current_block_data[-1, 0]
+        film_id_now = current_block_data[-1, film_col]
+        film_total = np.loadtxt(os.path.join(project_path, mp["data_set"] + ".films"), dtype=str, ndmin=2)
+        if classes > 1 and film_total.shape[0] > 1 and iteration > 2:
+
+            frealign_parfile.Parameters.add_lines_with_statistics(
+                current_block_par, 
+                current_class, 
+                project_path, 
+                is_frealignx=is_frealignx, 
+                )
+        
+        else:
+            logger.info("Skip modifying metadata for 1 film only")
+        """
+
         # run reconstructions
         run_reconstruction(
             output_basename,
@@ -517,6 +535,7 @@ def merge_movie_files_in_job_arr(
 
         # move back the original par with current rows
         # FIXME (Ye): classification
+        """
         if classes > 1 and film_total.shape[0] > 1 and iteration > 2:
              with timer.Timer(
                 "remove_hacking", text="Removing additional lines from parfile took: {}", logger=logger.info
@@ -538,7 +557,7 @@ def merge_movie_files_in_job_arr(
                     used_hackpar, used_data, parx=is_parx, frealignx=is_frealignx
                 )
                 # shutil.copy(current_block_par.replace(".par", ".paro"), current_block_par.replace(".par", "_used.par"))
-
+        """
         t = timer.Timer(text="Saving logs and reconstruction took: {}", logger=logger.info)
         t.start()
 
@@ -559,7 +578,7 @@ def merge_movie_files_in_job_arr(
             if mp['slurm_verbose']:
                 with open(log_files[0]) as f:
                     logger.info(f.read())
-
+        """
         # convert it back to metric new format
         if True:
             if mp['slurm_verbose']:
@@ -576,7 +595,7 @@ def merge_movie_files_in_job_arr(
 
                     for i in new_file:
                         f.write(i[:91] + i[99:])
-
+        """
         # copy recon over to project dir
         if mp["refine_parfile_compress"]:
             compressed = True
@@ -656,6 +675,8 @@ def save_reconstruction(
     # move over all the binary files (each represent on tilt-series) in a given bundle to output folder
     # FIXME: use different cistem files for different classes
     [os.rename(binary_file, Path(output_folder) / Path(binary_file).name) for binary_file in glob.glob("*/frealign/maps/*.cistem")]
+    # move the used binary for global merge 
+    [os.rename(binary_file, Path(output_folder) / Path(binary_file).name) for binary_file in glob.glob("*_used.cistem")]
 
     # copy only dumped mrc and .par files
     saved_path = os.getcwd()
@@ -747,55 +768,56 @@ def run_reconstruction(
 
     fp["refine_dataset"] = name
 
-    current_suffix = "_r%02d_%02d" % (ref, iteration)
-    previous_suffix = "_r%02d_%02d" % (ref, iteration - 1)
+    # current_suffix = "_r%02d_%02d" % (ref, iteration)
+    # previous_suffix = "_r%02d_%02d" % (ref, iteration - 1)
 
     parameter_file = name + "_r%02d.cistem" % (ref)
+
     alignment_parameters = Parameters.from_file(parameter_file)
 
     # FIXME: new cistem binary
     # necessary symlink for reconstruction
     # create shaped _used par file
-    # par_obj = call_shape_phase_residuals(
-    #     name + current_suffix + ".par",
-    #     name + current_suffix + "_used.par",
-    #     os.path.join(merged_recon_dir, name + current_suffix + "_scores.png"),
-    #     fp,
-    #     iteration,
-    # )
- 
-    # os.symlink(
-    #     "../" + name + current_suffix + "_used.par",
-    #     os.path.join(merged_recon_dir, name + current_suffix + "_used.par"),
-    # )
+    call_shape_phase_residuals(
+        parameter_file,
+        parameter_file.replace(".cistem", "_used.cistem"),
+        fp,
+        iteration,
+    )
 
-    # os.symlink(
-    #     "../" + name + current_suffix + ".par",
-    #     os.path.join(merged_recon_dir, name + current_suffix + ".par"),
-    # )
+    """"
+    os.symlink(
+        "../" + name +  "_r%02d_used.cistem" % ref,
+        os.path.join(merged_recon_dir, name + "_r%02d_used.cistem" % ref),
+    )
 
-    # if mp["class_num"] > 1 and not fp["refine_skip"]:
-    #     os.symlink(
-    #         "../" + name + current_suffix + "_pre.par",
-    #         os.path.join(merged_recon_dir, name + current_suffix + "_pre.par"),
-    #     )
+    os.symlink(
+        "../" + name +  "_r%02d.cistem" % ref,
+        os.path.join(merged_recon_dir, name + "_r%02d.cistem" % ref),
+    )
 
-    # os.symlink(
-    #     "../" + name + previous_suffix + ".mrc",
-    #     os.path.join(merged_recon_dir, name + current_suffix + ".mrc"),
-    # )
+    if mp["class_num"] > 1 and not fp["refine_skip"]:
+        os.symlink(
+            "../" + name + "_r%02d_pre.cistem" % ref,
+            os.path.join(merged_recon_dir, name + "_r%02d_pre.cistem" % ref),
+        )
 
-    # os.symlink(
-    #     "../" + name + previous_suffix + ".mrc",
-    #     os.path.join(merged_recon_dir, name + previous_suffix + ".mrc"),
-    # )
+    os.symlink(
+        "../" + name + previous_suffix + ".mrc",
+        os.path.join(merged_recon_dir, name + current_suffix + ".mrc"),
+    )
 
-    # # if needed save the stack files
-    # if save_stacks:
-    #     os.symlink(
-    #         "../" + name + "_stack.mrc",
-    #         os.path.join(merged_recon_dir, name + "_stack.mrc"),
-    #     )
+    os.symlink(
+        "../" + name + previous_suffix + ".mrc",
+        os.path.join(merged_recon_dir, name + previous_suffix + ".mrc"),
+    )
+    """
+    # if needed save the stack files
+    if save_stacks:
+        os.symlink(
+            "../" + name + "_stack.mrc",
+            os.path.join(merged_recon_dir, name + "_stack.mrc"),
+        )
 
     curr_dir = os.getcwd()
 
@@ -808,6 +830,8 @@ def run_reconstruction(
     groups, cpus_per_group = get_number_of_intermediate_reconstructions(mp)
 
     # get the number of frames
+    # TODO this is not 100% matching the projection data, since only link one image's extended.cistem as decoy
+    # But we're not actually using the num_tilts for reconstruct_3d 
     num_tilts = alignment_parameters.get_extended_data().get_num_tilts()
     frames_per_tilt = alignment_parameters.get_num_frames()
 
@@ -836,7 +860,6 @@ def run_reconstruction(
     recon_E = time.perf_counter()
     recon_T = recon_E - recon_S
     timer.Timer.timers.update({"reconstruct3d_splitcom" :{"elapsed_time": recon_T, "start_time": recon_st, "end_time": str(datetime.datetime.now())}})
-
 
     if mp["dose_weighting_enable"]:
         if os.path.exists("weights.txt"):
@@ -964,6 +987,9 @@ def run_mpi_reconstruction(
 
     iteration = mp["refine_iter"]
 
+    is_tomo = "tomo" in mp["data_mode"]
+
+    """
     if iteration == 2:
         classes = 1
     else:
@@ -974,36 +1000,37 @@ def run_mpi_reconstruction(
             dataset_name,
             local_input_dir,
             orderings,
-            old_pattern=r"(\w+)_%s_pre.par" % pattern,
-            new_pattern="{0}_{1:04d}_%s_pre.par" % pattern,
+            old_pattern=r"(\w+)_%s_pre.cistem" % pattern,
+            new_pattern="{0}_{1:04d}_%s_pre.cistem" % pattern,
         )
 
     new_parfiles = rename_par_local_files(
         dataset_name,
         local_input_dir,
         orderings,
-        old_pattern=r"(\w+)_%s.par" % pattern,
-        new_pattern="{0}_{1:04d}_%s.par" % pattern,
+        old_pattern=r"(\w+)_%s.cistem" % pattern,
+        new_pattern="{0}_{1:04d}_%s.cistem" % pattern,
     )
 
     new_used_parfiles = rename_par_local_files(
         dataset_name,
         local_input_dir,
         orderings,
-        old_pattern=r"(\w+)_%s_used.par" % pattern,
-        new_pattern="{0}_{1:04d}_%s_used.par" % pattern,
+        old_pattern=r"(\w+)_%s_used.cistem" % pattern,
+        new_pattern="{0}_{1:04d}_%s_used.cistem" % pattern,
     )
-
+    """
     # merge the par files and save to maps folder
-    merged_parfile = dataset_name + ".par"
-    merge_parfile = f"{dataset_name}.cistem"
-    output_merge_parfile = "../maps/" + dataset_name + ".par"
-    merge_used_parfile = dataset_name + "_used.par"
+    # merged_parfile = dataset_name + ".par"
+    # merge_parfile = f"{dataset_name}.cistem"
+    # output_merge_parfile = "../maps/" + dataset_name + ".par"
+    # merge_used_parfile = dataset_name + "_used.par"
 
     # a folder storing all the parameter files (instead of merged one)
-    parameter_file_folder = f"{dataset_name}_{iteration:02d}"
+    parameter_file_folder = f"{dataset_name}_r{ref:02d}_{iteration:02d}"
 
     # output_parfile = os.path.join(os.path.dirname(input_dir), "maps", merged_parfile)
+    """
     if False and "frealignx" in metric: # Always saving NEW format
         frealignx = True
     else:
@@ -1013,7 +1040,7 @@ def run_mpi_reconstruction(
         saved_frealignx = True
     else:
         saved_frealignx = False
-
+    """
     # FIXME: new cistem binary 
     # # save new iteration par without changing occ to frealign/maps
     # with timer.Timer(
@@ -1066,97 +1093,138 @@ def run_mpi_reconstruction(
     # symlink_force(output_merge_used_parfile, output_merge_parfile)
 
     # create prs.png for output image
-    phases_or_scores = "-scores"
+    # phases_or_scores = "-scores"
     arg_scores = True
-    arg_frealignx = False
-    width = 137
-    columns = 16
-
-    # Plot only recognize NEW format
-    if False and "frealignx" in project_params.param(fp["refine_metric"], iteration):
-        phases_or_scores = "-frealignx"
-        arg_scores = False
-        arg_frealignx = True
-    """
-    if fp["dose_weighting_enable"]:
-        phases_or_scores = "-frealignx"
-        arg_scores = False
-        arg_frealignx = True
-    """
+    # arg_frealignx = False
 
     # FIXME: new cistem binary
-    # with timer.Timer(
-    #     "plot_used_png", text = "Plot used particles pngs took: {}", logger=logger.info
-    # ):
+    with timer.Timer(
+        "plot_used_png", text = "Plot used particles pngs took: {}", logger=logger.info
+    ):
 
-    #     if float(project_params.param(fp["reconstruct_cutoff"], iteration)) >= 0:
-    #         # creat bild file from used.par file
-    #         mpi_funcs, mpi_args = [], []
+        if float(project_params.param(fp["reconstruct_cutoff"], iteration)) >= 0:
+           # creat bild file from used.par file
+            mpi_funcs, mpi_args = [], []
 
-    #         mpi_funcs.append(plot.par2bild)
-    #         bild_output = os.path.join(os.path.dirname(input_dir),"maps",f"{dataset_name}.bild")
-    #         mpi_args.append( [( merge_used_parfile, bild_output, fp)] )
+            binary_list = glob.glob(os.path.join(local_input_dir, "*_r%02d_used.cistem" % ref))
+            merge_used_par_data = merge_all_binary_with_filmid(binary_list=binary_list, read_extend=False)
+            merged_used_par = f"{dataset_name}_used_merged.cistem"
+            # save the new merged file for the following function
+            par_obj = Parameters()
+            par_obj._input_file = merged_used_par
+            par_obj.set_data(merge_used_par_data)
+            par_obj.to_binary()
+            bild_output = os.path.join(os.path.dirname(input_dir),"maps",f"{dataset_name}_{iteration:02d}.bild")
+            # plot.par2bild(merged_used_par, bild_output, fp)
+            mpi_funcs.append(plot.par2bild)
+            mpi_args.append( [( merged_used_par, bild_output, fp)] )
+            # 
+            # plot using all particles
+            binary_list = glob.glob(os.path.join(local_input_dir, "*_r%02d.cistem" % ref))
+            merge_par_data = merge_all_binary_with_filmid(binary_list=binary_list, read_extend=False)
+            # arg_input = f"{dataset_name}.par" # this should be a array of parameters 
+            arg_angle_groups = 25
+            arg_defocus_groups = 25
+            arg_dump = False
+            """
+            plot.generate_plots(
+                merge_par_data,
+                dataset_name + "_%02d" % iteration,
+                arg_angle_groups,
+                arg_defocus_groups,
+                arg_scores,
+                is_tomo,
+                arg_dump,
+            )
+            plot.generate_plots(
+                merge_used_par_data,
+                dataset_name + "_%02d_used" % iteration,
+                arg_angle_groups,
+                arg_defocus_groups,
+                arg_scores,
+                is_tomo,
+                arg_dump,
+            )
+            """
+            
+            mpi_funcs.append(plot.generate_plots)
+            mpi_args.append([(
+                merge_par_data,
+                dataset_name + "_%02d" % iteration,
+                arg_angle_groups,
+                arg_defocus_groups,
+                arg_scores,
+                is_tomo,
+                arg_dump,
+            )])
 
-    #         # plot using all particles
-    #         arg_input = f"{dataset_name}.par"
-    #         arg_angle_groups = 25
-    #         arg_defocus_groups = 25
-    #         arg_dump = False
-    #         mpi_funcs.append(plot.generate_plots)
-    #         mpi_args.append([(
-    #             arg_input,
-    #             arg_angle_groups,
-    #             arg_defocus_groups,
-    #             arg_scores,
-    #             arg_frealignx,
-    #             arg_dump,
-    #         )])
-
-    #         # plot using used particles
-    #         arg_input = f"{dataset_name}_used.par"
-    #         arg_angle_groups = 25
-    #         arg_defocus_groups = 25
-    #         arg_dump = False
-    #         mpi_funcs.append(plot.generate_plots)
-    #         mpi_args.append([(
-    #             arg_input,
-    #             arg_angle_groups,
-    #             arg_defocus_groups,
-    #             arg_scores,
-    #             arg_frealignx,
-    #             arg_dump,
-    #         )])
-
-    #         mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=fp["slurm_verbose"])
-    #         # transfer files to maps directory
-    #         for file in glob.glob(dataset_name + "*_prs.png"):
-    #             shutil.move(file, "../maps")
+            # plot using used particles
+            # arg_input = f"{dataset_name}_used.par"
+            arg_angle_groups = 25
+            arg_defocus_groups = 25
+            arg_dump = False
+            mpi_funcs.append(plot.generate_plots)
+            mpi_args.append([(
+                merge_used_par_data,
+                dataset_name + "_%02d_used" % iteration,
+                arg_angle_groups,
+                arg_defocus_groups,
+                arg_scores,
+                is_tomo,
+                arg_dump,
+            )])
+            
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=fp["slurm_verbose"])
+            
+            # transfer files to maps directory
+            for file in glob.glob(dataset_name + "*_prs.png"):
+                try:
+                    shutil.move(file, "../maps")
+                except:
+                    pass
+            
+            # do the statistics calculation here
+            stat_array_mean = np.mean(merge_used_par_data, axis=0)
+            stat_array_var = np.var(merge_used_par_data, axis=0)
+            # only projecton parameters here
+            stat = Parameters()
+            stat.set_data(np.vstack((stat_array_mean, stat_array_var)))
+            stat.to_binary( os.path.join(local_input_dir, dataset_name + "r%02d_stat.cistem" % ref ) )
+            occ_col = stat.get_index_of_column(OCCUPANCY)
+            # save an occ array for ploting in final merge
+            occ_data = merge_used_par_data[:, occ_col]
+            saved_occ = os.path.join(input_dir, "occ_only_r%02d.npy" % ref) # save in project folder/frealign/scratch
+            np.save(saved_occ, occ_data)
 
     # combine 2D plots from used particles and global statistics for histograms
     # read saved pickle files 
-    # with open(f"{dataset_name}_temp.pkl", 'rb') as f1:
-    #     plot_outputs = pickle.load(f1)
-    # with open(f"{dataset_name}_meta_temp.pkl", 'rb') as f2:
-    #     metadata = pickle.load(f2)
-    # with open(f"{dataset_name}_used_temp.pkl", 'rb') as f3:
-    #     plot_outputs_used = pickle.load(f3)
-    # with open(f"{dataset_name}_used_meta_temp.pkl", 'rb') as f4:
-    #     metadata_used = pickle.load(f4)
+    with open(f"{dataset_name}_{iteration:02d}_temp.pkl", 'rb') as f1:
+        plot_outputs = pickle.load(f1)
+    with open(f"{dataset_name}_{iteration:02d}_meta_temp.pkl", 'rb') as f2:
+        metadata = pickle.load(f2)
+    with open(f"{dataset_name}_{iteration:02d}_used_temp.pkl", 'rb') as f3:
+        plot_outputs_used = pickle.load(f3)
+    with open(f"{dataset_name}_{iteration:02d}_used_meta_temp.pkl", 'rb') as f4:
+        metadata_used = pickle.load(f4)
 
-    # consolidated_plot_outputs = plot_outputs.copy()
-    # consolidated_plot_outputs["def_rot_histogram"] = plot_outputs_used["def_rot_histogram"]
-    # consolidated_plot_outputs["def_rot_scores"] = plot_outputs_used["def_rot_scores"]
+    consolidated_plot_outputs = plot_outputs.copy()
+    consolidated_plot_outputs["def_rot_histogram"] = plot_outputs_used["def_rot_histogram"]
+    consolidated_plot_outputs["def_rot_scores"] = plot_outputs_used["def_rot_scores"]
 
-    # consolidated_metadata = metadata.copy()
-    # consolidated_metadata["particles_used"] = metadata_used["particles_used"]
-    # consolidated_metadata["phase_residual"] = metadata_used["phase_residual"]
+    consolidated_metadata = metadata.copy()
+    consolidated_metadata["particles_used"] = metadata_used["particles_used"]
+    consolidated_metadata["phase_residual"] = metadata_used["phase_residual"]
 
-    # pardata = frealign_parfile.Parameters.from_file(f"{dataset_name}.par").data
+    temp_par_obj = Parameters()
+    occ_col = temp_par_obj.get_index_of_column(OCCUPANCY)
+    score_col = temp_par_obj.get_index_of_column(SCORE)
     # samples = np.array(frealign.get_phase_residuals(pardata,f"{dataset_name}.par",fp,2))
-    # threshold = 1.075 * statistics.optimal_threshold(
-    #     samples=samples, criteria="optimal"
-    # )
-    # consolidated_metadata["phase_residual"] = threshold
+    mask = np.logical_and(merge_par_data[:, occ_col] > 0, np.isfinite(merge_par_data[:, score_col]))
+    samples = merge_par_data[mask][:, score_col]
+    threshold = 1.075 * statistics.optimal_threshold(
+        samples=samples, criteria="optimal"
+    )
+    consolidated_metadata["phase_residual"] = threshold
 
     # perform final merge
     # hack os.environ['PYP_SCRATCH']
@@ -1178,7 +1246,7 @@ def run_mpi_reconstruction(
         
         saved_path = os.getcwd()
         os.chdir(local_input_dir)
-        parameter_files = glob.glob("*.cistem")
+        parameter_files = glob.glob("*_r%02d.cistem" % ref) + glob.glob("*_r%02d_stat.cistem" % ref) + glob.glob("*_r%02d_extended.cistem" % ref) 
         os.mkdir(parameter_file_folder)
         [os.rename(f, Path(parameter_file_folder) / f) for f in parameter_files]
 
@@ -1234,6 +1302,7 @@ def run_mpi_reconstruction(
             + glob.glob("../maps/*half*.mrc")
             + glob.glob("../maps/*crop.mrc")
             + glob.glob("../maps/*scores.svgz")
+            + glob.glob("../maps/*.webp")
         ):  
             if os.path.exists(file):
                 shutil.copy2(file, output_folder)
@@ -1244,9 +1313,10 @@ def run_mpi_reconstruction(
 
             # FIXME: new cistem binary
             # send reconstruction to website
-            # save_reconstruction_to_website(
-            #     dataset_name, FSCs, consolidated_plot_outputs, consolidated_metadata
-            # )
+            save_reconstruction_to_website(
+                dataset_name, FSCs, consolidated_plot_outputs, consolidated_metadata
+            )
+    
 
 @timer.Timer(
     "run_merge", text="Total time elapsed: {}", logger=logger.info
@@ -1280,7 +1350,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
         classes = int(project_params.param(fp["class_num"], iteration))
 
     fp["refine_dataset"] = mp["data_set"]
-    metric = project_params.param(mp["refine_metric"], iteration).lower()
+    # metric = project_params.param(mp["refine_metric"], iteration).lower()
 
     # initialize directory structure to replicate frealign folders
     local_scratch = os.environ["PYP_SCRATCH"]
@@ -1338,27 +1408,17 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
                     1 / FSCs[:, 0], FSCs[:, iteration - 1], label="r%02d" % (ref + 1),
                 )
                 ranking[ref] = FSCs[:, iteration - 1].mean()
-                par_file = (
-                    fp["refine_dataset"]
-                    + "_r%02d_%02d.par" % (ref + 1, iteration)
-                )
-                
-                parfile = Path().cwd().parent / "maps" / par_file
-                compressed_parfile = Path().cwd().parent / "maps" / str(par_file+".bz2")
 
-                if compressed_parfile.exists():
-                    parfile = frealign_parfile.Parameters.decompress_parameter_file(str(compressed_parfile), mp["slurm_merge_tasks"])
-                elif not parfile.exists():
-                    assert Exception(f"{parfile} does not exist. Please check")
+                occ_only_file = os.path.join(input_dir, "occ_only_r%02d.npy" % (ref + 1))
+                if not occ_only_file.exists():
+                    assert Exception(f"{occ_only_file} does not exist. Please check")
 
-                input = frealign_parfile.Parameters.from_file(parfile).data
-
-                if input[0].shape[0] > 45:
-                    sortedocc = np.sort(input[:, 12])[::-1]
-                else:
-                    sortedocc = np.sort(input[:, 11])[::-1]
+                input = np.load(occ_only_file)
+ 
+                sortedocc = np.sort(input)
                 ax[1].plot(sortedocc, label="r%02d" % (ref + 1))
                 metadata["occ_%02d" % ( ref + 1 ) ] = sortedocc.tolist()
+
             ax[0].legend(loc="upper right", shadow=True)
             ax[0].set_ylim((-0.1, 1.05))
             ax[0].set_xlim((1 / FSCs[0, 0], 1 / FSCs[-1, 0]))
@@ -1392,11 +1452,6 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     # go back to project directory
     os.chdir(project_dir)
     # remove decompressed par
-    for ref in range(classes):
-        name = "%s_r%02d" % (mp["data_set"], ref + 1)
-        decompressed_par = "frealign/maps/" + name + "_%02d.par" % (iteration -1)
-        if os.path.exists(decompressed_par) and fp["refine_parfile_compress"]:
-            os.remove(decompressed_par)
     # denoising using sidesplitter with half maps
     if False and classes > 1 and "refine_maskth" in mp and os.path.exists(project_params.resolve_path(project_params.param(mp["refine_maskth"], iteration))): # default denoising but could be parameterized 
         logger.info("Denoising using sidesplitter")
@@ -1737,11 +1792,6 @@ def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="orderi
     fp = mp
 
     iteration = fp["refine_iter"]
-
-    if iteration == 2:
-        classes = 1
-    else:
-        classes = int(project_params.param(fp["class_num"], iteration))
 
     fp["refine_dataset"] = mp["data_set"]
     metric = project_params.param(mp["refine_metric"], iteration).lower()

@@ -434,7 +434,7 @@ def save_tomo_results(name, parameters, current_path, verbose=False):
         name
     )
 
-    if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")):
+    if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")) and not os.path.exists(os.path.join(current_path,"mrc",name+".mrc")):
         symlink_relative(
             os.path.join(current_path,"raw",name+".mrc"),
             os.path.join(current_path,"mrc",name+".mrc")

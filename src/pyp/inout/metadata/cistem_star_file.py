@@ -1,9 +1,9 @@
 import numpy as np
 import numpy.lib.recfunctions as rf
+import pandas as pd
 
 import sys
 from pathlib import Path
-
 
 
 """
@@ -589,10 +589,10 @@ class Parameters:
                DEFOCUS_ANGLE, 
                PHASE_SHIFT, 
                IMAGE_IS_ACTIVE, 
-               OCCUPANCY, 
+               OCCUPANCY,   # 11
                LOGP, 
                SIGMA, 
-               SCORE, 
+               SCORE,   # 14            
                PIXEL_SIZE, 
                MICROSCOPE_VOLTAGE, 
                MICROSCOPE_CS, 
@@ -604,13 +604,15 @@ class Parameters:
                ORIGINAL_X_POSITION,
                ORIGINAL_Y_POSITION,
                IMIND, 
-               PIND, 
+               PIND,    # 26
                TIND, 
                RIND, 
                FIND, 
                FSHIFT_X, 
                FSHIFT_Y
                ]
+    
+    HEADER_STRS = ["POSITION_IN_STACK", "PSI", "THETA", "PHI", "X_SHIFT", "Y_SHIFT", "DEFOCUS_1", "DEFOCUS_2", "DEFOCUS_ANGLE", "PHASE_SHIFT", "IMAGE_IS_ACTIVE", "OCCUPANCY", "LOGP", "SIGMA", "SCORE", "PIXEL_SIZE", "MICROSCOPE_VOLTAGE", "MICROSCOPE_CS", "APLITUDE_CONTRAST", "BEAM_TILT_X", "BEAM_TILT_Y", "IMAGE_SHIFT_X", "IMAGE_SHIFT_Y", "ORIGINAL_X_POSITION", "ORIGINAL_Y_POSITION", "IMIND", "PIND", "TIND", "RIND", "FIND", "FSHIFT_X", "FSHIFT_Y"]
 
     def __init__(self, input_file: str = "", extended_input_file: str = ""):
         
@@ -719,11 +721,15 @@ class Parameters:
             self._extended = ExtendedParameters.from_file(possible_extended)
  
  
-    def to_binary(self, output: str, extended_output: str = ""):
+    def to_binary(self, output: str = "", extended_output: str = ""):
 
         assert (self.get_num_cols() > 0 and self.get_num_rows() > 0), f"Number of columns ({self.get_num_cols()}) and rows ({self.get_num_rows()}) should be larger than 0"
         assert len(self._active_columns) > 0, f"No column detected."
         assert len(self._active_columns) == self.get_data().shape[1], f"Number of columns does not match in the header ({len(self._active_columns)}) and data ({self.get_data().shape[1]})"
+        
+        if output=="" and self._input_file is not None:
+            output = self._input_file
+
         assert output.endswith(".cistem"), f"Filename of output ({output}) better has .cistem extension."
 
         with open(output, "wb") as f:
@@ -860,21 +866,56 @@ class Parameters:
 
         self.get_extended_data().set_data(particles=particle_parameters, tilts=tilt_parameters)
 
-    def sync_particle_occ(self):
-        assert (self.get_extended_data()), f"Extended data is not included in the Parameters data structure."
-        
+    def sync_particle_occ(self, ptl_to_prj=True):
+        assert (self.get_extended_data()), "Extended data is not included in the Parameters data structure."
         particle_parameters = self.get_extended_data().get_particles()
 
         data = self.get_data()
 
-        # update scores of projection with the ones from particle parameters
-        def sync_projection_occ(row):
-            pind = row[self.get_index_of_column(PIND)]
-            row[self.get_index_of_column(OCCUPANCY)] = particle_parameters[pind].occ
-  
-        [sync_projection_occ(row) for row in data]
+        if ptl_to_prj:
+            # update occ of projection with the ones from particle parameters
+            def sync_projection_occ(row):
+                pind = row[self.get_index_of_column(PIND)]
+                row[self.get_index_of_column(OCCUPANCY)] = particle_parameters[pind].occ
 
-        self.set_data(data=data)
+            [sync_projection_occ(row) for row in data]
+
+            self.set_data(data=data)
+        else:
+            # update the particles parameters occ from the projection parameters
+            df = pd.DataFrame(data, columns=self.HEADER_STRS)
+            mean_occ = df.groupby('PIND')['OCCUPANCY'].mean().to_dict()
+
+            for pind, occ in mean_occ.items():
+                
+                if pind in particle_parameters:
+                    particle_parameters[pind].occ = occ
+
+            # Update the extended data structure with modified particles
+            self.get_extended_data().set_data(particles=particle_parameters, tilts=self.get_extended_data().get_tilts())
+    
+
+    def modify_projdata_by_column(self, col_index, new_value):
+        # modify the column values 
+        proj_data = self.get_data()
+        proj_data[:, col_index] = new_value
+        self.set_data(proj_data)
+        self.to_binary()
+    
+
+    def modify_outliers_in_column(self, col_index, min=None, max=None):
+        # modify the column values so that the outliers be min/max
+
+        proj_data = self.get_data()
+        if not min is None:
+            proj_data[proj_data[:, col_index] <= min, col_index] = min
+        if not max is None:
+            proj_data[proj_data[:, col_index] >= max, col_index] = max
+        
+        self.set_data(proj_data)
+        self.to_binary()
+
+
     
 def initialize_parameters_binary(): 
 

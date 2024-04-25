@@ -1559,7 +1559,7 @@ _rlnDefocusU #2
 _rlnDefocusV #3 
 _rlnDefocusAngle #4 
 _rlnCtfFigureOfMerit #5 
-_rlnCtfMaxResolution $6 """
+_rlnCtfMaxResolution #6 """
 
             ac = self.scope_data["AC"].values[0]
             cs = self.scope_data["CS"].values[0]

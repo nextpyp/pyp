@@ -876,7 +876,6 @@ def prepare_to_run_frealign(
     shutil.copy2(target, os.environ["PYP_SCRATCH"])
 
 def csp_run_refinement(
-    parxfile,
     alignment_parameters, 
     parameters,
     dataset,
@@ -1377,7 +1376,7 @@ def postprocess_after_refinement(
 
         mp_local["refine_mask"] = ",".join(refine_mask)
 
-    # run refinement (produces short_file_name)
+    # run refinement (produces short_file_name in the scratch folder)
     frealign.split_refinement(
         mp_local,
         current_class,
@@ -1411,59 +1410,66 @@ def postprocess_after_refinement(
         if not mp["refine_debug"]:
             [os.remove(f) for f in glob.glob("*_msearch_n.log_*")]
 
-    # compose extended .parx file
-    long_file_name = os.path.join("maps", new_par_file)
-    short_file_name = new_name + "_%02d.par_%07d_%07d" % (iteration, 1, frames,)
-    # remove outliers after refine3d
-    frealign_parfile.Parameters.remove_outliers(short_file_name, "score", 0, 100)
+    # output_refine3d = new_name + "_%07d_%07d.cistem" % (1, frames)
+    output_refine3d = new_name + ".cistem" # current dir is frealign/scratch/
     
-    concatenate_par_files(long_file_name, short_file_name, mp)
+    # compose extended .parx file
+    # long_file_name = os.path.join("maps", new_par_file)
+    # short_file_name = new_name + "_%02d.par_%07d_%07d" % (iteration, 1, frames,)
+    # remove outliers after refine3d
+    # frealign_parfile.Parameters.remove_outliers(short_file_name, "score", 0, 100)
+    # concatenate_par_files(long_file_name, short_file_name, mp)
+    
+    newpar_obj = cistem_star_file.Parameters.from_file(output_refine3d)
+    newpar_obj.modify_outliers_in_column(cistem_star_file.SCORE, min=0, max=100)
 
-    if classes == 1:
+    if classes == 1:    
+        col_index = newpar_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
+        newpar_obj.modify_projdata_by_column(col_index, 100)
 
         logger.info("Resetting occupancies to 100.0 since classes = 1")
 
-        # here we reformat columns to force the standard format (even if that means columns will be joint)
-        input = np.array(
-            [line for line in open(long_file_name) if not line.startswith("C")]
-        )
+    os.remove(new_par_file)
+    # replace the cistem scratch folder
+    symlink_relative( output_refine3d, new_par_file)
 
-        if "frealignx" in project_params.param(mp["refine_metric"], iteration).lower():
-            scores = 15
-            occ = 12
-        else:
-            scores = 14
-            occ = 11
+    """
+    # here we reformat columns to force the standard format (even if that means columns will be joint)
+    input = np.array(
+        [line for line in open(long_file_name) if not line.startswith("C")]
+    )
 
-        comments = [line for line in open(long_file_name) if line.startswith("C")]
+    if "frealignx" in project_params.param(mp["refine_metric"], iteration).lower():
+        scores = 15
+        occ = 12
+    else:
+        scores = 14
+        occ = 11
 
-        (
-            fieldwidths,
-            fieldstring,
-            _,
-            _,
-        ) = frealign_parfile.Parameters.format_from_parfile(long_file_name)
+    comments = [line for line in open(long_file_name) if line.startswith("C")]
 
-        # write output
-        with open(long_file_name, "w") as f:
+    (
+        fieldwidths,
+        fieldstring,
+        _,
+        _,
+    ) = frealign_parfile.Parameters.format_from_parfile(long_file_name)
+    
 
-            f.write("".join(comments))
+    with open(long_file_name, "w") as f:
 
-            for line in input:
-                values = np.array(line.split(), dtype="f")
-                if occ > 0 and mp["data_mode"] == "spr":
-                    values[occ] = 100
-                # truncate scores to prevent overflow
-                # if values[scores] > 9999:
-                #     values[scores] = 0
-                #     values[scores + 1] = 0
-                f.write(fieldstring % tuple(values))
+        f.write("".join(comments))
 
-    # No longer needed: save alignments to working directory (remove comments and first column)
-    # com = "grep -v C {0} | cut -c8- > {1}".format(
-    #    long_file_name, os.path.join(working_path, new_name + ".allparxs")
-    # )
-    # subprocess.check_output(com, stderr=subprocess.STDOUT, shell=True, text=True)
+        for line in input:
+            values = np.array(line.split(), dtype="f")
+            if occ > 0 and mp["data_mode"] == "spr":
+                values[occ] = 100
+            # truncate scores to prevent overflow
+            # if values[scores] > 9999:
+            #     values[scores] = 0
+            #     values[scores + 1] = 0
+            f.write(fieldstring % tuple(values))
+    """
 
     # go back to working directory
     os.chdir(working_path)
@@ -1477,7 +1483,6 @@ def csp_refinement(
     current_path,
     working_path,
     use_frames,
-    parxfile,
     allparxs,
     iteration,
 ):
@@ -1509,7 +1514,9 @@ def csp_refinement(
         classes = 1
     else:
         classes = int(project_params.param(mp["class_num"], iteration))
-
+    
+    # parx file not needed.
+    """
     # write parx file for class=1 by pre-pending particle index (frealign/maps/name_r01_01.parx -> parxfile)
     with Timer(
         "particle re-index", text = "Pre-pending index to par took: {}", logger=logger.info
@@ -1519,6 +1526,7 @@ def csp_refinement(
             parxfile,
             "frealignx" in project_params.param(mp["refine_metric"], iteration),
         )
+    """
 
     # copy maps to working maps directory
     [
@@ -1532,6 +1540,8 @@ def csp_refinement(
         )
     ]
 
+    # not being used
+    """
     if classes > 1:
 
         # frealign/name_r??_01.parx -> frealign/name_r??_01.par
@@ -1563,7 +1573,7 @@ def csp_refinement(
             shutil.copy2(
                 new_class_parxfile, new_class_parxfile.replace(".parx", ".par")
             )
-
+    """
     # prepare, run and post-process after refinement (do this for each class)
     for class_index in range(classes):
 
@@ -1597,8 +1607,7 @@ def csp_refinement(
 
         is_tomo = "tomo" in mp["data_mode"].lower()
 
-        class_parxfile = parxfile.replace("_r01_", "_r%02d_" % current_class)
-
+        # class_parxfile = parxfile.replace("_r01_", "_r%02d_" % current_class)
 
         # Everything that modifies parameter files falls here
         allparxs[class_index].update_pixel_size(mp["scope_pixel"] * mp["extract_bin"]) # data_bin?
@@ -1612,7 +1621,6 @@ def csp_refinement(
             # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
 
             parameter_file = csp_run_refinement(
-                class_parxfile,
                 allparxs[class_index],
                 mp,
                 dataset,
@@ -1653,7 +1661,6 @@ def csp_refinement(
             allparxs[class_index].to_binary(str(parameter_file))
 
         # run frealign refinement
-        is_frealignx = False
         if (classes > 1 or not use_frames) and not mp["refine_skip"]:
 
             # FIXME: new cistem binary (don't think we need it now)
@@ -1673,7 +1680,7 @@ def csp_refinement(
             #     pshift = np.zeros((input_par_data.shape[0], 1), dtype='float')
             #     frealignx_pardata = np.hstack((input_par_data[:, :11], pshift, input_par_data[:, 11:]))
             #     frealign_parfile.Parameters.write_parameter_file(class_parxfile, frealignx_pardata, parx=True, frealignx=True)
-
+            """
             film_total = np.loadtxt(os.path.join(current_path, mp["data_set"] + ".films"), dtype=str, ndmin=2)
             if classes > 1 and film_total.shape[0] > 1 and iteration > 2:
 
@@ -1686,6 +1693,8 @@ def csp_refinement(
 
             else:
                 logger.info("Skip modifying metadata to change statistics")
+            
+            """
 
             postprocess_after_refinement(
                 str(parameter_file),

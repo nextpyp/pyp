@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import scipy
 from pathlib import Path
+import json
 
 from pyp import merge
 from pyp.analysis import statistics, plot, geometry
@@ -207,7 +208,7 @@ def per_frame_scoring(
 
 
 def assign_angular_defocus_groups(
-    parfile: str, angles: int, defocuses: int, frealignx: bool = False
+    input, angles: int, defocuses: int
 ):
     """Divide particles in parameter file into a discrete number of angular and defocus groups.
 
@@ -233,7 +234,7 @@ def assign_angular_defocus_groups(
     """
 
 
-    
+    """
     # load .parx file
     if os.path.isfile(parfile):
 
@@ -250,22 +251,26 @@ def assign_angular_defocus_groups(
     else:
         logger.error("{} not found.".format(parfile))
         sys.exit(0)
+    """
+    par_obj = Parameters()
+    theta = par_obj.get_index_of_column(THETA)
+    defocus_1 = par_obj.get_index_of_column(DEFOCUS_1)
 
-    angular_group = np.floor(np.mod(input[:, 2], 180) * angles / 180)
+    angular_group = np.floor(np.mod(input[:, theta], 180) * angles / 180)
     if input.shape[0] > 0:
         mind, maxd = (
-            int(math.floor(input[:, 8].min())),
-            int(math.ceil(input[:, 8].max())),
+            int(math.floor(input[:, defocus_1].min())),
+            int(math.ceil(input[:, defocus_1].max())),
         )
     else:
         mind = maxd = 0
     if maxd == mind:
         defocus_group = np.zeros(angular_group.shape)
     else:
-        defocus_group = np.round((input[:, 8] - mind) / (maxd - mind) * (defocuses - 1))
+        defocus_group = np.round((input[:, defocus_1] - mind) / (maxd - mind) * (defocuses - 1))
 
     # return input, angular_group, defocus_group
-    return par_obj, angular_group, defocus_group
+    return angular_group, defocus_group
 
 
 def generate_cluster_stacks(inputstack, parfile, angles=25, defocuses=25):
@@ -313,14 +318,12 @@ def shape_phase_residuals(
     reverse,
     consistency,
     scores,
-    frealignx,
     odd,
     even,
-    outputparfile,
-    png_file
+    outputparfile
 ):
 
-
+    """
     if scores and not frealignx:
         field = 14
         occ = 11
@@ -329,21 +332,58 @@ def shape_phase_residuals(
         occ = 12
     else:
         field = 11
+    """
+    cistem_par = Parameters.from_file(inputparfile)
+    filmid = cistem_par.get_index_of_column(IMAGE_IS_ACTIVE)
+    field = cistem_par.get_index_of_column(SCORE)
+    occ = cistem_par.get_index_of_column(OCCUPANCY)
+    tind = cistem_par.get_index_of_column(TIND)
+
+    input = cistem_par.get_data()
+    films = np.unique(input[:, filmid])
 
     # read interesting part of input file
-    par_obj, angular_group, defocus_group = assign_angular_defocus_groups(
-        inputparfile, angles, defocuses, frealignx
+    angular_group, defocus_group = assign_angular_defocus_groups(
+        input, angles, defocuses
     )
-    input = par_obj.data
 
     # figure out tomo or spr by check tilt angles
-    tltangle = field + 3
-    ptlindex = field + 2
+    # tilts_dict = cistem_par.get_extended_data().get_tilts()
+    merged_extend = inputparfile.replace(".cistem", ".json")
+    with open(merged_extend, 'r') as jsonfile:
+        tilts_dict = json.load(jsonfile)
+        print(tilts_dict)
+
+    ptlindex = cistem_par.get_index_of_column(PIND)
     
-    if np.any(input[:, tltangle] !=0 ):
+    if any(abs(value) > 0 for value in tilts_dict['0'].values()):
         is_tomo = True
     else:
         is_tomo = False
+        
+    tiltangle = []
+
+    if is_tomo:
+
+        for f in films:
+            # contruct a tilt angle dictionary
+            # tind_angle_dict = {i: tilts_dict[f][i][0].angle for i in tilts_dict[f].keys()}
+            tind_angle_dict = tilts_dict[str(int(f))]
+            tind_angle_dict_int = {int(k): v for k, v in tind_angle_dict.items()} # json way saving dict as str but we need int
+            tind_in_film = input[input[:, filmid]==f][:, tind]
+            df_tind = pd.DataFrame(tind_in_film, columns=["Tind"])
+            # mapped_angles = np.vectorize(tind_angle_dict.get)(tind_in_film)
+            df_tind["Angle"] = df_tind["Tind"].map(tind_angle_dict_int)
+            tiltangle.append(df_tind["Angle"].to_numpy())
+            # for ti in input[input[:, filmid]==f][:, tind]:
+            #    tiltangle.append(tilts_dict[f][ti][0].angle )
+        tilt_angle_array = np.concatenate(tiltangle).reshape(-1, 1)
+
+    else:
+        tilt_angle_array = np.array([0] * input.shape[0]).reshape(-1, 1)
+
+    input = np.hstack((input, tilt_angle_array))
+    tltangle = -1 # tilt angle column as the last column temporarily
 
     import matplotlib as mpl
 
@@ -352,7 +392,7 @@ def shape_phase_residuals(
     from matplotlib import cm
 
     # additional sorting if matches available
-    name = inputparfile[:-4]
+    name = inputparfile[:-7]
     fmatch_stack = "../maps/{0}_match_unsorted.mrc".format(name)
     metric_weights = np.ones(input.shape[0])
     if os.path.exists(fmatch_stack):
@@ -421,7 +461,7 @@ def shape_phase_residuals(
 
                 elif threshold <= 1:
                     # cluster = input[ np.logical_and( angular_group == g, defocus_group == f ) ]
-                    if scores or frealignx:
+                    if scores:
                         # thresholds[g,f] = cluster[ cluster[:,field].argsort() ][ int( (cluster.shape[0]-1) * (1-threshold) ), field ]
                         if is_tomo:
                             bool_array = np.full(input.shape[0], False, dtype=bool)
@@ -449,7 +489,7 @@ def shape_phase_residuals(
                         ]
                 else:
                     # cluster = input[ np.logical_and( angular_group == g, defocus_group == f ) ]
-                    if scores or frealignx:
+                    if scores:
                         thresholds[g, f] = cluster[cluster[:, field].argsort()][
                             min(cluster.shape[0] - threshold, cluster.shape[0]) - 1,
                             field,
@@ -515,7 +555,7 @@ def shape_phase_residuals(
     for g in range(angles):
         for f in range(defocuses):
             # if threshold != 1:
-            if scores or frealignx:
+            if scores:
                 # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), np.nan, input[:,field] )
                 # input[:,occ] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), 0, input[:,occ] )
                 if is_tomo and thresholds[g, f] > 0:
@@ -568,7 +608,7 @@ def shape_phase_residuals(
         )
 
     # ignore if defocus outside permissible range
-    if scores or frealignx:
+    if scores:
         input[:, occ] = np.where(
             np.logical_or(input[:, 8] < mindefocus, input[:, 8] > maxdefocus),
             0,
@@ -584,7 +624,7 @@ def shape_phase_residuals(
     """
     # shape accorging to assigned top/side view orientations using mintilt and maxtilt values
     if maxazh < 180 or minazh > 0:
-        if scores or frealignx:
+        if scores:
             input[:, occ] = np.where(
                 np.logical_or(
                     np.mod(input[:, 2], 180) < minazh, np.mod(input[:, 2], 180) > maxazh
@@ -602,64 +642,25 @@ def shape_phase_residuals(
                 input[:, field],
             )
         """
-    # if extended .parx format
 
-    if (scores and input.shape[1] > 16) or (frealignx and input.shape[1] > 17):
+    if scores:
 
         # shape based on exposure sequence
         if lastframe > -1:
-            if scores and not frealignx:
+            if scores:
                 input[:, occ] = np.where(
-                    np.logical_or(input[:, 19] < firstframe, input[:, 19] > lastframe),
+                    np.logical_or(input[:, tind] < firstframe, input[:, tind] > lastframe),
                     0,
                     input[:, occ],
                 )
-            elif frealignx:
-                input[:, occ] = np.where(
-                    np.logical_or(input[:, 20] < firstframe, input[:, 20] > lastframe),
-                    0,
-                    input[:, occ],
-                )
-            """
-            else:
-                input[:, field] = np.where(
-                    np.logical_or(input[:, 19] < firstframe, input[:, 19] > lastframe),
-                    np.nan,
-                    input[:, field],
-                )
-            """
-        else:
-            if scores and not frealignx:
-                input[:, occ] = np.where(input[:, 19] < firstframe, 0, input[:, occ])
-            elif frealignx:
-                input[:, occ] = np.where(input[:, 20] < firstframe, 0, input[:, occ])
-            """
-            else:
-                input[:, field] = np.where(
-                    input[:, 19] < firstframe, np.nan, input[:, field]
-                )
-            """
+
         # shape based on tilt-angle
-        if scores and not frealignx:
+        if scores:
             input[:, occ] = np.where(
-                np.logical_or(input[:, 17] < mintilt, input[:, 17] > maxtilt),
+                np.logical_or(input[:, -1] < mintilt, input[:, -1] > maxtilt),
                 0,
                 input[:, occ],
             )
-        elif frealignx:
-            input[:, occ] = np.where(
-                np.logical_or(input[:, 18] < mintilt, input[:, 18] > maxtilt),
-                0,
-                input[:, occ],
-            )
-        """
-       else:
-            input[:, field] = np.where(
-                np.logical_or(input[:, 17] < mintilt, input[:, 17] > maxtilt),
-                np.nan,
-                input[:, field],
-            )
-        """
     # revert phase residual polarity so that lowest PR become highest and viceversa
     if reverse:
         min_pr = np.extract(np.isfinite(input[:, field]), input[:, field]).min()
@@ -718,7 +719,7 @@ def shape_phase_residuals(
             )
 
     if odd:
-        if scores or frealignx:
+        if scores:
             input[::2, occ] = 0
         else:
             input[::2, field] = np.nan
@@ -732,9 +733,11 @@ def shape_phase_residuals(
     # write output parameter file
     # new_par_obj = frealign_parfile.Parameters(version, extended=extended, data=input, prologue=prologue, epilogue=epilogue)
     # new_par_obj.write_file(outputparfile)
+    # par_obj.write_file(outputparfile)
 
-    par_obj.write_file(outputparfile)
-    return par_obj
+    cistem_par.set_data(input[:, :-1]) # not including the tilt angle column
+    cistem_par.to_binary(outputparfile)
+
     # f = open(outputparfile, "w")
     # for line in open(inputparfile):
     #     if line.startswith("C"):
@@ -781,7 +784,7 @@ def shape_phase_residuals(
     "call_shape_phase_residuals", text="Shaping scores took: {}", logger=logger.info
 )
 def call_shape_phase_residuals(
-    input_par_file, output_par_file, png_file, fp, iteration
+    input_par_file, output_par_file, fp, iteration
 ):
 
     mindefocus = float(project_params.param(fp["reconstruct_mindef"], iteration))
@@ -816,13 +819,8 @@ def call_shape_phase_residuals(
     odd = False
     even = False
     scores = True
-    is_frealignx = True or ("frealignx" in project_params.param(fp["refine_metric"], iteration)
-    or project_params.param(fp["dose_weighting_enable"], iteration) 
-    or "tomo" in project_params.param(fp["data_mode"], iteration)
-    or "local" in project_params.param(fp["extract_fmt"], iteration)
-    )
 
-    par_obj = shape_phase_residuals(
+    shape_phase_residuals(
         input_par_file,
         angle_groups,
         defocus_groups,
@@ -841,14 +839,11 @@ def call_shape_phase_residuals(
         reverse,
         consistency,
         scores,  # since we are always using scores (not phase residuals)
-        is_frealignx,
         odd,
         even,
-        output_par_file,
-        png_file
+        output_par_file
     )
     
-    return par_obj
 
 def eval_phase_residual(
     defocus, mparameters, fparameters, input, name, film, scanor, tolerance

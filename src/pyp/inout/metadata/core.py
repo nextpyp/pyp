@@ -22,7 +22,7 @@ from pyp.analysis.geometry import (
     spa_euler_angles,
 )
 from pyp.inout.image import mrc
-from pyp.inout.metadata import frealign_parfile, pyp_metadata
+from pyp.inout.metadata import frealign_parfile, pyp_metadata, cistem_star_file
 from pyp.inout.metadata.cistem_star_file import *
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.system import local_run, project_params
@@ -1905,7 +1905,7 @@ def csp_extract_coordinates(
                 allparxs = tomo_extract_coordinates(
                     filename, parameters, use_frames, extract_projections=False
                 )
-
+                """
                 # use external alignments if available
                 if parameters["refine_iter"] == 2 and refinement.endswith(".par"):
                     with timer.Timer(
@@ -1921,7 +1921,7 @@ def csp_extract_coordinates(
                         start += 3
                         extracted_rows = np.loadtxt(refinement, dtype=float, comments="C", skiprows=start, max_rows=step, ndmin=2)
                         allparxs.append(extracted_rows[:, 1:])
-
+                """
             # copy boxes3d and ctf files to local scratch
             # shutil.copy2("csp/{}_boxes3d.txt".format(filename), working_path)
 
@@ -2105,7 +2105,7 @@ def tomo_extract_coordinates(
     tilt_parameters = dict()
 
     phase_shift = 0.0
-    image_activity = 1
+    image_activity = 0
     beam_tilt_x = beam_tilt_y = 0.0
     image_shift_x = image_shift_y = 0.0
     image_index = 0
@@ -2858,20 +2858,14 @@ def compute_global_weights(parfile: str, weights_file: str = "global_weight.txt"
 @timer.Timer(
     "get index of particle frames", text="Get index of particles frames took: {}", logger=logger.info
 )
-def get_particles_tilt_index(parfile, path="./"):
+def get_particles_tilt_index(par_data, ptl_col):
     """
     Calculate index for each particles to quickly access to the particle tilt series that belong to it in the parfile
     idea from alimanfoo/find_runs.py
     """
 
     index = {}
-    par_data = frealign_parfile.Parameters.from_file(parfile).data
-    
-    if par_data.shape[1] > 45:
-        ptl_index = 17
-    else:
-        ptl_index = 16
-    
+    ptl_index = ptl_col # cistem2 Parameters format
     ptlid = par_data[:, ptl_index].ravel()
     n = ptlid.shape[0]
     loc_run_start = np.empty(n, dtype=bool)
@@ -2881,9 +2875,9 @@ def get_particles_tilt_index(parfile, path="./"):
     sections = np.nonzero(loc_run_start)
     index = np.append(sections, n)
     index = np.hstack((np.reshape(index[:-1], (-1, 1)), np.reshape(index[1:], (-1, 1))))
-    index_file = path + "/particle_tilt.index"
-    np.savetxt(index_file, index, fmt='%d')
-    
+
+    return index
+
 
 def array2formatstring(a, format):
     return format % tuple(a)
