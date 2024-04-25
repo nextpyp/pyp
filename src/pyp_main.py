@@ -66,6 +66,7 @@ from pyp.inout.metadata import (
     get_image_particle_index,
     get_particles_tilt_index,
     compute_global_weights,
+    cistem_star_file,
 )
 from pyp.postprocess.pyp_fsc import fsc_cutoff
 from pyp.refine.csp import particle_cspt
@@ -1903,8 +1904,7 @@ def csp_split(parameters, iteration):
         #         pass
         # if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)):
         #     get_image_particle_index(parameters, parfile, path="./csp")
-
-
+        
         if parameters["dose_weighting_enable"] and ref == 0:
 
             # create weights folder for storing weights.txt
@@ -1935,8 +1935,8 @@ def csp_split(parameters, iteration):
         # ):
         #     get_particles_tilt_index(parfile, path="./csp")
 
-        previous = "frealign/maps/%s_%02d.par" % (name, iteration - 1)
-        current = "%s_%02d" % (name, iteration)
+        # previous = "frealign/maps/%s_%02d.par" % (name, iteration - 1)
+        # current = "%s_%02d" % (name, iteration)
         raw_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt_raw"
         smooth_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt"
 
@@ -1965,31 +1965,44 @@ def csp_split(parameters, iteration):
             )
             or force_init
         ):
+            decompressed_parameter_file_folder = current_dir / "frealign" / "maps" / f"{dataset}_r01_{iteration-1:02d}"
             use_frame = "local" in parameters["extract_fmt"]
             is_tomo = "tomo" in parameters["data_mode"]
             classification_initialization(
-            parameters, dataset, classes, iteration, use_frame = use_frame, is_tomo = is_tomo, references_only=False
+            dataset, classes, iteration, decompressed_parameter_file_folder, files, use_frame = use_frame, is_tomo = is_tomo
         )
             # skip occupancy calculation twice
             parameters["refine_skip"] = True
             parameters["class_force_init"] = False
             project_params.save_pyp_parameters(parameters=parameters, path="..")
         else:
-
+            parameter_folders = Path(decompressed_parameter_file_folder).parent
             occupancy_extended(
-                parameters, dataset, iteration - 1, classes, path="maps", is_frealignx=False, local=False
+                parameters, dataset, classes, files, parameter_folders, local=False
             )
 
         os.chdir("..")
 
-    # get the statistics for refine3d and reconstruct3d
-    if classes > 1 and iteration > 2:
+        # get the statistics for refine3d and reconstruct3d
+        # TODO this part be a function
+    
         for ref in range(classes):
+            
             name = "%s_r%02d" % (dataset, ref + 1)
-            # previous = "frealign/maps/%s_%02d.par" % (name, iteration - 1)
-            previous = os.path.join("frealign", "maps" , "%s_%02d.par" % (name, iteration - 1))
-            par_stat = "frealign/maps/parfile_constrain_r%02d.txt" % (ref + 1)
-            get_statistics_from_par(previous, par_stat)
+            decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{name}_{iteration-1:02d}")
+            # read all images parameters for statistices 
+            class_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r%02d.cistem" % (ref + 1) ) for file in files ]
+            merged_all_parameters = cistem_star_file.Parameters.merge(class_files)
+            
+            projection_parameters = merged_all_parameters.get_data()
+            stat_array_mean = np.mean(projection_parameters, axis=0)
+            stat_array_var = np.var(projection_parameters, axis=0)
+            
+            # only projecton parameters here
+            stat = cistem_star_file.Parameters()
+            stat.set_data(np.vstack((stat_array_mean, stat_array_var)))
+            stat.to_binary( os.path.join(decompressed_parameter_file_folder, name + "r%02d_stat.cistem" % (ref + 1) ) )
+            
 
     os.makedirs("swarm", exist_ok=True)
     os.chdir("swarm")
@@ -2010,7 +2023,6 @@ def csp_extract_frames(
     parameters,
     filename,
     imagefile,
-    parxfile,
     stackfile,
     working_path,
     current_path,
@@ -2292,9 +2304,10 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         use_existing_frame_alignments=True,
     )
 
-    parxfile = os.path.join(
-        working_path, "frealign", "maps", filename + "_r01_%02d.parx" % (iteration - 1)
-    )
+    #  parxfile = os.path.join(
+    #     working_path, "frealign", "maps", filename + "_r01_%02d.parx" % (iteration - 1)
+    # )
+
     stackfile = os.path.join(working_path, "frealign", filename + "_stack.mrc")
 
     os.chdir(current_path)
@@ -2310,7 +2323,6 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         parameters,
         filename,
         imagefile,
-        parxfile,
         stackfile,
         working_path,
         current_path,
@@ -2324,7 +2336,6 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         current_path,
         working_path,
         use_frames,
-        parxfile,
         allparxs, 
         iteration,
     )

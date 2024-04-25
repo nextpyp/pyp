@@ -1549,7 +1549,6 @@ def cistem_mask_create(parameters: dict, model: str, output: str):
         + "0.35\n"
         + "eot\n"
     )
-    print(threshold)
 
     run_shell_command(command, verbose=parameters["slurm_verbose"])
     command = f"{get_imod_path()}/bin/alterheader -del {model_pixel},{model_pixel},{model_pixel} {output_mask}"

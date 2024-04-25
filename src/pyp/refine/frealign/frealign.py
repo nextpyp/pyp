@@ -1628,8 +1628,8 @@ def split_reconstruction(
     dataset = fp["refine_dataset"]
     name = dataset + "_r%02d" % (ref)
 
-    parfile = f"../{name}.cistem" # "%s_used.par" % (name)
-    reference = parfile.replace(".cistem", ".mrc")
+    parfile = f"../{name}_used.cistem" # "%s_used.par" % (name)
+    reference = parfile.replace("_used.cistem", ".mrc")
 
     ranger = "%07d_%07d" % (first, last)
 
@@ -1910,7 +1910,8 @@ eot
 
             score_weighting = "yes" if fp["refine_score_weighting"] else "no"
             min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
-            max_tilt_particle_score = fp["csp_UseImagesForRefinementMax"]
+            # max_tilt_particle_score = fp["csp_UseImagesForRefinementMax"]
+            max_tilt_particle_score = -1 # we just use occ as limit 
             per_particle_splitting = "yes" if fp["reconstruct_per_particle_splitting"] else "no"
             res_ref = "0"
             smoothing = "1"
@@ -3628,11 +3629,9 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
     if mp["csp_no_stacks"] and mp["slurm_tasks"] > 1:
 
         # This is the output parfile for this function
-        short_file_name = name + ".par_%07d_%07d" % (1, last)
-
         # bypass refine3d if mode == 0
         if int(project_params.param(mp["refine_mode"], i)) == 0:
-            shutil.copy2(f"{name}.par", short_file_name)
+            # shutil.copy2(f"{name}.par", short_file_name)
             return 0
 
         # create multirun script
@@ -3655,7 +3654,8 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
         mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=mp["slurm_verbose"])
 
         # combine all the refined parfile
-        short_file_name = name + "_%07d_%07d.cistem" % (1, last)
+        # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
+        merged_file_name = name + ".cistem"
         all_refined_par = [par for par in glob.glob(name + "_*_*.cistem")]
 
         # first check if the number of refined par is equal to count
@@ -3694,9 +3694,9 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
         # TODO: Ye, not sure if this is what you wanna do?
         merged_alignment = Parameters.merge(input_files=all_refined_par,
                                             input_extended_files=[])
-        merged_alignment.to_binary(short_file_name)
-        import sys
-        sys.exit()
+        merged_alignment.to_binary(merged_file_name)
+        # import sys
+        # sys.exit()
 
         """
         sort_allpar = sorted(
@@ -5028,7 +5028,7 @@ eot
                     frealign_paths["cistem2"], logfile
                 )
                 + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-                + "{0}.cistem\n{0}.mrc\n".format(name)
+                + "{0}.cistem\n{0}_stat.cistem\n{0}.mrc\n".format(name)
                 + "statistics_r%02d.txt\n" % ref
                 + stats
                 + "\n"
