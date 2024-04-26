@@ -1852,11 +1852,17 @@ def csp_split(parameters, iteration):
             assert external_parameter_file.exists(), f"{external_parameter_file} does not exist."
 
             if str(external_parameter_file).endswith(".bz2"):
+                # if the file is already here
+                if Path(str(external_parameter_file).replace(".bz2", "")).resolve() == decompressed_parameter_file_folder.resolve(): continue
+                
                 frealign_parfile.Parameters.decompress_parameter_file_and_move(file=external_parameter_file, 
                                                                                new_file=decompressed_parameter_file_folder, 
                                                                                micrograph_list=[f"{f}_r{ref+1:02d}" for f in files],
                                                                                threads=parameters["slurm_tasks"])
             elif os.path.isdir(external_parameter_file):
+                # if the file is already here
+                if external_parameter_file.resolve() == decompressed_parameter_file_folder.resolve(): continue
+                
                 # if it is already a folder
                 if decompressed_parameter_file_folder.exists():
                     shutil.rmtree(decompressed_parameter_file_folder)

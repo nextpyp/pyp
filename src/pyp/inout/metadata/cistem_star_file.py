@@ -210,6 +210,13 @@ class Particle:
         self.score = score 
         self.occ = occ
 
+    def __str__(self):
+        return f"Particle index {self.particle_index}\n\
+            Shift = ({self.shift_x}, {self.shift_y}, {self.shift_z})\n\
+            Rotation = ({self.psi}, {self.theta}, {self.phi})\n\
+            Position = ({self.x_position_3d}, {self.y_position_3d}, {self.z_position_3d})\n\
+            Score = {self.score}\n\
+            Occ = {self.occ}"
 class Tilt:
 
     """ Class storing tilt data (tilt geometry)

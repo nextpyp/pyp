@@ -784,12 +784,13 @@ def run_reconstruction(
     # FIXME: new cistem binary
     # necessary symlink for reconstruction
     # create shaped _used par file
-    call_shape_phase_residuals(
-        parameter_file,
-        parameter_file.replace(".cistem", "_used.cistem"),
-        fp,
-        iteration,
-    )
+    # call_shape_phase_residuals(
+    #     parameter_file,
+    #     parameter_file.replace(".cistem", "_used.cistem"),
+    #     fp,
+    #     iteration,
+    # )
+    shutil.copy2(parameter_file, parameter_file.replace(".cistem", "_used.cistem"))
 
     """"
     os.symlink(
