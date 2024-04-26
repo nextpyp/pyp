@@ -1033,7 +1033,8 @@ def run_mpi_reconstruction(
     # merge_used_parfile = dataset_name + "_used.par"
 
     # a folder storing all the parameter files (instead of merged one)
-    parameter_file_folder = f"{dataset_name}_r{ref:02d}_{iteration:02d}"
+    # NOTE: dataset_name = parameters['data_set'] + f"_r{ref:02d}"
+    parameter_file_folder = f"{dataset_name}_{iteration:02d}"
 
     # output_parfile = os.path.join(os.path.dirname(input_dir), "maps", merged_parfile)
     """
@@ -1487,7 +1488,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
     # clean-up the previous parameter file folders if they exist
     refinement_path = Path().cwd() / "frealign" / "maps"
-    parameter_file_folders = refinement_path.glob(f"{fp['data_set']}_r??_{iteration-1:02d}")
+    parameter_file_folders = refinement_path.glob(f"{fp['data_set']}_r??_??")
     [shutil.rmtree(folder) for folder in parameter_file_folders if Path(f"{folder}.bz2").exists()]
 
     # launch next iteration if needed
