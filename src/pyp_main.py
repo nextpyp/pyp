@@ -341,10 +341,11 @@ def parse_arguments(block):
                         parent_project_name + "_r01_02.par.bz2",
                     )
                     # find out what is the most recent parameter file
-                    potential_parameter_files = glob.glob(os.path.join(parent_parameters["data_parent"],"frealign","maps","*_r01_??.bz2")) \
-                        + glob.glob(os.path.join(parent_parameters["data_parent"],"frealign","maps","*_r01_??"))
-
+                    potential_file_patterns = ["*_r01_??.bz2", "*_r01_??", "*_r01_??_clean.bz2"]
+                    potential_parameter_files = [Path(parent_parameters["data_parent"], "frealign", "maps").glob(pattern) for pattern in potential_file_patterns]
+                    potential_parameter_files = [str(file) for files in potential_parameter_files for file in files]
                     reference_par_file = sorted(potential_parameter_files)
+
                     if len(reference_par_file) > 0:
                         reference_par_file = reference_par_file[-1]
                         reference_model_file = reference_par_file.replace(".bz2","") + ".mrc"
@@ -1859,7 +1860,7 @@ def csp_split(parameters, iteration):
                 # if it is already a folder
                 if decompressed_parameter_file_folder.exists():
                     shutil.rmtree(decompressed_parameter_file_folder)
-                shutil.copy2(external_parameter_file, decompressed_parameter_file_folder)
+                shutil.copytree(external_parameter_file, decompressed_parameter_file_folder)
 
             elif is_spr or str(external_parameter_file).endswith(".txt"):
                 # single-particle does not need a txt file like tomo to start the refinement
