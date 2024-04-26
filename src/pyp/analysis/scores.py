@@ -964,7 +964,10 @@ def filter_particles(parameter_file: str, mintilt: float, maxtilt: float, dist: 
 
     # save valid points in 3D
     best_particle = particles[0]
-    valid_particles = np.array([best_particle.x_position_3d, best_particle.y_position_3d, best_particle.z_position_3d], ndmin=2)
+    valid_particles = np.array([best_particle.x_position_3d - (best_particle.shift_x/pixel_size), 
+                                best_particle.y_position_3d - (best_particle.shift_x/pixel_size), 
+                                best_particle.z_position_3d - (best_particle.shift_x/pixel_size)
+                                ], ndmin=2)
 
     for idx, particle in enumerate(particles):
         pind = particle.particle_index

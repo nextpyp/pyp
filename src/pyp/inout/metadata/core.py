@@ -2576,30 +2576,31 @@ EOF
                                           frame_shift_y,
                                           ])
                 
-                tilt_parameters[tilt_index] = {}
-                tilt_parameters[tilt_index][region_index] = Tilt(tilt_index=tilt_index, 
-                                                                 region_index=region_index, 
-                                                                 shift_x=0.0, 
-                                                                 shift_y=0.0, 
-                                                                 angle=tilt_angle, 
-                                                                 axis=-axis)
+                if tilt_index not in tilt_parameters:
+                    tilt_parameters[tilt_index] = {}
+                    tilt_parameters[tilt_index][region_index] = Tilt(tilt_index=tilt_index, 
+                                                                    region_index=region_index, 
+                                                                    shift_x=0.0, 
+                                                                    shift_y=0.0, 
+                                                                    angle=tilt_angle, 
+                                                                    axis=-axis)
 
                 tilt_image_counter += 1
                 image_counter += 1
 
-            
-            particle_parameters[particle_index] = Particle(particle_index=particle_index, 
-                                                           shift_x=particle_orientation[3], 
-                                                           shift_y=particle_orientation[4], 
-                                                           shift_z=particle_orientation[5], 
-                                                           psi=ppsi, 
-                                                           theta=ptheta, 
-                                                           phi=pphi, 
-                                                           x_position_3d=transformed_3d_loc[0], 
-                                                           y_position_3d=transformed_3d_loc[1], 
-                                                           z_position_3d=transformed_3d_loc[2], 
-                                                           score=0.0, 
-                                                           occ=100.0)
+                if particle_index not in particle_parameters:            
+                    particle_parameters[particle_index] = Particle(particle_index=particle_index, 
+                                                                shift_x=particle_orientation[3], 
+                                                                shift_y=particle_orientation[4], 
+                                                                shift_z=particle_orientation[5], 
+                                                                psi=ppsi, 
+                                                                theta=ptheta, 
+                                                                phi=pphi, 
+                                                                x_position_3d=transformed_3d_loc[0], 
+                                                                y_position_3d=transformed_3d_loc[1], 
+                                                                z_position_3d=transformed_3d_loc[2], 
+                                                                score=0.0, 
+                                                                occ=100.0)
             global_spike_counter += 1
 
     cistem_parameters = np.array(cistem_parameters, ndmin=2)
