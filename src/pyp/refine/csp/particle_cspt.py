@@ -1255,8 +1255,6 @@ def run_mpi_reconstruction(
         os.chdir(local_input_dir)
         parameter_files = glob.glob("*_r%02d.cistem" % ref) + glob.glob("*_r%02d_stat.cistem" % ref) + glob.glob("*_r%02d_extended.cistem" % ref) 
         os.mkdir(parameter_file_folder)
-        print("CHECK OUTPUT FOLDERS")
-        print(parameter_file_folder)
         [os.rename(f, Path(parameter_file_folder) / f) for f in parameter_files]
 
         if fp["refine_parfile_compress"]:
