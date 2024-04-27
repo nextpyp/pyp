@@ -323,21 +323,13 @@ def shape_phase_residuals(
     outputparfile
 ):
 
-    """
-    if scores and not frealignx:
-        field = 14
-        occ = 11
-    elif frealignx:
-        field = 15
-        occ = 12
-    else:
-        field = 11
-    """
     cistem_par = Parameters.from_file(inputparfile)
     filmid = cistem_par.get_index_of_column(IMAGE_IS_ACTIVE)
     field = cistem_par.get_index_of_column(SCORE)
     occ = cistem_par.get_index_of_column(OCCUPANCY)
     tind = cistem_par.get_index_of_column(TIND)
+    defocus1 = cistem_par.get_index_of_column(DEFOCUS_1)
+    ptlindex = cistem_par.get_index_of_column(PIND)
 
     input = cistem_par.get_data()
     films = np.unique(input[:, filmid])
@@ -352,9 +344,6 @@ def shape_phase_residuals(
     merged_extend = inputparfile.replace(".cistem", ".json")
     with open(merged_extend, 'r') as jsonfile:
         tilts_dict = json.load(jsonfile)
-        print(tilts_dict)
-
-    ptlindex = cistem_par.get_index_of_column(PIND)
     
     if any(abs(value) > 0 for value in tilts_dict['0'].values()):
         is_tomo = True
@@ -369,8 +358,10 @@ def shape_phase_residuals(
             # contruct a tilt angle dictionary
             # tind_angle_dict = {i: tilts_dict[f][i][0].angle for i in tilts_dict[f].keys()}
             tind_angle_dict = tilts_dict[str(int(f))]
+            print(tind_angle_dict)
             tind_angle_dict_int = {int(k): v for k, v in tind_angle_dict.items()} # json way saving dict as str but we need int
             tind_in_film = input[input[:, filmid]==f][:, tind]
+            print(tind_in_film)
             df_tind = pd.DataFrame(tind_in_film, columns=["Tind"])
             # mapped_angles = np.vectorize(tind_angle_dict.get)(tind_in_film)
             df_tind["Angle"] = df_tind["Tind"].map(tind_angle_dict_int)
@@ -383,6 +374,7 @@ def shape_phase_residuals(
         tilt_angle_array = np.array([0] * input.shape[0]).reshape(-1, 1)
 
     input = np.hstack((input, tilt_angle_array))
+
     tltangle = -1 # tilt angle column as the last column temporarily
 
     import matplotlib as mpl
@@ -402,10 +394,12 @@ def shape_phase_residuals(
     else:
         msize = 0
         mask = np.array([])
-
+    
+    """
     pool = multiprocessing.Pool()
     manager = multiprocessing.Manager()
     results = manager.Queue()
+    """
 
     # determine per-cluster threshold
     thresholds = np.empty([angles, defocuses])
@@ -414,6 +408,7 @@ def shape_phase_residuals(
     min_scores[:] = np.nan
     max_scores = np.empty([angles, defocuses])
     max_scores[:] = np.nan
+
     for g in range(angles):
         for f in range(defocuses):
             # get all images in present cluster
@@ -466,14 +461,17 @@ def shape_phase_residuals(
                         if is_tomo:
                             bool_array = np.full(input.shape[0], False, dtype=bool)
                             bool_array[cluster] = True
-                            take_values = np.logical_and(bool_array, np.abs(input[:, tltangle]) < 10)
+                            take_values = np.logical_and(bool_array, np.abs(input[:, tltangle]) <= 12)
                             used_array = input[take_values]
                             scores_used = used_array[:, [field, ptlindex]]
-                            take_mean = []
-                            for i in np.unique(scores_used[:, 1]):
-                                take_mean.append(np.mean(scores_used[:, 0], where=scores_used[:,1]==i))
+                            pf = pd.DataFrame(scores_used, columns=["score", "pind"])
+                            meanscore = pf.groupby("pind")["score"].mean()
+                            
+                            # take_mean = []
+                            # for i in np.unique(scores_used[:, 1]):
+                            #     take_mean.append(np.mean(scores_used[:, 0], where=scores_used[:,1]==i))
 
-                            meanscore = np.array(take_mean)
+                            # meanscore = np.array(take_mean)
                             thresholds[g, f] = np.sort(meanscore)[
                                 int((meanscore.shape[0] - 1) * (1 - threshold))
                             ]
@@ -487,6 +485,8 @@ def shape_phase_residuals(
                         thresholds[g, f] = np.sort(input[cluster, field])[
                             int((cluster.shape[0] - 1) * threshold)
                         ]
+                    print("thresholds")
+                    print(thresholds)
                 else:
                     # cluster = input[ np.logical_and( angular_group == g, defocus_group == f ) ]
                     if scores:
@@ -516,7 +516,8 @@ def shape_phase_residuals(
 
             else:
                 logger.warning("No points in angular/defocus group.")
-
+    
+    """
     pool.close()
     pool.join()
 
@@ -537,6 +538,7 @@ def shape_phase_residuals(
             )
         bad_particles += np.where(current[4] == 0, 1, 0).sum()
         total_particles += len(current[3])
+    """
 
     from scipy.ndimage.filters import gaussian_filter
 
@@ -559,9 +561,22 @@ def shape_phase_residuals(
                 # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), np.nan, input[:,field] )
                 # input[:,occ] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), 0, input[:,occ] )
                 if is_tomo and thresholds[g, f] > 0:
-                    input_group = input[np.logical_and(angular_group == g, defocus_group == f)]
-                    ptl_index = np.unique(input_group[:, ptlindex])
+                    group_mask = np.logical_and(angular_group == g, defocus_group == f)
+                    input_group = input[group_mask]
 
+                    crop_array = input_group[:, [occ, field, ptlindex, tltangle]]
+                    crop_by_tltangle = crop_array[np.abs(crop_array[:, -1]) < 12]
+                    ptl_index = np.unique(crop_by_tltangle[:, 2])
+                    df = pd.DataFrame(crop_by_tltangle, columns=["occ", "score", "pind", "tltangle"])
+                    meanscore = df.groupby("pind")["score"].mean().to_numpy()
+                    above_threshold = meanscore > thresholds[g, f]
+                    discarded = ptl_index[above_threshold == False].size
+                    logger.info(f"{discarded} particles scores are below the threshold")
+
+                    modification_mask = np.isin(input_group[:, ptlindex], ptl_index[above_threshold == False])
+                    input[group_mask][modification_mask, occ] = 0 
+
+                    """
                     for i in ptl_index:
                         ptl_field_array = input_group[input_group[:, ptlindex] == i, field]
                         tltangle_array = input_group[input_group[:, ptlindex] == i, tltangle]
@@ -572,6 +587,7 @@ def shape_phase_residuals(
                         0,
                         input[input[:, ptlindex] == i, occ],
                         )
+                    """
                 else:
                     input[:, occ] = np.where(
                         np.logical_and(
@@ -587,8 +603,6 @@ def shape_phase_residuals(
                         0,
                         input[:, occ],
                     )
-                number = input[input[:, occ]==0].shape[0]
-                logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
 
     if os.path.exists(fmatch_stack):
         logger.info(
@@ -610,10 +624,11 @@ def shape_phase_residuals(
     # ignore if defocus outside permissible range
     if scores:
         input[:, occ] = np.where(
-            np.logical_or(input[:, 8] < mindefocus, input[:, 8] > maxdefocus),
+            np.logical_or(input[:, defocus1] < mindefocus, input[:, defocus1] > maxdefocus),
             0,
             input[:, occ],
         )
+
     """
     else:
         input[:, field] = np.where(
@@ -632,6 +647,7 @@ def shape_phase_residuals(
                 0,
                 input[:, occ],
             )
+        
         """
         else:
             input[:, field] = np.where(
@@ -661,6 +677,7 @@ def shape_phase_residuals(
                 0,
                 input[:, occ],
             )
+
     # revert phase residual polarity so that lowest PR become highest and viceversa
     if reverse:
         min_pr = np.extract(np.isfinite(input[:, field]), input[:, field]).min()
@@ -730,6 +747,8 @@ def shape_phase_residuals(
         else:
             input[1::2, field] = np.nan
 
+    number = input[input[:, occ]==0].shape[0]
+    logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
     # write output parameter file
     # new_par_obj = frealign_parfile.Parameters(version, extended=extended, data=input, prologue=prologue, epilogue=epilogue)
     # new_par_obj.write_file(outputparfile)

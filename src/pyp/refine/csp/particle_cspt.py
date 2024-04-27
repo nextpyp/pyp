@@ -1196,7 +1196,7 @@ def run_mpi_reconstruction(
             # only projecton parameters here
             stat = Parameters()
             stat.set_data(np.vstack((stat_array_mean, stat_array_var)))
-            stat.to_binary( os.path.join(local_input_dir, dataset_name + "r%02d_stat.cistem" % ref ) )
+            stat.to_binary( os.path.join(local_input_dir, dataset_name + "_stat.cistem" ) )
             occ_col = stat.get_index_of_column(OCCUPANCY)
             # save an occ array for ploting in final merge
             occ_data = merge_used_par_data[:, occ_col]
@@ -1255,6 +1255,8 @@ def run_mpi_reconstruction(
         os.chdir(local_input_dir)
         parameter_files = glob.glob("*_r%02d.cistem" % ref) + glob.glob("*_r%02d_stat.cistem" % ref) + glob.glob("*_r%02d_extended.cistem" % ref) 
         os.mkdir(parameter_file_folder)
+        print("CHECK OUTPUT FOLDERS")
+        print(parameter_file_folder)
         [os.rename(f, Path(parameter_file_folder) / f) for f in parameter_files]
 
         if fp["refine_parfile_compress"]:
