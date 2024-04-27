@@ -984,10 +984,10 @@ def filter_particles(parameter_file: str, mintilt: float, maxtilt: float, dist: 
     # save valid points in 3D
     best_particle = particles[0]
     valid_particles = np.array([best_particle.x_position_3d - (best_particle.shift_x/pixel_size), 
-                                best_particle.y_position_3d - (best_particle.shift_x/pixel_size), 
-                                best_particle.z_position_3d - (best_particle.shift_x/pixel_size)
+                                best_particle.y_position_3d - (best_particle.shift_y/pixel_size), 
+                                best_particle.z_position_3d - (best_particle.shift_z/pixel_size)
                                 ], ndmin=2)
-
+    
     for idx, particle in enumerate(particles):
         pind = particle.particle_index
         if idx == 0:
@@ -1065,6 +1065,7 @@ def particle_cleaning(parameters: dict):
                                                                        micrograph_list=[f"{f}_r{ref:02d}" for f in films],
                                                                        threads=parameters["slurm_tasks"])
         parameter_folder = str(parameter_folder_current)  
+        parameters["clean_parfile"] = Path(parameter_folder).absolute()
         
 
     # single class cleaning regard to box files
