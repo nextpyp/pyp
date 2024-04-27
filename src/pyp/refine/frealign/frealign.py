@@ -3670,27 +3670,6 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
                 f"The number of refined parfiles ({len(all_refined_par)}) != the number of jobs ({count})."
             )
 
-        # FIXME: I don't think we need to convert between different versions now
-
-        # if "frealignx" in metric:
-        #     frealignx = True
-        #     short_column = 17
-        # else:
-        #     frealignx = False
-        #     short_column = 16
-
-        # FIXME: I think the code below can be removed, as we perform new merging mechanism
-
-        # merged_short_par = np.empty((0, short_column))
-        # for refined_par in sorted(all_refined_par, key=lambda x: x.split("_")[-1]):
-        #     # changed_par = refined_par.replace(".par", "_changed.par")
-        #     refined = np.loadtxt(refined_par, ndmin=2, comments="C")
-        #     # changed = np.loadtxt(changed_par, ndmin=2, comments="C")
-        #     # refined[:, -2] = refined[:, -2] + refined[:, -1]
-        #     merged_short_par = np.vstack((merged_short_par, refined))
-
-        # frealign_parfile.Parameters.write_parameter_file(short_file_name, merged_short_par, parx=False, frealignx=frealignx)
-
         # TODO: Ye, not sure if this is what you wanna do?
         merged_alignment = Parameters.merge(input_files=all_refined_par,
                                             input_extended_files=[])
@@ -3718,7 +3697,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
         [
             os.remove(i)
             for i in glob.glob(str(scratch / f"{name}_*_*.cistem"))
-            if i != short_file_name
+            if i != merged_file_name
         ]
 
     else:
@@ -4341,6 +4320,7 @@ def mrefine_version(
     global_par = os.path.join(
         current_path, "frealign", "maps", global_name + "_r%02d_%02d.par" % (ref, i - 1)
     )
+    
     fp = mp
 
     pixel = float(mp["scope_pixel"]) * float(mp["data_bin"]) * float(mp["extract_bin"])

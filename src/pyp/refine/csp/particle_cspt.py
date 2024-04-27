@@ -441,31 +441,6 @@ def merge_movie_files_in_job_arr(
             str(output_basename) + "_r%02d.mrc" % (current_class),
         )
 
-        # FIXME: Don't think we need to convert between different versions now
-    #     # if dose weighting is enabled and we are not in metric frealignx, we need to add PSHIFT column, film column start from 0 is OK
-    #     current_pardata = frealign_parfile.Parameters.from_file(merged_par_file).data
-    #     if current_pardata.shape[-1] < 46:
-
-    #         new_file = [
-    #             line for line in open(merged_par_file) if not line.startswith("C")
-    #         ]
-    #         header = frealign_parfile.EXTENDED_FREALIGNX_PAR_HEADER
-    #         with open(merged_par_file, "w") as f:
-    #             [f.write(line) for line in header]
-    #             for i in new_file:
-    #                 f.write(i[:91] + "%8.2f" % 0 + i[91:])
-    #         if current_class == classes:
-    #             is_frealignx = True
-    #             convert_parfile = True
-    #         logger.debug("Reconstruction using frealignx format")
-
-    #     else:
-    #         is_frealignx = True
-    #         if current_pardata[0, 7] == 1:
-    #             # film id start from 0 for reconstruction
-    #             current_pardata[:, 7] -= 1 
-    #             frealign_parfile.Parameters.write_parameter_file(merged_par_file, current_pardata, parx=True, frealignx=True)
-
     logger.info("Running reconstruction")
 
     # change occupancy after refinement
@@ -485,14 +460,6 @@ def merge_movie_files_in_job_arr(
 
         current_class = class_index + 1
 
-        # FIXME (Ye): new cistem binary
-        # # append other rows to the current block from previous iteration
-        # film_col = 7
-        # current_block_par = "%s_r%02d_%02d.par" % (
-        #     output_basename,
-        #     current_class,
-        #     iteration,
-        # )
         par_binary = str(output_basename) + "_r%02d.cistem" % (class_index + 1)
         current_block_par_obj = Parameters.from_file(par_binary)
 
@@ -1304,7 +1271,7 @@ def run_mpi_reconstruction(
         
         # save what is worth to original frealing/maps
         for file in (
-            ["../maps/" + dataset_name + "_fyp.webp", "../maps/" + dataset_name + "_map.webp", f"../maps/{dataset_name}_{iteration:02d}.mrc", f"../maps/{dataset_name}_{iteration:02d}_raw.mrc"]
+            [ f"../maps/{dataset_name}_{iteration:02d}.mrc", f"../maps/{dataset_name}_{iteration:02d}_raw.mrc"]
             + glob.glob(f"../maps/*_r{ref:02d}_???.txt")
             + glob.glob("../maps/*half*.mrc")
             + glob.glob("../maps/*crop.mrc")

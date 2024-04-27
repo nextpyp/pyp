@@ -1996,19 +1996,20 @@ def csp_split(parameters, iteration):
         for ref in range(classes):
             
             name = "%s_r%02d" % (dataset, ref + 1)
-            decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{name}_{iteration-1:02d}")
-            # read all images parameters for statistices 
-            class_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r%02d.cistem" % (ref + 1) ) for file in files ]
-            merged_all_parameters = cistem_star_file.Parameters.merge(class_files)
-            
-            projection_parameters = merged_all_parameters.get_data()
-            stat_array_mean = np.mean(projection_parameters, axis=0)
-            stat_array_var = np.var(projection_parameters, axis=0)
-            
-            # only projecton parameters here
-            stat = cistem_star_file.Parameters()
-            stat.set_data(np.vstack((stat_array_mean, stat_array_var)))
-            stat.to_binary( os.path.join(decompressed_parameter_file_folder, name + "r%02d_stat.cistem" % (ref + 1) ) )
+            if not os.path.exists(name + "_stat.cistem"):
+                decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{name}_{iteration-1:02d}")
+                # read all images parameters for statistices 
+                class_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r%02d.cistem" % (ref + 1) ) for file in files ]
+                merged_all_parameters = cistem_star_file.Parameters.merge(class_files)
+                
+                projection_parameters = merged_all_parameters.get_data()
+                stat_array_mean = np.mean(projection_parameters, axis=0)
+                stat_array_var = np.var(projection_parameters, axis=0)
+                
+                # only projecton parameters here
+                stat = cistem_star_file.Parameters()
+                stat.set_data(np.vstack((stat_array_mean, stat_array_var)))
+                stat.to_binary( os.path.join(decompressed_parameter_file_folder, name + "_stat.cistem" ) )
             
 
     os.makedirs("swarm", exist_ok=True)

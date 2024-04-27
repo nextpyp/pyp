@@ -1327,9 +1327,15 @@ def postprocess_after_refinement(
 
     new_name = name + "_r%02d" % current_class
 
+    global_dataset_name =  mp_local["data_set"]
+    global_decompressed_foler = os.path.join(current_path, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (current_class, iteration - 1))
+    global_stat_file = os.path.join(global_decompressed_foler, global_dataset_name + "_r%02d_stat.cistem" % current_class)
     # create symlinks in scratch folder
     symlink_relative(
         new_par_file, os.path.join("scratch", f"{new_name}.cistem")
+    )
+    symlink_relative(
+        global_stat_file, os.path.join("scratch", f"{new_name}_stat.cistem")
     )
 
     # reset occupancies if not doing classification

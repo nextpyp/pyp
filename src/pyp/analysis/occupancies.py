@@ -128,9 +128,9 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
             project_dir = f.readline().strip("\n")
 
         for k in range(nclasses):
-
-            decompressed_parameter_file_folder = os.path.join(project_dir, "frealign", "maps", dataset + "_r%02d_%02d" % (k + 1, iteration)) 
-            remote_par_stat = os.path.join(decompressed_parameter_file_folder, dataset + "r%02d_stat.cistem" % (k + 1))
+            global_dataset_name = parameters["data_set"]
+            decompressed_parameter_file_folder = os.path.join(project_dir, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (k + 1, iteration)) 
+            remote_par_stat = os.path.join(decompressed_parameter_file_folder, global_dataset_name + "r%02d_stat.cistem" % (k + 1))
             stat = cistem_star_file.Parameters.from_file(remote_par_stat)
             occmean = stat[0, occ_col]
             class_average_occ.append(occmean)

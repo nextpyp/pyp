@@ -571,10 +571,12 @@ def shape_phase_residuals(
                     meanscore = df.groupby("pind")["score"].mean().to_numpy()
                     above_threshold = meanscore > thresholds[g, f]
                     discarded = ptl_index[above_threshold == False].size
-                    logger.info(f"{discarded} particles scores are below the threshold")
-
+                    logger.info(f"{discarded} particles scores are below the threshold, particles in the following list are removed from reconstruction")
+                    logger.info(ptl_index[above_threshold == False])
                     modification_mask = np.isin(input_group[:, ptlindex], ptl_index[above_threshold == False])
-                    input[group_mask][modification_mask, occ] = 0 
+                   
+                    group_mask[group_mask == True] = modification_mask
+                    input[group_mask, occ] = 0 
 
                     """
                     for i in ptl_index:
@@ -749,55 +751,9 @@ def shape_phase_residuals(
 
     number = input[input[:, occ]==0].shape[0]
     logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
-    # write output parameter file
-    # new_par_obj = frealign_parfile.Parameters(version, extended=extended, data=input, prologue=prologue, epilogue=epilogue)
-    # new_par_obj.write_file(outputparfile)
-    # par_obj.write_file(outputparfile)
 
     cistem_par.set_data(input[:, :-1]) # not including the tilt angle column
     cistem_par.to_binary(outputparfile)
-
-    # f = open(outputparfile, "w")
-    # for line in open(inputparfile):
-    #     if line.startswith("C"):
-    #         f.write(line)
-    # for i in range(input.shape[0]):
-    #     if scores:
-    #         f.write(frealign_parfile.NEW_PAR_STRING_TEMPLATE % tuple(input[i, :16]))
-    #     elif frealignx:
-    #         f.write(frealign_parfile.FREALIGNX_PAR_STRING_TEMPLATE % tuple(input[i, :17]))
-    #     else:
-    #         f.write(frealign_parfile.CCLIN_PAR_STRING_TEMPLATE % tuple(input[i, :13]))
-    #     f.write("\n")
-    # f.close()
-    #
-    # if scores:
-    #     columns = 16
-    #     width = 137
-    # elif frealignx:
-    #     columns = 17
-    #     width = 145
-    # else:
-    #     columns = 13
-    #     width = 103
-
-    # if input.shape[1] > columns:
-    #     # compose extended .parx file
-    #     long_file = [line for line in open(inputparfile) if not line.startswith("C")]
-    #     short_file = [line for line in open(outputparfile) if not line.startswith("C")]
-    #     if (
-    #         len(long_file[0].split()) > columns
-    #         and not len(short_file[0].split()) > columns
-    #         and not "star" in outputparfile
-    #     ):
-
-    #         logger.info("merging", inputparfile, "with", outputparfile, "into", outputparfile)
-
-    #         f = open(outputparfile, "w")
-    #         [f.write(line) for line in open(inputparfile) if line.startswith("C")]
-    #         for i, j in zip(short_file, long_file):
-    #             f.write(i[:-1] + j[width - 1 :])
-    #         f.close()
 
 @timer.Timer(
     "call_shape_phase_residuals", text="Shaping scores took: {}", logger=logger.info
