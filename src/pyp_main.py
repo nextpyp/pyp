@@ -1890,28 +1890,6 @@ def csp_split(parameters, iteration):
             #     raise Exception(f"{decompressed_parameter_file_folder} is required to proceed. ")
 
         
-        # # NOTE: we probably don't need this, because currently parameter files are separated
-        # compressed_par = Path(os.getcwd(), "frealign", "maps", f"{name}_{iteration-1:02d}.par.bz2")
-
-        # parfile = None
-        # if compressed_par.exists():
-        #     decompressed_par = frealign_parfile.Parameters.decompress_parameter_file(str(compressed_par), parameters["slurm_tasks"])
-        #     parfile = decompressed_par
-        #     if classes > 1:
-        #         shutil.copy2(parfile, Path(compressed_par.parent, os.path.basename(parfile)))
-
-        # elif "refine_parfile" in parameters and parameters["refine_parfile"] != None and os.path.exists(project_params.resolve_path(parameters["refine_parfile"])) and ".par" in project_params.resolve_path(parameters["refine_parfile"]):
-        #     refine_parfile = frealign_parfile.Parameters.decompress_parameter_file(project_params.resolve_path(parameters["refine_parfile"]), parameters["slurm_tasks"])
-        #     parfile = refine_parfile
-
-        # if use_frames and ref == 0 or iteration == 2:
-        #     try:
-        #         os.unlink("./csp/micrograph_particle.index")
-        #     except:
-        #         pass
-        # if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)):
-        #     get_image_particle_index(parameters, parfile, path="./csp")
-        
         if parameters["dose_weighting_enable"] and ref == 0:
 
             # create weights folder for storing weights.txt
@@ -1934,16 +1912,7 @@ def csp_split(parameters, iteration):
                     parameters["dose_weighting_weights"] = weight_file
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
 
-        # if (classes > 1
-        # and iteration > 2
-        # and not os.path.isfile("./csp/particle_tilt.index")
-        # and "tomo" in parameters["data_mode"]
-        # and ref == 0
-        # ):
-        #     get_particles_tilt_index(parfile, path="./csp")
 
-        # previous = "frealign/maps/%s_%02d.par" % (name, iteration - 1)
-        # current = "%s_%02d" % (name, iteration)
         raw_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt_raw"
         smooth_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt"
 
@@ -4313,9 +4282,9 @@ if __name__ == "__main__":
                     refine_res_lim = ""
 
                 comm_exe = os.environ["PYP_DIR"] + "/external/postprocessing/postprocessing.py "
-                basic = f"'{half1}' '{half2}' '{mask}' --angpix {pixel_size} --out '{output}' {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
+                basic = f"{half1} {half2} {mask} --angpix {pixel_size} --out {output} {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
                 comm = comm_exe + basic + bfac + filter + fsc + automask + randomize_phase
-                local_run.run_shell_command(comm, verbose=False)
+                local_run.run_shell_command(comm, verbose=parameters["slurm_verbose"])
                 if not os.path.exists(output_map):
                     raise Exception("Does the postprocessing block have enough RAM assigned (launch task)?")
 

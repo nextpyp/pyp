@@ -1211,8 +1211,8 @@ def csp_run_refinement(
                     alignment_parameters.to_binary(output=parameter_file)
 
                     csp_modes.append(5)
-                    parameters["csp_UseImagesForRefinementMin"] = int(len(scanord_list))
-                    parameters["csp_UseImagesForRefinementMax"] = int(len(scanord_list))
+                    parameters["csp_UseImagesForRefinementMin"] = int(max(scanord_list)) + 1
+                    parameters["csp_UseImagesForRefinementMax"] = int(max(scanord_list)) + 1
                     only_evaluate = True 
 
                     project_params.save_parameters(parameters)
@@ -1221,7 +1221,7 @@ def csp_run_refinement(
                 parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = csp_refine_min, csp_refine_max
                 project_params.save_parameters(parameters)
                 only_evaluate = False
-
+            
             t.stop()
 
             num_projections = alignment_parameters.get_num_rows()
