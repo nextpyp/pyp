@@ -893,10 +893,13 @@ def csp_run_refinement(
     frame_tag = "_local" if use_frames else ""
 
     if current_class > 1:
-        os.remove(os.path.join("frealign", "maps", "%s_frames_CSP_01.parx" % dataset))
-        os.remove(os.path.join("frealign", "scratch", "%s_frames_CSP_01.mrc" % dataset))
-        os.remove(os.path.join(local_scratch, "%s_frames_CSP_01.mrc" % dataset))
-        os.remove(os.path.join(local_scratch, "_frames_CSP_01.mrc"))
+        try:
+        # os.remove(os.path.join("frealign", "maps", "%s_frames_CSP_01.parx" % dataset))
+            os.remove(os.path.join("frealign", "scratch", "%s_frames_CSP_01.mrc" % dataset))
+            os.remove(os.path.join(local_scratch, "%s_frames_CSP_01.mrc" % dataset))
+            os.remove(os.path.join(local_scratch, "_frames_CSP_01.mrc"))
+        except:
+            pass
 
     parameter_file = f"frealign/maps/{name}.cistem"
     extended_parameter_file = parameter_file.replace(".cistem", "_extended.cistem")
@@ -1334,9 +1337,11 @@ def postprocess_after_refinement(
     symlink_relative(
         new_par_file, os.path.join("scratch", f"{new_name}.cistem")
     )
-    symlink_relative(
-        global_stat_file, os.path.join("scratch", f"{new_name}_stat.cistem")
-    )
+
+    if os.path.exists(global_stat_file):
+        symlink_relative(
+            global_stat_file, os.path.join("scratch", f"{new_name}_stat.cistem")
+        )
 
     # reset occupancies if not doing classification
     if iteration == 2:
@@ -1419,7 +1424,7 @@ def postprocess_after_refinement(
             [os.remove(f) for f in glob.glob("*_msearch_n.log_*")]
 
     # output_refine3d = new_name + "_%07d_%07d.cistem" % (1, frames)
-    output_refine3d = new_name + ".cistem" # current dir is frealign/scratch/
+    output_refine3d = new_name + "_refined.cistem" # current dir is frealign/scratch/
     
     # compose extended .parx file
     # long_file_name = os.path.join("maps", new_par_file)
@@ -1429,7 +1434,7 @@ def postprocess_after_refinement(
     # concatenate_par_files(long_file_name, short_file_name, mp)
     
     newpar_obj = cistem_star_file.Parameters.from_file(output_refine3d)
-    newpar_obj.modify_outliers_in_column(cistem_star_file.SCORE, min=0, max=100)
+    newpar_obj.modify_outliers_in_column(newpar_obj.get_index_of_column(cistem_star_file.SCORE), min=0, max=100)
 
     if classes == 1:    
         col_index = newpar_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
@@ -1439,7 +1444,7 @@ def postprocess_after_refinement(
 
     os.remove(new_par_file)
     # replace the cistem scratch folder
-    symlink_relative( output_refine3d, new_par_file)
+    shutil.copy2( output_refine3d, new_par_file)
 
     """
     # here we reformat columns to force the standard format (even if that means columns will be joint)

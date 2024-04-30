@@ -1908,6 +1908,8 @@ eot
             else:
                 dose_weighting = "no"
 
+            statistics_file = f"../{name}_stat.cistem" 
+
             score_weighting = "yes" if fp["refine_score_weighting"] else "no"
             min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
             # max_tilt_particle_score = fp["csp_UseImagesForRefinementMax"]
@@ -1927,6 +1929,7 @@ eot
                 )
                 + f"{stack}\n"
                 + f"{parfile}\n"
+                + f"{statistics_file}\n"
                 + f"{reference}\n"
                 + f"{name}_map1.mrc\n"
                 + f"{name}_map2.mrc\n"
@@ -3655,7 +3658,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
 
         # combine all the refined parfile
         # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
-        merged_file_name = name + ".cistem"
+        merged_file_name = name + "_refined.cistem"
         all_refined_par = [par for par in glob.glob(name + "_*_*.cistem")]
 
         # first check if the number of refined par is equal to count

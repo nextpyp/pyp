@@ -623,7 +623,7 @@ class Parameters:
 
     def __init__(self, input_file: str = "", extended_input_file: str = ""):
         
-        self._input_file: Path = None
+        self._input_file: str = ""
         self._data: np.ndarray = None
         self._num_columns: int = -1
         self._num_rows: int = -1
@@ -636,8 +636,9 @@ class Parameters:
         else:
             # create the class from scratch (given array and header)
             pass
-
-        self._input_file = Path(input_file).absolute()
+        
+        # TODO this Path object could cause some problem for the string operation
+        self._input_file = Path(input_file).absolute().as_posix()
 
     @classmethod
     def from_file(cls, input_file: str): 

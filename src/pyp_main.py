@@ -1886,8 +1886,8 @@ def csp_split(parameters, iteration):
                                                                             threads=parameters["slurm_tasks"])
             elif decompressed_parameter_file_folder.exists():
                 pass
-            else:
-                raise Exception(f"{decompressed_parameter_file_folder} is required to proceed. ")
+            # else:
+            #     raise Exception(f"{decompressed_parameter_file_folder} is required to proceed. ")
 
         
         # # NOTE: we probably don't need this, because currently parameter files are separated
@@ -1972,7 +1972,7 @@ def csp_split(parameters, iteration):
             )
             or force_init
         ):
-            decompressed_parameter_file_folder = current_dir / "frealign" / "maps" / f"{dataset}_r01_{iteration-1:02d}"
+            decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{dataset}_r01_{iteration-1:02d}")
             use_frame = "local" in parameters["extract_fmt"]
             is_tomo = "tomo" in parameters["data_mode"]
             classification_initialization(
@@ -1983,7 +1983,7 @@ def csp_split(parameters, iteration):
             parameters["class_force_init"] = False
             project_params.save_pyp_parameters(parameters=parameters, path="..")
         else:
-            parameter_folders = Path(decompressed_parameter_file_folder).parent
+            parameter_folders = decompressed_parameter_file_folder.parent.as_posix()
             occupancy_extended(
                 parameters, dataset, classes, files, parameter_folders, local=False
             )
@@ -2000,7 +2000,7 @@ def csp_split(parameters, iteration):
                 decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{name}_{iteration-1:02d}")
                 # read all images parameters for statistices 
                 class_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r%02d.cistem" % (ref + 1) ) for file in files ]
-                merged_all_parameters = cistem_star_file.Parameters.merge(class_files)
+                merged_all_parameters = cistem_star_file.Parameters.merge(class_files, input_extended_files=[])
                 
                 projection_parameters = merged_all_parameters.get_data()
                 stat_array_mean = np.mean(projection_parameters, axis=0)

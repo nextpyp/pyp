@@ -344,8 +344,9 @@ def shape_phase_residuals(
     merged_extend = inputparfile.replace(".cistem", ".json")
     with open(merged_extend, 'r') as jsonfile:
         tilts_dict = json.load(jsonfile)
-    
-    if any(abs(value) > 0 for value in tilts_dict['0'].values()):
+        any_key = next(iter(tilts_dict.keys()))
+
+    if any(abs(value) > 0 for value in tilts_dict[any_key].values()):
         is_tomo = True
     else:
         is_tomo = False
@@ -353,15 +354,14 @@ def shape_phase_residuals(
     tiltangle = []
 
     if is_tomo:
-
         for f in films:
             # contruct a tilt angle dictionary
             # tind_angle_dict = {i: tilts_dict[f][i][0].angle for i in tilts_dict[f].keys()}
             tind_angle_dict = tilts_dict[str(int(f))]
-            print(tind_angle_dict)
+
             tind_angle_dict_int = {int(k): v for k, v in tind_angle_dict.items()} # json way saving dict as str but we need int
             tind_in_film = input[input[:, filmid]==f][:, tind]
-            print(tind_in_film)
+
             df_tind = pd.DataFrame(tind_in_film, columns=["Tind"])
             # mapped_angles = np.vectorize(tind_angle_dict.get)(tind_in_film)
             df_tind["Angle"] = df_tind["Tind"].map(tind_angle_dict_int)

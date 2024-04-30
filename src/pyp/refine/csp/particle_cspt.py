@@ -391,6 +391,11 @@ def merge_movie_files_in_job_arr(
         mp["class_num"] = 1 
     else:
         classes = int(project_params.param(fp["class_num"], iteration))
+    
+    if not mp["refine_skip"]: # refine3d film output = 1
+        film_start = 1
+    else:
+        film_start = 0
 
     for class_index in range(classes):
 
@@ -401,20 +406,16 @@ def merge_movie_files_in_job_arr(
         for p in par_list:
             new_par_list.append(p.replace("_r01_", "_r%02d_" % current_class))
 
-        # metric = project_params.param(mp["refine_metric"], iteration)
-        # frealign_parfile.Parameters.merge_parameters(
-        #      new_par_list, merged_par_file, metric, update_film=True, parx=True, frealignx=is_frealignx
-        # )
-
         # FIXME (HF): merge all the cistem binary files in a bundle, re-number the film (using image_activity column)
         tilt_json = merged_par_file.replace(".cistem", ".json") # a dictinary file for tilt parameters 
         tilts_dict = {}
         if len(new_par_list) == 1:
+            # src_path = os.path.realpath(new_par_list[0])
             shutil.copy2(new_par_list[0], merged_par_file)
             extended_cistem = ExtendedParameters.from_file(new_par_list[0].replace(".cistem", "_extended.cistem"))
             tilt_dict = extended_cistem.get_tilts()
             tind_angle_dict = {int(t): tilt_dict[t][0].angle for t in tilt_dict.keys()}
-            tilts_dict[0] = tind_angle_dict # film id start from 0
+            tilts_dict[0 + film_start] = tind_angle_dict # film id start from 0
 
         else:
             merged_pardata = merge_all_binary_with_filmid(new_par_list, read_extend=False)
@@ -425,7 +426,7 @@ def merge_movie_files_in_job_arr(
                 extended_cistem = ExtendedParameters.from_file(f.replace(".cistem", "_extended.cistem"))
                 tilt_dict = extended_cistem.get_tilts()
                 tind_angle_dict = {int(t): tilt_dict[t][0].angle for t in tilt_dict.keys()}
-                tilts_dict[i] = tind_angle_dict
+                tilts_dict[i + film_start] = tind_angle_dict
         
         with open(tilt_json, 'w') as j:
             json.dump(tilts_dict, j, indent=4)
@@ -454,14 +455,24 @@ def merge_movie_files_in_job_arr(
 
         logger.info("Updating occupancies after local merge")
         # update occupancies using LogP values
-        occupancy_extended(mp, output_basename, iteration, classes, image_list=None, decompressed_parameter_file_folder=".", local=True)
+        current_path = os.getcwd()
+        occupancy_extended(mp, output_basename, classes, parameter_file_folders=current_path, local=True)
 
     for class_index in range(classes):
 
         current_class = class_index + 1
 
-        par_binary = str(output_basename) + "_r%02d.cistem" % (class_index + 1)
+        par_binary = str(output_basename) + "_r%02d.cistem" % current_class
         current_block_par_obj = Parameters.from_file(par_binary)
+        
+        # link statistics file
+        dataset_name = mp["data_set"]
+        decompressed_parameter_file_folder = os.path.join(project_path, "frealign", "maps", dataset_name + "_r%02d_%02d" % (current_class, iteration - 1))
+        remote_par_stat = os.path.join(decompressed_parameter_file_folder, dataset_name + "_r%02d_stat.cistem" % (current_class))
+        
+        # if not exist, will use the input parameter file to calculate statistics in reconstruct3d
+        if os.path.exists(remote_par_stat):
+            os.symlink(remote_par_stat, par_binary.replace(".cistem", "_stat.cistem"))
 
         # generate tsv files for Artix display
         if False and "tomo" in mp["data_mode"]:
@@ -641,15 +652,15 @@ def save_reconstruction(
     if not os.path.exists(dest_path):
         os.makedirs(dest_path, exist_ok=True)
 
-    all_files = os.listdir(output_folder)
+    # all_files = os.listdir(output_folder)
 
     output_name = output_basename
-    
+    class_label = output_basename.split("_")[-1]
     # move over all the binary files (each represent on tilt-series) in a given bundle to output folder
     # FIXME: use different cistem files for different classes
-    [os.rename(binary_file, Path(output_folder) / Path(binary_file).name) for binary_file in glob.glob("*/frealign/maps/*.cistem")]
+    [os.rename(binary_file, Path(output_folder) / Path(binary_file).name) for binary_file in glob.glob(f"*/frealign/maps/*{class_label}*.cistem")]
     # move the used binary for global merge 
-    [os.rename(binary_file, Path(output_folder) / Path(binary_file).name) for binary_file in glob.glob("*_used.cistem")]
+    [os.rename(binary_file, Path(output_folder) / Path(binary_file).name) for binary_file in glob.glob(f"*{class_label}*_used.cistem")]
 
     # copy only dumped mrc and .par files
     saved_path = os.getcwd()
@@ -1273,6 +1284,7 @@ def run_mpi_reconstruction(
         for file in (
             [ f"../maps/{dataset_name}_{iteration:02d}.mrc", f"../maps/{dataset_name}_{iteration:02d}_raw.mrc"]
             + glob.glob(f"../maps/*_r{ref:02d}_???.txt")
+            + glob.glob(f"../maps/*statistics.txt")
             + glob.glob("../maps/*half*.mrc")
             + glob.glob("../maps/*crop.mrc")
             + glob.glob("../maps/*scores.svgz")

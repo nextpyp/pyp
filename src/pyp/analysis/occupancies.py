@@ -104,14 +104,14 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
         "read par for occ", text = "OCC Read par took: {}", logger=logger.info
         ):
             for k in range(nclasses):
-                K = k + 1
-                decompressed_parameter_file_folder = os.path.join(parameter_file_folders, dataset + "_r%02d_%02d" % (K, iteration)) 
-                binary_list = [os.path.join(decompressed_parameter_file_folder, image + "_r%02d.cistem" % K ) for image in image_list]
-                park_data, par_extk_list = merge_all_binary_with_filmid(binary_list, read_extend=True)                
+                class_k = k + 1
+                decompressed_parameter_file_folder = os.path.join(parameter_file_folders, dataset + "_r%02d_%02d" % (class_k, iteration - 1)) 
+                binary_list = [os.path.join(decompressed_parameter_file_folder, image + "_r%02d.cistem" % class_k ) for image in image_list]
+                park_data, par_extk_dict = merge_all_binary_with_filmid(binary_list, read_extend=True)                
                 select_data = park_data[:, [film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, scanord_col]]
 
-                all_extended_list.append(par_extk_list)
-                parx.append(select_data.to_numpy())
+                all_extended_list.append(par_extk_dict)
+                parx.append(select_data)
                 all_occ = parx[k][:, newocc_col].ravel()
                 class_average_occ.append(mean(all_occ))
 
@@ -128,15 +128,16 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
             project_dir = f.readline().strip("\n")
 
         for k in range(nclasses):
+            
             global_dataset_name = parameters["data_set"]
-            decompressed_parameter_file_folder = os.path.join(project_dir, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (k + 1, iteration)) 
-            remote_par_stat = os.path.join(decompressed_parameter_file_folder, global_dataset_name + "r%02d_stat.cistem" % (k + 1))
-            stat = cistem_star_file.Parameters.from_file(remote_par_stat)
+            decompressed_parameter_file_folder = os.path.join(project_dir, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (k + 1, iteration - 1)) 
+            remote_par_stat = os.path.join(decompressed_parameter_file_folder, global_dataset_name + "_r%02d_stat.cistem" % (k + 1))
+            stat = cistem_star_file.Parameters.from_file(remote_par_stat).get_data()
             occmean = stat[0, occ_col]
             class_average_occ.append(occmean)
 
             # reload local par files
-            par_binary = os.path.join(parameter_file_folders, dataset + "r%02d.cistem" % (k + 1) )
+            par_binary = os.path.join(parameter_file_folders, dataset + "_r%02d.cistem" % (k + 1) )
             park_data = cistem_star_file.Parameters.from_file(par_binary)
             select_data = park_data.get_data()[:, [film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, scanord_col]]
             parx.append(select_data)
@@ -162,7 +163,7 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
             logger.info("Weighting logp with tilt distribution")
             for k in range(0, nclasses):
                 for i in index:
-                    per_particle_tiltweight(parx_3d[k, :,:], newocc_col, all_extended_list[k], newlogp_col, i)
+                    per_particle_tiltweight(parx_3d[k, :,:], all_extended_list[k], newlogp_col, i)
 
     else:
         logger.info("Not using tilt weighting to change OCC")
@@ -205,27 +206,27 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
     # updating columns in parx array
 
     for k in range(nclasses):
-        occdata = new_occ[k, :].reshape((-1, 1)) 
-        sigmadata = average_sigma.reshape((-1, 1))
+        occdata = new_occ[k, :]
+        sigmadata = average_sigma
         if not local:
             for film_id, image_name in enumerate(image_list):
-                decompressed_parameter_file_folder = os.path.join(parameter_file_folders, dataset + "_r%02d_%02d" % (K, iteration)) 
+                decompressed_parameter_file_folder = os.path.join(parameter_file_folders, dataset + "_r%02d_%02d" % (k + 1, iteration - 1)) 
                 # film_id += 1 # film index from 0
-                class_binary = os.path.join(decompressed_parameter_file_folder, image_name + "r%02d.cistem" % (k + 1))
+                class_binary = os.path.join(decompressed_parameter_file_folder, image_name + "_r%02d.cistem" % (k + 1))
                 image_data = cistem_star_file.Parameters.from_file(class_binary)
                 image_array = image_data.get_data()
                 image_array[:, occ_col] = occdata[film_index[film_id][0]:film_index[film_id][1]]
                 image_array[:, sigma_col] = sigmadata[film_index[film_id][0]:film_index[film_id][1]]
                 image_data.set_data(image_array)
-                image_data.to_binary()
+                image_data.to_binary(class_binary)
         else:
-            class_binary = os.path.join(parameter_file_folders, dataset + "r%02d.cistem" % (k + 1))
+            class_binary = os.path.join(parameter_file_folders, dataset + "_r%02d.cistem" % (k + 1))
             image_data = cistem_star_file.Parameters.from_file(class_binary)
             image_array = image_data.get_data()
             image_array[:, occ_col] = occdata
             image_array[:, sigma_col] = sigmadata
             image_data.set_data(image_array)
-            image_data.to_binary()
+            image_data.to_binary(class_binary)
 
 
 def random_sample_occ(
@@ -384,13 +385,19 @@ def classification_initialization( dataset, classes, iteration, decompressed_par
 
                 # update par_data and write class par
                 par_data[:, occ_col] = occf
+           
+            class_parameter_file_folder = decompressed_parameter_file_folder.replace("_r01_", "_r%02d_" % ref)
+            
+            if not os.path.exists(class_parameter_file_folder):
+                os.makedirs(class_parameter_file_folder)
 
             # split the par_data to individual array and save as binary file
             for f, image in enumerate(image_list):
-                saved_binary = os.path.join(decompressed_parameter_file_folder, image + "_r%02d.cistem" % ref )
+                saved_binary = os.path.join(class_parameter_file_folder, image + "_r%02d.cistem" % ref )
                 ext_binary = os.path.join(decompressed_parameter_file_folder, image + "_r01_extended.cistem" )
                 ext_data = cistem_star_file.ExtendedParameters.from_file(ext_binary)
                 image_data = par_data[par_data[:, film_col] ==  f ]
+                image_data[:, film_col] = 0 # reset film id as 0
                 image_parameters = cistem_star_file.Parameters()
                 image_parameters.set_data(data=image_data, extended_parameters=ext_data)
                 image_parameters.sync_particle_occ(ptl_to_prj=False)
@@ -450,7 +457,7 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False):
     # merge all the projection binary to generate single array updating film id
     film_ind = 0
     dataset_array_list = []
-    tiltangle_list = []
+    tiltangle_dict = {}
     for par_binary in binary_list:
         # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
         all_parameters = cistem_star_file.Parameters.from_file(par_binary)
@@ -462,14 +469,14 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False):
         if read_extend:
             ext_obj = all_parameters.get_extended_data()
             tilts_dict = ext_obj.get_tilts()
-            tiltangle_list.append(tilts_dict)
+            tiltangle_dict.update(tilts_dict)
 
         film_ind += 1
 
     par_data = np.vstack(dataset_array_list)
 
     if read_extend:
-        return par_data, tiltangle_list
+        return par_data, tiltangle_dict
     else:
         return par_data
 
