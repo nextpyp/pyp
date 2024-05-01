@@ -1722,9 +1722,10 @@ def csp_refinement(
     # write out the stack file and par file into a txt for later processing
     with open(os.path.join(os.environ["PYP_SCRATCH"], "stacks.txt"), "a") as f:
         f.write(os.path.join(name, "frealign/" + name + "_stack.mrc\n"))
-
+    
+    # save the first class name here only
     with open(os.path.join(os.environ["PYP_SCRATCH"], "pars.txt"), "a") as f:
-        f.write(str(parameter_file) + "\n")
+        f.write(str(parameter_file).replace(f"_r{classes:02d}", f"_r01") + "\n")
 
     # if the project directory file is not written
     project_dir_file = os.path.join(os.environ["PYP_SCRATCH"], "project_dir.txt")

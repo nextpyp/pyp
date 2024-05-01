@@ -404,7 +404,7 @@ def merge_movie_files_in_job_arr(
         merged_par_file = str(output_basename) + "_r%02d.cistem" % (current_class)
         new_par_list = []
         for p in par_list:
-            new_par_list.append(p.replace("_r01_", "_r%02d_" % current_class))
+            new_par_list.append(p.replace("_r01", "_r%02d" % current_class))
 
         # FIXME (HF): merge all the cistem binary files in a bundle, re-number the film (using image_activity column)
         tilt_json = merged_par_file.replace(".cistem", ".json") # a dictinary file for tilt parameters 
@@ -472,7 +472,10 @@ def merge_movie_files_in_job_arr(
         
         # if not exist, will use the input parameter file to calculate statistics in reconstruct3d
         if os.path.exists(remote_par_stat):
-            os.symlink(remote_par_stat, par_binary.replace(".cistem", "_stat.cistem"))
+            try:
+                os.symlink(remote_par_stat, par_binary.replace(".cistem", "_stat.cistem"))
+            except:
+                pass # file may exist
 
         # generate tsv files for Artix display
         if False and "tomo" in mp["data_mode"]:
@@ -1396,7 +1399,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
                 ranking[ref] = FSCs[:, iteration - 1].mean()
 
                 occ_only_file = os.path.join(input_dir, "occ_only_r%02d.npy" % (ref + 1))
-                if not occ_only_file.exists():
+                if not os.path.exists(occ_only_file):
                     assert Exception(f"{occ_only_file} does not exist. Please check")
 
                 input = np.load(occ_only_file)

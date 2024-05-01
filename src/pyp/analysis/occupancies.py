@@ -172,10 +172,11 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
     all_frame, col_num = parx[0].shape
 
     ptl_logp_array = parx_3d[:, :, newlogp_col]
-    ptl_occ_array = parx_3d[:, :, newocc_col]
+    # ptl_occ_array = parx_3d[:, :, newocc_col]
     ptl_sigma_array = parx_3d[:, :, newsigma_col]
     maxlogp_array = np.amax(ptl_logp_array, axis=0)
     sum_pp_array = np.full((all_frame,), 0.0)
+
     for k in range(nclasses):
         delta_logp_array = maxlogp_array - ptl_logp_array[k, :]
         logp_mask_array = delta_logp_array < 10
@@ -197,14 +198,14 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
             np.exp(delta_array) * class_average_occ[k] * 100 / sum_pp_array,
             0,
         )
-        new_occ[k, :] = (
-            occupancy_change_multiplier * (new_occ[k, :] - ptl_occ_array[k, :])
-            + ptl_occ_array[k, :]
-        )
+
+        # new_occ[k, :] = (
+        #     occupancy_change_multiplier * (new_occ[k, :] - ptl_occ_array[k, :])
+        #     + ptl_occ_array[k, :]
+        # )
         average_sigma += ptl_sigma_array[k, :] * new_occ[k, :] / 100
 
     # updating columns in parx array
-
     for k in range(nclasses):
         occdata = new_occ[k, :]
         sigmadata = average_sigma
@@ -218,7 +219,8 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
                 image_array[:, occ_col] = occdata[film_index[film_id][0]:film_index[film_id][1]]
                 image_array[:, sigma_col] = sigmadata[film_index[film_id][0]:film_index[film_id][1]]
                 image_data.set_data(image_array)
-                image_data.to_binary(class_binary)
+                image_data.sync_particle_occ(ptl_to_prj=False)
+                image_data.to_binary(class_binary, extended_output=class_binary.replace(".cistem", "_extended.cistem"))
         else:
             class_binary = os.path.join(parameter_file_folders, dataset + "_r%02d.cistem" % (k + 1))
             image_data = cistem_star_file.Parameters.from_file(class_binary)
@@ -437,7 +439,7 @@ def per_particle_tiltweight(target, tltang_dict, logp_col, index):
     ptl_data = target[index[0]:index[1], :]
     
     ptl_logp = statistics.weighted_by_tilt_angle(ptl_data, tltang_dict)
-
+    
     # pardata[index[0]:index[1], occ_col] = ptl_occ
     target[index[0]:index[1], logp_col] = ptl_logp
     # pardata[index[0]:index[1], sigma_col] = ptl_sigma

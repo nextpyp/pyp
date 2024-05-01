@@ -239,7 +239,7 @@ def weighted_by_tilt_angle(ptl_data, tltang_dict):
     #    tiltangle.append(proj_tlt_angle)
 
     tltang = df_tind["Angle"].to_numpy()
-    if np.count_nonzero(tltang) > 1:
+    if np.count_nonzero(tltang) >= 1:
         max_angle = np.amax(np.abs(tltang))
         gsigma = max_angle / 6
         gauss_weight = []
@@ -249,7 +249,7 @@ def weighted_by_tilt_angle(ptl_data, tltang_dict):
         logp = np.sum(logp * np.array(gauss_weight)) / np.sum(np.array(gauss_weight))
         # sigma = np.sum(sigma * np.array(gauss_weight)) / np.sum(np.array(gauss_weight))
     else:
-        logp = ptl_data[:30, 1].ravel()
+        # logp = ptl_data[:30, 1].ravel()
         logp = np.mean(logp)
 
     return logp

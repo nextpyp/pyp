@@ -485,8 +485,7 @@ def shape_phase_residuals(
                         thresholds[g, f] = np.sort(input[cluster, field])[
                             int((cluster.shape[0] - 1) * threshold)
                         ]
-                    print("thresholds")
-                    print(thresholds)
+
                 else:
                     # cluster = input[ np.logical_and( angular_group == g, defocus_group == f ) ]
                     if scores:
