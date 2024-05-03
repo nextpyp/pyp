@@ -2004,7 +2004,7 @@ input = { type="txtfile" }
 hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.parfile]
-name = "Input parameter file (*.par.bz2)"
+name = "Input parameter file (*.bz2)"
 description = "Parameter file to initialize refinement"
 type = "path"
 path = { type="files" }
@@ -3725,7 +3725,7 @@ hidden = ["spr_fine_refine", "spr_coarse_refine"]
 copyToNewBlock = false
 
 [tabs.clean.parfile]
-name = "Input parameter file (*.par.bz2)"
+name = "Input parameter file (*.bz2)"
 description = "Parfile used to compute average scores per particle"
 type = "path"
 path = { type="files" }
