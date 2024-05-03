@@ -1287,7 +1287,7 @@ def run_mpi_reconstruction(
         for file in (
             [ f"../maps/{dataset_name}_{iteration:02d}.mrc", f"../maps/{dataset_name}_{iteration:02d}_raw.mrc"]
             + glob.glob(f"../maps/*_r{ref:02d}_???.txt")
-            + glob.glob(f"../maps/*statistics.txt")
+            + glob.glob(f"./*statistics.txt")
             + glob.glob("../maps/*half*.mrc")
             + glob.glob("../maps/*crop.mrc")
             + glob.glob("../maps/*scores.svgz")

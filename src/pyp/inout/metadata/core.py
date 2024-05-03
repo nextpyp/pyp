@@ -1281,6 +1281,9 @@ def spa_extract_coordinates(
     allboxes = []
     allparxs = []
     allparxs.append([])
+    particle_parameters = dict()
+    tilt_parameters = dict()
+    cistem_parameters = []
 
     if not box.size > 0:
         logger.warning("You have empty partilce coordinates, return empty parfile")
@@ -1296,11 +1299,13 @@ def spa_extract_coordinates(
     if (
         "refine_parfile" in parameters.keys()
         and Path(refinement).exists()
-        and not "relion_frames" in parameters["extract_fmt"]
     ):
         # find zero-indexed film number for this micrograph
-        series = project_params.get_film_order(parameters, filename) - 1
+        # series = project_params.get_film_order(parameters, filename) - 1
+        this_image_cistem = path_to_the_File
+        ref = cistem_star_file.Parameters.from_file(this_image_cistem)
 
+        """
         ref = np.array(
             [
                 line.split()
@@ -1319,6 +1324,8 @@ def spa_extract_coordinates(
                     box.shape[0], ref.shape[0]
                 )
             )
+        """
+
     else:
         ref = None
    
@@ -1334,17 +1341,17 @@ def spa_extract_coordinates(
     cs = parameters["scope_cs"]
     voltage = parameters["scope_voltage"]
     binning = float(parameters["data_bin"]) * float(parameters["extract_bin"])
-    magnification = ctf[11]
+    magnification = ctf[11][0]
     dstep = float(pixel) * magnification / 10000.0
-    ccc = ctf[5]
+    ccc = ctf[5][0]
 
     if "ctf_use_ast" in parameters.keys() and not parameters["ctf_use_ast"]:
-        df1 = df2 = ctf[0]  # TOMOCTFFIND
+        df1 = df2 = ctf[0][0]  # TOMOCTFFIND
         angast = 45.0
     else:
-        df1 = ctf[2]  # CTFFIND3
-        df2 = ctf[3]  # CTFFIND3
-        angast = ctf[4]  # CTFFIND3
+        df1 = ctf[2][0]  # CTFFIND3
+        df2 = ctf[3][0]  # CTFFIND3
+        angast = ctf[4][0]  # CTFFIND3
 
     # global .parx parameters
     dose = tilt = ppsi = ptheta = pphi = 0
@@ -1361,6 +1368,22 @@ def spa_extract_coordinates(
     sigma = 0.5
     logp = change = 0
     score = 0.5
+    phase_shift = 0.0
+    image_activity = 0
+    beam_tilt_x = beam_tilt_y = 0.0
+    image_shift_x = image_shift_y = 0.0
+    image_index = 0
+    region_index = 0
+    frame_index = 0
+    frame_shift_x = 0
+    frame_shift_y = 0
+
+    # tilt dict info
+    tilt_angle = 0
+    tilt_axis = 0
+
+    actual_pixel = float(parameters["scope_pixel"]) * float(parameters["data_bin"])
+
     # for frame in range(xf.shape[0]):
     last = parameters["movie_last"]
     z = xf.shape[0]
@@ -1544,120 +1567,124 @@ def spa_extract_coordinates(
 
                 allboxes.append([box_pos[0], box_pos[1], local_frame])
 
-                if False and "cc" in project_params.param(
-                    parameters["refine_metric"], iteration=2
-                ):
+                """C     1       2       3       4         5         6       7     8        9       10      11      12        13         14      15      16       17        18        19        20        21        22        23        24        25        26        27        28        29        30        31        32        33        34        35        36        37        38        39        40        41        42        43        44        45"""
+                """C    NO     PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC      LOGP      SIGMA   SCORE  CHANGE   PTLIND    TILTAN    DOSEXX    SCANOR    CNFDNC    PTLCCX      AXIS     NORM0     NORM1     NORM2  MATRIX00  MATRIX01  MATRIX02  MATRIX03  MATRIX04  MATRIX05  MATRIX06  MATRIX07  MATRIX08  MATRIX09  MATRIX10  MATRIX11  MATRIX12  MATRIX13  MATRIX14  MATRIX15      PPSI    PTHETA      PPHI"""
 
-                    """
-                    C FREALIGN NEW parameter file
-                    C     1       2       3       4         5         6       7     8        9       10      11      12        13         14      15      16
-                    C    NO     PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC      LOGP      SIGMA   SCORE  CHANGE
-                    """
-                    allparxs[0].append(
-                        frealign_parfile.EXTENDED_CCLIN_PAR_STRING_TEMPLATE_WO_NO
-                        % (
-                            psi,
-                            the,
-                            phi,
-                            xshift,
-                            yshift,
-                            mag,
-                            film,
-                            df1,
-                            df2,
-                            angast,
-                            occ,
-                            logp,
-                            sigma,
-                            score,
-                            change,
-                            local_particle,
-                            tilt,
-                            dose,
-                            scan_order,
-                            confidence,
-                            ptl_CCX,
-                            axis,
-                            norm0,
-                            norm1,
-                            norm2,
-                            a00,
-                            a01,
-                            a02,
-                            a03,
-                            a04,
-                            a05,
-                            a06,
-                            a07,
-                            a08,
-                            a09,
-                            a10,
-                            a11,
-                            a12,
-                            a13,
-                            a14,
-                            a15,
-                            ppsi,
-                            ptheta,
-                            pphi,
-                        )
+                # frealign_v9
+                #           PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC     -LogP      SIGMA   SCORE  CHANGE
+                allparxs[0].append(
+                    frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
+                    % (
+                        psi,
+                        the,
+                        phi,
+                        xshift,
+                        yshift,
+                        mag,
+                        film,
+                        df1,
+                        df2,
+                        angast,
+                        occ,
+                        logp,
+                        sigma,
+                        score,
+                        change,
+                        local_particle,
+                        tilt,
+                        dose,
+                        scan_order,
+                        confidence,
+                        ptl_CCX,
+                        axis,
+                        norm0,
+                        norm1,
+                        norm2,
+                        a00,
+                        a01,
+                        a02,
+                        a03,
+                        a04,
+                        a05,
+                        a06,
+                        a07,
+                        a08,
+                        a09,
+                        a10,
+                        a11,
+                        a12,
+                        a13,
+                        a14,
+                        a15,
+                        ppsi,
+                        ptheta,
+                        pphi,
                     )
+                )
 
-                else:
-                    """C     1       2       3       4         5         6       7     8        9       10      11      12        13         14      15      16       17        18        19        20        21        22        23        24        25        26        27        28        29        30        31        32        33        34        35        36        37        38        39        40        41        42        43        44        45"""
-                    """C    NO     PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC      LOGP      SIGMA   SCORE  CHANGE   PTLIND    TILTAN    DOSEXX    SCANOR    CNFDNC    PTLCCX      AXIS     NORM0     NORM1     NORM2  MATRIX00  MATRIX01  MATRIX02  MATRIX03  MATRIX04  MATRIX05  MATRIX06  MATRIX07  MATRIX08  MATRIX09  MATRIX10  MATRIX11  MATRIX12  MATRIX13  MATRIX14  MATRIX15      PPSI    PTHETA      PPHI"""
+                cistem_parameters.append(
+                    [global_counter + 1,
+                        psi,
+                        the,
+                        phi,
+                        xshift,
+                        yshift,
+                        df1,
+                        df2,
+                        angast,
+                        phase_shift, 
+                        image_activity, 
+                        occ, 
+                        logp, 
+                        sigma, 
+                        score, 
+                        actual_pixel, 
+                        voltage, 
+                        cs, 
+                        wgh, 
+                        beam_tilt_x, 
+                        beam_tilt_y, 
+                        image_shift_x, 
+                        image_shift_y, 
+                        box_pos[0],  # x coord
+                        box_pos[1],  # y coord
+                        0, # image_index
+                        local_particle, # particle_index
+                        local_frame, # tilt_index
+                        0, # region_index 
+                        0, # frame_index 
+                        0, # frame_shift_x 
+                        0, # frame_shift_y
+                    ]
+                )
 
-                    # frealign_v9
-                    #           PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC     -LogP      SIGMA   SCORE  CHANGE
-                    allparxs[0].append(
-                        frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
-                        % (
-                            psi,
-                            the,
-                            phi,
-                            xshift,
-                            yshift,
-                            mag,
-                            film,
-                            df1,
-                            df2,
-                            angast,
-                            occ,
-                            logp,
-                            sigma,
-                            score,
-                            change,
-                            local_particle,
-                            tilt,
-                            dose,
-                            scan_order,
-                            confidence,
-                            ptl_CCX,
-                            axis,
-                            norm0,
-                            norm1,
-                            norm2,
-                            a00,
-                            a01,
-                            a02,
-                            a03,
-                            a04,
-                            a05,
-                            a06,
-                            a07,
-                            a08,
-                            a09,
-                            a10,
-                            a11,
-                            a12,
-                            a13,
-                            a14,
-                            a15,
-                            ppsi,
-                            ptheta,
-                            pphi,
-                        )
-                    )
+                if local_frame not in tilt_parameters:
+                    tilt_parameters[local_frame] = {}
+                    tilt_parameters[local_frame][region_index] = Tilt(tilt_index=local_frame, 
+                                                                    region_index=region_index, 
+                                                                    shift_x=0.0, 
+                                                                    shift_y=0.0, 
+                                                                    angle=tilt_angle, 
+                                                                    axis=-tilt_axis)
+
+                
+                image_index += 1
+
+                if local_particle not in particle_parameters:            
+                    particle_parameters[local_particle] = Particle(particle_index=local_particle, 
+                                                                shift_x= xshift, 
+                                                                shift_y= yshift, 
+                                                                shift_z= 0, 
+                                                                psi=psi, 
+                                                                theta=the, 
+                                                                phi=phi, 
+                                                                x_position_3d= box_pos[0], 
+                                                                y_position_3d= box_pos[1], 
+                                                                z_position_3d= 0, 
+                                                                score=0.0, 
+                                                                occ=100.0)       
+
+                    
             local_particle += 1
             global_counter += 1
 
@@ -1666,6 +1693,18 @@ def spa_extract_coordinates(
             break
 
         local_frame += 1
+
+    cistem_parameters = np.array(cistem_parameters, ndmin=2)
+    print("cistem binary shape is")
+    print(cistem_parameters.shape)
+    
+    parameters_obj = Parameters()
+    extended_parameters = ExtendedParameters()
+    extended_parameters.set_data(particles=particle_parameters,
+                                 tilts=tilt_parameters)
+    parameters_obj.set_data(data=cistem_parameters, extended_parameters=extended_parameters)
+
+    allparxs = [parameters_obj]
 
     return allboxes, allparxs
 
@@ -1815,8 +1854,8 @@ def csp_extract_coordinates(
                 )
         else:
 
-            if use_frames and (
-                refinement.endswith(".par") or refinement.endswith(".parx")
+            if False and use_frames and (
+                refinement.endswith(".cistem") or refinement.endswith(".bz2")
             ):
                 try:
                     parx_object_no_frames = frealign_parfile.Parameters.from_file(
@@ -2605,11 +2644,11 @@ EOF
 
     cistem_parameters = np.array(cistem_parameters, ndmin=2)
     
-    parameters = Parameters()
+    parameters_obj = Parameters()
     extended_parameters = ExtendedParameters()
     extended_parameters.set_data(particles=particle_parameters,
                                  tilts=tilt_parameters)
-    parameters.set_data(data=cistem_parameters, extended_parameters=extended_parameters)
+    parameters_obj.set_data(data=cistem_parameters, extended_parameters=extended_parameters)
 
     # parameters.to_binary(output=f"{name}_r01_02.cistem")
 
@@ -2648,7 +2687,7 @@ EOF
         os.remove(name + "_ali_boxes.txt")
 
 
-    allparxs = [parameters]
+    allparxs = [parameters_obj]
 
     # return allboxes, allparxs
     return allparxs

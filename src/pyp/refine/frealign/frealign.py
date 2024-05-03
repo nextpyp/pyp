@@ -4673,6 +4673,11 @@ eot
             stats = "yes"
         else:
             stats = "no"
+        
+        if mp["refine_priors"]:
+            use_priors = "yes"
+        else:
+            use_priors = "no"
 
         if project_params.param(mp["refine_focusmask"], i) == "0,0,0,0":
             masking = "no"
@@ -4766,7 +4771,7 @@ eot
                 "eot\n"
             )
 
-        elif "frealignx" in metric:
+        elif False and "frealignx" in metric:
 
             if project_params.param(mp["reconstruct_norm"], i):
                 normalize = "yes"
@@ -5014,6 +5019,8 @@ eot
                 + "{0}.cistem\n{0}_stat.cistem\n{0}.mrc\n".format(name)
                 + "statistics_r%02d.txt\n" % ref
                 + stats
+                + "\n"
+                + use_priors
                 + "\n"
                 + "{0}_match.mrc_{1}\n{0}_{1}.cistem\n{0}_{1}_changes.cistem\n".format(
                     name, ranger

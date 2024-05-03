@@ -1847,9 +1847,11 @@ def csp_split(parameters, iteration):
 
             # from the external parameter file (.txt or .bz2)
             # we only move .bz2 to frealign/maps
-            assert "refine_parfile" in parameters and parameters["refine_parfile"] is not None, "Parameter file is not provided."
-            external_parameter_file = Path(project_params.resolve_path(parameters["refine_parfile"]))
-            assert external_parameter_file.exists(), f"{external_parameter_file} does not exist."
+            if "refine_parfile" in parameters and parameters["refine_parfile"] is not None:
+                external_parameter_file = Path(project_params.resolve_path(parameters["refine_parfile"]))
+                assert external_parameter_file.exists(), f"{external_parameter_file} does not exist."
+            else:
+                external_parameter_file = ""
 
             if str(external_parameter_file).endswith(".bz2"):
                 # if the file is already here
@@ -1916,17 +1918,14 @@ def csp_split(parameters, iteration):
         raw_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt_raw"
         smooth_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt"
 
-        # FIXME: new cistem binary 
-
         # smooth part FSC curves
-        # if project_params.param(parameters["refine_metric"], iteration) == "new" and parameters["refine_fssnr"]:
+        if parameters["refine_fssnr"]:
+            plot_name = "frealign/maps/" + name + "_snr.png"
 
-        #     plot_name = "frealign/maps/" + current + "_snr.png"
-
-        #     if not os.path.exists(raw_stats_file) and os.path.exists(smooth_stats_file):
-        #         postprocess.smooth_part_fsc(smooth_stats_file, plot_name)
-        #     elif os.path.exists(raw_stats_file):
-        #         postprocess.smooth_part_fsc(raw_stats_file, plot_name)
+            if not os.path.exists(raw_stats_file) and os.path.exists(smooth_stats_file):
+                postprocess.smooth_part_fsc(smooth_stats_file, plot_name)
+            elif os.path.exists(raw_stats_file):
+                postprocess.smooth_part_fsc(raw_stats_file, plot_name)
 
     if classes > 1 and iteration > 2:
 
@@ -1959,14 +1958,17 @@ def csp_split(parameters, iteration):
 
         os.chdir("..")
 
-        # get the statistics for refine3d and reconstruct3d
-        # TODO this part be a function
-    
+    # get the statistics for refine3d and reconstruct3d
+    # TODO this part be a function
+    if iteration > 2:
+
         for ref in range(classes):
             
             name = "%s_r%02d" % (dataset, ref + 1)
-            if not os.path.exists(name + "_stat.cistem"):
-                decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{name}_{iteration-1:02d}")
+            
+            decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{name}_{iteration-1:02d}")
+            stat_file = os.path.join(decompressed_parameter_file_folder, name + "_stat.cistem")
+            if not os.path.exists(stat_file):
                 # read all images parameters for statistices 
                 class_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r%02d.cistem" % (ref + 1) ) for file in files ]
                 merged_all_parameters = cistem_star_file.Parameters.merge(class_files, input_extended_files=[])
@@ -1978,7 +1980,7 @@ def csp_split(parameters, iteration):
                 # only projecton parameters here
                 stat = cistem_star_file.Parameters()
                 stat.set_data(np.vstack((stat_array_mean, stat_array_var)))
-                stat.to_binary( os.path.join(decompressed_parameter_file_folder, name + "_stat.cistem" ) )
+                stat.to_binary( stat_file )
             
 
     os.makedirs("swarm", exist_ok=True)
@@ -2009,30 +2011,6 @@ def csp_extract_frames(
     iteration = parameters["refine_iter"]
     metric = project_params.param(parameters["refine_metric"], iteration)
     if totalboxes > 0:
-        # FIXME: I think we do not need to convert between different versions
-        # write .parx file for each class
-        # if type(allparxs[0]) == np.ndarray:
-        #     par_col = allparxs[0].shape[1]
-        #     if par_col > 15:
-        #         if par_col < 45:
-        #             metricfmt = "new"
-        #             format = frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
-        #         else:
-        #             metricfmt = "frealignx"
-        #             format = frealign_parfile.EXTENDED_FREALIGNX_PAR_STRING_TEMPLATE_WO_NO
-        #     else:
-        #         format = frealign_parfile.NEW_PAR_STRING_TEMPLATE_WO_NO
-        #     with timer.Timer(
-        #         "write_allparx", text = "Writing parx file from allparxs took: {}", logger=logger.info
-        #     ):
-        #         for current_class in range(len(allparxs)):
-        #             parfilename = parxfile.replace("_r01", "_r%02d" % (current_class + 1))
-        #             np.savetxt(parfilename.replace(".parx", ""), allparxs[current_class], fmt=format)
-        # else:
-        #     for current_class in range(len(allparxs)):
-        #         parfilename = parxfile.replace("_r01", "_r%02d" % (current_class + 1))
-        #         with open(parfilename.replace(".parx", ""), "w") as f:
-        #             f.writelines("%s\n" % item for item in allparxs[current_class])
 
         if not parameters["csp_parx_only"]:
 
@@ -2198,9 +2176,9 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
                         current_path,
                         "frealign",
                         "maps",
-                        "statistics_r%02d.txt" % (ref + 1),
+                        f"{dataset}_r{(ref + 1):02d}_{(iteration - 1):02d}_statistics.txt",
                     ),
-                    os.path.join(local_frealign_folder, "scratch"),
+                    os.path.join(local_frealign_folder, "scratch", "statistics_r%02d.txt" % (ref + 1)),
                 )
             except:
                 logger.warning(

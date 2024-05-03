@@ -906,7 +906,6 @@ def csp_run_refinement(
 
     # sync projection occ with particle occ
     alignment_parameters.sync_particle_occ()
-
     alignment_parameters.to_binary(output=parameter_file)
 
     # reconstruction
@@ -1643,6 +1642,7 @@ def csp_refinement(
                 current_path,
                 use_frames,
             )
+
             allparxs[class_index] = cistem_star_file.Parameters.from_file(str(parameter_file))
 
             # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
@@ -1654,7 +1654,6 @@ def csp_refinement(
             # frealign_parfile.Parameters.populateFrameIndexInScanord(class_parxfile, class_parxfile, False)
 
             parameter_file = csp_run_refinement(
-                class_parxfile,
                 allparxs[class_index],
                 mp,
                 dataset,
@@ -1675,39 +1674,6 @@ def csp_refinement(
 
         # run frealign refinement
         if (classes > 1 or not use_frames) and not mp["refine_skip"]:
-
-            # FIXME: new cistem binary (don't think we need it now)
-            # check if not frealignx format par but want to refine with frealignx
-            # input_par_data = frealign_parfile.Parameters.from_file(class_parxfile).data
-            # if (
-            #     "frealignx" in project_params.param(mp["refine_metric"], iteration)
-            #     and input_par_data[0].shape[0] < 46
-            # ) :
-            #     logger.info("Changing parfile format to frealign")
-            #     is_frealignx = True
-            #     if input_par_data[0, 7] == 0:
-            #         # add 1 for film column, frealignx start from 1
-            #         input_par_data[:, 7] += 1
-
-            #     # add the pshift column
-            #     pshift = np.zeros((input_par_data.shape[0], 1), dtype='float')
-            #     frealignx_pardata = np.hstack((input_par_data[:, :11], pshift, input_par_data[:, 11:]))
-            #     frealign_parfile.Parameters.write_parameter_file(class_parxfile, frealignx_pardata, parx=True, frealignx=True)
-            """
-            film_total = np.loadtxt(os.path.join(current_path, mp["data_set"] + ".films"), dtype=str, ndmin=2)
-            if classes > 1 and film_total.shape[0] > 1 and iteration > 2:
-
-                frealign_parfile.Parameters.add_lines_with_statistics(
-                    class_parxfile,
-                    current_class,
-                    current_path,
-                    is_frealignx=is_frealignx,
-                )
-
-            else:
-                logger.info("Skip modifying metadata to change statistics")
-            
-            """
 
             postprocess_after_refinement(
                 str(parameter_file),

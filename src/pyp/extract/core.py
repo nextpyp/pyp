@@ -21,6 +21,7 @@ from pyp.inout.image import (
     readMoviefileandsave,
     readTIFfileandsave,
 )
+from pyp.inout.metadata import cistem_star_file
 from pyp.preprocess import remove_xrays_from_movie_file
 from pyp.system import mpi
 from pyp.system.local_run import run_shell_command
@@ -365,7 +366,7 @@ def extract_particles(
 def extract_particles_non_mpi(
     input,
     output,
-    boxes,
+    cistem_obj,
     radius,
     boxsize,
     image_binning,
@@ -428,7 +429,13 @@ def extract_particles_non_mpi(
         else:
             image = mrc.read(input + ".mrc")
         nx, ny, frames = image.shape[-2], image.shape[-1], image.ndim - 1
+    
+    boxes_obj = cistem_obj[0] # only read 1 class
 
+    x_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
+    y_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_Y_POSITION)
+    boxes = boxes_obj.get_data()[:, [x_coord_col, y_coord_col]].tolist()
+    
     boxes.reverse()
     count = 0
     while len(boxes) > 0:
@@ -476,7 +483,7 @@ def extract_particles_non_mpi(
                     box[0] / coordinate_binning,
                 )
                 raw = np.zeros([boxsize, boxsize])
-        elif frames > 1:
+        elif False and frames > 1:
             if use_frames:
                 # if frames, coordinates would be like = [ x, y, tilt, frame ]
                 extraction = image[box[2]][
