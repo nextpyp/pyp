@@ -1627,10 +1627,6 @@ def csp_refinement(
 
         # execute refinement
         if is_tomo:
-            
-            # FIXME (HF): new cistem binary
-            # set SCANORD back to normal (without having frame index added) before going to csp
-            # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
 
             parameter_file = csp_run_refinement(
                 allparxs[class_index],
@@ -1644,15 +1640,9 @@ def csp_refinement(
             )
 
             allparxs[class_index] = cistem_star_file.Parameters.from_file(str(parameter_file))
-
-            # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
-            # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
 
         elif use_frames or mp["csp_refine_ctf"]: # run csp for only refine ctf or frame refinement 
 
-            # set SCARORD to 0 before going to csp
-            # frealign_parfile.Parameters.populateFrameIndexInScanord(class_parxfile, class_parxfile, False)
-
             parameter_file = csp_run_refinement(
                 allparxs[class_index],
                 mp,
@@ -1666,8 +1656,6 @@ def csp_refinement(
 
             allparxs[class_index] = cistem_star_file.Parameters.from_file(str(parameter_file))
 
-            # SCANORD has to be set to frame index to make dose weighting working
-            # frealign_parfile.Parameters.populateFrameIndexInScanord(new_par_file, class_parxfile)
         else:
             # we need parameter file on disk for spr
             allparxs[class_index].to_binary(str(parameter_file))
@@ -1684,11 +1672,11 @@ def csp_refinement(
                 working_path,
                 iteration,
             )
-   
+
     # write out the stack file and par file into a txt for later processing
     with open(os.path.join(os.environ["PYP_SCRATCH"], "stacks.txt"), "a") as f:
         f.write(os.path.join(name, "frealign/" + name + "_stack.mrc\n"))
-    
+
     # save the first class name here only
     with open(os.path.join(os.environ["PYP_SCRATCH"], "pars.txt"), "a") as f:
         f.write(str(parameter_file).replace(f"_r{classes:02d}", f"_r01") + "\n")
