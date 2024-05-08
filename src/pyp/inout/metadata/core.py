@@ -1691,7 +1691,7 @@ def spa_extract_coordinates(
                                                                 phi=phi, 
                                                                 x_position_3d= box_pos[0], 
                                                                 y_position_3d= box_pos[1], 
-                                                                z_position_3d= 0, 
+                                                                z_position_3d= 1, 
                                                                 score=0.0, 
                                                                 occ=100.0)       
 

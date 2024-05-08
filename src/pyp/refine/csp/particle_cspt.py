@@ -256,12 +256,11 @@ def prepare_particle_cspt(
     if not os.path.exists(metafile):
         raise Exception(f"Metadata is required to run patch-based local refinement")
     metaobj= pyp_metadata.LocalMetadata(metafile)
-    metadata = metaobj.data        
+    metadata = metaobj.data  
 
+    particle_parameters: dict = alignment_parameters.get_extended_data().get_particles()
 
     if "tomo" in parameters["data_mode"].lower():
-        
-        particle_parameters: dict = alignment_parameters.get_extended_data().get_particles()
 
         binning = parameters["tomo_rec_binning"]
         tomox, tomoy, tomoz = metadata["tomo"].at[0, "x"] * binning, metadata["tomo"].at[0, "y"] * binning, metadata["tomo"].at[0, "z"] * binning
@@ -287,9 +286,10 @@ def prepare_particle_cspt(
         )
 
     else:
+        """
         ptlind_col = 16
         
-        boxes = np.loadtxt(f"{name}.allboxes", ndmin=2)
+        # boxes = np.loadtxt(f"{name}.allboxes", ndmin=2)
         parfile = parx_object.data
         parfile = parfile[
                     np.unique(parfile[:, ptlind_col].astype("int"), return_index=True)[1], :
@@ -298,6 +298,7 @@ def prepare_particle_cspt(
         # compose cooridate list to [[ptlind, x, y, z],...[]] like tomo 
         boxes = [[int(parline[ptlind_col])] + list(box[:2]) + [0.0] 
                     for box, parline in zip(boxes, parfile)]
+        """
 
         imagex, imagey = metadata["image"].at[0, "x"], metadata["image"].at[0, "y"]
 
@@ -310,7 +311,7 @@ def prepare_particle_cspt(
         )
             
         ptlidx_regions_list = sort_particles_regions(
-            boxes, corners, size_region, per_particle=use_frames # do per particle only for frame refinement 
+            particle_parameters, corners, size_region, per_particle=use_frames # do per particle only for frame refinement 
         )
 
     # split the parameter file based on regions
