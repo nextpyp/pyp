@@ -15,7 +15,7 @@ from pyp.system import project_params
 from pyp.utils import get_relative_path, movie2regex, symlink_force
 from pyp.system.utils import get_imod_path
 from pyp.streampyp.logging import TQDMLogger
-from pyp.inout.metadata import frealign_parfile
+from pyp.inout.metadata import frealign_parfile, cistem_star_file
 from pyp.analysis.geometry import getRelionMatrix, spk2Relion, relion2Spk, alignment2Relion, eulerZXZtoZYZ, eulerZYZtoZXZ
 from pyp.analysis.geometry import transformations as vtk
 
@@ -2329,61 +2329,78 @@ def Read_MotionCorr(metastar):
     return image_general, frame_motions
 
 
-def merge_par_selection(parfile, selected, parameters, merge_align=False):
+def merge_par_selection(input_folder, output_folder, films, selected, parameters):
     """
     Merge different classes after classification ready for tomoedit.
     selected: list that has the class numers 
     mergealign: whether merge selected alignment parameters or not
     """
+    all_zero_list = []
     current_dir = os.getcwd()
-    parfile1 = re.sub("_r[0-9][0-9]_", "_r%02d_" % selected[0], parfile)
+    ipnut_1 = re.sub("_r[0-9][0-9]_", "_r%02d_" % selected[0], input_folder)
     # check decompress
-    if os.path.exists(parfile1) and parfile1.endswith(".bz2"):
-        parfile1 = frealign_parfile.Parameters.decompress_parameter_file(parfile1, parameters["slurm_tasks"])
-    elif not os.path.exists(parfile1):
-        logger.error(f"Can't find corresponding parfiles: {parfile1}")
+    if os.path.exists(ipnut_1) and ipnut_1.endswith(".bz2"):
+        decompressed_input1 = ipnut_1.replace(".bz2", "")
+
+        frealign_parfile.Parameters.decompress_parameter_file_and_move(file=ipnut_1, 
+                                                                        new_file=decompressed_input1, 
+                                                                        micrograph_list=[],
+                                                                        threads=parameters["slurm_tasks"]
+                                                                        )
+        input_1 = decompressed_input1
+
+    elif not os.path.exists(input_1):
+        logger.error(f"Can't find corresponding parfiles: {ipnut_1}")
         sys.exit()
-    pardata_keep1 = frealign_parfile.Parameters.from_file(parfile1).data
     
-    n = pardata_keep1.shape[0]
+    for image in films:
+        parameter_file = os.path.join(input_1, image + "_r%02d" % selected[0])
+        par_obj = cistem_star_file.Parameters.from_file(parameter_file)
+        pardata_keep1 = par_obj.get_data()
+        extended_parameter = par_obj.get_extended_data()
+    
+        n = pardata_keep1.shape[0]
 
-    if len(selected) > 1:
-        for k in selected[1:]:
-            parfilek = re.sub("_r[0-9][0-9]_", "_r%02d_" % k, parfile)
-            if os.path.exists(parfilek) and parfilek.endswith(".bz2"):
-                    parfilek = frealign_parfile.Parameters.decompress_parameter_file(parfilek, parameters["slurm_tasks"])
-            elif not os.path.exists(parfilek):
-                logger.error("Can't find corresponding parfiles")
-                sys.exit()
+        if len(selected) > 1:
 
-            if merge_align:
-                pardatak = frealign_parfile.Parameters.from_file(parfilek).data
+            for k in selected[1:]:
+                input_k = re.sub("_r[0-9][0-9]_", "_r%02d_" % k, input_folder)
+
+                if os.path.exists(input_k) and input_k.endswith(".bz2"):
+                    decompressed_inputk = input_k.replace(".bz2", "")
+
+                    frealign_parfile.Parameters.decompress_parameter_file_and_move(file=input_k, 
+                                                                                new_file=decompressed_inputk, 
+                                                                                micrograph_list=[],
+                                                                                threads=parameters["slurm_tasks"]
+                                                                                )
+                    input_k = decompressed_inputk
+
+                elif not os.path.exists(input_k):
+                    logger.error("Can't find corresponding parfiles")
+                    sys.exit()
+
+                parameter_file = os.path.join(input_k, image + "_r%02d" % selected[k])
+                par_obj_k = cistem_star_file.Parameters.from_file(parameter_file)
+                pardatak = par_obj_k.get_data()
                 mask = (pardatak[:, 11] >= parameters["reconstruct_min_occ"]).reshape(n, 1)
                 pardata_keep1 = np.where(mask, pardatak, pardata_keep1)
-            else:
-                # read occ column only
-                pardatak_occ = np.loadtxt(parfilek, usecols=11, comments="C")
-                mask = pardatak_occ >= parameters["reconstruct_min_occ"]
-                pardata_keep1[:,11] = np.where(mask, pardatak_occ, pardata_keep1[:, 11])
 
-    occ_keepmask = pardata_keep1[:, 11] >= parameters["reconstruct_min_occ"]
-    pardata_keep1[:, 11] = np.where(occ_keepmask, 100, 0)
+        occ_keepmask = pardata_keep1[:, 11] >= parameters["reconstruct_min_occ"]
+        
+        if not np.all(occ_keepmask=False):
 
-    version = parameters["refine_metric"]
-    frealign_par = frealign_parfile.Parameters(version=version)
-    combined = "_K".join(str(x) for x in selected)
-    parxfile = current_dir + "/frealign/maps/" + parameters["data_set"] + "_K" + combined + ".par"
-    
-    frealign_par.write_parameter_file(parxfile, pardata_keep1, parx=True, frealignx=False)
-                
-    # compress parfile
-    parfile_name = os.path.basename(parxfile)
-    os.chdir(current_dir + "/frealign/maps/")
-    frealign_parfile.Parameters.compress_parameter_file(parfile_name, parfile_name.replace(".par", ".par.bz2"), parameters["slurm_tasks"])
-    os.remove(parfile_name)
-    os.chdir(current_dir)
+            pardata_keep1[:, 11] = np.where(occ_keepmask, 100, 0)
 
-    return parxfile.replace(".par", ".par.bz2")
+            new_par_obj = cistem_star_file.Parameters()
+            output_binary = os.path.join(output_folder, image + "_r01")
+            new_par_obj.set_data(pardata_keep1)
+            new_par_obj.to_binary(output=output_binary, extended_output=extended_parameter)
+
+        else:
+            all_zero_list.append(image)
+
+    return all_zero_list
 
 ##############
 

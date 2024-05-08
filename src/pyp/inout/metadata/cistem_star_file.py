@@ -229,10 +229,6 @@ class Tilt:
         self.angle = angle
         self.axis = axis
 
-
-
-
-
 class ExtendedParameters():
 
     # Headers

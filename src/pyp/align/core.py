@@ -1627,10 +1627,6 @@ def csp_refinement(
 
         # execute refinement
         if is_tomo:
-            
-            # FIXME (HF): new cistem binary
-            # set SCANORD back to normal (without having frame index added) before going to csp
-            # frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
 
             parameter_file = csp_run_refinement(
                 allparxs[class_index],

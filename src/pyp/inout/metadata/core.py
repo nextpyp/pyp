@@ -1300,10 +1300,21 @@ def spa_extract_coordinates(
         "refine_parfile" in parameters.keys()
         and Path(refinement).exists()
     ):
-        # find zero-indexed film number for this micrograph
-        # series = project_params.get_film_order(parameters, filename) - 1
-        this_image_cistem = path_to_the_File
-        ref = cistem_star_file.Parameters.from_file(this_image_cistem)
+       
+        all_binary = os.listdir(refinement)
+        matching_files = [binary for binary in all_binary if filename in binary and "stat.cistem" not in binary and "_extended.cistem" not in binary] 
+
+        this_image_cistem = os.path.join(refinement, matching_files[0])
+        ref_obj = cistem_star_file.Parameters.from_file(this_image_cistem)
+        ref = ref_obj.get_data()
+        extended_data = ref_obj.get_extended_data()
+
+        parameters_obj = Parameters()
+        parameters_obj.set_data(data=ref, extended_parameters=extended_data)
+
+        allparxs = [parameters_obj]
+
+        return allparxs
 
         """
         ref = np.array(
@@ -1695,8 +1706,6 @@ def spa_extract_coordinates(
         local_frame += 1
 
     cistem_parameters = np.array(cistem_parameters, ndmin=2)
-    print("cistem binary shape is")
-    print(cistem_parameters.shape)
     
     parameters_obj = Parameters()
     extended_parameters = ExtendedParameters()
@@ -1706,7 +1715,7 @@ def spa_extract_coordinates(
 
     allparxs = [parameters_obj]
 
-    return allboxes, allparxs
+    return allparxs
 
 
 @timer.Timer(
@@ -1902,7 +1911,7 @@ def csp_extract_coordinates(
 
             else:
                 logger.info("Creating parfile from scratch")
-                [allboxes, allparxs] = spa_extract_coordinates(
+                allparxs = spa_extract_coordinates(
                     filename,
                     parameters,
                     only_inside,
