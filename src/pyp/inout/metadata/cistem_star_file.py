@@ -898,6 +898,23 @@ class Parameters:
             # Update the extended data structure with modified particles
             self.get_extended_data().set_data(particles=particle_parameters, tilts=self.get_extended_data().get_tilts())
     
+    
+    def sync_particle_ptlid(self):
+        # update the particle ids from projection data after particle cleaning
+        assert (self.get_extended_data()), "Extended data is not included in the Parameters data structure."
+        extended_parameters = self.get_extended_data()
+        particle_parameters = extended_parameters.get_particles()
+
+        data = self.get_data()
+        pids = np.unique(data[:, self.get_index_of_column(PIND)])
+
+        for pind in extended_parameters.get_particle_list():
+            if not pind in pids:
+                del particle_parameters[pind]
+
+        # Update the extended data structure with modified particles
+        self.get_extended_data().set_data(particles=particle_parameters, tilts=self.get_extended_data().get_tilts())
+
 
     def modify_projdata_by_column(self, col_index, new_value):
         # modify the column values 
@@ -950,25 +967,52 @@ class Parameters:
         Y_POSITION_COL = self.get_index_of_column(ORIGINAL_Y_POSITION)
 
         IMIND_COL = self.get_index_of_column(IMIND)
+        PTL_COL = self.get_index_of_column(PIND)
         TIND_COL = self.get_index_of_column(TIND)
         FIND_COL = self.get_index_of_column(FIND)
         
         frame_idxs = np.reshape(
             np.array([i for i in range(num_frames_per_image)]), (1, num_frames_per_image)
         )
-        
+    
         ctr = 0
 
+        if is_spr:
+            tilt_obj = self.get_extended_data().get_tilts()
+            ptl_obj = self.get_extended_data().get_particles()
+
+            """
+            for i in frame_idxs[0]:
+                if i not in tilt_obj:
+                    tilt_obj[i] = {}
+                    tilt_obj[i][0] = Tilt(tilt_index= i, 
+                                    region_index = 0, 
+                                    shift_x = image_alignment[0][:, 4], 
+                                    shift_y = image_alignment[0][:, 5], 
+                                    angle = 0, 
+                                    axis = 0)
+            """
+                    
         for row in self.get_data():
             
             imind = int(row[IMIND_COL])
             expanded_line = np.tile(row, (num_frames_per_image, 1))
             expanded_line[:, FIND_COL] = frame_idxs[0]
-
             if is_spr:
+                pid = int(row[PTL_COL])
                 expanded_line[:, IMIND_COL] = 0
                 expanded_line[:, TIND_COL] = 0
+                x_err = image_alignment[0][:, 4] - np.round_(image_alignment[0][:, 4])
+                y_err = image_alignment[0][:, 5] - np.round_(image_alignment[0][:, 5])
+                
+                expanded_line[:, X_SHIFT_COL] -= x_err * parameters["scope_pixel"]
+                expanded_line[:, Y_SHIFT_COL] -= y_err * parameters["scope_pixel"]
+                expanded_line[:, FSHIFT_X_COL] -= x_err * parameters["scope_pixel"]
+                expanded_line[:, FSHIFT_Y_COL] -= y_err * parameters["scope_pixel"]
 
+                expanded_line[:, X_POSITION_COL] = expanded_line[:, X_POSITION_COL] - np.round_(image_alignment[0][:, 4])
+                expanded_line[:, Y_POSITION_COL] = expanded_line[:, Y_POSITION_COL] - np.round_(image_alignment[0][:, 5])
+                
                 # TODO: modify extended data
                 # # preserve original shift x/y (obtained using normal refine3d) 
                 # parlines[:, MICROGRAPH_X_COL] = parlines[:, SHIFTX_COL] 
@@ -978,11 +1022,15 @@ class Parameters:
                 # parlines[:, PPSI_COL] = - parlines[:, PSI_COL]
                 # parlines[:, PTHETA_COL] = - parlines[:, THETA_COL]
                 # parlines[:, PPHI_COL] = - parlines[:, PHI_COL]
-
-                expanded_line[:, FSHIFT_X_COL] = 0.0
-                expanded_line[:, FSHIFT_Y_COL] = 0.0
+                PSI_COL = self.get_index_of_column(PSI)
+                THEAT_COL = self.get_index_of_column(THETA)
+                PHI_COL = self.get_index_of_column(PHI)
+                ptl_obj[pid].shift_x = - row[X_SHIFT_COL]
+                ptl_obj[pid].shift_y = - row[Y_SHIFT_COL]
+                ptl_obj[pid].psi = - row[PSI_COL]
+                ptl_obj[pid].theta = - row[THEAT_COL]
+                ptl_obj[pid].phi = - row[PHI_COL]
                 
-
             else:
                 x_err = image_alignment[imind][:, 4] - np.round_(image_alignment[imind][:, 4])
                 y_err = image_alignment[imind][:, 5] - np.round_(image_alignment[imind][:, 5])
@@ -992,15 +1040,21 @@ class Parameters:
                 expanded_line[:, FSHIFT_X_COL] -= x_err * parameters["scope_pixel"]
                 expanded_line[:, FSHIFT_Y_COL] -= y_err * parameters["scope_pixel"]
 
-
-            expanded_line[:, X_POSITION_COL] = expanded_line[:, X_POSITION_COL] - np.round_(image_alignment[imind][:, 4])
-            expanded_line[:, Y_POSITION_COL] = expanded_line[:, Y_POSITION_COL] - np.round_(image_alignment[imind][:, 5])
+                expanded_line[:, X_POSITION_COL] = expanded_line[:, X_POSITION_COL] - np.round_(image_alignment[imind][:, 4])
+                expanded_line[:, Y_POSITION_COL] = expanded_line[:, Y_POSITION_COL] - np.round_(image_alignment[imind][:, 5])
 
             prealloc_data[ctr : ctr + num_frames_per_image, :] = expanded_line
             ctr += num_frames_per_image
         
         prealloc_data[:, self.get_index_of_column(POSITION_IN_STACK)] = np.arange(start=1, stop=prealloc_data.shape[0]+1)
-        self.set_data(data=prealloc_data)
+
+        if is_spr:
+            self.get_extended_data().set_data(particles=ptl_obj, tilts=tilt_obj)
+            ext_parameters = self.get_extended_data()
+        else:
+            ext_parameters = None
+
+        self.set_data(data=prealloc_data, extended_parameters=ext_parameters)
 
 
 def initialize_parameters_binary(): 

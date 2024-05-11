@@ -1075,6 +1075,7 @@ def particle_cleaning(parameters: dict):
                     image_array[:, 0] = id
                     image_par_obj.set_data(image_array)
                     image_par_obj.sync_particle_occ(ptl_to_prj=False)
+                    image_par_obj.sync_particle_ptlid()
                     image_par_obj.to_binary(output_binary, extended_output=output_binary.replace(".cistem", "_extended.cistem"))
 
             # update extract selection after cleaning

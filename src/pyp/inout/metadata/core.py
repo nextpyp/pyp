@@ -1771,7 +1771,10 @@ def csp_extract_coordinates(
                 pkl_file = f"pkl/{filename}.pkl"
                 assert Path(pkl_file).exists(), f"{pkl_file} does not exist."
                 metadata = pyp_metadata.LocalMetadata(pkl_file).data
-                image_alignments = [metadata["drift"][image_idx].to_numpy() for image_idx in sorted(metadata["drift"].keys())]
+                if is_spr:
+                    image_alignments = [metadata["drift"].to_numpy()]
+                else:
+                    image_alignments = [metadata["drift"][image_idx].to_numpy() for image_idx in sorted(metadata["drift"].keys())]
 
                 # expand the data array with frames
                 alignment_parameters.convert_data_to_frames(image_alignment=image_alignments,
