@@ -571,10 +571,10 @@ def shape_phase_residuals(
                     meanscore = df.groupby("pind")["score"].mean().to_numpy()
                     above_threshold = meanscore >= thresholds[g, f]
                     discarded = ptl_index[above_threshold == False].size
-                    logger.info(f"{discarded} particles scores are below the threshold, particles in the following list are removed from reconstruction")
-                    logger.info(ptl_index[above_threshold == False])
+                    if discarded > 0:
+                        logger.info(f"{discarded} particles scores are below the threshold, particles in the following list are removed from reconstruction")
                     modification_mask = np.isin(input_group[:, ptlindex], ptl_index[above_threshold == False])
-                   
+
                     group_mask[group_mask == True] = modification_mask
                     input[group_mask, occ] = 0 
 
@@ -750,7 +750,7 @@ def shape_phase_residuals(
             input[1::2, field] = np.nan
 
     number = input[input[:, occ]==0].shape[0]
-    logger.info(f"Number of particles with zero occupancy = {number} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
+    logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
 
     cistem_par.set_data(input[:, :-1]) # not including the tilt angle column
     cistem_par.to_binary(outputparfile)
