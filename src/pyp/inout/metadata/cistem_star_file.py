@@ -978,6 +978,11 @@ class Parameters:
         ctr = 0
 
         if is_spr:
+            
+            PSI_COL = self.get_index_of_column(PSI)
+            THEAT_COL = self.get_index_of_column(THETA)
+            PHI_COL = self.get_index_of_column(PHI)
+
             tilt_obj = self.get_extended_data().get_tilts()
             ptl_obj = self.get_extended_data().get_particles()
 
@@ -1022,9 +1027,7 @@ class Parameters:
                 # parlines[:, PPSI_COL] = - parlines[:, PSI_COL]
                 # parlines[:, PTHETA_COL] = - parlines[:, THETA_COL]
                 # parlines[:, PPHI_COL] = - parlines[:, PHI_COL]
-                PSI_COL = self.get_index_of_column(PSI)
-                THEAT_COL = self.get_index_of_column(THETA)
-                PHI_COL = self.get_index_of_column(PHI)
+
                 ptl_obj[pid].shift_x = - row[X_SHIFT_COL]
                 ptl_obj[pid].shift_y = - row[Y_SHIFT_COL]
                 ptl_obj[pid].psi = - row[PSI_COL]
