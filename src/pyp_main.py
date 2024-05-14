@@ -916,10 +916,11 @@ def split(parameters):
                 parameters["slurm_queue"] = ""
                 pass
 
-        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
+        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or "train" in parameters["tomo_spk_method"] )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
+        milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"] 
 
-        if gpu or tomo_train or spr_train:
+        if gpu or tomo_train or spr_train or milo_eval:
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
@@ -950,6 +951,24 @@ def split(parameters):
                 ).strip()
             else:
                 raise Exception("Please select a list of coordinates for training")
+            
+        elif milo_eval:
+            milo_swarm_file = slurm.create_milo_swarm_file(parameters, timestamp)
+
+            # submit swarm jobs
+            id_train = slurm.submit_jobs(
+                "swarm",
+                milo_swarm_file,
+                jobtype="miloeval",
+                jobname="Milo-eval (gpu)",
+                queue=partition_name,
+                scratch=0,
+                threads=parameters["slurm_merge_tasks"],
+                memory=parameters["slurm_merge_memory"],
+                walltime=parameters["slurm_merge_walltime"],
+                tasks_per_arr=parameters["slurm_bundle_size"],
+                csp_no_stacks=parameters["csp_no_stacks"],
+            ).strip()
         else:
             id_train = ""
 

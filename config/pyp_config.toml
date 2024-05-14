@@ -1171,6 +1171,168 @@ description = "Save intermediate results to output folder train/"
 type = "bool"
 default = false
 
+#feature detect with milo
+[tabs.detect_milo]
+_name = "Mining/Exploration"
+_description = "Settings for tomogram content exploration using MiLo"
+
+[tabs.detect_milo.parquet]
+name = "Parquet File"
+description = "Path to parquet file from 3D interactive sub-cluster selection"
+type = "path"
+path = { type="files" }
+hidden = [ "tomo_import" ]
+
+[tabs.detect_milo.ref]
+name = "Trained model"
+description = "Path to trained model (*.pth)"
+type = "path"
+path = { type="files" }
+input = { type="trainedModel3D" }
+hidden = [ "tomo_import" ]
+
+[tabs.detect_milo.mode]
+name = "Input type"
+description = "Whether to use 2D or 3D data"
+type = "enum"
+enum = { 2d3d="2D + 3D", 3d="3D only" }
+default = "2d3d"
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.num_epochs]
+name = "Epochs"
+description = "Number of epochs used during training"
+type = "int"
+default = 60
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.num_clusters]
+name = "clusters"
+description = "Number of clusters to train"
+type = "int"
+default = 60
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.bbox]
+name = "Bounding box"
+description = "Bounding box for cropped patches, should be than particle size"
+type = "int"
+default = 36
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.lr]
+name = "Learning rate"
+description = "Rate to use during training"
+type = "float"
+default = 0.001
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.batch_size]
+name = "Batch size"
+description = "Batch size"
+type = "int"
+default = 256
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.val_interval]
+name = "Interval to perform validation"
+description = "Run validation within this interval"
+type = "int"
+default = 20
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+advanced = true
+
+[tabs.detect_milo.gauss]
+name = "Gaussian filter"
+description = "Preprocessing Gaussian filter to denoise tilt series and tomogram"
+type = "float"
+default = 0.8
+advanced = true
+
+[tabs.detect_milo.dog]
+name = "Class prior probability"
+description = "Kernel sizes for difference of Gaussian pyramid, comma delimited"
+type = "str"
+default = "3,5"
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+advanced = true
+
+[tabs.detect_milo.last_k]
+name = "Last kernel size"
+description = "Kernel size for the last convolution prior to projection"
+type = "int"
+default = 3
+advanced = true
+
+[tabs.detect_milo.with_score]
+name = "Save scores"
+description = "Whether to add score column in output text files"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.detect_milo.compress]
+name = "Slice averaging"
+description = "Whether to combine 2 slices into 1 during reading of the dataset"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.detect_milo.order]
+name = "Dimension order"
+description = "Input order of dimensions for reconstructed tomogram"
+type = "str"
+default = "xzy"
+advanced = true
+
+[tabs.detect_milo.cutoff_z]
+name = "Remove z-slices"
+description = "Removing this number of leading and trailing z slices"
+type = "int"
+default = 10
+advanced = true
+
+[tabs.detect_milo.nms]
+name = "Neighborhood for NMS"
+description = "Radius for running non-max supression"
+type = "int"
+default = 3
+advanced = true
+
+[tabs.detect_milo.distance_cutoff]
+name = "Distance cutoff"
+description = "Distance cutoff for whether two points are connected in graph"
+type = "float"
+default = 15.0
+advanced = true
+
+[tabs.detect_milo.fiber_mode]
+name = "Use fiber mode"
+description = "Enable fiber detection mode"
+type = "bool"
+default = false
+
+[tabs.detect_milo.r2_cutoff]
+name = "Fit curve residual"
+description = "Max residual for fitted curve, omit if above the residual/bad fitting"
+type = "float"
+default = 30.0
+advanced = true
+
+[tabs.detect_milo.curvature_cutoff]
+name = "Max curvature"
+description = "Max curvature for fitted curve, for microtubules the curvature should be small"
+type = "float"
+default = 0.003
+advanced = true
+
+[tabs.detect_milo.debug]
+name = "Debug mode"
+description = "Save intermediate results to output folder train/"
+type = "bool"
+default = false
+advanced = true
+
 # Particle parameters
 
 [tabs.particle]

@@ -137,8 +137,23 @@ def create_train_swarm_file(parameters, timestamp, swarm_file="train.swarm"):
     with open(os.path.join("swarm", swarm_file), "w") as f:
         f.write(
             "cd '{2}'; export {1}train={1}train; {0} 2>&1 | tee log/{3}_{1}train.log".format(
-                run_pyp(command="pyp", script=True),
-                parameters["data_mode"],
+                run_pyp(command="pyp", script=True, gpu=True),
+                "milo" if parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"],
+                os.getcwd(),
+                timestamp,
+            )
+        )
+        f.write("\n")
+
+    return swarm_file
+
+
+def create_milo_swarm_file(parameters, timestamp, swarm_file="miloeval.swarm"):
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+        f.write(
+            "cd {2}; export {1}eval={1}eval; {0} 2>&1 | tee log/{3}_{1}milo_eval.log".format(
+                run_pyp(command="pyp", script=True, gpu=True),
+                "milo" if parameters["tomo_spk_method"] == "milo-eval" else parameters["data_mode"],
                 os.getcwd(),
                 timestamp,
             )
