@@ -3964,6 +3964,39 @@ if __name__ == "__main__":
                 trackback()
                 logger.error("PYP (tomotrain) failed")
                 pass
+
+        elif "milotrain" in os.environ:
+            del os.environ["milotrain"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                args = project_params.load_pyp_parameters()
+                joint.milotrain(args)
+                logger.info("PYP (milotrain) finished successfully")
+            except:
+                trackback()
+                logger.error("PYP (milotrain) failed")
+                pass
+        
+        elif "miloeval" in os.environ:
+            del os.environ["miloeval"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                args = project_params.load_pyp_parameters()
+                joint.miloeval(args)
+                logger.info("PYP (miloeval) finished successfully")
+            except:
+                trackback()
+                logger.error("PYP (miloeval) failed")
+                pass
+
         # check gain reference
         elif "pypgain" in os.environ:
 
