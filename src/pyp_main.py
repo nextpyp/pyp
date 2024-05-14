@@ -1853,7 +1853,7 @@ def csp_split(parameters, iteration):
             else:
                 external_parameter_file = ""
 
-            if str(external_parameter_file).endswith(".bz2"):
+            if str(external_parameter_file).endswith(".bz2") and ".par" not in str(external_parameter_file):
                 # if the file is already here
                 if Path(str(external_parameter_file).replace(".bz2", "")).resolve() == decompressed_parameter_file_folder.resolve(): continue
                 
@@ -1876,6 +1876,9 @@ def csp_split(parameters, iteration):
                 
                 # if txt file (tomo), do not copy it over to the current project 
                 pass
+
+            elif ".par" in str(external_parameter_file):
+                pass
             else:
                 raise Exception("An initial particle orientation (txt file from pre-processing or bz2 file from particle refinement) is required.")
 
@@ -1893,17 +1896,20 @@ def csp_split(parameters, iteration):
 
         
         if parameters["dose_weighting_enable"] and ref == 0:
-
+     
             # create weights folder for storing weights.txt
             weights_folder = Path.cwd() / "frealign" / "weights"
             if not weights_folder.exists():
                 os.makedirs(weights_folder)
 
             # compute global weights using enitre parfile
-            if parameters["dose_weighting_global"] and parfile != None:
-
+            if parameters["dose_weighting_global"]:
+         
                 global_weight_file = str(weights_folder / "global_weight.txt")
-                compute_global_weights(parfile=parfile, weights_file=global_weight_file)
+                ref_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r01.cistem" ) for file in files ]
+                merged_all_parameters = cistem_star_file.Parameters.merge(ref_files, input_extended_files=[])
+                par_data = merged_all_parameters.get_data()
+                compute_global_weights(par_data=par_data, weights_file=global_weight_file)
 
                 parameters["dose_weighting_weights"] = global_weight_file
                 project_params.save_pyp_parameters(parameters=parameters, path=".")

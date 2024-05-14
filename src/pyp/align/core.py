@@ -1016,6 +1016,7 @@ def csp_run_refinement(
         # Mode 2 - Particle shifts ( pX, pY, pZ )
         # Mode 3 - Micrograph shifts ( mX, mY )     ## note: global
         # Mode 4 - Micrograph defocus ( defocus offset ) under construction
+
         for mode in csp_modes:
 
             outputs_pattern = "_??????_??????"
