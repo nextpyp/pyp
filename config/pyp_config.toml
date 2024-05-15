@@ -2180,7 +2180,6 @@ name = "Input csp directory"
 description = "Path to the csp directory related to the refine parfile"
 type = "path"
 path = { type="folders" }
-input = { type="folders" }
 copyToNewBlock = false
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
