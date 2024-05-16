@@ -1706,650 +1706,117 @@ def split_reconstruction(
 
     frealign_paths = get_frealign_paths()
 
-    if "cc" in project_params.param(mp["refine_metric"], i).lower():
+    #############
+    ###cistem2###
+    #############
 
-        # dumping requires an existing non-empty file for 3D output
-        shutil.copy2(
-            dataset + "_r%02d_%02d.mrc" % (ref, i - 1), name + "_" + ranger + ".mrc"
-        )
-
-        command = """
-%s/bin/frealign_v9_mp.exe << eot >>%s 2>&1
-M,0,F,F,F,F,%s,T,%s,%s,%s,%s,T,%s,%s                                         !CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,FBEAUT,FFILT,FBFACT,FMATCH,IFSC,FDUMP,IMEM,INTERP
-%s,0.,%s,%s,%s,%s,%s,%s,%s,%s,%s                                        !RO,RI,PSIZE,MW,WGH,XSTD,PBC,BOFF,DANG,ITMAX,IPMAX
-%s                                                                        !MASK
-%i,%i                                                                        !IFIRST,ILAST
-%s                                                                        !ASYM symmetry card
-1.0, %s, %s, %s, %s, %s, 0., 0.                                                !RELMAG,DSTEP,TARGET,THRESH,CS,AKV,TX,TY
-%s, %s, %s, %s, %s, %s                                                        !RREC,RMIN,RMAX,RCLAS,DFSTD,RBFACT
-%s
-/dev/null
-%s
-%s_%s.res
-%s_%s_dummy.shft
-0., 0., 0., 0., 0., 0., 0., 0.                                                !terminator with RELMAG=0.0
-%s_%s.mrc
-%s_%s_weights
-%s_%s_half1.mrc
-%s_%s_half2.mrc
-%s_%s_phasediffs
-%s_%s_pointspread
-eot
-""" % (
-            frealign_paths["cc3m"],
-            reclogfile,
-            project_params.param(fp["reconstruct_iewald"], i),
-            project_params.param(fp["reconstruct_ffilt"], i),
-            project_params.param(fp["reconstruct_fbfact"], i),
-            fmatch,
-            fp["refine_fboost"],
-            project_params.param(fp["refine_imem"], i),
-            project_params.param(fp["refine_interp"], i),
-            rad_rec,
-            pixel,
-            mp["particle_mw"],
-            mp["scope_wgh"],
-            project_params.param(fp["refine_xstd"], i),
-            project_params.param(fp["refine_pbc"], i),
-            boff,
-            project_params.param(fp["refine_dang"], i),
-            project_params.param(fp["refine_itmax"], i),
-            project_params.param(fp["refine_ipmax"], i),
-            project_params.param(fp["refine_mask"], i),
-            first,
-            last,
-            project_params.param(fp["particle_sym"], i),
-            dstep,
-            project_params.param(fp["refine_target"], i),
-            thresh,
-            mp["scope_cs"],
-            mp["scope_voltage"],
-            res_rec,
-            project_params.param(fp["refine_rlref"], i),
-            postprocess.get_rhref(fp, i),
-            project_params.param(fp["class_rhcls"], i),
-            project_params.param(fp["refine_dfsig"], i),
-            project_params.param(fp["refine_rbfact"], i),
-            stack,
-            parfile,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-        )
-
+    if fp["reconstruct_norm"]:
+        normalize = "yes"
     else:
+        normalize = "no"
+    if "t" in project_params.param(fp["refine_adjust"], i).lower():
+        adjust = "yes"
+    else:
+        adjust = "no"
+    if "t" in project_params.param(fp["refine_crop"], i).lower():
+        crop = "yes"
+    else:
+        crop = "no"
+    if fp["refine_invert"]:
+        invert = "yes"
+    else:
+        invert = "no"
 
-        # v9.11
+    if True: 
+        
+        if project_params.param(mp["dose_weighting_enable"], i):
+            dose_weighting = "yes"
 
-        # {1} - first particle
-        # {2} - last particle
-        # {3} - current iteration
-        # {4} - class number
-        # {5} - group number
+            # if dose weighting is enabled, we will go into this block
+            weight_files = project_params.resolve_path(mp["dose_weighting_weights"]) if "dose_weighting_weights" in mp else ""
+            external_weight = "/scratch/not_provided"
 
-        if fp["reconstruct_norm"]:
-            normalize = "yes"
+            if ".txt" in weight_files:
+                tag = "_" + name.split("_")[1] + "_" if "*" in weight_files else "txt"
+                files = [f for f in glob.glob(weight_files) if tag in f]
+                external_weight = files[0]
+
+            dose_weighting_multiply = "yes" if mp["dose_weighting_multiply"] else "no"
+            dose_weighting_fraction = str(fp["dose_weighting_fraction"])
+            dose_weighting_transition = str(fp["dose_weighting_transition"])
+
+            dose_weighting = "\n".join([dose_weighting, 
+                                        external_weight, 
+                                        dose_weighting_multiply, 
+                                        dose_weighting_fraction, 
+                                        dose_weighting_transition])
         else:
-            normalize = "no"
-        if "t" in project_params.param(fp["refine_adjust"], i).lower():
-            adjust = "yes"
+            dose_weighting = "no"
+
+        if (mp["class_num"] > 1 or mp["refine_global_stat"]) and os.path.exists(f"{name}_stat.cistem"):
+            statistics_file = f"../{name}_stat.cistem" 
         else:
-            adjust = "no"
-        if "t" in project_params.param(fp["refine_crop"], i).lower():
-            crop = "yes"
-        else:
-            crop = "no"
-        if fp["refine_invert"]:
-            invert = "yes"
-        else:
-            invert = "no"
+            statistics_file = "null"
+        # statistics_file = f"../{name}_stat.cistem" 
 
-        # ensure that scores with 0 are used
+        score_weighting = "yes" if fp["refine_score_weighting"] else "no"
+        min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
+        # max_tilt_particle_score = fp["csp_UseImagesForRefinementMax"]
+        max_tilt_particle_score = -1 # we just use occ as limit 
+        per_particle_splitting = "yes" if fp["reconstruct_per_particle_splitting"] else "no"
+        res_ref = "0"
+        smoothing = "1"
+        padding = "1"
+        exclude = "no"
+        center = "no"
+        blurring = "yes" if fp["reconstruct_lblur"] else "no"
+        th_input = "no"
 
-        # if thresh < 1:
-
-        # thresh = 0.999
-        """
-        if (
-            "new" in project_params.param(fp["refine_metric"], i).lower()
-            and not "frealignx" in project_params.param(fp["refine_metric"], i).lower()
-            and not fp["dose_weighting_enable"]
-            and not fp["reconstruct_lblur"]
-        ):
-        """
-        if False and "spr" in fp["data_mode"] and not "local" in fp["extract_fmt"] and "new" in project_params.param(fp["refine_metric"], i).lower():
-
-            command = (
-                "{0}/bin/reconstruct3d << eot >> {1} 2>&1\n".format(
-                    frealign_paths["new"], reclogfile
-                )
-                + "{0}\n{1}\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                    stack,
-                    Path(os.environ["PYP_SCRATCH"]) / parfile,
-                    Path(os.environ["PYP_SCRATCH"]) / name,
-                    first,
-                )
-                + project_params.param(fp["particle_sym"], i)
-                + "\n"
-                + str(first)
-                + "\n"
-                + str(last)
-                + "\n"
-                + str(pixel)
-                + "\n"
-                + str(mp["scope_voltage"])
-                + "\n"
-                + str(mp["scope_cs"])
-                + "\n"
-                + str(mp["scope_wgh"])
-                + "\n"
-                + str(mp["particle_mw"])
-                + "\n"
-                + "0\n"
-                + str(rad_rec)
-                + "\n"
-                + str(res_rec)
-                + "\n"
-                + project_params.param(fp["refine_bsc"], i)
-                + "\n"
-                + "%f\n" % thresh
-                + normalize
-                + "\n"
-                + adjust
-                + "\n"
-                + invert
-                + "\n"
-                + crop
-                + "\n"
-                + dump_intermediate
-                + "\n"
-                + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                    Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                )
-                + "eot\n"
+        command = (
+            "{0}/reconstruct3d << eot >> {1} 2>&1\n".format(
+                frealign_paths["cistem2"], reclogfile
             )
-
-        elif True: #"cistem2" in project_params.param(fp["refine_metric"], i).lower():
-            
-            if project_params.param(mp["dose_weighting_enable"], i):
-                dose_weighting = "yes"
-
-                # if dose weighting is enabled, we will go into this block
-                weight_files = project_params.resolve_path(mp["dose_weighting_weights"]) if "dose_weighting_weights" in mp else ""
-                external_weight = "/scratch/not_provided"
-
-                if ".txt" in weight_files:
-                    tag = "_" + name.split("_")[1] + "_" if "*" in weight_files else "txt"
-                    files = [f for f in glob.glob(weight_files) if tag in f]
-                    external_weight = files[0]
-
-                dose_weighting_multiply = "yes" if mp["dose_weighting_multiply"] else "no"
-                dose_weighting_fraction = str(fp["dose_weighting_fraction"])
-                dose_weighting_transition = str(fp["dose_weighting_transition"])
-
-                dose_weighting = "\n".join([dose_weighting, 
-                                            external_weight, 
-                                            dose_weighting_multiply, 
-                                            dose_weighting_fraction, 
-                                            dose_weighting_transition])
-            else:
-                dose_weighting = "no"
-
-            if mp["refine_global_stat"] and os.path.exists(f"{name}_stat.cistem"):
-                statistics_file = f"../{name}_stat.cistem" 
-            else:
-                statistics_file = "null"
-            # statistics_file = f"../{name}_stat.cistem" 
-
-            score_weighting = "yes" if fp["refine_score_weighting"] else "no"
-            min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
-            # max_tilt_particle_score = fp["csp_UseImagesForRefinementMax"]
-            max_tilt_particle_score = -1 # we just use occ as limit 
-            per_particle_splitting = "yes" if fp["reconstruct_per_particle_splitting"] else "no"
-            res_ref = "0"
-            smoothing = "1"
-            padding = "1"
-            exclude = "no"
-            center = "no"
-            blurring = "yes" if fp["reconstruct_lblur"] else "no"
-            th_input = "no"
-
-            command = (
-                "{0}/reconstruct3d << eot >> {1} 2>&1\n".format(
-                    frealign_paths["cistem2"], reclogfile
-                )
-                + f"{stack}\n"
-                + f"{parfile}\n"
-                + f"{statistics_file}\n"
-                + f"{reference}\n"
-                + f"{name}_map1.mrc\n"
-                + f"{name}_map2.mrc\n"
-                + f"output.mrc\n"
-                + f"{name}_n{first}.res\n"
-                + f"{project_params.param(fp['particle_sym'], i)}\n"
-                + f"{first}\n"
-                + f"{last}\n"
-                + f"{pixel}\n"
-                + f"{mp['particle_mw']}\n"
-                + "0\n" # inner radius
-                + f"{rad_rec}\n"
-                + f"{res_rec}\n"
-                + f"{res_ref}\n"
-                + f"{project_params.param(fp['refine_bsc'], i)}\n"
-                + f"{score_weighting}\n"
-                + f"{min_tilt_particle_score}\n"
-                + f"{max_tilt_particle_score}\n"
-                + f"{dose_weighting}\n"
-                + f"{thresh}\n"
-                + f"{smoothing}\n"
-                + f"{padding}\n"
-                + f"{normalize}\n"
-                + f"{adjust}\n"
-                + f"{invert}\n"
-                + f"{exclude}\n"
-                + f"{crop}\n"
-                + "yes\n" # split even odd
-                + f"{per_particle_splitting}\n"
-                + f"{center}\n"
-                + f"{blurring}\n"
-                + f"{th_input}\n"
-                + f"{dump_intermediate}\n"
-                + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n1\n".format(
-                    Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                )
-                + "eot\n"
+            + f"{stack}\n"
+            + f"{parfile}\n"
+            + f"{statistics_file}\n"
+            + f"{reference}\n"
+            + f"{name}_map1.mrc\n"
+            + f"{name}_map2.mrc\n"
+            + f"output.mrc\n"
+            + f"{name}_n{first}.res\n"
+            + f"{project_params.param(fp['particle_sym'], i)}\n"
+            + f"{first}\n"
+            + f"{last}\n"
+            + f"{pixel}\n"
+            + f"{mp['particle_mw']}\n"
+            + "0\n" # inner radius
+            + f"{rad_rec}\n"
+            + f"{res_rec}\n"
+            + f"{res_ref}\n"
+            + f"{project_params.param(fp['refine_bsc'], i)}\n"
+            + f"{score_weighting}\n"
+            + f"{min_tilt_particle_score}\n"
+            + f"{max_tilt_particle_score}\n"
+            + f"{dose_weighting}\n"
+            + f"{thresh}\n"
+            + f"{smoothing}\n"
+            + f"{padding}\n"
+            + f"{normalize}\n"
+            + f"{adjust}\n"
+            + f"{invert}\n"
+            + f"{exclude}\n"
+            + f"{crop}\n"
+            + "yes\n" # split even odd
+            + f"{per_particle_splitting}\n"
+            + f"{center}\n"
+            + f"{blurring}\n"
+            + f"{th_input}\n"
+            + f"{dump_intermediate}\n"
+            + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n1\n".format(
+                Path(os.environ["PYP_SCRATCH"]) / name, str(count)
             )
-
-        else:
-            # frealignx
-            # this is for the input reconstruction
-            prev_name = dataset + "_r%02d_%02d" % (ref, i - 1)
-
-            # {1} - first particle
-            # {2} - last particle
-            # {3} - current iteration
-            # {4} - class number
-            # {5} - group number
-
-            if project_params.param(fp["reconstruct_norm"], i):
-                normalize = "yes"
-            else:
-                normalize = "no"
-            if "t" in project_params.param(fp["refine_adjust"], i).lower():
-                adjust = "yes"
-            else:
-                adjust = "no"
-            if "t" in project_params.param(fp["refine_crop"], i).lower():
-                crop = "yes"
-            else:
-                crop = "no"
-            if fp["refine_invert"]:
-                invert = "yes"
-            else:
-                invert = "no"
-            if not fp["refine_score_weighting"]:
-                score_weighting = "no"
-            else:
-                score_weighting = "yes"
-
-            if project_params.param(mp["dose_weighting_enable"], i):
-                dose_weighting = "yes"
-            else:
-                dose_weighting = "no"
-
-            if mp["dose_weighting_multiply"]:
-                dose_weighting_multiply = "yes"
-            else:
-                dose_weighting_multiply = "no"
-
-            if not fp["reconstruct_per_particle_splitting"]:
-                per_particle_splitting = "no"
-            else:
-                per_particle_splitting = "yes"
-
-            if fp["reconstruct_lblur"]:
-                blurring = "yes"
-            else:
-                blurring = "no"
-
-            # add blurring parameters
-            if blurring == "yes":
-                blurring = blurring + "\n" + str(fp["reconstruct_lblur_start"])
-                blurring = blurring + "\n" + str(fp["reconstruct_lblur_step"])
-                blurring = blurring + "\n" + str(fp["reconstruct_lblur_nrot"])
-                blurring = blurring + "\n" + str(fp["reconstruct_lblur_range"])
-            """
-            if int(project_params.param(fp["reconstruct_num_frames"], i)) > 1:
-                num_frames = int(project_params.param(fp["reconstruct_num_frames"], i))
-                # infer number of frames directly from parameter file
-            else:
-                num_frames = 1
-            """
-            dose_weighting_fraction = fp["dose_weighting_fraction"]
-
-            dose_weighting_transition = fp["dose_weighting_transition"]
-
-            # if "original" in project_params.param(fp["refine_metric"], i).lower():
-            if not fp["dose_weighting_enable"] and not fp["reconstruct_lblur"]:
-                command = (
-                    "{0}/reconstruct3d_stats << eot >> {1} 2>&1\n".format(
-                        frealign_paths["frealignx"], reclogfile
-                    )
-                    + "{0}\n{1}\n{4}.mrc\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                        stack,
-                        parfile,
-                        Path(os.environ["PYP_SCRATCH"]) / name,
-                        first,
-                        Path(os.environ["PYP_SCRATCH"]) / prev_name,
-                    )
-                    + project_params.param(fp["particle_sym"], i)
-                    + "\n"
-                    + str(first)
-                    + "\n"
-                    + str(last)
-                    + "\n"
-                    + str(pixel)
-                    + "\n"
-                    + str(mp["scope_voltage"])
-                    + "\n"
-                    + str(mp["scope_cs"])
-                    + "\n"
-                    + str(mp["scope_wgh"])
-                    + "\n"
-                    + str(mp["particle_mw"])
-                    + "\n"
-                    + "0\n"
-                    + str(rad_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(project_params.param(fp["refine_bsc"], i))
-                    + "\n"
-                    + "%f\n" % thresh
-                    + "%0.1f\n" % 1
-                    + "%d\n" % 2
-                    + normalize
-                    + "\n"
-                    + adjust
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + "no"
-                    + "\n"
-                    + crop
-                    + "\n"
-                    + "yes"
-                    + "\n"
-                    + "no\n"
-                    + "no\n"
-                    + "no\n"
-                    + dump_intermediate
-                    + "\n"
-                    + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                        Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                    )
-                    + "eot\n"
-                )
-
-            elif "ab" in project_params.param(fp["refine_metric"], i).lower():
-                command = (
-                    "{0}/reconstruct3d_AB1 << eot >> {1} 2>&1\n".format(
-                        frealign_paths["frealignx"], reclogfile
-                    )
-                    + "{0}\n{1}\n{4}.mrc\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                        stack,
-                        parfile,
-                        Path(os.environ["PYP_SCRATCH"]) / name,
-                        first,
-                        Path(os.environ["PYP_SCRATCH"]) / prev_name,
-                    )
-                    + project_params.param(fp["particle_sym"], i)
-                    + "\n"
-                    + str(first)
-                    + "\n"
-                    + str(last)
-                    + "\n"
-                    + str(pixel)
-                    + "\n"
-                    + mp["scope_voltage"]
-                    + "\n"
-                    + mp["scope_cs"]
-                    + "\n"
-                    + mp["scope_wgh"]
-                    + "\n"
-                    + mp["particle_mw"]
-                    + "\n"
-                    + "0\n"
-                    + str(rad_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + project_params.param(fp["refine_bsc"], i)
-                    + "\n"
-                    + score_weighting
-                    + "\n"
-                    + dose_weighting
-                    + "\n"
-                    + str(num_frames)
-                    + "\n"
-                    + str(dose_weighting_fraction)
-                    + "\n"
-                    + str(dose_weighting_transition)
-                    + "\n"
-                    + "%f\n" % thresh
-                    + "%0.1f\n" % 1.0
-                    + "%d\n" % 2
-                    + normalize
-                    + "\n"
-                    + adjust
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + "no"
-                    + "\n"
-                    + crop
-                    + "\n"
-                    + "yes"
-                    + "\n"
-                    + "no\n"
-                    + blurring
-                    + "\n"
-                    + "no\n"
-                    + dump_intermediate
-                    + "\n"
-                    + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                        Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                    )
-                    + "eot\n"
-                )
-
-            elif fp["reconstruct_lblur"]:
-                blurring = "Yes"
-                external_weight = "/scratch/not_provided"
-                command = (
-                    "{0}/reconstruct3d_stats_DW << eot >> {1} 2>&1\n".format(
-                        frealign_paths["frealignx"], reclogfile
-                    )
-                    + "{0}\n{1}\n{4}.mrc\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                        stack,
-                        parfile,
-                        Path(os.environ["PYP_SCRATCH"]) / name,
-                        first,
-                        Path(os.environ["PYP_SCRATCH"]) / prev_name,
-                    )
-                    + project_params.param(fp["particle_sym"], i)
-                    + "\n"
-                    + str(first)
-                    + "\n"
-                    + str(last)
-                    + "\n"
-                    + str(pixel)
-                    + "\n"
-                    + str(mp["scope_voltage"])
-                    + "\n"
-                    + str(mp["scope_cs"])
-                    + "\n"
-                    + str(mp["scope_wgh"])
-                    + "\n"
-                    + str(mp["particle_mw"])
-                    + "\n"
-                    + "0\n"
-                    + str(rad_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + project_params.param(fp["refine_bsc"], i)
-                    + "\n"
-                    + score_weighting
-                    + "\n"
-                    + dose_weighting
-                    + "\n"
-                    + external_weight
-                    + "\n"
-                    + dose_weighting_multiply
-                    + "\n"
-                    + per_particle_splitting
-                    + "\n"
-                    + str(num_frames)
-                    + "\n"
-                    + str(dose_weighting_fraction)
-                    + "\n"
-                    + str(dose_weighting_transition)
-                    + "\n"
-                    + "%f\n" % thresh
-                    + "%0.1f\n" % 1
-                    + "%d\n" % 2
-                    + normalize
-                    + "\n"
-                    + adjust
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + "no"
-                    + "\n"
-                    + crop
-                    + "\n"
-                    + "yes"
-                    + "\n"
-                    + "no\n"
-                    + blurring
-                    + "\n"
-                    + "no\n"
-                    + dump_intermediate
-                    + "\n"
-                    + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                        Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                    )
-                    + "eot\n"
-                )
-
-            else:
-                # if dose weighting is enabled, we will go into this block
-                weight_files = project_params.resolve_path(mp["dose_weighting_weights"]) if "dose_weighting_weights" in mp else ""
-                external_weight = "/scratch/not_provided"
-
-                if ".txt" in weight_files:
-                    tag = "_" + name.split("_")[1] + "_" if "*" in weight_files else "txt"
-                    files = [f for f in glob.glob(weight_files) if tag in f]
-                    external_weight = files[0]
-
-                command = (
-                    "{0}/reconstruct3d_stats_DW << eot >> {1} 2>&1\n".format(
-                        frealign_paths["frealignx"], reclogfile
-                    )
-                    + "{0}\n{1}\n{4}.mrc\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                        stack,
-                        parfile,
-                        Path(os.environ["PYP_SCRATCH"]) / name,
-                        first,
-                        Path(os.environ["PYP_SCRATCH"]) / prev_name,
-                    )
-                    + project_params.param(fp["particle_sym"], i)
-                    + "\n"
-                    + str(first)
-                    + "\n"
-                    + str(last)
-                    + "\n"
-                    + str(pixel)
-                    + "\n"
-                    + str(mp["scope_voltage"])
-                    + "\n"
-                    + str(mp["scope_cs"])
-                    + "\n"
-                    + str(mp["scope_wgh"])
-                    + "\n"
-                    + str(mp["particle_mw"])
-                    + "\n"
-                    + "0\n"
-                    + str(rad_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + project_params.param(fp["refine_bsc"], i)
-                    + "\n"
-                    + score_weighting
-                    + "\n"
-                    + dose_weighting
-                    + "\n"
-                    + external_weight
-                    + "\n"
-                    + dose_weighting_multiply
-                    + "\n"
-                    + per_particle_splitting
-                    + "\n"
-                    + str(num_frames)
-                    + "\n"
-                    + str(dose_weighting_fraction)
-                    + "\n"
-                    + str(dose_weighting_transition)
-                    + "\n"
-                    + "%f\n" % thresh
-                    + "%0.1f\n" % 1
-                    + "%d\n" % 2
-                    + normalize
-                    + "\n"
-                    + adjust
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + "no"
-                    + "\n"
-                    + crop
-                    + "\n"
-                    + "yes"
-                    + "\n"
-                    + "no\n"
-                    + "no"
-                    + "\n"
-                    + "no\n"
-                    + dump_intermediate
-                    + "\n"
-                    + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                        Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                    )
-                    + "eot\n"
-                )
+            + "eot\n"
+        )
 
     os.environ["OMP_NUM_THREADS"] = os.environ["NCPUS"] = "{}".format(cpucount)
 
