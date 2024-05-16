@@ -1841,10 +1841,15 @@ def csp_split(parameters, iteration):
     [os.remove(path_to_webps / f) for f in os.listdir(path_to_webps) if f.endswith("_weights_local.webp")]
 
     is_spr = "spr" in parameters["data_mode"]
-    classes = int(project_params.param(parameters["class_num"], iteration))
+    
     dataset = parameters["data_set"]
     use_frames = "local" in parameters["extract_fmt"].lower()
     current_dir = Path().cwd()
+    
+    if iteration == 2:
+        classes = 1
+    else:
+        classes = int(project_params.param(parameters["class_num"], iteration))
 
     for ref in range(classes):
         name = f"{dataset}_r{ref+1:02d}"
