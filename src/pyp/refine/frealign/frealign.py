@@ -1908,7 +1908,11 @@ eot
             else:
                 dose_weighting = "no"
 
-            statistics_file = f"../{name}_stat.cistem" 
+            if mp["refine_global_stat"] and os.path.exists(f"{name}_stat.cistem"):
+                statistics_file = f"../{name}_stat.cistem" 
+            else:
+                statistics_file = "null"
+            # statistics_file = f"../{name}_stat.cistem" 
 
             score_weighting = "yes" if fp["refine_score_weighting"] else "no"
             min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
@@ -4345,901 +4349,181 @@ def mrefine_version(
 
     frealign_paths = get_frealign_paths()
 
-    # if first iteration and mode 4, force metric to cclin
-    # if i == 2 and int(project_params.param(mp["refine_mode"], i)) == 4:
-    #    metric = "cclin"
-   
-
-    # use CCLIN from frealign_v8 for initial orientation assignemnt (mode=4, mask=1,1,1,1,1)
-    if "cclin" in metric.lower():
-        '''    
-        thresh = 90.0
-        command = """
-%s/frealign_v8.10_intel/bin/frealign_v8_mp_cclin.exe << eot >>%s 2>&1
-M, 4, %s, %s, %s, %s, %s, T, %s, %s, %s, 0, F, %s                                !CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,FBEAUT,FFILT,FBFACT,FMATCH,IFSC,FSTAT,IBLOW
-%s, 0., %s, %s, %s, %s, %s, %s, %s, %s                                                !RO,RI,PSIZE,WGH,XSTD,PBC,BOFF,DANG,ITMAX,IPMAX
-1,1,1,1,1                                                                                !MASK
-%i, %i                                                                                !IFIRST,ILAST
-%s
-1.0, %s, %s, %s, %s, %s, 0., 0.
-%s, %s, %s, %s, %s
-%s/%s_stack.mrc
-%s_match.mrc_%s
-%s.par
-%s.par_%s
-/dev/null
--100., 0., 0., 0., 0., 0., 0., 0.                                                !terminator with RELMAG=-100.0 to skip 3D reconstruction
-%s_%s.mrc
-%s_weights_%s_%s
-%s_map1_%s.mrc
-%s_map2_%s.mrc
-%s_phasediffs_%s
-%s_pointspread_%s
-eot
-""" % (
-            os.environ["PYP_DIR"],
-            logfile,
-            project_params.param(fp["fmag"], i),
-            project_params.param(fp["fdef"], i),
-            project_params.param(fp["fastig"], i),
-            project_params.param(fp["fpart"], i),
-            project_params.param(fp["iewald"], i),
-            project_params.param(fp["ffilt"], i),
-            project_params.param(fp["fbfact"], i),
-            project_params.param(fp["fmatch"], i),
-            project_params.param(fp["iblow"], i),
-            mp["particle_rad"],
-            pixel,
-            mp["scope_wgh"],
-            project_params.param(fp["xstd"], i),
-            project_params.param(fp["pbc"], i),
-            project_params.param(fp["boff"], i),
-            project_params.param(fp["dang"], i),
-            project_params.param(fp["itmax"], i),
-            project_params.param(fp["ipmax"], i),
-            first,
-            last,
-            project_params.param(fp["symmetry"], i),
-            dstep,
-            10.0,
-            thresh,
-            mp["scope_cs"],
-            mp["scope_voltage"],  # set target PR to a low value
-            res_rec,
-            project_params.param(fp["rlref"], i),
-            postprocess.get_rhref(fp, i),
-            project_params.param(fp["dfsig"], i),
-            project_params.param(fp["rbfact"], i),
-            stack_dir,
-            fp["dataset"],
-            name,
-            ranger,
-            name,
-            name,
-            ranger,
-            dataset,
-            "%02d" % (i - 1),
-            scratch + name,
-            "%02d" % i,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-        )
-            '''
-
-        # v9.10
-        # evaluate scores without refining shifts or angles
-        mask = project_params.param(mp["refine_mask"], i)
-        mode = project_params.param(mp["refine_mode"], i)
-        if metric == "eval":
-            mask = "0,0,0,1,1"
-            mode = "1"
-        thresh = 0.0
-
-        if mp["refine_fboost"]:
-            ifsc = -1
-        else:
-            ifsc = 0
-        ifsc = 0
-
-        command = """
-%s/bin_debug/frealign_v9_intel_cclin.exe << eot >>%s 2>&1
-M, %s, %s, %s, %s, %s, %s, T, %s, %s, %s, %s, F, %s, %s                                !CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,FBEAUT,FFILT,FBFACT,FMATCH,IFSC,FDUMP,IMEM,INTERP
-%s, 0., %s, %s, %s, %s, %s, %s, %s, %s, %s                                        !RO,RI,PSIZE,MW,WGH,XSTD,PBC,BOFF,DANG,ITMAX,IPMAX
-%s                                                                                !MASK
-%i, %i                                                                                !IFIRST,ILAST
-%s
-1.0, %s, %s, %s, %s, %s, 0., 0.
-%s, %s, %s, %s, %s, %s
-%s/%s_stack.mrc
-%s_match.mrc_%s
-%s.par
-%s.par_%s
-/dev/null
--100., 0., 0., 0., 0., 0., 0., 0.                                                !terminator with RELMAG=-100.0 to skip 3D reconstruction
-%s_%s.mrc
-%s_weights_%s_%s
-%s_map1_%s.mrc
-%s_map2_%s.mrc
-%s_phasediffs_%s
-%s_pointspread_%s
-eot
-""" % (
-            frealign_paths["cclin"],
-            logfile,
-            mode,
-            project_params.param(mp["refine_fmag"], i),
-            project_params.param(mp["refine_fdef"], i),
-            project_params.param(mp["refine_fastig"], i),
-            project_params.param(mp["refine_fpart"], i),
-            project_params.param(mp["reconstruct_iewald"], i),
-            project_params.param(mp["reconstruct_ffilt"], i),
-            project_params.param(mp["reconstruct_fbfact"], i),
-            project_params.param(mp["refine_fmatch"], i),
-            ifsc,
-            project_params.param(mp["refine_imem"], i),
-            project_params.param(mp["refine_interp"], i),
-            # mp['particle_rad'], pixel, mp['particle_mw'], mp['scope_wgh'], project_params.param(fp['xstd'],i), project_params.param(fp['pbc'],i), project_params.param(fp['boff'],i), project_params.param(fp['dang'],i), project_params.param(fp['itmax'],i), project_params.param(fp['ipmax'],i),
-            mp["particle_rad"],
-            pixel,
-            mp["particle_mw"],
-            mp["scope_wgh"],
-            project_params.param(mp["refine_xstd"], i),
-            "100.0",
-            project_params.param(mp["refine_boff"], i),
-            project_params.param(mp["refine_dang"], i),
-            project_params.param(mp["refine_itmax"], i),
-            project_params.param(mp["refine_ipmax"], i),
-            mask,
-            first,
-            last,
-            project_params.param(mp["particle_sym"], i),
-            dstep,
-            project_params.param(mp["refine_target"], i),
-            thresh,
-            mp["scope_cs"],
-            mp["scope_voltage"],
-            res_rec,
-            project_params.param(mp["refine_rlref"], i),
-            postprocess.get_rhref(mp, i),
-            project_params.param(mp["class_rhcls"], i),
-            project_params.param(mp["refine_dfsig"], i),
-            project_params.param(mp["refine_rbfact"], i),
-            stack_dir,
-            fp["refine_dataset"],
-            name,
-            ranger,
-            name,
-            name,
-            ranger,
-            dataset,
-            "%02d" % (i - 1),
-            scratch + name,
-            "%02d" % i,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-        )
-    elif "cc3m" in metric.lower():
-
-        mask = project_params.param(mp["refine_mask"], i)
-        mode = project_params.param(mp["refine_mode"], i)
-
-        # update alignment mask according to settings used in classification
-        if int(project_params.param(mp["class_num"], i)) > 1:
-            refine_eulers = "0,0,0,"
-            if i % int(mp["class_refineeulers"]) == 0:
-                refine_eulers = "1,1,1,"
-                mode = project_params.param(mp["refine_mode"], i)
-            refine_shifts = "0,0"
-            if i % int(mp["class_refineshifts"]) == 0:
-                refine_shifts = "1,1"
-                mode = "1"
-            mask = refine_eulers + refine_shifts
-
-        # evaluate scores without refining shifts or angles
-        if metric == "eval":
-            mask = "0,0,0,1,1"
-            mode = "1"
-
-        thresh = 0.0
-        command = """
-%s/bin/frealign_v9.exe << eot >>%s 2>&1
-M, %s, %s, %s, %s, %s, %s, T, %s, %s, %s, %s, F, %s, %s                                !CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,FBEAUT,FFILT,FBFACT,FMATCH,IFSC,FDUMP,IMEM,INTERP
-%s, 0., %s, %s, %s, %s, %s, %s, %s, %s, %s                                        !RO,RI,PSIZE,MW,WGH,XSTD,PBC,BOFF,DANG,ITMAX,IPMAX
-%s                                                                                !MASK
-%i, %i                                                                                !IFIRST,ILAST
-%s
-1.0, %s, %s, %s, %s, %s, 0., 0.
-%s, %s, %s, %s, %s, %s
-%s/%s_stack.mrc
-%s_match.mrc_%s
-%s.par
-%s.par_%s
-/dev/null
--100., 0., 0., 0., 0., 0., 0., 0.                                                !terminator with RELMAG=-100.0 to skip 3D reconstruction
-%s_%s.mrc
-%s_weights_%s_%s
-%s_map1_%s.mrc
-%s_map2_%s.mrc
-%s_phasediffs_%s
-%s_pointspread_%s
-eot
-""" % (
-            frealign_paths["cc3m"],
-            logfile,
-            mode,
-            project_params.param(mp["refine_fmag"], i),
-            project_params.param(mp["refine_fdef"], i),
-            project_params.param(mp["refine_fastig"], i),
-            project_params.param(mp["refine_fpart"], i),
-            project_params.param(mp["reconstruct_iewald"], i),
-            project_params.param(mp["reconstruct_ffilt"], i),
-            project_params.param(mp["reconstruct_fbfact"], i),
-            project_params.param(mp["refine_fmatch"], i),
-            mp["refine_fboost"],
-            project_params.param(mp["refine_imem"], i),
-            project_params.param(mp["refine_interp"], i),
-            mp["particle_rad"],
-            pixel,
-            mp["particle_mw"],
-            mp["scope_wgh"],
-            project_params.param(mp["refine_xstd"], i),
-            project_params.param(mp["refine_pbc"], i),
-            project_params.param(mp["refine_boff"], i),
-            project_params.param(mp["refine_dang"], i),
-            project_params.param(mp["refine_itmax"], i),
-            project_params.param(mp["refine_ipmax"], i),
-            mask,
-            first,
-            last,
-            project_params.param(mp["particle_sym"], i),
-            dstep,
-            project_params.param(mp["refine_target"], i),
-            thresh,
-            mp["scope_cs"],
-            mp["scope_voltage"],
-            res_rec,
-            project_params.param(mp["refine_rlref"], i),
-            postprocess.get_rhref(mp, i),
-            project_params.param(mp["class_rhcls"], i),
-            project_params.param(mp["refine_dfsig"], i),
-            project_params.param(mp["refine_rbfact"], i),
-            stack_dir,
-            mp["refine_dataset"],
-            name,
-            ranger,
-            name,
-            name,
-            ranger,
-            dataset,
-            "%02d" % (i - 1),
-            scratch + name,
-            "%02d" % i,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-        )
-
-    elif "new" in metric or "frealignx" in metric:
-
-        # v9.11
-
-        my_mask = project_params.param(mp["refine_mask"], i).split(",")
-        if my_mask[0] == "0":
-            psib = "no"
-        else:
-            psib = "yes"
-        if my_mask[1] == "0":
-            thetab = "no"
-        else:
-            thetab = "yes"
-        if my_mask[1] == "0":
-            phib = "no"
-        else:
-            phib = "yes"
-        if my_mask[3] == "0":
-            shxb = "no"
-        else:
-            shxb = "yes"
-        if my_mask[4] == "0":
-            shyb = "no"
-        else:
-            shyb = "yes"
-
-        if (
-            mp["refine_fssnr"]
-            and os.path.exists("statistics_r%02d.txt" % ref)
-            and len(open("statistics_r%02d.txt" % ref).read()) > 0
-        ):
-            stats = "yes"
-        else:
-            stats = "no"
-        
-        if mp["refine_priors"]:
-            use_priors = "yes"
-        else:
-            use_priors = "no"
-
-        if project_params.param(mp["refine_focusmask"], i) == "0,0,0,0":
-            masking = "no"
-        else:
-            masking = "yes"
-        if "t" in project_params.param(mp["refine_fdef"], i).lower():
-            defocus = "yes"
-        else:
-            defocus = "no"
-        if "t" in project_params.param(mp["refine_fmatch"], i).lower():
-            match = "yes"
-        else:
-            match = "no"
-        if mp["refine_invert"]:
-            invert = "yes"
-        else:
-            invert = "no"
-
-        if project_params.param(mp["refine_mode"], i) == "1":
-            globally = "no"
-            locally = "yes"
-        else:
-            globally = "yes"
-            locally = "no"
-
-        # set radius for global search
-        if project_params.param(mp["refine_srad"], i) == 0:
-            srad = str(1.5 * mp["particle_rad"])
-        else:
-            srad = str(project_params.param(mp["refine_srad"], i))
-
-        boost = "30.0"
-        if mp["refine_fboost"]:
-            boost = str(mp["refine_fboostlim"])
-
-        mask_2d_x, mask_2d_y, mask_2d_z, mask_2d_rad = project_params.param(
-            mp["refine_focusmask"], i
-        ).split(",")
-        
-        #classification using weighted averages when do frames.
-        # TODO: should mostly used for tomo
-        if mp["class_num"] >1 and "local" in mp["extract_fmt"] and "spr" in mp["data_mode"]:
-            stack = "stack_weighted_average.mrc"
-        else:
-            stack = "stack.mrc"
-
-        if False and "new" in metric:
-            command = (
-                f"{frealign_paths['new']}/bin/refine3d << eot >>{logfile} 2>&1\n"
-                f"{stack_dir}/{fp['refine_dataset']}_{stack}\n"
-                f"{name}.par\n{dataset}_{i - 1:02d}.mrc\n"
-                f"statistics_r{ref:02d}.txt\n"
-                f"{stats}\n"
-                f"{name}_match.mrc_{ranger}\n"
-                f"{name}.par_{ranger}\n"
-                "/dev/null\n"
-                f"{project_params.param(fp['particle_sym'], i)}\n"
-                f"{first}\n"
-                f"{last}\n"
-                f"{pixel}\n"
-                f"{mp['scope_voltage']}\n"
-                f"{mp['scope_cs']}\n"
-                f"{mp['scope_wgh']}\n"
-                f"{mp['particle_mw']}\n"
-                f"{mp['particle_rad']}\n"
-                f"{project_params.param(mp['refine_rlref'], i)}\n"
-                f"{postprocess.get_rhref(mp, i)}\n"
-                f"{boost}\n"
-                f"{project_params.param(mp['class_rhcls'], i)}\n"
-                f"{srad}\n"
-                f"{postprocess.get_rhref(mp, i)}\n"
-                f"{project_params.param(mp['refine_dang'], i)}\n"
-                "20\n"
-                f"{project_params.param(mp['refine_searchx'], i)}\n"
-                f"{project_params.param(mp['refine_searchy'], i)}\n"
-                f"{mask_2d_x}\n{mask_2d_y}\n{mask_2d_z}\n{mask_2d_rad}\n"
-                "500.0\n"
-                "50.0\n"
-                f"{project_params.param(mp['refine_iblow'], i)}\n"
-                f"{globally}\n"
-                f"{locally}\n"
-                f"{psib}\n"
-                f"{thetab}\n"
-                f"{phib}\n"
-                f"{shxb}\n"
-                f"{shyb}\n"
-                f"{match}\n"
-                f"{masking}\n"
-                f"{defocus}\n"
-                f"{invert}\n"
-                "eot\n"
-            )
-
-        elif False and "frealignx" in metric:
-
-            if project_params.param(mp["reconstruct_norm"], i):
-                normalize = "yes"
-            else:
-                normalize = "no"
-
-            exclude = "no"
-            normalize_input = "yes"
-            threshold_input = "no"
-
-            if "cistem1" in metric.lower():
-                command = (
-                    f"{frealign_paths['frealignx']}/refine3d_cistem1 << eot >>{logfile} 2>&1\n"
-                    f"{stack_dir}/{fp['refine_dataset']}_stack.mrc\n"
-                    f"{name}.par\n{dataset}_{i - 1:02d}.mrc\n"
-                    f"statistics_r{ref:02d}.txt\n"
-                    f"{stats}\n"
-                    f"{name}_match.mrc_{ranger}\n"
-                    f"{name}.par_{ranger}\n"
-                    "/dev/null\n"
-                    f"{project_params.param(fp['particle_sym'], i)}\n"
-                    f"{first}\n"
-                    f"{last}\n"
-                    "1\n"
-                    f"{pixel}\n"
-                    f"{mp['scope_voltage']}\n"
-                    f"{mp['scope_cs']}\n"
-                    f"{mp['scope_wgh']}\n"
-                    f"{mp['particle_mw']}\n"
-                    "0\n"
-                    f"{mp['particle_rad']}\n"
-                    f"{project_params.param(mp['refine_rlref'], i)}\n"
-                    f"{postprocess.get_rhref(mp, i)}\n"
-                    f"{boost}\n"
-                    f"{project_params.param(mp['class_rhcls'], i)}\n"
-                    f"{srad}\n"
-                    f"{postprocess.get_rhref(mp, i)}\n"
-                    f"{project_params.param(mp['refine_dang'], i)}\n"
-                    "20\n"
-                    f"{project_params.param(mp['refine_searchx'], i)}\n"
-                    f"{project_params.param(mp['refine_searchy'], i)}\n"
-                    f"{mask_2d_x}\n{mask_2d_y}\n{mask_2d_z}\n{mask_2d_rad}\n"
-                    "500.0\n"
-                    "50.0\n"
-                    f"{project_params.param(mp['refine_iblow'], i)}\n"
-                    f"{globally}\n"
-                    f"{locally}\n"
-                    f"{psib}\n"
-                    f"{thetab}\n"
-                    f"{phib}\n"
-                    f"{shxb}\n"
-                    f"{shyb}\n"
-                    f"{match}\n"
-                    f"{masking}\n"
-                    f"{defocus}\n"
-                    "Yes\n"
-                    f"{invert}\n"
-                    "Yes\n"
-                    "Yes\n"
-                    "No\n"
-                    "eot\n"
-                )
-            elif "global" in metric.lower():
-                command = (
-                    "{0}/refine3d_global << eot >>{1} 2>&1\n".format(
-                        frealign_paths["frealignx"], logfile
-                    )
-                    + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-                    + "{0}.par\n{3}\n{1}_{2}.mrc\n".format(
-                        name, dataset, "%02d" % (i - 1), global_par
-                    )
-                    + "statistics_r%02d.txt\n" % ref
-                    + stats
-                    + "\n"
-                    + "{0}_match.mrc_{1}\n{0}.par_{1}\n/dev/null\n".format(name, ranger)
-                    + project_params.param(mp["particle_sym"], i)
-                    + "\n"
-                    + "{0}\n{1}\n1\n".format(first, last)
-                    + "{0}\n{1}\n{2}\n{3}\n{4}\n0\n".format(
-                        pixel,
-                        mp["scope_voltage"],
-                        mp["scope_cs"],
-                        mp["scope_wgh"],
-                        mp["particle_mw"],
-                    )
-                    + str(mp["particle_rad"])
-                    + "\n"
-                    + str(project_params.param(mp["refine_rlref"], i))
-                    + "\n"
-                    + str(postprocess.get_rhref(mp, i))
-                    + "\n"
-                    + boost
-                    + "\n"
-                    + str(project_params.param(mp["class_rhcls"], i))
-                    + "\n"
-                    + srad
-                    + "\n"
-                    + str(postprocess.get_rhref(mp, i))
-                    + "\n"
-                    + str(project_params.param(mp["refine_dang"], i))
-                    + "\n"
-                    + "20\n"
-                    + str(project_params.param(mp["refine_searchx"], i))
-                    + "\n"
-                    + str(project_params.param(mp["refine_searchy"], i))
-                    + "\n"
-                    + "\n".join(
-                        project_params.param(mp["refine_focusmask"], i).split(",")
-                    )
-                    + "\n"
-                    + "500.0\n"
-                    + "50.0\n"
-                    + str(project_params.param(mp["refine_iblow"], i))
-                    + "\n"
-                    + globally
-                    + "\n"
-                    + locally
-                    + "\n"
-                    + psib
-                    + "\n"
-                    + thetab
-                    + "\n"
-                    + phib
-                    + "\n"
-                    + shxb
-                    + "\n"
-                    + shyb
-                    + "\n"
-                    + match
-                    + "\n"
-                    + masking
-                    + "\n"
-                    + defocus
-                    + "\n"
-                    + normalize
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + exclude
-                    + "\n"
-                    + normalize_input
-                    + "\n"
-                    + threshold_input
-                    + "\n"
-                    "eot\n"
-                )
-            else:
-                refine3d = "refine3d" if mp["refine_priors"] else "refine3d_no_prior"
-                command = (
-                    "{0}/{2} << eot >>{1} 2>&1\n".format(
-                        frealign_paths["frealignx"], logfile, refine3d
-                    )
-                    + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-                    + "{0}.par\n{1}_{2}.mrc\n".format(name, dataset, "%02d" % (i - 1))
-                    + "statistics_r%02d.txt\n" % ref
-                    + stats
-                    + "\n"
-                    + "{0}_match.mrc_{1}\n{0}.par_{1}\n/dev/null\n".format(name, ranger)
-                    + project_params.param(mp["particle_sym"], i)
-                    + "\n"
-                    + "{0}\n{1}\n1\n".format(first, last)
-                    + "{0}\n{1}\n{2}\n{3}\n{4}\n0\n".format(
-                        pixel,
-                        mp["scope_voltage"],
-                        mp["scope_cs"],
-                        mp["scope_wgh"],
-                        mp["particle_mw"],
-                    )
-                    + str(mp["particle_rad"])
-                    + "\n"
-                    + str(project_params.param(mp["refine_rlref"], i))
-                    + "\n"
-                    + str(postprocess.get_rhref(mp, i))
-                    + "\n"
-                    + boost
-                    + "\n"
-                    + str(project_params.param(mp["class_rhcls"], i))
-                    + "\n"
-                    + srad
-                    + "\n"
-                    + str(postprocess.get_rhref(mp, i))
-                    + "\n"
-                    + str(project_params.param(mp["refine_dang"], i))
-                    + "\n"
-                    + "20\n"
-                    + str(project_params.param(mp["refine_searchx"], i))
-                    + "\n"
-                    + str(project_params.param(mp["refine_searchy"], i))
-                    + "\n"
-                    + "\n".join(
-                        project_params.param(mp["refine_focusmask"], i).split(",")
-                    )
-                    + "\n"
-                    + "500.0\n"
-                    + "50.0\n"
-                    + str(project_params.param(mp["refine_iblow"], i))
-                    + "\n"
-                    + globally
-                    + "\n"
-                    + locally
-                    + "\n"
-                    + psib
-                    + "\n"
-                    + thetab
-                    + "\n"
-                    + phib
-                    + "\n"
-                    + shxb
-                    + "\n"
-                    + shyb
-                    + "\n"
-                    + match
-                    + "\n"
-                    + masking
-                    + "\n"
-                    + defocus
-                    + "\n"
-                    + normalize
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + exclude
-                    + "\n"
-                    + normalize_input
-                    + "\n"
-                    + threshold_input
-                    + "\n"
-                    "eot\n"
-                )
-
-        else:
-
-            # cistem2
-            #
-            normalize = "yes"
-            edges = "no"
-            normalize_rec = "no"
-            thresh_rec = "no"
-
-            command = (
-                "{0}/refine3d << eot >>{1} 2>&1\n".format(
-                    frealign_paths["cistem2"], logfile
-                )
-                + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-                + "{0}.cistem\n{0}_stat.cistem\n{0}.mrc\n".format(name)
-                + "statistics_r%02d.txt\n" % ref
-                + stats
-                + "\n"
-                + use_priors
-                + "\n"
-                + "{0}_match.mrc_{1}\n{0}_{1}.cistem\n{0}_{1}_changes.cistem\n".format(
-                    name, ranger
-                )
-                + str(project_params.param(fp["particle_sym"], i))
-                + "\n"
-                + "{0}\n{1}\n1\n".format(first, last)
-                + "{0}\n{1}\n".format(pixel, mp["particle_mw"])
-                + "0\n"
-                + str(mp["particle_rad"])
-                + "\n"
-                + str(project_params.param(mp["refine_rlref"], i))
-                + "\n"
-                + str(postprocess.get_rhref(mp, i))
-                + "\n"
-                + boost
-                + "\n"
-                + str(project_params.param(mp["class_rhcls"], i))
-                + "\n"
-                + srad
-                + "\n"
-                + str(postprocess.get_rhref(mp, i))
-                + "\n"
-                + str(project_params.param(mp["refine_dang"], i))
-                + "\n"
-                + "20\n"
-                + str(project_params.param(mp["refine_searchx"], i))
-                + "\n"
-                + str(project_params.param(mp["refine_searchy"], i))
-                + "\n"
-                + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
-                + "\n"
-                + "500.0\n" # defocus_search_range
-                + "50.0\n" # defocus_step
-                + str(project_params.param(mp["refine_iblow"], i))
-                + "\n"
-                + globally
-                + "\n"
-                + locally
-                + "\n"
-                + psib
-                + "\n"
-                + thetab
-                + "\n"
-                + phib
-                + "\n"
-                + shxb
-                + "\n"
-                + shyb
-                + "\n"
-                + match
-                + "\n"
-                + masking
-                + "\n"
-                + defocus
-                + "\n"
-                + normalize
-                + "\n"
-                + invert
-                + "\n"
-                + edges
-                + "\n"
-                + normalize_rec
-                + "\n"
-                + thresh_rec
-                + "\neot\n"
-            )
+    my_mask = project_params.param(mp["refine_mask"], i).split(",")
+    if my_mask[0] == "0":
+        psib = "no"
     else:
+        psib = "yes"
+    if my_mask[1] == "0":
+        thetab = "no"
+    else:
+        thetab = "yes"
+    if my_mask[1] == "0":
+        phib = "no"
+    else:
+        phib = "yes"
+    if my_mask[3] == "0":
+        shxb = "no"
+    else:
+        shxb = "yes"
+    if my_mask[4] == "0":
+        shyb = "no"
+    else:
+        shyb = "yes"
 
-        # frealignx
+    if mp["refine_global_stat"] and os.path.exists(f"{name}_stat.cistem"):
+        global_stat = f"{name}_stat.cistem"
+    else:
+        global_stat = "null"
 
-        my_mask = project_params.param(mp["refine_mask"], i).split(",")
-        if my_mask[0] == "0":
-            psib = "no"
-        else:
-            psib = "yes"
-        if my_mask[1] == "0":
-            thetab = "no"
-        else:
-            thetab = "yes"
-        if my_mask[1] == "0":
-            phib = "no"
-        else:
-            phib = "yes"
-        if my_mask[3] == "0":
-            shxb = "no"
-        else:
-            shxb = "yes"
-        if my_mask[4] == "0":
-            shyb = "no"
-        else:
-            shyb = "yes"
+    if (
+        mp["refine_fssnr"]
+        and os.path.exists("statistics_r%02d.txt" % ref)
+        and len(open("statistics_r%02d.txt" % ref).read()) > 0
+    ):
+        stats = "yes"
+    else:
+        stats = "no"
+    
+    if mp["refine_priors"]:
+        use_priors = "yes"
+    else:
+        use_priors = "no"
 
-        if (
-            mp["refine_fssnr"]
-            and os.path.exists("statistics_r%02d.txt" % ref)
-            and len(open("statistics_r%02d.txt" % ref).read()) > 0
-        ):
-            stats = "yes"
-        else:
-            stats = "no"
+    if project_params.param(mp["refine_focusmask"], i) == "0,0,0,0":
+        masking = "no"
+    else:
+        masking = "yes"
+    if "t" in project_params.param(mp["refine_fdef"], i).lower():
+        defocus = "yes"
+        def_range = mp["csp_ToleranceMicrographDefocus1"]
+    else:
+        defocus = "no"
+        def_range = "500"
 
-        if project_params.param(mp["refine_focusmask"], i) == "0,0,0,0":
-            masking = "no"
-        else:
-            masking = "yes"
-        if "t" in project_params.param(mp["refine_fdef"], i).lower():
-            defocus = "yes"
-        else:
-            defocus = "no"
-        if "t" in project_params.param(mp["refine_fmatch"], i).lower():
-            match = "yes"
-        else:
-            match = "no"
-        if mp["refine_invert"]:
-            invert = "yes"
-        else:
-            invert = "no"
+    if "t" in project_params.param(mp["refine_fmatch"], i).lower():
+        match = "yes"
+    else:
+        match = "no"
+    if mp["refine_invert"]:
+        invert = "yes"
+    else:
+        invert = "no"
 
-        if project_params.param(mp["refine_mode"], i) == "1":
-            globally = "no"
-            locally = "yes"
-        else:
-            globally = "yes"
-            locally = "no"
+    if project_params.param(mp["refine_mode"], i) == "1":
+        globally = "no"
+        locally = "yes"
+    else:
+        globally = "yes"
+        locally = "no"
 
-        # set radius for global search
-        if project_params.param(mp["refine_srad"], i) == "0":
-            srad = str(1.5 * float(mp["particle_rad"]))
-        else:
-            srad = project_params.param(mp["refine_srad"], i)
+    # set radius for global search
+    if project_params.param(mp["refine_srad"], i) == 0:
+        srad = str(1.5 * mp["particle_rad"])
+    else:
+        srad = str(project_params.param(mp["refine_srad"], i))
 
-        boost = "30.0"
-        if mp["refine_fboost"]:
-            boost = mp["refine_fboostlim"]
+    boost = "30.0"
+    if mp["refine_fboost"]:
+        boost = str(mp["refine_fboostlim"])
 
-        if project_params.param(mp["reconstruct_norm"], i):
-            normalize = "yes"
-        else:
-            normalize = "no"
+    mask_2d_x, mask_2d_y, mask_2d_z, mask_2d_rad = project_params.param(
+        mp["refine_focusmask"], i
+    ).split(",")
+    
+    #classification using weighted averages when do frames.
+    # TODO: should mostly used for tomo
+    if mp["class_num"] >1 and "local" in mp["extract_fmt"] and "spr" in mp["data_mode"]:
+        stack = "stack_weighted_average.mrc"
+    else:
+        stack = "stack.mrc"
 
-        command = (
-            "{0}/refine3d << eot >>{1} 2>&1\n".format(
-                frealign_paths["frealignx"], logfile
-            )
-            + "{0}/{1}_stack.mrc\n".format(stack_dir, fp["refine_dataset"])
-            + "{0}.par\n{1}_{2}.mrc\n".format(name, dataset, "%02d" % (i - 1))
-            + "statistics_r%02d.txt\n" % ref
-            + stats
-            + "\n"
-            + "{0}_match.mrc_{1}\n{0}.par_{1}\n/dev/null\n".format(name, ranger)
-            + project_params.param(mp["particle_sym"], i)
-            + "\n"
-            + "{0}\n{1}\n".format(first, last)
-            + "1.0\n"
-            + "{0}\n{1}\n{2}\n{3}\n{4}\n".format(
-                pixel,
-                mp["scope_voltage"],
-                mp["scope_cs"],
-                mp["scope_wgh"],
-                mp["particle_mw"],
-            )
-            + "0\n"
-            + mp["particle_rad"]
-            + "\n"
-            + project_params.param(mp["refine_rlref"], i)
-            + "\n"
-            + str(postprocess.get_rhref(mp, i))
-            + "\n"
-            + boost
-            + "\n"
-            + project_params.param(mp["class_rhcls"], i)
-            + "\n"
-            + srad
-            + "\n"
-            + str(postprocess.get_rhref(mp, i))
-            + "\n"
-            + project_params.param(mp["refine_dang"], i)
-            + "\n"
-            + "20\n"
-            + project_params.param(mp["refine_searchx"], i)
-            + "\n"
-            + project_params.param(mp["refine_searchy"], i)
-            + "\n"
-            + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
-            + "\n"
-            + "500.0\n"
-            + "50.0\n"
-            + project_params.param(mp["refine_iblow"], i)
-            + "\n"
-            + globally
-            + "\n"
-            + locally
-            + "\n"
-            + psib
-            + "\n"
-            + thetab
-            + "\n"
-            + phib
-            + "\n"
-            + shxb
-            + "\n"
-            + shyb
-            + "\n"
-            + match
-            + "\n"
-            + masking
-            + "\n"
-            + defocus
-            + "\n"
-            + normalize
-            + "\n"
-            + invert
-            + "\n"
-            + "yes\n"
-            + "yes\n"
-            + "no\n"
-            + "eot\n"
+    ###############
+    ### cistem2 ###
+    ###############
+            
+    normalize = "yes"
+    edges = "no"
+    normalize_rec = "no"
+    thresh_rec = "no"
+
+    command = (
+        "{0}/refine3d << eot >>{1} 2>&1\n".format(
+            frealign_paths["cistem2"], logfile
         )
+        + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
+        + f"{name}.cistem\n{global_stat}\n{name}.mrc\n"
+        + "statistics_r%02d.txt\n" % ref
+        + stats
+        + "\n"
+        + use_priors
+        + "\n"
+        + "{0}_match.mrc_{1}\n{0}_{1}.cistem\n{0}_{1}_changes.cistem\n".format(
+            name, ranger
+        )
+        + str(project_params.param(fp["particle_sym"], i))
+        + "\n"
+        + "{0}\n{1}\n1\n".format(first, last)
+        + "{0}\n{1}\n".format(pixel, mp["particle_mw"])
+        + "0\n"
+        + str(mp["particle_rad"])
+        + "\n"
+        + str(project_params.param(mp["refine_rlref"], i))
+        + "\n"
+        + str(postprocess.get_rhref(mp, i))
+        + "\n"
+        + boost
+        + "\n"
+        + str(project_params.param(mp["class_rhcls"], i))
+        + "\n"
+        + srad
+        + "\n"
+        + str(postprocess.get_rhref(mp, i))
+        + "\n"
+        + str(project_params.param(mp["refine_dang"], i))
+        + "\n"
+        + "20\n"
+        + str(project_params.param(mp["refine_searchx"], i))
+        + "\n"
+        + str(project_params.param(mp["refine_searchy"], i))
+        + "\n"
+        + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
+        + "\n"
+        + "%s\n" % def_range # defocus_search_range
+        + "50.0\n" # defocus_step
+        + str(project_params.param(mp["refine_iblow"], i))
+        + "\n"
+        + globally
+        + "\n"
+        + locally
+        + "\n"
+        + psib
+        + "\n"
+        + thetab
+        + "\n"
+        + phib
+        + "\n"
+        + shxb
+        + "\n"
+        + shyb
+        + "\n"
+        + match
+        + "\n"
+        + masking
+        + "\n"
+        + defocus
+        + "\n"
+        + normalize
+        + "\n"
+        + invert
+        + "\n"
+        + edges
+        + "\n"
+        + normalize_rec
+        + "\n"
+        + thresh_rec
+        + "\neot\n"
+    )
 
     return command
 
