@@ -4371,7 +4371,7 @@ def mrefine_version(
     else:
         shyb = "yes"
 
-    if mp["refine_global_stat"] and os.path.exists(f"{name}_stat.cistem"):
+    if (mp["class_num"] > 1 or mp["refine_global_stat"]) and os.path.exists(f"{name}_stat.cistem"):
         global_stat = f"{name}_stat.cistem"
     else:
         global_stat = "null"
