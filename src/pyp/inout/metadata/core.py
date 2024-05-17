@@ -2923,8 +2923,6 @@ def get_particles_tilt_index(par_data, ptl_col):
     idea from alimanfoo/find_runs.py
     """
 
-    index = {}
-    
     ptlid = par_data[:, ptl_col].ravel()
     n = ptlid.shape[0]
     loc_run_start = np.empty(n, dtype=bool)

@@ -393,10 +393,11 @@ def merge_movie_files_in_job_arr(
     else:
         classes = int(project_params.param(fp["class_num"], iteration))
     
-    if not mp["refine_skip"]: # refine3d film output = 1
-        film_start = 1
-    else:
-        film_start = 0
+    # refine3d film output = 1 but csp film output == 0
+    # we just get the film id from the data
+    sample_data = Parameters.from_file(par_list[0])
+    film_col = sample_data.get_index_of_column(IMAGE_IS_ACTIVE)
+    film_start = int(sample_data.get_data()[0, film_col])
 
     for class_index in range(classes):
 

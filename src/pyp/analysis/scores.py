@@ -1016,7 +1016,7 @@ def particle_cleaning(parameters: dict):
         os.makedirs(output_parfile)
 
         all_zero_list = pyp_metadata.merge_par_selection(parameter_folder, output_parfile, films, selection, parameters)
-
+        parameter_folder = output_parfile
         parameters["refine_parfile"] = output_parfile
 
     else:
