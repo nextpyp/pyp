@@ -533,7 +533,7 @@ def merge_movie_files_in_job_arr(
             target_name = (
                 mp["data_set"]
                 + "_r%02d_%02d" % (current_class, iteration)
-                + "_mreconst3d.log"
+                + "_mreconst.log"
             )
             target = os.path.join(project_path, "frealign", "log", target_name)
             shutil.copy2(log_files[0], target)
