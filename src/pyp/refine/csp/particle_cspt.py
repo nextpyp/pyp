@@ -526,14 +526,14 @@ def merge_movie_files_in_job_arr(
 
         # save logs
         mypath = os.path.join(
-            "merged_recon" + "_r%02d" % current_class, "log/*_0000001_*.log"
+            "merged_recon" + "_r%02d" % current_class, "*_0000001_*.log"
         )
         log_files = glob.glob(mypath)
         if len(log_files) > 0:
             target_name = (
                 mp["data_set"]
                 + "_r%02d_%02d" % (current_class, iteration)
-                + "_mreconst.log"
+                + "_mreconst3d.log"
             )
             target = os.path.join(project_path, "frealign", "log", target_name)
             shutil.copy2(log_files[0], target)
@@ -1054,7 +1054,7 @@ def run_mpi_reconstruction(
 
         # append merge log
         reclogfile = "../log/%s_%02d_mreconst.log" % (dataset_name, iteration)
-        outputlogfile = os.path.join(os.path.dirname(input_dir), "log/%s_mreconst.log" % (dataset_name))
+        outputlogfile = os.path.join(os.path.dirname(input_dir), "log/%s_%02d_mreconst.log" % (dataset_name, iteration))
         with open(outputlogfile, "a") as fw:
             with open(reclogfile) as fr:
                 fw.write(fr.read())
