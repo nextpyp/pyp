@@ -1089,15 +1089,39 @@ def initialize_extended_parameters_binary():
     return 
 
 
-# test = Parameters.from_file("fresh.cistem")
-# print(test.get_data().shape)
-# test.to_binary("test.cistem")
+def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
 
-# test2 = Parameters.from_file("test.cistem")
+    # merge all the projection binary to generate single array updating film id
+    film_ind = 0
+    dataset_array_list = []
+    tiltangle_dict = {}
+    particle_dict = {}
+    for par_binary in binary_list:
+        # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
+        all_parameters = Parameters.from_file(par_binary)
+        col_film = all_parameters.get_index_of_column(IMAGE_IS_ACTIVE)
+        image_para_array = all_parameters.get_data()
+        image_para_array[:, col_film] = film_ind
+        dataset_array_list.append(image_para_array)
+        
+        if read_extend:
+            image_name = Path(par_binary).name.split("_r0")[0]
+            ext_obj = all_parameters.get_extended_data()
+            if not intact:
+                # only save unique tilt index id keys
+                tilts_dict = ext_obj.get_tilts()
+                tiltangle_dict.update(tilts_dict)
+            else:
+                tiltangle_dict[image_name] = ext_obj.get_tilts()
 
-# test_ext = ExtendedParameters.from_file("output.cistem")
+            ptl_dict = ext_obj.get_particles()
+            particle_dict[image_name] = ptl_dict
 
-# initialize_parameters_binary()
-# initialize_extended_parameters_binary()
+        film_ind += 1
 
+    par_data = np.vstack(dataset_array_list)
 
+    if read_extend:
+        return par_data, tiltangle_dict, particle_dict
+    else:
+        return par_data

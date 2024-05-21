@@ -107,7 +107,7 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
                 class_k = k + 1
                 decompressed_parameter_file_folder = os.path.join(parameter_file_folders, dataset + "_r%02d_%02d" % (class_k, iteration - 1)) 
                 binary_list = [os.path.join(decompressed_parameter_file_folder, image + "_r%02d.cistem" % class_k ) for image in image_list]
-                park_data, par_extk_dict = merge_all_binary_with_filmid(binary_list, read_extend=True)                
+                park_data, par_extk_dict, _ = cistem_star_file.merge_all_binary_with_filmid(binary_list, read_extend=True)                
                 select_data = park_data[:, [film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, scanord_col]]
 
                 all_extended_list.append(par_extk_dict)
@@ -306,7 +306,7 @@ def classification_initialization( dataset, classes, iteration, decompressed_par
     if not references_only:
         # read all images parameters for statistices and we need to track the film id to recover individual image data
         binary_list = [os.path.join(decompressed_parameter_file_folder, image + "_r01.cistem") for image in image_list]
-        par_data = merge_all_binary_with_filmid(binary_list, read_extend=False)
+        par_data = cistem_star_file.merge_all_binary_with_filmid(binary_list, read_extend=False)
 
         # the column index from cistem2 binary
         (
@@ -454,31 +454,5 @@ def per_particle_scoreweight(target, logp_col, scanord_col, scoreavg_tilt, index
 
 
 
-def merge_all_binary_with_filmid(binary_list, read_extend=False):
 
-    # merge all the projection binary to generate single array updating film id
-    film_ind = 0
-    dataset_array_list = []
-    tiltangle_dict = {}
-    for par_binary in binary_list:
-        # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
-        all_parameters = cistem_star_file.Parameters.from_file(par_binary)
-        col_film = all_parameters.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
-        image_para_array = all_parameters.get_data()
-        image_para_array[:, col_film] = film_ind
-        dataset_array_list.append(image_para_array)
-        
-        if read_extend:
-            ext_obj = all_parameters.get_extended_data()
-            tilts_dict = ext_obj.get_tilts()
-            tiltangle_dict.update(tilts_dict)
-
-        film_ind += 1
-
-    par_data = np.vstack(dataset_array_list)
-
-    if read_extend:
-        return par_data, tiltangle_dict
-    else:
-        return par_data
 

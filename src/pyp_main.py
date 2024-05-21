@@ -307,18 +307,19 @@ def parse_arguments(block):
 
             # use default par file from block upstream if none specified
             if os.path.exists(micrographs) and (
+                (
                 not "refine_parfile" in parameters.keys()
                 or parameters["refine_parfile"] is None
                 or project_params.resolve_path(parameters["refine_parfile"]) == "auto"
                 or not Path(
                     project_params.resolve_path(parameters["refine_parfile"])
-                ).exists
-                or not "refine_parfile_tomo" in parameters.keys()
+                ).exists) and (
+                not "refine_parfile_tomo" in parameters.keys()
                 or parameters["refine_parfile_tomo"] is None
                 or project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto"
                 or not Path(
                     project_params.resolve_path(parameters["refine_parfile_tomo"])
-                ).exists
+                ).exists )
                 or reinitialize
             ):
                 # if not using all micrographs, we need to generate new .par file
@@ -3565,7 +3566,7 @@ if __name__ == "__main__":
                             micrographs[line.strip()] = index
                             index += 1
 
-                    parfile = "frealign/maps/" + parameters["data_set"] + "_r01" + "_%02d.par" % iteration
+                    parfiles = "frealign/maps/" + parameters["data_set"] + "_r01" + "_%02d.bz2" % iteration
                     imagelist = list(micrographs.keys())
 
                     globalmeta = pyp_metadata.GlobalMetadata(
@@ -3574,7 +3575,7 @@ if __name__ == "__main__":
                         imagelist=imagelist,
                         mode=mode,
                         getpickle=True,
-                        parfile=parfile,
+                        parfile=parfiles,
                         path="./pkl"
                         )
                     select = parameters["extract_cls"]
@@ -3610,15 +3611,16 @@ if __name__ == "__main__":
 
                         if not os.path.exists(par_input):
                             try:
-                                par_input = os.path.join(os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01_%02d" % parameters["refine_iter"] + ".par.bz2")
+                                par_input = os.path.join(os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01_%02d" % parameters["refine_iter"] + ".bz2")
                                 logger.info(f"Using parfile {par_input} as template for alignment")
                             except:
                                 logger.error("Can find any available parfile to read alignment")
 
-                        if par_input.endswith(".par"):
+                        if os.path.isdir(par_input):
                             parfile = par_input
                         elif par_input.endswith(".bz2"):
-                            parfile = frealign_parfile.Parameters.decompress_parameter_file(par_input, parameters["slurm_tasks"])
+                            parfile = par_input.replace(".bz2", "")
+                            frealign_parfile.Parameters.decompress_parameter_file_and_move(Path(par_input), Path(parfile), threads=parameters["slurm_tasks"])
                         else:
                             logger.error("Can't recognize the parfile")
                             sys.exit()

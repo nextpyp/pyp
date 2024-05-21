@@ -30,7 +30,7 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
 from pyp.utils import get_relative_path, movie2regex
 from pyp.utils import timer, symlink_relative
-from pyp.analysis.geometry import get_vir_binning_boxsize, alignment2Relion, spk2Relion
+from pyp.analysis.geometry import get_vir_binning_boxsize, alignment2Relion, spk2Relion, cistem2_alignment2Relion
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -1290,12 +1290,15 @@ def spa_extract_coordinates(
          Path(refinement).exists() and refinement.endswith('.par')
     ):
         # parx file format read
-        input_csp_dir = project_params.resolve_path(parameters["refine_csp_dir"])
-        micrographs = f"{parameters['data_set']}.films"
+        input_csp_dir = parameters["refine_csp_dir"]
+        reference_name = os.path.basename(refinement).split("_r01_")[0]
+        micrographs = os.path.join(input_csp_dir, f"../{reference_name}.films")
         with open(micrographs) as f:
             micrograph_list = [line.strip() for line in f]
         if filename in micrograph_list:
             micrograph_index = micrograph_list.index(filename)
+        else:
+            raise Exception("There is no alignment information for this image from the input reference")
 
         index_file = os.path.join( input_csp_dir, "micrograph_particle.index" )
         if os.path.exists(index_file):
@@ -1786,6 +1789,7 @@ def csp_extract_coordinates(
 
         if "refine_parfile" in parameters.keys():
             refinement = project_params.resolve_path(parameters["refine_parfile"])
+            parameters["refine_csp_dir"] = os.path.join(str(Path(refinement).parent) , "../../csp/")
             # decompress file if needed
             refinement = frealign_parfile.Parameters.decompress_parameter_file(
                 refinement, parameters["slurm_tasks"]
@@ -2609,12 +2613,16 @@ EOF
                 global_spike_counter += 1
     else:
         # parx file format read
-        input_csp_dir = project_params.resolve_path(parameters["refine_csp_dir"])
-        micrographs = f"{parameters['data_set']}.films"
+        logger.info(f"Reading alignment parameters from {os.path.basename(refinement)}")
+        input_csp_dir = parameters["refine_csp_dir"]
+        reference_name = os.path.basename(refinement).split("_r01_")[0]
+        micrographs = os.path.join(input_csp_dir, f"../{reference_name}.films")
         with open(micrographs) as f:
             micrograph_list = [line.strip() for line in f]
         if filename in micrograph_list:
             micrograph_index = micrograph_list.index(filename)
+        else:
+            raise Exception("There is no alignmnet information for this image in the input reference")
 
         index_file = os.path.join( input_csp_dir, "micrograph_particle.index" )
         if os.path.exists(index_file):
@@ -2668,11 +2676,14 @@ EOF
             logp = extracted_rows[id,  12]
             sigma = extracted_rows[id,  13]
             score = extracted_rows[id,  14]
-            change = extracted_rows[id,  15]
 
             # AB - 0verride film number if we are processing each movie independently
             if parameters["csp_no_stacks"]:
                 film = 0
+
+            # TODO confirm this
+            image_shift_x = extracted_rows[id,  38]
+            image_shift_y = extracted_rows[id,  39]
 
             cistem_parameters.append([id + 1,
                                     extracted_rows[id,  1],
@@ -2716,8 +2727,8 @@ EOF
             tilt_parameters[int(index)] = {}
             tilt_parameters[int(index)][0] = Tilt(tilt_index=int(index), 
                                                             region_index=0, 
-                                                            shift_x=0.0, 
-                                                            shift_y=0.0, 
+                                                            shift_x=0, 
+                                                            shift_y=0, 
                                                             angle=angles, 
                                                             axis=-axis)
         
@@ -2940,65 +2951,48 @@ def array2formatstring(a, format):
     return format % tuple(a)
 
 
-def generate_ministar(parfile, image_list, z_thickness, tomo_binning, cls=1, output_path="." ):
+def generate_ministar(image_list, z_thickness, tomo_binning, cls=1, output_path="." ):
     # generate a mini star file for Artix display only
     header = """
-    # version 30001 by xpytools
+# version 30001 by xpytools
 
-    data_particles
+data_particles
 
-    loop_
-    _rlnTomoName #1
-    _rlnCoordinateX #2
-    _rlnCoordinateY #3
-    _rlnCoordinateZ #4
-    _rlnAngleRot #5
-    _rlnAngleTilt #6
-    _rlnAnglePsi #7
-    _rlnLogLikeliContribution #8
-    _rlnClassNumber #9"""
+loop_
+_rlnTomoName #1
+_rlnCoordinateX #2
+_rlnCoordinateY #3
+_rlnCoordinateZ #4
+_rlnAngleRot #5
+_rlnAngleTilt #6
+_rlnAnglePsi #7
+_rlnOriginXAngst #8
+_rlnOriginYAngst #9
+_rlnOriginZAngst #10 
+_rlnLogLikeliContribution #11
+_rlnClassNumber #12"""
 
-    pardata = frealign_parfile.Parameters.from_file(parfile).data
-    image_film = 0
-    for mrcs in image_list:
-        film_data = pardata[pardata[:, 7]==image_film]
-        image_film += 1
-        name = mrcs.split("/")[0]
+    # par_obj = cistem_star_file.Parameters()
+    # film_col = par_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+
+    for binary_file in image_list:
+        this_image_data = cistem_star_file.Parameters.from_file(binary_file)
+
+        name = os.path.basename(binary_file).split("_r0")[0]
         # box_str = np.loadtxt(os.path.join("csp", name + "_boxes3d.txt" ), dtype="str", comments="  PTLIDX" )
         metafile = os.path.join(name, name + ".pkl")
         pkl_data = pyp_metadata.LocalMetadata(metafile, is_spr=False).data
         coordinats_all = pkl_data["box"].to_numpy()
 
-        if film_data.shape[1] > 45:
-            ptl_index = 17
-            score_col = 15
-            occ_col = 12
-
-            NOMRX_COL = 24
-            NORMZ_COL = 26
-            MATRIX0_COL = 27
-            MATRIX15_COL = 42
-            PPSI_COL = 43
-            PPHI_COL = 45
-
-        else:
-            ptl_index = 17 - 1
-            score_col = 15 - 1
-            occ_col = 12 - 1
-
-            NOMRX_COL = 24 - 1
-            NORMZ_COL = 26 - 1
-            MATRIX0_COL = 27 - 1
-            MATRIX15_COL = 42 - 1
-            PPSI_COL = 43 - 1
-            PPHI_COL = 45 - 1
+        # par_data = this_image_data.get_data()
+        particle_dict = this_image_data.get_extended_data().get_particles()
 
         # get unique lines by shift down rows by 1 
-        meta = film_data[:, occ_col:]
-        nan_row = np.full((1, meta.shape[1]), np.nan)
-        shifted_meta = np.vstack((nan_row, meta[:-1, :]))
+        # meta = par_data[:, occ_col:]
+        # nan_row = np.full((1, meta.shape[1]), np.nan)
+        # shifted_meta = np.vstack((nan_row, meta[:-1, :]))
 
-        unique_lines = meta[meta[:, ptl_index - occ_col ] != shifted_meta[:, ptl_index - occ_col]]
+        # unique_lines = meta[meta[:, ptl_index - occ_col ] != shifted_meta[:, ptl_index - occ_col]]
         output = []
         
         full_thickness = z_thickness
@@ -3009,25 +3003,32 @@ def generate_ministar(parfile, image_list, z_thickness, tomo_binning, cls=1, out
         full_tomo_y = tomo_y * tomo_binning
 
 
-        for particle_lines in unique_lines:
+        for pid in particle_dict.keys():
+            particle_obj = particle_dict[pid]
             
-            pid = int(particle_lines[ptl_index - occ_col ])
-            coords = coordinats_all[pid, :]
-            x, y, z = coords
+            # coords = coordinats_all[int(pid), :]
+            # x, y, z = coords
+            
+            x = particle_obj.x_position_3d
+            y = particle_obj.y_position_3d
+            z = particle_obj.z_position_3d
 
             relion_x, relion_y, relion_z = spk2Relion(x, y, z, tomo_binning, full_tomo_x, full_tomo_y, thickness=full_thickness, tomo_x_bin=tomo_x, tomo_y_bin=tomo_y, tomo_z_bin=tomo_z)
 
-            matrix = particle_lines[MATRIX0_COL - occ_col : MATRIX15_COL - occ_col + 1]
-            ppsi, ptheta, pphi = particle_lines[PPSI_COL - occ_col : PPHI_COL - occ_col + 1]
-            normX, normY, normZ = particle_lines[NOMRX_COL - occ_col : NORMZ_COL - occ_col + 1]
-            rot, tilt, psi, dx, dy, dz = alignment2Relion(matrix, ppsi, ptheta, pphi, normX, normY, normZ)
-            score = particle_lines[score_col - occ_col]
-            occ = particle_lines[0]
+            ppsi = particle_obj.psi
+            ptheta = particle_obj.theta
+            pphi = particle_obj.phi
+            pshiftx = particle_obj.shift_x
+            pshifty = particle_obj.shift_y
+            pshiftz = particle_obj.shift_z
+            rot, tilt, psi, dx, dy, dz = cistem2_alignment2Relion(ppsi, ptheta, pphi, pshiftx, pshifty, pshiftz)
+            score = particle_obj.score
+            occ = particle_obj.occ
 
             relion_z = z_thickness - relion_z
             # relion_x = full_tomo_x - relion_x
             # relion_y = full_tomo_y - relion_y
-            output.append([name, relion_x, relion_y, relion_z, rot, tilt, psi, score, occ])
+            output.append([name, relion_x, relion_y, relion_z, rot, tilt, psi, dx, dy, dz, score, occ])
 
         alignment_array = np.array(output)
         # output_array = np.hstack((clean_box, alignment_array))
@@ -3036,3 +3037,5 @@ def generate_ministar(parfile, image_list, z_thickness, tomo_binning, cls=1, out
             os.makedirs(output_path)
 
         np.savetxt(os.path.join(output_path, name + "_K%d.star" % cls), alignment_array, fmt="%s", header=header, delimiter="\t", comments="")
+
+

@@ -14,7 +14,6 @@ import json
 
 from pyp import merge
 from pyp.analysis import statistics, plot, geometry
-from pyp.analysis.occupancies import merge_all_binary_with_filmid
 from pyp.inout.image import mrc
 from pyp.inout.metadata import frealign_parfile, pyp_metadata , get_particles_tilt_index
 from pyp.inout.metadata import cistem_star_file
@@ -1034,7 +1033,7 @@ def particle_cleaning(parameters: dict):
         all_binary = os.listdir(parameter_folder)
         binary_list = [os.path.join(parameter_folder,filename) for image in films for filename in all_binary if image in filename if "_stat.cistem" not in filename and "_extended.cistem" not in filename]
 
-        par_data = merge_all_binary_with_filmid(binary_list)
+        par_data = cistem_star_file.merge_all_binary_with_filmid(binary_list)
 
         if parameters["clean_spr_auto"]:
             # figure out optimal score threshold

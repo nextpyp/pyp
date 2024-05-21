@@ -22,7 +22,7 @@ from pyp import align, postprocess
 from pyp.analysis import plot, statistics
 from pyp.analysis.geometry import divide2regions, findSpecimenBounds, get_tomo_binning
 from pyp.analysis.geometry.pyp_convert_coord import read_3dbox
-from pyp.analysis.occupancies import occupancy_extended, merge_all_binary_with_filmid
+from pyp.analysis.occupancies import occupancy_extended
 from pyp.analysis.scores import call_shape_phase_residuals
 from pyp.analysis.plot import pyp_frealign_plot_weights
 from pyp.inout.image import mrc, img2webp
@@ -448,12 +448,6 @@ def merge_movie_files_in_job_arr(
     # change occupancy after refinement
     if classes > 1 and not mp["refine_skip"]:
 
-        # keep copies of original par files before updating occupancies
-        # for class_index in range(classes):
-            
-            # shutil.copy2(par_binary, par_binary.replace(".cistem", "_pre.cistem"))
-            # shutil.copy2(par_ext_binary, par_ext_binary.replace(".cistem", "_pre.cistem"))
-
         logger.info("Updating occupancies after local merge")
         # update occupancies using LogP values
         current_path = os.getcwd()
@@ -464,7 +458,7 @@ def merge_movie_files_in_job_arr(
         current_class = class_index + 1
 
         par_binary = str(output_basename) + "_r%02d.cistem" % current_class
-        current_block_par_obj = Parameters.from_file(par_binary)
+        # current_block_par_obj = Parameters.from_file(par_binary)
         
         # link statistics file
         dataset_name = mp["data_set"]
@@ -477,13 +471,17 @@ def merge_movie_files_in_job_arr(
                 os.symlink(remote_par_stat, par_binary.replace(".cistem", "_stat.cistem"))
             except:
                 pass # file may exist
+        
+        new_par_list = []
+        for p in par_list:
+            new_par_list.append(p.replace("_r01", "_r%02d" % current_class))
 
         # generate tsv files for Artix display
-        if False and "tomo" in mp["data_mode"]:
+        if "tomo" in mp["data_mode"]:
             star_output = os.path.join(project_path, "frealign", "artiax")
             binning = mp["tomo_rec_binning"]
             z_thicknes = mp["tomo_rec_thickness"]
-            generate_ministar(current_block_par_obj, movie_list, z_thicknes, binning, cls=current_class, output_path=star_output)
+            generate_ministar( new_par_list, z_thicknes, binning, cls=current_class, output_path=star_output)
         
         """
         if classes > 1:

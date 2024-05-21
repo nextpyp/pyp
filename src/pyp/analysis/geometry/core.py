@@ -940,7 +940,38 @@ def relion2Spk(x, y, z, binning, relion_x, relion_y, relion_z, tomo_x_bin=512, t
     
     return new_x, new_y, new_z
 
+def cistem2_alignment2Relion(ppsi, ptheta, pphi, px, py, pz):
 
+    # input: per particle rotation and shifts from extended Particles object
+    # rotation 
+    # R( normZ )*R( normX )*R( normY )*R( az )*R( alt )*R( phi )*R( -ppsi )*R( -ptheta )*R( -pphi ) (all left handedness)
+    #      Z          X          Z         Z       X        Z          Z           Y           Z 
+
+    mpsi = vtk.rotation_matrix(np.radians(-ppsi), [0, 0, 1])
+    mtheta = vtk.rotation_matrix(np.radians(-ptheta), [0, 1, 0])
+    mphi = vtk.rotation_matrix(np.radians(-pphi), [0, 0, 1])
+    refine_rotation = functools.reduce(np.matmul, [mpsi, mtheta, mphi])
+    
+    m = eulerTwoZYZtoOneZYZ(refine_rotation)
+
+    if m[2, 2] < 1 - np.nextafter(0, 1):
+
+        if m[2, 2] > -1 + np.nextafter(0, 1):
+            y = math.acos(m[2, 2])
+            z2 = math.atan2(m[2, 1] / math.sin(y), -m[2, 0] / math.sin(y))
+            z1 = math.atan2(m[1, 2] / math.sin(y), m[0, 2] / math.sin(y))
+        else:
+            y = math.pi
+            z1 = -math.atan2(m[1, 0], m[1, 1])
+            z2 = 0
+    else:
+        y = 0
+        z1 = math.atan2(m[1, 0], m[1, 1])
+        z2 = 0
+  
+    rot, tilt, psi = np.degrees(np.array([z2, y, z1])) 
+    
+    return rot, tilt, psi, -px, -py, -pz
 
 
 def alignment2Relion(matrix, ppsi, ptheta, pphi, normX, normY, normZ):

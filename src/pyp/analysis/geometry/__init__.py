@@ -12,6 +12,7 @@ from .core import (
     spk2Relion,
     relion2Spk,
     alignment2Relion,
+    cistem2_alignment2Relion,
     get_tomo_binning,
     get_vir_binning_boxsize,
 )
