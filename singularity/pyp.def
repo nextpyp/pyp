@@ -147,7 +147,7 @@ EOF
 
 	pip install torch==2.0.1 torchvision==0.15.2 tensorboard h5py imagesize tqdm
 	pip install torchio==0.18.92 healpy==1.14.0 phoenix==0.9.1 dataset==1.6.2 Pillow==10.0.1 pyarrow==11.0.0 scikit_network==0.28.2
-	pip install mrcfile pytorch_metric_learning progress faiss-gpu
+	pip install mrcfile pytorch_metric_learning progress faiss-gpu nptyping==2.5.0 umap_learn==0.5.3
 	pip install nibabel
 	pip install numba
 	pip install gputil
