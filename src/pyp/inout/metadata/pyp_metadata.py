@@ -1396,15 +1396,17 @@ _rlnOriginZAngst #3
                     for particle_index in particle_obj.keys():
                         
                         particle_obj = self.extended[1][micrograph][particle_index]
+                        
                         ppsi = particle_obj.psi
                         ptheta = particle_obj.theta
                         pphi = particle_obj.phi
                         pshiftx = particle_obj.shift_x
                         pshifty = particle_obj.shift_y
                         pshiftz = particle_obj.shift_z
-                        x = particle_obj.x_position_3d
-                        y = particle_obj.y_position_3d
-                        z = particle_obj.z_position_3d
+
+                        x = particle_obj.x_position_3d / binning
+                        y = particle_obj.y_position_3d / binning
+                        z = particle_obj.z_position_3d / binning
 
                         relion_x, relion_y, relion_z = spk2Relion(x, y, z, binning, full_tomo_x, full_tomo_y, thickness=full_thickness, tomo_x_bin=tomo_x, tomo_y_bin=tomo_y, tomo_z_bin=tomo_z)
 
