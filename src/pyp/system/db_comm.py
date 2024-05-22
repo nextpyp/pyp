@@ -464,7 +464,7 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
 
     files[
         "mrc"
-    ] = "{0}.rec {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
+    ] = "{0}.rec {0}_bin.ali {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
         name
     )
 
