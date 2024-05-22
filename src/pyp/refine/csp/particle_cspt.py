@@ -919,6 +919,13 @@ def run_mpi_reconstruction(
 
     is_tomo = "tomo" in mp["data_mode"]
 
+    if is_tomo:
+        tilt_min = mp["csp_UseImagesForRefinementMin"]
+        tilt_max = mp["csp_UseImagesForRefinementMax"]
+    else:
+        tilt_min = 0
+        tilt_max = 0
+
     # a folder storing all the parameter files (instead of merged one)
     # NOTE: dataset_name = parameters['data_set'] + f"_r{ref:02d}"
     parameter_file_folder = f"{dataset_name}_{iteration:02d}"
@@ -963,6 +970,8 @@ def run_mpi_reconstruction(
                 arg_scores,
                 is_tomo,
                 arg_dump,
+                tilt_min,
+                tilt_max,
             )])
 
             # plot using used particles
@@ -979,6 +988,8 @@ def run_mpi_reconstruction(
                 arg_scores,
                 is_tomo,
                 arg_dump,
+                tilt_min,
+                tilt_max,
             )])
 
             mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=fp["slurm_verbose"])
