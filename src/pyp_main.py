@@ -3459,8 +3459,8 @@ if __name__ == "__main__":
                         shutil.copy2(filmname, micrographs)
 
                         if "spr" in mode:
-                            mag = parameters["scope_mag"]
-                            globalmeta.star2par(starfile, mag=mag, path="frealign/")
+                            # mag = parameters["scope_mag"]
+                            globalmeta.star2par(starfile, new_imagelist, path="frealign/")
                         else:
                             # update handedness
                             parameters["csp_ctf_handedness"] = True if globalmeta.micrograph_global["ctf_hand"].values[0] == -1.0 else False

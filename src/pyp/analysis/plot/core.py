@@ -6,6 +6,7 @@ import subprocess
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pickle
 from pathlib import Path
 from scipy.spatial import distance
@@ -556,7 +557,7 @@ def plot_trajectory_raw(xf, output_name="", noisy=np.empty([0])):
 
 
 def generate_plots(
-    pardata, output_name, angles=25, defocuses=25, scores=False, is_tomo=False, dump=False
+    pardata, output_name, angles=25, defocuses=25, scores=False, is_tomo=False, dump=False, tilt_min=0, tilt_max=0,
 ):
     import matplotlib as mpl
 
@@ -797,15 +798,16 @@ def generate_plots(
     # particle score plot for tomo
     try:
         if is_tomo:
-            use_sub_block = input[input[:, occ_col] > 50][:, [film_id, field, ptlindex, tind_col]]
-            take_mean = []
-            for film in np.unique(use_sub_block[:,0]):
-                ptl_in_image = use_sub_block[use_sub_block[:,0] == film ]
-                ptl = np.unique(ptl_in_image[:, 2])
-                for p in ptl:
-                    take_score = ptl_in_image[np.logical_and(ptl_in_image[:, 2]== p, np.abs(ptl_in_image[:, 3]) < 10)][:, 1]
-                    take_mean.append(np.mean(take_score))
-            histogram_particle_tomo(take_mean, threshold=0, tiltseries=output_name, save_path="../maps")
+            used_mask = np.logical_and(
+                input[:, occ_col] > 50, 
+                np.abs(input[:, tind_col]) <= tilt_max, 
+                np.abs(input[:, tind_col]) >= tilt_min,
+                )
+            
+            used_sub_data = pd.DataFrame(input[used_mask], columns=cistem_star_file.Parameters.HEADER_STRS)
+            mean_score = used_sub_data.groupby("PIND")["SCORE"].mean()
+
+            histogram_particle_tomo(mean_score, threshold=0, tiltseries=output_name, save_path="../maps")
     except:
         logger.info("Per particle score plot for tomo was not successful")
         pass

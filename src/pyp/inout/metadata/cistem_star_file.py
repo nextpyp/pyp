@@ -764,9 +764,89 @@ class Parameters:
                 self._extended.to_binary(possible_extended)
 
 
-    def to_star(self, filename):
-        # TODO: simply call convert_binary_to_star executable
-        return
+    def to_star(self, imagesize, image_binning, micrograph_path, filename):
+        # convert cistem2 binary to relion conventions star
+        OPTICS_HEADER = """
+data_optics
+
+loop_ 
+_rlnOpticsGroupName #1 
+_rlnOpticsGroup #2 
+_rlnMicrographOriginalPixelSize #3 
+_rlnVoltage #4 
+_rlnSphericalAberration #5 
+_rlnAmplitudeContrast #6 
+_rlnImagePixelSize #7 
+_rlnImageSize #8 
+_rlnImageDimensionality #9 
+"""
+
+        # create optics 
+        sample_data = self._data[0]
+        image_pixelsize = sample_data[self.get_index_of_column(PIXEL_SIZE)]
+        micrograph_pixelsize = image_pixelsize / image_binning
+        voltage = sample_data[self.get_index_of_column(MICROSCOPE_VOLTAGE)]
+        cs = sample_data[self.get_index_of_column(MICROSCOPE_CS)]
+        AC = sample_data[self.get_index_of_column(AMPLITUDE_CONTRAST)]
+
+        PARTICLES_HEADER = """
+data_particles
+
+loop_ 
+_rlnImageName #1 
+_rlnMicrographName #2 
+_rlnCoordinateX #3 
+_rlnCoordinateY #4 
+_rlnAnglePsi #5
+_rlnAngleTilt #6 
+_rlnAngleRot #7 
+_rlnOriginXAngst #8
+_rlnOriginYAngst #9 
+_rlnDefocusU #10 
+_rlnDefocusV #11
+_rlnDefocusAngle #12 
+_rlnPhaseShift #13 
+_rlnOpticsGroup #14 
+_rlnGroupNumber #15 
+_rlnGroupNumber #16 
+_rlnLogLikeliContribution #17 
+_rlnRandomSubset #18 
+_rlnTiltIndex #19
+"""         
+        
+        binary_data = pd.DataFrame(self._data, columns=self.HEADER_STRS)
+        
+        total_ptl = self._data.shape[0]
+        length = len(str(total_ptl))
+       
+        dataset_name = Path(micrograph_path).stem
+        image_name = pd.DataFrame([f"{i:0{length}d}@{dataset_name}_stack.mrcs" for i in range(1, total_ptl + 1)], columns=["ImageName"])
+        micrograph_name = pd.DataFrame([micrograph_path] * total_ptl, columns=["MicrographName"])
+        coords = binary_data[["ORIGINAL_X_POSITION", "ORIGINAL_Y_POSITION"]]
+        alignment = binary_data[["PSI", "THETA", "PHI", "X_SHIFT", "Y_SHIFT"]].copy()
+        alignment.loc[:, ["X_SHIFT", "Y_SHIFT"]] = -alignment[["X_SHIFT", "Y_SHIFT"]]
+        CTF_info = binary_data[["DEFOCUS_1", "DEFOCUS_2", "DEFOCUS_ANGLE", "PHASE_SHIFT"]]
+        
+        all_other = pd.DataFrame(
+            {
+                "OpticsGroup": np.array([1] * total_ptl),
+                "GroupNumber": np.array([1] * total_ptl), 
+                "GroupNumber": np.array([1] * total_ptl), 
+                "LOGP": -binary_data[["LOGP"]].to_numpy().ravel(),
+                "RandomSubset": np.random.randint(1, high=3, size=total_ptl, dtype=int), 
+                "TiltIndex": binary_data[["TIND"]].to_numpy().ravel()
+            }
+        )
+
+        columns = [image_name, micrograph_name, coords, alignment, CTF_info, all_other]
+        star_columns = pd.concat(columns, axis=1)
+
+        star_values = star_columns.to_numpy(dtype=str, copy=True)
+        optics_values = f"opticsGroup1     1    {micrograph_pixelsize}  {voltage}   {cs}    {AC}    {imagesize} 2 \n"
+        star_header = OPTICS_HEADER + optics_values + PARTICLES_HEADER
+        np.savetxt(filename, star_values, fmt='%s', header=star_header, delimiter="\t", comments='')
+    
+
     def get_data(self) -> np.ndarray:
         return self._data
     def get_extended_data(self) -> ExtendedParameters:

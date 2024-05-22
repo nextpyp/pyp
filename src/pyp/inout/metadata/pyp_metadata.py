@@ -4,6 +4,7 @@ import glob
 import re
 import math
 from pathlib import Path
+import shutil
 import numpy as np
 import pandas as pd
 import pickle
@@ -1404,7 +1405,7 @@ _rlnOriginZAngst #3
                         x = particle_obj.x_position_3d
                         y = particle_obj.y_position_3d
                         z = particle_obj.z_position_3d
-                        
+
                         relion_x, relion_y, relion_z = spk2Relion(x, y, z, binning, full_tomo_x, full_tomo_y, thickness=full_thickness, tomo_x_bin=tomo_x, tomo_y_bin=tomo_y, tomo_z_bin=tomo_z)
 
                         # try different scanning orders to get particle alignment
@@ -2174,38 +2175,97 @@ _rlnRandomSubset #14
         return list(self.data.keys())
 
 
-    def star2par(self, starfile, mag, path="."):
+    def star2par(self, starfile, image_list, path="."):
         """
-        frealign custom command star 2 par
+        star 2 cistem binary
         """
 
-        parfile = os.path.basename(starfile).replace(".star", ".par")
-        pardata = refinestar2pardata(starfile, mag=mag)
+        dataset = os.path.basename(starfile).replace(".star", "")
+        saved_path = os.path.join(path, dataset + "_r01_01")
 
-        ptl_num = pardata.shape[0]
+        if not os.path.exists(saved_path):
+            os.makedirs(saved_path)
+
+        pardata = refinestar2pardata(starfile)
+
         # film from 0
-        # pardata[:, 7] = pardata[:, 7] - 1
-        extended = np.zeros((ptl_num, 29))
-        extended[:, [5, 10, 15, 20, 25]] = 1
-        par = np.hstack((pardata, extended))
+        par_obj = cistem_star_file.Parameters()
+        film_col = par_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+        ptl_col = par_obj.get_index_of_column(cistem_star_file.PIND)
+        x_col = par_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
+        y_col = par_obj.get_index_of_column(cistem_star_file.ORIGINAL_Y_POSITION)
 
-        # write parfile 
-        frealign = frealign_parfile.Parameters(version="new", extended=True)
-        frealign.write_parameter_file(
-            os.path.join(path, parfile), par, parx=True, frealignx=False
-        )
-        self.refinement = pd.DataFrame(pardata, columns=PARHEADER)
-        self.extended = pd.DataFrame(extended, columns=PAREXTENDED)
+        for film in image_list:
+            # get the par data 
+            filmid = image_list.index(film)
+            this_image_data = pardata[pardata[:, film_col] == filmid]
+
+            saved_binary = os.path.join(saved_path, film + "_r01.cistem")
+            saved_extended = os.path.join(saved_path, film + "_r01_extended.cistem")
+            
+            particle_parameters = {}
+            # generate extended data, spr tilt index just 0
+            tilt_parameters = {}
+            tilt_parameters[0] = {}
+            tilt_parameters[0][0] = cistem_star_file.Tilt(tilt_index=0, 
+                                                            region_index=0, 
+                                                            shift_x=0.0, 
+                                                            shift_y=0.0, 
+                                                            angle=0, 
+                                                            axis=-0)
+            
+            for particle_index in this_image_data[:, ptl_col]:
+                this_row = this_image_data[particle_index]
+                ppsi = this_row[1]
+                ptheta = this_row[2]
+                pphi = this_row[3]
+                shift_x = this_row[4]
+                shift_y = this_row[5]
+                x_coord = this_row[x_col]
+                y_coord = this_row[y_col]
+
+                if particle_index not in particle_parameters:            
+                    particle_parameters[particle_index] = cistem_star_file.Particle(particle_index=particle_index, 
+                                                                shift_x = -shift_x, 
+                                                                shift_y= -shift_y, 
+                                                                shift_z= 0, 
+                                                                psi = -ppsi, 
+                                                                theta = -ptheta, 
+                                                                phi = -pphi, 
+                                                                x_position_3d= x_coord, 
+                                                                y_position_3d= y_coord, 
+                                                                z_position_3d= 1, 
+                                                                score=20, 
+                                                                occ=100)
+            
+            parameters_obj = cistem_star_file.Parameters()
+            extended_parameters = cistem_star_file.ExtendedParameters()
+            extended_parameters.set_data(particles=particle_parameters,
+                                            tilts=tilt_parameters)
+            parameters_obj.set_data(data=this_image_data, extended_parameters=extended_parameters)
+
+            parameters_obj.to_binary(saved_binary, saved_extended)
+        
+        # compress the dir
+        compressed_file = saved_path + ".bz2"
+        frealign_parfile.Parameters.compress_parameter_file(
+                saved_path, compressed_file,
+            )
+        
+        shutil.rmtree(Path(saved_path))
+                
+        # self.refinement = pd.DataFrame(pardata, columns=cistem_star_file.Parameters.HEADER_STRS)
+        # self.extended = [tilt_dict, particle_dict]
         self.mode = "spr"
 
 
-def refinestar2pardata(starfile, mag=10000):
+def refinestar2pardata(starfile):
     """
     Convert RELION refine3d star file to standard parfile, return np array
     """
 
     star_metadata = parse_star_tables(starfile)
-    # optics = star_metadata[Relion.OPTICDATA]
+    optics = star_metadata[Relion.OPTICDATA]
     refinemeta = star_metadata[Relion.PARTICLEDATA]
 
     ptl_num = refinemeta.shape[0]
@@ -2231,7 +2291,7 @@ def refinestar2pardata(starfile, mag=10000):
     if not all([ ctf in refinemeta.columns for ctf in Relion.CTF_PARAMS[:3]]):
         logger.error("Missing CTF information. Abort")
         sys.exit()
-    ctf = refinemeta[Relion.CTF_PARAMS[:3]].to_numpy()
+    ctf = refinemeta[[Relion.DEFOCUSU, Relion.DEFOCUSV, Relion.DEFOCUSANGLE, Relion.PHASESHIFT]].to_numpy() # df1, df2, astg, phaseshift
 
     alignment = Relion.ANGLES + Relion.ORIGINSANGST
     for align in alignment:
@@ -2243,9 +2303,22 @@ def refinestar2pardata(starfile, mag=10000):
     shifts = - shifts
 
     pid = np.arange(1, ptl_num + 1).reshape(-1, 1)
-    mag = np.array([mag] * ptl_num).reshape(-1, 1)
 
-    pardata = np.hstack((pid, angles, shifts, mag, newfilm, ctf, stats))
+    opt = optics[Relion.IMAGEPIXELSIZE, Relion.VOLTAGE, Relion.CS, Relion.AC].to_numpy()
+    optics_data = np.tile(opt, (ptl_num, 1))   # pixel_size, voltage, cs, ac
+
+    if Relion.BEAMTILTX in refinemeta.columns:
+        beam_tilt = refinemeta[Relion.BEAMTILTX, Relion.BEAMTILTY].to_numpy()
+    else:
+        beam_tilt = np.tile([0, 0], (ptl_num, 1))
+    
+    coords = refinemeta[Relion.COORDX, Relion.COORDY].to_numpy()
+
+    image_shifts = np.tile([0, 0], (ptl_num, 1))
+    image_id = np.array([0]*ptl_num).reshape(-1, 1)
+    all_zeros = np.tile([0, 0, 0, 0, 0], (ptl_num, 1))
+    
+    pardata = np.hstack((pid, angles, shifts, ctf, newfilm, stats, optics_data, beam_tilt, image_shifts, coords, image_id, pid, all_zeros))
     
     return pardata
 

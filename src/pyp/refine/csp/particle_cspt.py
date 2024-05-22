@@ -358,6 +358,38 @@ def merge_movie_files_in_job_arr(
         if not os.path.exists(parfile):
             logger.info(not_found.format(parfile))
 
+    project_path = open(project_dir_file).read()
+    mp = project_params.load_pyp_parameters(project_path)
+    fp = mp
+
+    if fp["extract_stacks"]:
+
+        saved_path =os.path.join(
+                    project_path, "frealign", "particle_stacks",
+                )
+        
+        if not os.path.exists(saved_path):
+            os.makedirs(saved_path)
+
+        for stack in movie_list:
+            shutil.copy2( stack, os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".mrcs")) )
+
+        save_stacks = True
+
+        mpi_funcs, mpi_args = [ ], [ ]
+        imagesize = mp["extract_box"]
+        image_binning = mp["extract_bin"]
+        
+        for par in par_list:
+            micrograph_path = os.path.join(project_path, "mrc", Path(par).stem.strip("_r01") + ".mrc")
+            filename = os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".star")) 
+            # par_obj = Parameters.from_file(par)
+            # par_obj.to_star(imagesize, image_binning, micrograph_path, filename)
+            mpi_args.append([(Parameters.from_file(par), imagesize, image_binning, micrograph_path, filename)])
+            mpi_funcs.append(Parameters.to_star)
+        
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=mp["slurm_verbose"], silent=True)
+
     with timer.Timer(
         "merge_stack", text="Merging particle stack took: {}", logger=logger.info
     ):
@@ -369,19 +401,6 @@ def merge_movie_files_in_job_arr(
                 os.symlink(movie_list[0], str(output_basename) + "_stack.mrc")
             except:
                 pass
-
-    project_path = open(project_dir_file).read()
-    mp = project_params.load_pyp_parameters(project_path)
-    fp = mp
-
-    if fp["extract_stacks"]:
-        shutil.copy2(
-            output_basename + "_stack.mrc",
-            os.path.join(
-                project_path, "frealign", output_basename + "_stack.mrc"
-            ),
-        )
-        save_stacks = True
 
     logger.info("Merging parameter files")
 

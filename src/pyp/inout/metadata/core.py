@@ -3008,10 +3008,9 @@ _rlnClassNumber #12"""
             
             # coords = coordinats_all[int(pid), :]
             # x, y, z = coords
-            
-            x = particle_obj.x_position_3d
-            y = particle_obj.y_position_3d
-            z = particle_obj.z_position_3d
+            x = particle_obj.x_position_3d / tomo_binning
+            y = particle_obj.y_position_3d / tomo_binning
+            z = particle_obj.z_position_3d / tomo_binning
 
             relion_x, relion_y, relion_z = spk2Relion(x, y, z, tomo_binning, full_tomo_x, full_tomo_y, thickness=full_thickness, tomo_x_bin=tomo_x, tomo_y_bin=tomo_y, tomo_z_bin=tomo_z)
 
