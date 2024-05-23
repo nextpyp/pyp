@@ -4,8 +4,10 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.6.6 (4/24/2024)
+v0.7.0 (5/24/2024)
 ******************
+
+   :fa:`bug,text-danger` Fix bug that prevented launch task parameters from being used when launching sessions.
 
    :fa:`bug,text-danger` Fix bug where incorrect binning was applied when picking virions manually.
 

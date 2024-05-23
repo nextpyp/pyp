@@ -3908,8 +3908,21 @@ def mrefine_version(
     ###############
     ### cistem2 ###
     ###############
-            
-    normalize = "yes"
+
+    if project_params.param(mp["reconstruct_norm"], i):
+        normalize = "yes"
+    else:
+        normalize = "no"
+
+    if (
+        mp["refine_fssnr"]
+        and os.path.exists("statistics_r%02d.txt" % ref)
+        and len(open("statistics_r%02d.txt" % ref).read()) > 0
+    ):
+        stats = "yes"
+    else:
+        stats = "no"
+
     edges = "no"
     normalize_rec = "no"
     thresh_rec = "no"
