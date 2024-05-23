@@ -805,7 +805,8 @@ def generate_plots(
                 )
             
             used_sub_data = pd.DataFrame(input[used_mask], columns=cistem_star_file.Parameters.HEADER_STRS)
-            mean_score = used_sub_data.groupby("PIND")["SCORE"].mean()
+            
+            mean_score = used_sub_data.groupby(["IMAGE_IS_ACTIVE","PIND"])["SCORE"].mean()
 
             histogram_particle_tomo(mean_score, threshold=0, tiltseries=output_name, save_path="../maps")
     except:
