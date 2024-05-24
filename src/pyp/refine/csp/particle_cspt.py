@@ -1268,24 +1268,21 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
     # go back to project directory
     os.chdir(project_dir)
-    # remove decompressed par
-    # denoising using sidesplitter with half maps
-    if False and classes > 1 and "refine_maskth" in mp and os.path.exists(project_params.resolve_path(project_params.param(mp["refine_maskth"], iteration))): # default denoising but could be parameterized 
-        logger.info("Denoising using sidesplitter")
-        for ref in range(classes):
-            name = "%s_r%02d" % (mp["data_set"], ref + 1)
-            halfmap1 = "frealign/maps/" + name + "_half1.mrc"
-            halfmap2 = halfmap1.replace("half1", "half2")
-            mask = project_params.resolve_path(project_params.param(mp["refine_maskth"], iteration))
-            sidesplitter = "sidesplitter/SIDESPLITTER/build/sidesplitter"
-            command = sidesplitter + " " + "--v1 {0} --v2 {1} --mask {2}".format(halfmap1, halfmap2, mask)
-            local_run.run_shell_command(command)
-            newhalf1 = halfmap1.replace(".mrc", "_sidesplitter.mrc")
-            newhalf2 = halfmap2.replace(".mrc", "_sidesplitter.mrc")
-            newmap = "frealign/maps/" + name + "_%02d.mrc" % iteration
-            os.rename(newmap, newmap.replace(".mrc", "_ori.mrc"))
-            command =   "{0}/bin/clip add {1} {2} {3}".format(get_imod_path(), newhalf1, newhalf2, newmap)
-            local_run.run_shell_command(command)
+
+    # merge individual extracted star files 
+    if mp["extract_stacks"]:
+
+        merged_star = os.path.join(project_dir, "frealign", "particle_stacks", "particles.star")
+
+        individual_star_files = glob.glob( os.path.join(project_dir, "frealign", "particle_stacks", "*.star"))
+
+        shutil.copy2(individual_star_files[0], merged_star)
+        
+        for star in individual_star_files[1:]:
+            command = "awk 'BEGIN {{OFS=\"\\t\"}}; NF>3{{print}}' {0} >> {1}".format(star, merged_star)
+            local_run.run_shell_command(command, verbose=mp["slurm_verbose"])
+            os.remove(star)
+
 
     # update iteration number
     maxiter = fp["refine_maxiter"]
