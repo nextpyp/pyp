@@ -1173,7 +1173,7 @@ default = false
 
 #feature detect with milo
 [tabs.detect_milo]
-_name = "Mining/Exploration"
+_name = "Training/Evaluation (milopyp)"
 _description = "Settings for tomogram content exploration using MiLo"
 
 [tabs.detect_milo.parquet]
@@ -1840,7 +1840,7 @@ default = 0
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", auto="auto", import="import (path to particle coordinates required)", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)",  milo-train="milo-train (pattern mining)", milo-eval="milo-eval" }
+enum = { none="none", auto="auto", import="import (path to particle coordinates required)", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)",  milo-train="milo-train (list of positions required)", milo-eval="milo-eval" }
 default = "none"
 
 [tabs.tomo_spk.files]
