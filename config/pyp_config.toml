@@ -1207,7 +1207,7 @@ default = 60
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_milo.num_clusters]
-name = "clusters"
+name = "Clusters"
 description = "Number of clusters to train"
 type = "int"
 default = 60
@@ -1215,7 +1215,7 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_milo.bbox]
 name = "Bounding box"
-description = "Bounding box for cropped patches, should be than particle size"
+description = "Bounding box for cropped patches, should be bigger than particle size"
 type = "int"
 default = 36
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
@@ -1229,7 +1229,7 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
 [tabs.detect_milo.batch_size]
 name = "Batch size"
-description = "Batch size"
+description = "Batch size for training"
 type = "int"
 default = 256
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
@@ -1240,43 +1240,37 @@ description = "Run validation within this interval"
 type = "int"
 default = 20
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-advanced = true
 
 [tabs.detect_milo.gauss]
 name = "Gaussian filter"
-description = "Preprocessing Gaussian filter to denoise tilt series and tomogram"
+description = "Size of Gaussian filter used to denoise tilt series and tomograms"
 type = "float"
 default = 0.8
-advanced = true
 
 [tabs.detect_milo.dog]
 name = "Class prior probability"
-description = "Kernel sizes for difference of Gaussian pyramid, comma delimited"
+description = "Kernel sizes for Difference of Gaussians (DoG) pyramid, comma delimited"
 type = "str"
 default = "3,5"
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-advanced = true
 
 [tabs.detect_milo.last_k]
 name = "Last kernel size"
 description = "Kernel size for the last convolution prior to projection"
 type = "int"
 default = 3
-advanced = true
 
 [tabs.detect_milo.with_score]
 name = "Save scores"
 description = "Whether to add score column in output text files"
 type = "bool"
 default = false
-advanced = true
 
 [tabs.detect_milo.compress]
-name = "Slice averaging"
+name = "Slice averaging in Z"
 description = "Whether to combine 2 slices into 1 during reading of the dataset"
 type = "bool"
 default = true
-advanced = true
 
 [tabs.detect_milo.order]
 name = "Dimension order"
@@ -1286,25 +1280,22 @@ default = "xzy"
 advanced = true
 
 [tabs.detect_milo.cutoff_z]
-name = "Remove z-slices"
-description = "Removing this number of leading and trailing z slices"
+name = "Remove Z-slices"
+description = "Remove this number of leading and trailing Z slices"
 type = "int"
 default = 10
-advanced = true
 
 [tabs.detect_milo.nms]
 name = "Neighborhood for NMS"
 description = "Radius for running non-max supression"
 type = "int"
 default = 3
-advanced = true
 
 [tabs.detect_milo.distance_cutoff]
 name = "Distance cutoff"
 description = "Distance cutoff for whether two points are connected in graph"
 type = "float"
 default = 15.0
-advanced = true
 
 [tabs.detect_milo.fiber_mode]
 name = "Use fiber mode"
@@ -1317,21 +1308,20 @@ name = "Fit curve residual"
 description = "Max residual for fitted curve, omit if above the residual/bad fitting"
 type = "float"
 default = 30.0
-advanced = true
+condition = { arg="fiber_mode", value="true" }
 
 [tabs.detect_milo.curvature_cutoff]
 name = "Max curvature"
 description = "Max curvature for fitted curve, for microtubules the curvature should be small"
 type = "float"
 default = 0.003
-advanced = true
+condition = { arg="fiber_mode", value="true" }
 
 [tabs.detect_milo.debug]
 name = "Debug mode"
-description = "Save intermediate results to output folder train/"
+description = "Save intermediate results"
 type = "bool"
 default = false
-advanced = true
 
 # Particle parameters
 
