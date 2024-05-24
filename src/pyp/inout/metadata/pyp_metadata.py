@@ -2200,8 +2200,9 @@ _rlnRandomSubset #14
         for film in image_list:
             # get the par data 
             filmid = image_list.index(film)
-            this_image_data = pardata[pardata[:, film_col] == filmid]
-
+            this_image_data = pardata[pardata[:, film_col] == filmid].astype(float)
+            this_image_data[:, film_col] = 0 # reset the film id as 0 
+ 
             saved_binary = os.path.join(saved_path, film + "_r01.cistem")
             saved_extended = os.path.join(saved_path, film + "_r01_extended.cistem")
             
@@ -2216,8 +2217,8 @@ _rlnRandomSubset #14
                                                             angle=0, 
                                                             axis=-0)
             
-            for particle_index in this_image_data[:, ptl_col]:
-                this_row = this_image_data[particle_index]
+            for this_row in this_image_data:
+                particle_index = this_row[ptl_col]
                 ppsi = this_row[1]
                 ptheta = this_row[2]
                 pphi = this_row[3]
@@ -2249,13 +2250,15 @@ _rlnRandomSubset #14
             parameters_obj.to_binary(saved_binary, saved_extended)
         
         # compress the dir
-        compressed_file = saved_path + ".bz2"
+        compressed_file = dataset + "_r01_01.bz2"
+        current_dir = os.getcwd()
+        os.chdir(path)
         frealign_parfile.Parameters.compress_parameter_file(
-                saved_path, compressed_file,
+                os.path.basename(saved_path), compressed_file,
             )
-        
+        os.chdir(current_dir)
         shutil.rmtree(Path(saved_path))
-                
+            
         # self.refinement = pd.DataFrame(pardata, columns=cistem_star_file.Parameters.HEADER_STRS)
         # self.extended = [tilt_dict, particle_dict]
         self.mode = "spr"
@@ -2306,15 +2309,15 @@ def refinestar2pardata(starfile):
 
     pid = np.arange(1, ptl_num + 1).reshape(-1, 1)
 
-    opt = optics[Relion.IMAGEPIXELSIZE, Relion.VOLTAGE, Relion.CS, Relion.AC].to_numpy()
+    opt = optics[[Relion.IMAGEPIXELSIZE, Relion.VOLTAGE, Relion.CS, Relion.AC]].to_numpy()
     optics_data = np.tile(opt, (ptl_num, 1))   # pixel_size, voltage, cs, ac
 
     if Relion.BEAMTILTX in refinemeta.columns:
-        beam_tilt = refinemeta[Relion.BEAMTILTX, Relion.BEAMTILTY].to_numpy()
+        beam_tilt = refinemeta[[Relion.BEAMTILTX, Relion.BEAMTILTY]].to_numpy()
     else:
         beam_tilt = np.tile([0, 0], (ptl_num, 1))
     
-    coords = refinemeta[Relion.COORDX, Relion.COORDY].to_numpy()
+    coords = refinemeta[[Relion.COORDX, Relion.COORDY]].to_numpy()
 
     image_shifts = np.tile([0, 0], (ptl_num, 1))
     image_id = np.array([0]*ptl_num).reshape(-1, 1)
