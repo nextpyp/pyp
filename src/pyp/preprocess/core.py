@@ -319,14 +319,14 @@ def read_tilt_series(
                 plt.close()
 
         elif os.path.isfile(name + ".mrc"):
-            
+
             if not parameters["movie_mdoc"]:
                 # .rawtlt and .order should be moved to the local scratch at this point
                 assert Path(f"{name}.rawtlt").exists(), "Please provide .rawtlt file containing the initial tilt angles."
                 assert Path(f"{name}.order").exists(), "Please provide .order file containing the acquisition order."
-                           
+
             elif len(mdocs) > 0 and parameters["movie_mdoc"]:
-                
+
                 tilts = frames_from_mdoc(mdocs, parameters)
                 tilts.sort(key=lambda x: x[1])
 
@@ -335,10 +335,10 @@ def read_tilt_series(
 
                 np.savetxt(f"{name}.rawtlt", tilt_angles, fmt="%.2f")
                 np.savetxt(f"{name}.order", order, fmt="%d")
-        
+
             else:
                 raise Exception("Please either provide .rawtlt/.order files or .mdoc file(s) for initial tilt angles and acquisition order.")
-  
+
 
             if not os.path.isfile("{0}.rawtlt".format(name)):
                 # write to .rawtlt
@@ -357,9 +357,9 @@ def read_tilt_series(
                 shifts[i] = np.zeros([1, 2])
 
             x, y, z = get_image_dimensions(name + ".mrc")
-            
+
             # sanity check if number of tilts derived from .rawtlt is correct
-            assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"      
+            assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"
             assert (z == len(order)), f"{z} tilts in {name+'.mrc'} != {len(order)} from .order"
 
             pixel_size = parameters["scope_pixel"]
@@ -613,7 +613,8 @@ def read_tilt_series(
 
     else:
         logger.error("Cannot read %s", filename)
-    if metadata:
+
+    if metadata.get("drift"):
         drift_metadata["drift"] = {}
         if metadata.get("drift"):
             for i in metadata["drift"]:
