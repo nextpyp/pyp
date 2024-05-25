@@ -1426,11 +1426,10 @@ default = 0.0
 hidden = true
 
 [tabs.extract.stacks]
-name = "Stacks"
-description = "Produce particle and micrographs sub-stacks (legacy)"
+name = "Save particle stacks"
+description = "Save particle stacks to use in external programs"
 type = "bool"
 default = false
-hidden = true
 
 [tabs.extract.using_frames]
 name = "Using frames"
