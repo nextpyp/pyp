@@ -1720,7 +1720,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.tomo_slicer_gif)
         mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True, 2, parameters["slurm_verbose"])] )
 
-    if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp"):
+    if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp") or parameters["tomo_ali_force"]:
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.mrc', name + "_raw.webp")] )
 
