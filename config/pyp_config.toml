@@ -1462,8 +1462,15 @@ advanced = true
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
 type = "enum"
-enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)" }
+enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)", import="import (from path)" }
 default = "imod_gold"
+
+[tabs.tomo_ali.import]
+name = "Import path"
+description = "Location of .xf and .tlt files to use for import"
+type = "path"
+condition = { arg="method", value="import" }
+path = { type="folders" }
 
 [tabs.tomo_ali.fiducial]
 name = "Fiducial diameter (A)"

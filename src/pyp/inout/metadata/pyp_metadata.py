@@ -693,7 +693,7 @@ class LocalMetadata:
                 del self.data["box"]
                 meta_update = True
 
-        if "tomo_ali_force" in parameters and parameters["tomo_ali_force"]:
+        if "tomo_ali_force" in parameters and parameters["tomo_ali_force"] and parameters.get("tomo_ali_method") != "import":
             logger.info(
                 f"Tilt-series alignments will be re-computed"
             )
