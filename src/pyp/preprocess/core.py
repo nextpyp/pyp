@@ -614,7 +614,7 @@ def read_tilt_series(
     else:
         logger.error("Cannot read %s", filename)
 
-    if metadata.get("drift"):
+    if metadata and metadata.get("drift"):
         drift_metadata["drift"] = {}
         if metadata.get("drift"):
             for i in metadata["drift"]:
