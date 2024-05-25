@@ -1274,7 +1274,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     if mp["extract_stacks"]:
 
         stacks_folder = os.path.join(project_dir, "frealign", "stacks")
-        merged_star = os.path.join(stacks_folder, "particles.star")
+        merged_star = os.path.join(stacks_folder, fp["data_set"] + "_particles.star")
 
         # delete merged_star if already exists
         try:
@@ -1284,7 +1284,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
         individual_star_files = glob.glob( os.path.join(project_dir, "frealign", "stacks", "*.star"))
 
-        shutil.copy2(individual_star_files[0], merged_star)
+        shutil.move(individual_star_files[0], merged_star)
 
         for star in individual_star_files[1:]:
             command = "awk 'BEGIN {{OFS=\"\\t\"}}; NF>3{{print}}' {0} >> {1}".format(star, merged_star)
