@@ -779,8 +779,8 @@ class GlobalMetadata:
                     {
                         "tomo_rec_binning" : parameters["tomo_rec_binning"], 
                         "tomo_rec_thickness" : parameters["tomo_rec_thickness"], 
-                        "tomo_rec_square" : "true" if parameters["tomo_rec_square"] else "false", 
-                        "tomo_rec_format" : "true" if parameters["tomo_rec_format"] else "false",
+                        "tomo_ali_square" : "true" if parameters["tomo_ali_square"] else "false", 
+                        "tomo_alu_format" : "true" if parameters["tomo_ali_format"] else "false",
                     }, 
                     index=["tomogram"]
                 )
@@ -1339,10 +1339,10 @@ _rlnOriginZAngst #3
                         if condition[0].size != 0:
                             # tilt_data = self.extended.values[condition, :][0, 0, :]
                             tilt_obj = self.extended[0][micrograph][tilt][0]
-                            
+
                             dx_tilt = tilt_obj.shift_x
                             dy_tilt = tilt_obj.shift_y
-                            
+
                             tilt_angle = tilt_obj.angle
 
                         xf[4] -= dx_tilt / pixel_size
@@ -1394,9 +1394,9 @@ _rlnOriginZAngst #3
                     # coordinates = data["box"].values
                     particle_obj = self.extended[1][micrograph]
                     for particle_index in particle_obj.keys():
-                        
+
                         particle_obj = self.extended[1][micrograph][particle_index]
-                        
+
                         ppsi = particle_obj.psi
                         ptheta = particle_obj.theta
                         pphi = particle_obj.phi

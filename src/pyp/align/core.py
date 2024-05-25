@@ -4803,7 +4803,7 @@ def align_tilt_series(name, parameters, rotation=0):
     if not 'aretomo' in parameters["tomo_ali_method"].lower():
         logger.info("Doing pre-alignment using IMODs tiltxcorr")
 
-        if parameters["tomo_rec_square"]:
+        if parameters["tomo_ali_square"]:
             tapper_size = int(
                 min(int(512 / binning), min(tilt_series_size_x, tilt_series_size_y) / 4)
             )

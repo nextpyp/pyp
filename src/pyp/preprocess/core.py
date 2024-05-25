@@ -641,7 +641,7 @@ def read_tilt_series(
         float(tilt_axis),
     )
 
-    if parameters["tomo_rec_format"]:
+    if parameters["tomo_ali_format"]:
         squarex = math.ceil(x / 512.0) * 512
         squarey = math.ceil(y / 512.0) * 512
     else:

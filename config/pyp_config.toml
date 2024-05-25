@@ -1458,6 +1458,19 @@ default = 8
 condition = { arg="auto_bin", value="false" }
 advanced = true
 
+[tabs.tomo_ali.square]
+name = "Reshape tilt-images into squares"
+description = "Tilt images will be reshaped into squares before processing"
+type = "bool"
+default = true
+
+[tabs.tomo_ali.format]
+name = "Resize squares to closest multiple of 512"
+description = "Tilt images will be reshaped into squares using the closest multiple of 512 as size"
+type = "bool"
+default = true
+condition = { arg="square", value="true" }
+
 [tabs.tomo_ali.method]
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
@@ -1614,19 +1627,6 @@ type = "float"
 default = 1.0
 condition = { arg="erase_fiducials", value="true" }
 advanced = true
-
-[tabs.tomo_rec.square]
-name = "Reshape tilt-images into squares"
-description = "Tilt images will be reshaped into squares before processing"
-type = "bool"
-default = true
-
-[tabs.tomo_rec.format]
-name = "Resize squares to closest multiple of 512"
-description = "Tilt images will be reshaped into squares using the closest multiple of 512 as size"
-type = "bool"
-default = true
-condition = { arg="square", value="true" }
 
 [tabs.tomo_rec.thickness]
 name = "Thickness of reconstruction (unbinned voxels)"

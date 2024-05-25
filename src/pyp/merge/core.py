@@ -297,7 +297,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     if 'imod' in parameters["tomo_rec_method"].lower():
 
-        if False and parameters["tomo_rec_square"]:
+        if False and parameters["tomo_ali_square"]:
             command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -SLICE 0,{2} -THICKNESS {3} -WIDTH {4} -IMAGEBINNED {5} -FULLIMAGE {6},{4} {7} {8}".format(
                 get_imod_path(), name, x - 1, thickness, y, binning, x, tilt_options, zfact,
             )

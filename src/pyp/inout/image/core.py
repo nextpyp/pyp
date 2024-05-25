@@ -1388,7 +1388,7 @@ def compress_images(input, output, cpus=1):
 def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
 
     commands = []
-    if parameters["tomo_rec_square"]:
+    if parameters["tomo_ali_square"]:
         square_enabled = True
     else:
         square_enabled = False
