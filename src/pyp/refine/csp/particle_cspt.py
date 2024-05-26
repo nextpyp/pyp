@@ -304,7 +304,7 @@ def prepare_particle_cspt(
 
         corners, size_region = divide2regions(
             bottom_left_corner=[0,0,0], 
-            top_right_corner=[imagex, imagey, 0], 
+            top_right_corner=[imagex, imagey, 1], 
             split_x=grids[0], 
             split_y=grids[1], 
             split_z=1,
