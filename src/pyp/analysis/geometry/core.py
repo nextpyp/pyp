@@ -625,9 +625,10 @@ def divide2regions(
                     ]
                 )
 
-    logger.info(
-        f"Dividing into {len(corners_squares)} region(s) for CSPT region-based refinement"
-    )
+    if len(corners_squares) > 1:
+        logger.info(
+            f"Dividing into {len(corners_squares)} region(s) for CSPT region-based refinement"
+        )
 
     return corners_squares, [patchsize_x, patchsize_y, patchsize_z]
 
