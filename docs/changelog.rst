@@ -7,6 +7,12 @@ Changelog
 v0.7.0 (5/24/2024)
 ******************
 
+   :fa:`plus-square,text-primary` Move options to reshape images into squares from Reconstruction to Tilt-series alignment tab.
+
+   :fa:`plus-square,text-primary` Add option to import existing tilt-series alignments from *.xf and *.tlt IMOD files.
+
+   :fa:`plus-square,text-primary` Add option to save particle stacks for use in external programs.
+
    :fa:`bug,text-danger` Fix bug that prevented launch task parameters from being used when launching sessions.
 
    :fa:`bug,text-danger` Fix bug where incorrect binning was applied when picking virions manually.

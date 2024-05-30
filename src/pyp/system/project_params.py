@@ -880,6 +880,9 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     new_parameters["tomo_rec_force"] = True
                     new_parameters["tomo_vir_force"] = True
                     clean_tomo_vir_particles(project_dir)
+                    new_parameters["detect_force"] = True
+                    clean_picking_files(project_dir)
+                    new_parameters["ctf_force"] = True
 
                 elif "tomo_rec" in k:
                     logger.info(
@@ -889,6 +892,8 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     if not "tomo_rec_erase_fiducials" in k:
                         new_parameters["tomo_vir_force"] = True
                         clean_tomo_vir_particles(project_dir)
+                        new_parameters["detect_force"] = True
+                        clean_picking_files(project_dir)
 
                 elif "tomo_vir_" in k and "tomo_vir_detect_" not in k:
                     logger.info(

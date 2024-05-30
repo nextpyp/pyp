@@ -304,7 +304,7 @@ def prepare_particle_cspt(
 
         corners, size_region = divide2regions(
             bottom_left_corner=[0,0,0], 
-            top_right_corner=[imagex, imagey, 0], 
+            top_right_corner=[imagex, imagey, 1], 
             split_x=grids[0], 
             split_y=grids[1], 
             split_z=1,
@@ -365,21 +365,22 @@ def merge_movie_files_in_job_arr(
     if fp["extract_stacks"]:
 
         saved_path =os.path.join(
-                    project_path, "frealign", "particle_stacks",
+                    project_path, "frealign", "stacks",
                 )
-        
+
         if not os.path.exists(saved_path):
             os.makedirs(saved_path)
 
         for stack in movie_list:
             shutil.copy2( stack, os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".mrcs")) )
+            logger.info(f"Stack {Path(stack).name} saved to {saved_path}")
 
         save_stacks = True
 
         mpi_funcs, mpi_args = [ ], [ ]
         imagesize = mp["extract_box"]
         image_binning = mp["extract_bin"]
-        
+
         for par in par_list:
             micrograph_path = os.path.join(project_path, "mrc", Path(par).stem.strip("_r01") + ".mrc")
             filename = os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".star")) 
@@ -387,7 +388,7 @@ def merge_movie_files_in_job_arr(
             # par_obj.to_star(imagesize, image_binning, micrograph_path, filename)
             mpi_args.append([(Parameters.from_file(par), imagesize, image_binning, micrograph_path, filename)])
             mpi_funcs.append(Parameters.to_star)
-        
+
         mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=mp["slurm_verbose"], silent=True)
 
     with timer.Timer(
@@ -1272,17 +1273,25 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     # merge individual extracted star files 
     if mp["extract_stacks"]:
 
-        merged_star = os.path.join(project_dir, "frealign", "particle_stacks", "particles.star")
+        stacks_folder = os.path.join(project_dir, "frealign", "stacks")
+        merged_star = os.path.join(stacks_folder, fp["data_set"] + "_particles.star")
 
-        individual_star_files = glob.glob( os.path.join(project_dir, "frealign", "particle_stacks", "*.star"))
+        # delete merged_star if already exists
+        try:
+            os.remove(os.path.join(stacks_folder,merged_star))
+        except:
+            pass
 
-        shutil.copy2(individual_star_files[0], merged_star)
-        
+        individual_star_files = glob.glob( os.path.join(project_dir, "frealign", "stacks", "*.star"))
+
+        shutil.move(individual_star_files[0], merged_star)
+
         for star in individual_star_files[1:]:
             command = "awk 'BEGIN {{OFS=\"\\t\"}}; NF>3{{print}}' {0} >> {1}".format(star, merged_star)
             local_run.run_shell_command(command, verbose=mp["slurm_verbose"])
             os.remove(star)
 
+        logger.info(f"Stacks saved to {stacks_folder}")
 
     # update iteration number
     maxiter = fp["refine_maxiter"]
