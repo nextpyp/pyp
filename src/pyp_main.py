@@ -66,7 +66,9 @@ from pyp.inout.metadata import (
     get_image_particle_index,
     get_particles_tilt_index,
     compute_global_weights,
+    compute_global_weights_from_par,
     cistem_star_file,
+    global_par2cistem,
 )
 from pyp.postprocess.pyp_fsc import fsc_cutoff
 from pyp.refine.csp import particle_cspt
@@ -1898,12 +1900,15 @@ def csp_split(parameters, iteration):
             elif is_spr or str(external_parameter_file).endswith(".txt"):
                 # single-particle does not need a txt file like tomo to start the refinement
                 # However, if not provided, it will re-produce a new set of parameter files
-                
-                # if txt file (tomo), do not copy it over to the current project 
                 pass
 
-            elif ".par" in str(external_parameter_file):
-                pass
+            elif ".par.bz2" in str(external_parameter_file):
+                decompressed_parfile = str(external_parameter_file).replace(".bz2", "")
+                parameters["refine_parfile"] = decompressed_parfile
+                os.chdir(external_parameter_file.parent)
+                frealign_parfile.Parameters.decompress_file(str(external_parameter_file), threads=parameters["slurm_tasks"])
+                os.chdir(current_dir)
+                project_params.save_pyp_parameters(parameters=parameters, path=".")
             else:
                 raise Exception("An initial particle orientation (txt file from pre-processing or bz2 file from particle refinement) is required.")
 
@@ -1914,12 +1919,22 @@ def csp_split(parameters, iteration):
                                                                             new_file=decompressed_parameter_file_folder, 
                                                                             micrograph_list=[f"{f}_r{ref+1:02d}" for f in files],
                                                                             threads=parameters["slurm_tasks"])
+                
             elif decompressed_parameter_file_folder.exists():
                 pass
             # else:
             #     raise Exception(f"{decompressed_parameter_file_folder} is required to proceed. ")
+            else:
+                old_parfile = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}.par.bz2"
+                if old_parfile.exists():
+                    decompressed_parfile = str(old_parfile).replace(".bz2", "")
+                    parameters["refine_parfile"] = decompressed_parfile
+                    os.chdir("./frealign/maps")
+                    frealign_parfile.Parameters.decompress_file(str(old_parfile), threads=parameters["slurm_tasks"])
+                    global_par2cistem(decompressed_parfile, parameters)
+                    os.chdir(current_dir)
+                    project_params.save_pyp_parameters(parameters=parameters, path=".")
 
-        
         if parameters["dose_weighting_enable"] and ref == 0:
      
             # create weights folder for storing weights.txt
@@ -1931,10 +1946,14 @@ def csp_split(parameters, iteration):
             if parameters["dose_weighting_global"]:
          
                 global_weight_file = str(weights_folder / "global_weight.txt")
-                ref_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r01.cistem" ) for file in files ]
-                merged_all_parameters = cistem_star_file.Parameters.merge(ref_files, input_extended_files=[])
-                par_data = merged_all_parameters.get_data()
-                compute_global_weights(par_data=par_data, weights_file=global_weight_file)
+
+                if decompressed_parameter_file_folder.exists():
+                    ref_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r01.cistem" ) for file in files ]
+                    merged_all_parameters = cistem_star_file.Parameters.merge(ref_files, input_extended_files=[])
+                    par_data = merged_all_parameters.get_data()
+                    compute_global_weights(par_data=par_data, weights_file=global_weight_file)
+                elif os.path.exists(parameters["refine_parfile"]) and ".par" in parameters["refine_parfile"]:
+                    compute_global_weights_from_par(parfile=parameters["refine_parfile"], weights_file=global_weight_file)
 
                 parameters["dose_weighting_weights"] = global_weight_file
                 project_params.save_pyp_parameters(parameters=parameters, path=".")

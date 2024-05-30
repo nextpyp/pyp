@@ -1444,12 +1444,6 @@ hidden = true
 _name = "Tilt-series alignment"
 _description = "Parameters for tilt-series alignment"
 
-[tabs.tomo_ali.import]
-name = "Import alignment metadata"
-description = "Use external titl-series alignment with path to .xf and .tlt files"
-type = "path"
-path = { type="folders" } 
-
 [tabs.tomo_ali.auto_bin]
 name = "Auto binning"
 description = "Automatically determine binning factor to use for alignment"

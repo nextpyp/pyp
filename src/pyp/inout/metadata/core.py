@@ -25,7 +25,7 @@ from pyp.inout.image import mrc
 from pyp.inout.metadata import frealign_parfile, pyp_metadata, cistem_star_file
 from pyp.inout.metadata.cistem_star_file import *
 from pyp.inout.utils import pyp_edit_box_files as imod
-from pyp.system import local_run, project_params
+from pyp.system import local_run, project_params, mpi
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
 from pyp.utils import get_relative_path, movie2regex
@@ -1290,7 +1290,7 @@ def spa_extract_coordinates(
          Path(refinement).exists() and refinement.endswith('.par')
     ):
         # parx file format read
-        input_csp_dir = parameters["refine_csp_dir"]
+        input_csp_dir = os.path.join(str(Path(refinement).parent), "../../csp" )
         reference_name = os.path.basename(refinement).split("_r01_")[0]
         micrographs = os.path.join(input_csp_dir, f"../{reference_name}.films")
         with open(micrographs) as f:
@@ -1313,121 +1313,15 @@ def spa_extract_coordinates(
             pardata = np.loadtxt(refinement, dtype=float, comments="C", ndmin=2)
             extracted_rows = pardata[pardata[:, 7] == micrograph_index]
 
-        allboxes = (
-                np.loadtxt(
+        allboxes = np.loadtxt(
                     os.path.join(input_csp_dir, filename  + ".allboxes"), ndmin=2
-                )
-                .astype(int)
-                .tolist()
-            )
+                ).astype(int)
 
-        frame_shift_x = 0
-        frame_shift_y = 0
-        beam_tilt_x = beam_tilt_y = 0.0
-        image_shift_x = image_shift_y = 0.0
-        wgh = parameters["scope_wgh"]
-        cs = parameters["scope_cs"]
-        voltage = parameters["scope_voltage"]
-        phase_shift = 0
-        frame_index = 0
-        region_index = 0
-        # binning = float(parameters["data_bin"]) * float(parameters["extract_bin"])
-        actual_pixel = float(parameters["scope_pixel"]) * float(parameters["data_bin"])
-        # traverse all images in tilt series
-        for id, box in enumerate(allboxes):
-            
-            image_index = int(extracted_rows[id, 19]) # TODO confirm this is correct
-            tilt_index = int(extracted_rows[id, 19]) # scanord
-            tilt_angle = extracted_rows[id, 14] # tiltang
-            particle_index = int(extracted_rows[id,  16]) # ptlind
-           
-
-            # use defocus for this tilt
-            df1 = extracted_rows[id,  8]
-            df2 = extracted_rows[id,  9]
-            angast = extracted_rows[id,  10]
-
-            image_activity = int(extracted_rows[id,  7])
-            occ = extracted_rows[id,  11]
-            logp = extracted_rows[id,  12]
-            sigma = extracted_rows[id,  13]
-            score = extracted_rows[id,  14]
-
-            cistem_parameters.append([id + 1,
-                                    extracted_rows[id,  1],
-                                    extracted_rows[id,  2],
-                                    extracted_rows[id,  3],
-                                    extracted_rows[id,  4],
-                                    extracted_rows[id,  5],
-                                    df1,
-                                    df2,
-                                    angast,
-                                    phase_shift, 
-                                    image_activity, 
-                                    occ, 
-                                    logp, 
-                                    sigma, 
-                                    score, 
-                                    actual_pixel, 
-                                    voltage, 
-                                    cs, 
-                                    wgh, 
-                                    beam_tilt_x, 
-                                    beam_tilt_y, 
-                                    image_shift_x, 
-                                    image_shift_y, 
-                                    box[0],  #  coordx
-                                    box[1],  # coordy
-                                    image_index, 
-                                    particle_index,
-                                    tilt_index,
-                                    region_index, 
-                                    frame_index, 
-                                    frame_shift_x, 
-                                    frame_shift_y,
-                                    ])
-            
-        tilt_data = extracted_rows[:, [17, 19]]
-        df = pd.DataFrame(tilt_data, columns=["TILTANG", "SCANORD"])
-        tilt_group = df.groupby('SCANORD')['TILTANG'].mean().to_dict()
-
-        for index, angles in tilt_group.items():
-            tilt_parameters[int(index)] = {}
-            tilt_parameters[int(index)][0] = Tilt(tilt_index=int(index), 
-                                                            region_index=0, 
-                                                            shift_x=0.0, 
-                                                            shift_y=0.0, 
-                                                            angle=angles, 
-                                                            axis=-0)
-        
-        ptl_idx = extracted_rows[:, 16]
-
-        for i, ptlidx in enumerate(ptl_idx):
-            particle_index = int(ptlidx)
-
-            # TODO: should use the spa_eular_angles() to get the 3d alignment parameters
-            this_row = extracted_rows[i]
-            ppsi = this_row[1]
-            ptheta = this_row[2]
-            pphi = this_row[3]
-            shift_x = this_row[4]
-            shift_y = this_row[5]
-            score = this_row[14]
-            occ = this_row[11]
-
-            if particle_index not in particle_parameters:            
-                particle_parameters[particle_index] = Particle(particle_index=particle_index, 
-                                                            shift_x = -shift_x, 
-                                                            shift_y= -shift_y, 
-                                                            shift_z= 0, 
-                                                            psi = -ppsi, 
-                                                            theta = -ptheta, 
-                                                            phi = -pphi, 
-                                                            x_position_3d=allboxes[i][0], 
-                                                            y_position_3d=allboxes[i][0], 
-                                                            z_position_3d= 1, 
-                                                            score=score, 
-                                                            occ=occ)
+        cistem_obj = Parameters()
+        cistem_obj.from_parfile( parameters, extracted_rows, allboxes, filename, reference_name, input_csp_dir, save_binary=False)
+        cistem_parameters = cistem_obj.get_data()
+        particle_parameters = cistem_obj.get_extended_data().get_particles()
+        tilt_parameters = cistem_obj.get_extended_data().get_tilts()
 
     else:
         ref = None
@@ -1787,143 +1681,25 @@ def csp_extract_coordinates(
 
         logger.info("Executing coordinate extraction")
 
-        if "refine_parfile" in parameters.keys():
-            refinement = project_params.resolve_path(parameters["refine_parfile"])
-            parameters["refine_csp_dir"] = os.path.join(str(Path(refinement).parent) , "../../csp/")
-            # decompress file if needed
-            refinement = frealign_parfile.Parameters.decompress_parameter_file(
-                refinement, parameters["slurm_tasks"]
-            )
-            parameters["refine_parfile"] = refinement
-        else:
-            refinement = 'none'
-
         if "tomo" in parameters["data_mode"].lower():
 
             # generate new parx file from previous parx (not containing frame)
             # NOTE: we move this part above (converting data into frames))
-            # TODO: do the same thing for SPR
-            if False and use_frames and (
-                refinement.endswith(".par")
-                or refinement.endswith(".parx")
-                or refinement.endswith(".bz2")
-            ):
-                # decompress file if needed
-                refinement = frealign_parfile.Parameters.decompress_parameter_file(
-                    refinement, parameters["slurm_tasks"]
-                )
-                try:
-                    parx_object_no_frames = frealign_parfile.Parameters.from_file(
-                        refinement
-                    )
-                except:
-                    raise Exception(f"Parfile {refinement} cannot be read.")
-
-                parx_object_no_frames.data = parx_object_no_frames.data[
-                    parx_object_no_frames.data[:, film_col] == micrograph_index
-                ]
-
-                allboxes = (
-                    np.loadtxt(
-                        os.path.join(working_path, filename + ".allboxes"), ndmin=2
-                    )
-                    .astype(int)
-                    .tolist()
-                )
-
-                metadata = None 
-                if os.path.exists(f"pkl/{filename}.pkl"):
-                    metadata = pyp_metadata.LocalMetadata(f"pkl/{filename}.pkl").data
-
-                try:
-                    scanords = [
-                        order for order in np.loadtxt("raw/%s.order" % filename)
-                    ]
-                except:
-                    scanords = [int(_[0]) for _ in metadata["order"].to_numpy()]
-
-                if len(allboxes) != parx_object_no_frames.data.shape[0]:
-                    raise Exception(
-                        "The allboxes and parxfile DO NOT have the same length. (%d v.s. %d)"
-                        % (len(allboxes), parx_object_no_frames.data.shape[0])
-                    )
-                try:
-                    xf_frames, xf_files = tomo_load_frame_xf(
-                        parameters, filename, xf_path="mrc/"
-                    )
-                except:
-                    xf_frames = [metadata["drift"][tilt_idx].to_numpy() for tilt_idx in sorted(metadata["drift"].keys())]
-
-                # convert short parxfile to long parxfile/allboxes that contains frames
-                [
-                    allboxes,
-                    allparxs,
-                ] = frealign_parfile.Parameters.extendParFileWithFrames(
-                    parx_object_no_frames, allboxes, xf_frames, parameters, scanords
-                )
-            else:
-                allparxs = tomo_extract_coordinates(
-                    filename, parameters, use_frames, extract_projections=False
-                )
+            allparxs = tomo_extract_coordinates(
+                filename, parameters, use_frames, extract_projections=False
+            )
         else:
 
-            if False and use_frames and (
-                refinement.endswith(".cistem") or refinement.endswith(".bz2")
-            ):
-                try:
-                    parx_object_no_frames = frealign_parfile.Parameters.from_file(
-                        refinement
-                    )
-                except:
-                    raise Exception("Parfile cannot be read.")
-
-                parx_object_no_frames.data = parx_object_no_frames.data[
-                    parx_object_no_frames.data[:, film_col] == micrograph_index
-                ]
-
-                allboxes = (
-                    np.loadtxt(
-                        os.path.join(working_path, filename + ".allboxes"), ndmin=2
-                    )
-                    .astype(int)
-                    .tolist()
-                )
-
-                metadata = None
-                # same as single particle to check boxx selection
-                if os.path.exists(os.path.join(working_path, filename + ".pkl")):
-                    metadata = pyp_metadata.LocalMetadata(os.path.join(working_path, filename + ".pkl")).data
-                
-                if len(allboxes) != parx_object_no_frames.data.shape[0]:
-                    raise Exception(
-                        "The allboxes and parxfile DO NOT have the same length. (%d v.s. %d)"
-                        % (len(allboxes), parx_object_no_frames.data.shape[0])
-                    )
-
-                if os.path.exists(os.path.join(working_path, filename + ".xf")):
-                    xf_frames = [np.loadtxt(os.path.join(working_path, filename + ".xf"), ndmin=2)]
-                else:
-                    xf_frames = [metadata["drift"].to_numpy()]
-
-                # convert short parxfile to long parxfile/allboxes that contains frames
-                [
-                    allboxes,
-                    allparxs,
-                ] = frealign_parfile.Parameters.extendParFileWithFrames(
-                    parx_object_no_frames, allboxes, xf_frames, parameters
-                )
-
-            else:
-                logger.info("Creating parfile from scratch")
-                allparxs = spa_extract_coordinates(
-                    filename,
-                    parameters,
-                    only_inside,
-                    use_frames,
-                    use_existing_frame_alignments,
-                    working_path
-                )
-
+            logger.info("Creating parfile from scratch")
+            allparxs = spa_extract_coordinates(
+                filename,
+                parameters,
+                only_inside,
+                use_frames,
+                use_existing_frame_alignments,
+                working_path
+            )
+    
     return allparxs
 
 def tomo_extract_coordinates(
@@ -1973,9 +1749,9 @@ def tomo_extract_coordinates(
         assert (key in metadata), f"{key} is not included in {pkl}, please re-run tomoswarm"
 
     # Decompress
-    refinement = frealign_parfile.Parameters.decompress_parameter_file(
-    refinement, parameters["slurm_tasks"]
-    )
+    # refinement = frealign_parfile.Parameters.decompress_parameter_file(
+    # refinement, parameters["slurm_tasks"]
+    # )
 
     cutboxsize = int(parameters["extract_box"]) * int(parameters["extract_bin"])
 
@@ -2614,7 +2390,7 @@ EOF
     else:
         # parx file format read
         logger.info(f"Reading alignment parameters from {os.path.basename(refinement)}")
-        input_csp_dir = parameters["refine_csp_dir"]
+        input_csp_dir = os.path.join(str(Path(refinement).parent), "../../csp" )
         reference_name = os.path.basename(refinement).split("_r01_")[0]
         micrographs = os.path.join(input_csp_dir, f"../{reference_name}.films")
         with open(micrographs) as f:
@@ -2637,180 +2413,15 @@ EOF
             pardata = np.loadtxt(refinement, dtype=float, comments="C", ndmin=2)
             extracted_rows = pardata[pardata[:, 7] == micrograph_index]
 
-        allboxes = (
-                np.loadtxt(
-                    os.path.join(input_csp_dir, filename  + ".allboxes"), ndmin=2
-                )
-                .astype(int)
-                .tolist()
-            )
+        allboxes = np.loadtxt(
+            os.path.join(input_csp_dir, filename  + ".allboxes"), ndmin=2
+        ).astype(int)
 
-        # traverse all images in tilt series
-        for id, box in enumerate(allboxes):
-            
-            image_index = int(extracted_rows[id, 19]) # TODO confirm this is correct
-            tilt_index = int(extracted_rows[id, 19]) # scanord
-            tilt_angle = extracted_rows[id, 14] # tiltang
-            particle_index = int(extracted_rows[id,  16]) # ptlind
-
-            # use defocus for this tilt
-            df1 = extracted_rows[id,  8]
-            df2 = extracted_rows[id,  9]
-            angast = extracted_rows[id,  10]
-
-            # x-distance of tilt-axis to center of image
-            # variable axis is from invert transform back to raw micrographs and is right handedness; positive angle - counterclockwise rotation
-            # tilt_axis_radians = math.radians(-axis)
-            axis = extracted_rows[id, 22]
-            # this is the global particle index (from the autopick txt file)
-            ptl_index = extracted_rows[id,  16]
-
-            dose = 0
-            scan_order = extracted_rows[id, 19]
-
-            # format parameter sequence and add to current .par file
-            mag = float(parameters["scope_mag"])
-
-            image_activity = int(extracted_rows[id,  7])
-            occ = extracted_rows[id,  11]
-            logp = extracted_rows[id,  12]
-            sigma = extracted_rows[id,  13]
-            score = extracted_rows[id,  14]
-
-            # AB - 0verride film number if we are processing each movie independently
-            if parameters["csp_no_stacks"]:
-                film = 0
-
-            # TODO confirm this
-            image_shift_x = extracted_rows[id,  38]
-            image_shift_y = extracted_rows[id,  39]
-
-            cistem_parameters.append([id + 1,
-                                    extracted_rows[id,  1],
-                                    extracted_rows[id,  2],
-                                    extracted_rows[id,  3],
-                                    extracted_rows[id,  4],
-                                    extracted_rows[id,  5],
-                                    df1,
-                                    df2,
-                                    angast,
-                                    phase_shift, 
-                                    image_activity, 
-                                    occ, 
-                                    logp, 
-                                    sigma, 
-                                    score, 
-                                    actual_pixel, 
-                                    voltage, 
-                                    cs, 
-                                    wgh, 
-                                    beam_tilt_x, 
-                                    beam_tilt_y, 
-                                    image_shift_x, 
-                                    image_shift_y, 
-                                    box[0],  #  coordx
-                                    box[1],  # coordy
-                                    image_index, 
-                                    particle_index,
-                                    tilt_index,
-                                    region_index, 
-                                    frame_index, 
-                                    frame_shift_x, 
-                                    frame_shift_y,
-                                    ])
-            
-        tilt_data = extracted_rows[:, [17, 19]]
-        df = pd.DataFrame(tilt_data, columns=["TILTANG", "SCANORD"])
-        tilt_group = df.groupby('SCANORD')['TILTANG'].mean().to_dict()
-
-        for index, angles in tilt_group.items():
-            tilt_parameters[int(index)] = {}
-            tilt_parameters[int(index)][0] = Tilt(tilt_index=int(index), 
-                                                            region_index=0, 
-                                                            shift_x=0, 
-                                                            shift_y=0, 
-                                                            angle=angles, 
-                                                            axis=-axis)
-        
-        box3dfile = os.path.join(input_csp_dir, f"{name}_boxes3d.txt")
-        box3d = np.loadtxt(box3dfile, dtype='str', skiprows=1)
-        box3d_clean = box3d[box3d[:, -1] == "Yes"][:, :-1]
-
-        assert box3d_clean.shape[0] == np.unique(extracted_rows[:, 16]).shape[0], f"boxes {box3d_clean.shape[0]}  not equal to the particle number {np.unique(extracted_rows[:, 16]).shape[0]}"
-
-        for box_info in box3d_clean:
-            particle_index = int(box_info[0])
-
-            this_ptl = extracted_rows[extracted_rows[:, 16]==particle_index]
-            if this_ptl.ndim == 1:
-                ppsi = this_ptl[42]
-                ptheta = this_ptl[43]
-                pphi = this_ptl[44]
-            else:
-                ppsi = this_ptl[0,  42]
-                ptheta = this_ptl[0,  43]
-                pphi = this_ptl[0,  44]
-
-            norm0, norm1, norm2 = extracted_rows[extracted_rows[:, 16]==particle_index][0, 23:26]
-            
-            (
-                m00,
-                m01,
-                m02,
-                m03,
-                m04,
-                m05,
-                m06,
-                m07,
-                m08,
-                m09,
-                m10,
-                m11,
-                m12,
-                m13,
-                m14,
-                m15,
-            ) = extracted_rows[extracted_rows[:, 16]==particle_index][0, 26:42]
-
-            fp, nm = spa_euler_angles(
-                        0,
-                        0,
-                        [norm0, norm1, norm2],
-                        [
-                            m00,
-                            m01,
-                            m02,
-                            m03,
-                            m04,
-                            m05,
-                            m06,
-                            m07,
-                            m08,
-                            m09,
-                            m10,
-                            m11,
-                            0,
-                            0,
-                            0,
-                            1,
-                        ],
-                        0,
-                    )
-
-            if particle_index not in particle_parameters:            
-                particle_parameters[particle_index] = Particle(particle_index=particle_index, 
-                                                            shift_x= nm[3], 
-                                                            shift_y= nm[4], 
-                                                            shift_z= nm[5], 
-                                                            psi=ppsi + nm[0], 
-                                                            theta=ptheta + nm[1], 
-                                                            phi=pphi + nm[2], 
-                                                            x_position_3d=float(box_info[1]), 
-                                                            y_position_3d=float(box_info[2]), 
-                                                            z_position_3d=float(box_info[3]), 
-                                                            score=float(box_info[4]), 
-                                                            occ=100.0)
-        
+        cistem_obj = Parameters()
+        cistem_obj.from_parfile( parameters, extracted_rows, allboxes, filename, reference_name, input_csp_dir, save_binary=False)
+        cistem_parameters = cistem_obj.get_data()
+        particle_parameters = cistem_obj.get_extended_data().get_particles()
+        tilt_parameters = cistem_obj.get_extended_data().get_tilts()
 
     cistem_parameters = np.array(cistem_parameters, ndmin=2)
     
@@ -2819,6 +2430,7 @@ EOF
     extended_parameters.set_data(particles=particle_parameters,
                                  tilts=tilt_parameters)
     parameters_obj.set_data(data=cistem_parameters, extended_parameters=extended_parameters)
+    parameters_obj.update_particle_score()
 
     # parameters.to_binary(output=f"{name}_r01_02.cistem")
 
@@ -2896,6 +2508,44 @@ def compute_global_weights(par_data, weights_file: str = "global_weight.txt"):
     SCORE_COL = par_obj.get_index_of_column(cistem_star_file.SCORE) 
 
     import pandas as pd
+    
+    # only consider projections that have occ > 0
+    par_data = par_data[par_data[:, OCC_COL] > 0.0]
+    df = pd.DataFrame(data=par_data[:, [SCORE_COL, SCANORD_COL]], 
+                      columns=["SCORE", "SCANORD"])
+    
+    sum_scores = df.groupby("SCANORD").sum()
+    counts = df.groupby("SCANORD").size().reset_index(name='count')
+
+    weights = []
+
+    for scanord, row in sum_scores.iterrows():
+        sum_score = row["SCORE"]
+
+        while scanord >= len(weights):
+            weights.append(-1.0)
+
+        weights[int(scanord)] = sum_score
+    
+    for index, row in counts.iterrows():
+        scanord = row["SCANORD"]
+        count = row["count"]
+
+        weights[int(scanord)] /= count
+
+    with open(weights_file, "w") as f:
+        f.write("\n".join(list(map(str, weights))))
+
+
+def compute_global_weights_from_par(parfile: str, weights_file: str = "global_weight.txt"):
+
+    FILM_COL = 8 - 1
+    SCANORD_COL = 20 - 1
+    OCC_COL = 12 - 1
+    SCORE_COL = 15 - 1 
+
+    import pandas as pd
+    par_data = frealign_parfile.Parameters.from_file(parfile).data
     
     # only consider projections that have occ > 0
     par_data = par_data[par_data[:, OCC_COL] > 0.0]
@@ -3037,4 +2687,48 @@ _rlnClassNumber #12"""
 
         np.savetxt(os.path.join(output_path, name + "_K%d.star" % cls), alignment_array, fmt="%s", header=header, delimiter="\t", comments="")
 
+
+def global_par2cistem(refinement, parameters):
+
+    # parx file format read
+    logger.info(f"Reading alignment parameters from {os.path.basename(refinement)}")
+
+    output_dir = refinement.replace(".par", "")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    input_csp_dir = os.path.join(str(Path(refinement).parent) , "../../csp/")
+    reference_name = parameters["data_set"]
+    micrographs = os.path.join(input_csp_dir, f"../{reference_name}.films")
+    with open(micrographs) as f:
+        micrograph_list = [line.strip() for line in f]
+    
+    mpi_funcs, mpi_args = [ ], [ ]
+
+    for micrograph_index, filename in enumerate(micrograph_list):
+        
+        index_file = os.path.join( input_csp_dir, "micrograph_particle.index" )
+        if os.path.exists(index_file):
+            with open(index_file) as f:
+                index_dict = json.load(f)
+            
+            start, end = index_dict[str(micrograph_index)]
+            step = end - start
+            start += 3
+            extracted_rows = np.loadtxt(refinement, dtype=float, comments="C", skiprows=start, max_rows=step, ndmin=2)
+        else:
+            pardata = np.loadtxt(refinement, dtype=float, comments="C", ndmin=2)
+            extracted_rows = pardata[pardata[:, 7] == micrograph_index]
+
+        allboxes = np.loadtxt(
+                    os.path.join(input_csp_dir, filename  + ".allboxes"), ndmin=2
+                ).astype(int)
+
+        cistem_obj = cistem_star_file.Parameters()
+        mpi_args.append([(parameters, extracted_rows, allboxes, filename, refinement, input_csp_dir, output_dir)])
+        
+        mpi_funcs.append(cistem_obj.from_parfile)
+        # cistem_obj.from_parfile(parameters, extracted_rows, allboxes, filename, refinement, input_csp_dir, output_dir)
+     
+    mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
 

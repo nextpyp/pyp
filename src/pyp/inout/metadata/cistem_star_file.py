@@ -2,8 +2,9 @@ import numpy as np
 import numpy.lib.recfunctions as rf
 import pandas as pd
 
-import sys
+import sys, os
 from pathlib import Path
+from pyp.analysis.geometry import csp_euler_angles
 
 
 """
@@ -1138,6 +1139,220 @@ _rlnTiltIndex #19
             ext_parameters = None
 
         self.set_data(data=prealloc_data, extended_parameters=ext_parameters)
+
+
+    def from_parfile(self, parameters, extracted_rows, allboxes, image_name, parfile_name, input_csp_dir, output_dir=".", save_binary=True):
+
+        tilt_parameters = {}
+        particle_parameters = {}
+        rows = allboxes.shape[0]
+        cistem_parameters = np.zeros((rows, 32), dtype='float')
+
+        actual_pixel = float(parameters["scope_pixel"]) * float(parameters["data_bin"])
+        voltage = parameters["scope_voltage"]
+        cs = parameters["scope_cs"]
+        wgh = parameters["scope_wgh"]
+
+        # asign nonzeors:
+        cistem_parameters[:, self.get_index_of_column(PIXEL_SIZE)] = actual_pixel
+        cistem_parameters[:, self.get_index_of_column(MICROSCOPE_VOLTAGE)] = voltage
+        cistem_parameters[:, self.get_index_of_column(MICROSCOPE_CS)] = cs
+        cistem_parameters[:, self.get_index_of_column(AMPLITUDE_CONTRAST)] = wgh
+        cistem_parameters[:, [self.get_index_of_column(ORIGINAL_X_POSITION), self.get_index_of_column(ORIGINAL_Y_POSITION)]] = allboxes[:, [0, 1]]
+
+        id = np.arange(1, rows + 1)
+        
+        alignment = extracted_rows[:, 1:6]
+        ctf_info = extracted_rows[:, 8:11]
+
+        # image_activity = extracted_rows[:, 7]
+
+        stats = extracted_rows[:, 11:15]
+        # imind = (extracted_rows[:, 19]).astype(int) # TODO confirm this is correct
+        imind = allboxes[:, 2]
+        tilt_index = (extracted_rows[:, 19]).astype(int) # scanord
+        particle_index = (extracted_rows[:,  16]).astype(int) # ptlind
+        frame_index = (extracted_rows[:, 20]).astype(int)
+        # image_shifts = extracted_rows[:, [38, 39]]
+
+        # cistem_parameters[:, self.get_index_of_column(IMAGE_IS_ACTIVE)] = image_activity
+        cistem_parameters[:, self.get_index_of_column(IMIND)] = imind
+        cistem_parameters[:, self.get_index_of_column(PIND)] = particle_index
+        cistem_parameters[:, self.get_index_of_column(TIND)] = tilt_index
+        cistem_parameters[:, self.get_index_of_column(FIND)] = frame_index
+
+        cistem_parameters[:, self.get_index_of_column(POSITION_IN_STACK)] = id
+        cistem_parameters[:, self.get_index_of_column(PSI) : self.get_index_of_column(DEFOCUS_1)] = alignment
+        cistem_parameters[:, self.get_index_of_column(DEFOCUS_1) : self.get_index_of_column(PHASE_SHIFT)] = ctf_info
+        cistem_parameters[:, self.get_index_of_column(OCCUPANCY) : self.get_index_of_column(PIXEL_SIZE)] = stats
+        # cistem_parameters[:, [self.get_index_of_column(IMAGE_SHIFT_X), self.get_index_of_column(IMAGE_SHIFT_Y)]] =0 # ctf related?
+
+        # parse the tilt dictionary 
+        tilt_data = extracted_rows[:, [17, 19, 22, 38, 39]]
+        df = pd.DataFrame(tilt_data, columns=["TILTANG", "SCANORD", "AXIS", "M12", "M13"])
+        tilt_group = df.groupby('SCANORD')['TILTANG'].mean().to_dict()
+        axis = df.groupby('SCANORD')['AXIS'].mean().to_dict()
+        image_shifts = df.groupby('SCANORD')[['M12', 'M13']].mean().to_dict()
+
+        for index, angles in tilt_group.items():
+            tilt_parameters[int(index)] = {}
+            tilt_parameters[int(index)][0] = Tilt(tilt_index=int(index), 
+                                                            region_index=0, 
+                                                            shift_x=image_shifts['M12'][index], 
+                                                            shift_y=image_shifts['M13'][index], 
+                                                            angle=angles, 
+                                                            axis=axis[index])
+            
+        if "tomo" in parameters["data_mode"]:
+
+            box3dfile = os.path.join(input_csp_dir, f"{image_name}_boxes3d.txt")
+            box3d = np.loadtxt(box3dfile, dtype='str', skiprows=1)
+            box3d_clean = box3d[box3d[:, -1] == "Yes"][:, :-1]
+
+            assert box3d_clean.shape[0] == np.unique(extracted_rows[:, 16]).shape[0], f"boxes {box3d_clean.shape[0]}  not equal to the particle number {np.unique(extracted_rows[:, 16]).shape[0]}"
+
+            for box_info in box3d_clean:
+                particle_index = int(box_info[0])
+
+                this_ptl = extracted_rows[extracted_rows[:, 16]==particle_index]
+                if this_ptl.ndim == 1:
+                    ppsi = this_ptl[42]
+                    ptheta = this_ptl[43]
+                    pphi = this_ptl[44]
+
+                    norm0, norm1, norm2 = this_ptl[23:26]
+                    axis = this_ptl[22]
+                
+                    (
+                        m00,
+                        m01,
+                        m02,
+                        m03,
+                        m04,
+                        m05,
+                        m06,
+                        m07,
+                        m08,
+                        m09,
+                        m10,
+                        m11,
+                        m12,
+                        m13,
+                        m14,
+                        m15,
+                    ) = this_ptl[26:42]
+
+                else:
+                    ppsi = this_ptl[0,  42]
+                    ptheta = this_ptl[0,  43]
+                    pphi = this_ptl[0,  44]
+
+                    norm0, norm1, norm2 = this_ptl[0, 23:26]
+                    axis = this_ptl[0, 22]
+                    (
+                        m00,
+                        m01,
+                        m02,
+                        m03,
+                        m04,
+                        m05,
+                        m06,
+                        m07,
+                        m08,
+                        m09,
+                        m10,
+                        m11,
+                        m12,
+                        m13,
+                        m14,
+                        m15,
+                    ) = this_ptl[0, 26:42]
+
+                fp, nm = csp_euler_angles(
+                            0,
+                            axis,
+                            [norm0, norm1, norm2],
+                            [
+                                m00,
+                                m01,
+                                m02,
+                                m03,
+                                m04,
+                                m05,
+                                m06,
+                                m07,
+                                m08,
+                                m09,
+                                m10,
+                                m11,
+                                0,
+                                0,
+                                0,
+                                1,
+                            ],
+                            0,
+                            [
+                                ppsi,
+                                ptheta,
+                                pphi,
+                            ],
+                        )
+                
+                if particle_index not in particle_parameters:            
+                    particle_parameters[particle_index] = Particle(particle_index=particle_index, 
+                                                                shift_x=nm[3], 
+                                                                shift_y=nm[4], 
+                                                                shift_z=nm[5], 
+                                                                psi=nm[0], 
+                                                                theta=nm[1], 
+                                                                phi=nm[2], 
+                                                                x_position_3d=float(box_info[1]), 
+                                                                y_position_3d=float(box_info[2]), 
+                                                                z_position_3d=float(box_info[3]), 
+                                                                score=float(box_info[4]), 
+                                                                occ=100.0)
+        else:
+            ptl_idx = extracted_rows[:, 16]
+
+            for i, ptlidx in enumerate(ptl_idx):
+                particle_index = int(ptlidx)
+
+                # TODO: should use the spa_eular_angles() to get the 3d alignment parameters
+                this_row = extracted_rows[i]
+                ppsi = this_row[1]
+                ptheta = this_row[2]
+                pphi = this_row[3]
+                shift_x = this_row[4]
+                shift_y = this_row[5]
+                score = this_row[14]
+                occ = this_row[11]
+
+                if particle_index not in particle_parameters:            
+                    particle_parameters[particle_index] = Particle(particle_index=particle_index, 
+                                                                shift_x = -shift_x, 
+                                                                shift_y= -shift_y, 
+                                                                shift_z= 0, 
+                                                                psi = -ppsi, 
+                                                                theta = -ptheta, 
+                                                                phi = -pphi, 
+                                                                x_position_3d=allboxes[i][0], 
+                                                                y_position_3d=allboxes[i][0], 
+                                                                z_position_3d= 1, 
+                                                                score=score, 
+                                                                occ=occ)
+    
+        self._data = cistem_parameters
+        self._extended = ExtendedParameters()
+        self._extended.set_data(particles=particle_parameters,
+                                tilts=tilt_parameters)
+        extended_parameters = self._extended
+        self.set_data(data=cistem_parameters, extended_parameters=extended_parameters)
+        self.update_particle_score()
+        
+        if save_binary:
+            binary_file = os.path.join(output_dir, image_name + "_" + os.path.basename(parfile_name).split("_")[-2] + ".cistem")
+            extended_binary = binary_file.replace(".cistem", "_extended.cistem")
+            self.to_binary(binary_file, extended_output=extended_binary)
 
 
 def initialize_parameters_binary(): 

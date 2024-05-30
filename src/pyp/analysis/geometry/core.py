@@ -1081,3 +1081,141 @@ def get_vir_binning_boxsize(vir_rad, pixel_size, factor_rad2boxsize=3, binned_vi
     virion_boxsize = factor_rad2boxsize * int(vir_rad / pixel_size)
     return int(math.ceil( virion_boxsize / binned_vir_boxsize)), virion_boxsize
 
+
+def csp_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset, csp_matrix):
+
+    """refinement angles merge with csp eular angles"""
+    
+    # Refinement matrix, including rotation and translation, which is from 3DAVG or EMAN2
+    refinement = np.matrix(
+        [
+            [m[0], m[1], m[2], m[3]],
+            [m[4], m[5], m[6], m[7]],
+            [m[8], m[9], m[10], m[11]],
+            [m[12], m[13], m[14], m[15]],
+        ]
+    )
+    # Rotation matrix only ( Z1 * X * Z2 )
+    refinement_rotation = np.matrix(
+        [
+            [m[0], m[1], m[2], 0],
+            [m[4], m[5], m[6], 0],
+            [m[8], m[9], m[10], 0],
+            [m[12], m[13], m[14], m[15]],
+        ]
+    )
+
+    # invert the order of rotation matrix ( Z2 * X * Z1 )
+    refinement_rotation_reverse = np.matrix(
+        [
+            [m[0], -m[4], m[8], 0],
+            [-m[1], m[5], -m[9], 0],
+            [m[2], -m[6], m[10], 0],
+            [m[12], m[13], m[14], m[15]],
+        ]
+    )
+
+    # translation matrix only
+    refinement_translation = np.dot(np.linalg.inv(refinement_rotation), refinement)
+
+    # correct translations x and z to make sense
+    refinement_translation[0, 3] = -refinement_translation[0, 3]
+    refinement_translation[2, 3] = -refinement_translation[2, 3]
+
+    # compute rotation matrix of norm X Y Z, be careful that vtk uses right handedness but 3DAVG uses left handedness
+    normX = vtk.rotation_matrix(np.radians(-normal[0]), [1, 0, 0])
+    normY = vtk.rotation_matrix(np.radians(-normal[1]), [0, 0, 1])
+    normZ = vtk.rotation_matrix(np.radians(-normal[2]), [0, 0, 1])
+    norm = np.dot(normZ, np.dot(normX, normY))
+    norm_reverse = np.dot(normY, np.dot(normX, normZ))
+
+    # compute matrix of Tilt axis rotation (around Z)
+    tilt_axis_rotation_matrix = vtk.rotation_matrix(
+        np.radians(tilt_axis_angle), [0, 0, 1]
+    )
+    # compute matrix of tilt angle (around Y)
+    tilt_angle_matrix = vtk.rotation_matrix(np.radians(tilt_angle), [0, 1, 0])
+
+    ###################
+    # Rotation matrix #
+    ###################
+    # R( -phi )*R( -alt )*R( -az )*R( -normY )*R( -normX )*R( -normZ )*R( tilt_angle )*R( -tilt_axis_rotation )
+    #      Z         X        Z          Z           X           Z             Y                   Z
+    r = np.linalg.inv(tilt_axis_rotation_matrix)
+    r = np.dot(tilt_angle_matrix, r)
+
+    # convert ZXZ to ZYZ and then merge two ZYZs into one ZYZ
+    n = eulerZXZtoZYZ(np.linalg.inv(norm))
+
+    n = np.dot(eulerZXZtoZYZ(np.linalg.inv(refinement_rotation)), n)
+
+    # n = np.dot(np.linalg.inv(refinement_rotation), n)
+    n = eulerTwoZYZtoOneZYZ(n)
+
+    csp_psi, csp_theta, csp_phi = csp_matrix
+    # now we combine all the rotations into particle rotation (in parfile)
+    mpsi = vtk.rotation_matrix(np.radians(csp_psi), [0, 0, 1])
+    mtheta = vtk.rotation_matrix(np.radians(csp_theta), [0, 1, 0])
+    mphi = vtk.rotation_matrix(np.radians(csp_phi), [0, 0, 1])
+    refine_rotation = functools.reduce(np.matmul, [mphi, mtheta, mpsi])
+
+    n = np.matmul(refine_rotation, n)
+
+    n = eulerTwoZYZtoOneZYZ(n)
+
+    ppsi, ptheta, pphi = get_degrees_from_matrix(n)
+
+    r = np.dot(n, r)
+
+    ######################
+    # Translation matrix #
+    ######################
+    # R( -tilt_axis_rotation )*R( tilt_angle )*R( -normZ )*R( -normX )*R( -normY )*R( -az )*R( -alt )*R( -phi )*T( -translation )
+
+    t = vtk.translation_matrix([0, 0, -cutOffset])
+    t = np.dot(np.linalg.inv(refinement_translation), t)
+    t = np.dot(np.linalg.inv(refinement_rotation_reverse), t)
+    t = np.dot(np.linalg.inv(norm_reverse), t)
+
+    # now we store particle shifts directly into parfile without norm, matrix
+    px = -t[0, 3]
+    py = -t[1, 3]
+    pz = -t[2, 3]
+
+    t = np.dot(tilt_angle_matrix, t)
+    t = np.dot(np.linalg.inv(tilt_axis_rotation_matrix), t)
+
+    # extract euler angles from transformation matrix by decoding its sin and cos
+
+    # Frealign first rotates the "reference" by PHI -> THETA -> PSI extrinsically
+    # then moves/translates the reference to match 2D particle projections
+
+    # Matrix(ZYZ) -> R(z1) * R(y) * R(z2)
+    # z1 = phi
+    # y = theta
+    # z2 = psi
+
+    # *** LEFT handedness
+    #            cz1*cy*cz2 - sz1*sz2       cz1*cy*sz2 + sz1*cz2         -cz1*sy
+    # Matrix = [ -sz1*cy*cz2 - cz1*sz2      -sz1*cy*sz2 + cz1*cz2         sz1*sy ]
+    #                 sy*cz2                       sy*sz2                   cy
+
+    if r[2, 2] < 1 - np.nextafter(0, 1):
+        if r[2, 2] > -1 + np.nextafter(0, 1):
+            theta = math.acos(r[2, 2])
+            psi = math.atan2(r[2, 1] / math.sin(theta), r[2, 0] / math.sin(theta))
+            phi = math.atan2(r[1, 2] / math.sin(theta), -r[0, 2] / math.sin(theta))
+        else:
+            theta = math.pi
+            phi = math.atan2(-r[0, 1], -r[0, 0])
+            psi = 0
+    else:
+        theta = 0
+        phi = math.atan2(r[0, 1], r[0, 0])
+        psi = 0
+
+    psi, theta, phi = get_degrees_from_matrix(r)
+
+
+
+    return [psi, theta, phi, t[0, 3], t[1, 3]], [-ppsi, -ptheta, -pphi, px, py, pz]

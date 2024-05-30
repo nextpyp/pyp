@@ -8,6 +8,7 @@ from .core import (
     findSpecimenBounds,
     getShiftsForRecenter,
     spa_euler_angles,
+    csp_euler_angles,
     getRelionMatrix,
     spk2Relion,
     relion2Spk,

@@ -475,11 +475,13 @@ def shape_phase_residuals(
                             thresholds[g, f] = np.sort(meanscore)[
                                 int((meanscore.shape[0] - 1) * (1 - threshold))
                             ]
-                            logger.info(f"Minimum score used for reconstruction = {thresholds[g, f]:.2f}")
+                            
                         else:
                             thresholds[g, f] = np.sort(input[cluster, field])[
                                 int((cluster.shape[0] - 1) * (1 - threshold))
                             ]
+
+                        logger.info(f"Minimum score used for reconstruction = {thresholds[g, f]:.2f}")
                     else:
                         # thresholds[g,f] = cluster[ cluster[:,field].argsort() ][ int( (cluster.shape[0]-1) * threshold ), field ]
                         thresholds[g, f] = np.sort(input[cluster, field])[
@@ -577,33 +579,22 @@ def shape_phase_residuals(
                     group_mask[group_mask == True] = modification_mask
                     input[group_mask, occ] = 0 
 
-                    """
-                    for i in ptl_index:
-                        ptl_field_array = input_group[input_group[:, ptlindex] == i, field]
-                        tltangle_array = input_group[input_group[:, ptlindex] == i, tltangle]
-                        meanfrom = ptl_field_array[np.abs(tltangle_array) < 10]
-
-                        input[input[:, ptlindex] == i, occ] = np.where(
-                        np.array( [ 0 if meanfrom.size == 0 else np.mean(meanfrom) ] * ptl_field_array.shape[0] ) < thresholds[g, f],
-                        0,
-                        input[input[:, ptlindex] == i, occ],
-                        )
-                    """
                 else:
                     input[:, occ] = np.where(
                         np.logical_and(
                             np.logical_and(angular_group == g, defocus_group == f),
                             np.logical_or(
                                 np.logical_or(
-                                    input[:, field] <= thresholds[g, f],
-                                    input[:, field] <= min_scores[g, f],
+                                    input[:, field] < thresholds[g, f],
+                                    input[:, field] < min_scores[g, f],
                                 ),
-                                input[:, field] >= max_scores[g, f],
+                                input[:, field] > max_scores[g, f],
                             ),
                         ),
                         0,
                         input[:, occ],
                     )
+                    number = input[input[:, occ]==0].shape[0]
 
     if os.path.exists(fmatch_stack):
         logger.info(

@@ -2201,7 +2201,11 @@ _rlnRandomSubset #14
             # get the par data 
             filmid = image_list.index(film)
             this_image_data = pardata[pardata[:, film_col] == filmid].astype(float)
-            this_image_data[:, film_col] = 0 # reset the film id as 0 
+            this_image_data[:, film_col] = 1 # reset the film id as 1
+            # reset pid
+            ptl_num = this_image_data.shape[0]
+            this_image_data[:, 0] = np.arange(1, ptl_num + 1)
+            this_image_data[:, ptl_col] = np.arange(1, ptl_num + 1)
  
             saved_binary = os.path.join(saved_path, film + "_r01.cistem")
             saved_extended = os.path.join(saved_path, film + "_r01_extended.cistem")
