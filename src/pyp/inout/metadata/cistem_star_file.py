@@ -1355,6 +1355,78 @@ _rlnTiltIndex #19
             self.to_binary(binary_file, extended_output=extended_binary)
 
 
+def merge_star(star_list):
+
+    data_frames = []
+    
+    # Iterate over each file path in the list
+    for file in star_list:
+        df = read_star(file)
+        data_frames.append(df)
+
+    combined_data = pd.concat(data_frames, ignore_index=True)
+
+    conventional_header = [
+    "cisTEMPositionInStack", 
+    "cisTEMAnglePsi",
+    "cisTEMAngleTheta", 
+    "cisTEMAnglePhi",
+    "cisTEMXShift", 
+    "cisTEMYShift", 
+    "cisTEMDefocus1", 
+    "cisTEMDefocus2", 
+    "cisTEMDefocusAngle",
+    "cisTEMPhaseShift", 
+    "cisTEMImageActivity", 
+    "cisTEMOccupancy", 
+    "cisTEMLogP", 
+    "cisTEMSigma",
+    "cisTEMScore",  
+    "cisTEMPixelSize", 
+    "cisTEMMicroscopeVoltagekV",
+    "cisTEMMicroscopeCsMM", 
+    "cisTEMAmplitudeContrast", 
+    "cisTEMBeamTiltX", 
+    "cisTEMBeamTiltY",
+    "cisTEMImageShiftX", 
+    "cisTEMImageShiftY", 
+    "cisTEMOriginalXPosition", 
+    "cisTEMOriginalYPosition", 
+    "cisTEMImageIndex", 
+    "cisTEMParticleIndex",
+    "cisTEMTiltIndex", 
+    "cisTEMRegionIndex", 
+    "cisTEMFrameIndex", 
+    "cisTEMFrameShiftX", 
+    "cisTEMFrameShiftY"]
+
+    data = combined_data[conventional_header].to_numpy()
+
+    return data
+        
+def read_star(star_file):     
+    # Open the file and skip all comment lines starting with '#'
+    with open(star_file, 'r') as file:
+        # Skip lines until the header
+        for line in file:
+            if line.strip().lower() == 'data_':
+                break
+        # Skip 'loop_' line
+        next(file)
+        
+        # Read header columns
+        columns = []
+        for line in file:
+            if line.startswith('#'):
+                break
+            if line.startswith('_'):
+                columns.append(line.split()[0][1:])
+
+        data = pd.read_csv(file, delim_whitespace=True, names=columns, comment='#')
+
+    return data
+
+
 def initialize_parameters_binary(): 
 
     data = np.ones((100, 32))

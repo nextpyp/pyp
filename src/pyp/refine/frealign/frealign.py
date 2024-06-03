@@ -3062,7 +3062,7 @@ eot
     return command
 
 
-def split_refinement(mp, ref, current_path, first, last, i, metric):
+def split_refinement(mp, ref, current_path, first, last, i):
     """function to execute refinement using refine3d in parallel
 
     Parameters
@@ -3100,7 +3100,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
     scratch = Path(os.environ["PYP_SCRATCH"])
 
     # if we are in csp using frame refinement mode we can fork each batch into multiple cores
-    if mp["csp_no_stacks"] and mp["slurm_tasks"] > 1:
+    if mp["csp_no_stacks"] and mp["slurm_tasks"] > 1 and not mp["refine_beamtilt"]:
 
         # This is the output parfile for this function
         # bypass refine3d if mode == 0
@@ -3148,25 +3148,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
         merged_alignment = Parameters.merge(input_files=all_refined_par,
                                             input_extended_files=[])
         merged_alignment.to_binary(merged_file_name)
-        # import sys
-        # sys.exit()
 
-        """
-        sort_allpar = sorted(
-            [
-                line
-                for par in all_refined_par
-                for line in open(par)
-                if not line.startswith("C")
-            ],
-            key=lambda x: int(x.split()[0]),
-        )
-
-        # write out short allpar (extended metadata will be added later)
-        with open(short_file_name, "w") as f:
-            for line in sort_allpar:
-                f.write(line)
-        """
         # cleanup
         [
             os.remove(i)
@@ -3174,6 +3156,55 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
             if i != merged_file_name
         ]
 
+    elif mp["refine_beamtilt"]:
+        # create multirun script
+        cpus = mp["slurm_tasks"]
+
+        commands, count = local_run.create_split_commands(
+            mp,
+            name,
+            last,
+            cpus,
+            scratch,
+            ref=ref,
+            current_path=current_path,
+            iteration=i,
+            step="refine_ctf",
+        )
+
+        # submit jobs to MPI
+        mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=mp["slurm_verbose"])
+
+        # combine all the refined parfile
+        # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
+        merged_file_name = name + "_refined.cistem"
+        all_refined_star = [star for star in glob.glob(name + "_*_*_refined_ctf.star")]
+
+        # first check if the number of refined par is equal to count
+        if len(all_refined_star) != count:
+            # attempt to get error information to the user before exiting
+            logger.error(commands[0])
+            logfile = glob.glob( "*_msearch_ctf_n.log_0000001_*" )
+            if len(logfile) > 0:
+                with open( logfile[0] ) as output:
+                    logger.error("\n".join([s for s in output.read().split("\n") if s]))
+            raise Exception(
+                f"The number of refined parfiles ({len(all_refined_star)}) != the number of jobs ({count})."
+            )
+
+        # merge refine_ctf star files
+        merged_data = merge_star(all_refined_star)
+        merge_alignment = Parameters()
+        merge_alignment.set_data(data=merged_data)
+        merge_alignment.to_binary(merged_file_name)
+
+        # cleanup
+        [
+            os.remove(i)
+            for i in glob.glob(str(scratch / f"{name}_*_*.cistem"))
+            if i != merged_file_name
+        ]
+    
     else:
 
         # this is the regular refinement on a single core
@@ -3191,7 +3222,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
                 ranger,
                 logfile,
                 str(scratch),
-                metric,  # TODO: safe to pass Path here?
+                False,  # TODO: safe to pass Path here?
             )
 
             os.environ["OMP_NUM_THREADS"] = os.environ["NCPUS"] = "1"
@@ -3783,7 +3814,7 @@ def merge_refinements(mp, fp, iteration, alignment_option):
 
 
 def mrefine_version(
-    mp, first, last, i, ref, current_path, name, ranger, logfile, scratch, metric
+    mp, first, last, i, ref, current_path, name, ranger, logfile, scratch, refine_beam_tilt=False
 ):
     """Return frealign refinement command."""
 
@@ -3927,23 +3958,104 @@ def mrefine_version(
     normalize_rec = "no"
     thresh_rec = "no"
 
-    command = (
-        "{0}/refine3d << eot >>{1} 2>&1\n".format(
+    if not refine_beam_tilt:
+        # refine3d 
+        command = (
+            "{0}/refine3d << eot >>{1} 2>&1\n".format(
+                frealign_paths["cistem2"], logfile
+            )
+            + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
+            + f"{name}.cistem\n{global_stat}\n{name}.mrc\n"
+            + "statistics_r%02d.txt\n" % ref
+            + stats
+            + "\n"
+            + use_priors
+            + "\n"
+            + "{0}_match.mrc_{1}\n{0}_{1}.cistem\n{0}_{1}_changes.cistem\n".format(
+                name, ranger
+            )
+            + str(project_params.param(fp["particle_sym"], i))
+            + "\n"
+            + "{0}\n{1}\n1\n".format(first, last)
+            + "{0}\n{1}\n".format(pixel, mp["particle_mw"])
+            + "0\n"
+            + str(mp["particle_rad"])
+            + "\n"
+            + str(project_params.param(mp["refine_rlref"], i))
+            + "\n"
+            + str(postprocess.get_rhref(mp, i))
+            + "\n"
+            + boost
+            + "\n"
+            + str(project_params.param(mp["class_rhcls"], i))
+            + "\n"
+            + srad
+            + "\n"
+            + str(postprocess.get_rhref(mp, i))
+            + "\n"
+            + str(project_params.param(mp["refine_dang"], i))
+            + "\n"
+            + "20\n"
+            + str(project_params.param(mp["refine_searchx"], i))
+            + "\n"
+            + str(project_params.param(mp["refine_searchy"], i))
+            + "\n"
+            + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
+            + "\n"
+            + "%s\n" % def_range # defocus_search_range
+            + "50.0\n" # defocus_step
+            + str(project_params.param(mp["refine_iblow"], i))
+            + "\n"
+            + globally
+            + "\n"
+            + locally
+            + "\n"
+            + psib
+            + "\n"
+            + thetab
+            + "\n"
+            + phib
+            + "\n"
+            + shxb
+            + "\n"
+            + shyb
+            + "\n"
+            + match
+            + "\n"
+            + masking
+            + "\n"
+            + defocus
+            + "\n"
+            + normalize
+            + "\n"
+            + invert
+            + "\n"
+            + edges
+            + "\n"
+            + normalize_rec
+            + "\n"
+            + thresh_rec
+            + "\neot\n"
+        )
+    else:
+        beam_tilt = "Yes"
+        # refine_ctf
+        command = (
+        "{0}/refine_ctf << eot >>{1} 2>&1\n".format(
             frealign_paths["cistem2"], logfile
         )
         + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-        + f"{name}.cistem\n{global_stat}\n{name}.mrc\n"
+        + f"{name}.cistem\n{name}.mrc\n"
         + "statistics_r%02d.txt\n" % ref
         + stats
         + "\n"
-        + use_priors
-        + "\n"
-        + "{0}_match.mrc_{1}\n{0}_{1}.cistem\n{0}_{1}_changes.cistem\n".format(
+        + "{0}_{1}_refined_ctf.star\n{0}_{1}_changes.star\n".format(
             name, ranger
         )
-        + str(project_params.param(fp["particle_sym"], i))
-        + "\n"
-        + "{0}\n{1}\n1\n".format(first, last)
+        + f"{name}_phase_difference.mrc\n"
+        + f"{name}_beamtilt_image.mrc\n"
+        + f"{name}_difference_image.mrc\n"
+        + "{0}\n{1}\n".format(first, last)
         + "{0}\n{1}\n".format(pixel, mp["particle_mw"])
         + "0\n"
         + str(mp["particle_rad"])
@@ -3952,46 +4064,13 @@ def mrefine_version(
         + "\n"
         + str(postprocess.get_rhref(mp, i))
         + "\n"
-        + boost
-        + "\n"
-        + str(project_params.param(mp["class_rhcls"], i))
-        + "\n"
-        + srad
-        + "\n"
-        + str(postprocess.get_rhref(mp, i))
-        + "\n"
-        + str(project_params.param(mp["refine_dang"], i))
-        + "\n"
-        + "20\n"
-        + str(project_params.param(mp["refine_searchx"], i))
-        + "\n"
-        + str(project_params.param(mp["refine_searchy"], i))
-        + "\n"
-        + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
-        + "\n"
         + "%s\n" % def_range # defocus_search_range
         + "50.0\n" # defocus_step
         + str(project_params.param(mp["refine_iblow"], i))
         + "\n"
-        + globally
-        + "\n"
-        + locally
-        + "\n"
-        + psib
-        + "\n"
-        + thetab
-        + "\n"
-        + phib
-        + "\n"
-        + shxb
-        + "\n"
-        + shyb
-        + "\n"
-        + match
-        + "\n"
-        + masking
-        + "\n"
         + defocus
+        + "\n"
+        + beam_tilt
         + "\n"
         + normalize
         + "\n"

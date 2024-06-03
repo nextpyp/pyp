@@ -1397,7 +1397,6 @@ def postprocess_after_refinement(
         1,
         frames,
         iteration,
-        project_params.param(mp["refine_metric"], iteration),
     )
 
     # save log file to frealign directory (only if not in mode=0)
@@ -1405,23 +1404,39 @@ def postprocess_after_refinement(
         with open(glob.glob(os.path.join(current_path, "*.micrographs"))[0]) as f:
             micrographs = f.read().split("\n")
         if name == micrographs[0]:
-            shutil.copy2(
-                glob.glob("*_msearch_n.log_*")[0],
-                os.path.join(
-                    current_path,
-                    "frealign",
-                    "log",
-                    "%s_r%02d_%02d_msearch.log"
-                    % (mp["data_set"], current_class, iteration),
-                ),
-            )
-            # send output to user interface
-            if 'slurm_verbose' in mp and mp['slurm_verbose']:
-                with open(glob.glob("*_msearch_n.log_*")[0]) as f:
-                    logger.info(f.read())
+            if not mp["refine_beamtilt"]:
+                shutil.copy2(
+                    glob.glob("*_msearch_n.log_*")[0],
+                    os.path.join(
+                        current_path,
+                        "frealign",
+                        "log",
+                        "%s_r%02d_%02d_msearch.log"
+                        % (mp["data_set"], current_class, iteration),
+                    ),
+                )
+                # send output to user interface
+                if 'slurm_verbose' in mp and mp['slurm_verbose']:
+                    with open(glob.glob("*_msearch_n.log_*")[0]) as f:
+                        logger.info(f.read())
+            else:
+                shutil.copy2(
+                    glob.glob("*_msearch_ctf_n.log_*")[0],
+                    os.path.join(
+                        current_path,
+                        "frealign",
+                        "log",
+                        "%s_r%02d_%02d_msearch_ctf.log"
+                        % (mp["data_set"], current_class, iteration),
+                    ),
+                )
+                # send output to user interface
+                if 'slurm_verbose' in mp and mp['slurm_verbose']:
+                    with open(glob.glob("*_msearch_ctf_n.log_*")[0]) as f:
+                        logger.info(f.read())
         # remove log files
         if not mp["refine_debug"]:
-            [os.remove(f) for f in glob.glob("*_msearch_n.log_*")]
+            [os.remove(f) for f in glob.glob("*_msearch*_n.log_*")]
 
     # output_refine3d = new_name + "_%07d_%07d.cistem" % (1, frames)
     output_refine3d = new_name + "_refined.cistem" # current dir is frealign/scratch/
@@ -1445,44 +1460,6 @@ def postprocess_after_refinement(
     os.remove(new_par_file)
     # replace the cistem scratch folder
     shutil.copy2( output_refine3d, new_par_file)
-
-    """
-    # here we reformat columns to force the standard format (even if that means columns will be joint)
-    input = np.array(
-        [line for line in open(long_file_name) if not line.startswith("C")]
-    )
-
-    if "frealignx" in project_params.param(mp["refine_metric"], iteration).lower():
-        scores = 15
-        occ = 12
-    else:
-        scores = 14
-        occ = 11
-
-    comments = [line for line in open(long_file_name) if line.startswith("C")]
-
-    (
-        fieldwidths,
-        fieldstring,
-        _,
-        _,
-    ) = frealign_parfile.Parameters.format_from_parfile(long_file_name)
-    
-
-    with open(long_file_name, "w") as f:
-
-        f.write("".join(comments))
-
-        for line in input:
-            values = np.array(line.split(), dtype="f")
-            if occ > 0 and mp["data_mode"] == "spr":
-                values[occ] = 100
-            # truncate scores to prevent overflow
-            # if values[scores] > 9999:
-            #     values[scores] = 0
-            #     values[scores + 1] = 0
-            f.write(fieldstring % tuple(values))
-    """
 
     # go back to working directory
     os.chdir(working_path)
@@ -1673,6 +1650,19 @@ def csp_refinement(
                 working_path,
                 iteration,
             )
+        
+        if mp["refine_beamtilt"]:
+
+            postprocess_after_refinement(
+                str(parameter_file),
+                name,
+                mp,
+                current_class,
+                current_path,
+                working_path,
+                iteration,
+            )
+
 
     # write out the stack file and par file into a txt for later processing
     with open(os.path.join(os.environ["PYP_SCRATCH"], "stacks.txt"), "a") as f:

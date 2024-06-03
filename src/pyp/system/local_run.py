@@ -409,13 +409,16 @@ def create_split_commands(
         last = min(first + increment, frames)
 
         ranger = "%07d_%07d" % (first, last)
-        if fp["refine_debug"] or first == 1:
-            logfile = "%s_msearch_n.log_%s" % (name, ranger)
-        else:
-            logfile = "/dev/null"
+
 
         from pyp.system import project_params
         if "refine3d" in step:
+
+            if fp["refine_debug"] or first == 1:
+                logfile = "%s_msearch_n.log_%s" % (name, ranger)
+            else:
+                logfile = "/dev/null"
+
             command = frealign.mrefine_version(
                 mp,
                 first,
@@ -427,8 +430,29 @@ def create_split_commands(
                 ranger,
                 logfile,
                 scratch,
-                project_params.param(mp["refine_metric"], iteration),
+                refine_beam_tilt=False,
             )
+        elif "refine_ctf" in step:
+
+            if fp["refine_debug"] or first == 1:
+                logfile = "%s_msearch_ctf_n.log_%s" % (name, ranger)
+            else:
+                logfile = "/dev/null"
+
+            command = frealign.mrefine_version(
+                mp,
+                first,
+                last,
+                iteration,
+                ref,
+                current_path,
+                name,
+                ranger,
+                logfile,
+                scratch,
+                refine_beam_tilt=True,
+            )
+
         elif "reconstruct3d" in step:
             command = frealign.split_reconstruction(
                 mp,
