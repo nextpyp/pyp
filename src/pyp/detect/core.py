@@ -1091,6 +1091,17 @@ def pick_particles(
                     "{}.box".format(name), boxes * data_bin * auto_binning, fmt="%i\t"
                 )
 
+        elif mparameters["detect_method"] == "import" and os.path.exists(project_params.resolve_path(mparameters["detect_files"])):
+            box_file = os.path.join(project_params.resolve_path(mparameters["detect_files"]), f"{name}.box")
+            if os.path.exists(box_file):
+                boxes = np.loadtxt(box_file, ndmin=2)
+                add_columns = np.zeros([boxes.shape[0], 2])
+                boxes = np.hstack((boxes, add_columns))
+                np.savetxt(
+                        "{}.box".format(name), boxes, fmt="%f\t"
+                        )
+            else:
+                logger.warning("Couldn't find any box file for this image")
         else:
             logger.error(
                 f"Particle picking strategy not recognized: {mparameters['detect_method']}"
