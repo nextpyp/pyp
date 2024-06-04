@@ -1333,12 +1333,16 @@ def postprocess_after_refinement(
     global_dataset_name =  mp_local["data_set"]
     global_decompressed_foler = os.path.join(current_path, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (current_class, iteration - 1))
     global_stat_file = os.path.join(global_decompressed_foler, global_dataset_name + "_r%02d_stat.cistem" % current_class)
+    
     # create symlinks in scratch folder
+    if os.path.exists(os.path.join("scratch", f"{new_name}.cistem")):
+        os.remove(os.path.join("scratch", f"{new_name}.cistem"))
+
     symlink_relative(
         new_par_file, os.path.join("scratch", f"{new_name}.cistem")
     )
 
-    if os.path.exists(global_stat_file):
+    if os.path.exists(global_stat_file) and not os.path.exists(os.path.join("scratch", f"{new_name}_stat.cistem")):
         symlink_relative(
             global_stat_file, os.path.join("scratch", f"{new_name}_stat.cistem")
         )
@@ -1637,10 +1641,15 @@ def csp_refinement(
         else:
             # we need parameter file on disk for spr
             allparxs[class_index].to_binary(str(parameter_file))
+        
+        if mp["refine_beamtilt"]:
+            refine_beamtilt = True
+        else:
+            refine_beamtilt = False
 
         # run frealign refinement
         if (classes > 1 or not use_frames) and not mp["refine_skip"]:
-
+            mp["refine_beamtilt"] = False
             postprocess_after_refinement(
                 str(parameter_file),
                 name,
@@ -1651,8 +1660,8 @@ def csp_refinement(
                 iteration,
             )
         
-        if mp["refine_beamtilt"]:
-
+        if refine_beamtilt:
+            mp["refine_beamtilt"] = True
             postprocess_after_refinement(
                 str(parameter_file),
                 name,
