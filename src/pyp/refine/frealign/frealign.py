@@ -3191,6 +3191,10 @@ def split_refinement(mp, ref, current_path, first, last, i):
             raise Exception(
                 f"The number of refined parfiles ({len(all_refined_star)}) != the number of jobs ({count})."
             )
+        elif mp.get("slurm_verbose"):
+            if len(logfile) > 0:
+                with open( logfile[0] ) as output:
+                    logger.info("\n".join([s for s in output.read().split("\n") if s]))
 
         # merge refine_ctf star files
         merged_data = merge_star(all_refined_star)
@@ -4038,7 +4042,7 @@ def mrefine_version(
             + "\neot\n"
         )
     else:
-        beam_tilt = "Yes"
+        beam_tilt = "yes"
         # refine_ctf
         command = (
         "{0}/refine_ctf << eot >>{1} 2>&1\n".format(
@@ -4081,7 +4085,8 @@ def mrefine_version(
         + normalize_rec
         + "\n"
         + thresh_rec
-        + "\neot\n"
+        + "\n"
+        + "eot"
     )
 
     return command
@@ -4536,10 +4541,13 @@ def refine_ctf(mp, fp, i, ref):
         + "\n"
         + threads
         + "\n"
-        + "eot\n"
+        + "eot"
     )
 
-    local_run.run_shell_command(command)
+    with open(logfile, "a") as f:
+        f.write(command)
+
+    local_run.run_shell_command(command,verbose=mp["slurm_verbose"])
 
 
 """
