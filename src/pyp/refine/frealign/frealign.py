@@ -3132,17 +3132,20 @@ def split_refinement(mp, ref, current_path, first, last, i):
         merged_file_name = name + "_refined.cistem"
         all_refined_par = [par for par in glob.glob(name + "_*_*.cistem")]
 
+        logfile = glob.glob( "*_msearch_n.log_0000001_*" )
         # first check if the number of refined par is equal to count
         if len(all_refined_par) != count:
             # attempt to get error information to the user before exiting
             logger.error(commands[0])
-            logfile = glob.glob( "*_msearch_n.log_0000001_*" )
             if len(logfile) > 0:
                 with open( logfile[0] ) as output:
                     logger.error("\n".join([s for s in output.read().split("\n") if s]))
             raise Exception(
                 f"The number of refined parfiles ({len(all_refined_par)}) != the number of jobs ({count})."
             )
+        elif mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile[0]):
+            with open( logfile[0] ) as output:
+                logger.info("\n".join([s for s in output.read().split("\n") if s]))
 
         # TODO: Ye, not sure if this is what you wanna do?
         merged_alignment = Parameters.merge(input_files=all_refined_par,
@@ -3181,20 +3184,19 @@ def split_refinement(mp, ref, current_path, first, last, i):
         all_refined_star = [star for star in glob.glob(name + "_*_*_refined_ctf.star")]
 
         # first check if the number of refined par is equal to count
+        logfile = glob.glob( "*_msearch_ctf_n.log_0000001_*" )
         if len(all_refined_star) != count:
             # attempt to get error information to the user before exiting
             logger.error(commands[0])
-            logfile = glob.glob( "*_msearch_ctf_n.log_0000001_*" )
             if len(logfile) > 0:
                 with open( logfile[0] ) as output:
                     logger.error("\n".join([s for s in output.read().split("\n") if s]))
             raise Exception(
                 f"The number of refined parfiles ({len(all_refined_star)}) != the number of jobs ({count})."
             )
-        elif mp.get("slurm_verbose"):
-            if len(logfile) > 0:
-                with open( logfile[0] ) as output:
-                    logger.info("\n".join([s for s in output.read().split("\n") if s]))
+        elif mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile[0]):
+            with open( logfile[0] ) as output:
+                logger.info("\n".join([s for s in output.read().split("\n") if s]))
 
         # merge refine_ctf star files
         merged_data = merge_star(all_refined_star)
@@ -4499,6 +4501,48 @@ def refine_ctf(mp, fp, i, ref):
 
     frealign_paths = get_frealign_paths()
 
+    """
+            **   Welcome to RefineCTF   **
+
+                Version : 1.00
+                Compiled : Mar 27 2020
+                    Mode : Interactive
+
+    Input particle images [../pyp_frames_stack.mrc]    :
+    Input cisTEM star filename
+    [pyp_frames_r01_03.star]                           :
+    Input reconstruction [pyp_frames_r01_02.mrc]       :
+    Input data statistics [my_statistics.txt]          :
+    Use statistics [no]                                :
+    Output star file [my_refined_parameters.star]      :
+    Output parameter changes
+    [my_parameter_changes.par]                         :
+    Output phase difference image
+    [my_phase_difference.mrc]                          :
+    Output beam tilt image [my_beamtilt_image.mrc]     :
+    Output phase diff - beam tilt
+    [my_difference_image.mrc]                          :
+    First particle to refine (0 = first in stack) [1]  :
+    Last particle to refine (0 = last in stack) [0]    :
+    Pixel size of reconstruction (A) [1.0]             :
+    Molecular mass of particle (kDa) [1000.0]          :
+    Inner mask radius (A) [0.0]                        :
+    Outer mask radius (A) [100.0]                      :
+    Low resolution limit (A) [300.0]                   :
+    High resolution limit (A) [8.0]                    :
+    Defocus search range (A) [500.0]                   :
+    Defocus step (A) [50.0]                            :
+    Tuning parameters: padding factor [1.0]            :
+    Refine defocus [No]                                : yes
+    Estimate beamtilt [No]                             : yes
+    Normalize particles [Yes]                          :
+    Invert particle contrast [No]                      :
+    Exclude images with blank edges [Yes]              :
+    Normalize input reconstruction [Yes]               :
+    Threshold input reconstruction [No]                :
+    Max. threads to use for calculation [1]            :
+    """
+
     command = (
         "{0}/refine_ctf << eot >>{1} 2>&1\n".format(frealign_paths["cistem2"], logfile)
         + "../{}_stack.mrc\n".format(fp["refine_dataset"])
@@ -4544,53 +4588,15 @@ def refine_ctf(mp, fp, i, ref):
         + "eot"
     )
 
-    with open(logfile, "a") as f:
-        f.write(command)
-
     local_run.run_shell_command(command,verbose=mp["slurm_verbose"])
 
-
-"""
-        **   Welcome to RefineCTF   **
-
-             Version : 1.00
-            Compiled : Mar 27 2020
-                Mode : Interactive
-
-Input particle images [../pyp_frames_stack.mrc]    :
-Input cisTEM star filename
-[pyp_frames_r01_03.star]                           :
-Input reconstruction [pyp_frames_r01_02.mrc]       :
-Input data statistics [my_statistics.txt]          :
-Use statistics [no]                                :
-Output star file [my_refined_parameters.star]      :
-Output parameter changes
-[my_parameter_changes.par]                         :
-Output phase difference image
-[my_phase_difference.mrc]                          :
-Output beam tilt image [my_beamtilt_image.mrc]     :
-Output phase diff - beam tilt
-[my_difference_image.mrc]                          :
-First particle to refine (0 = first in stack) [1]  :
-Last particle to refine (0 = last in stack) [0]    :
-Pixel size of reconstruction (A) [1.0]             :
-Molecular mass of particle (kDa) [1000.0]          :
-Inner mask radius (A) [0.0]                        :
-Outer mask radius (A) [100.0]                      :
-Low resolution limit (A) [300.0]                   :
-High resolution limit (A) [8.0]                    :
-Defocus search range (A) [500.0]                   :
-Defocus step (A) [50.0]                            :
-Tuning parameters: padding factor [1.0]            :
-Refine defocus [No]                                : yes
-Estimate beamtilt [No]                             : yes
-Normalize particles [Yes]                          :
-Invert particle contrast [No]                      :
-Exclude images with blank edges [Yes]              :
-Normalize input reconstruction [Yes]               :
-Threshold input reconstruction [No]                :
-Max. threads to use for calculation [1]            :
-"""
+    logger.warning(mp.get("slurm_verbose"))
+    logger.warning(logfile)
+    logger.warning(len(logfile))
+    logger.warning(os.path.exists(logfile))
+    if mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile):
+        with open( logfile[0] ) as output:
+            logger.info("\n".join([s for s in output.read().split("\n") if s]))
 
 
 def create_initial_model(parameters, actual_pixel, box_size, local_parameters):
