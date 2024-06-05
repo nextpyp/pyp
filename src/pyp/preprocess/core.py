@@ -650,31 +650,29 @@ def read_tilt_series(
 
     square = max(squarex, squarey)
 
-    if binning > 1 or square != x or True:
+    # only need squared tilt-series when: 
+    # 1. tiltseries alignment is not done yet
+    # 2. squared aligned tiltseries needs to be generated (for producing downsampled tomogram or subvolume/virion extraction)
+    if not project_params.tiltseries_align_is_done(metadata) or \
+        not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
+        ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
+        parameters["tomo_vir_force"] or \
+        parameters["tomo_rec_force"] or \
+        tomo_subvolume_extract_is_required(parameters) or \
+        tomo_vir_is_required(parameters) or \
+        not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path):
 
         t = timer.Timer(text="Convert tilt-series into squares took: {}", logger=logger.info)
         t.start()
-
-        # only need squared tilt-series when: 
-        # 1. tiltseries alignment is not done yet
-        # 2. squared aligned tiltseries needs to be generated (for producing downsampled tomogram or subvolume/virion extraction)
-        if not project_params.tiltseries_align_is_done(metadata) or \
-            not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
-            ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
-            parameters["tomo_vir_force"] or \
-            parameters["tomo_rec_force"] or \
-            tomo_subvolume_extract_is_required(parameters) or \
-            tomo_vir_is_required(parameters) or \
-            not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path):
-            imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
+        imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
         t.stop()
 
-        f = open("{0}.mrc".format(name), "rb")
-        headerbytes = f.read(1024)
-        headerdict = imageio.mrc.parseHeader(headerbytes)
-        x, y, z = headerdict["nx"], headerdict["ny"], headerdict["nz"]
+    f = open("{0}.mrc".format(name), "rb")
+    headerbytes = f.read(1024)
+    headerdict = imageio.mrc.parseHeader(headerbytes)
+    x, y, z = headerdict["nx"], headerdict["ny"], headerdict["nz"]
 
-        pixel_size *= binning
+    pixel_size *= binning
 
     # invert contrast if needed
     if parameters["data_invert"]:
