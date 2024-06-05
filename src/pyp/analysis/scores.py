@@ -566,7 +566,7 @@ def shape_phase_residuals(
                     input_group = input[group_mask]
 
                     crop_array = input_group[:, [occ, field, ptlindex, tltangle]]
-                    crop_by_tltangle = crop_array[np.abs(crop_array[:, -1]) < 12]
+                    crop_by_tltangle = crop_array[np.abs(crop_array[:, -1]) < 10]
                     ptl_index = np.unique(crop_by_tltangle[:, 2])
                     df = pd.DataFrame(crop_by_tltangle, columns=["occ", "score", "pind", "tltangle"])
                     meanscore = df.groupby("pind")["score"].mean().to_numpy()

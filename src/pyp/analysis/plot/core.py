@@ -800,8 +800,10 @@ def generate_plots(
         if is_tomo:
             used_mask = np.logical_and(
                 input[:, occ_col] > 50, 
-                np.abs(input[:, tind_col]) <= tilt_max, 
-                np.abs(input[:, tind_col]) >= tilt_min,
+                np.logical_and(
+                    np.abs(input[:, tind_col]) <= tilt_max, 
+                    np.abs(input[:, tind_col]) >= tilt_min
+                    )
                 )
             
             used_sub_data = pd.DataFrame(input[used_mask], columns=cistem_star_file.Parameters.HEADER_STRS)

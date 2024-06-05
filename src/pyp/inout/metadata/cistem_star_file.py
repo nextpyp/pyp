@@ -1209,11 +1209,12 @@ _rlnTiltIndex #19
             box3d = np.loadtxt(box3dfile, dtype='str', skiprows=1)
             box3d_clean = box3d[box3d[:, -1] == "Yes"][:, :-1]
 
-            assert box3d_clean.shape[0] == np.unique(extracted_rows[:, 16]).shape[0], f"boxes {box3d_clean.shape[0]}  not equal to the particle number {np.unique(extracted_rows[:, 16]).shape[0]}"
+            assert box3d_clean.shape[0] >= np.unique(extracted_rows[:, 16]).shape[0], f"boxes {box3d_clean.shape[0]}  not equal to the particle number {np.unique(extracted_rows[:, 16]).shape[0]}"
 
-            for box_info in box3d_clean:
-                particle_index = int(box_info[0])
-
+            for particle_index in np.unique(extracted_rows[:, 16]):
+            # for box_info in box3d_clean:
+                # particle_index = int(box_info[0])
+                box_info = box3d[int(particle_index)]
                 this_ptl = extracted_rows[extracted_rows[:, 16]==particle_index]
                 if this_ptl.ndim == 1:
                     ppsi = this_ptl[42]
