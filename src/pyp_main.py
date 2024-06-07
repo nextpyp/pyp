@@ -1839,9 +1839,11 @@ def csp_split(parameters, iteration):
 
     # clean-up csp logs and webp files
     path_to_logs = Path(os.getcwd(), "log")
-    [os.remove(path_to_logs / f) for f in os.listdir(path_to_logs) if f.endswith("_csp.log")]
+    if path_to_logs.exists():
+        [os.remove(path_to_logs / f) for f in os.listdir(path_to_logs) if f.endswith("_csp.log")]
     path_to_webps = Path(os.getcwd(), "frealign")
-    [os.remove(path_to_webps / f) for f in os.listdir(path_to_webps) if f.endswith("_weights_local.webp")]
+    if path_to_webps.exists():
+        [os.remove(path_to_webps / f) for f in os.listdir(path_to_webps) if f.endswith("_weights_local.webp")]
 
     is_spr = "spr" in parameters["data_mode"]
     

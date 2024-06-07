@@ -2384,7 +2384,7 @@ name = "Refine beam-tilt"
 description = "Use beam tilt refinement"
 type = "bool"
 default = false
-hidden = true
+condition = { arg="skip", value="false" }
 
 [tabs.refine.adjust]
 name = "TBA"
