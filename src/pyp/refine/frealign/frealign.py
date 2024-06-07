@@ -1760,7 +1760,8 @@ def split_reconstruction(
         # statistics_file = f"../{name}_stat.cistem" 
 
         score_weighting = "yes" if fp["refine_score_weighting"] else "no"
-        min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
+        # min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
+        min_tilt_particle_score = 0
         # max_tilt_particle_score = fp["csp_UseImagesForRefinementMax"]
         max_tilt_particle_score = -1 # we just use occ as limit 
         per_particle_splitting = "yes" if fp["reconstruct_per_particle_splitting"] else "no"
