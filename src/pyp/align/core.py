@@ -692,9 +692,12 @@ def align_spr_local_inner(
     return clean_shifts
 
 
-def get_csp_command():
-    return os.path.join(os.environ["PYP_DIR"], "external/CSP/csp")
-
+def get_csp_command(grid_search=False):
+    # return os.path.join(os.environ["PYP_DIR"], "external/CSP/csp")
+    if grid_search:
+        return os.path.join(os.environ["PYP_DIR"], "external/CSP/csp_GS")
+    else:
+        return os.path.join(os.environ["PYP_DIR"], "external/CSP/csp")
 
 def frealign_refinement(new_par_file, name, parameters, fp, target, working_path):
     # evaluate scores using mode 1, mask 0,0,0,0,0 (MOVE INTO FUNCTION)
@@ -1043,7 +1046,16 @@ def csp_run_refinement(
                 else:
                     parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = csp_refine_min, csp_refine_max
 
+            if mode == 2 and "csp_RandomParticles" in parameters and parameters["csp_RandomParticles"] > 0:
+                parameters["csp_RandomSkipRatio"] = round(max(0.00, 1 - float(parameters["csp_RandomParticles"] / ptlind_list[-1])), 2)
+                logger.info(f"Random skip ratio is {parameters['csp_RandomSkipRatio']} for CSP ab inito")
+
             project_params.save_parameters(parameters)
+
+            if parameters["csp_GridSearch"]:
+                grid_search = True
+            else:
+                grid_search = False
 
             if mode in (0, 3):
                 if "spr" in parameters["data_mode"].lower():
@@ -1077,7 +1089,7 @@ def csp_run_refinement(
 
             elif mode in (-1, -2, -2.1, 1, 2):
                 commands, count, movie_list = create_csp_split_commands(
-                    get_csp_command(),
+                    get_csp_command(grid_search),
                     parameter_file,
                     mode,
                     cpus,
@@ -1122,7 +1134,7 @@ def csp_run_refinement(
                     pass
 
                 commands, count, movie_list = create_csp_split_commands(
-                    get_csp_command(),
+                    get_csp_command(grid_search),
                     split_parx_list,
                     mode,
                     cpus,

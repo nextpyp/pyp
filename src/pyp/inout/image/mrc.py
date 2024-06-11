@@ -43,7 +43,7 @@ import sys
 from functools import reduce
 
 import numpy
-
+import scipy.fftpack as fftpack
 from pyp.inout.image.utils import arraystats, weakattr
 
 from pyp.system.utils import get_frealign_paths
@@ -966,6 +966,86 @@ def testStack():
     ## make stack
     outputname = "stack.mrc"
     stack(files, tilts, outputname)
+
+def lowpass_filter(volume, voxel_size, cutoff_res):
+    
+    volume_fft = fftpack.fftn(volume)
+    fft_center_volume = numpy.fft.fftshift(volume_fft)
+    # Generate a frequency grid
+    kx, ky, kz = numpy.mgrid[:volume.shape[0], :volume.shape[1], :volume.shape[2]]
+    kx = kx - (volume.shape[0] // 2)
+    ky = ky - (volume.shape[1] // 2)
+    kz = kz - (volume.shape[2] // 2)
+
+    # Calculate the cutoff frequency 
+    cutoff_freq = 1 / cutoff_res 
+
+    # Normalize frequency grid
+    norm_freq_grid = numpy.sqrt(kx**2 + ky**2 + kz**2) / (volume.shape[0] * voxel_size)
+    
+    # Create the filter mask
+    filter_mask = norm_freq_grid <= cutoff_freq
+    # Apply the filter
+    filtered_volume_fft = fft_center_volume * filter_mask
+    inverse_shift = numpy.fft.ifftshift(filtered_volume_fft)
+    filtered_volume = numpy.real(fftpack.ifftn(inverse_shift))
+
+    return filtered_volume
+
+def get_largest_continuous_volume(filtered_volume):
+    
+    import scipy.ndimage
+
+    # Label the connected components
+    labeled_array, num_features = scipy.ndimage.label(filtered_volume)
+
+    # Find the size of each component
+    sizes = scipy.ndimage.sum(filtered_volume, labeled_array, range(num_features + 1))
+
+    # Identify the largest component (excluding the background component, which is labeled 0)
+    largest_component_label = sizes[1:].argmax() + 1 
+
+    # Create an array where the largest component is labeled as 1 and others are 0
+    largest_component = (labeled_array == largest_component_label).astype(int)
+
+    return largest_component
+
+def auto_masking(input_volume, voxel_size, radius):
+    # cisTEM auto masking 
+    header = readHeaderFromFile(input_volume)
+    volume = read(input_volume)
+    mrc_mean = numpy.mean(volume)
+    volume[volume < mrc_mean] = mrc_mean
+
+    # lowpass filter 50 A
+    filtered_volume = lowpass_filter(volume, voxel_size, 50)
+
+    # threshold 
+    filtered_mean = numpy.mean(filtered_volume)
+    flattened_volume = filtered_volume.flatten()
+    # Find the top 500 maximum values
+    top_500_values = numpy.sort(flattened_volume)[-500:]
+  
+    mean_top_500 = numpy.mean(top_500_values)
+    t = filtered_mean + 0.04 * (mean_top_500 - filtered_mean)
+    # binarized
+    filtered_volume[filtered_volume <= t] = 0
+    filtered_volume[filtered_volume > t] = 1
+
+    mask = get_largest_continuous_volume(filtered_volume)
+    
+    # particle radius cutoff
+    center = numpy.array(mask.shape) // 2
+    x, y, z = numpy.indices(mask.shape)
+    distance_from_center = numpy.sqrt((x - center[0])**2 + (y - center[1])**2 + (z - center[2])**2)
+
+    # Apply the sphere cutoff
+    rad_voxel = radius / voxel_size
+    mask[distance_from_center >= rad_voxel] = 0
+    mask_file = input_volume.replace(".mrc", "_mask.mrc")
+    write(mask, mask_file, header)
+    
+    return mask_file
 
 
 if __name__ == "__main__":

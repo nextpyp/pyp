@@ -2033,7 +2033,11 @@ def csp_split(parameters, iteration):
                 stat = cistem_star_file.Parameters()
                 stat.set_data(np.vstack((stat_array_mean, stat_array_var)))
                 stat.to_binary( stat_file )
-            
+
+    # ab initio 
+    if "csp_abinitio" in parameters.keys() and parameters["csp_abinitio"]:
+        logger.info('doing ab initio')
+        ab_initio(parameters)    
 
     os.makedirs("swarm", exist_ok=True)
     os.chdir("swarm")
@@ -3048,6 +3052,84 @@ def cryolo_3d(
     # clean temporary files
     shutil.rmtree("filtered_tmp")
     os.chdir("..")
+
+
+def ab_initio(parameters):
+    # initilization of ab inito parameters
+    iter = parameters["refine_iter"]
+
+    if iter == 2:
+        all_iters = parameters["refine_maxiter"] - parameters["refine_iter"]
+        # the highest resolution limit for ab inito is 16
+        low_limit = parameters["csp_InitialResolution"]
+        high_limit =  parameters["csp_ResolutionLimit"]
+        res_range = low_limit - high_limit
+        if res_range < 0:
+            raise Exception("Initial resolution limit must be lower than final used resolution")
+        else:
+            step = round(res_range / all_iters, 2)
+            res_limit = [str(low_limit - i * step) for i in np.arange(all_iters + 1)]
+            parameters["refine_rhref"] = ":".join(res_limit)
+            parameters["reconstruct_cutoff"] = "0.1"
+            parameters["refine_skip"] = True
+            parameters["refine_bsc"] = "0.0"
+            parameters["csp_refine_particles"] = False
+            
+            parameters["refine_score_weighting"] = False
+
+    else:
+        parameters["reconstruct_cutoff"] = "1"
+        if iter == 3:
+            parameters["csp_InitialSkip"] = True
+            parameters["csp_refine_particles"] = True
+            parameters["csp_GridSearch"] = True
+            parameters["csp_AngleStep"] = 36
+            parameters["csp_ShiftStep"] = 20
+            parameters["csp_RandomParticles"] = 10
+            parameters["reconstruct_minscore"] = 1
+            parameters["reconstruct_maxscore"] = 50
+        else:
+            parameters["csp_InitialSkip"] = False
+        
+        if parameters["refine_automask"] and iter > 3:
+            classes = int(project_params.param(parameters["class_num"], iter))
+            dataset = parameters["data_set"]
+            # Auto masking as cisTEM way 
+            for ref in range(classes):
+                current_ref = os.path.join(os.getcwd(), "frealign", "maps", "%s_r%02d_%02d.mrc" % (dataset, ref + 1, iter - 1) )
+                voxel_size = float(parameters["scope_pixel"] * parameters["data_bin"] * parameters["extract_bin"])
+                radius = parameters["particle_rad"]
+                mask_file = mrc.auto_masking(current_ref, voxel_size, radius)
+                parameters["refine_maskth"] = mask_file
+    
+        elif iter > 40:
+            parameters["csp_ToleranceParticlesShifts"] = 30
+            parameters["csp_ShiftStep"] = 10
+            parameters["csp_AngleStep"] = 20
+            parameters["csp_RandomParticles"] = 30
+            parameters["refine_bsc"] = "2.0"
+           
+            # start to re-evaluate the score
+            parameters["refine_skip"] = False
+
+        elif iter > 80:
+            parameters["csp_ToleranceParticlesShifts"] = 20
+            parameters["csp_ShiftStep"] = 6
+            parameters["csp_AngleStep"] = 10
+            parameters["csp_RandomParticles"] = 30
+            parameters["refine_bsc"] = "2.0"
+           
+            # start to re-evaluate the score
+            parameters["refine_skip"] = False
+
+        elif iter > 160:
+            parameters["csp_ToleranceParticlesShifts"] = 10
+            parameters["csp_ShiftStep"] = 3
+            parameters["csp_AngleStep"] = 6
+            parameters["csp_RandomParticles"] = 30
+    
+    project_params.save_parameters(parameters)
+
 
 def enable_profiler(parameters=None,path=None):
     if parameters == None:

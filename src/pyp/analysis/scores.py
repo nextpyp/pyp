@@ -573,11 +573,25 @@ def shape_phase_residuals(
                     above_threshold = meanscore >= thresholds[g, f]
                     discarded = ptl_index[above_threshold == False].size
                     if discarded > 0:
-                        logger.info(f"{discarded} particles scores are below the threshold, particles in the following list are removed from reconstruction")
+                        logger.info(f"{discarded} particles scores are below the threshold and being removed from reconstruction")
                     modification_mask = np.isin(input_group[:, ptlindex], ptl_index[above_threshold == False])
 
                     group_mask[group_mask == True] = modification_mask
                     input[group_mask, occ] = 0 
+                    
+                    # enable the score range threshold
+                    input[:, occ] = np.where(
+                        np.logical_and(
+                            np.logical_and(angular_group == g, defocus_group == f),
+                            np.logical_or(
+                                input[:, field] < min_scores[g, f],
+                                input[:, field] > max_scores[g, f],
+                            ),
+                        ),
+                        0,
+                        input[:, occ],
+                    )
+                    number = input[input[:, occ]==0].shape[0]
 
                 else:
                     input[:, occ] = np.where(
@@ -621,14 +635,7 @@ def shape_phase_residuals(
             input[:, occ],
         )
 
-    """
-    else:
-        input[:, field] = np.where(
-            np.logical_or(input[:, 8] < mindefocus, input[:, 8] > maxdefocus),
-            np.nan,
-            input[:, field],
-        )
-    """
+
     # shape accorging to assigned top/side view orientations using mintilt and maxtilt values
     if maxazh < 180 or minazh > 0:
         if scores:
@@ -639,17 +646,6 @@ def shape_phase_residuals(
                 0,
                 input[:, occ],
             )
-        
-        """
-        else:
-            input[:, field] = np.where(
-                np.logical_or(
-                    np.mod(input[:, 2], 180) < minazh, np.mod(input[:, 2], 180) > maxazh
-                ),
-                np.nan,
-                input[:, field],
-            )
-        """
 
     if scores:
 

@@ -2492,6 +2492,12 @@ path = { type="files" }
 input = { type="initialModel" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
+[tabs.refine.automask]
+name = "ab initio auto masking"
+description = "Auto masking during ab initio"
+type = "bool"
+default = false
+
 [tabs.refine.merge_normalize]
 name = "Frame normalization"
 description = "Normalize the voxel and CTF in merge3d by the number of frames"
@@ -3051,6 +3057,91 @@ name = "Optimizer - Tolerance value"
 description = "Tolerance value to use in Powell optimization"
 type = "float"
 default = 0.0001
+
+[tabs.csp.abinitio]
+name = "ab initio"
+description = "Do ab initio"
+type = "bool"
+default = false
+advanced = true
+copyToNewBlock = false
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+
+[tabs.csp.InitialResolution]
+name = "Initial resolution for ab initio"
+description = "Initial resolution used for ab initio"
+type = "float"
+default = 60.0
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+condition = { arg="csp_abinitio", value="true" }
+
+[tabs.csp.ResolutionLimit]
+name = "High resolution limit for ab initio"
+description = "Highest resolution can be used for ab initio"
+type = "float"
+default = 10.0
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+condition = { arg="csp_abinitio", value="true" }
+
+[tabs.csp.InitialSkip]
+name = "Refine - ab initio initialization"
+description = "ab initio initialization"
+type = "bool"
+default = false
+advanced = true
+copyToNewBlock = false
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+condition = { arg="csp_abinitio", value="true" }
+
+[tabs.csp.RandomSkipRatio]
+name = "CSP - Skip ratio in csp for ab initio"
+description = "Ratio to skip for csp random refinement"
+type = "float"
+default = 0.0
+advanced = true
+copyToNewBlock = false
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+condition = { arg="csp_abinitio", value="true" }
+
+[tabs.csp.RandomParticles]
+name = "Refine - Particle number used for ab inito"
+description = "Particles to use in the refinement"
+type = "int"
+default = 10
+advanced = true
+copyToNewBlock = false
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+condition = { arg="csp_abinitio", value="true" }
+
+[tabs.csp.GridSearch]
+name = "Refine - Grid search"
+description = "Use uniform grid search instead of random search"
+type = "bool"
+default = false
+advanced = true
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+copyToNewBlock = false
+condition = { arg="csp_abinitio", value="true" }
+
+[tabs.csp.AngleStep]
+name = "Refine - Angle Step"
+description = "Angle Step for global search (degree)"
+type = "float"
+default = 20
+advanced = true
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+copyToNewBlock = false
+condition = { arg="csp_GridSearch", value="true" }
+
+[tabs.csp.ShiftStep]
+name = "Refine - Shift Step"
+description = "Shift Step for global search (A)"
+type = "float"
+default = 6
+advanced = true
+hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
+copyToNewBlock = false
+condition = { arg="csp_GridSearch", value="true" }
 
 [tabs.csp.refine_micrographs]
 name = "Refine tilt-geometry"
