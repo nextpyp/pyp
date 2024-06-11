@@ -591,7 +591,6 @@ def shape_phase_residuals(
                         0,
                         input[:, occ],
                     )
-                    number = input[input[:, occ]==0].shape[0]
 
                 else:
                     input[:, occ] = np.where(
@@ -607,8 +606,7 @@ def shape_phase_residuals(
                         ),
                         0,
                         input[:, occ],
-                    )
-                    number = input[input[:, occ]==0].shape[0]
+                    )  
 
     if os.path.exists(fmatch_stack):
         logger.info(
