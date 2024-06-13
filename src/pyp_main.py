@@ -3057,7 +3057,7 @@ def cryolo_3d(
 def ab_initio(parameters):
     # initilization of ab inito parameters
     iter = parameters["refine_iter"]
-
+    running_particles = iter * int(parameters["csp_RandomParticles"])
     if iter == 2:
         all_iters = parameters["refine_maxiter"] - parameters["refine_iter"]
         # the highest resolution limit for ab inito is 16
@@ -3074,7 +3074,6 @@ def ab_initio(parameters):
             parameters["refine_skip"] = True
             parameters["refine_bsc"] = "0.0"
             parameters["csp_refine_particles"] = False
-            
             parameters["refine_score_weighting"] = False
 
     else:
@@ -3085,7 +3084,6 @@ def ab_initio(parameters):
             parameters["csp_GridSearch"] = True
             parameters["csp_AngleStep"] = 36
             parameters["csp_ShiftStep"] = 20
-            parameters["csp_RandomParticles"] = 10
             parameters["reconstruct_minscore"] = 1
             parameters["reconstruct_maxscore"] = 50
         else:
@@ -3101,32 +3099,32 @@ def ab_initio(parameters):
                 radius = parameters["particle_rad"]
                 mask_file = mrc.auto_masking(current_ref, voxel_size, radius)
                 parameters["refine_maskth"] = mask_file
-    
-        elif iter > 40:
+
+        if running_particles > 500:
             parameters["csp_ToleranceParticlesShifts"] = 30
+            parameters["reconstruct_cutoff"] = "0"
             parameters["csp_ShiftStep"] = 10
-            parameters["csp_AngleStep"] = 20
-            parameters["csp_RandomParticles"] = 30
+            parameters["csp_AngleStep"] = 30
+            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 10
             parameters["refine_bsc"] = "2.0"
-           
+            parameters["refine_score_weighting"] = True
             # start to re-evaluate the score
             parameters["refine_skip"] = False
 
-        elif iter > 80:
-            parameters["csp_ToleranceParticlesShifts"] = 20
+        if iter > 80:
+            parameters["csp_ToleranceParticlesShifts"] = 6
             parameters["csp_ShiftStep"] = 6
-            parameters["csp_AngleStep"] = 10
-            parameters["csp_RandomParticles"] = 30
+            parameters["csp_AngleStep"] = 20
+            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 10
             parameters["refine_bsc"] = "2.0"
            
             # start to re-evaluate the score
             parameters["refine_skip"] = False
 
-        elif iter > 160:
-            parameters["csp_ToleranceParticlesShifts"] = 10
-            parameters["csp_ShiftStep"] = 3
-            parameters["csp_AngleStep"] = 6
-            parameters["csp_RandomParticles"] = 30
+        elif iter > 140:
+            parameters["csp_ToleranceParticlesShifts"] = 0
+            parameters["csp_AngleStep"] = 10
+            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 10
     
     project_params.save_parameters(parameters)
 

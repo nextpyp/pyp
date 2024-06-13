@@ -435,7 +435,18 @@ def shape_phase_residuals(
                 # find cluster threshold using either percentage of size or absolute number of images
 
                 if threshold == 0:
-                    prs = np.extract(cluster == 1, input[:, field])
+                    
+                    if is_tomo:
+                        bool_array = np.full(input.shape[0], False, dtype=bool)
+                        bool_array[cluster] = True
+                        take_values = np.logical_and(bool_array, np.abs(input[:, tltangle]) <= 12)
+                        used_array = input[take_values]
+                        scores_used = used_array[:, [field, ptlindex]]
+                        pf = pd.DataFrame(scores_used, columns=["score", "pind"])
+                        prs = pf.groupby("pind")["score"].mean()
+                    else:
+                        prs = np.extract(cluster == 1, input[:, field])
+                        
                     optimal_threshold = 1.075 * statistics.optimal_threshold(samples=prs, criteria="optimal")
                     if prs.size > 1:
                         mythreshold = optimal_threshold
