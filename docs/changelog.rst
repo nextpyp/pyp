@@ -4,14 +4,28 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.7.0 (5/24/2024)
+v0.7.0 (6/24/2024)
 ******************
+
+   :fa:`star,text-success` Website can now submit slurm jobs using individual user accounts.
+
+   :fa:`star,text-success` Implement ab-initio refinement strategy for tomography pipeline.
+
+   :fa:`star,text-success` Add option to do automasking during refinement.
+
+   :fa:`star,text-success` Save refinement metadata in cisTEM's binary format (2x speedup during reference-based refinement).
+
+   :fa:`star,text-success` Upgrade to newer version of cisTEM that supports beam tilt refinement and correction.
+
+   :fa:`plus-square,text-primary` Allow selection of a block with a single click in the Run jobs menu.
 
    :fa:`plus-square,text-primary` Move options to reshape images into squares from Reconstruction to Tilt-series alignment tab.
 
-   :fa:`plus-square,text-primary` Add option to import existing tilt-series alignments from *.xf and *.tlt IMOD files.
+   :fa:`plus-square,text-primary` Add option to import existing tilt-series alignments from IMOD files (*.xf and *.tlt).
 
    :fa:`plus-square,text-primary` Add option to save particle stacks for use in external programs.
+
+   :fa:`bug,text-danger` Fix bug in navigation bar for refiement blocks when multiple classes were used.
 
    :fa:`bug,text-danger` Fix bug that prevented launch task parameters from being used when launching sessions.
 
