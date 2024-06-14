@@ -816,7 +816,8 @@ _rlnRandomSubset #19
 _rlnTiltIndex #20"""         
         
         binary_data = pd.DataFrame(self._data, columns=self.HEADER_STRS)
-        
+        ptl_index = np.unique(binary_data[["PIND"]].to_numpy().ravel())
+
         total_ptl = self._data.shape[0]
         length = len(str(total_ptl))
        
@@ -832,8 +833,9 @@ _rlnTiltIndex #20"""
         micrograph_id = np.argwhere(global_imagelist == str(dataset_name).replace(".mrc", ""))[0][0]
         total_micrographs = global_imagelist.shape[0]
         length_m = len(str(total_micrographs))
-
-        groupNum = np.array( [ f"{micrograph_id:0{length_m}d}_{i:0{length}d}" for i in range(total_ptl) ] )
+        length_p = len(str(ptl_index.shape[0]))
+        groupdict = { i : f"{micrograph_id:0{length_m}d}_{int(i):0{length_p}d}" for i in ptl_index }
+        binary_data["Group"] = binary_data["PIND"].map(groupdict)
         
         # parse the ctf b factor (dose weighting)
         ctf_bfac = np.array( [ (i * doseRate)*(-4) for i in binary_data[["TIND"]].to_numpy().ravel() ] )
@@ -847,7 +849,7 @@ _rlnTiltIndex #20"""
         all_other = pd.DataFrame(
             {
                 "OpticsGroup": np.array([1] * total_ptl),
-                "GroupNumber": groupNum, 
+                "GroupNumber": binary_data[["Group"]].to_numpy().ravel() , 
                 "CtfBfactor": ctf_bfac, 
                 "CtfScalefactor": ctf_scaleFactor, 
                 "LOGP": -binary_data[["LOGP"]].to_numpy().ravel(),
