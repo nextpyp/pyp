@@ -104,8 +104,12 @@ EOF
 def ctffind4_movie(movie, parameters, average=4):
 
     logfile = "ctffind4.log"
-
-    ctffind_command = f"{get_frealign_paths()['cistem2']}/ctffind"
+    if "ctffind5" in parameters['ctf_method']:
+        ctffind5 = True
+        ctffind_command = f"{get_frealign_paths()['cistem2']}/ctffind5"
+    else:
+        ctffind5 = False
+        ctffind_command = f"{get_frealign_paths()['cistem2']}/ctffind"
 
     if os.path.exists(movie + ".avg"):
         source = movie + ".avg"
@@ -119,35 +123,211 @@ def ctffind4_movie(movie, parameters, average=4):
     else:
         use_ast = f"yes\n0"
 
+    if parameters["ctf_known_ast"] > 0:
+        known_ast = "Yes"
+        use_restraint_ast = ""
+        known_ast_value = f"{parameters['ctf_known_ast']}\n"
+        known_ast_angle = f"{parameters['ctf_known_ast_angle']}"
+    else:
+        known_ast = "No"
+        use_restraint_ast = "No"
+        known_ast_value= ""
+        known_ast_angle = ""
+
+    if parameters["ctf_determine_tilt"]:
+        determine_tilt = "Yes\n"
+    else:
+        determine_tilt = "No\n"
+
+    if parameters["ctf_determine_thickness"]:
+        determine_thickness = "Yes"
+    else:
+        determine_thickness = "No"
+
+    exhaustive = "No"
+    if parameters["ctf_phase_shift"]:
+        phase_shift = f"Yes\n{parameters['ctf_min_rad']}\n{parameters['ctf_max_rad']}\n{parameters['ctf_ps_step']}"
+        determine_tilt = ""
+    else:    
+        phase_shift = "No"
+    
+    brutal_force = "No"
+    refine2d = "No"
+    
     # use frame average
     if mrc.readHeaderFromFile("ctffind4.mrc")["nz"] < 3:
-        # version 4.1
-        if not parameters["ctf_use_phs"]:
-            if True:
-                # cistem
+        
+        if ctffind5:
+            # ctffind5
+            command = f"""
+{timeout_command(ctffind_command, 600, full_path=True)} > {logfile} 2>&1 << EOF
+{movie}.mrc
+power.mrc
+{parameters['scope_pixel'] * parameters['data_bin']}
+{parameters['scope_voltage']}
+{parameters['scope_cs']}
+{parameters['scope_wgh']}
+{parameters['ctf_tile']}
+{parameters['ctf_min_res']}
+{parameters['ctf_max_res']}
+{parameters['ctf_min_def']}
+{parameters['ctf_max_def']}
+{parameters['ctf_fstep']}
+{known_ast}
+{exhaustive}
+{use_restraint_ast}{known_ast_value}{known_ast_angle}
+{phase_shift}
+{determine_tilt}{determine_thickness}
+{brutal_force}
+{refine2d}
+{30.0}
+{3.0}
+No
+No
+No
+EOF
+""" 
+    
+            """        **   Welcome to Ctffind   **
+
+                Version : 5.0.2
+            Compiled : Mar 28 2024
+        Library Version : 2.0.0-alpha-295-b21db55-dirty
+            From Branch : ctffind5_merge
+                Mode : Interactive
+
+    Input image file name
+    [14sep05c_00024sq_00003hl_00002es.frames.mrc]      : 
+    Output diagnostic image file name
+    [diagnostic_output.mrc]                            : 
+    Pixel size [0.66]                                  : 
+    Acceleration voltage [300.0]                       : 
+    Spherical aberration [2.70]                        : 
+    Amplitude contrast [0.07]                          : 
+    Size of amplitude spectrum to compute [512]        : 
+    Minimum resolution [30.0]                          : 
+    Maximum resolution [5.0]                           : 
+    Minimum defocus [5000.0]                           : 
+    Maximum defocus [50000.0]                          : 
+    Defocus search step [100.0]                        : 
+    Do you know what astigmatism is present? [No]      : 
+    Slower, more exhaustive search? [No]               : 
+    Use a restraint on astigmatism? [No]               : 
+    Find additional phase shift? [No]                  : 
+    Determine sample tilt? [No]                        : 
+    Determine samnple thickness? [No]                  :
+    Use brute force 1D search? [Yes]                   : 
+    Use 2D refinement? [Yes]                           : 
+    Low resolution limit for nodes [30.0]              : 
+    High resolution limit for nodes [3.0]              : 
+    Use rounded square for nodes? [No]                 : 
+    Downweight nodes? [No]                             : 
+    Do you want to set expert options? [No]            : yes
+    Resample micrograph if pixel size too small? [Yes] : 
+    Target pixel size after resampling [1.4]           : 
+    Do you already know the defocus? [No]              : 
+    Weight down low resolution signal? [Yes]           : 
+    Desired number of parallel threads [1]             : 
+            """
+        else:
+            # version 4.1
+            if not parameters["ctf_use_phs"]:
+                if True:
+                    # cistem
+
+                    command = """
+    %s > %s 2>&1 << EOF
+    %s.mrc
+    power.mrc
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    no
+    no
+    %s
+    no
+    no
+    no
+    EOF
+    """ % (
+                        timeout_command(ctffind_command, 600, full_path=True),
+                        logfile,
+                        movie,
+                        parameters["scope_pixel"] * parameters["data_bin"],
+                        parameters["scope_voltage"],
+                        parameters["scope_cs"],
+                        parameters["scope_wgh"],
+                        parameters["ctf_tile"],
+                        parameters["ctf_min_res"],
+                        parameters["ctf_max_res"],
+                        parameters["ctf_min_def"],
+                        parameters["ctf_max_def"],
+                        parameters["ctf_fstep"],
+                        use_ast,
+                    )
+            
+                """
+                # **   Welcome to Ctffind   **
+                #      Version : 4.1.14
+                #      Compiled : Mar 27 2020
+                #  Mode : Interactive
+                #  Input image file name [input.mrc]                  : ctffind4.mrc
+                #  Input is a movie (stack of frames) [No]            : Yes
+                #  Number of frames to average together [1]           : 4
+                #  Output diagnostic image file name
+                #  [diagnostic_output.mrc]                            : power.mrc
+                #  Pixel size [1.0]                                   : 1.08
+                #  Acceleration voltage [300.0]                       : 300
+                #  Spherical aberration [2.70]                        : 2.7
+                #  Amplitude contrast [0.07]                          : 0.07
+                #  Size of amplitude spectrum to compute [512]        : 512
+                #  Minimum resolution [30.0]                          : 15
+                #  Maximum resolution [5.0]                           : 3.5
+                #  Minimum defocus [5000.0]                           : 3500
+                #  Maximum defocus [50000.0]                          : 50000
+                #  Defocus search step [100.0]                        : 250
+                #  Do you know what astigmatism is present? [No]      : No
+                #  Slower, more exhaustive search? [No]               : No
+                #  Use a restraint on astigmatism? [No]               : No
+                #  Find additional phase shift? [No]                  : No
+                #  Determine sample tilt? [No]                        : No
+                #  Do you want to set expert options? [No]            : No
+                """
+            
+            else:
 
                 command = """
-%s > %s 2>&1 << EOF
-%s.mrc
-power.mrc
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-no
-no
-%s
-no
-no
-no
-EOF
-""" % (
+    %s > %s 2>&1 << EOF
+    %s.mrc
+    power.mrc
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    %s
+    no
+    no
+    yes
+    %s
+    yes
+    0.0
+    3.15
+    0.5
+    no
+    EOF
+    """ % (
                     timeout_command(ctffind_command, 600, full_path=True),
                     logfile,
                     movie,
@@ -161,99 +341,32 @@ EOF
                     parameters["ctf_min_def"],
                     parameters["ctf_max_def"],
                     parameters["ctf_fstep"],
-                    use_ast,
+                    parameters["ctf_dast"],
                 )
-
-        # **   Welcome to Ctffind   **
-        #      Version : 4.1.14
-        #      Compiled : Mar 27 2020
-        #  Mode : Interactive
-        #  Input image file name [input.mrc]                  : ctffind4.mrc
-        #  Input is a movie (stack of frames) [No]            : Yes
-        #  Number of frames to average together [1]           : 4
-        #  Output diagnostic image file name
-        #  [diagnostic_output.mrc]                            : power.mrc
-        #  Pixel size [1.0]                                   : 1.08
-        #  Acceleration voltage [300.0]                       : 300
-        #  Spherical aberration [2.70]                        : 2.7
-        #  Amplitude contrast [0.07]                          : 0.07
-        #  Size of amplitude spectrum to compute [512]        : 512
-        #  Minimum resolution [30.0]                          : 15
-        #  Maximum resolution [5.0]                           : 3.5
-        #  Minimum defocus [5000.0]                           : 3500
-        #  Maximum defocus [50000.0]                          : 50000
-        #  Defocus search step [100.0]                        : 250
-        #  Do you know what astigmatism is present? [No]      : No
-        #  Slower, more exhaustive search? [No]               : No
-        #  Use a restraint on astigmatism? [No]               : No
-        #  Find additional phase shift? [No]                  : No
-        #  Determine sample tilt? [No]                        : No
-        #  Do you want to set expert options? [No]            : No
-
-        else:
-
-            command = """
-%s > %s 2>&1 << EOF
-%s.mrc
-power.mrc
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-no
-no
-yes
-%s
-yes
-0.0
-3.15
-0.5
-no
-EOF
-""" % (
-                timeout_command(ctffind_command, 600, full_path=True),
-                logfile,
-                movie,
-                parameters["scope_pixel"] * parameters["data_bin"],
-                parameters["scope_voltage"],
-                parameters["scope_cs"],
-                parameters["scope_wgh"],
-                parameters["ctf_tile"],
-                parameters["ctf_min_res"],
-                parameters["ctf_max_res"],
-                parameters["ctf_min_def"],
-                parameters["ctf_max_def"],
-                parameters["ctf_fstep"],
-                parameters["ctf_dast"],
-            )
-
-    # Input image file name
-    # Output diagnostic filename [diagnostic_output.mrc]
-    # Pixel size                                [0.3185]
-    # Acceleration voltage                       [300.0]
-    # Spherical aberration                         [2.7]
-    # Amplitude contrast                          [0.07]
-    # Size of power spectrum to compute            [512]
-    # Minimum resolution                          [30.0]
-    # Maximum resolution                             [3]
-    # Minimum defocus                           [5000.0]
-    # Maximum defocus                          [50000.0]
-    # Defocus search step                        [500.0]
-    # Do you know what astigmatism is present?      [no]
-    # Slower, more exhaustive search?              [yes]
-    # Use a restraint on astigmatism?              [yes]
-    # Expected (tolerated) astigmatism           [200.0]
-    # Find additional phase shift?                 [yes]
-    # Minimum phase shift (rad)                    [0.0]
-    # Maximum phase shift (rad)                   [3.15]
-    # Phase shift search step                      [0.5]
-    # Do you want to set expert options?             [y]
+        
+                """
+                # Input image file name
+                # Output diagnostic filename [diagnostic_output.mrc]
+                # Pixel size                                [0.3185]
+                # Acceleration voltage                       [300.0]
+                # Spherical aberration                         [2.7]
+                # Amplitude contrast                          [0.07]
+                # Size of power spectrum to compute            [512]
+                # Minimum resolution                          [30.0]
+                # Maximum resolution                             [3]
+                # Minimum defocus                           [5000.0]
+                # Maximum defocus                          [50000.0]
+                # Defocus search step                        [500.0]
+                # Do you know what astigmatism is present?      [no]
+                # Slower, more exhaustive search?              [yes]
+                # Use a restraint on astigmatism?              [yes]
+                # Expected (tolerated) astigmatism           [200.0]
+                # Find additional phase shift?                 [yes]
+                # Minimum phase shift (rad)                    [0.0]
+                # Maximum phase shift (rad)                   [3.15]
+                # Phase shift search step                      [0.5]
+                # Do you want to set expert options?             [y]
+                """
 
     # use movie frames
     else:
@@ -342,10 +455,14 @@ EOF
             with open(logfile, "r") as f:
                 ctffind4 = f.read()
                 logger.info(ctffind4)
-        # parse output and return df1, df2, angast and CC
-        return np.loadtxt("power.txt", comments="#", dtype="f")[[1, 2, 3, 5, 6]]
+        if not ctffind5:
+            # parse output and return df1, df2, angast and CC
+            return np.loadtxt("power.txt", comments="#", dtype="f")[[1, 2, 3, 5, 6]]
+        else:
+            # df1, df2, angast, phaseshift (rad), CC, fit resolution (A), tilt axis, tilt angle, sample thickness (A) 
+            return np.loadtxt("power.txt", comments="#", dtype="f")[[1, 2, 3, 5, 6, 7, 8, 9]]
     except:
-        logger.error("ctffind4 failed, aborting.")
+        logger.error("ctffind failed, aborting.")
         logger.info(error)
         logger.info(output)
         sys.exit(0)
@@ -462,7 +579,7 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
     counts = 0.0
     
     ctf = ctffind4_movie(name, parameters)
-
+    print("TEST HERE", ctf)
     df1 = ctf[0]
     df2 = ctf[1]
     df = (df1 + df2) / 2.0
@@ -496,7 +613,8 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
     f, axarr = plt.subplots(2, figsize=(6, 6))
 
     ctfprof = np.loadtxt("power_avrot.txt", comments="#")
-
+    print("TEST CTF PROFILE")
+    print(ctfprof)
     os.rename("power_avrot.txt", name + "_avgrot.txt")
 
     # determine index of ctf_min_res
