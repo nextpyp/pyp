@@ -579,7 +579,7 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
     counts = 0.0
     
     ctf = ctffind4_movie(name, parameters)
-    print("TEST HERE", ctf)
+
     df1 = ctf[0]
     df2 = ctf[1]
     df = (df1 + df2) / 2.0
@@ -613,8 +613,6 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
     f, axarr = plt.subplots(2, figsize=(6, 6))
 
     ctfprof = np.loadtxt("power_avrot.txt", comments="#")
-    print("TEST CTF PROFILE")
-    print(ctfprof)
     os.rename("power_avrot.txt", name + "_avgrot.txt")
 
     # determine index of ctf_min_res

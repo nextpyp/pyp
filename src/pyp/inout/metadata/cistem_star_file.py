@@ -765,7 +765,7 @@ class Parameters:
                 self._extended.to_binary(possible_extended)
 
 
-    def to_star(self, imagesize, image_binning, micrograph_path, filename):
+    def to_star(self, imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate):
         # convert cistem2 binary to relion conventions star
         OPTICS_HEADER = """
 data_optics
@@ -809,11 +809,11 @@ _rlnDefocusAngle #12
 _rlnPhaseShift #13 
 _rlnOpticsGroup #14 
 _rlnGroupNumber #15 
-_rlnGroupNumber #16 
-_rlnLogLikeliContribution #17 
-_rlnRandomSubset #18 
-_rlnTiltIndex #19
-"""         
+_rlnCtfBfactor #16
+_rlnCtfScalefactor #17
+_rlnLogLikeliContribution #18 
+_rlnRandomSubset #19 
+_rlnTiltIndex #20"""         
         
         binary_data = pd.DataFrame(self._data, columns=self.HEADER_STRS)
         
@@ -828,11 +828,28 @@ _rlnTiltIndex #19
         alignment.loc[:, ["X_SHIFT", "Y_SHIFT"]] = -alignment[["X_SHIFT", "Y_SHIFT"]]
         CTF_info = binary_data[["DEFOCUS_1", "DEFOCUS_2", "DEFOCUS_ANGLE", "PHASE_SHIFT"]]
         
+        # parse group number
+        micrograph_id = np.argwhere(global_imagelist == str(dataset_name).replace(".mrc", ""))[0][0]
+        total_micrographs = global_imagelist.shape[0]
+        length_m = len(str(total_micrographs))
+
+        groupNum = np.array( [ f"{micrograph_id:0{length_m}d}_{i:0{length}d}" for i in range(total_ptl) ] )
+        
+        # parse the ctf b factor (dose weighting)
+        ctf_bfac = np.array( [ (i * doseRate)*(-4) for i in binary_data[["TIND"]].to_numpy().ravel() ] )
+
+        # parse ctfScalefactor
+        tilts_dict = self.get_extended_data().get_tilts()
+        tind_angle_dict = {int(t): tilts_dict[t][0].angle for t in tilts_dict.keys()} 
+        binary_data["Angle"] = binary_data["TIND"].map(tind_angle_dict)
+        ctf_scaleFactor = np.array( [ np.cos(np.radians(angle)) for angle in binary_data[["Angle"]].to_numpy().ravel() ] )
+
         all_other = pd.DataFrame(
             {
                 "OpticsGroup": np.array([1] * total_ptl),
-                "GroupNumber": np.array([1] * total_ptl), 
-                "GroupNumber": np.array([1] * total_ptl), 
+                "GroupNumber": groupNum, 
+                "CtfBfactor": ctf_bfac, 
+                "CtfScalefactor": ctf_scaleFactor, 
                 "LOGP": -binary_data[["LOGP"]].to_numpy().ravel(),
                 "RandomSubset": np.random.randint(1, high=3, size=total_ptl, dtype=int), 
                 "TiltIndex": binary_data[["TIND"]].to_numpy().ravel()
@@ -843,7 +860,7 @@ _rlnTiltIndex #19
         star_columns = pd.concat(columns, axis=1)
 
         star_values = star_columns.to_numpy(dtype=str, copy=True)
-        optics_values = f"opticsGroup1     1    {micrograph_pixelsize}  {voltage}   {cs}    {AC}    {imagesize} 2 \n"
+        optics_values = f"opticsGroup1     1    {micrograph_pixelsize:0.1f}  {voltage}   {cs:.1f}    {AC:0.2f}  {image_pixelsize:0.2f}   {imagesize} 2 \n"
         star_header = OPTICS_HEADER + optics_values + PARTICLES_HEADER
         np.savetxt(filename, star_values, fmt='%s', header=star_header, delimiter="\t", comments='')
     

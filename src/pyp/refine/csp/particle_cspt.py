@@ -376,17 +376,21 @@ def merge_movie_files_in_job_arr(
             logger.info(f"Stack {Path(stack).name} saved to {saved_path}")
 
         save_stacks = True
+        global_image = os.path.join( project_path, mp["data_set"] + ".films" ) 
+        global_imagelist = np.loadtxt(global_image, dtype=str).ravel()
 
         mpi_funcs, mpi_args = [ ], [ ]
         imagesize = mp["extract_box"]
         image_binning = mp["extract_bin"]
+        doseRate = mp["scope_dose_rate"]
 
         for par in par_list:
-            micrograph_path = os.path.join(project_path, "mrc", Path(par).stem.strip("_r01") + ".mrc")
+            micrograph_path = os.path.join(project_path, "mrc", Path(par).stem.split("_r01")[0] + ".mrc")
+
             filename = os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".star")) 
             # par_obj = Parameters.from_file(par)
-            # par_obj.to_star(imagesize, image_binning, micrograph_path, filename)
-            mpi_args.append([(Parameters.from_file(par), imagesize, image_binning, micrograph_path, filename)])
+            # par_obj.to_star(imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate)
+            mpi_args.append([(Parameters.from_file(par), imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate)])
             mpi_funcs.append(Parameters.to_star)
 
         mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=mp["slurm_verbose"], silent=True)
