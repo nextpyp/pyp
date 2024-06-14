@@ -3105,26 +3105,25 @@ def ab_initio(parameters):
             parameters["reconstruct_cutoff"] = "0"
             parameters["csp_ShiftStep"] = 10
             parameters["csp_AngleStep"] = 30
-            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 10
             parameters["refine_bsc"] = "2.0"
             parameters["refine_score_weighting"] = True
             # start to re-evaluate the score
             parameters["refine_skip"] = False
 
-        if iter > 80:
+        if iter == 80:
             parameters["csp_ToleranceParticlesShifts"] = 6
             parameters["csp_ShiftStep"] = 6
             parameters["csp_AngleStep"] = 20
-            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 10
+            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 30
             parameters["refine_bsc"] = "2.0"
            
             # start to re-evaluate the score
             parameters["refine_skip"] = False
 
-        elif iter > 140:
+        elif iter == 140:
             parameters["csp_ToleranceParticlesShifts"] = 0
             parameters["csp_AngleStep"] = 10
-            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 10
+            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 30
     
     project_params.save_parameters(parameters)
 
