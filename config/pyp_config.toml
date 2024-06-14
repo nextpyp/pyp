@@ -610,6 +610,13 @@ type = "bool"
 default = true
 hidden = true
 
+[tabs.ctf.method]
+name = "CTF estimation method"
+description = "Which CTF estimation method to use"
+type = "enum"
+enum = { ctffind4="ctffind4", ctffind5="ctffind5" }
+default = "ctffind5"
+
 [tabs.ctf.min_res]
 name = "Min resolution (A)"
 description = "Minimum resolution used for CTF estimation"
@@ -686,6 +693,57 @@ description = "Tilt angles with absolute values higher than this number will not
 type = "float"
 default = 50.0
 hidden = [ "stream_spr", "spr_pre_process" ]
+
+[tabs.ctf.phase_shift]
+name = "Find phase shift"
+description = "Find additional phase shift"
+type = "bool"
+default = false
+
+[tabs.ctf.min_rad]
+name = "Min phase shift (rad)"
+description = "Minimum phase shift"
+type = "float"
+default = 0.0
+condition={ arg="ctf_phase_shift", value="true" }
+
+[tabs.ctf.max_rad]
+name = "Max phase shift (rad)"
+description = "Maximum phase shift"
+type = "float"
+default = 0.0
+condition={ arg="ctf_phase_shift", value="true" }
+
+[tabs.ctf.ps_step]
+name = "phase shift search step"
+description = "phase shift search step"
+type = "float"
+default = 0.0
+condition={ arg="ctf_phase_shift", value="true" }
+
+[tabs.ctf.determine_tilt]
+name = "Detect tilt axis and angle"
+description = "Image tilt axis and tilt angle estimation"
+type = "bool"
+default = false
+
+[tabs.ctf.determine_thickness]
+name = "Detect sample thickness"
+description = "Sample thickness estimation"
+type = "bool"
+default = false
+
+[tabs.ctf.known_ast]
+name = "Known astigmatism"
+description = "Astigmatism values (Angstrom)"
+type = "float"
+default = 0.0
+
+[tabs.ctf.known_ast_angle]
+name = "Known astigmatism angle"
+description = "Astigmatism angle values (degree)"
+type = "float"
+default = 0.0
 
 # Particle detection parameters
 
@@ -2319,7 +2377,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine Phi angle"
 description = "Refine angle parameter Phi"
 type = "bool"
-default = true
+default = false
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -2327,7 +2385,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine Theta angle"
 description = "Refine angle parameter Theta"
 type = "bool"
-default = true
+default = false
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -2335,7 +2393,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine Psi angle"
 description = "Refine angle parameter Psi"
 type = "bool"
-default = true
+default = false
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -2343,7 +2401,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine X shifts"
 description = "Refine translation in the X dimension"
 type = "bool"
-default = true
+default = false
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -2351,7 +2409,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine Y shifts"
 description = "Refine translation in the Y dimension"
 type = "bool"
-default = true
+default = false
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -3079,7 +3137,7 @@ condition = { arg="csp_abinitio", value="true" }
 name = "High resolution limit for ab initio"
 description = "Highest resolution can be used for ab initio"
 type = "float"
-default = 10.0
+default = 16.0
 hidden = ['spr_flexible_refine', 'tomo_flexible_refine' ]
 condition = { arg="csp_abinitio", value="true" }
 
