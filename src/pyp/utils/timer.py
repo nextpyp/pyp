@@ -54,7 +54,22 @@ class Timer(ContextDecorator):
         self._start_time = None
 
         if self.logger:
-            self.logger(self.text.format(time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time))))
+            days = elapsed_time // (24 * 3600)
+            timed = elapsed_time % (24 * 3600)
+            hours = timed // 3600
+            timed %= 3600
+            minutes = timed // 60
+            timed %= 60
+            seconds = timed
+            if days > 0:
+                self.logger(self.text.format("%dd %dh %dm %ds" % (days, hours, minutes, seconds)))
+            elif hours > 0:
+                self.logger(self.text.format("%dh %dm %ds" % (hours, minutes, seconds)))
+            elif minutes > 0:
+                self.logger(self.text.format("%dm %ds" % (minutes, seconds)))
+            else:
+                self.logger(self.text.format("%ds" % (seconds)))
+                
         if self.name:
             self.timers[self.name]["elapsed_time"] += elapsed_time
             self.timers[self.name]["end_time"] = str(datetime.datetime.now())
