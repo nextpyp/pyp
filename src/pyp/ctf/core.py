@@ -158,9 +158,51 @@ def ctffind4_movie(movie, parameters, average=4):
     if mrc.readHeaderFromFile("ctffind4.mrc")["nz"] < 3:
         
         if ctffind5:
+
+            """        
+    **   Welcome to Ctffind   **
+
+            Version : 5.0.2
+        Compiled : Mar 28 2024
+    Library Version : 2.0.0-alpha-295-b21db55-dirty
+        From Branch : ctffind5_merge
+            Mode : Interactive
+
+Input image file name
+[14sep05c_00024sq_00003hl_00002es.frames.mrc]      : 
+Output diagnostic image file name
+[diagnostic_output.mrc]                            : 
+Pixel size [0.66]                                  : 
+Acceleration voltage [300.0]                       : 
+Spherical aberration [2.70]                        : 
+Amplitude contrast [0.07]                          : 
+Size of amplitude spectrum to compute [512]        : 
+Minimum resolution [30.0]                          : 
+Maximum resolution [5.0]                           : 
+Minimum defocus [5000.0]                           : 
+Maximum defocus [50000.0]                          : 
+Defocus search step [100.0]                        : 
+Do you know what astigmatism is present? [No]      : 
+Slower, more exhaustive search? [No]               : 
+Use a restraint on astigmatism? [No]               : 
+Find additional phase shift? [No]                  : 
+Determine sample tilt? [No]                        : 
+Determine samnple thickness? [No]                  :
+Use brute force 1D search? [Yes]                   : 
+Use 2D refinement? [Yes]                           : 
+Low resolution limit for nodes [30.0]              : 
+High resolution limit for nodes [3.0]              : 
+Use rounded square for nodes? [No]                 : 
+Downweight nodes? [No]                             : 
+Do you want to set expert options? [No]            : yes
+Resample micrograph if pixel size too small? [Yes] : 
+Target pixel size after resampling [1.4]           : 
+Do you already know the defocus? [No]              : 
+Weight down low resolution signal? [Yes]           : 
+Desired number of parallel threads [1]             : 
+            """
             # ctffind5
-            command = f"""
-{timeout_command(ctffind_command, 600, full_path=True)} > {logfile} 2>&1 << EOF
+            command = f"""{timeout_command(ctffind_command, 600, full_path=True)} > {logfile} 2>&1 << EOF
 {movie}.mrc
 power.mrc
 {parameters['scope_pixel'] * parameters['data_bin']}
@@ -186,49 +228,7 @@ No
 No
 No
 EOF
-""" 
-    
-            """        **   Welcome to Ctffind   **
-
-                Version : 5.0.2
-            Compiled : Mar 28 2024
-        Library Version : 2.0.0-alpha-295-b21db55-dirty
-            From Branch : ctffind5_merge
-                Mode : Interactive
-
-    Input image file name
-    [14sep05c_00024sq_00003hl_00002es.frames.mrc]      : 
-    Output diagnostic image file name
-    [diagnostic_output.mrc]                            : 
-    Pixel size [0.66]                                  : 
-    Acceleration voltage [300.0]                       : 
-    Spherical aberration [2.70]                        : 
-    Amplitude contrast [0.07]                          : 
-    Size of amplitude spectrum to compute [512]        : 
-    Minimum resolution [30.0]                          : 
-    Maximum resolution [5.0]                           : 
-    Minimum defocus [5000.0]                           : 
-    Maximum defocus [50000.0]                          : 
-    Defocus search step [100.0]                        : 
-    Do you know what astigmatism is present? [No]      : 
-    Slower, more exhaustive search? [No]               : 
-    Use a restraint on astigmatism? [No]               : 
-    Find additional phase shift? [No]                  : 
-    Determine sample tilt? [No]                        : 
-    Determine samnple thickness? [No]                  :
-    Use brute force 1D search? [Yes]                   : 
-    Use 2D refinement? [Yes]                           : 
-    Low resolution limit for nodes [30.0]              : 
-    High resolution limit for nodes [3.0]              : 
-    Use rounded square for nodes? [No]                 : 
-    Downweight nodes? [No]                             : 
-    Do you want to set expert options? [No]            : yes
-    Resample micrograph if pixel size too small? [Yes] : 
-    Target pixel size after resampling [1.4]           : 
-    Do you already know the defocus? [No]              : 
-    Weight down low resolution signal? [Yes]           : 
-    Desired number of parallel threads [1]             : 
-            """
+"""
         else:
             # version 4.1
             if not parameters["ctf_use_phs"]:
