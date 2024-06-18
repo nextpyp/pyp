@@ -134,13 +134,8 @@ def ctffind4_movie(movie, parameters, average=4):
         known_ast_value= ""
         known_ast_angle = ""
 
-    if parameters["ctf_determine_tilt"]:
-        determine_tilt = "Yes\n"
-    else:
-        determine_tilt = "No\n"
-
     if parameters["ctf_determine_thickness"]:
-        determine_thickness = "Yes"
+        determine_thickness = "Yes\nNo\nNo\n30.0\n3.0\nNo\nNo"
     else:
         determine_thickness = "No"
 
@@ -150,9 +145,12 @@ def ctffind4_movie(movie, parameters, average=4):
         determine_tilt = ""
     else:    
         phase_shift = "No"
+        if parameters["ctf_determine_tilt"]:
+            determine_tilt = "Yes\n"
+        else:
+            determine_tilt = "No\n"
     
-    brutal_force = "No"
-    refine2d = "No"
+
     
     # use frame average
     if mrc.readHeaderFromFile("ctffind4.mrc")["nz"] < 3:
@@ -187,14 +185,14 @@ Slower, more exhaustive search? [No]               :
 Use a restraint on astigmatism? [No]               : 
 Find additional phase shift? [No]                  : 
 Determine sample tilt? [No]                        : 
-Determine samnple thickness? [No]                  :
+Determine samnple thickness? [No]                  :Yes
 Use brute force 1D search? [Yes]                   : 
 Use 2D refinement? [Yes]                           : 
 Low resolution limit for nodes [30.0]              : 
 High resolution limit for nodes [3.0]              : 
 Use rounded square for nodes? [No]                 : 
 Downweight nodes? [No]                             : 
-Do you want to set expert options? [No]            : yes
+Do you want to set expert options? [No]            : Yes
 Resample micrograph if pixel size too small? [Yes] : 
 Target pixel size after resampling [1.4]           : 
 Do you already know the defocus? [No]              : 
@@ -220,13 +218,12 @@ power.mrc
 {use_restraint_ast}{known_ast_value}{known_ast_angle}
 {phase_shift}
 {determine_tilt}{determine_thickness}
-{brutal_force}
-{refine2d}
-{30.0}
-{3.0}
+Yes
+Yes
+1.4
 No
-No
-No
+Yes
+{parameters["slurm_tasks"]}
 EOF
 """
         else:
@@ -441,12 +438,13 @@ EOF
     #  Do you want to set expert options? [No]            : No
 
     # make sure ctffind runs in parallel
-    command = (
-        "export OMP_NUM_THREADS={0}; export NCPUS={0}; ".format(
-            parameters["slurm_tasks"]
+    if not "ctffind5"  in parameters["ctf_method"]:
+        command = (
+            "export OMP_NUM_THREADS={0}; export NCPUS={0}; ".format(
+                parameters["slurm_tasks"]
+            )
+            + command
         )
-        + command
-    )
     
     [ output, error ] = local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
@@ -1498,6 +1496,7 @@ EOF
         tilt_axis,
     )
 
+  
     command_not_determine_tilt = """
 %s > %s 2>&1 << EOF
 %s.mrc
@@ -1539,16 +1538,54 @@ EOF
         parameters["ctf_fstep"],
     )
 
+    if "ctffind5"  in parameters["ctf_method"]:
+        ctffind_command = f"{get_frealign_paths()['cistem2']}/ctffind5"
+
+        determine_tilt = "Yes"
+        determine_thickness = "Yes"
+        # ctffind5
+        ctffind5_command = f"""{timeout_command(ctffind_command, 800, full_path=True)} > {logfile_notilt} 2>&1 << EOF
+{imagefile + ".mrc"}
+{output_spectra_notilt}
+{parameters['scope_pixel'] * parameters['data_bin']}
+{parameters['scope_voltage']}
+{parameters['scope_cs']}
+{parameters['scope_wgh']}
+{parameters['ctf_tile']}
+{parameters['ctf_min_res']}
+{parameters['ctf_max_res']}
+{parameters['ctf_min_def']}
+{parameters['ctf_max_def']}
+{parameters['ctf_fstep']}
+No
+No
+No
+No
+{determine_tilt}
+{determine_thickness}
+No
+No
+{30.0}
+{3.0}
+No
+No
+No
+EOF
+        """
+    else:
+        ctffind5_command = ""
+
     # We run two different per-tilt ctf estimation on the same image, and choose the best one based on
     # estimated resolution and cc
-    for estimation in [command_determine_tilt]: #, command_not_determine_tilt]:
+    for estimation in [command_determine_tilt, ctffind5_command]: #, command_not_determine_tilt]:
 
         command = estimation
+
         if estimation == command_determine_tilt:
             output_spectra = output_spectra_tilt
             logfile = logfile_tilt
             avrot = avrot_tilt
-        elif estimation == command_not_determine_tilt:
+        elif estimation == ctffind5_command:
             output_spectra = output_spectra_notilt
             logfile = logfile_notilt
             avrot = avrot_notilt
