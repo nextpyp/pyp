@@ -699,51 +699,56 @@ name = "Find phase shift"
 description = "Find additional phase shift"
 type = "bool"
 default = false
+condition={ arg="method", value="ctffind5" }
 
 [tabs.ctf.min_rad]
 name = "Min phase shift (rad)"
 description = "Minimum phase shift"
 type = "float"
 default = 0.0
-condition={ arg="ctf_phase_shift", value="true" }
+condition={ arg="phase_shift", value="true" }
 
 [tabs.ctf.max_rad]
 name = "Max phase shift (rad)"
 description = "Maximum phase shift"
 type = "float"
 default = 0.0
-condition={ arg="ctf_phase_shift", value="true" }
+condition={ arg="phase_shift", value="true" }
 
 [tabs.ctf.ps_step]
-name = "phase shift search step"
-description = "phase shift search step"
+name = "Search step"
+description = "Phase shift search step"
 type = "float"
 default = 0.0
-condition={ arg="ctf_phase_shift", value="true" }
+condition={ arg="phase_shift", value="true" }
 
 [tabs.ctf.determine_tilt]
 name = "Detect tilt axis and angle"
 description = "Image tilt axis and tilt angle estimation"
 type = "bool"
 default = false
+condition={ arg="method", value="ctffind5" }
 
 [tabs.ctf.determine_thickness]
 name = "Detect sample thickness"
 description = "Sample thickness estimation"
 type = "bool"
 default = false
+condition={ arg="method", value="ctffind5" }
 
 [tabs.ctf.known_ast]
 name = "Known astigmatism"
 description = "Astigmatism values (Angstrom)"
 type = "float"
 default = 0.0
+condition={ arg="method", value="ctffind5" }
 
 [tabs.ctf.known_ast_angle]
 name = "Known astigmatism angle"
 description = "Astigmatism angle values (degree)"
 type = "float"
 default = 0.0
+condition={ arg="method", value="ctffind5" }
 
 # Particle detection parameters
 
