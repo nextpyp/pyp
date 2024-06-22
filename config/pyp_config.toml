@@ -3225,7 +3225,7 @@ default = 0.0001
 name = "Ab initio refinement"
 description = "Enable ab initio refinement"
 type = "bool"
-default = true
+default = false
 copyToNewBlock = false
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
 
