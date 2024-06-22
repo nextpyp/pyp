@@ -1580,6 +1580,9 @@ EOF
     for estimation in [command_determine_tilt, ctffind5_command]: #, command_not_determine_tilt]:
 
         command = estimation
+        
+        if not len(command):
+            continue
 
         if estimation == command_determine_tilt:
             output_spectra = output_spectra_tilt
