@@ -163,6 +163,36 @@ def create_milo_swarm_file(parameters, timestamp, swarm_file="miloeval.swarm"):
     return swarm_file
 
 
+def create_tomohalf_swarm_file(parameters, files, timestamp, swarm_file="cryocare.swarm"):
+    # enable Nvidia GPU?
+    gpu = needs_gpu(parameters)
+
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+
+        f.write(
+            "\n".join(
+                [
+                    "cd '{4}/swarm'; export {3}={3}; {0} --file {2} --path '{4}' 2>&1 | tee ../log/{2}.log".format(
+                        run_pyp(
+                            command="pyp",
+                            script=True,
+                            cpus=parameters["slurm_tasks"],
+                            gpu=gpu,
+                        ),
+                        timestamp,
+                        s,
+                        "cryocare",
+                        os.getcwd(),
+                    )
+                    for s in files
+                ]
+            )
+        )
+        f.write("\n")
+
+    return swarm_file, gpu
+
+
 def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swarm"):
     f = open(swarm_file, "w")
     f.write(

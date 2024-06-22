@@ -1392,18 +1392,18 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
         square_enabled = True
     else:
         square_enabled = False
-    squares = [ "%s_%04d_square.mrc"%(name, idx) for idx in range(z) ]
+    
     if len(aligned_tilts) > 0:
         from_frames = True
         # make individual tilted images squares
-        for tilt in aligned_tilts:
+        for i, tilt in enumerate(aligned_tilts):
             if square_enabled:
-                command = "{0}/bin/newstack {1} {2}_square.mrc -size {3},{3} -taper 1,1 -bin {4}".format(
-                    get_imod_path(), tilt, tilt.replace(".mrc", ""), int(square / binning), binning
+                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4}".format(
+                    get_imod_path(), tilt, name, int(square / binning), binning, i
                 )
             else:
-                command = "{0}/bin/newstack {1} {2}_square.mrc -taper 1,1 -bin {3}".format(
-                    get_imod_path(), tilt, tilt.replace(".mrc", ""), binning
+                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -taper 1,1 -bin {3}".format(
+                    get_imod_path(), tilt, name, binning, i
                 )
             commands.append(command)
     else:
@@ -1417,6 +1417,8 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
                     get_imod_path(), tilt_idx, name, binning
                 )
             commands.append(command)
+
+    squares = [ "%s_%04d_square.mrc"%(name, idx) for idx in range(z) ]
 
     from pyp.system import mpi
     mpi.submit_jobs_to_workers(commands, os.getcwd())
@@ -1457,7 +1459,7 @@ def get_tilt_axis_angle(name, parameters):
     return axis / counter
 
 
-def generate_aligned_tiltseries(name, parameters, tilt_metadata):
+def generate_aligned_tiltseries(name, parameters):
 
     # align unbinned data
     sec = 0 

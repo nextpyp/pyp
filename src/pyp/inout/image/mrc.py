@@ -1048,6 +1048,24 @@ def auto_masking(input_volume, voxel_size, radius):
     return mask_file
 
 
+def generate_cuboid_mask(input, mask_shape, outputname):
+    """
+    generate a mask covering the center of the input volume with size of mask size
+    """
+    volume_shape = read(input).shape()
+    mask_volume = numpy.zeros(volume_shape)
+    start_indices = [(v - m) // 2 for v, m in zip(volume_shape, mask_shape)]
+    mask_volume[
+    start_indices[0]:start_indices[0] + mask_shape[0],
+    start_indices[1]:start_indices[1] + mask_shape[1],
+    start_indices[2]:start_indices[2] + mask_shape[2]
+    ] = 1
+    header = readHeaderFromFile(input)
+    write(mask_volume, outputname, header=header)
+    
+    return outputname
+
+
 if __name__ == "__main__":
     testHeader()
     # testWrite()

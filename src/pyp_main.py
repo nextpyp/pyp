@@ -48,7 +48,7 @@ from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
 from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
-from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required
+from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
@@ -922,8 +922,9 @@ def split(parameters):
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or "train" in parameters["tomo_spk_method"] )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
         milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"] 
+        cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_rec_denoise"] 
 
-        if gpu or tomo_train or spr_train or milo_eval:
+        if gpu or tomo_train or spr_train or milo_eval or cryocare:
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
@@ -972,6 +973,26 @@ def split(parameters):
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
             ).strip()
+        elif cryocare:
+            tomohalf_swarm_file, _ = slurm.create_tomohalf_swarm_file(parameters, files, timestamp)
+
+            # submit swarm jobs
+            id_cryocare = slurm.submit_jobs(
+                "swarm",
+                tomohalf_swarm_file,
+                jobtype="cryocare",
+                jobname="cryoCARE (gpu)",
+                queue=partition_name,
+                scratch=0,
+                threads=parameters["slurm_tasks"],
+                memory=parameters["slurm_memory"],
+                gres=parameters["slurm_gres"],
+                account=parameters.get("slurm_account"),
+                walltime=parameters["slurm_walltime"],
+                tasks_per_arr=parameters["slurm_bundle_size"],
+                use_gpu=gpu,
+            ).strip()
+
         else:
             id_train = ""
 
@@ -1560,7 +1581,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
         t = timer.Timer(text="Apply alignment to tiltseries took: {}", logger=logger.info)
         t.start()
-        generate_aligned_tiltseries(name, parameters, tilt_metadata)
+        generate_aligned_tiltseries(name, parameters)
         t.stop()
 
     # Refined tilt angles
@@ -1639,7 +1660,10 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # erase fiducials if needed
     if parameters["tomo_ali_method"] == "imod_gold":
-        gold_mod = "f{name}_gold.mod"
+
+        preprocess.erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y)
+        """
+        gold_mod = f"{name}_gold.mod"
 
         if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
             # create binned aligned stack
@@ -1679,6 +1703,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
             # re-calculate reconstruction using gold-erased tilt-series
             merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
+        """
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
@@ -4103,6 +4128,27 @@ if __name__ == "__main__":
                 trackback()
                 logger.error("PYP (miloeval) failed")
                 pass
+        
+        elif "cryocare" in os.environ:
+            del os.environ["cryocare"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                args = project_params.parse_arguments("tomoswarm")
+                cryocare.tomo_swarm_half(args.path, args.file)
+                logger.info("PYP (cryocare) finished successfully")
+            except:
+                trackback()
+                logger.error("PYP (cryocare) failed")
+                pass
+
+            # we are done, clear local scratch
+            if False  and os.path.exists(os.environ["PYP_SCRATCH"]):
+                shutil.rmtree(os.environ["PYP_SCRATCH"])
+
 
         # check gain reference
         elif "pypgain" in os.environ:

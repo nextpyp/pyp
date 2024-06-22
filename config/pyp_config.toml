@@ -1731,11 +1731,12 @@ type = "int"
 default = 5
 condition = { arg="aretomo_sart", value="true" }
 
-[tabs.tomo_rec.topaz_denoise]
-name = "Denoise tomograms using Topaz denoise"
-description = "Denoise tomograms using Topaz pre-trained model"
-type = "bool"
-default = false
+[tabs.tomo_rec.denoise]
+name = "Denoise tomograms methods"
+description = "Denoise tomograms with selected method"
+type = "enum"
+enum = {topaz="topaz", cryocare="cryocare", isonet="isonet", none="none"}
+default = "none"
 
 [tabs.tomo_rec.topaz_model]
 name = "Pre-train model"
@@ -1743,35 +1744,133 @@ description = "Pre-trained model to use for denoising"
 type = "enum"
 enum = { unet-3d-10a="unet-3d-10a", unet-3d="unet-3d", unet-3d-20a="unet-3d-20a" }
 default = "unet-3d-10a"
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="denoise", value="topaz" }
 
 [tabs.tomo_rec.topaz_gaussian]
 name = "Gaussian filter"
 description = "Standard deviation of Gaussian filter for post-processing (0 means no postprocessing)"
 type = "float"
 default = 0.0
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="denoise", value="topaz" }
 
 [tabs.tomo_rec.topaz_patch_size]
 name = "Patch size"
 description = "Denoises volumes in patches of this size"
 type = "int"
 default = 96
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="denoise", value="topaz" }
 
 [tabs.tomo_rec.topaz_patch_padding]
 name = "Patch padding size"
 description = "Padding around each patch to remove edge artifacts"
 type = "int"
 default = 48
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="denoise", value="topaz" }
 
 [tabs.tomo_rec.topaz_use_gpu]
 name = "Use GPU"
 description = "Request a GPU to run Topaz denoise"
 type = "bool"
 default = false
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="denoise", value="topaz" }
+
+[tabs.tomo_rec.masksize]
+name = "Mask shape"
+description = "Mask shape in x,y,z covering the center of tomogram"
+type = "str"
+default = "0,0,0"
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_patch]
+name = "Patch shape"
+description = "Per dimension size of the sub-volumes used for training. (Cubic shape >= 64x64x64)"
+type = "int"
+default = 72
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_slices]
+name = "Number of slices"
+description = "Number of sub-volumes extracted per tomograms."
+type = "int"
+default = 1200
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_split]
+name = "Split ratio"
+description = "Train/Validation ratio."
+type = "float"
+default = 0.9
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_samples]
+name = "Number subtomograms for normalization statistics"
+description = "Number of sub-volumes extracted per tomograms used to compute mean and standard deviation for normalization"
+type = "int"
+default = 500
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_epochs]
+name = "Number of epochs (train)"
+description = "Number of epochs used to train the network."
+type = "int"
+default = 100
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_steps]
+name = "Gradient steps (train)"
+description = "Number of gradient steps performed per epoch."
+type = "int"
+default = 200
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_batchsize]
+name = "Batch size (train)"
+description = "Used training batch size."
+type = "int"
+default = 16
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_kern]
+name = "Kernel size (train)"
+description = "Convolution kernel size of the U-Net. Has to be an odd number."
+type = "int"
+default = 3
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_depth]
+name = "Unet depth (train)"
+description = "Depth of the U-Net."
+type = "int"
+default = 3
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_nfirst]
+name = "Initial feature channels (train)"
+description = "Number of initial feature channels."
+type = "int"
+default = 16
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_lr]
+name = "Learning rate (train)"
+description = "Learning rate of the model training."
+type = "float"
+default = 0.0004
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_tiles]
+name = "Initial tiles (prediction)"
+description = "Initial tiles per dimension."
+type = "int"
+default = 1
+condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.cryocare_overwrite]
+name = "Overwrite tomograms (prediction)"
+description = "Allow previous tomograms to be overwritten."
+type = "bool"
+default = false
+condition = { arg="denoise", value="cryocare" }
 
 [tabs.tomo_vir]
 _name = "Virion/spike detection"
@@ -3126,7 +3225,7 @@ default = 0.0001
 name = "Ab initio refinement"
 description = "Enable ab initio refinement"
 type = "bool"
-default = false
+default = true
 copyToNewBlock = false
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
 
