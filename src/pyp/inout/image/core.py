@@ -868,6 +868,8 @@ def get_image_dimensions(name):
 
     command = "{0}/bin/header -size '{1}'".format(get_imod_path(), name)
     [output, error] = run_shell_command(command, verbose=False)
+    if "ERROR" in output:
+        logger.error(output)
     return [int(num) for num in output.split()]
 
 
