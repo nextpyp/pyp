@@ -382,7 +382,7 @@ def read_tilt_series(
 
             # read image dimensions
             [micrographinfo, error] = local_run.run_shell_command(
-                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=parameters["slurm_verbose"]
+                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=False
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
@@ -745,7 +745,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         or scaling > 1.01
         or int(mparameters["extract_box"]) != model_box_size
     ):
-        logger.warning(f"Rescaling {initial_model} by {1/scaling:.2f}x to pixel size {model_pixel_size/scaling:.2f}")
+        logger.warning(f"Rescaling reference ({initial_model}) {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
         command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
             get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, initial_model,
         )

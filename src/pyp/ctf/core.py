@@ -233,27 +233,27 @@ EOF
                     # cistem
 
                     command = """
-    %s > %s 2>&1 << EOF
-    %s.mrc
-    power.mrc
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    no
-    no
-    %s
-    no
-    no
-    no
-    EOF
-    """ % (
+%s > %s 2>&1 << EOF
+%s.mrc
+power.mrc
+%s
+%s
+%s
+%s
+%s
+%s
+%s
+%s
+%s
+%s
+no
+no
+%s
+no
+no
+no
+EOF
+""" % (
                         timeout_command(ctffind_command, 600, full_path=True),
                         logfile,
                         movie,
@@ -301,30 +301,30 @@ EOF
             else:
 
                 command = """
-    %s > %s 2>&1 << EOF
-    %s.mrc
-    power.mrc
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    %s
-    no
-    no
-    yes
-    %s
-    yes
-    0.0
-    3.15
-    0.5
-    no
-    EOF
-    """ % (
+%s > %s 2>&1 << EOF
+%s.mrc
+power.mrc
+%s
+%s
+%s
+%s
+%s
+%s
+%s
+%s
+%s
+%s
+no
+no
+yes
+%s
+yes
+0.0
+3.15
+0.5
+no
+EOF
+""" % (
                     timeout_command(ctffind_command, 600, full_path=True),
                     logfile,
                     movie,
@@ -1538,13 +1538,14 @@ EOF
         parameters["ctf_fstep"],
     )
 
-    if "ctffind5"  in parameters["ctf_method"]:
+    if "ctffind5" in parameters["ctf_method"]:
         ctffind_command = f"{get_frealign_paths()['cistem2']}/ctffind5"
 
         determine_tilt = "Yes"
         determine_thickness = "Yes"
         # ctffind5
-        ctffind5_command = f"""{timeout_command(ctffind_command, 800, full_path=True)} > {logfile_notilt} 2>&1 << EOF
+        ctffind5_command = f"""
+{timeout_command(ctffind_command, 800, full_path=True)} > {logfile_notilt} 2>&1 << EOF
 {imagefile + ".mrc"}
 {output_spectra_notilt}
 {parameters['scope_pixel'] * parameters['data_bin']}
@@ -1571,7 +1572,7 @@ No
 No
 No
 EOF
-        """
+"""
     else:
         ctffind5_command = ""
 
@@ -1580,6 +1581,9 @@ EOF
     for estimation in [command_determine_tilt, ctffind5_command]: #, command_not_determine_tilt]:
 
         command = estimation
+        
+        if not len(command):
+            continue
 
         if estimation == command_determine_tilt:
             output_spectra = output_spectra_tilt
@@ -1594,7 +1598,6 @@ EOF
 
         # suppress long log
         [output, error] = local_run.run_shell_command(command, verbose=False)
-
         assert Path(logfile).exists(), f"{logfile} does not exist. CTFFIND_TILT fails to run."
 
         with open(logfile, 'r') as f:

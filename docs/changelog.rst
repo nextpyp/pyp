@@ -7,11 +7,19 @@ Changelog
 v0.7.0 (6/24/2024)
 ******************
 
+   :fa:`star,text-success` Incorporated external program IsoNet for denoising tomograms.
+
+   :fa:`star,text-success` Incorporated external program cryoCARE for denoising tomograms.
+
+   :fa:`star,text-success` Incorporated CTF estimation using CTFFIND5.
+
    :fa:`star,text-success` Website can now submit slurm jobs using individual user accounts.
 
    :fa:`star,text-success` Implement ab-initio refinement strategy for tomography pipeline.
 
    :fa:`star,text-success` Add option to do automasking during refinement.
+
+   :fa:`star,text-success` Molecular pattern mining and particle localization (MiLoPYP).
 
    :fa:`star,text-success` Save refinement metadata in cisTEM's binary format (2x speedup during reference-based refinement).
 

@@ -343,7 +343,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -Gpu {get_gpu_id()}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
-    if parameters["tomo_rec_topaz_denoise"]:
+    if parameters.get("tomo_rec_topaz_denoise"):
 
         """
         usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]

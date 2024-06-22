@@ -2481,7 +2481,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine Phi angle"
 description = "Refine angle parameter Phi"
 type = "bool"
-default = false
+default = true
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -2489,7 +2489,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine Theta angle"
 description = "Refine angle parameter Theta"
 type = "bool"
-default = false
+default = true
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -2497,7 +2497,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine Psi angle"
 description = "Refine angle parameter Psi"
 type = "bool"
-default = false
+default = true
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -2505,7 +2505,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine X shifts"
 description = "Refine translation in the X dimension"
 type = "bool"
-default = false
+default = true
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -2513,7 +2513,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Refine Y shifts"
 description = "Refine translation in the Y dimension"
 type = "bool"
-default = false
+default = true
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
@@ -3225,7 +3225,7 @@ default = 0.0001
 name = "Ab initio refinement"
 description = "Enable ab initio refinement"
 type = "bool"
-default = true
+default = false
 copyToNewBlock = false
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
 
