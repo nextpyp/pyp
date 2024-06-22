@@ -382,7 +382,7 @@ def read_tilt_series(
 
             # read image dimensions
             [micrographinfo, error] = local_run.run_shell_command(
-                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=parameters["slurm_verbose"]
+                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=False
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
