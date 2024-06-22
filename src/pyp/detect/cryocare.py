@@ -38,7 +38,7 @@ def cryocare(working_path, project_path, name, parameters):
     "even": half1_list,
     "odd": half2_list,
     "tilt_axis": "Y",
-    "path": f"{project_path}/train"
+    "path": f"./train_data"
     }
 
     config["patch_shape"] = [parameters["tomo_rec_cryocare_patch"]] * 3
@@ -61,11 +61,12 @@ def cryocare(working_path, project_path, name, parameters):
 
     # train.json
     train_config = {
-    "train_data": "./",
+    "train_data": "./train_data",
     "model_name": "cryocare_model",
-    "path": "./",
-    "gpu_id": 0
+    "path": "./train_model",
     }
+    # "gpu_id": 0
+    
     
     train_config["epochs"] = parameters["tomo_rec_cryocare_epochs"]
     train_config["steps_per_epoch"] = parameters["tomo_rec_cryocare_steps"]
@@ -86,14 +87,16 @@ def cryocare(working_path, project_path, name, parameters):
 
     # prediction.json
     predcit_config = {
-    "path": f"./cryocare_model.tar.gz",
+    "path": f"./train_model/cryocare_model.tar.gz",
     "even": half1_list,
     "odd": half2_list,
     "n_tiles": [parameters["tomo_rec_cryocare_tiles"]] * 3,
-    "output": f"{project_path}/mrc/",
+    "output": f"{project_path}/mrc/cryocare",
     "overwrite": parameters["tomo_rec_cryocare_overwrite"],
-    "gpu_id": 0
     }
+
+    # "gpu_id": 0
+
     
     precict_config_file = "predict_config.json"
     with open(precict_config_file, 'w') as file:
@@ -282,7 +285,7 @@ def tomo_swarm_half(project_path, filename):
             merge.reconstruct_tomo(parameters, newfilename, x, y, binning, zfact, tilt_options, force=True)
 
         # save the half tomograms to the project folder 
-        shutil.copy2(newfilename + ".rec", os.path.join(project_path, "mrc", newfilename + ".rec"))
+        # shutil.copy2(newfilename + ".rec", os.path.join(project_path, "mrc", newfilename + ".rec"))
     
     # cryoCARE 
     cryocare("./", project_path, filename, parameters)
