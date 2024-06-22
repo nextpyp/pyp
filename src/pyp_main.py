@@ -2061,7 +2061,7 @@ def csp_split(parameters, iteration):
 
     # ab initio 
     if "csp_abinitio" in parameters.keys() and parameters["csp_abinitio"]:
-        logger.info('doing ab initio')
+        logger.info('Doing ab initio refinement')
         ab_initio(parameters)    
 
     os.makedirs("swarm", exist_ok=True)
