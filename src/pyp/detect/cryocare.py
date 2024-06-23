@@ -91,18 +91,22 @@ def cryocare(working_path, project_path, name, parameters):
     "even": half1_list,
     "odd": half2_list,
     "n_tiles": [parameters["tomo_rec_cryocare_tiles"]] * 3,
-    "output": f"{project_path}/mrc/cryocare",
-    "overwrite": parameters["tomo_rec_cryocare_overwrite"],
     }
 
+    output_path = f"{project_path}/mrc/{name}_denoised.rec"
     # "gpu_id": 0
-
+    if os.path.exists(output_path):
+        predcit_config["overwrite"] = True
+    else:
+        predcit_config["overwrite"] = parameters["tomo_rec_cryocare_overwrite"]
     
-    precict_config_file = "predict_config.json"
-    with open(precict_config_file, 'w') as file:
+    predcit_config["output"] = output_path
+    
+    predict_config_file = "predict_config.json"
+    with open(predict_config_file, 'w') as file:
         json.dump(predcit_config, file, indent=4)
 
-    command = f"{command_base}cryoCARE_predict.py --conf {precict_config_file}"
+    command = f"{command_base}cryoCARE_predict.py --conf {predict_config_file}"
     local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
 
