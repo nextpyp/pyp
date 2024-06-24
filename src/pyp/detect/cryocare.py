@@ -48,9 +48,10 @@ def cryocare(working_path, project_path, name, parameters):
 
     if not "0" in parameters["tomo_rec_masksize"]:
         mask_shape = [int(i) for i in parameters["tomo_rec_masksize"].split(",")]
-        mrc.generate_cuboid_mask(half1_list[0], mask_shape, outputname="train_data_config.json")
+        train_mask = "./train_mask.mrc"
+        mrc.generate_cuboid_mask(half1_list[0], mask_shape, outputname=train_mask)
 
-        config["mask"] = "./train_mask.mrc"
+        config["mask"] = train_mask
 
     data_config = "train_data_config.json"
     with open(data_config, 'w') as file:
@@ -63,10 +64,9 @@ def cryocare(working_path, project_path, name, parameters):
     train_config = {
     "train_data": "./train_data",
     "model_name": "cryocare_model",
-    "path": "./train_model",
+    "path": "./train_model"
     }
     # "gpu_id": 0
-    
     
     train_config["epochs"] = parameters["tomo_rec_cryocare_epochs"]
     train_config["steps_per_epoch"] = parameters["tomo_rec_cryocare_steps"]
@@ -90,7 +90,7 @@ def cryocare(working_path, project_path, name, parameters):
     "path": f"./train_model/cryocare_model.tar.gz",
     "even": half1_list,
     "odd": half2_list,
-    "n_tiles": [parameters["tomo_rec_cryocare_tiles"]] * 3,
+    "n_tiles": [parameters["tomo_rec_cryocare_tiles"]] * 3
     }
 
     output_path = f"{project_path}/mrc/{name}_denoised.rec"

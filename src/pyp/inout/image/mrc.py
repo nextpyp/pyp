@@ -1063,7 +1063,6 @@ def generate_cuboid_mask(input, mask_shape, outputname):
     header = readHeaderFromFile(input)
     write(mask_volume, outputname, header=header)
     
-    return outputname
 
 
 if __name__ == "__main__":
