@@ -163,6 +163,22 @@ def create_milo_swarm_file(parameters, timestamp, swarm_file="miloeval.swarm"):
     return swarm_file
 
 
+def create_other_swarm_file(parameters, timestamp, swarm_file, modename):
+    gpu = needs_gpu(parameters)
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+        f.write(
+            "cd '{2}'; export {1}={1}; {0} 2>&1 | tee log/{3}_{1}.log".format(
+                run_pyp(command="pyp", script=True, gpu=gpu),
+                modename,
+                os.getcwd(),
+                timestamp,
+            )
+        )
+        f.write("\n")
+
+    return swarm_file
+
+
 def create_tomohalf_swarm_file(parameters, files, timestamp, swarm_file="cryocare.swarm"):
     # enable Nvidia GPU?
     gpu = needs_gpu(parameters)

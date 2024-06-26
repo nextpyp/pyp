@@ -1792,7 +1792,7 @@ condition = { arg="denoise", value="cryocare" }
 name = "Number of slices"
 description = "Number of sub-volumes extracted per tomograms."
 type = "int"
-default = 1200
+default = 500
 condition = { arg="denoise", value="cryocare" }
 
 [tabs.tomo_rec.cryocare_split]
@@ -1813,7 +1813,7 @@ condition = { arg="denoise", value="cryocare" }
 name = "Number of epochs (train)"
 description = "Number of epochs used to train the network."
 type = "int"
-default = 100
+default = 60
 condition = { arg="denoise", value="cryocare" }
 
 [tabs.tomo_rec.cryocare_steps]
@@ -1871,6 +1871,195 @@ description = "Allow previous tomograms to be overwritten."
 type = "bool"
 default = false
 condition = { arg="denoise", value="cryocare" }
+
+[tabs.tomo_rec.isonet_tomoid]
+name = "Tomo IDs used"
+description = "Tomo IDs from the full image list (name order) used for training "
+type = "str"
+default = "None"
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_CTFdeconvol]
+name = "CTF deconvolution"
+description = "Do CTF deconvolution for tomograms"
+type = "bool"
+default = true
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_snrfalloff]
+name = "SNR falloff (CTF deconvolution)"
+description = "SNR fall rate with the frequency. High values means losing more high frequency."
+type = "float"
+default = 1.0
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_hp]
+name = "Highpass filter (CTF deconvolution)"
+description = "Highpass filter for at very low frequency."
+type = "float"
+default = 0.02
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.patchsize]
+name = "Patch_size (mask)"
+description = "The size of the box from which the max-filter and std-filter are calculated."
+type = "int"
+default = 4
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.zcrop]
+name = "Z crop ratio"
+description = "If exclude the top and bottom regions of tomograms along z axis."
+type = "float"
+default = 0.2
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_densityPercent]
+name = "Density percentage (mask)"
+description = "The approximate percentage of pixels to keep based on their local pixel density."
+type = "int"
+default = 50
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_stdPercent]
+name = "standard deviation percentage (mask)"
+description = "The approximate percentage of pixels to keep based on their local standard deviation."
+type = "int"
+default = 50
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_cubesize]
+name = "Cube size (extract)"
+description = "Size of cubes for training, should be divisible by 8. The actual sizes of extracted subtomograms are this value adds 16."
+type = "int"
+default = 64
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_iters]
+name = "Iterations (refine)"
+description = "Number of training iterations."
+type = "int"
+default = 30
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.model]
+name = "Trained model (refine/predict)"
+description = "Trainded model (.h5)."
+type = "str"
+default = "None"
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_json]
+name = "Json file (refine)"
+description = "A Json file (from previous training) to continue from."
+type = "str"
+default = "None"
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_epochs]
+name = "Epochs (refine)"
+description = "Number of epoch for each iteraction."
+type = "int"
+default = 10
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_batchsize]
+name = "Batch size (refine)"
+description = "Size of the minibatch. If None, batch_size will be the max(2 * number_of_gpu,4). batch_size should be divisible by the number of gpu."
+type = "int"
+default = 4
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_steps]
+name = "Steps per epoch (refine)"
+description = "Steps per epoch."
+type = "int"
+default = 200
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_nl]
+name = "Noise level (refine)"
+description = "Level of noise STD(added noise)/STD(data) after the iteration defined in noise_start_iter.(0.05, 0.1, 0.15, 0.2)"
+type = "float"
+default = 0.1
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_ns]
+name = "Noise start iteration (refine)"
+description = "Iteration that start to add noise of corresponding noise level."
+type = "int"
+default = 16
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_nm]
+name = "Noise mode (refine)"
+description = "Filter names when generating noise volumes, can be 'ramp', 'hamming' and 'noFilter'."
+type = "enum"
+enum = {ramp="ramp", hamming="hamming", noFilter="noFilter", none="none"}
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_dropout]
+name = "Drop out (refine)"
+description = "Drop out rate to reduce overfitting."
+type = "float"
+default = 0.3
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_lr]
+name = "Learning rate (refine)"
+description = "learning rate for network training."
+type = "float"
+default = 0.0004
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_layers]
+name = "Convolution layers (refine)"
+description = "Number of convolution layer for each depth."
+type = "int"
+default = 3
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_kernel]
+name = "Kernel (refine)"
+description = "Kernel for convolution."
+type = "str"
+default = "3,3,3"
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_depth]
+name = "Unet depth (refine)"
+description = "Depth of UNet."
+type = "int"
+default = 3
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_base]
+name = "Filter base (refine)"
+description = "The base number of channels after convolution."
+type = "int"
+default = 64
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_normalization]
+name = "Use batch normalization (refine)"
+description = "Use Batch Normalization layer"
+type = "bool"
+default = true
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_pool]
+name = "Use pooling (refine)"
+description = "IUse pooling layer instead of stride convolution layer."
+type = "bool"
+default = false
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_rec.isonet_threshold]
+name = "Use Percent thresholding (refine)"
+description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively."
+type = "bool"
+default = true
+condition = { arg="denoise", value="isonet" }
 
 [tabs.tomo_vir]
 _name = "Virion/spike detection"

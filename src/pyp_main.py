@@ -48,7 +48,7 @@ from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
 from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
-from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare
+from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
@@ -923,8 +923,9 @@ def split(parameters):
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
         milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"] 
         cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_rec_denoise"] 
+        isonet = parameters["data_mode"] == "tomo" and "isonet" in parameters["tomo_rec_denoise"] 
 
-        if gpu or tomo_train or spr_train or milo_eval or cryocare:
+        if gpu or tomo_train or spr_train or milo_eval or cryocare or isonet:
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
@@ -982,6 +983,27 @@ def split(parameters):
                 tomohalf_swarm_file,
                 jobtype="cryocare",
                 jobname="cryoCARE (gpu)",
+                queue=partition_name,
+                scratch=0,
+                threads=parameters["slurm_tasks"],
+                memory=parameters["slurm_memory"],
+                gres=parameters["slurm_gres"],
+                account=parameters.get("slurm_account"),
+                walltime=parameters["slurm_walltime"],
+                tasks_per_arr=parameters["slurm_bundle_size"],
+                use_gpu=gpu,
+            ).strip()
+
+        elif isonet:
+            swarm_file = "isonet.swarm"
+            isonet_swarm_file, _ = slurm.create_other_swarm_file(parameters, timestamp, swarm_file, modename="isonet" )
+
+            # submit swarm jobs
+            id = slurm.submit_jobs(
+                "swarm",
+                isonet_swarm_file,
+                jobtype="isonet",
+                jobname="isonet (gpu)",
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
@@ -4149,6 +4171,23 @@ if __name__ == "__main__":
             if False  and os.path.exists(os.environ["PYP_SCRATCH"]):
                 shutil.rmtree(os.environ["PYP_SCRATCH"])
 
+        elif "isonet" in os.environ:
+            del os.environ["isonet"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                parameters = project_params.load_pyp_parameters()
+                input_dir = os.path.join(os.getcwd(), 'mrc')
+                
+                isonet_tools.isonet_run(input_dir, output=input_dir, parameters=parameters)
+                logger.info("PYP (isonet) finished successfully")
+            except:
+                trackback()
+                logger.error("PYP (isonet) failed")
+                pass
 
         # check gain reference
         elif "pypgain" in os.environ:
