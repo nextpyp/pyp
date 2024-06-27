@@ -1900,14 +1900,14 @@ type = "float"
 default = 0.02
 condition = { arg="denoise", value="isonet" }
 
-[tabs.tomo_rec.patchsize]
+[tabs.tomo_rec.isonet_patchsize]
 name = "Patch_size (mask)"
 description = "The size of the box from which the max-filter and std-filter are calculated."
 type = "int"
 default = 4
 condition = { arg="denoise", value="isonet" }
 
-[tabs.tomo_rec.zcrop]
+[tabs.tomo_rec.isonet_zcrop]
 name = "Z crop ratio"
 description = "If exclude the top and bottom regions of tomograms along z axis."
 type = "float"
@@ -1942,7 +1942,7 @@ type = "int"
 default = 30
 condition = { arg="denoise", value="isonet" }
 
-[tabs.tomo_rec.model]
+[tabs.tomo_rec.isonet_model]
 name = "Trained model (refine/predict)"
 description = "Trainded model (.h5)."
 type = "str"
@@ -1996,6 +1996,7 @@ name = "Noise mode (refine)"
 description = "Filter names when generating noise volumes, can be 'ramp', 'hamming' and 'noFilter'."
 type = "enum"
 enum = {ramp="ramp", hamming="hamming", noFilter="noFilter", none="none"}
+default = "none"
 condition = { arg="denoise", value="isonet" }
 
 [tabs.tomo_rec.isonet_dropout]

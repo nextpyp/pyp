@@ -17,7 +17,7 @@ logger = initialize_pyp_logger(log_name=relative_path)
 def get_isonet_path():
     config = get_pyp_configuration()
     isonet_path = config["pyp"]["isonet"]
-    command_base = f"source activate {isonet_path}; {isonet_path}/bin/"
+    command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH ;{isonet_path}/bin/"
     return command_base
 
 isonet_command = get_isonet_path()
@@ -40,14 +40,18 @@ _rlnNumberSubtomo #5"""
     # with open( os.path.join( train_folder, "current_list.txt" ) ) as f:
     #     train_name = f.read()
     
-    tomograms = glob.glob(f"{project_dir}/*.rec")
+    all_tomograms = glob.glob(f"{project_dir}/mrc/*.rec")
+    tomograms = [t for t in all_tomograms if not "denoised" in t]
 
     with open(outputname, 'w') as f:
         f.write(star_header)
         for i, tomo in enumerate(tomograms):
-            name = tomo.replace(".rec", "")
+            name = os.path.basename(tomo).replace(".rec", "")
             pixel_size = parameters["scope_pixel"] * parameters["data_bin"] * parameters["tomo_rec_binning"]
-            metadata = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)
+
+            pkl_file = f"{project_dir}/../pkl/{name}.pkl"
+            assert os.path.exists(pkl_file), f"There is no meta data for this image, please check the input name: {pkl_file}."
+            metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
             ctf = metadata.data["global_ctf"].to_numpy()
             df = ctf[0]
             
@@ -262,7 +266,7 @@ def isonet_predict(input_star, model, output, batch_size, use_deconv, threshold_
     local_run.run_shell_command(command,verbose=verbose)
 
 
-def isonet_run(input_dir, output, parameters, keep=False):
+def isonet_run(project_dir, output, parameters, keep=False):
     
     # initialize path
     working_path = Path(os.environ["PYP_SCRATCH"]) / "isonet"
@@ -277,7 +281,7 @@ def isonet_run(input_dir, output, parameters, keep=False):
 
     # generate input tomo.star
     initial_star = "tomograms.star" 
-    isonet_generate_star(input_dir, initial_star, parameters)
+    isonet_generate_star(project_dir, initial_star, parameters)
     
     # preprocess
     preprocess_star = "tomograms_processed.star"

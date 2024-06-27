@@ -996,14 +996,14 @@ def split(parameters):
 
         elif isonet:
             swarm_file = "isonet.swarm"
-            isonet_swarm_file, _ = slurm.create_other_swarm_file(parameters, timestamp, swarm_file, modename="isonet" )
+            isonet_swarm_file = slurm.create_other_swarm_file(parameters, timestamp, swarm_file, modename="isonet" )
 
             # submit swarm jobs
             id = slurm.submit_jobs(
                 "swarm",
                 isonet_swarm_file,
                 jobtype="isonet",
-                jobname="isonet (gpu)",
+                jobname="IsoNet (gpu)",
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
@@ -4180,9 +4180,9 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 parameters = project_params.load_pyp_parameters()
-                input_dir = os.path.join(os.getcwd(), 'mrc')
-                
-                isonet_tools.isonet_run(input_dir, output=input_dir, parameters=parameters)
+                project_dir = os.getcwd()
+                output = os.path.join(project_dir, "mrc")
+                isonet_tools.isonet_run(project_dir, output=output, parameters=parameters)
                 logger.info("PYP (isonet) finished successfully")
             except:
                 trackback()
