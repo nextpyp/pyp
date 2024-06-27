@@ -343,7 +343,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -Gpu {get_gpu_id()}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
 
-    if parameters.get("tomo_rec_topaz_denoise"):
+    if parameters.get("tomo_denoise_topaz_denoise"):
 
         """
         usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
@@ -370,11 +370,11 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
         logger.info("Denoising tomogram using Topaz")
         command = f"{get_topaz_path()}/topaz denoise3d \
 {name}.rec \
---model {parameters['tomo_rec_topaz_model']} \
+--model {parameters['tomo_denoise_topaz_model']} \
 --device {devices} \
---gaussian {parameters['tomo_rec_topaz_gaussian']} \
---patch-size {parameters['tomo_rec_topaz_patch_size']} \
---patch-padding {parameters['tomo_rec_topaz_patch_padding']} \
+--gaussian {parameters['tomo_denoise_topaz_gaussian']} \
+--patch-size {parameters['tomo_denoise_topaz_patch_size']} \
+--patch-padding {parameters['tomo_denoise_topaz_patch_padding']} \
 --output {os.getcwd()} \
 2>&1 | tee {time_stamp}_topaz_denoise3d.log"
 

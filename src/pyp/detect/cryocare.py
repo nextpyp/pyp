@@ -41,10 +41,10 @@ def cryocare(working_path, project_path, name, parameters):
     "path": f"./train_data"
     }
 
-    config["patch_shape"] = [parameters["tomo_rec_cryocare_patch"]] * 3
-    config["num_slices"] = parameters["tomo_rec_cryocare_slices"]
-    config["split"] = parameters["tomo_rec_cryocare_split"]
-    config["n_normalization_samples"] = parameters["tomo_rec_cryocare_samples"]
+    config["patch_shape"] = [parameters["tomo_denoise_cryocare_patch"]] * 3
+    config["num_slices"] = parameters["tomo_denoise_cryocare_slices"]
+    config["split"] = parameters["tomo_denoise_cryocare_split"]
+    config["n_normalization_samples"] = parameters["tomo_denoise_cryocare_samples"]
 
     if not "0" in parameters["tomo_rec_masksize"]:
         mask_shape = [int(i) for i in parameters["tomo_rec_masksize"].split(",")]
@@ -68,13 +68,13 @@ def cryocare(working_path, project_path, name, parameters):
     }
     # "gpu_id": 0
     
-    train_config["epochs"] = parameters["tomo_rec_cryocare_epochs"]
-    train_config["steps_per_epoch"] = parameters["tomo_rec_cryocare_steps"]
-    train_config["batch_size"] = parameters["tomo_rec_cryocare_batchsize"]
-    train_config["unet_kern_size"] = parameters["tomo_rec_cryocare_kern"]
-    train_config["unet_n_depth"] = parameters["tomo_rec_cryocare_depth"]
-    train_config["unet_n_first"] = parameters["tomo_rec_cryocare_nfirst"]
-    train_config["learning_rate"] = parameters["tomo_rec_cryocare_lr"]
+    train_config["epochs"] = parameters["tomo_denoise_cryocare_epochs"]
+    train_config["steps_per_epoch"] = parameters["tomo_denoise_cryocare_steps"]
+    train_config["batch_size"] = parameters["tomo_denoise_cryocare_batchsize"]
+    train_config["unet_kern_size"] = parameters["tomo_denoise_cryocare_kern"]
+    train_config["unet_n_depth"] = parameters["tomo_denoise_cryocare_depth"]
+    train_config["unet_n_first"] = parameters["tomo_denoise_cryocare_nfirst"]
+    train_config["learning_rate"] = parameters["tomo_denoise_cryocare_lr"]
     
     train_config_file = "train_config.json"
     with open(train_config_file, 'w') as file:
@@ -90,7 +90,7 @@ def cryocare(working_path, project_path, name, parameters):
     "path": f"./train_model/cryocare_model.tar.gz",
     "even": half1_list,
     "odd": half2_list,
-    "n_tiles": [parameters["tomo_rec_cryocare_tiles"]] * 3
+    "n_tiles": [parameters["tomo_denoise_cryocare_tiles"]] * 3
     }
 
     output_path = f"{project_path}/mrc/{name}_denoised.rec"
@@ -98,7 +98,7 @@ def cryocare(working_path, project_path, name, parameters):
     if os.path.exists(output_path):
         predcit_config["overwrite"] = True
     else:
-        predcit_config["overwrite"] = parameters["tomo_rec_cryocare_overwrite"]
+        predcit_config["overwrite"] = parameters["tomo_denoise_cryocare_overwrite"]
     
     predcit_config["output"] = output_path
     
@@ -293,3 +293,6 @@ def tomo_swarm_half(project_path, filename):
     
     # cryoCARE 
     cryocare("./", project_path, filename, parameters)
+
+    # clean 
+    shutil.rmtree(working_path, "True")

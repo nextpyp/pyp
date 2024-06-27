@@ -168,7 +168,7 @@ def isonet_refine(input_star, output, parameters):
     :param normalize_percentile: (True) Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively. If this is set to False, normalize the input to 0 mean and 1 standard dievation.
     """
 
-    isn = "tomo_rec_isonet"
+    isn = "tomo_denoise_isonet"
 
     iterations = parameters[f"{isn}_iters"]
     model = parameters[f"{isn}_model"]
@@ -285,26 +285,26 @@ def isonet_run(project_dir, output, parameters, keep=False):
     
     # preprocess
     preprocess_star = "tomograms_processed.star"
-    process_id = parameters["tomo_rec_isonet_tomoid"]
+    process_id = parameters["tomo_denoise_isonet_tomoid"]
     ncpu = parameters["slurm_tasks"]
     verbose = parameters["slurm_verbose"]
 
     # extract parameters
-    d_percent = parameters["tomo_rec_isonet_densityPercent"]
-    std_percent = parameters["tomo_rec_isonet_stdPercent"]
-    patchsize = parameters["tomo_rec_isonet_patchsize"]
-    z_crop = parameters["tomo_rec_isonet_zcrop"]
+    d_percent = parameters["tomo_denoise_isonet_densityPercent"]
+    std_percent = parameters["tomo_denoise_isonet_stdPercent"]
+    patchsize = parameters["tomo_denoise_isonet_patchsize"]
+    z_crop = parameters["tomo_denoise_isonet_zcrop"]
     
     logger.info("isonet preprocessing...")
     
-    if parameters["tomo_rec_isonet_CTFdeconvol"]:
+    if parameters["tomo_denoise_isonet_CTFdeconvol"]:
 
         use_deconvol = "True"
         ctf_convol_star = preprocess_star.replace(".star", "_ctf.star")
-        ssnr_falloff = parameters["tomo_rec_isonet_snrfalloff"]
+        ssnr_falloff = parameters["tomo_denoise_isonet_snrfalloff"]
         cs = parameters["scope_cs"]
         voltage = parameters["scope_voltage"]
-        hp_nyquist = parameters["tomo_rec_isonet_hp"]
+        hp_nyquist = parameters["tomo_denoise_isonet_hp"]
         
         isonet_ctf_deconvolve(
             initial_star,
@@ -339,7 +339,7 @@ def isonet_run(project_dir, output, parameters, keep=False):
 
     # extract subvolumes
     logger.info("isonet subvolumes extraction...")
-    cube_size = parameters["tomo_rec_isonet_cubesize"]
+    cube_size = parameters["tomo_denoise_isonet_cubesize"]
     extracted_folder = os.path.join(working_path, "subtomograms")
     extracted_star = "subtomograms.star"
     isonet_extract(
@@ -360,8 +360,8 @@ def isonet_run(project_dir, output, parameters, keep=False):
     isonet_refine(extracted_star, output_dir, parameters)
 
     # predict
-    use_threshold = parameters["tomo_rec_isonet_threshold"]
-    batch_size = parameters["tomo_rec_isonet_batchsize"]
+    use_threshold = parameters["tomo_denoise_isonet_threshold"]
+    batch_size = parameters["tomo_denoise_isonet_batchsize"]
 
     models = glob.glob(os.path.join(output_dir, "model_iter*.h5"))
     # get the most recent model 
@@ -379,5 +379,8 @@ def isonet_run(project_dir, output, parameters, keep=False):
         verbose=verbose
         )
 
+    # clean
+    if not keep:
+        shutil.rmtree(working_path, "True")
     
  

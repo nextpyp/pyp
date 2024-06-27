@@ -922,8 +922,8 @@ def split(parameters):
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or "train" in parameters["tomo_spk_method"] )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
         milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"] 
-        cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_rec_denoise"] 
-        isonet = parameters["data_mode"] == "tomo" and "isonet" in parameters["tomo_rec_denoise"] 
+        cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"] 
+        isonet = parameters["data_mode"] == "tomo" and "isonet" in parameters["tomo_denoise_method"] 
 
         if gpu or tomo_train or spr_train or milo_eval or cryocare or isonet:
             # try to get the gpu partition
