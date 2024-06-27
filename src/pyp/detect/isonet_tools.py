@@ -49,7 +49,7 @@ _rlnNumberSubtomo #5"""
             name = os.path.basename(tomo).replace(".rec", "")
             pixel_size = parameters["scope_pixel"] * parameters["data_bin"] * parameters["tomo_rec_binning"]
 
-            pkl_file = f"{project_dir}/../pkl/{name}.pkl"
+            pkl_file = f"{project_dir}/pkl/{name}.pkl"
             assert os.path.exists(pkl_file), f"There is no meta data for this image, please check the input name: {pkl_file}."
             metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
             ctf = metadata.data["global_ctf"].to_numpy()
