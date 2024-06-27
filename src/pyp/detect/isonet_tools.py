@@ -363,7 +363,7 @@ def isonet_run(project_dir, output, parameters, keep=False):
     use_threshold = parameters["tomo_rec_isonet_threshold"]
     batch_size = parameters["tomo_rec_isonet_batchsize"]
 
-    models = glob.glob[os.path.join(output_dir, "model_iter*.h5")]
+    models = glob.glob(os.path.join(output_dir, "model_iter*.h5"))
     # get the most recent model 
     model = max(models, key=os.path.getmtime)
 
