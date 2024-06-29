@@ -46,8 +46,8 @@ def cryocare(working_path, project_path, name, parameters):
     config["split"] = parameters["tomo_denoise_cryocare_split"]
     config["n_normalization_samples"] = parameters["tomo_denoise_cryocare_samples"]
 
-    if not "0" in parameters["tomo_rec_masksize"]:
-        mask_shape = [int(i) for i in parameters["tomo_rec_masksize"].split(",")]
+    if not "0" in parameters["tomo_denoise_masksize"]:
+        mask_shape = [int(i) for i in parameters["tomo_denoise_masksize"].split(",")]
         train_mask = "./train_mask.mrc"
         mrc.generate_cuboid_mask(half1_list[0], mask_shape, outputname=train_mask)
 
@@ -110,7 +110,7 @@ def cryocare(working_path, project_path, name, parameters):
     local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
 
-def tomo_swarm_half(project_path, filename):
+def tomo_swarm_half(project_path, filename, keep=False):
     """
         Generate half tomograms for cryoCARE training
     """
@@ -295,4 +295,5 @@ def tomo_swarm_half(project_path, filename):
     cryocare("./", project_path, filename, parameters)
 
     # clean 
-    shutil.rmtree(working_path, "True")
+    if not keep:
+        shutil.rmtree(working_path, "True")

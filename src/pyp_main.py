@@ -906,7 +906,20 @@ def split(parameters):
     # launch pre-processing
     if not os.path.isfile("frealign/mpirun.mynodes"):
 
-        swarm_file, gpu = slurm.create_pyp_swarm_file(parameters, files, timestamp)
+        cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"]
+        isonet_predict = parameters["data_mode"] == "tomo" and "isonet-predict" in parameters["tomo_denoise_method"] 
+
+        if cryocare:
+            run_mode = "cryocare"
+            job_type = "cryocareswarm"
+        elif isonet_predict:
+            run_mode = "isonet"
+            job_type = "isonetswarm"
+        else:
+            run_mode = parameters["data_mode"]
+            job_type = parameters["data_mode"] + "swarm"
+
+        swarm_file, gpu = slurm.create_pyp_swarm_file(parameters, files, timestamp, run_mode)
 
         config = get_pyp_configuration()
 
@@ -921,11 +934,10 @@ def split(parameters):
 
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or "train" in parameters["tomo_spk_method"] )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
-        milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"] 
-        cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"] 
-        isonet = parameters["data_mode"] == "tomo" and "isonet" in parameters["tomo_denoise_method"] 
+        milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"]
+        isonet_train = parameters["data_mode"] == "tomo" and "isonet-train" in parameters["tomo_denoise_method"] 
 
-        if gpu or tomo_train or spr_train or milo_eval or cryocare or isonet:
+        if gpu or tomo_train or spr_train or milo_eval or cryocare:
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
@@ -933,15 +945,26 @@ def split(parameters):
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
 
-        if ( tomo_train or spr_train ):
+        if ( tomo_train or spr_train or isonet_train):
             if os.path.exists(os.path.join("train","current_list.txt")):
-                train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
+
+                if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train":
+                    train_type = "milo"
+                    train_jobtype = "milogtrain"
+                elif "tomo_denoise_method" in parameters and parameters["tomo_denoise_method"] == "isonet-train":
+                    train_type = "isonet"
+                    train_jobtype = "isonettrain"
+                else:
+                    train_type = parameters["data_mode"]
+                    train_jobtype = parameters["data_mode"] + "train"
+
+                train_swarm_file = slurm.create_train_swarm_file(timestamp, train_type=train_type)
 
                 # submit swarm jobs
                 id_train = slurm.submit_jobs(
                     "swarm",
                     train_swarm_file,
-                    jobtype="milotrain" if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
+                    jobtype=train_jobtype,
                     jobname="Train (gpu)",
                     queue=partition_name,
                     scratch=0,
@@ -974,7 +997,8 @@ def split(parameters):
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
             ).strip()
-        elif cryocare:
+
+        elif False and cryocare:
             tomohalf_swarm_file, _ = slurm.create_tomohalf_swarm_file(parameters, files, timestamp)
 
             # submit swarm jobs
@@ -982,28 +1006,7 @@ def split(parameters):
                 "swarm",
                 tomohalf_swarm_file,
                 jobtype="cryocare",
-                jobname="cryoCARE (gpu)",
-                queue=partition_name,
-                scratch=0,
-                threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
-                gres=parameters["slurm_gres"],
-                account=parameters.get("slurm_account"),
-                walltime=parameters["slurm_walltime"],
-                tasks_per_arr=parameters["slurm_bundle_size"],
-                use_gpu=gpu,
-            ).strip()
-
-        elif isonet:
-            swarm_file = "isonet.swarm"
-            isonet_swarm_file = slurm.create_other_swarm_file(parameters, timestamp, swarm_file, modename="isonet" )
-
-            # submit swarm jobs
-            id = slurm.submit_jobs(
-                "swarm",
-                isonet_swarm_file,
-                jobtype="isonet",
-                jobname="IsoNet (gpu)",
+                jobname=job_name,
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
@@ -1022,7 +1025,7 @@ def split(parameters):
             id = slurm.submit_jobs(
                 "swarm",
                 swarm_file,
-                jobtype=parameters["data_mode"] + "swarm",
+                jobtype=job_type,
                 jobname=job_name,
                 queue=partition_name,
                 scratch=0,
@@ -4151,8 +4154,8 @@ if __name__ == "__main__":
                 logger.error("PYP (miloeval) failed")
                 pass
         
-        elif "cryocare" in os.environ:
-            del os.environ["cryocare"]
+        elif "cryocareswarm" in os.environ:
+            del os.environ["cryocareswarm"]
             try:
 
                 # clear local scratch and report free space
@@ -4160,7 +4163,7 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 args = project_params.parse_arguments("tomoswarm")
-                cryocare.tomo_swarm_half(args.path, args.file)
+                cryocare.tomo_swarm_half(args.path, os.path.basename(args.file), args.keep)
                 logger.info("PYP (cryocare) finished successfully")
             except:
                 trackback()
@@ -4171,8 +4174,8 @@ if __name__ == "__main__":
             if False  and os.path.exists(os.environ["PYP_SCRATCH"]):
                 shutil.rmtree(os.environ["PYP_SCRATCH"])
 
-        elif "isonet" in os.environ:
-            del os.environ["isonet"]
+        elif "isonettrain" in os.environ:
+            del os.environ["isonettrain"]
             try:
 
                 # clear local scratch and report free space
@@ -4182,11 +4185,28 @@ if __name__ == "__main__":
                 parameters = project_params.load_pyp_parameters()
                 project_dir = os.getcwd()
                 output = os.path.join(project_dir, "mrc")
-                isonet_tools.isonet_run(project_dir, output=output, parameters=parameters)
-                logger.info("PYP (isonet) finished successfully")
+                isonet_tools.isonet_train(project_dir, output=output, parameters=parameters)
+                logger.info("PYP (isonet train) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (isonet) failed")
+                logger.error("PYP (isonet train) failed")
+                pass
+        
+        elif "isonetswarm" in os.environ:
+            del os.environ["isonetswarm"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                
+                # use same parameters mode as tomoswarm
+                args = project_params.parse_arguments("tomoswarm")
+                isonet_tools.isonet_predict(args.path, os.path.basename(args.file))
+                logger.info("PYP (isonet predict) finished successfully")
+            except:
+                trackback()
+                logger.error("PYP (isonet predict) failed")
                 pass
 
         # check gain reference

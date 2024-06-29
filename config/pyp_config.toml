@@ -68,7 +68,7 @@ tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_re
 [blocks.tomo_pre_process]
 name = "TOMO Pre-processing"
 description = "Alignment, CTF and particle picking"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "detect_milo", "tomo_ext", "slurm" ]
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_denoise", "tomo_vir", "tomo_spk", "detect_nn3d", "detect_milo", "tomo_ext", "slurm" ]
 
 [blocks.tomo_coarse_refine]
 name = "TOMO Coarse Refinement"
@@ -84,6 +84,11 @@ tabs = [ "clean", "slurm" ]
 name = "TOMO Mask Generation"
 description = "Mask generation for TOMO"
 tabs = [ "mask", "slurm" ]
+
+[blocks.tomo_denoise]
+name = "TOMO Denoising"
+description = "Denoising"
+tabs = [ "tomo_denoise", "slurm" ]
 
 [blocks.tomo_flexible_refine]
 name = "TOMO Frame Refinement"
@@ -1739,7 +1744,7 @@ _description = "Parameters for tomograms denoising"
 name = "Denoise tomograms methods"
 description = "Denoise tomograms with selected method"
 type = "enum"
-enum = {topaz="topaz", cryocare="cryocare", isonet="isonet", none="none"}
+enum = {topaz="topaz", cryocare="cryocare", isonet-train="isonet-train", isonet-predict="isonet-predict", none="none"}
 default = "none"
 
 [tabs.tomo_denoise.topaz_model]
@@ -1808,9 +1813,9 @@ condition = { arg="denoise", value="cryocare" }
 
 [tabs.tomo_denoise.cryocare_samples]
 name = "Number subtomograms for normalization statistics"
-description = "Number of sub-volumes extracted per tomograms used to compute mean and standard deviation for normalization"
+description = "Number of sub-volumes extracted per tomograms used to compute mean and standard deviation for normalization (should be less than number of slices)"
 type = "int"
-default = 500
+default = 400
 condition = { arg="denoise", value="cryocare" }
 
 [tabs.tomo_denoise.cryocare_epochs]
@@ -1875,13 +1880,6 @@ description = "Allow previous tomograms to be overwritten."
 type = "bool"
 default = false
 condition = { arg="denoise", value="cryocare" }
-
-[tabs.tomo_denoise.isonet_tomoid]
-name = "Tomo IDs used"
-description = "Tomo IDs from the full image list (name order) used for training "
-type = "str"
-default = "None"
-condition = { arg="denoise", value="isonet" }
 
 [tabs.tomo_denoise.isonet_CTFdeconvol]
 name = "CTF deconvolution"
@@ -1949,15 +1947,17 @@ condition = { arg="denoise", value="isonet" }
 [tabs.tomo_denoise.isonet_model]
 name = "Trained model (refine/predict)"
 description = "Trainded model (.h5)."
-type = "str"
+type = "path"
 default = "None"
+path = { type="files" }
 condition = { arg="denoise", value="isonet" }
 
 [tabs.tomo_denoise.isonet_json]
 name = "Json file (refine)"
 description = "A Json file (from previous training) to continue from."
-type = "str"
+type = "path"
 default = "None"
+path = { type="files" }
 condition = { arg="denoise", value="isonet" }
 
 [tabs.tomo_denoise.isonet_epochs]
@@ -2054,7 +2054,7 @@ condition = { arg="denoise", value="isonet" }
 
 [tabs.tomo_denoise.isonet_pool]
 name = "Use pooling (refine)"
-description = "IUse pooling layer instead of stride convolution layer."
+description = "Use pooling layer instead of stride convolution layer."
 type = "bool"
 default = false
 condition = { arg="denoise", value="isonet" }
@@ -2064,6 +2064,13 @@ name = "Use Percent thresholding (refine)"
 description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively."
 type = "bool"
 default = true
+condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_denoise.isonet_debug]
+name = "Debug (refine)"
+description = "Save intermediate files to result directory."
+type = "bool"
+default = false
 condition = { arg="denoise", value="isonet" }
 
 [tabs.tomo_vir]

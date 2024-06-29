@@ -79,7 +79,7 @@ def calculate_rec_swarm_required_resources(mparameters, fparameters, particles):
     return increment, threads
 
 
-def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.swarm"):
+def create_pyp_swarm_file(parameters, files, timestamp, run_mode, swarm_file="pre_process.swarm"):
 
     # enable Nvidia GPU?
     gpu = needs_gpu(parameters)
@@ -121,7 +121,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
                             ),
                             timestamp,
                             s,
-                            parameters["data_mode"],
+                            run_mode,
                             os.getcwd(),
                         )
                         for s in files
@@ -133,12 +133,12 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
     return swarm_file, gpu
 
 
-def create_train_swarm_file(parameters, timestamp, swarm_file="train.swarm"):
+def create_train_swarm_file(timestamp, train_type, swarm_file="train.swarm"):
     with open(os.path.join("swarm", swarm_file), "w") as f:
         f.write(
             "cd '{2}'; export {1}train={1}train; {0} 2>&1 | tee log/{3}_{1}train.log".format(
                 run_pyp(command="pyp", script=True, gpu=True),
-                "milo" if parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"],
+                train_type,
                 os.getcwd(),
                 timestamp,
             )
@@ -163,13 +163,13 @@ def create_milo_swarm_file(parameters, timestamp, swarm_file="miloeval.swarm"):
     return swarm_file
 
 
-def create_other_swarm_file(parameters, timestamp, swarm_file, modename):
+def create_other_swarm_file(parameters, timestamp, swarm_file, run_mode):
     gpu = needs_gpu(parameters)
     with open(os.path.join("swarm", swarm_file), "w") as f:
         f.write(
             "cd '{2}'; export {1}={1}; {0} 2>&1 | tee log/{3}_{1}.log".format(
                 run_pyp(command="pyp", script=True, gpu=gpu),
-                modename,
+                run_mode,
                 os.getcwd(),
                 timestamp,
             )
