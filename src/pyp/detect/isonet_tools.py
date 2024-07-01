@@ -17,7 +17,7 @@ logger = initialize_pyp_logger(log_name=relative_path)
 def get_isonet_path():
     config = get_pyp_configuration()
     isonet_path = config["pyp"]["isonet"]
-    command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH ;{isonet_path}/bin/"
+    command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH ;{isonet_path}/IsoNet/bin/"
     return command_base
 
 isonet_command = get_isonet_path()
@@ -293,7 +293,7 @@ def isonet_train(project_dir, output, parameters):
 
     # generate input tomo.star
     initial_star = "tomograms.star" 
-    isonet_generate_star(tomogram_source, initial_star, parameters, train_name)
+    isonet_generate_star(tomogram_source, initial_star, parameters, train_name[:, 0])
     
     debug = True if parameters.get("tomo_denoise_isonet_debug", False) else False
         
