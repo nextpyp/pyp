@@ -998,26 +998,6 @@ def split(parameters):
                 csp_no_stacks=parameters["csp_no_stacks"],
             ).strip()
 
-        elif False and cryocare:
-            tomohalf_swarm_file, _ = slurm.create_tomohalf_swarm_file(parameters, files, timestamp)
-
-            # submit swarm jobs
-            id_cryocare = slurm.submit_jobs(
-                "swarm",
-                tomohalf_swarm_file,
-                jobtype="cryocare",
-                jobname=job_name,
-                queue=partition_name,
-                scratch=0,
-                threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
-                gres=parameters["slurm_gres"],
-                account=parameters.get("slurm_account"),
-                walltime=parameters["slurm_walltime"],
-                tasks_per_arr=parameters["slurm_bundle_size"],
-                use_gpu=gpu,
-            ).strip()
-
         else:
             id_train = ""
 
