@@ -68,7 +68,7 @@ tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_re
 [blocks.tomo_pre_process]
 name = "TOMO Pre-processing"
 description = "Alignment, CTF and particle picking"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_denoise", "tomo_vir", "tomo_spk", "detect_nn3d", "detect_milo", "tomo_ext", "slurm" ]
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "detect_milo", "tomo_ext", "slurm" ]
 
 [blocks.tomo_coarse_refine]
 name = "TOMO Coarse Refinement"
