@@ -294,6 +294,11 @@ def tomo_swarm_half(project_path, filename, keep=False):
     # cryoCARE 
     cryocare("./", project_path, filename, parameters)
 
+    # rename the denoised tomograms
+    shutil.move(os.path.join(project_path, "mrc", filename + "_denoised.rec", filename + "_half1.rec" ), os.path.join(project_path, "mrc", filename + ".rec" ))
+
+    shutil.rmtree(os.path.join(project_path, "mrc", filename + "_denoised.rec"))
+
     # clean 
     if not keep:
         shutil.rmtree(working_path, "True")
