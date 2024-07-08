@@ -734,6 +734,20 @@ type = "bool"
 default = false
 condition={ arg="method", value="ctffind5" }
 
+[tabs.ctf.tilt_axis_known]
+name = "Tilt axis is known"
+description = "Estimiate CTF with known tilt axis"
+type = "bool"
+default = false
+condition={ arg="method", value="ctffind5" }
+
+[tabs.ctf.tilt_axis]
+name = "Known tilt axis angle"
+description = "Tilt axis used for CTF estimation"
+type = "float"
+default = 0.0
+condition={ arg="method", value="ctffind5" }
+
 [tabs.ctf.determine_thickness]
 name = "Detect sample thickness"
 description = "Sample thickness estimation"

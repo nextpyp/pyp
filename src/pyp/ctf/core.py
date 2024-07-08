@@ -146,7 +146,12 @@ def ctffind4_movie(movie, parameters, average=4):
     else:    
         phase_shift = "No"
         if parameters["ctf_determine_tilt"]:
-            determine_tilt = "Yes\n"
+
+            if parameters["ctf_tilt_axis_known"]:
+                determine_tilt = f"Yes\nYes\n{parameters['ctf_tilt_axis']}\n"
+            else:
+                determine_tilt = "Yes\nNo\n"
+
         else:
             determine_tilt = "No\n"
     
@@ -222,7 +227,6 @@ Yes
 Yes
 1.4
 No
-Yes
 {parameters["slurm_tasks"]}
 EOF
 """
@@ -801,7 +805,7 @@ def ctffind_tilt_multiprocessing(
 
     os.symlink( f"../{current_name}.mrc", f"{current_name}.mrc" )
 
-    [df1, df2, angast, cc, res] = run_ctffind_tilt(
+    [df1, df2, angast, cc, res, est_tilt_axis, est_tilt_angle, est_thickness] = run_ctffind_tilt(
         current_name, parameters, tilt_angle, tilt_axis, meandef, tolerance, False
     )
     os.chdir(current)
@@ -809,7 +813,7 @@ def ctffind_tilt_multiprocessing(
     shutil.rmtree(current_name)
     os.remove(f"{current_name}.mrc")
     filename = current_name + ".txt"
-    np.savetxt(filename, np.array([counter, df1, df2, angast, cc, res]).astype("float"))
+    np.savetxt(filename, np.array([counter, df1, df2, angast, cc, res, est_tilt_axis, est_tilt_angle, est_thickness]).astype("float"))
     return
 
 
@@ -972,7 +976,7 @@ def ctffind_tomo_estimate(name, parameters):
                         parameters,
                         counter,
                         tilt_angle,
-                        -90 + tilt_axis,
+                        90 + tilt_axis,
                         mean_df,
                         tolerance,
                     )
@@ -1026,7 +1030,7 @@ def plot_ctffind_tilt(name, parameters, ctf):
     for tilt_angle in tilts:
         filename = name + "_%04d.txt" % counter
         current = np.loadtxt(filename)
-        defocuses[int(current[0]), :] = current
+        defocuses[int(current[0]), :] = current[:6]
         defocuses[int(current[0]), 0] = tilts[int(current[0])]
         counter += 1
 
@@ -1374,7 +1378,6 @@ def refineCtftilt(
         math.inf,
     )
 
-
     rootname = Path(imagefile).stem
     best_output_spectra = rootname + "_ctffind4.mrc"
     best_avrot = rootname + "_ctffind4_avrot.txt"
@@ -1496,8 +1499,8 @@ EOF
         tilt_axis,
     )
 
-  
-    command_not_determine_tilt = """
+    if False:
+        command_not_determine_tilt = """
 %s > %s 2>&1 << EOF
 %s.mrc
 %s
@@ -1521,28 +1524,48 @@ Yes
 No
 1
 EOF
-""" % (
-        timeout_command(ctffind_exe, 600, full_path=True),
-        logfile_notilt,
-        imagefile,
-        output_spectra_notilt,
-        float(parameters["data_bin"]) * float(parameters["scope_pixel"]),
-        parameters["scope_voltage"],
-        parameters["scope_cs"],
-        parameters["scope_wgh"],
-        parameters["ctf_tile"],
-        parameters["ctf_min_res"],
-        parameters["ctf_max_res"],
-        mindefocus,
-        maxdefocus,
-        parameters["ctf_fstep"],
-    )
+    """ % (
+            timeout_command(ctffind_exe, 600, full_path=True),
+            logfile_notilt,
+            imagefile,
+            output_spectra_notilt,
+            float(parameters["data_bin"]) * float(parameters["scope_pixel"]),
+            parameters["scope_voltage"],
+            parameters["scope_cs"],
+            parameters["scope_wgh"],
+            parameters["ctf_tile"],
+            parameters["ctf_min_res"],
+            parameters["ctf_max_res"],
+            mindefocus,
+            maxdefocus,
+            parameters["ctf_fstep"],
+        )
 
     if "ctffind5" in parameters["ctf_method"]:
         ctffind_command = f"{get_frealign_paths()['cistem2']}/ctffind5"
 
         determine_tilt = "Yes"
-        determine_thickness = "Yes"
+        known_tilt_axis = "Yes"
+        # TODO confirm ctffind5 tilt axis/angle convention, the code seems to be counterclockwise while paper mentioned as clockwise
+        if tilt_axis < 0:
+            tilt_axis + 360
+        
+        ctf_max_res = parameters['ctf_max_res']
+        if np.abs(tilt_angle) >= 10 and np.abs(tilt_angle) < 20:
+            ctf_max_res += 1       
+        elif np.abs(tilt_angle) >= 20 and np.abs(tilt_angle) < 30:
+            ctf_max_res += 2
+        elif np.abs(tilt_angle) >= 30 and np.abs(tilt_angle) < 40:
+            ctf_max_res += 3
+        elif np.abs(tilt_angle) >= 40 and np.abs(tilt_angle) < 50:
+            ctf_max_res += 4
+        elif np.abs(tilt_angle) >= 50:
+            ctf_max_res += 5
+
+        if parameters["ctf_determine_thickness"]:
+            determine_thickness = f"Yes\nNo\nNo\n30.0\n{ctf_max_res}\nNo\nNo"
+        else:
+            determine_thickness = "No"
         # ctffind5
         ctffind5_command = f"""
 {timeout_command(ctffind_command, 800, full_path=True)} > {logfile_notilt} 2>&1 << EOF
@@ -1563,13 +1586,9 @@ No
 No
 No
 {determine_tilt}
+{known_tilt_axis}
+{tilt_axis}
 {determine_thickness}
-No
-No
-{30.0}
-{3.0}
-No
-No
 No
 EOF
 """
@@ -1578,7 +1597,7 @@ EOF
 
     # We run two different per-tilt ctf estimation on the same image, and choose the best one based on
     # estimated resolution and cc
-    for estimation in [command_determine_tilt, ctffind5_command]: #, command_not_determine_tilt]:
+    for estimation in [ ctffind5_command ]: #, command_determine_tilt, command_not_determine_tilt]:
 
         command = estimation
         
@@ -1698,9 +1717,9 @@ def run_ctffind_tilt(
     five_res = int(min_res + ctfprof[0, min_res:].size / 2)
 
     # 1D CTF FIT
-    df1, df2, angast, ccc, est_res = np.loadtxt(
+    df1, df2, angast, ccc, est_res, est_tilt_axis, est_tilt_angle, est_thickness = np.loadtxt(
         output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
-    )[[1, 2, 3, 5, 6]]
+    )[[1, 2, 3, 5, 6, 7, 8, 9]]
 
     axarr.set_title(
         image_file + " (CC=%0.2f, Res=%0.2f A)" % (ccc, est_res), fontsize=10
@@ -1728,7 +1747,7 @@ def run_ctffind_tilt(
     )
     axarr.set_xlim(ctfprof[0, min_res], ctfprof[0, five_res])
     axarr.set_ylim(0, 1.2)
-    axarr.set_xlabel("DF1=%.2d, DF2=%.2f, ANGAST=%.2f" % (df1, df2, angast))
+    axarr.set_xlabel("DF1=%.2d, DF2=%.2f, ANGAST=%.2f, \nTILT_AXIS=%.2f, TILT_ANGLE=%.2f, THICKNESS=%.2f" % (df1, df2, angast, est_tilt_axis, est_tilt_angle, est_thickness))
     # axarr.legend()
     axarr.set_xlim(
         1.0 / float(parameters["ctf_min_res"]), 1.25 / float(parameters["ctf_max_res"])
@@ -1743,7 +1762,7 @@ def run_ctffind_tilt(
         # parse output and return df1, df2, angast and CC
         return np.loadtxt(
             output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
-        )[[1, 2, 3, 5, 6]]
+        )[[1, 2, 3, 5, 6, 7, 8, 9]]
     except Exception as error:
         logger.exception("CTFFIND4 failed to run.")
         logger.info(error)
@@ -1938,7 +1957,7 @@ EOF
 
     return
 
-def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_detect: float = 30.0, tilt_axis_error: float = 90.0, tilt_angle_error = 10.0):
+def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_detect: float = 30.0, tilt_axis_error: float = 90.0, tilt_angle_error = 20.0):
     """detect_handedness Detect tilt handedness by checking the tilt geometry estimated by ctffind_tilt
 
     Parameters
@@ -1978,7 +1997,11 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
                         if "rot=" in line
                     ][index][0].split()[2][:-1]
                 )
-    tilt_axis = -90 + tilt_axis
+    tilt_axis = 90 + tilt_axis
+
+    if tilt_axis < 0:
+        tilt_axis += 360
+
     tilt_angle = tilt_angles[index]
 
     # produced by running ctffind_tilt
@@ -1992,16 +2015,11 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
             # logger.info(f"{estimated_tilt_axis}, {tilt_axis}, {estimated_tilt_angle}, {tilt_angle}")
 
             handedness = NO_FLIP
-            if abs(estimated_tilt_angle - abs(tilt_angle)) < tilt_angle_error:
-                if tilt_angle > 0:
-                    if abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error:
-                        handedness = FLIP
-                else:
-                    if abs(estimated_tilt_axis - tilt_axis) > tilt_axis_error:
-                        handedness = FLIP
-                return handedness
-            else:
-                logger.warning(f"Estimated tilt-angle ({estimated_tilt_angle}) is very different from expected value ({tilt_angles[index]}). Skipping handedness detection for this tilt")
+            if (abs(estimated_tilt_axis - tilt_axis) < tilt_axis_error and abs(estimated_tilt_angle - tilt_angle) > tilt_angle_error 
+                or  abs(estimated_tilt_axis - tilt_axis) > tilt_axis_error and abs(estimated_tilt_angle - tilt_angle) < tilt_angle_error ):
+                handedness = FLIP
+
+            return handedness         
     else:
         logger.warning(f"{estimated_tilt} does not exist. Skipping detecting handedness using tilt angle {angle_to_detect}... ")
 

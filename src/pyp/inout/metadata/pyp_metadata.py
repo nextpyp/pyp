@@ -153,7 +153,7 @@ FILES_TOMO= {"image":
                 {
                     "path": "%s_????.txt", 
                     "format": "text", 
-                    "header": ["counter", "df1", "df2", "angast", "cc", "res"],
+                    "header": ["counter", "df1", "df2", "angast", "cc", "res", "tilt_axis_angle", "tilt_angle", "thickness"],
                     "index": None
                 }, 
             "box": 
