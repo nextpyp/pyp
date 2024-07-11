@@ -88,6 +88,7 @@ def needs_gpu(parameters):
         or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters.get("detect_force") )
         or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters.get("tomo_vir_force") )
         or ( "topaz" in parameters.get("tomo_denoise_method") and parameters.get("tomo_denoise_topaz_use_gpu") and parameters.get("tomo_rec_force") )
+        or (parameters.get("tomo_mem_seg") and parameters["tomo_mem_seg"])
         or "gpu:" in parameters.get("slurm_gres")
         ):
         return True

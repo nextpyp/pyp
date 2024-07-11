@@ -382,7 +382,9 @@ def isonet_train(project_dir, output, parameters):
                 shutil.copytree(s, d, dirs_exist_ok=True) 
             else:
                 shutil.copy2(s, d)
-
+    
+    # clean
+    os.chdir(project_dir)
     shutil.rmtree(working_path, "True")
     
  

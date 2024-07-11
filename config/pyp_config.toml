@@ -65,10 +65,10 @@ name = "TOMO Star Import"
 description = "Star data import for TOMO"
 tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
-[blocks.tomo_pre_process]
+[blocks.tomo_preprocess]
 name = "TOMO Pre-processing"
-description = "Alignment, CTF and particle picking"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "detect_milo", "tomo_ext", "slurm" ]
+description = "Alignment, CTF and Reconstruction"
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
 
 [blocks.tomo_coarse_refine]
 name = "TOMO Coarse Refinement"
@@ -89,6 +89,16 @@ tabs = [ "mask", "slurm" ]
 name = "TOMO Denoising"
 description = "Denoising"
 tabs = [ "tomo_denoise", "slurm" ]
+
+[blocks.tomo_segment]
+name = "TOMO Segmentation"
+description = "Segmentation"
+tabs = [ "tomo_mem", "tomo_vir", "detect_nn3d", "slurm" ]
+
+[blocks.tomo_picking]
+name = "TOMO Particle-picking"
+description = "Particle picking"
+tabs = [ "tomo_spk", "detect_nn3d", "detect_milo", "tomo_ext", "slurm" ]
 
 [blocks.tomo_flexible_refine]
 name = "TOMO Frame Refinement"
@@ -2086,6 +2096,107 @@ description = "Save intermediate files to result directory."
 type = "bool"
 default = false
 condition = { arg="denoise", value="isonet" }
+
+[tabs.tomo_mem]
+_name = "Membrane segmentation"
+_description = "Parameters for tomogram membrane segmentation using MemBrain-seg"
+
+[tabs.tomo_mem.seg]
+name = "Do membrane segmentation"
+description = "Do membrane segmentation on tomograms using MemBrain."
+type = "bool"
+default = false
+
+[tabs.tomo_mem.preprocessing]
+name = "Do preprocessing"
+description = "Do preprocessing for the input tomogram."
+type = "bool"
+default = false
+
+[tabs.tomo_mem.pixel]
+name = "Rescaling pixel size"
+description = "Rescale the tomogram pixel size to this value."
+type = "float"
+default = 0.0
+condition = { arg="preprocessing", value="true" }
+
+[tabs.tomo_mem.match_ps]
+name = "Match spectrum"
+description = "Match amplitude of Fourier spectrum from input tomogram to target spectrum."
+type = "bool"
+default = false
+condition = { arg="preprocessing", value="true" }
+
+[tabs.tomo_mem.target]
+name = "Target tomogram"
+description = "Target tomgram for matching."
+type = "path"
+default = "None"
+path = { type="files" }
+condition = { arg="preprocessing", value="true" }
+
+[tabs.tomo_mem.deconvolve]
+name = "Deconvolution filter"
+description = "Perform the deconvolution filter to enhance tomogram contrast."
+type = "bool"
+default = false
+condition = { arg="preprocessing", value="true" }
+
+[tabs.tomo_mem.model]
+name = "Membrane segmentation model"
+description = "Path to pre-trained membrane segmentation model."
+type = "path"
+default = "None"
+path = { type="files" }
+
+[tabs.tomo_mem.rescale_patches]
+name = "Rescale patches"
+description = "Should patches be rescaled on-the-fly during inference?"
+type = "bool"
+default = false
+
+[tabs.tomo_mem.patch_pxl]
+name = "Patch pixel size"
+description = "Pixel size to which patches will be rescaled internally (should normally be 10)"
+type = "float"
+default = 10.0
+condition = { arg="rescale_patches", value="true" }
+
+[tabs.tomo_mem.store_probabilities]
+name = "Store probabilities"
+description = "Should probability maps be output in addition to segmentations?"
+type = "bool"
+default = false
+
+[tabs.tomo_mem.connected_map]
+name = "Compute connected components"
+description = "Should connected components of the segmentation be computed?"
+type = "bool"
+default = false
+
+[tabs.tomo_mem.connected_thres]
+name = "Connected components threshold"
+description = "Components smaller than this will be removed from the segmentation"
+type = "int"
+default = 0
+
+[tabs.tomo_mem.augmentation]
+name = "Test time augmentation"
+description = "Should 8-fold test time augmentation be used?"
+type = "bool"
+default = true
+
+[tabs.tomo_mem.seg_thres]
+name = "Segmentation threshold"
+description = "Threshold used in scoremap to increase / decrease segmented membranes"
+type = "float"
+default = 0.0
+
+[tabs.tomo_mem.sliding_wd]
+name = "Sliding window size"
+description = "Integer Sliding window size used for inference."
+type = "int"
+default = 160
 
 [tabs.tomo_vir]
 _name = "Virion/spike detection"

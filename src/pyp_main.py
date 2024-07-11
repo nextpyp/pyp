@@ -48,7 +48,7 @@ from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
 from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
-from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools
+from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools, MemBrain
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
@@ -908,6 +908,7 @@ def split(parameters):
 
         cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"]
         isonet_predict = parameters["data_mode"] == "tomo" and "isonet-predict" in parameters["tomo_denoise_method"] 
+        membrain = parameters["data_mode"] == "tomo" and "tomo_mem_seg" in parameters and parameters["tomo_mem_seg"] 
 
         if cryocare:
             run_mode = "cryocare"
@@ -915,6 +916,9 @@ def split(parameters):
         elif isonet_predict:
             run_mode = "isonet"
             job_type = "isonetswarm"
+        elif membrain:
+            run_mode = "membrain"
+            job_type = "membrainswarm"
         else:
             run_mode = parameters["data_mode"]
             job_type = parameters["data_mode"] + "swarm"
@@ -4187,6 +4191,23 @@ if __name__ == "__main__":
             except:
                 trackback()
                 logger.error("PYP (isonet predict) failed")
+                pass
+        
+        elif "membrainswarm" in os.environ:
+            del os.environ["membrainswarm"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                
+                # use same parameters mode as tomoswarm
+                args = project_params.parse_arguments("tomoswarm")
+                MemBrain.run_membrain(args.path, os.path.basename(args.file))
+                logger.info("PYP (membrane segmentation) finished successfully")
+            except:
+                trackback()
+                logger.error("PYP (membrane segmentation) failed")
                 pass
 
         # check gain reference
