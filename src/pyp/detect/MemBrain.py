@@ -148,12 +148,9 @@ def run_membrain(project_dir, name):
  
     if rescaled:
         rescale_input = glob.glob(f"./{local_output}/*.mrc")[0]
-        command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path ./scaled_back"
+        command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path {output}"
 
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
-        scaled_back = glob.glob("./scale_back/*.mrc")[0]
-        if os.path.exists(scaled_back):
-            shutil.move(scaled_back, output)
     else:
         target = glob.glob(f"./{local_output}/*.mrc")[0]
         shutil.move(target, output)
