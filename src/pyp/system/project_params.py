@@ -505,8 +505,9 @@ def parse_parameters(my_parameters,block,mode):
     blocks = [ specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and ( ( block in b and block != "import" ) or b.endswith("_import_raw") ) ]
 
     if "tomo" in mode and "pre_process" in block:
-        extra_block = "tomo_denoise"
-        blocks.extend([specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and extra_block in b ])
+        extra_blocks = ["tomo_denoise", "tomo_segment", "tomo_picking"]
+        for extra_block in extra_blocks:
+            blocks.extend([specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and extra_block in b ])
 
     blocks = list(np.unique(np.concatenate(blocks).flat))
     tabs = {}

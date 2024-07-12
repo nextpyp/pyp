@@ -390,6 +390,7 @@ def isonet_train(project_dir, output, parameters):
  
 def isonet_predict(project_dir, name):
     
+    os.chdir(project_dir)
     parameters = project_params.load_pyp_parameters()
     output = os.path.join(project_dir, "mrc")
 

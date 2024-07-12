@@ -109,6 +109,7 @@ def membrain_segmetation(parameters, input, local_output):
 
 def run_membrain(project_dir, name):
 
+    os.chdir(project_dir)
     parameters = project_params.load_pyp_parameters()
 
     # always try to look for tomograms from parent project
@@ -131,7 +132,7 @@ def run_membrain(project_dir, name):
     local_input =f"./{name}.rec"
 
     # copy the input tomogram to scratch space
-    assert os.path.exists(), "Input tomogram dose not exist, run preprocessing fist"
+    assert os.path.exists(input_tomo), "Input tomogram dose not exist, run preprocessing fist"
 
     shutil.copy2(input_tomo, local_input)
 
