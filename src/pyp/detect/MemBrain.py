@@ -1,6 +1,7 @@
 # MemBrain
 import os
 import shutil
+import glob
 from pathlib import Path
 from pyp.system import local_run, project_params
 from pyp.system.logging import initialize_pyp_logger
@@ -55,7 +56,7 @@ def membrain_preprocessing(parameters, input):
     else:
         output_match_spectrum = output_rescale
 
-    if parameters["tomo_membrane_deconvolve"]:
+    if parameters["tomo_mem_deconvolve"]:
 
         command = f"{get_membrane_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output} --pixel-size {tomo_pixelsize}"
 
@@ -83,7 +84,7 @@ def membrain_segmetation(parameters, input, local_output):
     if parameters[tm + "_rescale_patches"]:
         rescale_patches = f"--rescale-patches --in-pixel-size {inpix} --out-pixel-size {parameters[tm + '_patch_pxl']}"
     else:
-        rescale_patches = "--no-rescale-patches"
+        rescale_patches = ""
     
     if parameters[tm + "_store_probabilities"]:
         store_p = "--store-probabilities"
@@ -100,9 +101,7 @@ def membrain_segmetation(parameters, input, local_output):
     else:
         augment = "--no-test-time-augmentation"
     
-    local_output = "./segmentation.mrc"
-    
-    command =f"{get_membrane_path()}membrain segment --tomogram-path {input} --ckpt-path {model} --output-folder {local_output} {rescale_patches} {store_p} {connected_map} {augment} --segmentation-threshold {parameters[tm + '_seg_thres']} --sliding-window-size {parameters[tm + '_sliding_wd']}"
+    command =f"{get_membrane_path()}membrain segment --tomogram-path {input} --ckpt-path {model} --out-folder {local_output} {rescale_patches} {store_p} {connected_map} {augment} --segmentation-threshold {parameters[tm + '_seg_thres']} --sliding-window-size {parameters[tm + '_sliding_wd']}"
 
     local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
 
@@ -144,15 +143,20 @@ def run_membrain(project_dir, name):
         rescaled = False
         preprocessed = local_input
     
-    local_output =local_input.replace(".rec", "_seg.mrc")
+    local_output ="seg_out"
     membrain_segmetation(parameters, input=preprocessed, local_output=local_output)
  
     if rescaled:
-        command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {local_output} --orig-tomo-path ./{name}.rec --output-path {output}"
+        rescale_input = glob.glob(f"./{local_output}/*.mrc")[0]
+        command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path ./scaled_back"
 
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        scaled_back = glob.glob("./scale_back/*.mrc")[0]
+        if os.path.exists(scaled_back):
+            shutil.move(scaled_back, output)
     else:
-        shutil.move(local_output, output)
+        target = glob.glob(f"./{local_output}/*.mrc")[0]
+        shutil.move(target, output)
 
     # clean 
     os.chdir(project_dir)
