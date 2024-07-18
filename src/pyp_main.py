@@ -1469,7 +1469,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             metadata_object.meta2PYP(path=working_path,data_path=os.path.join(current_path,"raw/"))
 
         # convert nextpyp coordinates to imod model
-        if os.path.exists(f"{name}_exclude_views.next"):
+        if os.path.exists(f"{name}_exclude_views.next") and os.path.getsize(f"{name}_exclude_views.next") > 0:
             # convert next file to imod model
             com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
             local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
