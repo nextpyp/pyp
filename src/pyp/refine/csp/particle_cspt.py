@@ -1291,7 +1291,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
         shutil.move(individual_star_files[0], merged_star)
 
         for star in individual_star_files[1:]:
-            command = "awk 'BEGIN {{OFS=\"\\t\"}}; NF>3{{print}}' {0} >> {1}".format(star, merged_star)
+            command = "awk 'BEGIN {{OFS=\"\\t\"}}; NF>10{{print}}' {0} >> {1}".format(star, merged_star)
             local_run.run_shell_command(command, verbose=mp["slurm_verbose"])
             os.remove(star)
 
