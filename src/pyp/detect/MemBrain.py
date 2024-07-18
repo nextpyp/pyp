@@ -119,7 +119,7 @@ def run_membrain(project_dir, name):
         logger.info("Using current project tomograms for isonet denoising")
 
     # initialize path
-    working_path = Path(os.environ["PYP_SCRATCH"]) / "membrain"
+    working_path = Path(os.environ["PYP_SCRATCH"]) / name
 
     logger.info(f"Working path: {working_path}")
     
