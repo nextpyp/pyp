@@ -1404,7 +1404,7 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
                     get_imod_path(), tilt, name, int(square / binning), binning, i
                 )
             else:
-                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -taper 1,1 -bin {3}".format(
+                command = "{0}/bin/newstack {1} {2}_{4:04d}_square.mrc -taper 1,1 -bin {3}".format(
                     get_imod_path(), tilt, name, binning, i
                 )
             commands.append(command)
