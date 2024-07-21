@@ -504,8 +504,19 @@ def parse_parameters(my_parameters,block,mode):
     # only check tabs included in current block and mode
     blocks = [ specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and ( ( block in b and block != "import" ) or b.endswith("_import_raw") ) ]
 
-    if "tomo" in mode and "pre_process" in block:
-        extra_blocks = ["tomo_denoise", "tomo_segment", "tomo_picking"]
+    extra_blocks = []
+    if "tomo" in mode:
+        if  "pre_process" in block:
+            extra_blocks = ["tomo_denoise", "tomo_segment", "tomo_picking"]
+
+        if "refine" in block:
+            extra_blocks = [ "tomo_heterogeneity" ]
+
+    else:
+        if "refine" in block:
+            extra_blocks = [ "spr_heterogeneity" ]
+
+    if len(extra_blocks) > 0:    
         for extra_block in extra_blocks:
             blocks.extend([specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and extra_block in b ])
 

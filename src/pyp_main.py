@@ -48,7 +48,7 @@ from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
 from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
-from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools, MemBrain
+from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools, MemBrain 
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
@@ -72,6 +72,7 @@ from pyp.inout.metadata import (
 )
 from pyp.postprocess.pyp_fsc import fsc_cutoff
 from pyp.refine.csp import particle_cspt
+from pyp.refine.heterogeneity import cryoDRGN
 from pyp.refine.eman import eman
 from pyp.refine.frealign import frealign
 from pyp.refine.relion import relion
@@ -940,6 +941,8 @@ def split(parameters):
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
         milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"]
         isonet_train = parameters["data_mode"] == "tomo" and "isonet-train" in parameters["tomo_denoise_method"] 
+        heterogeneity = ( parameters.get("cryodrgn_active")
+                         or parameters.get("tomodrgn_active") )
 
         if gpu or tomo_train or spr_train or milo_eval or cryocare:
             # try to get the gpu partition
@@ -949,7 +952,7 @@ def split(parameters):
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
 
-        if ( tomo_train or spr_train or isonet_train):
+        if ( tomo_train or spr_train or isonet_train or heterogeneity):
             if os.path.exists(os.path.join("train","current_list.txt")):
 
                 if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train":
@@ -958,6 +961,9 @@ def split(parameters):
                 elif "tomo_denoise_method" in parameters and parameters["tomo_denoise_method"] == "isonet-train":
                     train_type = "isonet"
                     train_jobtype = "isonettrain"
+                elif heterogeneity:
+                    train_type = "heterogeneity"
+
                 else:
                     train_type = parameters["data_mode"]
                     train_jobtype = parameters["data_mode"] + "train"
@@ -4208,6 +4214,44 @@ if __name__ == "__main__":
             except:
                 trackback()
                 logger.error("PYP (membrane segmentation) failed")
+                pass
+        
+        elif "heterogeneity" in os.environ:
+            del os.environ["heterogeneity"]
+            try:
+                parameters = parse_arguments("refine")
+
+                if parameters["cryodrgn_active"]:
+                    if parameters["data_mode"] == "spr":
+                        set_up.prepare_spr_dir()
+                    else:
+                        set_up.prepare_tomo_dir()
+
+                    # prepare directory structure
+                    folders = [
+                        "frealign"
+                    ]
+                    null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
+
+                    if "data_parent" in parameters and parameters["data_parent"] is not None: 
+                        input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
+                        input = Path(os.getcwd()) / "frealign" / "stacks" 
+                        if not input.exits() and input_source.exists():               
+                            os.symlink( input_source, input ) 
+                    else:
+                        logger.info("Taking current project stacks as input to CryoDRGN")
+
+                    # clear local scratch and report free space
+                    clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                    project_dir = os.getcwd()
+                    cryoDRGN.run_cryodrgn(project_dir, parameters=parameters)
+                    logger.info("PYP (CryoDRGN) finished successfully")
+
+            except:
+                trackback()
+                logger.error("PYP (Heterogeneity analysis) failed")
                 pass
 
         # check gain reference
