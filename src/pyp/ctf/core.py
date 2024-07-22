@@ -1452,6 +1452,7 @@ Desired number of parallel threads [1]             :
     logfile_notilt = rootname + "_notilt.log"
     avrot_notilt = Path(output_spectra_notilt).stem + "_avrot.txt"
 
+    run_commands = []
     command_determine_tilt = """
 %s > %s 2>&1 << EOF
 %s.mrc
@@ -1548,7 +1549,7 @@ EOF
         known_tilt_axis = "Yes"
         # TODO confirm ctffind5 tilt axis/angle convention, the code seems to be counterclockwise while paper mentioned as clockwise
         if tilt_axis < 0:
-            tilt_axis + 360
+            tilt_axis += 360
         
         ctf_max_res = parameters['ctf_max_res']
         if np.abs(tilt_angle) >= 10 and np.abs(tilt_angle) < 20:
@@ -1592,12 +1593,13 @@ No
 No
 EOF
 """
+        run_commands.append(ctffind5_command)
     else:
-        ctffind5_command = ""
+        run_commands.append(command_determine_tilt)
 
     # We run two different per-tilt ctf estimation on the same image, and choose the best one based on
     # estimated resolution and cc
-    for estimation in [ ctffind5_command ]: #, command_determine_tilt, command_not_determine_tilt]:
+    for estimation in run_commands: #, command_determine_tilt, command_not_determine_tilt]:
 
         command = estimation
         
@@ -1717,9 +1719,16 @@ def run_ctffind_tilt(
     five_res = int(min_res + ctfprof[0, min_res:].size / 2)
 
     # 1D CTF FIT
-    df1, df2, angast, ccc, est_res, est_tilt_axis, est_tilt_angle, est_thickness = np.loadtxt(
-        output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
-    )[[1, 2, 3, 5, 6, 7, 8, 9]]
+    if "ctffind5" in parameters["ctf_method"]:
+        df1, df2, angast, ccc, est_res, est_tilt_axis, est_tilt_angle, est_thickness = np.loadtxt(
+            output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
+        )[[1, 2, 3, 5, 6, 7, 8, 9]]
+    else:
+        df1, df2, angast, ccc, est_res = np.loadtxt(
+            output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
+        )[[1, 2, 3, 5, 6]]
+
+        est_tilt_axis, est_tilt_angle, est_thickness = 0, 0, 0
 
     axarr.set_title(
         image_file + " (CC=%0.2f, Res=%0.2f A)" % (ccc, est_res), fontsize=10
@@ -1759,10 +1768,20 @@ def run_ctffind_tilt(
     shutil.move(image_file + "_ctffind4_avrot.txt", Path(os.getcwd()).parent)
 
     try:
-        # parse output and return df1, df2, angast and CC
-        return np.loadtxt(
-            output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
-        )[[1, 2, 3, 5, 6, 7, 8, 9]]
+        if "ctffind5" in parameters["ctf_method"]:
+            # parse output and return df1, df2, angast and CC
+            return np.loadtxt(
+                output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
+            )[[1, 2, 3, 5, 6, 7, 8, 9]]
+        else:
+            data = np.loadtxt(
+                output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
+            )[[1, 2, 3, 5, 6]]
+
+            
+            result = np.concatenate((data, np.array([0, 0, 0])), axis=0)
+            return result 
+        
     except Exception as error:
         logger.exception("CTFFIND4 failed to run.")
         logger.info(error)

@@ -70,7 +70,7 @@ name = "TOMO Star Import"
 description = "Star data import for TOMO"
 tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
-[blocks.tomo_preprocess]
+[blocks.tomo_pre_process]
 name = "TOMO Pre-processing"
 description = "Alignment, CTF and Reconstruction"
 tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
