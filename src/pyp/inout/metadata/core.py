@@ -639,7 +639,7 @@ def get_new_input_list(parameters, inputlist):
                 )
     tomo_vir_pick = (
                     "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0
-                    and not ("none" in parameters["tomo_vir_detect_method"] or "none" in parameters["tomo_vir_method"] or "pyp-train" in parameters["tomo_vir_method"])
+                    and not ("none" in parameters["tomo_srf_detect_method"] or "none" in parameters["tomo_vir_method"] or "pyp-train" in parameters["tomo_vir_method"])
                     )
     tomo_spk_pick = (
                     "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0
@@ -1724,7 +1724,7 @@ def tomo_extract_coordinates(
         Parx strings for all frames in all particles
     """
     name = os.path.basename(filename)
-    # distance_from_equator = float(parameters["tomo_vir_detect_band"])
+    # distance_from_equator = float(parameters["tomo_srf_detect_band"])
     voltage = parameters["scope_voltage"]
     cs = parameters["scope_cs"]
     wgh = parameters["scope_wgh"]

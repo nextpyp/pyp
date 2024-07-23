@@ -912,7 +912,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                         new_parameters["detect_force"] = True
                         clean_picking_files(project_dir)
 
-                elif "tomo_vir_" in k and "tomo_vir_detect_" not in k:
+                elif "tomo_vir_" in k and "tomo_srf_detect_" not in k:
                     logger.info(
                         f"Virions will be re-computed to reflect change in parameter {k}"
                     )
