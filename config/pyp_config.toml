@@ -2121,7 +2121,7 @@ _name = "Membrane segmentation"
 _description = "Parameters for tomogram membrane segmentation using MemBrain-seg"
 
 [tabs.tomo_mem.seg]
-name = "Do membrane segmentation"
+name = "Segment membranes"
 description = "Do membrane segmentation on tomograms using MemBrain."
 type = "bool"
 default = false
@@ -2131,6 +2131,7 @@ name = "Do preprocessing"
 description = "Do preprocessing for the input tomogram."
 type = "bool"
 default = false
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.pixel]
 name = "Rescaling pixel size"
@@ -2167,12 +2168,14 @@ description = "Path to pre-trained membrane segmentation model."
 type = "path"
 default = "None"
 path = { type="files" }
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.rescale_patches]
 name = "Rescale patches"
 description = "Should patches be rescaled on-the-fly during inference?"
 type = "bool"
 default = false
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.patch_pxl]
 name = "Patch pixel size"
@@ -2186,36 +2189,42 @@ name = "Store probabilities"
 description = "Should probability maps be output in addition to segmentations?"
 type = "bool"
 default = false
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.connected_map]
 name = "Compute connected components"
 description = "Should connected components of the segmentation be computed?"
 type = "bool"
 default = false
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.connected_thres]
 name = "Connected components threshold"
 description = "Components smaller than this will be removed from the segmentation"
 type = "int"
 default = 0
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.augmentation]
 name = "Test time augmentation"
 description = "Should 8-fold test time augmentation be used?"
 type = "bool"
 default = true
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.seg_thres]
 name = "Segmentation threshold"
 description = "Threshold used in scoremap to increase / decrease segmented membranes"
 type = "float"
 default = 0.0
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.sliding_wd]
 name = "Sliding window size"
 description = "Integer Sliding window size used for inference."
 type = "int"
 default = 160
+condition = { arg="seg", value="true" }
 
 [tabs.tomo_vir]
 _name = "Virion/spike detection"
