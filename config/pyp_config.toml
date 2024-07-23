@@ -4117,7 +4117,7 @@ advanced = true
 
 [tabs.cryodrgn.dec_domain]
 name = "Decoder representation"
-descrition = "Volume decoder representation (default: fourier)"
+description = "Volume decoder representation (default: fourier)"
 type = "enum"
 enum = {hartley="hartley", fourier="fourier"}
 default = "fourier"
