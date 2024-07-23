@@ -134,7 +134,7 @@ def process_virion_multiprocessing(
     autopick_template = virion_name + "_autopick_template.mrc"
 
     # run autopick
-    if parameters["tomo_vir_detect_method"] != "none":
+    if parameters["tomo_srf_detect_method"] != "none":
 
         fresh_template_match = False
 
@@ -147,7 +147,7 @@ def process_virion_multiprocessing(
         if (
             not os.path.exists(virion_name + "_cut.txt")
         ):
-            if "template" in parameters["tomo_vir_detect_method"]:
+            if "template" in parameters["tomo_srf_detect_method"]:
                 # pick and extract particles
                 lower_slice = int(
                     virion_size / 2 / virion_binning - band_width / virion_binning
@@ -157,10 +157,10 @@ def process_virion_multiprocessing(
                 )
 
                 # if using standard template, rescale template volume to match data pixel size
-                parameters["tomo_vir_detect_ref"] = project_params.resolve_path(parameters["tomo_vir_detect_ref"]) if "tomo_vir_detect_ref" in parameters else ""
+                parameters["tomo_srf_detect_ref"] = project_params.resolve_path(parameters["tomo_srf_detect_ref"]) if "tomo_srf_detect_ref" in parameters else ""
                 if (
                     "hiv1bal-ang90_global_average_symmetrized.mrc.filtered.mrc"
-                    in parameters["tomo_vir_detect_ref"]
+                    in parameters["tomo_srf_detect_ref"]
                 ):
                     # size = int( 36.0 * factor )
                     size = int(64.0 * factor)
@@ -168,16 +168,16 @@ def process_virion_multiprocessing(
                         size += 1
 
                     resample_and_resize(
-                        input=parameters["tomo_vir_detect_ref"],
+                        input=parameters["tomo_srf_detect_ref"],
                         output=autopick_template,
                         scale=factor,
                         size=size,
                     )
 
-                # elif parameters["tomo_vir_detect_method"] == "mesh":
+                # elif parameters["tomo_srf_detect_method"] == "mesh":
                 #     size_x = size_y = size_z = 8
-                if os.path.exists(parameters["tomo_vir_detect_ref"]):
-                    shutil.copy2(parameters["tomo_vir_detect_ref"], autopick_template)
+                if os.path.exists(parameters["tomo_srf_detect_ref"]):
+                    shutil.copy2(parameters["tomo_srf_detect_ref"], autopick_template)
                     size_x = size_z = 0
                     size_y = autopick_template
                 else: 
@@ -217,22 +217,22 @@ def process_virion_multiprocessing(
                     max(tilt_angles),
                     lower_slice,
                     upper_slice,
-                    str(parameters["tomo_vir_detect_dist"]),
-                    str(parameters["tomo_vir_detect_thre"]),
+                    str(parameters["tomo_srf_detect_dist"]),
+                    str(parameters["tomo_srf_detect_thre"]),
                     autopick_template,
                 )
                 t = timer.Timer(text="Spike detection using Correlation3DNew took: {}", logger=logger.info)
                 t.start()
-                command = f"{get_tomo_path()}/Correlation3DNew {virion_name} {virion_name}_binned_nad_seg.mrc {threshold} {spk_pick_binning} {min(tilt_angles)} {max(tilt_angles)} 2 {lower_slice} {upper_slice} {size_x} {size_y} {size_z} {parameters['tomo_vir_detect_dist']} {parameters['tomo_vir_detect_thre']} {virion_name}_cut.txt {virion_name}_ccc.xml {virion_name}_spikes.xml"
+                command = f"{get_tomo_path()}/Correlation3DNew {virion_name} {virion_name}_binned_nad_seg.mrc {threshold} {spk_pick_binning} {min(tilt_angles)} {max(tilt_angles)} 2 {lower_slice} {upper_slice} {size_x} {size_y} {size_z} {parameters['tomo_srf_detect_dist']} {parameters['tomo_srf_detect_thre']} {virion_name}_cut.txt {virion_name}_ccc.xml {virion_name}_spikes.xml"
                 local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
                 t.stop()
                 fresh_template_match = True
 
             # Using uniform coordinates from virion surface
-            elif  "tomo_vir_detect_method" in parameters and parameters["tomo_vir_detect_method"] == "mesh":
+            elif  "tomo_srf_detect_method" in parameters and parameters["tomo_srf_detect_method"] == "mesh":
                 fresh_template_match = True
                 bandwidth = band_width / virion_binning
-                distance = parameters["tomo_vir_detect_dist"]
+                distance = parameters["tomo_srf_detect_dist"]
                 # scale_factor = virion_binning * spk_pick_binning
                 mesh_coordinate_generator(virion_name, threshold, distance, bandwidth)
 
@@ -282,7 +282,7 @@ def process_virion_multiprocessing(
 
                 # spike height default = 228A
                 spike_height = (
-                    float(parameters["tomo_vir_detect_offset"])
+                    float(parameters["tomo_srf_detect_offset"])
                     / parameters["scope_pixel"]
                     / virion_binning
                 )
@@ -291,7 +291,7 @@ def process_virion_multiprocessing(
                 # offset = - ( spike_height + 4 ) / 2
                 offset = -spike_height
 
-                if offset != 0 or "mesh" in parameters["tomo_vir_detect_method"]:
+                if offset != 0 or "mesh" in parameters["tomo_srf_detect_method"]:
                     com = "{0}/LoopCreateVolumeList {1} {2} {3} {4}.rec {4}.pos {5} {4}_binned_nad_seg.mrc {6} {4}_cut.txt".format(
                         get_tomo_path(),
                         spk_pick_binning,
@@ -394,7 +394,7 @@ def process_virion_multiprocessing(
                                 # if not, only process the lines which are height corrected
 
                                 if (
-                                        fresh_template_match and float(parameters["tomo_vir_detect_offset"])
+                                        fresh_template_match and float(parameters["tomo_srf_detect_offset"])
                                 ) > 0 and data[6] != "0":
                                     continue
 
@@ -507,7 +507,7 @@ def process_virions(
         Extracted virion volume
     """
 
-    band_width = parameters["tomo_vir_detect_band"] / parameters["scope_pixel"]
+    band_width = parameters["tomo_srf_detect_band"] / parameters["scope_pixel"]
     spike_size = parameters["tomo_ext_size"] if "tomo_ext_size" in parameters  else 0
 
     virion_binning, virion_size = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
@@ -732,11 +732,11 @@ def process_virions(
                 )
 
                 if virion_name.endswith("_vir0000"):
-                    if parameters["tomo_vir_detect_method"] != "none":
+                    if parameters["tomo_srf_detect_method"] != "none":
                         if not os.path.exists(virion_name + "_cut.txt"):
-                            if "template" in parameters["tomo_vir_detect_method"]:
+                            if "template" in parameters["tomo_srf_detect_method"]:
                                 logger.info("Detecting spikes using template search")
-                            elif  "tomo_vir_detect_method" in parameters and parameters["tomo_vir_detect_method"] == "mesh":
+                            elif  "tomo_srf_detect_method" in parameters and parameters["tomo_srf_detect_method"] == "mesh":
                                 logger.info("Detecting spikes using mesh vertices")
                             else:
                                 logger.warning("No spike detection method provided")
@@ -765,7 +765,7 @@ def process_virions(
             mpi.submit_function_to_workers(process_virion_multiprocessing, arguments, verbose=parameters["slurm_verbose"])
 
             # save all coordinates as .spk file
-            if parameters["tomo_vir_detect_method"] != "none":
+            if parameters["tomo_srf_detect_method"] != "none":
                 global_spike_coordiantes = get_global_spike_coordiantes( name, parameters, x, y )
                 if len(global_spike_coordiantes) > 0:
                     np.savetxt(f"{name}_all_spikes.txt", np.asarray(global_spike_coordiantes,dtype='f'))
@@ -1313,7 +1313,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
         elif parameters["tomo_spk_method"] == "pyp-eval":
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
-        if parameters["tomo_vir_detect_method"] == "template" or parameters["tomo_vir_detect_method"] == "mesh":
+        if parameters["tomo_srf_detect_method"] == "template" or parameters["tomo_srf_detect_method"] == "mesh":
             # reverse z-dimension to display on website
             spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
         spike_coordinates_with_radius = np.hstack( ( spike_coordinates, parameters["tomo_spk_rad"] / binning * np.ones((spike_coordinates.shape[0],1)) ) )
