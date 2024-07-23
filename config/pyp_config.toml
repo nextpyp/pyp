@@ -72,8 +72,27 @@ tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_re
 
 [blocks.tomo_pre_process]
 name = "TOMO Pre-processing"
+description = "Alignment, CTF and particle picking"
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
+[blocks.tomo_pure_preprocess]
+name = "TOMO Pre-processing"
 description = "Alignment, CTF and Reconstruction"
 tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
+[blocks.tomo_segment]
+name = "TOMO Segmentation"
+description = "Segmentation"
+tabs = [ "tomo_mem", "tomo_vir", "detect_nn3d", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
+[blocks.tomo_picking]
+name = "TOMO Particle-picking"
+description = "Particle picking"
+tabs = [ "tomo_srf", "tomo_spk", "detect_nn3d", "detect_milo", "tomo_ext", "slurm" ]
+forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_coarse_refine]
 name = "TOMO Coarse Refinement"
@@ -99,16 +118,6 @@ tabs = [ "mask", "slurm" ]
 name = "TOMO Denoising"
 description = "Denoising"
 tabs = [ "tomo_denoise", "slurm" ]
-
-[blocks.tomo_segment]
-name = "TOMO Segmentation"
-description = "Segmentation"
-tabs = [ "tomo_mem", "tomo_vir", "detect_nn3d", "slurm" ]
-
-[blocks.tomo_picking]
-name = "TOMO Particle-picking"
-description = "Particle picking"
-tabs = [ "tomo_spk", "detect_nn3d", "detect_milo", "tomo_ext", "slurm" ]
 
 [blocks.tomo_flexible_refine]
 name = "TOMO Frame Refinement"
