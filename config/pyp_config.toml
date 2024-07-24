@@ -82,10 +82,16 @@ description = "Alignment, CTF and Reconstruction"
 tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
-[blocks.tomo_segment]
-name = "TOMO Segmentation"
+[blocks.tomo_segment_open]
+name = "TOMO Segmentation (open)"
 description = "Segmentation"
-tabs = [ "tomo_mem", "tomo_vir", "detect_nn3d", "slurm" ]
+tabs = [ "tomo_mem", "tomo_srf", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
+[blocks.tomo_segment_close]
+name = "TOMO Segmentation (close)"
+description = "Segmentation"
+tabs = [ "tomo_sphere", "tomo_srf", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_picking]
