@@ -3974,7 +3974,7 @@ name = "Windowing radius"
 description = "Windowing radius (default: 0.85)"
 type = "float"
 default = 0.85
-condition = { arg="train_windowing", value="true" }
+condition = { arg="data_windowing", value="true" }
 
 [tabs.cryodrgn.data_dir]
 name = "Input data directory"
@@ -4076,7 +4076,7 @@ default = "quat"
 name = "Pose learning rate"
 description = "Learning rate for pose optimizer (default: 0.0003)"
 type = "float"
-default = "0.0003"
+default = 0.0003
 
 [tabs.cryodrgn.enc_hl]
 name = "Encoder layers"
