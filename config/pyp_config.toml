@@ -823,7 +823,7 @@ default = false
 hidden = true
 
 [tabs.detect.method]
-name = "Detection method"
+name = "Method"
 description = "Strategy to use for particle detection"
 type = "enum"
 enum = { none="none", auto="auto", all="all", manual="manual (list of positions required)", import="import (path to particle coordinates required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)", topaz-train="topaz-train (list of positions required)", topaz-eval="topaz-eval (trained model required)" }
@@ -2103,27 +2103,27 @@ condition = { arg="method", value="isonet" }
 
 [tabs.tomo_denoise.isonet_pool]
 name = "Use pooling (refine)"
-description = "Use pooling layer instead of stride convolution layer."
+description = "Use pooling layer instead of stride convolution layer"
 type = "bool"
 default = false
 condition = { arg="method", value="isonet" }
 
 [tabs.tomo_denoise.isonet_threshold]
 name = "Use Percent thresholding (refine)"
-description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively."
+description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively"
 type = "bool"
 default = true
 condition = { arg="method", value="isonet" }
 
 [tabs.tomo_denoise.isonet_debug]
 name = "Debug (refine)"
-description = "Save intermediate files to result directory."
+description = "Save intermediate files to result directory"
 type = "bool"
 default = false
 condition = { arg="method", value="isonet" }
 
 [tabs.tomo_mem]
-_name = "Membrane segmentation"
+_name = "Segmentation"
 _description = "Parameters for tomogram membrane segmentation using MemBrain-seg"
 
 [tabs.tomo_mem.seg]
@@ -2133,29 +2133,29 @@ type = "bool"
 default = false
 
 [tabs.tomo_mem.preprocessing]
-name = "Do preprocessing"
-description = "Do preprocessing for the input tomogram."
+name = "Pre-process tomograms"
+description = "Pre-process input tomograms"
 type = "bool"
 default = false
 condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.pixel]
-name = "Rescaling pixel size"
-description = "Rescale the tomogram pixel size to this value."
+name = "Pixel size rescaling"
+description = "Rescale the tomogram pixel size to this value"
 type = "float"
 default = 0.0
 condition = { arg="preprocessing", value="true" }
 
 [tabs.tomo_mem.match_ps]
 name = "Match spectrum"
-description = "Match amplitude of Fourier spectrum from input tomogram to target spectrum."
+description = "Match amplitude of Fourier spectrum from input tomogram to target spectrum"
 type = "bool"
 default = false
 condition = { arg="preprocessing", value="true" }
 
 [tabs.tomo_mem.target]
 name = "Target tomogram"
-description = "Target tomgram for matching."
+description = "Target tomogram for matching"
 type = "path"
 default = "None"
 path = { type="files" }
@@ -2163,14 +2163,14 @@ condition = { arg="preprocessing", value="true" }
 
 [tabs.tomo_mem.deconvolve]
 name = "Deconvolution filter"
-description = "Perform the deconvolution filter to enhance tomogram contrast."
+description = "Perform the deconvolution filter to enhance tomogram contrast"
 type = "bool"
 default = false
 condition = { arg="preprocessing", value="true" }
 
 [tabs.tomo_mem.model]
-name = "Membrane segmentation model"
-description = "Path to pre-trained membrane segmentation model."
+name = "Segmentation model"
+description = "Path to pre-trained membrane segmentation model"
 type = "path"
 default = "None"
 path = { type="files" }
@@ -2220,14 +2220,14 @@ condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.seg_thres]
 name = "Segmentation threshold"
-description = "Threshold used in scoremap to increase / decrease segmented membranes"
+description = "Threshold used in scoremap to increase/decrease segmented membranes"
 type = "float"
 default = 0.0
 condition = { arg="seg", value="true" }
 
 [tabs.tomo_mem.sliding_wd]
 name = "Sliding window size"
-description = "Integer Sliding window size used for inference."
+description = "Integer sliding window size used for inference."
 type = "int"
 default = 160
 condition = { arg="seg", value="true" }
@@ -2299,54 +2299,54 @@ default = 2
 condition = { arg="method", value="auto" }
 
 [tabs.tomo_srf]
-_name = "Spike detection"
-_description = "Spike detection parameters"
+_name = "Particle detection"
+_description = "Particle detection parameters"
 
 [tabs.tomo_srf.detect_method]
-name = "Spike detection method"
-description = "Strategy to use for spike detection"
+name = "Method"
+description = "Strategy to use for particle detection"
 type = "enum"
 enum = { none="none", template="template search (template file required)", mesh="uniform" }
 default = "none"
 
 [tabs.tomo_srf.detect_ref]
-name = "Template for spike search (*.mrc)"
+name = "Template (*.mrc)"
 description = "Path to file containing the template (dimensions must match the binned tomograms)"
 type = "path"
 condition = { arg="detect_method", value="template" }
 path = { type="files" }
 
 [tabs.tomo_srf.detect_thre]
-name = "Spike correlation threshold"
-description = "Minimum correlation value to use for spike detection (lower values, more spikes)"
+name = "Particle correlation threshold"
+description = "Minimum correlation value to use for particle detection (lower values, more particles)"
 type = "float"
 condition = { arg="detect_method", value="template" }
 default = 0.2
 
 [tabs.tomo_srf.detect_dist]
-name = "Minimum distance between spikes (voxels)"
-description = "Minimum distance between neighboring spikes"
+name = "Minimum distance between particles (voxels)"
+description = "Minimum distance between neighboring particles"
 type = "int"
 default = 10
 condition = { arg="detect_method", value=["template","mesh"] }
 
 [tabs.tomo_srf.detect_band]
-name = "Size of equatorial band to restrict spike picking (A)"
-description = "Only pick spikes within a band centered around the virion equator"
+name = "Size of equatorial band to restrict particle picking (A)"
+description = "Only pick particles within a band centered around the sphere equator"
 type = "int"
 default = 100
 condition = { arg="detect_method", value=["template","mesh"] }
 
 [tabs.tomo_srf.detect_rand]
-name = "Randomize in-plane spike rotations"
-description = "Randomize spike rotations (around direction normal to virion surface) to reduce missing wedge effects"
+name = "Randomize in-plane particle rotations"
+description = "Randomize particle rotations (around direction normal to surface) to reduce missing wedge effects"
 type = "bool"
 default = true
 condition = { arg="detect_method", value=["template","mesh"] }
 
 [tabs.tomo_srf.detect_offset]
-name = "Spike height offset (A)"
-description = "Cut particles above membrane surface by this amount"
+name = "Particle height offset (A)"
+description = "Cut particles above membrane by this amount"
 type = "int"
 default = 0
 condition = { arg="detect_method", value=["template","mesh"] }
@@ -2473,7 +2473,7 @@ _hidden = [ "stream_tomo" ]
 
 [tabs.tomo_ext.fmt]
 name = "Extraction format"
-description = "Format to use to extract sub-tomogram"
+description = "Format to extract sub-tomograms"
 type = "enum"
 enum = { none="none", eman="eman (invert contrast)", 3DAVG="3davg (do not invert contrast)" }
 default = "none"
@@ -4145,7 +4145,7 @@ advanced = true
 
 [tabs.cryodrgn.dec_domain]
 name = "Decoder representation"
-description = "Volume decoder representation (default: fourier)"
+description = "Volume decoder representation (default: Fourier)"
 type = "enum"
 enum = {hartley="hartley", fourier="fourier"}
 default = "fourier"
