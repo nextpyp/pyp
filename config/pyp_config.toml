@@ -3907,7 +3907,7 @@ type = "enum"
 enum = {CryoDRGN="CryoDRGN", TomoDRGN="TomoDRGN", none="none"}
 default = "none"
 
-[tabs.heterogeneity.cryodrgn_star]
+[tabs.heterogeneity.input_star]
 name = "Input particle parameters"
 description = "Star file with particle alignment and metadata"
 type = "path"
@@ -4214,12 +4214,6 @@ description = "Default value of start index for volume generation (default: 0)"
 type = "int"
 default = 0
 advanced = true
-
-[tabs.heterogeneity.tomodrgn_star]
-name = "Input particle parameters"
-description = "Star file with particle alignment and metadata"
-type = "path"
-path = { type="files" }
 
 # [tabs.heterogeneity.tomodrgn_downsample_size]
 # name = "Downsample boxsize"
