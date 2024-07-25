@@ -4255,10 +4255,10 @@ if __name__ == "__main__":
 
                     project_dir = os.getcwd()
 
-                    if "cryodrgn" in parameters["heterogeneity_method"]:
+                    if "CryoDRGN" in parameters["heterogeneity_method"]:
                         cryoDRGN.run_cryodrgn(project_dir, parameters=parameters)
                     
-                    elif "tomodrgn" in parameters["heterogeneity_method"]:
+                    elif "TomoDRGN" in parameters["heterogeneity_method"]:
                         tomoDRGN.run_tomodrgn(project_dir, parameters=parameters)
                     
                     else:
