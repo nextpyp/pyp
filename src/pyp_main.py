@@ -72,7 +72,7 @@ from pyp.inout.metadata import (
 )
 from pyp.postprocess.pyp_fsc import fsc_cutoff
 from pyp.refine.csp import particle_cspt
-from pyp.refine.heterogeneity import cryoDRGN
+from pyp.refine.heterogeneity import cryoDRGN, tomoDRGN
 from pyp.refine.eman import eman
 from pyp.refine.frealign import frealign
 from pyp.refine.relion import relion
@@ -941,8 +941,8 @@ def split(parameters):
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
         milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"]
         isonet_train = parameters["data_mode"] == "tomo" and "isonet-train" in parameters["tomo_denoise_method"] 
-        heterogeneity = ( parameters.get("cryodrgn_active")
-                         or parameters.get("tomodrgn_active") )
+        heterogeneity = ( parameters.get("heterogeneity_method")
+                         and not "none" in parameters["heterogeneity_method"])
 
         if gpu or tomo_train or spr_train or milo_eval or cryocare:
             # try to get the gpu partition
@@ -4221,7 +4221,7 @@ if __name__ == "__main__":
             try:
                 parameters = parse_arguments("refine")
 
-                if parameters["cryodrgn_active"]:
+                if not "none" in parameters["heterogeneity_method"]:
                     if parameters["data_mode"] == "spr":
                         set_up.prepare_spr_dir()
                     else:
@@ -4238,6 +4238,14 @@ if __name__ == "__main__":
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
                         if not input.exits() and input_source.exists():               
                             os.symlink( input_source, input ) 
+                    elif parameters.get("heterogeneity_input_star") and os.path.exists( project_params.resolve_path(parameters["heterogeneity_input_star"]) ):
+                        input_source = Path(parameters['heterogeneity_input_star']).parent
+                        input = Path(os.getcwd()) / "frealign" / "stacks" 
+                        # check particle stacks
+                        assert len(glob.glob(str(input_source) + "/*.mrc")) > 0, "Can not find any particle stacks from input folder.\n \
+                            Please include particles stacks in the same path of the input star file. "
+                        if not input.exits():               
+                            os.symlink( input_source, input ) 
                     else:
                         logger.info("Taking current project stacks as input to CryoDRGN")
 
@@ -4246,8 +4254,17 @@ if __name__ == "__main__":
                     get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                     project_dir = os.getcwd()
-                    cryoDRGN.run_cryodrgn(project_dir, parameters=parameters)
-                    logger.info("PYP (CryoDRGN) finished successfully")
+
+                    if "cryodrgn" in parameters["heterogeneity_method"]:
+                        cryoDRGN.run_cryodrgn(project_dir, parameters=parameters)
+                    
+                    elif "tomodrgn" in parameters["heterogeneity_method"]:
+                        tomoDRGN.run_tomodrgn(project_dir, parameters=parameters)
+                    
+                    else:
+                        raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
+
+                    logger.info("PYP (Heterogeneity analysis) finished successfully")
 
             except:
                 trackback()
