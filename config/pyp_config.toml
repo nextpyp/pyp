@@ -4953,7 +4953,7 @@ default = 20
 [tabs.heterogeneity.tomodrgn_analysis_pc_ondata]
 name = "pc-ondata"
 description = "Find closest on-data latent point to each PC percentile (default: False)"
-type = "boool"
+type = "bool"
 default = false
 advanced = true
 
