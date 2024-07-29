@@ -910,7 +910,7 @@ def split(parameters):
 
         cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"]
         isonet_predict = parameters["data_mode"] == "tomo" and "isonet-predict" in parameters["tomo_denoise_method"] 
-        membrain = parameters["data_mode"] == "tomo" and "tomo_mem_seg" in parameters and parameters["tomo_mem_seg"] 
+        membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain"
 
         if cryocare:
             run_mode = "cryocare"
