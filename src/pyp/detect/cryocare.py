@@ -162,7 +162,7 @@ def tomo_swarm_half(project_path, filename, keep=False):
     frame_list = metadata["frames"] if "frames" in metadata else frame_list
 
     if not len(frame_list) > 0:
-        raise Exception("There is no movies in this dataset, can not run cryoCARE")
+        raise Exception("There are no movies in this dataset, cannot run cryoCARE")
 
     # copy over all the frames
     arguments = []
