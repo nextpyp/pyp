@@ -313,12 +313,12 @@ def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None, acco
         "--cpus-per-task=%d" % threads,
         "--time=%s" % walltime,
         "--mem=%sG" % memory,
-        "--job-name='%s'" % jobname,
+        "--job-name=%s" % jobname,
     ]
     if gres != "" and gres != None:
-        args.append("--gres=%s" % json.dumps(gres))
+        args.append("--gres=%s" % gres)
     if account != "" and account != None:
-        args.append("--account=%s" % json.dumps(account))
+        args.append("--account=%s" % account)
     return args
 
 def submit_script(
