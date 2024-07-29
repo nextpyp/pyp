@@ -297,10 +297,11 @@ def parse_arguments(block):
                 reinitialize = True
             else:
                 for e in extensions:
-                    source = os.path.join(parameters["data_parent"], parent_dataset + e)
-                    target = dataset + e
-                    if not os.path.exists(target) and os.path.exists(source):
-                        symlink_relative(source, target)
+                    if parameters.get("data_parent") and parent_dataset:
+                        source = os.path.join(parameters["data_parent"], parent_dataset + e)
+                        target = dataset + e
+                        if not os.path.exists(target) and os.path.exists(source):
+                            symlink_relative(source, target)
 
             # copy configuration files
             files = [".pyp_config.toml"]
@@ -828,7 +829,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 # print vector
                 vector[0] = str(count)
                 # randomize phi angle in +/- 180
-                if parameters["tomo_vir_detect_rand"] and parameters["tomo_spk_rand"]:
+                if parameters["tomo_srf_detect_rand"] and parameters["tomo_spk_rand"]:
                     vector[10] = "%.4f" % (360 * (random.random() - 0.5))
                 vector[-1] = os.getcwd() + "/sva/" + vector[-1]
                 f.write("\t".join([v for v in vector]) + "\n")
