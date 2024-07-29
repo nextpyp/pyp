@@ -24,9 +24,7 @@ def cryocare(working_path, project_path, name, parameters):
     Will take all the *half1.rec from mrc folder as list to train and run denoise
     """
 
-    config = get_pyp_configuration()
-    cryocare_path = config["pyp"]["cryocare"]
-    command_base = f"source activate {cryocare_path}; {cryocare_path}/bin/"
+    command_base = '/opt/conda/envs/pyp/bin/'
 
     # half1_list = glob.glob(os.path.join(project_path, "mrc", "*half1.rec"))
     half1_list = [os.path.join(working_path, name + "_half1.rec")]

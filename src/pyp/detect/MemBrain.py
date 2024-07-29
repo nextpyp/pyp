@@ -12,9 +12,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_membrane_path():
-    config = get_pyp_configuration()
-    membrain_path = config["pyp"]["membrain"]
-    command_base = f"source activate {membrain_path}; {membrain_path}/bin/"
+    command_base = '/opt/conda/envs/pyp/bin/'
     return command_base
 
 def membrain_preprocessing(parameters, input):
