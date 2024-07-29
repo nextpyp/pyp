@@ -7,13 +7,19 @@ Changelog
 v0.7.0 (6/24/2024)
 ******************
 
+   :fa:`star,text-success` Incorporated external program tomoDRGN for continuous variability analysis.
+
+   :fa:`star,text-success` Incorporated external program cryoDRGN and cryoDRGN-ET for continuous variability analysis.
+
+   :fa:`star,text-success` Incorporated external program MemBrain-Seg for segmenting tomograms.
+
    :fa:`star,text-success` Incorporated external program IsoNet for denoising tomograms.
 
    :fa:`star,text-success` Incorporated external program cryoCARE for denoising tomograms.
 
    :fa:`star,text-success` Incorporated CTF estimation using CTFFIND5.
 
-   :fa:`star,text-success` Website can now submit slurm jobs using individual user accounts.
+   :fa:`star,text-success` nextPYP can now submit slurm jobs using individual OS user accounts.
 
    :fa:`star,text-success` Implement ab-initio refinement strategy for tomography pipeline.
 
@@ -21,11 +27,11 @@ v0.7.0 (6/24/2024)
 
    :fa:`star,text-success` Molecular pattern mining and particle localization (MiLoPYP).
 
-   :fa:`star,text-success` Save refinement metadata in cisTEM's binary format (2x speedup during reference-based refinement).
+   :fa:`star,text-success` Start saving refinement metadata in cisTEM's binary format (2x speedup during reference-based refinement).
 
-   :fa:`star,text-success` Upgrade to newer version of cisTEM that supports beam tilt refinement and correction.
+   :fa:`star,text-success` Add support for beam-tilt refinement and correction (as implemented in cisTEM).
 
-   :fa:`plus-square,text-primary` Allow selection of a block with a single click in the Run jobs menu.
+   :fa:`plus-square,text-primary` Allow selection of blocks using a single click in the Run jobs menu.
 
    :fa:`plus-square,text-primary` Move options to reshape images into squares from Reconstruction to Tilt-series alignment tab.
 
