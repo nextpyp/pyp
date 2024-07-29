@@ -4358,7 +4358,7 @@ name = "Windowing radius"
 description = "Windowing radius (default: 0.85)"
 type = "float"
 default = 0.85
-condition = { arg="data_windowing", value="true" }
+condition = { arg="cryodrgn_data_windowing", value="true" }
 
 [tabs.heterogeneity.cryodrgn_data_dir]
 name = "Input data directory"
@@ -4491,7 +4491,7 @@ name = "Use real space"
 description = "Use real space image for encoder (for convolutional encoder)"
 type = "bool"
 default = false
-condition = {arg="enc_mode", value="conv"}
+condition = {arg="cryodrgn_enc_mode", value="conv"}
 
 [tabs.heterogeneity.cryodrgn_dec_hl]
 name = "Decoder layers"
@@ -4661,7 +4661,7 @@ name = "Windowing radius"
 description = "Windowing radius (default: 0.85)"
 type = "float"
 default = 0.85
-condition = { arg="train_windowing", value="true" }
+condition = { arg="tomodrgn_data_windowing", value="true" }
 advanced = true
 
 [tabs.heterogeneity.tomodrgn_data_dir]
