@@ -64,9 +64,9 @@ def cryocare(working_path, project_path, name, parameters):
     train_config = {
     "train_data": "./train_data",
     "model_name": "cryocare_model",
-    "path": "./train_model"
+    "path": "./train_model",
+    "gpu_id": 0
     }
-    # "gpu_id": 0
     
     train_config["epochs"] = parameters["tomo_denoise_cryocare_epochs"]
     train_config["steps_per_epoch"] = parameters["tomo_denoise_cryocare_steps"]
