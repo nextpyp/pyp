@@ -4806,7 +4806,8 @@ condition = {arg="tomodrgn_mode", value="train_nn"}
 name = "Reference volume"
 description = "volume against which to calculate FSC"
 type = "path"
-default = "none"
+path = { type="files" }
+input = { type="initialModel" }
 condition = {arg="tomodrgn_mode", value="convergence_nn"}
 
 [tabs.heterogeneity.tomodrgn_max_epoch]
@@ -4827,8 +4828,8 @@ condition = {arg="tomodrgn_mode", value="convergence_nn"}
 name = "Fsc-mask"
 description = "Type of mask applied to volumes before calculating FSC (default: soft)"
 type = "enum"
-enum={ none="none", sphere="sphere", tight="tight", soft="soft" }
-default = false
+enum = { none="none", sphere="sphere", tight="tight", soft="soft" }
+default = "none"
 condition = {arg="tomodrgn_mode", value="convergence_nn"}
 
 # convergence_vae
