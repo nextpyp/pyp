@@ -65,11 +65,6 @@ name = "SPA Particle-picking"
 description = "Particle picking"
 tabs = [ "detect", "detect_nn2d", "detect_topaz2d", "slurm" ] # TODO
 
-[blocks.spr_drgn]
-name = "SPA Continuous Heterogeneity"
-description = "Continuous Heterogeneity"
-tabs = [ "cryodrgn", "slurm" ] # TODO
-
 [blocks.spr_map_clean]
 name = "Particle Filtering"
 description = "Filter particles based on scores or by class"
@@ -136,7 +131,7 @@ tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "dose_w
 [blocks.tomo_drgn]
 name = "Heterogeneity analysis"
 description = "Conformation Heterogeneity analysis"
-tabs = [ "heterogeniety", "slurm" ]
+tabs = [ "heterogeneity", "slurm" ]
 
 [blocks.tomo_clean]
 name = "TOMO Particle Cleaning"
