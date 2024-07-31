@@ -14,9 +14,8 @@ logger = initialize_pyp_logger(log_name=relative_path)
 def get_cryodrgn_path():
     config = get_pyp_configuration()
     cryodrgn_path = config["pyp"]["cryodrgn"]
-    command_base = f"source activate {cryodrgn_path}; {cryodrgn_path}/cryodrgn"
+    command_base = f"source activate {cryodrgn_path}; {cryodrgn_path}/bin/cryodrgn"
     return command_base
-
 
 def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, downsample_size):
     """prepare CryoDRGN metadata and downsample particles for traning"""
@@ -38,9 +37,10 @@ def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, do
         for stack in particle_stack_list:
             
             command = f"{get_cryodrgn_path()} downsample {stack} -D {downsample_size} -o {stack.replace('.mrcs', '')}_{downsample_size}.mrcs"
+            # local_run.run_shell_command(command, verbose=True)
             tasks.append(command)
         
-        mpi.submit_jobs_file_to_workers(tasks, os.getcwd(), verbose=False)
+        mpi.submit_jobs_to_workers(tasks, os.getcwd(), verbose=True)
 
         # edit the input alignment star to replace the new mrcs
         command = f"sed 's/.mrcs/_{downsample_size}.mrcs/g' {alignment_star} > {alignment_star.replace('.star', '_downsample.star')}"
@@ -138,12 +138,12 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
     """
 
     if downsampled:
-        particles_input = os.path.join(input_dir, name + "_particles_downsampled.star")
+        particles_input = os.path.join(input_dir, name + "_particles_downsample.star")
     else:
         particles_input = os.path.join(input_dir, name + "_particles.star")
     
-    pose_input = name + "_pose.pkl"
-    ctf_input = name + "_ctf.pkl"
+    pose_input = os.path.join(input_dir, name + "_poses.pkl")
+    ctf_input = os.path.join(input_dir, name + "_ctf.pkl")
 
     options = f"--checkpoint {parameters['heterogeneity_cryodrgn_train_checkpoint']} \
         --log-interval {parameters['heterogeneity_cryodrgn_train_log_interval']} \
@@ -181,7 +181,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
     if parameters["slurm_verbose"]:
         options += " -v"
 
-    if downsampled:
+    if False and  downsampled:
         options += " --preprocessed"
 
     training_parameters = f"-n {parameters['heterogeneity_cryodrgn_train_epochs']} \
@@ -191,12 +191,12 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
         --pretrain {parameters['heterogeneity_cryodrgn_pretrain']} \
         --emb-type {parameters['heterogeneity_cryodrgn_emd_type']} \
         --pose-lr {parameters['heterogeneity_cryodrgn_pose_lr']} \
-        --enc-lr {parameters['heterogeneity_cryodrgn_enc_hl']} \
+        --enc-layers {parameters['heterogeneity_cryodrgn_enc_hl']} \
         --enc-dim {parameters['heterogeneity_cryodrgn_enc_dim']} \
         --encode-mode {parameters['heterogeneity_cryodrgn_enc_mode']} \
         --dec-layers {parameters['heterogeneity_cryodrgn_dec_hl']} \
         --dec-dim {parameters['heterogeneity_cryodrgn_dec_dim']} \
-        --pe-type {parameters['heterogeneity_cryodrgn_dec_type']} \
+        --pe-type {parameters['heterogeneity_cryodrgn_pe_type']} \
         --domain {parameters['heterogeneity_cryodrgn_dec_domain']} \
         --activation {parameters['heterogeneity_cryodrgn_activation']}\
         "
@@ -206,7 +206,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
     if "conv" in parameters['heterogeneity_cryodrgn_enc_mode'] and parameters['heterogeneity_cryodrgn_use_real']:
         training_parameters += " --use_real"
     
-    if "gaussian" in parameters['heterogeneity_cryodrgn_pe_type']:
+    if False and "gaussian" in parameters['heterogeneity_cryodrgn_pe_type']:
         training_parameters += f" --feat_sigma {parameters['heterogeneity_cryodrgn_feat_sigma']}"
 
     if parameters.get('heterogeneity_cryodrgn_pe_dim'):
@@ -217,7 +217,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
     if parameters.get('heterogeneity_cryodrgn_train_beta_control'):
         training_parameters += f" --beta-control {parameters['heterogeneity_cryodrgn_train_beta_control']}"    
 
-    if not "none" in parameters['heterogeneity_cryodrgn_data_norm']:
+    if not "None" in parameters['heterogeneity_cryodrgn_data_norm']:
         training_parameters += f" --norm {parameters['heterogeneity_cryodrgn_data_norm']}"
     if not parameters['heterogeneity_cryodrgn_train_amp']:
         training_parameters += " --no-amp"
@@ -232,7 +232,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
 
     # TODO: multigpu option
 
-    command = f"{get_cryodrgn_path()} train_vae {particles_input} --datadir {input_dir} --ctf {ctf_input} --pose {pose_input} --zdim {parameters['heterogeneity_cryodrgn_train_zdim']} --num-epochs {parameters['heterogeneity_cryodrgn_train_epochs']} -o {output} {options} {training_parameters} {tomo}"
+    command = f"{get_cryodrgn_path()} train_vae {particles_input} --datadir {input_dir} --ctf {ctf_input} --poses {pose_input} --zdim {parameters['heterogeneity_cryodrgn_train_zdim']} --num-epochs {parameters['heterogeneity_cryodrgn_train_epochs']} -o {output} {options} {training_parameters} {tomo}"
 
     local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -275,7 +275,7 @@ def cryodrgn_analyze(input_dir, output, parameters, downsampled):
     if parameters['heterogeneity_cryodrgn_analysis_flip']:
         options += " --flip"
     if parameters['heterogeneity_cryodrgn_analysis_invert']:
-        options += "--invert"
+        options += " --invert"
     
     if parameters.get('heterogeneity_cryodrgn_analysis_downsample'):
         options += f" -d {parameters['heterogeneity_cryodrgn_analysis_downsample']}"
@@ -315,7 +315,7 @@ def run_cryodrgn(project_dir, parameters):
     name = parameters['data_set']
     starfile = name + "_particles.star"
 
-    input_star = Path(input_path / starfile) 
+    input_star = Path(input_path) / starfile 
     assert input_star.exists(), "Can not find input star file, run the extract stacks first."
 
     # this is the input star and partilces stacks folder
@@ -329,12 +329,12 @@ def run_cryodrgn(project_dir, parameters):
     tasks = []
     for stack in particles_stacks:
         
-        command = f"mv {stack} {os.getcwd()}/input_data/"
+        command = f"cp {stack} {os.getcwd()}/input_data/"
         tasks.append(command)
 
-    mpi.submit_jobs_file_to_workers(tasks, os.getcwd(), verbose=False)
-        
-    particle_stack_list = [os.basename(p) for p in particles_stacks]
+    mpi.submit_jobs_to_workers(tasks, os.getcwd())
+    
+    particle_stack_list = [os.path.basename(p) for p in particles_stacks]
 
     # do preprocessing in input_data folder
     os.chdir("input_data")

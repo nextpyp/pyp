@@ -47,7 +47,7 @@ tabs = [ "extract", "refine", "reconstruct", "class", "denoise", "export", "slur
 
 [blocks.spr_heterogeneity]
 name = "Heterogeneity analysis"
-description = "Conformation Heterogeneity analysis"
+description = "Conformational heterogeneity analysis"
 tabs = [ "heterogeneity", "slurm" ]
 
 [blocks.spr_flexible_refine]
@@ -135,8 +135,8 @@ tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "dose_w
 
 [blocks.tomo_drgn]
 name = "Heterogeneity analysis"
-description = "Conformation Heterogeneity analysis"
-tabs = [ "heterogeniety", "slurm" ]
+description = "Conformational heterogeneity analysis"
+tabs = [ "heterogeneity", "slurm" ]
 
 [blocks.tomo_clean]
 name = "TOMO Particle Cleaning"
@@ -2177,7 +2177,7 @@ _description = "Parameters for tomogram membrane segmentation using MemBrain-seg
 name = "Method"
 description = "Pre-process input tomograms"
 type = "enum"
-enum = { none="none", membrain="membrain" }
+enum = { membrain="membrain", none="none" }
 default = "none"
 
 [tabs.tomo_mem.preprocessing]
@@ -4275,13 +4275,6 @@ _name = "CryoDRGN"
 _description = "CryoDRGN analysis"
 _hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
-
-# [tabs.heterogeneity.cryodrgn_active]
-# name = "CryoDRGN mode"
-# description = "CryoDGRGN enable or not"
-# type = "bool"
-# default = false
-
 [tabs.heterogeneity.method]
 name = "Heterogeneity method"
 description = "CryoDGRGN run subtomogram or not"
@@ -4429,7 +4422,7 @@ advanced = true
 name = "Data normalization"
 description = "Data normalization as shift, 1/scale (default: mean, std of dataset)"
 type = "str"
-default = "none"
+default = "None"
 
 [tabs.heterogeneity.cryodrgn_train_amp]
 name = "Use mixed_precision"
@@ -4441,7 +4434,7 @@ default = false
 name = "Pose SGD"
 description = "Refine poses with gradient descent"
 type = "bool"
-default = true
+default = false
 
 [tabs.heterogeneity.cryodrgn_pretrain]
 name = "Pre-train epochs"
@@ -4585,7 +4578,7 @@ description = "Number of principal component traversals to generate (default: 2)
 type = "int"
 default = 2
 
-[tabs.heterogeneity.cryodrgn_analysis_ksmaple]
+[tabs.heterogeneity.cryodrgn_analysis_ksample]
 name = "kmeans samples"
 description = "Number of kmeans samples to generate (default: 20)"
 type = "int"
@@ -4603,6 +4596,13 @@ advanced = true
 # description = "Downsampled particle boxsize for training"
 # type = "float"
 # default = 128
+
+[tabs.heterogeneity.tomodrgn_mode]
+name = "TomoDRGN command"
+description = "TomoDRGN command type want to run"
+type = "enum"
+enum = {train_nn="train_nn", convergence_nn="convergence_nn", train_vae="train_vae", convergence_vae="convergence_vae", analysis="analysis", filter_star="filter_star", eval_vol="eval_vol", subtomo2chimerax="subtom2chimerax", eval_images="eval_images"}
+default = "train_vae"
 
 [tabs.heterogeneity.tomodrgn_train_zdim]
 name = "ZDIM"
@@ -4702,11 +4702,11 @@ description = "Do not train on frequencies exposed to > 2.5x critical dose. Trai
 type = "bool"
 default = false
 
-[tabs.heterogeneity.tomodrgn_sample_tilt]
-name = "Sample tilt"
-description = "Number of tilts to sample from each particle per epoch. Default: min(ntilts) from dataset"
+[tabs.heterogeneity.tomodrgn_use_ptl]
+name = "Sample particles"
+description = "Keep the first N particles in the sorted star file. Default -1 means to use all."
 type = "int"
-default = 0
+default = -1
 
 [tabs.heterogeneity.tomodrgn_use_firstn]
 name = "Sample tilt"
@@ -4738,7 +4738,7 @@ description = "Weight decay in Adam optimizer (default: 0)"
 type = "int"
 default = 0
 
-[tabs.heterogeneity.tomodrgntrain_lr]
+[tabs.heterogeneity.tomodrgn_train_lr]
 name = "Learning rate"
 description = "Learning rate in Adam optimizer (default: 0.0001)"
 type = "float"
@@ -4760,7 +4760,7 @@ advanced = true
 name = "Data normalization"
 description = "Data normalization as shift, 1/scale (default: mean, std of dataset)"
 type = "str"
-default = "none"
+default = "None"
 
 [tabs.heterogeneity.tomodrgn_train_amp]
 name = "Use mixed_precision"
@@ -4793,6 +4793,194 @@ default = false
 # type = "float"
 # default = "0.0003"
 
+[tabs.heterogeneity.tomodrgn_layers]
+name = "layers"
+description = "Number of hidden layers(default: 3)"
+type = "int"
+default = 3
+condition = {arg="tomodrgn_mode", value="train_nn"}
+
+[tabs.heterogeneity.tomodrgn_dim]
+name = "Number of nodes"
+description = "Number of nodes in hidden layers (default: 256)"
+type = "int"
+default = 256
+condition = {arg="tomodrgn_mode", value="train_nn"}
+
+[tabs.heterogeneity.tomodrgn_ref]
+name = "Reference volume"
+description = "volume against which to calculate FSC"
+type = "path"
+default = "none"
+condition = {arg="tomodrgn_mode", value="convergence_nn"}
+
+[tabs.heterogeneity.tomodrgn_max_epoch]
+name = "Max epoch"
+description = "Maximum epoch for which to calculate FSCs (default: None)"
+type = "int"
+default = 0
+condition = {arg="tomodrgn_mode", value="convergence_nn"}
+
+[tabs.heterogeneity.tomodrgn_dc]
+name = "Include-dc"
+description = "Include FSC calculation for DC component, default False because DC component default excluded during training (default: False)"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_nn"}
+
+[tabs.heterogeneity.tomodrgn_fscmask]
+name = "Fsc-mask"
+description = "Type of mask applied to volumes before calculating FSC (default: soft)"
+type = "enum"
+enum={ none="none", sphere="sphere", tight="tight", soft="soft" }
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_nn"}
+
+# convergence_vae
+[tabs.heterogeneity.tomodrgn_epoch_index]
+name = "Epoch index"
+description = "Latest epoch number N to analyze convergence (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
+type = "int"
+default = 0
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_epoch_interval]
+name = "Epoch interval"
+description = "Interval of epochs between calculating most convergence heuristics (default: 5)"
+type = "int"
+default = 5
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_force_umapcpu]
+name = "force-umap-cpu"
+description = "Override default UMAP GPU-bound implementation via cuML to use umap-learn library instead (default: False)"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_subset]
+name = "subset"
+description = "Max number of particles to be used for UMAP calculations. 'None' means use all ptcls (default: 50000)"
+type = "int"
+default = 50000
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_randomseed]
+name = "random-seed"
+description = "Manually specify the seed used for selection of subset particles (default: None)"
+type = "int"
+default = 0
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_randomstate]
+name = "random-state"
+description = "Random state seed used by UMAP for reproducibility at slight cost of performance (default 42, None means slightly faster but non-reproducible))"
+type = "str"
+default = "42"
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_epochs_umap]
+name = "n-epochs-umap"
+description = "Number of epochs to train the UMAP embedding via cuML for a given z.pkl, as described in the cuml.UMAP documentation (default: 25000)"
+type = "int"
+default = 25000
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_skip_umap]
+name = "skip umap"
+description = "Skip UMAP embedding. Requires that UMAP be precomputed for downstream calcs. Useful for tweaking volume generation settings. (default: False)"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_nbins]
+name = "n-bins"
+description = "The number of bins along UMAP1 and UMAP2 (default: 30)"
+type = "int"
+default = 30
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_smooth]
+name = "smooth"
+description = "Mooth the 2D histogram before identifying local maxima (default: True)"
+type = "bool"
+default = true
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_smooth_width]
+name = "smooth width"
+description = "Width of gaussian kernel for smoothing 2D histogram expressed as multiple of one bin's width (default: 1.0)"
+type = "float"
+default = 1.0
+condition = {arg="tomodrgn_smooth", value="true"}
+
+[tabs.heterogeneity.tomodrgn_pruned_maxima]
+name = "pruned-maxima"
+description = "Prune poorly-separated maxima until this many maxima remain (default: 12)"
+type = "int"
+default = 12
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_radius]
+name = "radius"
+description = "Distance at which two maxima are considered poorly-separated and are candidates for pruning (euclidean distance in bin-space) (default: 5.0)"
+type = "float"
+default = 5.0
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_final_maxima]
+name = "final-maxima"
+description = "select this many local maxima, sorted by highest bin count after pruning, for which to generate volumes (default: 10)"
+type = "int"
+default = 10
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_skip_vgen]
+name = "skip-volgen"
+description = "kip volume generation. Requires that volumes already exist for downstream CC + FSC calcs (default: False)"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_gt]
+name = "ground-truth"
+description = "Relative path containing wildcards to ground_truth_vols*.mrc for map-map CC calcs (default: None)"
+type = "str"
+default = "None"
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_max_threads]
+name = "max-threads"
+description = "Max number of threads used to parallelize mask generation (default: 8)"
+type = "int"
+default = 8
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_thresh]
+name = "Mask threshold"
+description = "Float, isosurface at which to threshold mask; default 0 uses 50th percentile (default: 0)"
+type = "float"
+default = 0
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_dist]
+name = "Mask soft edge"
+description = "Number of voxels over which to apply a soft cosine falling edge from dilated mask boundary (default: 10)"
+type = "int"
+default = 10
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_dilate]
+name = "Mask dilate"
+description = "Number of voxels to dilate thresholded isosurface outwards from mask boundary (default: 3)"
+type = "int"
+default = 3
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+
+##############
+##############
+
 [tabs.heterogeneity.tomodrgn_enc_lya]
 name = "enc-layers-A"
 description = "Number of hidden layers for each tilt (default: 3)"
@@ -4812,16 +5000,16 @@ type = "int"
 default = 128
 
 [tabs.heterogeneity.tomodrgn_enc_lyb]
-name = "enc-dim-B"
-description = "Number of nodes in hidden layers encoding merged tilts (default: 512)"
-type = "int"
-default = 512
-
-[tabs.heterogeneity.tomodrgn_enc_dimb]
 name = "enc-layers-B"
 description = "Number of hidden layers encoding merged tilts (default: 3)"
 type = "int"
 default = 3
+
+[tabs.heterogeneity.tomodrgn_enc_dimb]
+name = "enc-dim-B"
+description = "Number of nodes in hidden layers encoding merged tilts (default: 512)"
+type = "int"
+default = 512
 
 [tabs.heterogeneity.tomodrgn_pool]
 name = "Pooling-function"
@@ -4893,12 +5081,12 @@ type = "enum"
 enum = {geom_ft="geom_ft", geom_full="geom_full", geom_lowf="geom_lowf", geom_nohighf="geom_nohighf", linear_lowf="linear_lowf", gaussian="gaussian", none="none"}
 default = "gaussian"
 
-[tabs.heterogeneity.tomodrgn_feat_sigma]
-name = "Gaussian features"
-description = "Scale for random Gaussian features (default: 0.5)"
-type = "float"
-default = 0.5
-advanced = true
+# [tabs.heterogeneity.tomodrgn_feat_sigma]
+# name = "Gaussian features"
+# description = "Scale for random Gaussian features (default: 0.5)"
+# type = "float"
+# default = 0.5
+# advanced = true
 
 [tabs.heterogeneity.tomodrgn_pe_dim]
 name = "Positional frequencies"
@@ -4931,7 +5119,7 @@ advanced = true
 name = "prefetch-factor"
 description = "Number of particles to prefetch per worker for training. Has moderate impact on epoch time (default: 2)"
 type = "int"
-default = 0
+default = 2
 advanced = true
 
 [tabs.heterogeneity.tomodrgn_pst_wkrs]
@@ -4992,7 +5180,7 @@ description = "Number of principal component traversals to generate (default: 2)
 type = "int"
 default = 2
 
-[tabs.heterogeneity.tomodrgn_analysis_ksmaple]
+[tabs.heterogeneity.tomodrgn_analysis_ksample]
 name = "kmeans samples"
 description = "Number of kmeans samples to generate (default: 20)"
 type = "int"

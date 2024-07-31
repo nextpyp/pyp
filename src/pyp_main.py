@@ -962,34 +962,36 @@ def split(parameters):
                 elif "tomo_denoise_method" in parameters and parameters["tomo_denoise_method"] == "isonet-train":
                     train_type = "isonet"
                     train_jobtype = "isonettrain"
-                elif heterogeneity:
-                    train_type = "heterogeneity"
-
                 else:
                     train_type = parameters["data_mode"]
                     train_jobtype = parameters["data_mode"] + "train"
 
-                train_swarm_file = slurm.create_train_swarm_file(timestamp, train_type=train_type)
-
-                # submit swarm jobs
-                id_train = slurm.submit_jobs(
-                    "swarm",
-                    train_swarm_file,
-                    jobtype=train_jobtype,
-                    jobname="Train (gpu)",
-                    queue=partition_name,
-                    scratch=0,
-                    threads=parameters["slurm_tasks"],
-                    memory=parameters["slurm_memory"],
-                    gres=parameters["slurm_gres"],
-                    account=parameters.get("slurm_account"),
-                    walltime=parameters["slurm_walltime"],
-                    tasks_per_arr=parameters["slurm_bundle_size"],
-                    csp_no_stacks=parameters["csp_no_stacks"],
-                    use_gpu=gpu,
-                ).strip()
+            elif heterogeneity:
+                train_type = "heterogeneity"
+                train_jobtype = "heterogeneitytrain"
             else:
                 raise Exception("Please select a list of coordinates for training")
+
+            train_swarm_file = slurm.create_train_swarm_file(timestamp, train_type=train_type)
+
+            # submit swarm jobs
+            id_train = slurm.submit_jobs(
+                "swarm",
+                train_swarm_file,
+                jobtype=train_jobtype,
+                jobname="Train (gpu)",
+                queue=partition_name,
+                scratch=0,
+                threads=parameters["slurm_tasks"],
+                memory=parameters["slurm_memory"],
+                gres=parameters["slurm_gres"],
+                account=parameters.get("slurm_account"),
+                walltime=parameters["slurm_walltime"],
+                tasks_per_arr=parameters["slurm_bundle_size"],
+                csp_no_stacks=parameters["csp_no_stacks"],
+                use_gpu=gpu,
+            ).strip()
+
             
         elif milo_eval:
             milo_swarm_file = slurm.create_milo_swarm_file(parameters, timestamp)
@@ -4217,10 +4219,10 @@ if __name__ == "__main__":
                 logger.error("PYP (membrane segmentation) failed")
                 pass
         
-        elif "heterogeneity" in os.environ:
-            del os.environ["heterogeneity"]
+        elif "heterogeneitytrain" in os.environ:
+            del os.environ["heterogeneitytrain"]
             try:
-                parameters = parse_arguments("refine")
+                parameters = parse_arguments("pre_process")
 
                 if not "none" in parameters["heterogeneity_method"]:
                     if parameters["data_mode"] == "spr":
@@ -4237,7 +4239,7 @@ if __name__ == "__main__":
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
-                        if not input.exits() and input_source.exists():               
+                        if not input.exists() and input_source.exists():               
                             os.symlink( input_source, input ) 
                     elif parameters.get("heterogeneity_input_star") and os.path.exists( project_params.resolve_path(parameters["heterogeneity_input_star"]) ):
                         input_source = Path(parameters['heterogeneity_input_star']).parent
@@ -4245,7 +4247,7 @@ if __name__ == "__main__":
                         # check particle stacks
                         assert len(glob.glob(str(input_source) + "/*.mrc")) > 0, "Can not find any particle stacks from input folder.\n \
                             Please include particles stacks in the same path of the input star file. "
-                        if not input.exits():               
+                        if not input.exists():               
                             os.symlink( input_source, input ) 
                     else:
                         logger.info("Taking current project stacks as input to CryoDRGN")
@@ -4266,6 +4268,8 @@ if __name__ == "__main__":
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
 
                     logger.info("PYP (Heterogeneity analysis) finished successfully")
+                else:
+                    raise Exception("Not any of the heterogeneity analysis methods selected.")
 
             except:
                 trackback()

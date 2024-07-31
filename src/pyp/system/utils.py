@@ -80,7 +80,7 @@ def get_gpu_file():
 
 def needs_gpu(parameters):
     # enable Nvidia GPU?
-    if ( ( "movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters.get("movie_force") )
+    if (( "movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters.get("movie_force") )
         or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters.get("tomo_ali_force") )
         or ("tomo_denoise_method" in parameters and not "none" in parameters.get("tomo_denoise_method") and not "topaz" in parameters.get("tomo_denoise_method"))
         or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters.get("tomo_rec_force") )
@@ -89,7 +89,8 @@ def needs_gpu(parameters):
         or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters.get("tomo_vir_force") )
         or ("tomo_denoise_method" in parameters and "topaz" in parameters.get("tomo_denoise_method") and parameters.get("tomo_denoise_topaz_use_gpu") and parameters.get("tomo_rec_force") )
         or (parameters.get("tomo_mem_seg") and parameters["tomo_mem_seg"])
-        or "gpu:" in parameters.get("slurm_gres")
+        or (parameters.get("tomo_mem_method") and not "none" in parameters["tomo_mem_method"])
+        or (parameters.get("heterogeneity_method") and not "none" in parameters["heterogeneity_method"])
         ):
         return True
     else:
