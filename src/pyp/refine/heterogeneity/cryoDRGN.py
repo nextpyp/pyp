@@ -293,8 +293,10 @@ def cryodrgn_analyze(input_dir, output, parameters, downsampled):
     else:
         output_pixel = original_pixelsize
 
+    if parameters['heterogeneity_cryodrgn_analysis_epoch'] == 0 or parameters['heterogeneity_cryodrgn_analysis_epoch'] >= parameters['heterogeneity_cryodrgn_train_epochs']:
+        parameters['heterogeneity_cryodrgn_analysis_epoch'] = parameters['heterogeneity_cryodrgn_train_epochs'] - 1
 
-    command = f"{get_cryodrgn_path()} analyze {input_dir} {parameters['heterogeneity_cryodrgn_analyze_epoch']} -o {output} --pc {parameters['heterogeneity_cryodrgn_analysis_pc']} --ksample {parameters['heterogeneity_cryodrgn_analysis_ksample']} --vol-star-index {parameters['heterogeneity_cryodrgn_analysis_istart']} {options} -Apix {output_pixel}"
+    command = f"{get_cryodrgn_path()} analyze {input_dir} {parameters['heterogeneity_cryodrgn_analysis_epoch']} -o {output} --pc {parameters['heterogeneity_cryodrgn_analysis_pc']} --ksample {parameters['heterogeneity_cryodrgn_analysis_ksample']} --vol-start-index {parameters['heterogeneity_cryodrgn_analysis_istart']} {options} --Apix {output_pixel}"
 
     local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -351,11 +353,11 @@ def run_cryodrgn(project_dir, parameters):
     # train
     cryodrgn_train(parameters, "input_data", name, "train_output", downsampled=downsampled)
 
-    if (working_path / "input_data" / "weights.pkl").exists() and (working_path / "input_data" / "z.pkl").exists():
+    if (working_path / "train_output" / "weights.pkl").exists() and (working_path / "train_output" / "z.pkl").exists():
         saved_folder = os.path.join(project_dir, "train")
         logger.info(f"CryoDRGN finishes training, saving the training results to {saved_folder}")
 
-        shutil.copytree((working_path / "input_data"), Path(saved_folder), dirs_exist_ok=True)
+        shutil.copytree((working_path / "train_output"), Path(saved_folder), dirs_exist_ok=True)
     else:
         raise Exception("Training did not finish successfully")
 

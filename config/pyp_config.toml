@@ -4533,7 +4533,7 @@ default = "relu"
 name = "Analysis epochs"
 description = "Epoch number N to analyze (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
 type = "int"
-default = 49
+default = 0
 advanced = true
 
 [tabs.heterogeneity.cryodrgn_analysis_skipv]
@@ -4603,7 +4603,7 @@ default = "train_vae"
 name = "ZDIM"
 description = "Dimension of latent variable"
 type = "int"
-default = 8
+default = 128
 
 [tabs.heterogeneity.tomodrgn_train_weight]
 name = "initial traning model"
@@ -4655,7 +4655,7 @@ default = false
 name = "Windowing radius"
 description = "Windowing radius (default: 0.85)"
 type = "float"
-default = 0.85
+default = 0.96
 condition = { arg="tomodrgn_data_windowing", value="true" }
 advanced = true
 
@@ -4707,7 +4707,7 @@ default = -1
 name = "Sample tilt"
 description = "Number of tilts to sample from each particle per epoch. Default: min(ntilts) from dataset"
 type = "int"
-default = 0
+default = 32
 
 [tabs.heterogeneity.tomodrgn_sequential_order]
 name = "Sequential order"
@@ -4719,7 +4719,7 @@ default = true
 name = "Number of epochs"
 description = "Number of training epochs (default: 20)"
 type = "int"
-default = 20
+default = 50
 
 [tabs.heterogeneity.tomodrgn_train_batch]
 name = "Batch size"
@@ -5004,7 +5004,7 @@ default = 3
 name = "enc-dim-B"
 description = "Number of nodes in hidden layers encoding merged tilts (default: 512)"
 type = "int"
-default = 512
+default = 256
 
 [tabs.heterogeneity.tomodrgn_pool]
 name = "Pooling-function"
@@ -5059,7 +5059,7 @@ advanced = true
 name = "Decoder nodes"
 description = "Number of nodes in decoder hidden layers (default: 1024)"
 type = "int"
-default = 1024
+default = 256
 advanced = true
 
 [tabs.heterogeneity.tomodrgn_l_ext]

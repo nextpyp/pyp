@@ -976,7 +976,7 @@ def ctffind_tomo_estimate(name, parameters):
                         parameters,
                         counter,
                         tilt_angle,
-                        90 + tilt_axis,
+                        tilt_axis - 90,
                         mean_df,
                         tolerance,
                     )
@@ -1547,7 +1547,10 @@ EOF
 
         determine_tilt = "Yes"
         known_tilt_axis = "Yes"
-        # TODO confirm ctffind5 tilt axis/angle convention, the code seems to be counterclockwise while paper mentioned as clockwise
+        # TODO confirm ctffind5 tilt axis/angle convention, the paper mentioned as clockwise
+        if parameters["ctf_tilt_axis_known"]:
+            tilt_axis = parameters["ctf_tilt_axis"]
+
         if tilt_axis < 0:
             tilt_axis += 360
         
@@ -2016,7 +2019,7 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
                         if "rot=" in line
                     ][index][0].split()[2][:-1]
                 )
-    tilt_axis = 90 + tilt_axis
+    tilt_axis = tilt_axis - 90
 
     if tilt_axis < 0:
         tilt_axis += 360

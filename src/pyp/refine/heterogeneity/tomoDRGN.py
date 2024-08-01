@@ -86,7 +86,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
     if not parameters["heterogeneity_tomodrgn_data_windowing"]:
         options += " --no-window"
     else:
-        options += f" --window-r {parameters['heterogeneity_tomodrgn_data_window_r']}"
+        options += f" --window-r {parameters['heterogeneity_tomodrgn_data_window_r']} --window-r-outer 1.12"
     
     if parameters.get("heterogeneity_tomodrgn_data_dir"):
         data_dir = project_params.resolve_path(parameters["heterogeneity_tomodrgn_data_dir"])
@@ -159,6 +159,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
         tomo += " --recon-dose-weight"
     else:
         pass 
+    tomo += " --sort-ptcl-imgs dose_ascending"
 
     if parameters["heterogeneity_tomodrgn_dose_mask"]:
         tomo += " --l-dose-mask"
@@ -238,7 +239,7 @@ def tomodrgn_analyze(input_dir, output, parameters):
         options += " --flip"
     if parameters['heterogeneity_tomodrgn_analysis_invert']:
         options += " --invert"
-    if parameters["heterogeneity_tomodrgn_pc_ondata"]:
+    if parameters["heterogeneity_tomodrgn_analysis_pc_ondata"]:
         options += " --pc-ondata"
     
     if parameters.get('heterogeneity_tomodrgn_analysis_downsample'):
@@ -252,7 +253,10 @@ def tomodrgn_analyze(input_dir, output, parameters):
     else:
         output_pixel = original_pixelsize
 
-    command = f"{get_tomodrgn_path()} analyze {input_dir} {parameters['heterogeneity_tomodrgn_analyze_epoch']} -o {output} --pc {parameters['heterogeneity_tomodrgn_analysis_pc']} --ksample {parameters['heterogeneity_tomodrgn_analysis_ksample']} {options} -Apix {output_pixel}"
+    if parameters['heterogeneity_tomodrgn_analysis_epoch'] == 0 or parameters['heterogeneity_tomodrgn_analysis_epoch'] >= parameters['heterogeneity_tomodrgn_train_epochs']:
+        parameters['heterogeneity_tomodrgn_analysis_epoch'] = parameters['heterogeneity_tomodrgn_train_epochs'] - 1
+
+    command = f"{get_tomodrgn_path()} analyze {input_dir} {parameters['heterogeneity_tomodrgn_analysis_epoch']} -o {output} --pc {parameters['heterogeneity_tomodrgn_analysis_pc']} --ksample {parameters['heterogeneity_tomodrgn_analysis_ksample']} {options} --Apix {output_pixel}"
 
     local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -309,11 +313,11 @@ def run_tomodrgn(project_dir, parameters):
     # train
     tomodrgn_train(parameters, "input_data", name, "train_output")
 
-    if (working_path / "input_data" / "weights.pkl").exists() and (working_path / "input_data" / "z.pkl").exists():
+    if (working_path / "train_output" / "weights.pkl").exists() and (working_path / "train_output" / "z.train.pkl").exists():
         saved_folder = os.path.join(project_dir, "train")
-        logger.info(f"tomodrgn finishes training, saving the training results to {saved_folder}")
+        logger.info(f"TomoDRGN finishes training, saving the training results to {saved_folder}")
 
-        shutil.copytree((working_path / "input_data"), Path(saved_folder), dirs_exist_ok=True)
+        shutil.copytree((working_path / "train_output"), Path(saved_folder), dirs_exist_ok=True)
     else:
         raise Exception("Training did not finish successfully")
 
