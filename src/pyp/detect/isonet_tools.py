@@ -16,7 +16,7 @@ logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_isonet_path():
     isonet_path = '/opt/pyp/external'
-    command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH ;{isonet_path}/IsoNet/bin/"
+    command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH; {isonet_path}/IsoNet/bin/"
     return command_base
 
 isonet_command = get_isonet_path()
@@ -307,7 +307,7 @@ def isonet_train(project_dir, output, parameters):
     patchsize = parameters["tomo_denoise_isonet_patchsize"]
     z_crop = parameters["tomo_denoise_isonet_zcrop"]
     
-    logger.info("isonet preprocessing...")
+    logger.info("IsoNet preprocessing...")
     
     if parameters["tomo_denoise_isonet_CTFdeconvol"]:
 
