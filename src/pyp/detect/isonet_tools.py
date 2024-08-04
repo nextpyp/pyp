@@ -269,17 +269,11 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
 def isonet_train(project_dir, output, parameters):
     
     # always try to look for tomograms from parent project
-    if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):
-        tomogram_source = project_params.resolve_path(parameters["data_parent"])
-    else:
-        tomogram_source = project_dir
-        logger.info("Using current project tomograms for isonet denoising")
+    tomogram_source = project_dir
 
     # get the train list
     train_folder = os.path.join(tomogram_source, "train")
-    with open( os.path.join( train_folder, "current_list.txt" ) ) as f:
-        list_file = f.read()
-    train_name = np.loadtxt(os.path.join( train_folder, list_file + "_images.txt" ), dtype=str, skiprows=1, usecols=0, ndmin=2)
+    train_name = np.loadtxt( os.path.join( train_folder, "current_list.txt" ), dtype=str, skiprows=0, usecols=0, ndmin=2)
 
     # initialize path
     working_path = Path(os.environ["PYP_SCRATCH"]) / "isonet"
