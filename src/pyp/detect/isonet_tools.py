@@ -15,8 +15,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_isonet_path():
-    config = get_pyp_configuration()
-    isonet_path = config["pyp"]["isonet"]
+    isonet_path = '/opt/pyp/external'
     command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH ;{isonet_path}/IsoNet/bin/"
     return command_base
 
