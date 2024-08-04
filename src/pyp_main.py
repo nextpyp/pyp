@@ -3452,7 +3452,7 @@ if __name__ == "__main__":
                 pass
 
             # we are done, clear local scratch
-            if os.path.exists(os.environ["PYP_SCRATCH"]):
+            if os.path.exists(os.environ["PYP_SCRATCH"]) and not args.keep:
                 shutil.rmtree(os.environ["PYP_SCRATCH"])
 
         # swarm
@@ -3479,7 +3479,7 @@ if __name__ == "__main__":
                 pass
 
             # we are done, clear local scratch
-            if os.path.exists(os.environ["PYP_SCRATCH"]):
+            if os.path.exists(os.environ["PYP_SCRATCH"]) and not args.keep:
                 shutil.rmtree(os.environ["PYP_SCRATCH"])
 
         elif "tomomerge" in os.environ:
