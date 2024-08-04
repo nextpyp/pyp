@@ -103,7 +103,7 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, get_gpu_queue
+from pyp.system.utils import get_imod_path, get_topaz_path, get_multirun_path, get_parameter_files_path, get_gpu_queue
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
@@ -1690,48 +1690,43 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if parameters["tomo_ali_method"] == "imod_gold":
 
         preprocess.erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y)
+
+    if parameters.get("tomo_denoise_method") == "topaz":
+
         """
-        gold_mod = f"{name}_gold.mod"
-
-        if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
-            # create binned aligned stack
-            if not os.path.exists(f'{name}_bin.ali'):
-                command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
-                    get_imod_path(), name, binning
-                )
-                local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
-
-            detect.detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
-
-        if parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
-
-            # save projected gold coordinates as txt file
-            com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
-            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-            # calculate unbinned tilt-series coordinates
-            gold_coordinates = np.loadtxt(name + "_gold_ccderaser.txt",ndmin=2)
-            gold_coordinates[:,:2] *= binning
-            np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
-
-            # convert back to imod model using one point per contour
-            com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
-            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-            # erase gold on (unbinned) aligned tilt-series
-            erase_factor = parameters["tomo_rec_erase_factor"]
-            com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand 5 -order 0 -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
-            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-            try:
-                os.remove(name + "_gold_ccderaser.txt")
-                os.remove(name + "_gold_ccderaser.mod")
-            except:
-                pass
-
-            # re-calculate reconstruction using gold-erased tilt-series
-            merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
+        usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
+                    [-a EVEN_TRAIN_PATH] [-b ODD_TRAIN_PATH] [--N-train N_TRAIN]
+                    [--N-test N_TEST] [-c CROP]
+                    [--base-kernel-width BASE_KERNEL_WIDTH]
+                    [--optim {adam,adagrad,sgd}] [--lr LR] [--criteria {L1,L2}]
+                    [--momentum MOMENTUM] [--batch-size BATCH_SIZE]
+                    [--num-epochs NUM_EPOCHS] [-w WEIGHT_DECAY]
+                    [--save-interval SAVE_INTERVAL] [--save-prefix SAVE_PREFIX]
+                    [--num-workers NUM_WORKERS] [-j NUM_THREADS] [-g GAUSSIAN]
+                    [-s PATCH_SIZE] [-p PATCH_PADDING] [-d DEVICE]
+                    [volumes ...]
         """
+
+        # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
+        import torch
+        if torch.cuda.is_available():
+            devices = 0
+        else:
+            devices = -1
+
+        time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
+        logger.info("Denoising tomogram using Topaz")
+        command = f"{get_topaz_path()}/topaz denoise3d \
+{name}.rec \
+--model {parameters['tomo_denoise_topaz_model']} \
+--device {devices} \
+--gaussian {parameters['tomo_denoise_topaz_gaussian']} \
+--patch-size {parameters['tomo_denoise_topaz_patch_size']} \
+--patch-padding {parameters['tomo_denoise_topaz_patch_padding']} \
+--output {os.getcwd()} \
+2>&1 | tee {time_stamp}_topaz_denoise3d.log"
+
+        local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
