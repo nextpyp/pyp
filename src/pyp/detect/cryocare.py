@@ -88,7 +88,8 @@ def cryocare(working_path, project_path, name, parameters):
     "path": f"./train_model/cryocare_model.tar.gz",
     "even": half1_list,
     "odd": half2_list,
-    "n_tiles": [parameters["tomo_denoise_cryocare_tiles"]] * 3
+    "n_tiles": [parameters["tomo_denoise_cryocare_tiles"]] * 3,
+    "gpu_id": 0
     }
 
     output_path = f"{project_path}/mrc/{name}_denoised.rec"
