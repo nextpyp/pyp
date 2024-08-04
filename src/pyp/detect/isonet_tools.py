@@ -48,7 +48,7 @@ _rlnNumberSubtomo #5"""
             assert os.path.exists(pkl_file), f"There is no meta data for this image, please check the input name: {pkl_file}."
             metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
             ctf = metadata.data["global_ctf"].to_numpy()
-            df = ctf[0]
+            df = np.squeeze(ctf[0])
             
             sub_tomograms = 100
             f.write(f"\n{i + 1}    {tomo}   {pixel_size}    {df}    {sub_tomograms}" )
