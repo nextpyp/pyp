@@ -349,7 +349,7 @@ def isonet_train(project_dir, output, parameters):
         )
 
     # extract subvolumes
-    logger.info("isonet subvolumes extraction...")
+    logger.info("IsoNet subvolume extraction...")
     cube_size = parameters["tomo_denoise_isonet_cubesize"]
     extracted_folder = os.path.join(working_path, "subtomograms")
     extracted_star = "subtomograms.star"
@@ -367,7 +367,7 @@ def isonet_train(project_dir, output, parameters):
     # refine (train)
     output_dir = os.path.join(output, "isonet_tran")
 
-    logger.info(f"Running isonet refine, model files will be saved in {output_dir}")
+    logger.info(f"Running IsoNet refine, model files will be saved in {output_dir}")
     isonet_refine(extracted_star, output_dir, parameters)
 
     if debug:
