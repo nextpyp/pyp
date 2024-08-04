@@ -322,16 +322,12 @@ def isonet_train(project_dir, output, parameters):
             ncpu,
             verbose=verbose
             )
-
-        extract_input = ctf_convol_star
-
     else:
         use_deconvol = "False"
-        extract_input = initial_star
 
     # mask
     isonet_generat_mask(
-        extract_input,
+        initial_star,
         preprocess_star,
         d_percent,
         std_percent,
@@ -347,7 +343,7 @@ def isonet_train(project_dir, output, parameters):
     extracted_folder = os.path.join(working_path, "subtomograms")
     extracted_star = "subtomograms.star"
     isonet_extract(
-        preprocess_star,
+        initial_star,
         extracted_folder,
         extracted_star,
         cube_size,
