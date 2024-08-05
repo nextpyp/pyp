@@ -424,3 +424,5 @@ def isonet_predict(project_dir, name):
         verbose=verbose
     )
 
+    # TODO: overwrite tomogram with denoised version
+   # mv output/"isonet_predict"/name. name.rec

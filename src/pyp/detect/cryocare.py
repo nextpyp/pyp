@@ -107,7 +107,10 @@ def cryocare(working_path, project_path, name, parameters):
 
     command = f"{command_base}cryoCARE_predict.py --conf {predict_config_file}"
     local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+    # Move: output_path/name_half1.rec -> name.rec
 
+    # TODO: rename outpur to "name.rec" so that the reconstruction get overwritten
+    
 
 def tomo_swarm_half(project_path, filename, keep=False):
     """
