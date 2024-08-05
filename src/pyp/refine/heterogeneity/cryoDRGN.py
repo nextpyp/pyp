@@ -206,8 +206,8 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
     if "conv" in parameters['heterogeneity_cryodrgn_enc_mode'] and parameters['heterogeneity_cryodrgn_use_real']:
         training_parameters += " --use_real"
     
-    if False and "gaussian" in parameters['heterogeneity_cryodrgn_pe_type']:
-        training_parameters += f" --feat_sigma {parameters['heterogeneity_cryodrgn_feat_sigma']}"
+    if "gaussian" in parameters['heterogeneity_cryodrgn_pe_type']:
+        training_parameters += f" --feat-sigma {parameters['heterogeneity_cryodrgn_feat_sigma']}"
 
     if parameters.get('heterogeneity_cryodrgn_pe_dim'):
         training_parameters += f" --pe-dim {parameters['heterogeneity_cryodrgn_pe_dim']}"
@@ -264,7 +264,6 @@ def cryodrgn_analyze(input_dir, output, parameters, downsampled):
         --vol-start-index VOL_START_INDEX
                     Default value of start index for volume generation (default: 0)
     """
-
 
     options = ''
 

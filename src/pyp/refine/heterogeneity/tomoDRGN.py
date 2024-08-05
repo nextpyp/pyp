@@ -406,8 +406,8 @@ def train_nn(parameters, input_dir, name, output):
     if parameters.get('heterogeneity_tomodrgn_enc_mask'):
         training_parameters += f" --enc-mask {parameters['heterogeneity_tomodrgn_enc_mask']}"
     
-    if False and "gaussian" in parameters['heterogeneity_tomodrgn_pe_type']:
-        training_parameters += f" --feat_sigma {parameters['heterogeneity_tomodrgn_feat_sigma']}"
+    if "gaussian" in parameters['heterogeneity_tomodrgn_pe_type']:
+        training_parameters += f" --feat-sigma {parameters['heterogeneity_tomodrgn_feat_sigma']}"
 
     if parameters.get('heterogeneity_tomodrgn_pe_dim'):
         training_parameters += f" --pe-dim {parameters['heterogeneity_tomodrgn_pe_dim']}"

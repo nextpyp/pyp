@@ -4289,6 +4289,7 @@ name = "Downsample boxsize"
 description = "Downsampled particle boxsize for training"
 type = "float"
 default = 128
+condition = { arg="method", value="CryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_zdim]
 name = "ZDIM"
@@ -4340,6 +4341,7 @@ name = "Real space windowing"
 description = "Real space windowing of dataset"
 type = "bool"
 default = false
+condition = { arg="method", value="CryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_window_r]
 name = "Windowing radius"

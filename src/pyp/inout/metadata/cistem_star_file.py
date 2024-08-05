@@ -813,7 +813,8 @@ _rlnCtfBfactor #16
 _rlnCtfScalefactor #17
 _rlnLogLikeliContribution #18 
 _rlnRandomSubset #19 
-_rlnTiltIndex #20"""         
+_rlnTiltIndex #20
+_rlnGroupName #21"""         
         
         binary_data = pd.DataFrame(self._data, columns=self.HEADER_STRS)
         ptl_index = np.unique(binary_data[["PIND"]].to_numpy().ravel())
@@ -849,12 +850,13 @@ _rlnTiltIndex #20"""
         all_other = pd.DataFrame(
             {
                 "OpticsGroup": np.array([1] * total_ptl),
-                "GroupNumber": binary_data[["Group"]].to_numpy().ravel() , 
+                "GroupNumber": binary_data[["Group"]].to_numpy().ravel(), 
                 "CtfBfactor": ctf_bfac, 
                 "CtfScalefactor": ctf_scaleFactor, 
                 "LOGP": -binary_data[["LOGP"]].to_numpy().ravel(),
                 "RandomSubset": np.random.randint(1, high=3, size=total_ptl, dtype=int), 
-                "TiltIndex": binary_data[["TIND"]].to_numpy().ravel()
+                "TiltIndex": binary_data[["TIND"]].to_numpy().ravel(),
+                "GroupName": binary_data[["PIND"]].to_numpy().ravel()
             }
         )
 

@@ -2307,25 +2307,6 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             os.chdir(current_path)
         except:
             logger.warning("Unable to retrieve metadata")
-
-
-    # Why doing this twice?
-    """    
-    statistic_file = glob.glob(
-            current_path + "/frealign/" + "maps/" + f"{dataset}_r01_{(iteration-1):02d}_statistics.txt"
-    )
-    for statics in statistic_file:
-        try:
-            shutil.copy2(
-                statics, os.path.join(local_frealign_folder, "scratch"),
-            )
-            logger.info("Copying frealign statistics to local scratch")
-        except:
-            logger.warning(
-                "Cannot find frealign statistics file in scratch folder, skipping"
-            )
-            pass
-    """
     
     if is_tomo:
         if use_frames:
