@@ -954,6 +954,10 @@ def split(parameters):
             job_name = "Split (cpu)"
 
         if ( tomo_train or spr_train or isonet_train or heterogeneity):
+
+            # operate on all files in the .micrographs list since this is now a standalone block
+            shutil.copy2( micrographs, os.path.join("train","current_list.txt") )
+            
             if os.path.exists(os.path.join("train","current_list.txt")):
 
                 if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train":
@@ -3433,7 +3437,7 @@ if __name__ == "__main__":
                 pass
 
             # we are done, clear local scratch
-            if os.path.exists(os.environ["PYP_SCRATCH"]):
+            if os.path.exists(os.environ["PYP_SCRATCH"]) and not args.keep:
                 shutil.rmtree(os.environ["PYP_SCRATCH"])
 
         # swarm
@@ -3460,7 +3464,7 @@ if __name__ == "__main__":
                 pass
 
             # we are done, clear local scratch
-            if os.path.exists(os.environ["PYP_SCRATCH"]):
+            if os.path.exists(os.environ["PYP_SCRATCH"]) and not args.keep:
                 shutil.rmtree(os.environ["PYP_SCRATCH"])
 
         elif "tomomerge" in os.environ:

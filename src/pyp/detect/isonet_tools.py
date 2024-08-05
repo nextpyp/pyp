@@ -15,9 +15,8 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_isonet_path():
-    config = get_pyp_configuration()
-    isonet_path = config["pyp"]["isonet"]
-    command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH ;{isonet_path}/IsoNet/bin/"
+    isonet_path = '/opt/pyp/external'
+    command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH; {isonet_path}/IsoNet/bin/"
     return command_base
 
 isonet_command = get_isonet_path()
@@ -49,7 +48,7 @@ _rlnNumberSubtomo #5"""
             assert os.path.exists(pkl_file), f"There is no meta data for this image, please check the input name: {pkl_file}."
             metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
             ctf = metadata.data["global_ctf"].to_numpy()
-            df = ctf[0]
+            df = np.squeeze(ctf[0])
             
             sub_tomograms = 100
             f.write(f"\n{i + 1}    {tomo}   {pixel_size}    {df}    {sub_tomograms}" )
@@ -270,17 +269,11 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
 def isonet_train(project_dir, output, parameters):
     
     # always try to look for tomograms from parent project
-    if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):
-        tomogram_source = project_params.resolve_path(parameters["data_parent"])
-    else:
-        tomogram_source = project_dir
-        logger.info("Using current project tomograms for isonet denoising")
+    tomogram_source = project_dir
 
     # get the train list
     train_folder = os.path.join(tomogram_source, "train")
-    with open( os.path.join( train_folder, "current_list.txt" ) ) as f:
-        list_file = f.read()
-    train_name = np.loadtxt(os.path.join( train_folder, list_file + "_images.txt" ), dtype=str, skiprows=1, usecols=0, ndmin=2)
+    train_name = np.loadtxt( os.path.join( train_folder, "current_list.txt" ), dtype=str, skiprows=0, usecols=0, ndmin=2)
 
     # initialize path
     working_path = Path(os.environ["PYP_SCRATCH"]) / "isonet"
@@ -308,7 +301,7 @@ def isonet_train(project_dir, output, parameters):
     patchsize = parameters["tomo_denoise_isonet_patchsize"]
     z_crop = parameters["tomo_denoise_isonet_zcrop"]
     
-    logger.info("isonet preprocessing...")
+    logger.info("IsoNet preprocessing...")
     
     if parameters["tomo_denoise_isonet_CTFdeconvol"]:
 
@@ -329,16 +322,12 @@ def isonet_train(project_dir, output, parameters):
             ncpu,
             verbose=verbose
             )
-
-        extract_input = ctf_convol_star
-
     else:
         use_deconvol = "False"
-        extract_input = initial_star
 
     # mask
     isonet_generat_mask(
-        extract_input,
+        initial_star,
         preprocess_star,
         d_percent,
         std_percent,
@@ -349,12 +338,12 @@ def isonet_train(project_dir, output, parameters):
         )
 
     # extract subvolumes
-    logger.info("isonet subvolumes extraction...")
+    logger.info("IsoNet subvolume extraction...")
     cube_size = parameters["tomo_denoise_isonet_cubesize"]
     extracted_folder = os.path.join(working_path, "subtomograms")
     extracted_star = "subtomograms.star"
     isonet_extract(
-        preprocess_star,
+        initial_star,
         extracted_folder,
         extracted_star,
         cube_size,
@@ -367,7 +356,7 @@ def isonet_train(project_dir, output, parameters):
     # refine (train)
     output_dir = os.path.join(output, "isonet_tran")
 
-    logger.info(f"Running isonet refine, model files will be saved in {output_dir}")
+    logger.info(f"Running IsoNet refine, model files will be saved in {output_dir}")
     isonet_refine(extracted_star, output_dir, parameters)
 
     if debug:
