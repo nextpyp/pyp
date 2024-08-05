@@ -955,27 +955,28 @@ def split(parameters):
 
         if ( tomo_train or spr_train or isonet_train or heterogeneity):
 
-            # operate on all files in the .micrographs list since this is now a standalone block
-            shutil.copy2( micrographs, os.path.join("train","current_list.txt") )
-            
-            if os.path.exists(os.path.join("train","current_list.txt")):
+            if not heterogeneity:
+                # operate on all files in the .micrographs list since this is now a standalone block
+                shutil.copy2( micrographs, os.path.join("train","current_list.txt") )
+                
+                if os.path.exists(os.path.join("train","current_list.txt")):
 
-                if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train":
-                    train_type = "milo"
-                    train_jobtype = "milogtrain"
-                elif "tomo_denoise_method" in parameters and parameters["tomo_denoise_method"] == "isonet-train":
-                    train_type = "isonet"
-                    train_jobtype = "isonettrain"
+                    if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train":
+                        train_type = "milo"
+                        train_jobtype = "milogtrain"
+                    elif "tomo_denoise_method" in parameters and parameters["tomo_denoise_method"] == "isonet-train":
+                        train_type = "isonet"
+                        train_jobtype = "isonettrain"
+                    else:
+                        train_type = parameters["data_mode"]
+                        train_jobtype = parameters["data_mode"] + "train"
                 else:
-                    train_type = parameters["data_mode"]
-                    train_jobtype = parameters["data_mode"] + "train"
+                    raise Exception("Please select a list of coordinates for training")
 
-            elif heterogeneity:
+            else:
                 train_type = "heterogeneity"
                 train_jobtype = "heterogeneitytrain"
-            else:
-                raise Exception("Please select a list of coordinates for training")
-
+            
             train_swarm_file = slurm.create_train_swarm_file(timestamp, train_type=train_type)
 
             # submit swarm jobs

@@ -1046,7 +1046,7 @@ def csp_run_refinement(
                 else:
                     parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = csp_refine_min, csp_refine_max
 
-            if mode == 2 and "csp_RandomParticles" in parameters and parameters["csp_RandomParticles"] > 0:
+            if mode == 2 and "csp_RandomParticles" in parameters and parameters["csp_RandomParticles"] > 0 and parameters["csp_abinitio"]:
                 parameters["csp_RandomSkipRatio"] = round(max(0.00, 1 - float(parameters["csp_RandomParticles"] / ptlind_list[-1])), 2)
                 logger.info(f"Random skip ratio is {parameters['csp_RandomSkipRatio']} for CSP ab inito")
 

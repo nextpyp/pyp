@@ -226,7 +226,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
         training_parameters += " --do-pose-sgd"
     
     if "tomo" in parameters["data_mode"]:
-        tomo = f" --encode-mode tilt --dose-per-tilt {parameters['scope_dose_rate']}"
+        tomo = f" --encode-mode tilt --dose-per-tilt {parameters['scope_dose_rate']} --ntilts 1"
     else:
         tomo = ""
 
