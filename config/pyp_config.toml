@@ -801,7 +801,7 @@ condition={ arg="method", value="ctffind5" }
 
 [tabs.ctf.tilt_axis]
 name = "Known tilt axis angle"
-description = "Tilt axis used for CTF estimation"
+description = "Tilt axis used for CTF estimation, angle from X-axis, counterclockwise as positive. (The angle that actually used for tomogram reconstruction)."
 type = "float"
 default = 0.0
 condition={ arg="method", value="ctffind5" }

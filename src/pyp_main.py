@@ -1662,7 +1662,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         t.stop()
 
     if ctffind_tilt:
+        if parameters["ctf_tilt_axis_known"]:
+            input_tilt_axis = parameters["ctf_tilt_axis"]
+        else:
+            input_tilt_axis = parameters["scope_tilt_axis"]
         ctf_mod.detect_handedness_tilt_range(name=name,
+                                             input_tilt_axis=input_tilt_axis,
                                              tilt_angles=tilt_angles, 
                                              lower_tilt=parameters["ctf_handedness_mintilt"], 
                                              upper_tilt=parameters["ctf_handedness_maxtilt"],)

@@ -1547,9 +1547,14 @@ EOF
 
         determine_tilt = "Yes"
         known_tilt_axis = "Yes"
-        # TODO confirm ctffind5 tilt axis/angle convention, the paper mentioned as clockwise
+        # TODO confirm ctffind5 tilt axis/angle convention, the paper mentioned as clockwise, imod/aretomo or mdoc is counterclockwise as positive
         if parameters["ctf_tilt_axis_known"]:
-            tilt_axis = parameters["ctf_tilt_axis"]
+            if not int(parameters["ctf_tilt_axis"]) == 0:
+                tilt_axis = -1 * parameters["ctf_tilt_axis"]
+            else:
+                tilt_axis = parameters["ctf_tilt_axis"]
+        else:
+            tilt_axis = -1 * parameters["scope_tilt_axis"]
 
         if tilt_axis < 0:
             tilt_axis += 360
@@ -1629,7 +1634,7 @@ EOF
             for line in f.readlines():
                 if "Tilt_axis, tilt angle" in line:
                     estimated_tilt_axis, estimated_tilt_angle = line.split(":")[1].replace("degrees", "").replace(" ", "").split(",")
-                    estimated_tilt_axis, estimated_tilt_angle = float(estimated_tilt_axis), float(estimated_tilt_angle)
+                    estimated_tilt_axis, estimated_tilt_angle = float(estimated_tilt_axis), -1 * float(estimated_tilt_angle) #tilt angle from ctffind5 also clockwise
                     with open(f"../{imagefile}_handedness.txt", "w") as f:
                         f.write(f"{estimated_tilt_angle} {estimated_tilt_axis}")
                     break
@@ -1979,7 +1984,7 @@ EOF
 
     return
 
-def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_detect: float = 30.0, tilt_axis_error: float = 90.0, tilt_angle_error = 20.0):
+def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, tilt_axis: float, angle_to_detect: float = 30.0, tilt_axis_error: float = 90.0, tilt_angle_error = 20.0):
     """detect_handedness Detect tilt handedness by checking the tilt geometry estimated by ctffind_tilt
 
     Parameters
@@ -1990,6 +1995,8 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
         Path to tilt angle file (*.tlt)
     xf_file : Path
         Path to tilt alignment file (*.xf)
+    tilt_axis: float
+        tilt axis from data collection
     angle_to_detect : float, optional
         Tilt angle to detect the handedness, usually angle between 10 to 50 or -10 to -50 works better, by default 30.0
     tilt_axis_error : float, optional
@@ -2007,6 +2014,7 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
     tilt_angles_modified = tilt_angles - angle_to_detect
     index = np.argmin(abs(tilt_angles_modified.ravel()))
 
+    """
     tilt_axis = float(
                     [
                         line.split("\n")
@@ -2019,8 +2027,10 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
                         if "rot=" in line
                     ][index][0].split()[2][:-1]
                 )
-    tilt_axis = tilt_axis - 90
+    """
 
+    # tilt_axis = -1 * (tilt_axis + 90) + 180 # to compare, ctffind5 clockwise from X axis while imod/aretomo counterclockwise from Y axis, and imod may flip 180
+    
     if tilt_axis < 0:
         tilt_axis += 360
 
@@ -2048,13 +2058,14 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, angle_to_det
     return None
 
 
-def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt: float = 10.0, upper_tilt: float = 50.0): 
+def detect_handedness_tilt_range(name: str, input_tilt_axis: float, tilt_angles: np.ndarray, lower_tilt: float = 10.0, upper_tilt: float = 50.0): 
     """ Detect the tilt handedness using multiple tilts 
         Lower bound and upper bound should be all positive. 
         For example, using lower_tilt == 10 and upper_tilt == 50, images within +10 to +50 and -10 to -50 will be used.  
 
     Args:
         name (str): Name of tilt-series
+        input_tilt_axis (flat): tilt axis from data collection 
         tilt_angles (np.ndarray): tilt angles
         lower_tilt (float, optional): Lower tilt in the range. Defaults to 10.0.
         upper_tilt (float, optional): Upper tilt in the range. Defaults to 50.0.
@@ -2073,6 +2084,7 @@ def detect_handedness_tilt_range(name: str, tilt_angles: np.ndarray, lower_tilt:
             candidates.append(detect_handedness(name=name, 
                                                 tiltang_file=Path(f"{name}.tlt"), 
                                                 xf_file=Path(f"{name}.xf"), 
+                                                tilt_axis=-input_tilt_axis,
                                                 angle_to_detect=angle,
                                                 ))
     # remove tilted images that can be used 
