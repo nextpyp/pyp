@@ -4070,6 +4070,7 @@ name = "Refine particle alignments"
 description = "Optimize sub-tomogram orientations and translations in 3D"
 type = "bool"
 default = false
+copyToNewBlock = false
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
 
 [tabs.csp.ToleranceParticlesPhi]
