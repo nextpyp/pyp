@@ -3,7 +3,6 @@ import os
 import socket
 from pwd import getpwnam
 from pyp.system.singularity import get_pyp_configuration
-from pyp.streampyp.web import Web
 
 def timeout_command(command, time, full_path=False):
     if full_path:
@@ -87,12 +86,15 @@ def needs_gpu(parameters):
         or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters.get("detect_force") )
         or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters.get("detect_force") )
         or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters.get("tomo_vir_force") )
-        or ("tomo_denoise_method" in parameters and "topaz" in parameters.get("tomo_denoise_method") and parameters.get("tomo_denoise_topaz_use_gpu") )
+        or ("tomo_denoise_method" in parameters and not "topaz" in parameters.get("tomo_denoise_method") and parameters.get("tomo_denoise_topaz_use_gpu") )
+        or ("tomo_denoise_method" in parameters and "cryocare" in parameters.get("tomo_denoise_method") )
+        or ("tomo_denoise_method" in parameters and "isonet" in parameters.get("tomo_denoise_method") )
+        or ("heterogeneity_method" in parameters and not "none" in parameters.get("heterogeneity_method") )
         or (parameters.get("tomo_mem_seg") and parameters["tomo_mem_seg"])
         or (parameters.get("tomo_mem_method") and not "none" in parameters["tomo_mem_method"])
         or (parameters.get("heterogeneity_method") and not "none" in parameters["heterogeneity_method"])
         ):
-        return True
+        return True    
     else:
         return False
 
