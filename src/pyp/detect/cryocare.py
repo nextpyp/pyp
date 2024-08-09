@@ -171,6 +171,9 @@ def tomo_swarm_half(project_path, filename, keep=False):
 
     # convert eer files to mrc using movie_eer_reduce and movie_eer_frames parameters (flipping in x is required to match unblur/motioncorr convention)
     if frame_list[0].endswith(".eer"):
+        full_frame = get_image_dimensions(frame_list[0])[2]
+        valid_averages = np.floor(full_frame / parameters['movie_eer_frames'])
+        eer = True
         arguments = []
         for f in frame_list:
             # average eer frames
@@ -181,6 +184,7 @@ def tomo_swarm_half(project_path, filename, keep=False):
         raw_image = [ i.replace('.eer','.mrc') for i in frame_list ]
     else:
         raw_image = frame_list
+        eer = False
 
     # convert tif movies to mrc files
     if ".tif" in raw_image[0]:
@@ -197,7 +201,11 @@ def tomo_swarm_half(project_path, filename, keep=False):
  
     # get the dimension first
     dims = get_image_dimensions(raw_image[0])
-    z_slices = dims[2] - 1
+    if eer:
+        z_slices = int(valid_averages) - 1
+    else:
+        z_slices = dims[2] - 1
+
     even_list = np.arange(0, z_slices + 1, 2)
     odd_list = np.arange(1, z_slices + 1, 2)
 
