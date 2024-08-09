@@ -231,7 +231,8 @@ def isonet_refine(input_star, output, parameters):
 --filter_base {filter_base} \\
 --batch_normalization {normalization} \\
 --pool {pool} \\
---normalize_percentile {threshold_norm}
+--normalize_percentile {threshold_norm} \\
+--gpuID 0
 """
     
     local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
