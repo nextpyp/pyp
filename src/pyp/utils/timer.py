@@ -63,7 +63,7 @@ class Timer(ContextDecorator):
             seconds = timed
 
             if days > 0:
-                display += f"{days:.0f}d "
+                display = f"{days:.0f}d "
             else:
                 display = ""
             if hours > 0:
