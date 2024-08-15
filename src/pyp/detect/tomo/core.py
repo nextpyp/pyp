@@ -534,7 +534,7 @@ def process_virions(
     [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
 
     # find virions
-    if not os.path.isfile("{0}.vir".format(name)) and parameters["tomo_vir_method"] == "auto":
+    if not os.path.isfile("{0}.vir".format(name)) and ( parameters["tomo_vir_method"] == "auto" or parameters["tomo_spk_method"] == "spherical" ):
 
         extension = "rec"
         if parameters['tomo_vir_binn'] > 1:
@@ -1147,7 +1147,6 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         radius_in_pixels = int(parameters["tomo_vir_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"])
 
         if not os.path.exists("%s.vir" % name):
-
             if parameters["tomo_vir_method"] == "manual":
                 logger.info("Using virion manual picking")
                 # reset virion binning since we are considering above it already
