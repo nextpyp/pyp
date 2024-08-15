@@ -949,6 +949,7 @@ def split(parameters):
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
+            gpu = True
         else:
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
