@@ -3173,7 +3173,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.global_stat]
 name = "Use global statistics"
-description = "Use global statistics for refinemnet and reconstruction"
+description = "Use global statistics for refinement and reconstruction"
 type = "bool"
 default = false
 condition = { arg="skip", value="false" }
