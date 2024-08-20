@@ -1177,8 +1177,10 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     dimensions : int, optional
         Dimensions of output GIF, by default 256
     """
+    
+    extension = Path(tomogram).suffix
 
-    tomogram_avg = tomogram.replace(".rec",".avg")
+    tomogram_avg = tomogram.replace(extension,".avg")
     if averagezslices > 1:
         command = f"{get_imod_path()}/bin/binvol {tomogram} {tomogram_avg}"
         if flipyz:
@@ -1191,7 +1193,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
         os.symlink( tomogram, tomogram_avg)
 
     # flip yz - convert tomogram from 512 x 256 x 512 to 512 x 512 x 256
-    tomogram_flip = tomogram.replace(".rec", "_flip.rec")
+    tomogram_flip = tomogram.replace(extension, "_flip.rec")
     if flipyz:
         command = "{0}/bin/clip flipyz {1} {2}".format(
             get_imod_path(), tomogram_avg, tomogram_flip
