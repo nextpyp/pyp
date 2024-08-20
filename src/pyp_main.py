@@ -1724,6 +1724,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         tilt_metadata["virion_coordinates"] = virion_coordinates
 
     tilt_metadata["spike_coordinates"] = spike_coordinates
+    if len(spike_coordinates) > 0:
+        logger.info(f"Total number of particles = {len(spike_coordinates):,}")
 
     mpi_funcs, mpi_args = [ ], [ ]
     if ctffind_tilt:
