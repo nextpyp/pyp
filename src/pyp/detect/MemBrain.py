@@ -2,7 +2,10 @@
 import os
 import shutil
 import glob
+import numpy as np
 from pathlib import Path
+from pyp.analysis import plot
+from pyp.inout.image import mrc
 from pyp.system import local_run, project_params
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
@@ -66,7 +69,7 @@ def membrain_preprocessing(parameters, input):
     return rescaled, output
 
 
-def membrain_segmetation(parameters, input, local_output):
+def membrain_segmentation(parameters, input, local_output):
 
     model = project_params.resolve_path(parameters["tomo_mem_model"])
 
@@ -129,11 +132,11 @@ def run_membrain(project_dir, name):
     local_input =f"./{name}.rec"
 
     # copy the input tomogram to scratch space
-    assert os.path.exists(input_tomo), "Input tomogram dose not exist, run preprocessing fist"
+    assert os.path.exists(input_tomo), "Input tomogram dose not exist, run preprocessing first"
 
     shutil.copy2(input_tomo, local_input)
 
-    output = os.path.join(project_dir, "mrc", name + "_segmem.mrc")
+    output = name + "_segmem.mrc"
 
     if parameters["tomo_mem_preprocessing"]:
         rescaled, preprocessed = membrain_preprocessing(parameters, input=local_input)
@@ -141,9 +144,9 @@ def run_membrain(project_dir, name):
         rescaled = False
         preprocessed = local_input
     
-    local_output ="seg_out"
-    membrain_segmetation(parameters, input=preprocessed, local_output=local_output)
- 
+    local_output = "seg_out"
+    membrain_segmentation(parameters, input=preprocessed, local_output=local_output)
+    
     if rescaled:
         rescale_input = glob.glob(f"./{local_output}/*.mrc")[0]
         command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path {output}"
@@ -152,6 +155,31 @@ def run_membrain(project_dir, name):
     else:
         target = glob.glob(f"./{local_output}/*.mrc")[0]
         shutil.move(target, output)
+
+    # produce poor man's visualization
+    reconstruction = mrc.read(local_input)
+    segmentation = mrc.read(output)
+    max = np.max(reconstruction)
+    visualization = np.where( segmentation == 1, max, reconstruction )
+    mrc.write(visualization,output)
+
+    # generate webp file for visualization
+    plot.tomo_slicer_gif( output, name + "_rec.webp", True, 2 )
+    plot.tomo_montage(output, name + "_raw.webp")
+
+    # save denoised tomogram
+    target = os.path.join( project_dir, "mrc", output )
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.move( output, target )
+    target = os.path.join( project_dir, "webp", name + "_rec.webp" )
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.move( name + "_rec.webp", target )
+    target = os.path.join( project_dir, "webp", name + "_raw.webp" )
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.move( name + "_raw.webp", target )
 
     # clean 
     os.chdir(project_dir)
