@@ -911,6 +911,7 @@ def split(parameters):
         cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"]
         isonet_predict = parameters["data_mode"] == "tomo" and "isonet-predict" in parameters["tomo_denoise_method"] 
         membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain"
+        topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz"
 
         if cryocare:
             run_mode = "cryocare"
@@ -921,6 +922,9 @@ def split(parameters):
         elif membrain:
             run_mode = "membrain"
             job_type = "membrainswarm"
+        elif topaz:
+            run_mode = "topaz"
+            job_type = "topazswarm"
         else:
             run_mode = parameters["data_mode"]
             job_type = parameters["data_mode"] + "swarm"
@@ -945,7 +949,7 @@ def split(parameters):
         heterogeneity = ( parameters.get("heterogeneity_method")
                          and not "none" in parameters["heterogeneity_method"])
 
-        if gpu or tomo_train or spr_train or milo_eval or cryocare:
+        if gpu or tomo_train or spr_train or milo_eval or cryocare or ( topaz and parameters.get("tomo_denoise_topaz_use_gpu") ):
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
@@ -1691,43 +1695,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if parameters["tomo_ali_method"] == "imod_gold":
 
         preprocess.erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y)
-
-    if parameters.get("tomo_denoise_method") == "topaz":
-
-        """
-        usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
-                    [-a EVEN_TRAIN_PATH] [-b ODD_TRAIN_PATH] [--N-train N_TRAIN]
-                    [--N-test N_TEST] [-c CROP]
-                    [--base-kernel-width BASE_KERNEL_WIDTH]
-                    [--optim {adam,adagrad,sgd}] [--lr LR] [--criteria {L1,L2}]
-                    [--momentum MOMENTUM] [--batch-size BATCH_SIZE]
-                    [--num-epochs NUM_EPOCHS] [-w WEIGHT_DECAY]
-                    [--save-interval SAVE_INTERVAL] [--save-prefix SAVE_PREFIX]
-                    [--num-workers NUM_WORKERS] [-j NUM_THREADS] [-g GAUSSIAN]
-                    [-s PATCH_SIZE] [-p PATCH_PADDING] [-d DEVICE]
-                    [volumes ...]
-        """
-
-        # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
-        import torch
-        if torch.cuda.is_available():
-            devices = 0
-        else:
-            devices = -1
-
-        time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
-        logger.info("Denoising tomogram using Topaz")
-        command = f"{get_topaz_path()}/topaz denoise3d \
-{name}.rec \
---model {parameters['tomo_denoise_topaz_model']} \
---device {devices} \
---gaussian {parameters['tomo_denoise_topaz_gaussian']} \
---patch-size {parameters['tomo_denoise_topaz_patch_size']} \
---patch-padding {parameters['tomo_denoise_topaz_patch_padding']} \
---output {os.getcwd()} \
-2>&1 | tee {time_stamp}_topaz_denoise3d.log"
-
-        local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
@@ -4204,6 +4171,96 @@ if __name__ == "__main__":
             except:
                 trackback()
                 logger.error("PYP (membrane segmentation) failed")
+                pass
+        
+        elif "topazswarm" in os.environ:
+            del os.environ["topazswarm"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                # use same parameters mode as tomoswarm
+                args = project_params.parse_arguments("tomoswarm")
+                
+                # get file name
+                name = os.path.basename(args.file)
+
+                # set-up working area
+                project_path = Path.cwd().parents[0]
+                working_path = Path(os.environ["PYP_SCRATCH"]) / name
+                working_path.mkdir(parents=True, exist_ok=True)
+
+                # manage directories
+                os.chdir(project_path)
+
+                parameters = project_params.load_pyp_parameters()                
+
+                logger.info(f"Working path: {working_path}")
+
+                os.chdir(working_path)
+
+                if "data_set" in parameters:
+                    dataset = parameters["data_set"]
+                else:
+                    raise Exception("Unknown dataset or session name")
+
+                # always use "raw" input .rec file from parent block
+                raw_rec_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc"
+                denoised_rec_location = project_path / "mrc"
+
+                """
+                usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
+                            [-a EVEN_TRAIN_PATH] [-b ODD_TRAIN_PATH] [--N-train N_TRAIN]
+                            [--N-test N_TEST] [-c CROP]
+                            [--base-kernel-width BASE_KERNEL_WIDTH]
+                            [--optim {adam,adagrad,sgd}] [--lr LR] [--criteria {L1,L2}]
+                            [--momentum MOMENTUM] [--batch-size BATCH_SIZE]
+                            [--num-epochs NUM_EPOCHS] [-w WEIGHT_DECAY]
+                            [--save-interval SAVE_INTERVAL] [--save-prefix SAVE_PREFIX]
+                            [--num-workers NUM_WORKERS] [-j NUM_THREADS] [-g GAUSSIAN]
+                            [-s PATCH_SIZE] [-p PATCH_PADDING] [-d DEVICE]
+                            [volumes ...]
+                """
+
+                # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
+                import torch
+                if torch.cuda.is_available():
+                    devices = 0
+                else:
+                    devices = -1
+
+                time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
+                logger.info("Denoising tomogram using Topaz")
+                command = f"{get_topaz_path()}/topaz denoise3d \
+{raw_rec_location / name}.rec \
+--model {parameters['tomo_denoise_topaz_model']} \
+--device {devices} \
+--gaussian {parameters['tomo_denoise_topaz_gaussian']} \
+--patch-size {parameters['tomo_denoise_topaz_patch_size']} \
+--patch-padding {parameters['tomo_denoise_topaz_patch_padding']} \
+--output {working_path} \
+2>&1 | tee {time_stamp}_topaz_denoise3d.log"
+
+                local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+
+                # generate webp file for visualization
+                plot.tomo_slicer_gif( name + ".rec", name + "_rec.webp", True, 2, parameters["slurm_verbose"] )
+                
+                # copy outputs to project folder
+                shutil.copy2( name + ".rec", denoised_rec_location )
+                shutil.copy2( name + "_rec.webp", project_path / 'webp' )
+
+                # read metadata from pickle file and sent to website
+                import pandas as pd
+                tilt_metadata = pd.read_pickle(f"{os.path.join(args.path,'pkl',Path(args.file).name)}.pkl")
+                save_tiltseries_to_website(Path(args.file).name, tilt_metadata['web'])
+
+                logger.info("PYP (topaz denoising) finished successfully")
+            except:
+                trackback()
+                logger.error("PYP (topaz denoising) failed")
                 pass
         
         elif "heterogeneitytrain" in os.environ:
