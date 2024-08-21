@@ -11,7 +11,7 @@ _description = "Block types for web UI"
 [blocks.spr_import_raw]
 name = "SPA import raw"
 description = "Data Import for SPA"
-tabs = [ "data", "gain", "scope", "slurm" ]
+tabs = [ "data", "gain", "scope", "slurm", "micromon" ]
 
 [blocks.spr_import]
 name = "SPA import"
@@ -58,7 +58,7 @@ tabs = [ "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
 [blocks.spr_denoise]
 name = "SPA Denoising"
 description = "Denoising"
-tabs = [ "denoise2d", "slurm" ] # TODO
+tabs = [ "denoise2d", "slurm", "micromon" ] # TODO
 
 [blocks.spr_picking]
 name = "SPA Particle-picking"
@@ -75,7 +75,7 @@ tabs = [ "clean", "particle", "extract", "refine", "csp", "reconstruct", "dose_w
 [blocks.tomo_import_raw]
 name = "TOMO import"
 description = "Data Import for TOMO"
-tabs = [ "data", "gain", "scope", "slurm"  ]
+tabs = [ "data", "gain", "scope", "slurm", "micromon" ]
 
 [blocks.tomo_import]
 name = "TOMO import"
@@ -164,7 +164,7 @@ tabs = [ "mask", "slurm" ]
 [blocks.tomo_denoise]
 name = "TOMO Denoising"
 description = "Denoising"
-tabs = [ "tomo_denoise", "slurm" ]
+tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
 [blocks.tomo_flexible_refine]
 name = "TOMO Frame Refinement"
