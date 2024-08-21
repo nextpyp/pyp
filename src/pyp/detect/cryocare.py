@@ -4,6 +4,7 @@ import numpy as np
 from pathlib import Path
 import json
 
+from pyp.analysis import plot
 from pyp import preprocess, merge
 from pyp.inout.metadata import pyp_metadata
 from pyp.inout.image import get_image_dimensions, mrc
@@ -27,9 +28,9 @@ def cryocare(working_path, project_path, name, parameters):
     command_base = '/opt/conda/envs/pyp/bin/'
 
     # half1_list = glob.glob(os.path.join(project_path, "mrc", "*half1.rec"))
+    # half2_list = [f.replace("half1", "half2") for f in half1_list]
     half1_list = [os.path.join(working_path, name + "_half1.rec")]
     half2_list = [os.path.join(working_path, name + "_half2.rec")]
-    # half2_list = [f.replace("half1", "half2") for f in half1_list]
 
     # train_data.json
     config = {
@@ -92,7 +93,7 @@ def cryocare(working_path, project_path, name, parameters):
     "gpu_id": 0
     }
 
-    output_path = f"{project_path}/mrc/{name}_denoised.rec"
+    output_path = os.path.join( working_path, "denoised" )
     # "gpu_id": 0
     if os.path.exists(output_path):
         predcit_config["overwrite"] = True
@@ -106,11 +107,7 @@ def cryocare(working_path, project_path, name, parameters):
         json.dump(predcit_config, file, indent=4)
 
     command = f"{command_base}cryoCARE_predict.py --conf {predict_config_file}"
-    local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
-    # Move: output_path/name_half1.rec -> name.rec
-
-    # TODO: rename outpur to "name.rec" so that the reconstruction get overwritten
-    
+    local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])    
 
 def tomo_swarm_half(project_path, filename, keep=False):
     """
@@ -293,7 +290,6 @@ def tomo_swarm_half(project_path, filename, keep=False):
         # produce binned tomograms
         # erase fiducials if needed
         if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"]:
-            
             preprocess.erase_gold_beads(newfilename, parameters, tilt_options, binning, zfact, x, y)
         else:
             merge.reconstruct_tomo(parameters, newfilename, x, y, binning, zfact, tilt_options, force=True)
@@ -303,11 +299,32 @@ def tomo_swarm_half(project_path, filename, keep=False):
     
     # cryoCARE 
     cryocare("./", project_path, filename, parameters)
+    
+    # figure out output file name
+    import glob
+    output = glob.glob( "denoised/*.*" )[0]
+    shutil.move( output, Path(output).name )
+    output = Path(output).name
 
-    # rename the denoised tomograms
-    shutil.move(os.path.join(project_path, "mrc", filename + "_denoised.rec", filename + "_half1.rec" ), os.path.join(project_path, "mrc", filename + ".rec" ))
+    # generate webp file for visualization
+    plot.tomo_slicer_gif( output, filename + "_rec.webp", True, 2, parameters["slurm_verbose"] )
+    plot.tomo_montage( output, filename + "_raw.webp")
 
-    shutil.rmtree(os.path.join(project_path, "mrc", filename + "_denoised.rec"))
+    # save denoised tomogram
+    target = os.path.join( project_path, "mrc", filename + ".rec" )
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.copy2( output, target )
+    
+    target = os.path.join( project_path, "webp", filename + "_rec.webp" )
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.copy2( filename + "_rec.webp", target )
+
+    target = os.path.join( project_path, "webp", filename + "_raw.webp" )
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.copy2( filename + "_raw.webp", target )
 
     # clean 
     if not keep:
