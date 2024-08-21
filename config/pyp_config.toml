@@ -228,6 +228,108 @@ type = "str"
 default = ""
 hidden = true
 
+[tabs.tomo_pareval]
+_name = "Particle model training" # TODO ?
+_description = "Train a model to pick particles" # TODO ?
+
+[tabs.tomo_pareval.detect_nn3d_ref]
+name = "Trained model (*.pth)"
+description = "Path to trained model"
+type = "path"
+path = { type="files" }
+input = { type="trainedModel3D" }
+
+[tabs.tomo_partrain]
+_name = "Particle model training" # TODO ?
+_description = "Train a model to pick particles" # TODO ?
+
+[tabs.tomo_partrain.parquet]
+name = "Parquet File"
+description = "Path to parquet file from 3D interactive sub-cluster selection"
+type = "path"
+path = { type="files" }
+
+[tabs.tomo_partrain.detect_nn3d_down_ratio]
+name = "Downsample"
+description = "Down ratio for output"
+type = "int"
+default = 2
+hidden = true
+
+[tabs.tomo_partrain.detect_nn3d_compress]
+name = "Additional binning in Z"
+description = "Apply additional 2x binning in Z-dimension"
+type = "bool"
+default = true
+
+[tabs.tomo_partrain.detect_nn3d_num_epochs]
+name = "Epochs"
+description = "Number of epochs used during training"
+type = "int"
+default = 10
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_bbox]
+name = "Bounding box"
+description = "Box size for particles, used to generate Guassian kernel during training"
+type = "int"
+default = 16
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_thresh]
+name = "Threshold for soft/hard positives"
+description = "Threshold for soft/hard positives"
+type = "float"
+default = 0.85
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_cr_weight]
+name = "Contrastive regularization weight"
+description = "Weight for contrastive regularization term"
+type = "float"
+default = 0.1
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_max_objects]
+name = "Max number of particles"
+description = "Expected number of particles per tomogram"
+type = "int"
+default = 1200
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_lr]
+name = "Learning rate"
+description = "Rate to use during training"
+type = "float"
+default = 0.0005
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_val_interval]
+name = "Interval to perform validation"
+description = "Run validation every this number of epochs"
+type = "int"
+default = 5
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_temp]
+name = "inforNCE temperature"
+description = "inforNCE temperature"
+type = "float"
+default = 0.07
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_tau]
+name = "Class prior probability"
+description = "Class prior probability (tau)"
+type = "float"
+default = 0.01
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.tomo_partrain.detect_nn3d_debug]
+name = "Debug mode"
+description = "Save intermediate results to output folder train/"
+type = "bool"
+default = false
 
 # Miroscope parameters
 
