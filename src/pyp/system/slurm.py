@@ -153,7 +153,7 @@ def create_milo_swarm_file(parameters, timestamp, swarm_file="miloeval.swarm"):
         f.write(
             "cd {2}; export {1}eval={1}eval; {0} 2>&1 | tee log/{3}_{1}milo_eval.log".format(
                 run_pyp(command="pyp", script=True, gpu=True),
-                "milo" if parameters["tomo_spk_method"] == "milo-eval" else parameters["data_mode"],
+                "milo",
                 os.getcwd(),
                 timestamp,
             )
