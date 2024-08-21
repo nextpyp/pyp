@@ -214,6 +214,21 @@ _name = "Parameter groups to use as tabs in web UI and for PYP CLI parameter def
 _description = "Data analysis parameters grouped according to their function"
 _help = "PYP - Cryo-EM/ET image analysis"
 
+# 3D reconstruction parameters
+
+[tabs.micromon]
+_name = "Micromon options"
+_description = "Micromon options without real use for now"
+_hidden = [ "spr_import_raw", "spr_denoise", "tomo_denoise" ]
+
+[tabs.micromon.block]
+name = "Apply symmetry"
+description = "Apply symmetry during reconstruction"
+type = "str"
+default = ""
+hidden = true
+
+
 # Miroscope parameters
 
 [tabs.scope]
