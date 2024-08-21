@@ -963,7 +963,10 @@ def split(parameters):
 
             if not heterogeneity:
                 # operate on all files in the .micrographs list since this is now a standalone block
-                shutil.copy2( micrographs, os.path.join("train","current_list.txt") )
+                if os.path.exists( micrographs + "_subset" ):
+                    shutil.copy2( micrographs + "_subset", os.path.join("train","current_list.txt") )
+                else:
+                    shutil.copy2( micrographs, os.path.join("train","current_list.txt") )                    
                 
                 if os.path.exists(os.path.join("train","current_list.txt")):
 
