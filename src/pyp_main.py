@@ -947,8 +947,7 @@ def split(parameters):
         milo_train = parameters["data_mode"] == "tomo" and "tomo-milo" == parameters["micromon_block"] and parameters["detect_milo_task"] == "train"
         milo_eval = parameters["data_mode"] == "tomo" and "tomo-milo" == parameters["micromon_block"] and parameters["detect_milo_task"] == "eval"
         isonet_train = parameters["data_mode"] == "tomo" and "isonet-train" in parameters["tomo_denoise_method"] 
-        heterogeneity = ( parameters.get("heterogeneity_method")
-                         and not "none" in parameters["heterogeneity_method"])
+        heterogeneity = ( parameters.get("heterogeneity_method") and not "none" in parameters["heterogeneity_method"])
 
         if gpu or tomo_train or spr_train or milo_train or milo_eval or cryocare or ( topaz and parameters.get("tomo_denoise_topaz_use_gpu") ):
             # try to get the gpu partition
@@ -973,7 +972,7 @@ def split(parameters):
                     if milo_train:
                         train_type = "milo"
                         train_jobtype = "milotrain"
-                    elif "tomo_denoise_method" in parameters and parameters["tomo_denoise_method"] == "isonet-train":
+                    elif isonet_train:
                         train_type = "isonet"
                         train_jobtype = "isonettrain"
                     else:
