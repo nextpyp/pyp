@@ -800,7 +800,8 @@ def tomo_merge(parameters, check_for_missing_files=True):
             f.close()
     else:
         inputlist = input_all_list
-        raise Exception("Either all tilt-series failed or no particles were found, stopping")
+        if parameters.get("micromon_block") != "tomo-picking":
+            raise Exception("Either all tilt-series failed or no particles were found, stopping")
 
     if detect.tomo_spk_is_required(parameters) > 0:
         # produce .txt file for 3DAVG
@@ -4116,6 +4117,12 @@ if __name__ == "__main__":
 
                 args = project_params.parse_arguments("tomoswarm")
                 cryocare.tomo_swarm_half(args.path, os.path.basename(args.file), args.keep)
+
+                # read metadata from pickle file and sent to website
+                import pandas as pd
+                tilt_metadata = pd.read_pickle(f"{os.path.join(args.path,'pkl',Path(args.file).name)}.pkl")
+                save_tiltseries_to_website(Path(args.file).name, tilt_metadata['web'])
+
                 logger.info("PYP (cryocare) finished successfully")
             except:
                 trackback()
@@ -4155,6 +4162,12 @@ if __name__ == "__main__":
                 # use same parameters mode as tomoswarm
                 args = project_params.parse_arguments("tomoswarm")
                 isonet_tools.isonet_predict(args.path, os.path.basename(args.file))
+
+                # read metadata from pickle file and sent to website
+                import pandas as pd
+                tilt_metadata = pd.read_pickle(f"{os.path.join(args.path,'pkl',Path(args.file).name)}.pkl")
+                save_tiltseries_to_website(Path(args.file).name, tilt_metadata['web'])
+
                 logger.info("PYP (isonet predict) finished successfully")
             except:
                 trackback()
@@ -4168,10 +4181,16 @@ if __name__ == "__main__":
                 # clear local scratch and report free space
                 clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                
+
                 # use same parameters mode as tomoswarm
                 args = project_params.parse_arguments("tomoswarm")
                 MemBrain.run_membrain(args.path, os.path.basename(args.file))
+
+                # read metadata from pickle file and sent to website
+                import pandas as pd
+                tilt_metadata = pd.read_pickle(f"{os.path.join(args.path,'pkl',Path(args.file).name)}.pkl")
+                save_tiltseries_to_website(Path(args.file).name, tilt_metadata['web'])
+
                 logger.info("PYP (membrane segmentation) finished successfully")
             except:
                 trackback()
@@ -4252,10 +4271,21 @@ if __name__ == "__main__":
 
                 # generate webp file for visualization
                 plot.tomo_slicer_gif( name + ".rec", name + "_rec.webp", True, 2, parameters["slurm_verbose"] )
+                plot.tomo_montage( name + ".rec", name + "_raw.webp")
                 
                 # copy outputs to project folder
-                shutil.copy2( name + ".rec", denoised_rec_location )
-                shutil.copy2( name + "_rec.webp", project_path / 'webp' )
+                target = os.path.join( denoised_rec_location, name + ".rec")
+                if os.path.exists(target):
+                    os.remove(target)
+                    shutil.copy2( name + ".rec", target )
+                target = os.path.join( project_path, 'webp', name + "_rec.webp")
+                if os.path.exists(target):
+                    os.remove(target)
+                    shutil.copy2( name + "_rec.webp", target )
+                target = os.path.join( project_path, 'webp', name + "_raw.webp")
+                if os.path.exists(target):
+                    os.remove(target)
+                    shutil.copy2( name + "_raw.webp", target )
 
                 # read metadata from pickle file and sent to website
                 import pandas as pd
