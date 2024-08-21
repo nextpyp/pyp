@@ -12,7 +12,7 @@ from pyp.inout.metadata import pyp_metadata
 from pyp.inout.image import img2webp
 from pyp.system import local_run, project_params
 from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
+from pyp.utils import get_relative_path, symlink_relative
 from pyp.utils.timer import Timer
 from pyp.system import local_run, mpi
 from pyp.system.utils import get_imod_path
@@ -204,12 +204,12 @@ def tomotrain(args):
     """
     train_folder = os.path.join( os.getcwd(), "train" )
 
-    if "tomo_spk_detect_milo_parquet" in args and os.path.exists(args["tomo_spk_detect_milo_parquet"]):
+    if "detect_milo_parquet" in args and os.path.exists(args["detect_milo_parquet"]):
 
         train_coords = os.path.join(train_folder, 'training_coordinates.txt')
         train_images = os.path.join(train_folder, 'training_images.txt')
 
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {args['tomo_spk_detect_milo_parquet']} --output {train_coords}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {args['detect_milo_parquet']} --output {train_coords}"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         if os.path.exists(train_coords):
 
@@ -310,18 +310,18 @@ def tomoeval(args,name):
     with open( test_file, 'w' ) as f:
         f.write("image_name\tx_coord\ty_coord\tz_coord\n")
 
-    if args['tomo_spk_detect_milo_compress']:
+    if args['detect_milo_compress']:
         z_compress = "--compress"
     else:
         z_compress = ""
     
-    if args['tomo_spk_detect_milo_with_score']:
+    if args['detect_milo_with_score']:
         with_score = "--with_score"
     else:
         with_score = ""
 
-    if args['tomo_spk_detect_milo_fiber_mode']:
-        fiber = f"--fiber --distance_cutoff {args['tomo_spk_detect_milo_distance_cutoff']} --r2_cutoff {args['tomo_spk_detect_milo_r2_cutoff']} --curvature_cutoff {args['tomo_spk_detect_milo_curvature_cutoff']}"
+    if args['detect_milo_fiber_mode']:
+        fiber = f"--fiber --distance_cutoff {args['detect_milo_distance_cutoff']} --r2_cutoff {args['detect_milo_r2_cutoff']} --curvature_cutoff {args['detect_milo_curvature_cutoff']}"
     else:
         fiber = ""
 
@@ -396,21 +396,24 @@ def milotrain(args):
         pyp parameters
     """
     train_folder = os.path.join( os.getcwd(), "train" )
+    train_image_list = os.path.join( train_folder, "current_list.txt" )
+    """
     try:
-        with open( os.path.join( train_folder, "current_list.txt" ) ) as f:
+        with open( train)_image_list ) as f:
             train_name = f.read()
     except:
         logger.info("No current list exists")
         train_name = "milo"
+    """
 
-    train_images = os.path.join( train_folder,  "train_images.txt" )
-    train_coords = os.path.join( train_folder, train_name + "_coordinates.txt" )
+    input_list = np.unique( np.loadtxt(train_image_list, dtype='str', ndmin=2))
+    train_images = os.path.join( train_folder, "train_images.txt" )
 
     with open( train_images, 'w' ) as train_images_file:
         train_images_file.write("image_name\trec_path\ttilt_path\tangle_path\n")
 
         # create list of images and rawtlt files in train/ directory
-        input_list = np.unique(np.loadtxt(train_coords, dtype='str', ndmin=2, comments="image_name")[:, 0])
+        #input_list = np.unique(np.loadtxt(train_images, dtype='str', ndmin=2))
         
         for file in input_list:
             # retrieve metadata from pkl file
@@ -447,12 +450,12 @@ def milotrain(args):
     os.chdir(scratch_train)
 
     logger.info(f"Training MiLoPYP's exploration module")
-    if 'tomo_spk_detect_milo_mode' in args and '2d' in args['tomo_spk_detect_milo_mode']:
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['tomo_spk_detect_milo_num_epochs']} --exp_id test_sample --bbox {args['tomo_spk_detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['tomo_spk_detect_milo_num_clusters']} --lr {args['tomo_spk_detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['tomo_spk_detect_milo_batch_size']} --val_intervals {args['tomo_spk_detect_milo_val_interval']} --save_all --gauss {args['tomo_spk_detect_milo_gauss']} --dog {args['tomo_spk_detect_milo_dog']} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+    if 'detect_milo_mode' in args and '2d' in args['detect_milo_mode']:
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
         output_path = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample")
     else:
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['tomo_spk_detect_milo_num_epochs']} --exp_id test_sample --bbox {args['tomo_spk_detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['tomo_spk_detect_milo_num_clusters']} --lr {args['tomo_spk_detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['tomo_spk_detect_milo_batch_size']} --val_intervals {args['tomo_spk_detect_milo_val_interval']} --save_all --gauss {args['tomo_spk_detect_milo_gauss']} --dog {args['tomo_spk_detect_milo_dog']} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
         output_path = Path(os.getcwd() + "/exp/simsiam3d/test_sample")
 
@@ -472,9 +475,9 @@ def miloeval(args):
     train_folder = os.path.join( os.getcwd(), "train" ) 
     imgs_file = os.path.join( train_folder,  "train_images.txt" )
 
-    if 'tomo_spk_detect_milo_ref' in args.keys() and os.path.exists( project_params.resolve_path(args['tomo_spk_detect_milo_ref']) ):
+    if 'detect_milo_model' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_milo_model']) ):
 
-        logger.info(f"Evaluating MiLoPYP's exploration module using {Path(project_params.resolve_path(args['tomo_spk_detect_milo_ref'])).name}")
+        logger.info(f"Evaluating MiLoPYP's exploration module using {Path(project_params.resolve_path(args['detect_milo_model'])).name}")
         
         # setup local scratch area
         scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "eval" )
@@ -483,15 +486,15 @@ def miloeval(args):
         # make sure all output stays under the train folder
         os.chdir(scratch_train)
 
-        input_model = project_params.resolve_path(args['tomo_spk_detect_milo_ref'])
+        input_model = project_params.resolve_path(args['detect_milo_model'])
 
-        if '2d' in args['tomo_spk_detect_milo_mode']:
-            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['tomo_spk_detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['tomo_spk_detect_milo_gauss']} --dog {args['tomo_spk_detect_milo_dog']} 2>&1 | tee {train_folder + '_testing.log'}"
+        if '2d' in args['detect_milo_mode']:
+            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} 2>&1 | tee {train_folder + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
 
         else:
-            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['tomo_spk_detect_milo_bbox']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['tomo_spk_detect_milo_gauss']} --dog {args['tomo_spk_detect_milo_dog']} 2>&1 | tee {train_folder + '_testing.log'}"
+            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} 2>&1 | tee {train_folder + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
@@ -499,9 +502,9 @@ def miloeval(args):
         
         if args.get('slurm_verbose'):
             with open(train_folder + '_testing.log') as f:
-                logger.info("\n".join([s for s in output.read().split("\n") if s]))                
-
-        # check for failure if not output was produced
+                logger.info("\n".join([s for s in f.read().split("\n") if s]))                
+        
+        # check for failure if no output was produced
         if not os.path.isfile(output_file):
             raise Exception("Failed to run inference module")
         
@@ -514,18 +517,23 @@ def miloeval(args):
         shutil.copy2( output_file, output_folder )
 
         # generate 2D visualization plots
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['tomo_spk_detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {train_folder +  '_plot2d.log'}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {train_folder +  '_plot2d.log'}"
 
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         if args.get('slurm_verbose'):
             with open(train_folder + '_plot2d.log') as f:
-                logger.info("\n".join([s for s in output.read().split("\n") if s]))                
+                logger.info("\n".join([s for s in f.read().split("\n") if s]))                
 
         # convert the png to webp
         img2webp(f"{output_folder}/2d_visualization_labels.png", f"{output_folder}/2d_visualization_labels.webp")
         img2webp(f"{output_folder}/2d_visualization_out.png", f"{output_folder}/2d_visualization_out.webp")
         os.remove(f"{output_folder}/2d_visualization_labels.png")
         os.remove(f"{output_folder}/2d_visualization_out.png")
+        
+        # create symlinks to latest results
+        symlink_relative( os.path.join(output_folder, 'all_output_info.npz'), os.path.join( train_folder, 'all_output_info.npz' ) )
+        symlink_relative( os.path.join(output_folder, '2d_visualization_labels.webp'), os.path.join( train_folder, "2d_visualization_labels.webp") )
+        symlink_relative( os.path.join(output_folder, '2d_visualization_out.webp'), os.path.join( train_folder, "2d_visualization_out.webp") )
 
         """
         # generate 3D tomogram visualization plots
