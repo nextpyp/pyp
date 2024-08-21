@@ -1014,9 +1014,9 @@ def split(parameters):
                 jobname="Milo-eval (gpu)",
                 queue=partition_name,
                 scratch=0,
-                threads=parameters["slurm_merge_tasks"],
-                memory=parameters["slurm_merge_memory"],
-                walltime=parameters["slurm_merge_walltime"],
+                threads=parameters["slurm_tasks"],
+                memory=parameters["slurm_memory"],
+                walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
             ).strip()
