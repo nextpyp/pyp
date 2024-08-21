@@ -389,7 +389,7 @@ def isonet_predict(project_dir, name):
         tomogram_source = project_params.resolve_path(parameters["data_parent"])
     else:
         tomogram_source = project_dir
-        logger.info("Using current project tomograms for isonet denoising")
+        logger.warning("Using current project tomograms for isonet denoising")
 
     initial_star = "tomograms.star"
     isonet_generate_star(tomogram_source, initial_star, parameters, name_list=[name])
@@ -410,20 +410,19 @@ def isonet_predict(project_dir, name):
         # get the most recent model 
         model = max(models, key=os.path.getmtime)
 
-    output_dir = os.path.join(output, "isonet_predict")
-    logger.info(f"Running isonet predict, final results will be saved in {output_dir}")
+    logger.info(f"Running isonet predict, final results will be saved in {output}")
 
     verbose = parameters["slurm_verbose"]
 
     isonet_predict_command(
         initial_star,
         model,
-        output_dir,
+        output,
         batch_size,
         use_deconvol,
         use_threshold, 
         verbose=verbose
     )
-
-    # TODO: overwrite tomogram with denoised version
-   # mv output/"isonet_predict"/name. name.rec
+    
+    # generate webp file for visualization
+    plot.tomo_slicer_gif( f"{output/name}.rec", f"{project_dir/'webp'/name}_rec.webp", True, 2, parameters["slurm_verbose"] )
