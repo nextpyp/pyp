@@ -944,12 +944,13 @@ def split(parameters):
 
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or "train" in parameters["tomo_spk_method"] )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
-        milo_eval = parameters["data_mode"] == "tomo" and "milo-eval" in parameters["tomo_spk_method"]
+        milo_train = parameters["data_mode"] == "tomo" and "tomo-milo" == parameters["micromon_block"] and parameters["detect_milo_task"] == "train"
+        milo_eval = parameters["data_mode"] == "tomo" and "tomo-milo" == parameters["micromon_block"] and parameters["detect_milo_task"] == "eval"
         isonet_train = parameters["data_mode"] == "tomo" and "isonet-train" in parameters["tomo_denoise_method"] 
         heterogeneity = ( parameters.get("heterogeneity_method")
                          and not "none" in parameters["heterogeneity_method"])
 
-        if gpu or tomo_train or spr_train or milo_eval or cryocare or ( topaz and parameters.get("tomo_denoise_topaz_use_gpu") ):
+        if gpu or tomo_train or spr_train or milo_train or milo_eval or cryocare or ( topaz and parameters.get("tomo_denoise_topaz_use_gpu") ):
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
@@ -958,7 +959,7 @@ def split(parameters):
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
 
-        if ( tomo_train or spr_train or isonet_train or heterogeneity):
+        if ( tomo_train or spr_train or isonet_train or heterogeneity or milo_train ):
 
             if not heterogeneity:
                 # operate on all files in the .micrographs list since this is now a standalone block
@@ -966,9 +967,9 @@ def split(parameters):
                 
                 if os.path.exists(os.path.join("train","current_list.txt")):
 
-                    if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train":
+                    if milo_train:
                         train_type = "milo"
-                        train_jobtype = "milogtrain"
+                        train_jobtype = "milotrain"
                     elif "tomo_denoise_method" in parameters and parameters["tomo_denoise_method"] == "isonet-train":
                         train_type = "isonet"
                         train_jobtype = "isonettrain"
