@@ -2119,14 +2119,14 @@ name = "SNR falloff (CTF deconvolution)"
 description = "SNR fall rate with the frequency. High values means losing more high frequency."
 type = "float"
 default = 1.0
-condition = { arg="method", value="isonet-train" }
+condition = { arg="isonet_CTFdeconvol", value="True" }
 
 [tabs.tomo_denoise.isonet_hp]
 name = "Highpass filter (CTF deconvolution)"
 description = "Highpass filter for at very low frequency."
 type = "float"
 default = 0.02
-condition = { arg="method", value="isonet-train" }
+condition = { arg="isonet_CTFdeconvol", value="True" }
 
 [tabs.tomo_denoise.isonet_patchsize]
 name = "Patch_size (mask)"
@@ -2172,10 +2172,10 @@ condition = { arg="method", value="isonet-train" }
 
 [tabs.tomo_denoise.isonet_model]
 name = "Trained model (refine/predict)"
-description = "Trainded model (.h5)."
+description = "Trained model (.h5)."
 type = "path"
-default = "None"
 path = { type="files" }
+input = { type="isonetTrainedModel" }
 condition = { arg="method", value=["isonet-train","isonet-predict"] }
 
 [tabs.tomo_denoise.isonet_json]
@@ -2259,7 +2259,7 @@ condition = { arg="method", value="isonet-train" }
 
 [tabs.tomo_denoise.isonet_depth]
 name = "Unet depth (refine)"
-description = "Depth of UNet."
+description = "Depth of UNet"
 type = "int"
 default = 3
 condition = { arg="method", value="isonet-train" }
@@ -2281,8 +2281,8 @@ condition = { arg="method", value="isonet-train" }
 [tabs.tomo_denoise.isonet_pool]
 name = "Use pooling (refine)"
 description = "Use pooling layer instead of stride convolution layer"
-type = "bool"
-default = false
+type = "str"
+default = "None"
 condition = { arg="method", value="isonet-train" }
 
 [tabs.tomo_denoise.isonet_threshold]
