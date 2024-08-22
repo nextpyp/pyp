@@ -5,6 +5,7 @@ import shutil
 import numpy as np
 from pathlib import Path
 
+from pyp.analysis import plot
 from pyp.inout.metadata import pyp_metadata
 from pyp.system import local_run, project_params
 from pyp.system.logging import initialize_pyp_logger
@@ -15,8 +16,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_isonet_path():
-    isonet_path = '/opt/pyp/external'
-    command_base = f"export PYTHONPATH={isonet_path}:$PYTHONPATH; {isonet_path}/IsoNet/bin/"
+    command_base = f". activate isonet; export PATH=/opt/conda/envs/isonet/bin:$PATH; export PYTHONPATH=/:/opt/conda/envs/isonet/lib/python3.12/site-packages:$PYTHONPATH; /IsoNet/bin/"
     return command_base
 
 isonet_command = get_isonet_path()
@@ -171,28 +171,63 @@ def isonet_refine(input_star, output, parameters):
     isn = "tomo_denoise_isonet"
 
     iterations = parameters[f"{isn}_iters"]
+    isonet_parameters = f"--iterations {iterations}"
+    
     model = project_params.resolve_path(parameters[f"{isn}_model"])
+    if len(model) > 1:
+        isonet_parameters += f" --pretrained_model {model}"
+    
     data_dir = "./train"
+    isonet_parameters += f" --data_dir {data_dir}"
+    
     continue_from = project_params.resolve_path(parameters[f"{isn}_json"])
+    isonet_parameters += f" --continue_from {continue_from}"
+
     result_dir = output
+    isonet_parameters += f" --result_dir {result_dir}"
+
     ncpu = parameters["slurm_tasks"]
+    isonet_parameters += f" --preprocessing_ncpus {ncpu}"
 
     epochs = parameters[f"{isn}_epochs"]
+    isonet_parameters += f" --epochs {epochs}"
+
     batch_size = parameters[f"{isn}_batchsize"]
+    isonet_parameters += f" --batch_size {batch_size}"
+
     steps_per_epoch = parameters[f"{isn}_steps"]
+    isonet_parameters += f" --steps_per_epoch {steps_per_epoch}"
 
     noise_level = parameters[f"{isn}_nl"]
+    isonet_parameters += f" --noise_level {noise_level}"
+
     noise_start_i = parameters[f"{isn}_ns"]
+    isonet_parameters += f" --noise_start_iter {noise_start_i}"
+
     noise_mode = parameters[f"{isn}_nm"]
+    isonet_parameters += f" --noise_mode {noise_mode}"
+
     # noise_dir = parameters[f"{isn}_nd"]
     noise_dir = "./noise_data"
+    isonet_parameters += f" --noise_dir {noise_dir}"
 
     drop_out = parameters[f"{isn}_dropout"]
+    isonet_parameters += f" --drop_out {drop_out}"
+
     learning_rate = parameters[f"{isn}_lr"]
+    isonet_parameters += f" --learning_rate {learning_rate}"
+
     convs_per_depth = parameters[f"{isn}_layers"]
+    isonet_parameters += f" --convs_per_depth {convs_per_depth}"
+
     kernel = parameters[f"{isn}_kernel"]
+    isonet_parameters += f" --kernel {kernel}"
+
     unet_depth = parameters[f"{isn}_depth"]
+    isonet_parameters += f" --unet_depth {unet_depth}"
+
     filter_base = parameters[f"{isn}_base"]
+    isonet_parameters += f" --filter_base {filter_base}"
 
     if parameters[f"{isn}_normalization"]:
         normalization = "True"
@@ -203,37 +238,13 @@ def isonet_refine(input_star, output, parameters):
     else:
         normalization = "False"
         threshold_norm = "False"
+    isonet_parameters += f" --batch_normalization {normalization}"
+    isonet_parameters += f" --normalize_percentile {threshold_norm}"
 
-    if parameters[f"{isn}_pool"]:
-        pool = "True"
-    else:
-        pool = "False"
+    pool = parameters[f"{isn}_pool"]
+    isonet_parameters += f" --pool {pool}"
 
-    command = isonet_command + f"""isonet.py refine {input_star} \\
---iterations {iterations} \\
---data_dir {data_dir} \\
---continue_from {continue_from} \\
---result_dir {result_dir} \\
---pretrained_model {model} \\
---preprocessing_ncpus {ncpu} \\
---epochs {epochs} \\
---batch_size {batch_size} \\
---steps_per_epoch {steps_per_epoch} \\
---noise_start_iter {noise_start_i} \\
---noise_level {noise_level} \\
---noise_mode {noise_mode} \\
---noise_dir {noise_dir} \\
---drop_out {drop_out} \\
---learning_rate {learning_rate} \\
---convs_per_depth {convs_per_depth} \\
---kernel {kernel} \\
---unet_depth {unet_depth} \\
---filter_base {filter_base} \\
---batch_normalization {normalization} \\
---pool {pool} \\
---normalize_percentile {threshold_norm} \\
---gpuID 0
-"""
+    command = isonet_command + f"""isonet.py refine {input_star} {isonet_parameters} --gpuID 0"""
     
     local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
@@ -261,7 +272,8 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
 --output_dir {output} \\
 --batch_size {batch_size} \\
 --use_deconv_tomo {use_deconv} \\
---normalize_percentile {threshold_norm}
+--normalize_percentile {threshold_norm} \\
+--gpuID 0
 """
     
     local_run.run_shell_command(command,verbose=verbose)
@@ -355,10 +367,16 @@ def isonet_train(project_dir, output, parameters):
     
     
     # refine (train)
-    output_dir = os.path.join(output, "isonet_tran")
+    output_dir = os.path.join(working_path, "refine")
 
     logger.info(f"Running IsoNet refine, model files will be saved in {output_dir}")
     isonet_refine(extracted_star, output_dir, parameters)
+    
+    save_dir = os.path.join( project_dir, "train", "isonet" )
+    os.makedirs(save_dir,exist_ok=True)
+    
+    for f in glob.glob( os.path.join( output_dir, "*.h5") ):
+        shutil.copy2( f, os.path.join( save_dir, "isonet_" + Path(f).name) )
 
     if debug:
         if not os.path.exists(output_dir):
@@ -414,15 +432,36 @@ def isonet_predict(project_dir, name):
 
     verbose = parameters["slurm_verbose"]
 
+    local_scratch = os.environ["PYP_SCRATCH"]
+    
     isonet_predict_command(
         initial_star,
         model,
-        output,
+        local_scratch,
         batch_size,
         use_deconvol,
         use_threshold, 
         verbose=verbose
     )
     
+    os.chdir(local_scratch)
+    
+    output = glob.glob( "*_corrected.*" )[0]
+     
+    # copy result to project folder
+    target = f"{project_dir}/mrc/{name}.rec"
+    if os.path.exists(target):
+        os.remove(target)
+    shutil.copy2( output, target)
+
     # generate webp file for visualization
-    plot.tomo_slicer_gif( f"{output/name}.rec", f"{project_dir/'webp'/name}_rec.webp", True, 2, parameters["slurm_verbose"] )
+    target = f"{project_dir}/webp/{name}_sides.webp"
+    if os.path.exists(target):
+        os.remove(target)
+    target = f"{project_dir}/webp/{name}.webp"
+    if os.path.exists(target):
+        os.remove(target)
+    target = f"{project_dir}/webp/{name}_rec.webp"
+    if os.path.exists(target):
+        os.remove(target)
+    plot.tomo_slicer_gif( output, target, True, 2, parameters["slurm_verbose"] )
