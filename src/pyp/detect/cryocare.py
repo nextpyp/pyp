@@ -24,8 +24,8 @@ def cryocare(working_path, project_path, name, parameters):
     cryoCARE training and prediction
     Will take all the *half1.rec from mrc folder as list to train and run denoise
     """
-
-    command_base = '/opt/conda/envs/pyp/bin/'
+    cryocare_path = '/opt/conda/envs/cryocare'
+    command_base = f". activate cryocare; export LD_LIBRARY_PATH={cryocare_path}/lib:$LD_LIBRARY_PATH; {cryocare_path}/bin/"
 
     # half1_list = glob.glob(os.path.join(project_path, "mrc", "*half1.rec"))
     # half2_list = [f.replace("half1", "half2") for f in half1_list]
@@ -308,7 +308,6 @@ def tomo_swarm_half(project_path, filename, keep=False):
 
     # generate webp file for visualization
     plot.tomo_slicer_gif( output, filename + "_rec.webp", True, 2, parameters["slurm_verbose"] )
-    plot.tomo_montage( output, filename + "_raw.webp")
 
     # save denoised tomogram
     target = os.path.join( project_path, "mrc", filename + ".rec" )
@@ -321,10 +320,15 @@ def tomo_swarm_half(project_path, filename, keep=False):
         os.remove(target)
         shutil.copy2( filename + "_rec.webp", target )
 
-    target = os.path.join( project_path, "webp", filename + "_raw.webp" )
+    target = os.path.join( project_path, "webp", filename + "_sides.webp" )
     if os.path.exists(target):
         os.remove(target)
-        shutil.copy2( filename + "_raw.webp", target )
+        shutil.copy2( filename + "_sides.webp", target )
+
+    target = os.path.join( project_path, "webp", filename + ".webp" )
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.copy2( filename + ".webp", target )
 
     # clean 
     if not keep:
