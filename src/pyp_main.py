@@ -4271,7 +4271,6 @@ if __name__ == "__main__":
 
                 # generate webp file for visualization
                 plot.tomo_slicer_gif( name + ".rec", name + "_rec.webp", True, 2, parameters["slurm_verbose"] )
-                plot.tomo_montage( name + ".rec", name + "_raw.webp")
                 
                 # copy outputs to project folder
                 target = os.path.join( denoised_rec_location, name + ".rec")
@@ -4282,10 +4281,14 @@ if __name__ == "__main__":
                 if os.path.exists(target):
                     os.remove(target)
                     shutil.copy2( name + "_rec.webp", target )
-                target = os.path.join( project_path, 'webp', name + "_raw.webp")
+                target = os.path.join( project_path, 'webp', name + "_sides.webp")
                 if os.path.exists(target):
                     os.remove(target)
-                    shutil.copy2( name + "_raw.webp", target )
+                    shutil.copy2( name + "_sides.webp", target )
+                target = os.path.join( project_path, 'webp', name + ".webp")
+                if os.path.exists(target):
+                    os.remove(target)
+                    shutil.copy2( name + ".webp", target )
 
                 # read metadata from pickle file and sent to website
                 import pandas as pd
