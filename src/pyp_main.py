@@ -4143,7 +4143,7 @@ if __name__ == "__main__":
 
                 parameters = project_params.load_pyp_parameters()
                 project_dir = os.getcwd()
-                output = os.path.join(project_dir, "mrc")
+                output = os.path.join(project_dir, "train")
                 isonet_tools.isonet_train(project_dir, output=output, parameters=parameters)
                 logger.info("PYP (isonet train) finished successfully")
             except:
