@@ -12,9 +12,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_tomodrgn_path():
-    config = get_pyp_configuration()
-    tomodrgn_path = config["pyp"]["tomodrgn"]
-    command_base = f"source activate {tomodrgn_path}; {tomodrgn_path}/bin/tomodrgn"
+    command_base = f". activate tomodrgn; /opt/conda/envs/tomodrgn/bin/tomodrgn"
     return command_base
 
 
