@@ -254,7 +254,7 @@ def isonet_refine(input_star, output, parameters):
     local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
 
-def isonet_predict_command(input_star, model, output, batch_size, use_deconv, threshold_norm, verbose=False):
+def isonet_predict_command(input_star, model, output, batch_size, use_deconv, threshold_norm, parameters, verbose=False):
     """
     Predict tomograms using trained model
     isonet.py predict star_file model [--gpuID] [--output_dir] [--cube_size] [--crop_size] [--batch_size] [--tomo_idx]
@@ -445,7 +445,8 @@ def isonet_predict(project_dir, name):
         local_scratch,
         batch_size,
         use_deconvol,
-        use_threshold, 
+        use_threshold,
+        parameters=parameters,
         verbose=verbose
     )
     
