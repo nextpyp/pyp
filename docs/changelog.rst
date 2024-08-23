@@ -7,6 +7,8 @@ Changelog
 v0.7.0 (6/24/2024)
 ******************
 
+   :fa:`star,text-success` Add support for multiple GPUs in MotionCor, AreTomo, IsoNet and cryoCARE.
+
    :fa:`star,text-success` Incorporated external program tomoDRGN for continuous variability analysis.
 
    :fa:`star,text-success` Incorporated external program cryoDRGN and cryoDRGN-ET for continuous variability analysis.

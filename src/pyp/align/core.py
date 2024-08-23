@@ -54,7 +54,7 @@ from pyp.system.utils import (
     get_unblur_path,
     get_unblur2_path,
     get_motioncor3_path,
-    get_gpu_id,
+    get_gpu_ids,
     imod_load_command,
 )
 from pyp.system.wrapper_functions import avgstack
@@ -4488,8 +4488,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 {patches} \
 {dose_weighting_options} \
 {mag_correction_options} \
--Gpu {get_gpu_id()} \
--UseGpus 1"
+-Gpu {get_gpu_ids(parameters,separator=' ')}"
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
         if "Segmentation fault" in error or "Killed" in error:
@@ -5130,7 +5129,7 @@ def align_tilt_series(name, parameters, rotation=0):
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
 -OutImod 2 {patches} \
--Gpu {get_gpu_id()}"
+-Gpu {get_gpu_ids(parameters,separator=' ')}"
             [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             if "Tilt offset" in output:

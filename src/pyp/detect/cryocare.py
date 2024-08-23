@@ -12,7 +12,7 @@ from pyp.inout.image.core import generate_aligned_tiltseries
 from pyp.system import local_run, project_params, mpi
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
-from pyp.system.utils import get_imod_path
+from pyp.system.utils import get_imod_path, get_gpu_ids
 from pyp.system.db_comm import load_tomo_results, load_config_files
 from pyp.system.singularity import get_pyp_configuration
 
@@ -64,7 +64,7 @@ def cryocare(working_path, project_path, name, parameters):
     "train_data": "./train_data",
     "model_name": "cryocare_model",
     "path": "./train_model",
-    "gpu_id": 0
+    "gpu_id": get_gpu_ids(parameters)
     }
     
     train_config["epochs"] = parameters["tomo_denoise_cryocare_epochs"]
@@ -90,11 +90,10 @@ def cryocare(working_path, project_path, name, parameters):
     "even": half1_list,
     "odd": half2_list,
     "n_tiles": [parameters["tomo_denoise_cryocare_tiles"]] * 3,
-    "gpu_id": 0
+    "gpu_id": get_gpu_ids(parameters)
     }
 
     output_path = os.path.join( working_path, "denoised" )
-    # "gpu_id": 0
     if os.path.exists(output_path):
         predcit_config["overwrite"] = True
     else:

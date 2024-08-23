@@ -8,6 +8,7 @@ from pathlib import Path
 from pyp.analysis import plot
 from pyp.inout.metadata import pyp_metadata
 from pyp.system import local_run, project_params
+from pyp.system.utils import get_gpu_ids
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
 from pyp.system.singularity import get_pyp_configuration
@@ -244,7 +245,7 @@ def isonet_refine(input_star, output, parameters):
     pool = parameters[f"{isn}_pool"]
     isonet_parameters += f" --pool {pool}"
 
-    command = isonet_command + f"""isonet.py refine {input_star} {isonet_parameters} --gpuID 0"""
+    command = isonet_command + f"""isonet.py refine {input_star} {isonet_parameters} --gpuID {get_gpu_ids(parameters)}"""
     
     local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
@@ -273,7 +274,7 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
 --batch_size {batch_size} \\
 --use_deconv_tomo {use_deconv} \\
 --normalize_percentile {threshold_norm} \\
---gpuID 0
+--gpuID {get_gpu_ids(parameters)}
 """
     
     local_run.run_shell_command(command,verbose=verbose)

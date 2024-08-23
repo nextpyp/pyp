@@ -74,6 +74,20 @@ def get_motioncor3_path():
 def get_gpu_id():
     return 0
 
+def get_gpu_ids(parameters,separator=","):
+    # return list of GPU devices based on gres variable
+    gres = parameters["slurm_gres"]
+    if "gpu" in gres:
+        for g in gres.split(","):
+            if "gpu" in g:
+                for i in g.split(":"):
+                    if i.isdigit():
+                        gpus = int(i)
+                        break
+    else:
+        gpus = 1
+    return separator.join(str(x) for x in range(gpus))
+
 def get_gpu_file():
     return os.path.join(os.environ["PYP_SCRATCH"],"gpu_device.id")
 

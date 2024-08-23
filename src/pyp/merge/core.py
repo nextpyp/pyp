@@ -18,7 +18,7 @@ from pyp.merge import weights as pyp_weights
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import get_imod_path, get_aretomo_path, get_topaz_path, get_gpu_id
+from pyp.system.utils import get_imod_path, get_aretomo_path, get_topaz_path, get_gpu_ids
 from pyp.utils import get_relative_path
 from pyp.utils.timer import Timer
 
@@ -340,5 +340,5 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 {reconstruct_option} \
 -Align 0 \
--Gpu {get_gpu_id()}"
+-Gpu {get_gpu_ids(parameters,separator=' ')}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
