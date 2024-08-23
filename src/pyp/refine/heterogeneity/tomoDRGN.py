@@ -183,7 +183,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
         workers += f" --num-workers {parameters['slurm_tasks']}"
 
     if parameters["heterogeneity_tomodrgn_prefetch_factor"] > 0:
-            workers += f" --prefetch-factor {parameters['heterogeneity_tomodrgn_prefetch_factor']}"
+        workers += f" --prefetch-factor {parameters['heterogeneity_tomodrgn_prefetch_factor']}"
 
     if parameters["heterogeneity_tomodrgn_pst_wkrs"]:
         workers += " --persistent-workers"

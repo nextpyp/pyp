@@ -27,14 +27,14 @@ def isonet_generate_star(project_dir, outputname, parameters, name_list):
     Generate star file with tomograms names and defocus
     """
 
-    star_header = """data_
-
+    star_header = """
+data_
 loop_
-_rlnIndex #1
+_rlnIndex          #1
 _rlnMicrographName #2
-_rlnPixelSize #3
-_rlnDefocus #4
-_rlnNumberSubtomo #5"""
+_rlnPixelSize      #3
+_rlnDefocus        #4
+_rlnNumberSubtomo  #5"""
 
     # all_tomograms = glob.glob(f"{project_dir}/mrc/*.rec")
     # tomograms = [t for t in all_tomograms if not "denoised" in t]
@@ -46,7 +46,7 @@ _rlnNumberSubtomo #5"""
             pixel_size = parameters["scope_pixel"] * parameters["data_bin"] * parameters["tomo_rec_binning"]
 
             pkl_file = f"{project_dir}/pkl/{name}.pkl"
-            assert os.path.exists(pkl_file), f"There is no meta data for this image, please check the input name: {pkl_file}."
+            assert os.path.exists(pkl_file), f"There is no meta data for this tomogram, please check the input name: {pkl_file}."
             metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
             ctf = metadata.data["global_ctf"].to_numpy()
             df = np.squeeze(ctf[0])

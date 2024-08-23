@@ -4130,7 +4130,7 @@ if __name__ == "__main__":
                 pass
 
             # we are done, clear local scratch
-            if False  and os.path.exists(os.environ["PYP_SCRATCH"]):
+            if os.path.exists(os.environ["PYP_SCRATCH"]):
                 shutil.rmtree(os.environ["PYP_SCRATCH"])
 
         elif "isonettrain" in os.environ:
