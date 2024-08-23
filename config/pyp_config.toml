@@ -2211,14 +2211,14 @@ condition = { arg="method", value="isonet-train" }
 
 [tabs.tomo_denoise.isonet_batchsize]
 name = "Mini-batch size"
-description = "Size of the minibatch. If None, batch_size will be the max(2 * number_of_gpu,4). batch_size should be divisible by the number of gpus"
+description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be divisible by the number of gpus"
 type = "int"
 default = 4
 condition = { arg="method", value="isonet-train" }
 
 [tabs.tomo_denoise.isonet_steps]
 name = "Steps per epoch"
-description = "Steps per epoch. Default (0) corresponds to: min(num_of_subtomograms * 6 / batch_size , 200)"
+description = "Steps per epoch. 0 corresponds to: min(num_of_subtomograms * 6 / batch_size , 200)"
 type = "int"
 default = 0
 condition = { arg="method", value="isonet-train" }
@@ -2246,8 +2246,8 @@ default = "none"
 condition = { arg="method", value="isonet-train" }
 
 [tabs.tomo_denoise.isonet_dropout]
-name = "Drop out rate"
-description = "Drop out rate to reduce overfitting"
+name = "Dropout rate"
+description = "Dropout rate to reduce overfitting"
 type = "float"
 default = 0.3
 condition = { arg="method", value="isonet-train" }
@@ -2260,7 +2260,7 @@ default = 0.0004
 condition = { arg="method", value="isonet-train" }
 
 [tabs.tomo_denoise.isonet_layers]
-name = "Convolution layers per depth"
+name = "Convolution layers"
 description = "Number of convolution layers for each depth"
 type = "int"
 default = 3
@@ -2274,8 +2274,8 @@ default = "3,3,3"
 condition = { arg="method", value="isonet-train" }
 
 [tabs.tomo_denoise.isonet_depth]
-name = "Unet depth"
-description = "Depth of UNet"
+name = "U-Net depth"
+description = "Depth of U-Net"
 type = "int"
 default = 3
 condition = { arg="method", value="isonet-train" }
