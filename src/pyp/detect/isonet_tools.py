@@ -195,7 +195,8 @@ def isonet_refine(input_star, output, parameters):
     isonet_parameters += f" --epochs {epochs}"
 
     batch_size = parameters[f"{isn}_batchsize"]
-    isonet_parameters += f" --batch_size {batch_size}"
+    if batch_size != 0:
+        isonet_parameters += f" --batch_size {batch_size}"
 
     steps_per_epoch = parameters[f"{isn}_steps"]
     if steps_per_epoch > 0:
