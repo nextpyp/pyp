@@ -174,9 +174,10 @@ def isonet_refine(input_star, output, parameters):
     iterations = parameters[f"{isn}_iters"]
     isonet_parameters = f"--iterations {iterations}"
     
-    model = project_params.resolve_path(parameters[f"{isn}_model"])
-    if len(model) > 1:
-        isonet_parameters += f" --pretrained_model {model}"
+    if parameters.get(f"{isn}_pretrained_model"):
+        model = project_params.resolve_path(parameters[f"{isn}_pretrained_model"])
+        if len(model) > 1:
+            isonet_parameters += f" --pretrained_model {model}"
     
     data_dir = "./train"
     isonet_parameters += f" --data_dir {data_dir}"
@@ -197,7 +198,8 @@ def isonet_refine(input_star, output, parameters):
     isonet_parameters += f" --batch_size {batch_size}"
 
     steps_per_epoch = parameters[f"{isn}_steps"]
-    isonet_parameters += f" --steps_per_epoch {steps_per_epoch}"
+    if steps_per_epoch > 0:
+        isonet_parameters += f" --steps_per_epoch {steps_per_epoch}"
 
     noise_level = parameters[f"{isn}_nl"]
     isonet_parameters += f" --noise_level {noise_level}"
@@ -243,7 +245,8 @@ def isonet_refine(input_star, output, parameters):
     isonet_parameters += f" --normalize_percentile {threshold_norm}"
 
     pool = parameters[f"{isn}_pool"]
-    isonet_parameters += f" --pool {pool}"
+    if len(pool):
+        isonet_parameters += f" --pool {pool}"
 
     command = isonet_command + f"""isonet.py refine {input_star} {isonet_parameters} --gpuID {get_gpu_ids(parameters)}"""
     
@@ -302,6 +305,11 @@ def isonet_train(project_dir, output, parameters):
     initial_star = "tomograms.star" 
     isonet_generate_star(tomogram_source, initial_star, parameters, train_name[:, 0])
     
+    # display star file if in verbose mode
+    if parameters["slurm_verbose"]:
+        with open(initial_star) as f:
+            logger.info("Input star file:"+f.read())
+    
     debug = True if parameters.get("tomo_denoise_isonet_debug", False) else False
         
     # preprocess
@@ -309,18 +317,9 @@ def isonet_train(project_dir, output, parameters):
     ncpu = parameters["slurm_tasks"]
     verbose = parameters["slurm_verbose"]
 
-    # extract parameters
-    d_percent = parameters["tomo_denoise_isonet_densityPercent"]
-    std_percent = parameters["tomo_denoise_isonet_stdPercent"]
-    patchsize = parameters["tomo_denoise_isonet_patchsize"]
-    z_crop = parameters["tomo_denoise_isonet_zcrop"]
-    
-    logger.info("IsoNet preprocessing...")
-    
     if parameters["tomo_denoise_isonet_CTFdeconvol"]:
 
-        use_deconvol = "True"
-        ctf_convol_star = preprocess_star.replace(".star", "_ctf.star")
+        use_deconvol = True
         ssnr_falloff = parameters["tomo_denoise_isonet_snrfalloff"]
         cs = parameters["scope_cs"]
         voltage = parameters["scope_voltage"]
@@ -328,7 +327,7 @@ def isonet_train(project_dir, output, parameters):
         
         isonet_ctf_deconvolve(
             initial_star,
-            ctf_convol_star,
+            "deconv",
             ssnr_falloff,
             cs,
             voltage,
@@ -337,19 +336,27 @@ def isonet_train(project_dir, output, parameters):
             verbose=verbose
             )
     else:
-        use_deconvol = "False"
+        use_deconvol = False
 
-    # mask
-    isonet_generat_mask(
-        initial_star,
-        preprocess_star,
-        d_percent,
-        std_percent,
-        patchsize,
-        use_deconvol,
-        z_crop,
-        verbose=verbose
-        )
+    # masking
+    if parameters["tomo_denoise_isonet_mask"]:
+        
+        # masking parameters
+        d_percent = parameters["tomo_denoise_isonet_densityPercent"]
+        std_percent = parameters["tomo_denoise_isonet_stdPercent"]
+        patchsize = parameters["tomo_denoise_isonet_patchsize"]
+        z_crop = parameters["tomo_denoise_isonet_zcrop"]
+        
+        isonet_generat_mask(
+            initial_star,
+            "masked",
+            d_percent,
+            std_percent,
+            patchsize,
+            use_deconvol,
+            z_crop,
+            verbose=verbose
+            )
 
     # extract subvolumes
     logger.info("IsoNet subvolume extraction...")
@@ -364,35 +371,33 @@ def isonet_train(project_dir, output, parameters):
         use_deconvol,
         debug=debug,
         verbose=verbose
-        )
-    
+        )    
     
     # refine (train)
     output_dir = os.path.join(working_path, "refine")
 
-    logger.info(f"Running IsoNet refine, model files will be saved in {output_dir}")
     isonet_refine(extracted_star, output_dir, parameters)
     
+    # copy resulting h5 models to project directory
     save_dir = os.path.join( project_dir, "train", "isonet" )
     os.makedirs(save_dir,exist_ok=True)
-    
     for f in glob.glob( os.path.join( output_dir, "*.h5") ):
         shutil.copy2( f, os.path.join( save_dir, "isonet_" + Path(f).name) )
 
     if debug:
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
 
         # Copy each file and directory to the result directory
         for item in os.listdir("./"):
             s = os.path.join("./", item)
-            d = os.path.join(output_dir, item)
-            if os.path.isdir(s):
+            d = os.path.join(save_dir, item)
+            if os.path.isdir(s) and ( s == "masked" or s == "deconv" ):
                 shutil.copytree(s, d, dirs_exist_ok=True) 
-            else:
+            elif Path(s).suffix == ".star":
                 shutil.copy2(s, d)
     
-    # clean
+    # go back to project directory and clean local scratch
     os.chdir(project_dir)
     shutil.rmtree(working_path, "True")
     
@@ -428,8 +433,6 @@ def isonet_predict(project_dir, name):
         models = glob.glob(os.path.join(project_dir, "mrc", "isonet_train", "model_iter*.h5"))
         # get the most recent model 
         model = max(models, key=os.path.getmtime)
-
-    logger.info(f"Running isonet predict, final results will be saved in {output}")
 
     verbose = parameters["slurm_verbose"]
 
