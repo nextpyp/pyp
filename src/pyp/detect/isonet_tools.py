@@ -416,7 +416,7 @@ def isonet_predict(project_dir, name):
         tomogram_source = project_dir
         logger.warning("Using current project tomograms for isonet denoising")
 
-    initial_star = "tomograms.star"
+    initial_star = os.path.join(os.environ["PYP_SCRATCH"], f"{name}_tomograms.star")
     isonet_generate_star(tomogram_source, initial_star, parameters, name_list=[name])
     # predict
     if parameters["tomo_denoise_isonet_CTFdeconvol"]:
