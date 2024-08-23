@@ -393,7 +393,7 @@ def isonet_train(project_dir, output, parameters):
         for item in os.listdir("./"):
             s = os.path.join("./", item)
             d = os.path.join(save_dir, item)
-            if os.path.isdir(s) and ( s == "masked" or s == "deconv" ):
+            if os.path.isdir(s) and ( Path(s).stem == "masked" or Path(s).stem == "deconv" ):
                 shutil.copytree(s, d, dirs_exist_ok=True) 
             elif Path(s).suffix == ".star":
                 shutil.copy2(s, d)
