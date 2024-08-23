@@ -4146,6 +4146,11 @@ if __name__ == "__main__":
                 output = os.path.join(project_dir, "train")
                 isonet_tools.isonet_train(project_dir, output=output, parameters=parameters)
                 logger.info("PYP (isonet train) finished successfully")
+
+                # we are done, clear local scratch
+                if os.path.exists(os.environ["PYP_SCRATCH"]):
+                    shutil.rmtree(os.environ["PYP_SCRATCH"])
+
             except:
                 trackback()
                 logger.error("PYP (isonet train) failed")
