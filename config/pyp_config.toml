@@ -148,13 +148,13 @@ forwarded_tabs = [] # TODO ?
 [blocks.tomo_particles_train]
 name = "TOMO Particles Training"
 description = "Particle model training"
-tabs = [ "tomo_partrain", "slurm" ] # TODO ?
+tabs = [ "detect_nn3d", "slurm" ] # TODO ?
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_particles_eval]
 name = "TOMO Particles Evaluation"
 description = "Particle model evaluation"
-tabs = [ "tomo_pareval", "slurm" ] # TODO ?
+tabs = [ "detect_nn3d", "slurm" ] # TODO ?
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_clean]
