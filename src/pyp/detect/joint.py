@@ -497,11 +497,11 @@ def miloeval(args):
 
             output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
-        [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+        [ output, error ] = local_run.run_shell_command(command, verbose=False)
         
         if args.get('slurm_verbose'):
             with open(train_folder + '_testing.log') as f:
-                logger.info("\n".join([s for s in f.read().split("\n") if s]))                
+                logger.info("\n".join([s for s in f.read().split("\n") if not s.startswith('No param') and not s.startswith('Drop parameter layer')]))
         
         # check for failure if no output was produced
         if not os.path.isfile(output_file):
@@ -518,7 +518,7 @@ def miloeval(args):
         # generate 2D visualization plots
         command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {train_folder +  '_plot2d.log'}"
 
-        [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+        [ output, error ] = local_run.run_shell_command(command, verbose=False)
         if args.get('slurm_verbose'):
             with open(train_folder + '_plot2d.log') as f:
                 logger.info("\n".join([s for s in f.read().split("\n") if s]))                
