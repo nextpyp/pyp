@@ -229,8 +229,7 @@ def tomotrain(args):
 
     else:
     
-        with open( os.path.join( train_folder, "current_list.txt" ) ) as f:
-            train_name = f.read()
+        train_name = "particles"
         train_images = os.path.join( train_folder, train_name + "_images.txt" )
         train_coords = os.path.join( train_folder, train_name + "_coordinates.txt" )
 
