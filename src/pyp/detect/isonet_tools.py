@@ -283,7 +283,6 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
     
     local_run.run_shell_command(command,verbose=verbose)
 
-
 def isonet_train(project_dir, output, parameters):
     
     # always try to look for tomograms from parent project
@@ -403,12 +402,8 @@ def isonet_train(project_dir, output, parameters):
     shutil.rmtree(working_path, "True")
     
  
-def isonet_predict(project_dir, name):
+def isonet_predict( name, project_dir, parameters ):
     
-    os.chdir(project_dir)
-    parameters = project_params.load_pyp_parameters()
-    output = os.path.join(project_dir, "mrc")
-
     # always try to look for tomograms from parent project
     if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):
         tomogram_source = project_params.resolve_path(parameters["data_parent"])
@@ -416,8 +411,9 @@ def isonet_predict(project_dir, name):
         tomogram_source = project_dir
         logger.warning("Using current project tomograms for isonet denoising")
 
-    initial_star = os.path.join(os.environ["PYP_SCRATCH"], f"{name}_tomograms.star")
-    isonet_generate_star(tomogram_source, initial_star, parameters, name_list=[name])
+    initial_star = f"{name}_tomograms.star"
+    isonet_generate_star( tomogram_source, initial_star, parameters, name_list=[name])
+
     # predict
     if parameters["tomo_denoise_isonet_CTFdeconvol"]:
         use_deconvol = "True"
@@ -434,40 +430,17 @@ def isonet_predict(project_dir, name):
         models = glob.glob(os.path.join(project_dir, "mrc", "isonet_train", "model_iter*.h5"))
         # get the most recent model 
         model = max(models, key=os.path.getmtime)
-
-    verbose = parameters["slurm_verbose"]
-
-    local_scratch = os.environ["PYP_SCRATCH"]
     
     isonet_predict_command(
         initial_star,
         model,
-        local_scratch,
+        os.getcwd(),
         batch_size,
         use_deconvol,
         use_threshold,
         parameters=parameters,
-        verbose=verbose
+        verbose=parameters["slurm_verbose"]
     )
-    
-    os.chdir(local_scratch)
-    
+       
     output = glob.glob( "*_corrected.*" )[0]
-     
-    # copy result to project folder
-    target = f"{project_dir}/mrc/{name}.rec"
-    if os.path.exists(target):
-        os.remove(target)
-    shutil.copy2( output, target)
-
-    # generate webp file for visualization
-    target = f"{project_dir}/webp/{name}_sides.webp"
-    if os.path.exists(target):
-        os.remove(target)
-    target = f"{project_dir}/webp/{name}.webp"
-    if os.path.exists(target):
-        os.remove(target)
-    target = f"{project_dir}/webp/{name}_rec.webp"
-    if os.path.exists(target):
-        os.remove(target)
-    plot.tomo_slicer_gif( output, target, True, 2, parameters["slurm_verbose"] )
+    return output

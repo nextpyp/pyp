@@ -107,10 +107,7 @@ def membrain_segmentation(parameters, input, local_output):
     local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
 
 
-def run_membrain(project_dir, name):
-
-    os.chdir(project_dir)
-    parameters = project_params.load_pyp_parameters()
+def run_membrain(project_dir, name, parameters ):
 
     # always try to look for tomograms from parent project
     if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):
@@ -119,17 +116,8 @@ def run_membrain(project_dir, name):
         tomogram_source = project_dir
         logger.info("Using current project tomograms for isonet denoising")
 
-    # initialize path
-    working_path = Path(os.environ["PYP_SCRATCH"]) / name
-
-    logger.info(f"Working path: {working_path}")
-    
-    working_path.mkdir(parents=True, exist_ok=True)
-    
-    os.chdir(working_path)
-
     input_tomo = os.path.join(tomogram_source, "mrc", name + ".rec")
-    local_input =f"./{name}.rec"
+    local_input = f"./{name}.rec"
 
     # copy the input tomogram to scratch space
     assert os.path.exists(input_tomo), "Input tomogram dose not exist, run preprocessing first"
@@ -163,24 +151,4 @@ def run_membrain(project_dir, name):
     visualization = np.where( segmentation == 1, max, reconstruction )
     mrc.write(visualization,output)
 
-    # generate webp file for visualization
-    plot.tomo_slicer_gif( output, name + "_rec.webp", True, 2 )
-    plot.tomo_montage(output, name + "_raw.webp")
-
-    # save denoised tomogram
-    target = os.path.join( project_dir, "mrc", output )
-    if os.path.exists(target):
-        os.remove(target)
-        shutil.move( output, target )
-    target = os.path.join( project_dir, "webp", name + "_rec.webp" )
-    if os.path.exists(target):
-        os.remove(target)
-        shutil.move( name + "_rec.webp", target )
-    target = os.path.join( project_dir, "webp", name + "_raw.webp" )
-    if os.path.exists(target):
-        os.remove(target)
-        shutil.move( name + "_raw.webp", target )
-
-    # clean 
-    os.chdir(project_dir)
-    shutil.rmtree(working_path, "True")
+    return output

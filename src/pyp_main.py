@@ -3195,6 +3195,92 @@ def clear_scratch(scratch,timeout=60):
                     except:
                         pass
 
+def tomoswarm_prologue():
+    """ Setup enviroment for running tasks that take a tomogram and produce another tomogram
+
+    Returns
+    -------
+    args
+        Command line arguments
+    name
+        Name of tilt-series
+    project_path
+        Project directory
+    working_path
+        Local scratch directory
+    """   
+     
+    # clear local scratch and report free space
+    clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+    # figure out project and working directories
+    project_path = Path.cwd().parents[0]
+
+    # retrieve command line arguments
+    args = project_params.parse_arguments("tomoswarm")
+    name = os.path.basename(args.file)
+
+    # read pyp parameters
+    parameters = project_params.load_pyp_parameters(project_path)
+
+    working_path = Path(os.environ["PYP_SCRATCH"]) / name
+    os.makedirs( working_path, exist_ok=True)
+
+    # move to wroking directory    
+    os.chdir(working_path)
+    
+    return args, name, project_path, working_path, parameters
+    
+def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters):
+    """ Save resulting tomogram and update corresponding images and metadata
+
+    Parameters
+    ----------
+    new_reconstruction
+        Name of new reconstruction
+    name
+        Name of tilt-series
+    project_path
+        Project directory
+    output
+        Location to save the result in the project folder
+    parameters :
+        pyp parameters
+    """    
+    # generate webp files for visualization
+    plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True, 2, parameters["slurm_verbose"] )
+    
+    # copy outputs to project folder
+    target = os.path.join( project_path, "mrc", name + ".rec" )
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.copy2( new_reconstruction, target )
+    target = os.path.join( project_path, 'webp', name + "_rec.webp")
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.copy2( name + "_rec.webp", target )
+    target = os.path.join( project_path, 'webp', name + "_sides.webp")
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.copy2( name + "_sides.webp", target )
+    target = os.path.join( project_path, 'webp', name + ".webp")
+    if os.path.exists(target):
+        os.remove(target)
+        shutil.copy2( name + ".webp", target )
+
+    # read metadata from pickle file
+    metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
+    
+    # dump files to local scratch
+    metadata_object.meta2PYP( path=working_path, data_path=os.path.join(project_path, "raw/"))
+    [ os.remove(i) for i in glob.glob(f"{name}*.*") if Path(i).suffix != ".ctf" ]
+
+    # read metadata from pickle file and sent to website
+    import pandas as pd
+    tilt_metadata = pd.read_pickle(f"{os.path.join(project_path,'pkl',name)}.pkl")
+    save_tiltseries_to_website(name, tilt_metadata['web'])
+
 if __name__ == "__main__":
 
     try:
@@ -4111,17 +4197,11 @@ if __name__ == "__main__":
             del os.environ["cryocareswarm"]
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                args, name, project_path, working_path, parameters = tomoswarm_prologue()
 
-                args = project_params.parse_arguments("tomoswarm")
-                cryocare.tomo_swarm_half(args.path, os.path.basename(args.file), args.keep)
+                new_reconstruction = cryocare.tomo_swarm_half( name, project_path, working_path, parameters)
 
-                # read metadata from pickle file and sent to website
-                import pandas as pd
-                tilt_metadata = pd.read_pickle(f"{os.path.join(args.path,'pkl',Path(args.file).name)}.pkl")
-                save_tiltseries_to_website(Path(args.file).name, tilt_metadata['web'])
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
 
                 logger.info("PYP (cryocare) finished successfully")
             except:
@@ -4160,18 +4240,11 @@ if __name__ == "__main__":
             del os.environ["isonetswarm"]
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                
-                # use same parameters mode as tomoswarm
-                args = project_params.parse_arguments("tomoswarm")
-                isonet_tools.isonet_predict(args.path, os.path.basename(args.file))
+                args, name, project_path, working_path, parameters = tomoswarm_prologue()
 
-                # read metadata from pickle file and sent to website
-                import pandas as pd
-                tilt_metadata = pd.read_pickle(f"{os.path.join(args.path,'pkl',Path(args.file).name)}.pkl")
-                save_tiltseries_to_website(Path(args.file).name, tilt_metadata['web'])
+                new_reconstruction = isonet_tools.isonet_predict( name, project_path, parameters)
+
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
 
                 logger.info("PYP (isonet predict) finished successfully")
             except:
@@ -4183,18 +4256,11 @@ if __name__ == "__main__":
             del os.environ["membrainswarm"]
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
-                # use same parameters mode as tomoswarm
-                args = project_params.parse_arguments("tomoswarm")
-                MemBrain.run_membrain(args.path, os.path.basename(args.file))
-
-                # read metadata from pickle file and sent to website
-                import pandas as pd
-                tilt_metadata = pd.read_pickle(f"{os.path.join(args.path,'pkl',Path(args.file).name)}.pkl")
-                save_tiltseries_to_website(Path(args.file).name, tilt_metadata['web'])
+                args, name, project_path, working_path, parameters = tomoswarm_prologue()
+                
+                new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
+                
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
 
                 logger.info("PYP (membrane segmentation) finished successfully")
             except:
@@ -4206,29 +4272,7 @@ if __name__ == "__main__":
             del os.environ["topazswarm"]
             try:
 
-                # clear local scratch and report free space
-                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
-                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
-
-                # use same parameters mode as tomoswarm
-                args = project_params.parse_arguments("tomoswarm")
-                
-                # get file name
-                name = os.path.basename(args.file)
-
-                # set-up working area
-                project_path = Path.cwd().parents[0]
-                working_path = Path(os.environ["PYP_SCRATCH"]) / name
-                working_path.mkdir(parents=True, exist_ok=True)
-
-                # manage directories
-                os.chdir(project_path)
-
-                parameters = project_params.load_pyp_parameters()                
-
-                logger.info(f"Working path: {working_path}")
-
-                os.chdir(working_path)
+                args, name, project_path, working_path, parameters = tomoswarm_prologue()
 
                 if "data_set" in parameters:
                     dataset = parameters["data_set"]
@@ -4261,6 +4305,7 @@ if __name__ == "__main__":
                     devices = -1
 
                 time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
+
                 logger.info("Denoising tomogram using Topaz")
                 command = f"{get_topaz_path()}/topaz denoise3d \
 {raw_rec_location / name}.rec \
@@ -4274,31 +4319,7 @@ if __name__ == "__main__":
 
                 local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
 
-                # generate webp file for visualization
-                plot.tomo_slicer_gif( name + ".rec", name + "_rec.webp", True, 2, parameters["slurm_verbose"] )
-                
-                # copy outputs to project folder
-                target = os.path.join( denoised_rec_location, name + ".rec")
-                if os.path.exists(target):
-                    os.remove(target)
-                    shutil.copy2( name + ".rec", target )
-                target = os.path.join( project_path, 'webp', name + "_rec.webp")
-                if os.path.exists(target):
-                    os.remove(target)
-                    shutil.copy2( name + "_rec.webp", target )
-                target = os.path.join( project_path, 'webp', name + "_sides.webp")
-                if os.path.exists(target):
-                    os.remove(target)
-                    shutil.copy2( name + "_sides.webp", target )
-                target = os.path.join( project_path, 'webp', name + ".webp")
-                if os.path.exists(target):
-                    os.remove(target)
-                    shutil.copy2( name + ".webp", target )
-
-                # read metadata from pickle file and sent to website
-                import pandas as pd
-                tilt_metadata = pd.read_pickle(f"{os.path.join(args.path,'pkl',Path(args.file).name)}.pkl")
-                save_tiltseries_to_website(Path(args.file).name, tilt_metadata['web'])
+                tomoswarm_epilogue( name + ".rec", name, project_path, working_path, parameters)
 
                 logger.info("PYP (topaz denoising) finished successfully")
             except:
