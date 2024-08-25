@@ -2388,8 +2388,8 @@ _description = "Parameters for tomogram membrane segmentation using MemBrain-seg
 name = "Method"
 description = "Pre-process input tomograms"
 type = "enum"
-enum = { membrain="membrain", none="none" }
-default = "none"
+enum = { membrain="membrain" }
+default = "membrain"
 
 [tabs.tomo_mem.preprocessing]
 name = "Pre-process tomograms"
