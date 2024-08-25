@@ -246,7 +246,7 @@ def isonet_refine(input_star, output, parameters):
     isonet_parameters += f" --normalize_percentile {threshold_norm}"
 
     pool = parameters[f"{isn}_pool"]
-    if len(pool):
+    if pool and len(pool):
         isonet_parameters += f" --pool {pool}"
 
     command = isonet_command + f"""isonet.py refine {input_star} {isonet_parameters} --gpuID {get_gpu_ids(parameters)}"""
