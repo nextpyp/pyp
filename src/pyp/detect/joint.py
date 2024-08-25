@@ -472,7 +472,7 @@ def milotrain(args):
 def miloeval(args):
 
     train_folder = os.path.join( os.getcwd(), "train" ) 
-    imgs_file = os.path.join( train_folder,  "train_images.txt" )
+    imgs_file = os.path.join( project_params.resolve_path(args.get("data_parent")), "train",  "train_images.txt" )
 
     if 'detect_milo_model' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_milo_model']) ):
 
