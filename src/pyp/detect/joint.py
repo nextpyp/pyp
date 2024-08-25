@@ -324,9 +324,9 @@ def tomoeval(args,name):
     else:
         fiber = ""
 
-    if 'tomo_spk_detect_nn3d_ref' in args.keys() and os.path.exists( project_params.resolve_path(args['tomo_spk_detect_nn3d_ref']) ):
+    if 'detect_nn3d_ref' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_nn3d_ref']) ):
 
-        logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['tomo_spk_detect_nn3d_ref'])).name}")
+        logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn3d_ref'])).name}")
         # use option "--gpus -1" to force run on CPU
 
         if args.get("tomo_spk_detect_nn3d_compress"):
@@ -335,7 +335,7 @@ def tomoeval(args,name):
             compress = ""
 
 
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --with_score --exp_id test_reprod --load_model '{project_params.resolve_path(args['tomo_spk_detect_nn3d_ref'])}' {compress} --down_ratio 2 --contrastive --K {args['tomo_spk_detect_nn3d_max_objects']} --out_thresh {args['tomo_spk_detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --with_score --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
@@ -366,8 +366,8 @@ def tomoeval(args,name):
                 boxes = coordinates.copy().astype('f')
                 # mean = boxes[:,-1].mean()
                 # boxes[:,-1] = ( boxes[:,-1] - mean )
-                coordinates = boxes[ boxes[:,-1] > args["tomo_spk_detect_nn3d_thresh"] ]
-                logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["tomo_spk_detect_nn3d_thresh"]))
+                coordinates = boxes[ boxes[:,-1] > args["detect_nn3d_thresh"] ]
+                logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_nn3d_thresh"]))
 
                 if len(coordinates) > 0:
                     return coordinates[:,:3].astype('i')
