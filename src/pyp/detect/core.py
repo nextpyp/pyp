@@ -22,7 +22,7 @@ logger = initialize_pyp_logger(log_name=relative_path)
 
 def tomo_spk_is_required(parameters):
     """Whether to detect and extract spikes."""
-    return "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 and parameters.get("tomo_spk_method") != "manual"
+    return "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 or parameters.get("tomo_srf_detect_method") != "none"
 
 def tomo_subvolume_extract_is_required(parameters):
     return "tomo_ext_size" in parameters and parameters["tomo_ext_size"] > 0 and parameters["tomo_ext_fmt"] != "none"
