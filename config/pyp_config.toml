@@ -133,8 +133,14 @@ name = "Heterogeneity analysis"
 description = "Conformational heterogeneity analysis"
 tabs = [ "heterogeneity", "slurm" ]
 
-[blocks.tomo_milo]
-name = "MiLoPYP"
+[blocks.tomo_milo_train]
+name = "MiLoPYP training"
+description = "MiLoPYP parameters"
+tabs = [ "detect_milo", "slurm" ]
+forwarded_tabs = [] # TODO ?
+
+[blocks.tomo_milo_eval]
+name = "MiLoPYP evaluation"
 description = "MiLoPYP parameters"
 tabs = [ "detect_milo", "slurm" ]
 forwarded_tabs = [] # TODO ?
@@ -1470,20 +1476,13 @@ default = false
 _name = "Pattern mining"
 _description = "Settings for tomogram content exploration using MiLo"
 
-[tabs.detect_milo.task]
-name = "Task"
-description = "Training or evaluation"
-type = "enum"
-enum = { train="train", eval="eval" }
-default = "train"
-
 [tabs.detect_milo.model]
 name = "Trained model (*.pth)"
 description = "Path to trained model"
 type = "path"
 path = { type="files" }
 input = { type="trainedModel3D" }
-condition = { arg="task", value="eval" }
+hidden = [ "tomo_milo_train" ]
 
 [tabs.detect_milo.mode]
 name = "Input type"
@@ -1498,14 +1497,14 @@ name = "Epochs"
 description = "Number of epochs used during training"
 type = "int"
 default = 60
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.num_clusters]
 name = "Clusters"
 description = "Number of clusters to train"
 type = "int"
 default = 60
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.bbox]
 name = "Bounding box"
@@ -1519,21 +1518,21 @@ name = "Learning rate"
 description = "Rate to use during training"
 type = "float"
 default = 0.001
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.batch_size]
 name = "Batch size"
 description = "Batch size for training"
 type = "int"
 default = 256
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.val_interval]
 name = "Interval to perform validation"
 description = "Run validation within this interval"
 type = "int"
 default = 20
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.gauss]
 name = "Gaussian filter"
@@ -1970,8 +1969,13 @@ _description = "Parameters for tomograms denoising"
 name = "Method"
 description = "Denoise tomograms with selected method"
 type = "enum"
-enum = {none="none", cryocare="cryocare", isonet-train="isonet-train", isonet-predict="isonet-predict", topaz="topaz"}
-default = "none"
+[tabs.tomo_denoise.method_train]
+name = "Method"
+description = "Denoise tomograms with selected method"
+type = "enum"
+enum = {isonet="isonet"}
+default = "isonet"
+hidden = [ "tomo_denoise" ]
 
 [tabs.tomo_denoise.topaz_model]
 name = "Pre-train model"
@@ -2112,7 +2116,8 @@ name = "CTF deconvolution"
 description = "Do CTF deconvolution for tomograms"
 type = "bool"
 default = true
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_snrfalloff]
 name = "SNR falloff"
@@ -2120,6 +2125,7 @@ description = "SNR fall rate with the frequency. High values means losing more h
 type = "float"
 default = 1.0
 condition = { arg="isonet_CTFdeconvol", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_hp]
 name = "Highpass filter"
@@ -2127,13 +2133,15 @@ description = "Highpass filter for at very low frequency"
 type = "float"
 default = 0.02
 condition = { arg="isonet_CTFdeconvol", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_mask]
 name = "Use masking"
 description = "Mask out background areas"
 type = "bool"
 default = true
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_densityPercent]
 name = "Density percentage"
@@ -2141,6 +2149,7 @@ description = "The approximate percentage of pixels to keep based on their local
 type = "int"
 default = 50
 condition = { arg="isonet_mask", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_stdPercent]
 name = "Standard deviation percentage"
@@ -2148,6 +2157,7 @@ description = "The approximate percentage of pixels to keep based on their local
 type = "int"
 default = 50
 condition = { arg="isonet_mask", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_patchsize]
 name = "Patch size for statistics"
@@ -2155,6 +2165,7 @@ description = "Size of box from which the max-filter and std-filter are calculat
 type = "int"
 default = 4
 condition = { arg="isonet_mask", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_zcrop]
 name = "Z-crop fraction"
@@ -2162,6 +2173,7 @@ description = "Exclude top and bottom regions of tomogram along Z (0.2 will mask
 type = "float"
 default = 0.2
 condition = { arg="isonet_mask", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_model]
 name = "Trained model"
@@ -2169,7 +2181,8 @@ description = "Trained model (.h5)"
 type = "path"
 path = { type="files" }
 input = { type="isonetTrainedModel" }
-condition = { arg="method", value=["isonet-predict"] }
+condition = { arg="method_train", value=["isonet"] }
+hidden = [ "tomo_denoise", "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.isonet_pretrained_model]
 name = "Pre-trained model"
@@ -2177,7 +2190,8 @@ description = "A trained model to start training with"
 type = "path"
 path = { type="files" }
 input = { type="isonetTrainedModel" }
-condition = { arg="method", value=["isonet-train"] }
+condition = { arg="method_train", value=["isonet"] }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_json]
 name = "Continue from (.json)"
@@ -2185,7 +2199,7 @@ description = "A Json file (from previous training) to continue from"
 type = "path"
 default = "None"
 path = { type="files" }
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
 hidden = true
 
 [tabs.tomo_denoise.isonet_cubesize]
@@ -2193,49 +2207,56 @@ name = "Cube size for training"
 description = "Should be divisible by 8. Actual sizes are this value plus 16"
 type = "int"
 default = 64
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_iters]
 name = "Training iterations"
 description = "Number of training iterations"
 type = "int"
 default = 30
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_epochs]
 name = "Training epochs"
 description = "Number of epochs for each iteraction"
 type = "int"
 default = 10
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_batchsize]
 name = "Mini-batch size"
 description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be divisible by the number of gpus"
 type = "int"
 default = 4
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_steps]
 name = "Steps per epoch"
 description = "Steps per epoch. 0 corresponds to: min(num_of_subtomograms * 6 / batch_size , 200)"
 type = "int"
 default = 0
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_nl]
 name = "Noise level"
 description = "Level of noise STD(added noise)/STD(data) after the iteration defined in noise_start_iter"
 type = "str"
 default = "0.05,0.1,0.15,0.2"
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_ns]
 name = "Noise start iteration"
 description = "Iteration that start to add noise of corresponding noise level"
 type = "str"
 default = "11,16,21,26"
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_nm]
 name = "Noise mode"
@@ -2243,77 +2264,88 @@ description = "Filter names when generating noise volumes"
 type = "enum"
 enum = {ramp="ramp", hamming="hamming", noFilter="noFilter", none="none"}
 default = "none"
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_dropout]
 name = "Dropout rate"
 description = "Dropout rate to reduce overfitting"
 type = "float"
 default = 0.3
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_lr]
 name = "Learning rate"
 description = "learning rate for network training"
 type = "float"
 default = 0.0004
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_layers]
 name = "Convolution layers"
 description = "Number of convolution layers for each depth"
 type = "int"
 default = 3
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_kernel]
 name = "Convolution kernel size"
 description = "Kernel size for convolution"
 type = "str"
 default = "3,3,3"
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_depth]
 name = "U-Net depth"
 description = "Depth of U-Net"
 type = "int"
 default = 3
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_base]
 name = "Filter base"
 description = "The base number of channels after convolution"
 type = "int"
 default = 64
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_normalization]
 name = "Use batch normalization"
 description = "Use batch normalization layer"
 type = "bool"
 default = true
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_pool]
 name = "Use pooling"
 description = "Use pooling layer instead of stride convolution layer"
 type = "str"
 default = ""
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_threshold]
 name = "Use percent thresholding"
 description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively. Otherwise, normalize input to 0 mean and unit standard deviation"
 type = "bool"
 default = true
-condition = { arg="method", value="isonet-predict" }
+condition = { arg="method", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_debug]
 name = "Debug"
 description = "Save intermediate files to results directory"
 type = "bool"
 default = false
-condition = { arg="method", value="isonet-train" }
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
 
 [tabs.tomo_mem]
 _name = "Segmentation"
@@ -2507,6 +2539,7 @@ description = "Increase binning to speed up virion detection and reduce noise"
 type = "int"
 default = 2
 condition = { arg="method", value="auto" }
+
 [tabs.tomo_srf]
 _name = "Particle detection"
 _description = "Particle detection parameters"
