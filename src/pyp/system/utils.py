@@ -84,9 +84,9 @@ def get_gpu_ids(parameters,separator=","):
                     if i.isdigit():
                         gpus = int(i)
                         break
+        return separator.join(str(x) for x in range(gpus))
     else:
-        gpus = 1
-    return separator.join(str(x) for x in range(gpus))
+        return 0
 
 def get_gpu_file():
     return os.path.join(os.environ["PYP_SCRATCH"],"gpu_device.id")
