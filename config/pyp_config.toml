@@ -172,6 +172,16 @@ name = "TOMO Denoising"
 description = "Denoising"
 tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
+[blocks.tomo_denoise_train]
+name = "TOMO Denoising (training)"
+description = "Denoising"
+tabs = [ "tomo_denoise", "slurm", "micromon" ]
+
+[blocks.tomo_denoise_eval]
+name = "TOMO Denoising (eval)"
+description = "Denoising"
+tabs = [ "tomo_denoise", "slurm", "micromon" ]
+
 [blocks.tomo_flexible_refine]
 name = "TOMO Frame Refinement"
 description = "Constrained  movie frame alignment"
@@ -980,7 +990,7 @@ enum = {none="none", topaz="topaz"}
 default = "none"
 
 [tabs.denoise2d.topaz_model]
-name = "Pre-train model"
+name = "Pre-trained model"
 description = "Pre-trained model to use for denoising"
 type = "enum"
 enum = { unet-3d-10a="unet-3d-10a", unet-3d="unet-3d", unet-3d-20a="unet-3d-20a" }
@@ -1969,6 +1979,10 @@ _description = "Parameters for tomograms denoising"
 name = "Method"
 description = "Denoise tomograms with selected method"
 type = "enum"
+enum = {cryocare="cryocare", topaz="topaz"}
+default = "cryocare"
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
 [tabs.tomo_denoise.method_train]
 name = "Method"
 description = "Denoise tomograms with selected method"
@@ -1984,6 +1998,7 @@ type = "enum"
 enum = { unet-3d-10a="unet-3d-10a", unet-3d="unet-3d", unet-3d-20a="unet-3d-20a" }
 default = "unet-3d-10a"
 condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.topaz_gaussian]
 name = "Gaussian filter"
@@ -1991,6 +2006,7 @@ description = "Standard deviation of Gaussian filter for post-processing (0 mean
 type = "float"
 default = 0.0
 condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.topaz_patch_size]
 name = "Patch size"
@@ -1998,6 +2014,7 @@ description = "Denoises volumes in patches of this size"
 type = "int"
 default = 96
 condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.topaz_patch_padding]
 name = "Patch padding size"
@@ -2005,6 +2022,7 @@ description = "Padding around each patch to remove edge artifacts"
 type = "int"
 default = 48
 condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.topaz_use_gpu]
 name = "Use GPU"
@@ -2012,6 +2030,7 @@ description = "Request a GPU to run Topaz denoise"
 type = "bool"
 default = false
 condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.masksize]
 name = "Mask shape"
@@ -2019,6 +2038,7 @@ description = "Mask shape in x,y,z covering the center of tomogram"
 type = "str"
 default = "0,0,0"
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_patch]
 name = "Patch shape"
@@ -2026,6 +2046,7 @@ description = "Per dimension size of the sub-volumes used for training (cubic sh
 type = "int"
 default = 72
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_slices]
 name = "Number of slices"
@@ -2033,6 +2054,7 @@ description = "Number of sub-volumes extracted per tomogram"
 type = "int"
 default = 500
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_split]
 name = "Split ratio"
@@ -2040,6 +2062,7 @@ description = "Train/validation ratio"
 type = "float"
 default = 0.9
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_samples]
 name = "Sub-tomograms for statistics"
@@ -2047,6 +2070,7 @@ description = "Number of sub-volumes per tomogram used to compute mean and stand
 type = "int"
 default = 400
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_epochs]
 name = "Number of epochs (train)"
@@ -2054,6 +2078,7 @@ description = "Number of epochs used to train the network"
 type = "int"
 default = 60
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_steps]
 name = "Gradient steps (train)"
@@ -2061,6 +2086,7 @@ description = "Number of gradient steps performed per epoch"
 type = "int"
 default = 200
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_batchsize]
 name = "Batch size (train)"
@@ -2068,6 +2094,7 @@ description = "Used training batch size"
 type = "int"
 default = 16
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_kern]
 name = "Kernel size (train)"
@@ -2075,6 +2102,7 @@ description = "Convolution kernel size of the U-Net. Has to be an odd number"
 type = "int"
 default = 3
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_depth]
 name = "Unet depth (train)"
@@ -2082,6 +2110,7 @@ description = "Depth of the U-Net"
 type = "int"
 default = 3
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_nfirst]
 name = "Initial feature channels (train)"
@@ -2089,6 +2118,7 @@ description = "Number of initial feature channels"
 type = "int"
 default = 16
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_lr]
 name = "Learning rate (train)"
@@ -2096,6 +2126,7 @@ description = "Learning rate of the model training"
 type = "float"
 default = 0.0004
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_tiles]
 name = "Initial tiles (prediction)"
@@ -2103,6 +2134,7 @@ description = "Initial tiles per dimension"
 type = "int"
 default = 1
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_overwrite]
 name = "Overwrite tomograms (prediction)"
@@ -2110,6 +2142,7 @@ description = "Allow previous tomograms to be overwritten"
 type = "bool"
 default = false
 condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_CTFdeconvol]
 name = "CTF deconvolution"
