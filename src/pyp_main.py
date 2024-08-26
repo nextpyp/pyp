@@ -910,7 +910,7 @@ def split(parameters):
     if not os.path.isfile("frealign/mpirun.mynodes"):
 
         cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"] and parameters["micromon_block"] == "tomo-denoising"
-        isonet_predict = parameters["data_mode"] == "tomo" and "isonet-predict" in parameters["tomo_denoise_method"] and parameters["micromon_block"] == "tomo-denoising"
+        isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
         membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain" and parameters["micromon_block"] == "tomo-picking-open"
         topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising"
 
@@ -943,14 +943,14 @@ def split(parameters):
                 parameters["slurm_queue"] = ""
                 pass
 
-        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or "train" in parameters["tomo_spk_method"] )
+        tomo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-particles-train"
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
-        milo_train = parameters["data_mode"] == "tomo" and "tomo-milo" == parameters["micromon_block"] and parameters["detect_milo_task"] == "train"
-        milo_eval = parameters["data_mode"] == "tomo" and "tomo-milo" == parameters["micromon_block"] and parameters["detect_milo_task"] == "eval"
-        isonet_train = parameters["data_mode"] == "tomo" and "isonet-train" in parameters["tomo_denoise_method"] 
+        milo_train = parameters["data_mode"] == "tomo" and "tomo-milo-train" == parameters["micromon_block"]
+        milo_eval = parameters["data_mode"] == "tomo" and "tomo-milo" == parameters["micromon_block"]
+        isonet_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-train" 
         heterogeneity = ( parameters.get("heterogeneity_method") and not "none" in parameters["heterogeneity_method"])
 
-        if gpu or tomo_train or spr_train or milo_train or milo_eval or cryocare or ( topaz and parameters.get("tomo_denoise_topaz_use_gpu") ):
+        if gpu or tomo_train or spr_train or milo_train or milo_eval or cryocare or isonet_train or isonet_predict or ( topaz and parameters.get("tomo_denoise_topaz_use_gpu") ):
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
