@@ -530,17 +530,26 @@ def miloeval(args):
         os.remove(f"{output_folder}/2d_visualization_out.png")
         
         # create symlinks to latest results
-        symlink_relative( os.path.join(output_folder, 'all_output_info.npz'), os.path.join( train_folder, 'all_output_info.npz' ) )
-        symlink_relative( os.path.join(output_folder, '2d_visualization_labels.webp'), os.path.join( train_folder, "2d_visualization_labels.webp") )
-        symlink_relative( os.path.join(output_folder, '2d_visualization_out.webp'), os.path.join( train_folder, "2d_visualization_out.webp") )
+        for file in [ 'all_output_info.npz', "2d_visualization_labels.webp", "2d_visualization_out.webp" ]:
+            target = os.path.join( train_folder, file )
+            outputfile = target
+            if os.path.exists(target):
+                os.remove(target)
+            symlink_relative( os.path.join(output_folder, file), target )            
 
+        # TODO: generate 3D tomogram visualization plots
         """
-        # generate 3D tomogram visualization plots
-        commmand = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {outputfile} --color exp/simsiam2d3d/test_sample/all_colors.npy --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir sample_data/ 2>&1 | tee {train_folder + '_plot3d.log'}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {outputfile} --color exp/simsiam2d3d/test_sample/all_colors.npy --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir sample_data/ 2>&1 | tee {train_folder + '_plot3d.log'}"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         if args.get('slurm_verbose'):
             with open(train_folder + '_plot3d.log') as f:
-                logger.info("\n".join([s for s in output.read().split("\n") if s]))                
+                logger.info("\n".join([s for s in output.read().split("\n") if s]))
+          
+        logger.warning(glob.glob("*.*"))      
+        # The two arrays can be blended using weighted averaging        
+        # w x rec_3d.npy + (1-w) x hm3d_simsiam.npy
+        weight = 0.5
+        output = weight * np.load("rec_3d.npy") + ( 1 - weight) * np.load("hm3d_simsiam.npy")
         """
 
     else:

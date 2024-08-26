@@ -3256,18 +3256,11 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
     if os.path.exists(target):
         os.remove(target)
         shutil.copy2( new_reconstruction, target )
-    target = os.path.join( project_path, 'webp', name + "_rec.webp")
-    if os.path.exists(target):
-        os.remove(target)
-        shutil.copy2( name + "_rec.webp", target )
-    target = os.path.join( project_path, 'webp', name + "_sides.webp")
-    if os.path.exists(target):
-        os.remove(target)
-        shutil.copy2( name + "_sides.webp", target )
-    target = os.path.join( project_path, 'webp', name + ".webp")
-    if os.path.exists(target):
-        os.remove(target)
-        shutil.copy2( name + ".webp", target )
+    for pattern in [ "_rec.webp", "_sides.webp", ".webp" ]:
+        target = os.path.join( project_path, 'webp', name + pattern )
+        if os.path.exists(target):
+            os.remove(target)
+            shutil.copy2( name + pattern, target )
 
     # read metadata from pickle file
     metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
