@@ -763,7 +763,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 # missing files remaining after retrying
                 try:
                     os.remove(micrographs)
-                    logger.error("Second attempt failed, stopping. Please check for errors in the logs.")
+                    logger.error("Second attempt failed, stopping. Please check for errors in the logs")
                     raise
                 except:
                     pass
@@ -784,7 +784,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 # remove the missing file list 
                 try:
                     os.remove(micrographs)
-                    logger.warning("Image(s) that failed last time succeeded in new job(s), deleting missing file list ")
+                    logger.warning("Image(s) that failed last time succeeded in new job(s), deleting missing file list")
                 except:
                     pass
 
