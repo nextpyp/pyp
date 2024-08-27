@@ -123,6 +123,18 @@ description = "Particle picking"
 tabs = [ "tomo_spk", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "movie" ]
 
+[blocks.tomo_par_open]
+name = "TOMO Particle-picking"
+description = "Particle picking"
+tabs = [ "tomo_spk", "tomo_ext", "slurm" ]
+forwarded_tabs = [ "data", "scope", "movie" ]
+
+[blocks.tomo_par_close]
+name = "TOMO Particle-picking"
+description = "Particle picking"
+tabs = [ "tomo_spk", "tomo_ext", "slurm" ]
+forwarded_tabs = [ "data", "scope", "movie" ]
+
 [blocks.tomo_coarse_refine]
 name = "TOMO Coarse Refinement"
 description = "Constrained particle alignment"
