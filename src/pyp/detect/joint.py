@@ -523,17 +523,10 @@ def miloeval(args):
             with open(train_folder + '_plot2d.log') as f:
                 logger.info("\n".join([s for s in f.read().split("\n") if s]))                
 
-        # convert the png to webp
-        img2webp(f"{output_folder}/2d_visualization_labels.png", f"{output_folder}/2d_visualization_labels.webp")
-        img2webp(f"{output_folder}/2d_visualization_out.png", f"{output_folder}/2d_visualization_out.webp")
-        os.remove(f"{output_folder}/2d_visualization_labels.png")
-        os.remove(f"{output_folder}/2d_visualization_out.png")
-        
         # create symlinks to latest results
-        for file in [ 'all_output_info.npz', "2d_visualization_labels.webp", "2d_visualization_out.webp" ]:
+        for file in [ 'all_output_info.npz', "2d_visualization_labels.svgz", "2d_visualization_out.svgz" ]:
             target = os.path.join( train_folder, file )
-            outputfile = target
-            if os.path.exists(target):
+            if os.path.exists(target) or os.path.islink(target):
                 os.remove(target)
             symlink_relative( os.path.join(output_folder, file), target )            
 
