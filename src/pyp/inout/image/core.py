@@ -1441,7 +1441,7 @@ def get_tilt_axis_angle(name, parameters):
     # figure out tilt-axis angle and store in metadata
     [output, _] = run_shell_command(
         "%s/bin/xf2rotmagstr %s.xf" % (get_imod_path(), name), 
-        verbose=parameters["slurm_verbose"],
+        verbose=False,
     )
     xf_rot_mag = output.split("\n")
     axis_mean = counter = 0
