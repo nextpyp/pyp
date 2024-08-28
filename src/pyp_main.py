@@ -943,14 +943,14 @@ def split(parameters):
                 parameters["slurm_queue"] = ""
                 pass
 
-        tomo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-particles-train"
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
-        milo_train = parameters["data_mode"] == "tomo" and "tomo-milo-train" == parameters["micromon_block"]
-        milo_eval = parameters["data_mode"] == "tomo" and "tomo-milo" == parameters["micromon_block"]
+        tomo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-particles-train"
+        milo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo-train"
+        milo_eval = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo"
         isonet_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-train" 
-        heterogeneity = ( parameters.get("heterogeneity_method") and not "none" in parameters["heterogeneity_method"])
+        heterogeneity = "drgn" in parameters.get("micromon_block")                
 
-        if gpu or tomo_train or spr_train or milo_train or milo_eval or cryocare or isonet_train or isonet_predict or ( topaz and parameters.get("tomo_denoise_topaz_use_gpu") ):
+        if gpu:
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
