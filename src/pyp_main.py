@@ -911,7 +911,7 @@ def split(parameters):
 
         cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"] and parameters["micromon_block"] == "tomo-denoising"
         isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
-        membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain" and parameters["micromon_block"] == "tomo-picking-open"
+        membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain" and parameters["micromon_block"] == "tomo-segmentation-open"
         topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising"
 
         if cryocare:
