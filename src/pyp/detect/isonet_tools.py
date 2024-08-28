@@ -251,8 +251,27 @@ def isonet_refine(input_star, output, parameters):
 
     command = isonet_command + f"""isonet.py refine {input_star} {isonet_parameters} --gpuID {get_gpu_ids(parameters)}"""
     
-    local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+    [ output, error ] = local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
+    # parse output
+    loss = [ line.split("loss:")[1].split()[0] for line in output.split("\n") if "ETA:" in line]
+    mse = [ line.split("mse:")[1].split()[0] for line in output.split("\n") if "ETA:" in line]
+    
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 5], sharex=True)
+
+    ax[0].set_title("IsoNet training (refine)")
+    ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Loss")
+    ax[0].set_ylabel("Loss")
+    ax[0].legend()
+    ax[1].plot(np.array(mse).astype('f'),".-",color="red",label="MSE")
+    ax[1].set_ylabel("MSE")
+    ax[1].set_xlabel("Step")
+    ax[1].legend()
+    plt.xlabel("Step")
+    plt.savefig("isonet_refine.svgz")
+    plt.close()
 
 def isonet_predict_command(input_star, model, output, batch_size, use_deconv, threshold_norm, parameters, verbose=False):
     """
@@ -381,6 +400,7 @@ def isonet_train(project_dir, output, parameters):
     # copy resulting h5 models to project directory
     save_dir = os.path.join( project_dir, "train", "isonet" )
     os.makedirs(save_dir,exist_ok=True)
+    shutil.copy2( "isonet_training.svgz", os.path.join( project_dir, "train" ) )
     for f in glob.glob( os.path.join( output_dir, "*.h5") ):
         shutil.copy2( f, os.path.join( save_dir, "isonet_" + Path(f).name) )
 
