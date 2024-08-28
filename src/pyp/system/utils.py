@@ -93,24 +93,37 @@ def get_gpu_file():
 
 def needs_gpu(parameters):
     # enable Nvidia GPU?
-    if (( "movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters.get("movie_force") )
-        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters.get("tomo_ali_force") )
-        or ("tomo_denoise_method" in parameters and not "none" in parameters.get("tomo_denoise_method") and not "topaz" in parameters.get("tomo_denoise_method"))
-        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters.get("tomo_rec_force") )
-        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters.get("detect_force") )
-        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters.get("detect_force") )
-        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters.get("tomo_vir_force") )
-        or ("tomo_denoise_method" in parameters and not "topaz" in parameters.get("tomo_denoise_method") and parameters.get("tomo_denoise_topaz_use_gpu") )
-        or ("tomo_denoise_method" in parameters and "cryocare" in parameters.get("tomo_denoise_method") )
-        or ("tomo_denoise_method" in parameters and "isonet" in parameters.get("tomo_denoise_method") )
-        or ("heterogeneity_method" in parameters and not "none" in parameters.get("heterogeneity_method") )
-        or (parameters.get("tomo_mem_seg") and parameters["tomo_mem_seg"])
-        or (parameters.get("tomo_mem_method") and not "none" in parameters["tomo_mem_method"])
-        or (parameters.get("heterogeneity_method") and not "none" in parameters["heterogeneity_method"])
-        ):
-        return True    
-    else:
-        return False
+    
+    gpu_for_movies = parameters.get("movie_force") and parameters.get("movie_ali") == 'motioncor'
+
+    gpu_for_alignment = parameters.get("tomo_ali_force") and parameters.get("tomo_ali_method") == "aretomo"
+    
+    gpu_for_reconstrucion = parameters.get("tomo_rec_force") and parameters.get("tomo_rec_method") == "aretomo"
+    
+    gpu_for_denoising = "tomo-denoising" in parameters.get("micromon_block") and (
+        ( parameters.get("tomo_denoise_method") == "topaz" and parameters.get("tomo_denoise_topaz_use_gpu") )
+        or parameters.get("tomo_denoise_method") == "cryocare"
+        or parameters.get("tomo_denoise_method_train") == "isonet"
+    )
+
+    gpu_for_segmentation = parameters.get("micromon_block") == "tomo-segmentation-open"
+
+    gpu_for_mining = "tomo-milo" in parameters.get("micromon_block")
+
+    gpu_for_picking = parameters.get("detect_force") and parameters.get("micromon_block") == "tomo-picking-train"
+    
+    gpu_for_heterogeneity = parameters.get("micromon_block") == "tomo-drgn"
+
+    return (
+        gpu_for_movies
+        or gpu_for_alignment
+        or gpu_for_reconstrucion
+        or gpu_for_denoising
+        or gpu_for_segmentation
+        or gpu_for_mining
+        or gpu_for_picking
+        or gpu_for_heterogeneity
+    ) 
 
 def get_gpu_queue(parameters):
     # try to get the gpu partition
