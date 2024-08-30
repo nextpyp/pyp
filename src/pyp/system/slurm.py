@@ -451,6 +451,8 @@ def submit_jobs(
             firstline = f.readline()
             is_list = "#" not in firstline
             is_script = "#" in firstline and "bash" in firstline
+        import stat
+        os.chmod(myfile,stat.S_IRWXU)
 
     if is_list:
         with open(myfile) as file:
@@ -466,7 +468,7 @@ def submit_jobs(
         depend = " --dependency=afterany:{0}".format(dependencies)
 
     # call the corresponding submission function
-    if is_list:
+    if is_list and procs > 1:
         id = jobs.submit_commands(
             submit_dir,
             command_file,
