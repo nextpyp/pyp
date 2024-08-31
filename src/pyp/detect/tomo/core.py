@@ -534,7 +534,7 @@ def process_virions(
     [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
 
     # find virions
-    if not os.path.isfile("{0}.vir".format(name)) and ( parameters["tomo_vir_method"] == "auto" or parameters["tomo_spk_method"] == "spherical" ):
+    if not os.path.isfile("{0}.vir".format(name)) and ( parameters["tomo_vir_method"] == "auto" or parameters["tomo_spk_method"] == "virions" ):
 
         extension = "rec"
         if parameters['tomo_vir_binn'] > 1:
