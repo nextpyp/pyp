@@ -764,6 +764,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 try:
                     os.remove(micrographs)
                     logger.error("Second attempt failed, stopping. Please check for errors in the logs")
+                    Web.failed()
                     raise
                 except:
                     pass
