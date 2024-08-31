@@ -536,27 +536,27 @@ def miloeval(args):
             raise Exception("Failed to run inference module")
         
         time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
-        output_folder = os.path.join( train_folder, "display", time_stamp )
+        output_folder = os.path.join( os.getcwd(), "display", time_stamp )
         os.makedirs( output_folder )
         
-        # move trained models to project folder
-        logger.info(f"Copying results to {output_folder}")  
-        shutil.copy2( output_file, output_folder )
-
         # generate 2D visualization plots
         command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {train_folder +  '_plot2d.log'}"
 
-        [ output, error ] = local_run.run_shell_command(command, verbose=False)
+        local_run.run_shell_command(command, verbose=args["slurm_verbose"])
         if args.get('slurm_verbose'):
             with open(train_folder + '_plot2d.log') as f:
                 logger.info("\n".join([s for s in f.read().split("\n") if s]))                
 
-        # create symlinks to latest results
-        for file in [ 'all_output_info.npz', "2d_visualization_labels.svgz", "2d_visualization_out.svgz" ]:
+        # copy results to project folder
+        for file in [ 'interactive_info_parquet.gzip', "2d_visualization_labels.webp", "2d_visualization_out.webp" ]:
             target = os.path.join( train_folder, file )
             if os.path.exists(target) or os.path.islink(target):
                 os.remove(target)
-            symlink_relative( os.path.join(output_folder, file), target )            
+            shutil.copy2( os.path.join(output_folder, file), target )
+            
+        # pack images and metadata into single file
+        command = f"cd {output_folder}; tar cvfz {train_folder}/milopyp_interactive.tbz interactive_info_parquet.gzip imgs/"
+        local_run.run_shell_command(command, verbose=False)
 
         # TODO: generate 3D tomogram visualization plots
         """
