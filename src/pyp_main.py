@@ -825,7 +825,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
             for volume in [
                 line
                 for line in open(file).read().split("\n")
-                if "number" not in line and line != ""
+                if not line.startswith("number") and line != ""
             ]:
                 vector = volume.split("\t")
                 # print vector
