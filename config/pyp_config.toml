@@ -88,7 +88,7 @@ description = "Star data import for TOMO"
 tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
 [blocks.tomo_pre_process]
-name = "TOMO Pre-processing"
+name = "TOMO Pre-processing (legacy)"
 description = "Alignment, CTF and particle picking"
 tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "gain" ]
@@ -102,19 +102,13 @@ forwarded_tabs = [ "data", "scope" ]
 [blocks.tomo_segment_open]
 name = "TOMO Segmentation (open)"
 description = "Segmentation"
-tabs = [ "tomo_mem", "tomo_srf", "slurm" ]
+tabs = [ "tomo_mem", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_segment_close]
 name = "TOMO Segmentation (close)"
 description = "Segmentation"
-tabs = [ "tomo_vir", "tomo_srf", "slurm" ]
-forwarded_tabs = [ "data", "scope" ]
-
-[blocks.tomo_segment]
-name = "TOMO Segmentation (dummy)"
-description = "Segmentation"
-tabs = [ "tomo_sphere", "tomo_srf", "slurm" ]
+tabs = [ "tomo_sphere", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_picking]
@@ -126,13 +120,13 @@ forwarded_tabs = [ "data", "scope", "movie" ]
 [blocks.tomo_par_open]
 name = "TOMO Particle-picking"
 description = "Particle picking"
-tabs = [ "tomo_spk", "tomo_ext", "slurm" ]
+tabs = [ "tomo_srf", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_par_close]
 name = "TOMO Particle-picking"
 description = "Particle picking"
-tabs = [ "tomo_spk", "tomo_ext", "slurm" ]
+tabs = [ "tomo_srf", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_coarse_refine]
