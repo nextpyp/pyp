@@ -270,7 +270,7 @@ def isonet_refine(input_star, output, parameters):
     ax[1].set_xlabel("Step")
     ax[1].legend()
     plt.xlabel("Step")
-    plt.savefig("isonet_refine.svgz")
+    plt.savefig("training_loss.svgz")
     plt.close()
 
 def isonet_predict_command(input_star, model, output, batch_size, use_deconv, threshold_norm, parameters, verbose=False):
@@ -400,7 +400,7 @@ def isonet_train(project_dir, output, parameters):
     # copy resulting h5 models to project directory
     save_dir = os.path.join( project_dir, "train", "isonet" )
     os.makedirs(save_dir,exist_ok=True)
-    shutil.copy2( "isonet_training.svgz", os.path.join( project_dir, "train" ) )
+    shutil.copy2( "training_loss.svgz", os.path.join( project_dir, "train" ) )
     for f in glob.glob( os.path.join( output_dir, "*.h5") ):
         shutil.copy2( f, os.path.join( save_dir, "isonet_" + Path(f).name) )
 
