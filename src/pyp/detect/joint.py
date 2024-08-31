@@ -468,6 +468,34 @@ def milotrain(args):
     logger.info(f"Copying results to {output_folder}")
     for path in output_path.rglob('*.pth'):
         shutil.copy2( path, output_folder )
+    for path in output_path.rglob('log.txt'):
+        shutil.copy2( path, os.getcwd() )
+
+    # parse output
+    with open("log.txt") as f:
+        output = f.read()
+    loss = [ line.split("loss")[1].split()[0] for line in output.split("\n") if len(line)]
+    closs = [ line.split("cosine_loss")[1].split()[0] for line in output.split("\n") if len(line)]
+    std = [ line.split("output_std")[1].split()[0] for line in output.split("\n") if len(line)]
+    
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=[8, 5], sharex=True)
+
+    ax[0].set_title("MiLoPYP (training)")
+    ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Loss")
+    ax[0].set_ylabel("Loss")
+    ax[0].legend()
+    ax[1].plot(np.array(closs).astype('f'),".-",color="green",label="Cosine Loss")
+    ax[1].set_ylabel("Cosine Loss")
+    ax[1].legend()
+    ax[2].plot(np.array(std).astype('f'),".-",color="red",label="STD")
+    ax[2].set_ylabel("STD")
+    ax[2].legend()
+    plt.xlabel("Epoch")
+    plt.savefig( os.path.join( train_folder, "milo_training.svgz"))
+    plt.close()
+
 
 def miloeval(args):
 
