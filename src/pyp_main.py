@@ -1709,6 +1709,19 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     t.start()
     # remove environment LD_LIBRARY_PATH conflicts
 
+    if parameters.get("micromon_block") == "tomo-particles-eval":
+        if os.path.exists(name+".spk"):
+            os.remove(name+".spk")
+        parameters["tomo_spk_method"] = "pyp-eval"
+
+    if parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
+        # use spike radius as virion radius
+        parameters["tomo_vir_rad"] = parameters["tomo_spk_rad"]
+        if parameters.get("micromon_block") == "tomo-picking-closed":
+            parameters["tomo_spk_rad"] = parameters["tomo_srf_detect_rad"]
+        if os.path.exists(name+".spk"):
+            os.remove(name+".spk")
+
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
         name,
@@ -3538,7 +3551,11 @@ if __name__ == "__main__":
                 os.chdir(os.pardir)
 
                 parameters = project_params.load_pyp_parameters()
-                tomo_merge(parameters)
+                try:
+                    tomo_merge(parameters)
+                except:
+                    Web.failed()
+                    pass
                 # reset all flags for re-calculation
                 parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
                 project_params.save_pyp_parameters(parameters)
@@ -4864,6 +4881,10 @@ EOF
 
                 if "extract_cls" not in parameters.keys():
                     parameters["extract_cls"] = 0
+
+                # set the correct virion radius if in tomo-picking-closed block to ensure proper particle extraction
+                if parameters.get("micromon_block") == "tomo-picking-closed":
+                    parameters["tomo_vir_rad"] = parameters["tomo_spk_rad"]
 
                 # save configuration
                 project_params.save_parameters(parameters)

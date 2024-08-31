@@ -250,109 +250,6 @@ type = "str"
 default = ""
 hidden = true
 
-[tabs.tomo_pareval]
-_name = "Particle model training" # TODO ?
-_description = "Train a model to pick particles" # TODO ?
-
-[tabs.tomo_pareval.detect_nn3d_ref]
-name = "Trained model (*.pth)"
-description = "Path to trained model"
-type = "path"
-path = { type="files" }
-input = { type="trainedModel3D" }
-
-[tabs.tomo_partrain]
-_name = "Particle model training" # TODO ?
-_description = "Train a model to pick particles" # TODO ?
-
-[tabs.tomo_partrain.parquet]
-name = "Parquet File"
-description = "Path to parquet file from 3D interactive sub-cluster selection"
-type = "path"
-path = { type="files" }
-
-[tabs.tomo_partrain.detect_nn3d_down_ratio]
-name = "Downsample"
-description = "Down ratio for output"
-type = "int"
-default = 2
-hidden = true
-
-[tabs.tomo_partrain.detect_nn3d_compress]
-name = "Additional binning in Z"
-description = "Apply additional 2x binning in Z-dimension"
-type = "bool"
-default = true
-
-[tabs.tomo_partrain.detect_nn3d_num_epochs]
-name = "Epochs"
-description = "Number of epochs used during training"
-type = "int"
-default = 10
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_bbox]
-name = "Bounding box"
-description = "Box size for particles, used to generate Guassian kernel during training"
-type = "int"
-default = 16
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_thresh]
-name = "Threshold for soft/hard positives"
-description = "Threshold for soft/hard positives"
-type = "float"
-default = 0.85
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_cr_weight]
-name = "Contrastive regularization weight"
-description = "Weight for contrastive regularization term"
-type = "float"
-default = 0.1
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_max_objects]
-name = "Max number of particles"
-description = "Expected number of particles per tomogram"
-type = "int"
-default = 1200
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_lr]
-name = "Learning rate"
-description = "Rate to use during training"
-type = "float"
-default = 0.0005
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_val_interval]
-name = "Interval to perform validation"
-description = "Run validation every this number of epochs"
-type = "int"
-default = 5
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_temp]
-name = "inforNCE temperature"
-description = "inforNCE temperature"
-type = "float"
-default = 0.07
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_tau]
-name = "Class prior probability"
-description = "Class prior probability (tau)"
-type = "float"
-default = 0.01
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
-
-[tabs.tomo_partrain.detect_nn3d_debug]
-name = "Debug mode"
-description = "Save intermediate results to output folder train/"
-type = "bool"
-default = false
-
 # Miroscope parameters
 
 [tabs.scope]
@@ -1403,89 +1300,91 @@ description = "Path to trained model"
 type = "path"
 path = { type="files" }
 input = { type="trainedModel3D" }
-hidden = [ "tomo_import" ]
+hidden = [ "tomo_import", "tomo_particles_train" ]
 
 [tabs.detect_nn3d.down_ratio]
 name = "Downsample"
 description = "Down ratio for output"
 type = "int"
 default = 2
-hidden = true
+hidden = [ "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.compress]
 name = "Additional binning in Z"
 description = "Apply additional 2x binning in Z-dimension"
 type = "bool"
 default = true
+hidden = [ "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.num_epochs]
 name = "Epochs"
 description = "Number of epochs used during training"
 type = "int"
 default = 10
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.bbox]
 name = "Bounding box"
 description = "Box size for particles, used to generate Guassian kernel during training"
 type = "int"
 default = 16
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.thresh]
 name = "Threshold for soft/hard positives"
 description = "Threshold for soft/hard positives"
 type = "float"
 default = 0.85
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_train"]
 
 [tabs.detect_nn3d.cr_weight]
 name = "Contrastive regularization weight"
 description = "Weight for contrastive regularization term"
 type = "float"
 default = 0.1
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.max_objects]
 name = "Max number of particles"
 description = "Expected number of particles per tomogram"
 type = "int"
 default = 1200
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_train" ]
 
 [tabs.detect_nn3d.lr]
 name = "Learning rate"
 description = "Rate to use during training"
 type = "float"
 default = 0.0005
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.val_interval]
 name = "Interval to perform validation"
 description = "Run validation every this number of epochs"
 type = "int"
 default = 5
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.temp]
 name = "inforNCE temperature"
 description = "inforNCE temperature"
 type = "float"
 default = 0.07
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.tau]
 name = "Class prior probability"
 description = "Class prior probability (tau)"
 type = "float"
 default = 0.01
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.debug]
 name = "Debug mode"
 description = "Save intermediate results to output folder train/"
 type = "bool"
 default = false
+hidden = ["tomo_particles_eval"]
 
 #feature detect with milo
 [tabs.detect_milo]
@@ -2501,15 +2400,9 @@ condition = { arg="method", value="membrain" }
 _name = "Sphere segmentation"
 _description = "Sphere segmentation parameters"
 
-[tabs.tomo_sphere.rad]
-name = "Radius (A)"
-description = "Sphere radius (0=auto)"
-type = "float"
-default = 0
-
 [tabs.tomo_sphere.seg_tol]
-name = "Tolerance for sphere radius"
-description = "Allow sphere radius variations within this tolerance (percentage)"
+name = "Segmentation radius tolerance"
+description = "Allow variations around specified radius within this tolerance (percentage)"
 type = "float"
 default = 20.0
 
@@ -2522,6 +2415,7 @@ name = "Virion radius (A)"
 description = "Approximate virion radius to use for detection"
 type = "float"
 default = 0
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.method]
 name = "Virion detection method"
@@ -2529,6 +2423,7 @@ description = "Strategy for virion detection"
 type = "enum"
 enum = { none="none", auto="auto", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)" }
 default = "none"
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.number]
 name = "Max number of virions per tomogram"
@@ -2536,6 +2431,7 @@ description = "Limit the number of virions during detection"
 type = "int"
 default = 25
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.det_tol]
 name = "Tolerance for virion radius during detection"
@@ -2543,6 +2439,7 @@ description = "Allow virion radius variations within this tolerance (percentage)
 type = "float"
 default = 20.0
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.seg_tol]
 name = "Tolerance for virion radius during segmentation"
@@ -2550,6 +2447,7 @@ description = "Allow virion radius variations within this tolerance (percentage)
 type = "float"
 default = 20.0
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.iterations]
 name = "Denoising iterations before virion detection"
@@ -2557,6 +2455,7 @@ description = "Number denoising iterations (anisotropic diffusion)"
 type = "int"
 default = 25
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.canny_low]
 name = "Low threshold for Canny edge detector"
@@ -2564,6 +2463,7 @@ description = "Allows to control the performance of virion detection"
 type = "float"
 default = 0.2
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.canny_high]
 name = "High threshold for Canny edge detector"
@@ -2571,6 +2471,7 @@ description = "Allows to control the performance of virion detection"
 type = "float"
 default = 0.5
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.binn]
 name = "Virion additional binning"
@@ -2578,6 +2479,7 @@ description = "Increase binning to speed up virion detection and reduce noise"
 type = "int"
 default = 2
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_srf]
 _name = "Particle detection"
@@ -2587,8 +2489,14 @@ _description = "Particle detection parameters"
 name = "Method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", template="template search (location required)", mesh="uniform" }
-default = "none"
+enum = { template="template search", mesh="uniform" }
+default = "mesh"
+
+[tabs.tomo_srf.detect_rad]
+name = "Particle radius (A)"
+description = "Particle radius in A"
+type = "float"
+dfault = 0
 
 [tabs.tomo_srf.detect_ref]
 name = "Template (*.mrc)"
@@ -2598,7 +2506,7 @@ condition = { arg="detect_method", value="template" }
 path = { type="files" }
 
 [tabs.tomo_srf.detect_thre]
-name = "Particle correlation threshold"
+name = "Correlation threshold"
 description = "Minimum correlation value to use for particle detection (lower values, more particles)"
 type = "float"
 condition = { arg="detect_method", value="template" }
@@ -2612,8 +2520,8 @@ default = 10
 condition = { arg="detect_method", value=["template","mesh"] }
 
 [tabs.tomo_srf.detect_band]
-name = "Size of equatorial band to restrict particle picking (A)"
-description = "Only pick particles within a band centered around the sphere equator"
+name = "Size of equatorial band to restrict search (A)"
+description = "Only pick particles within a band centered around the equator"
 type = "int"
 default = 100
 condition = { arg="detect_method", value=["template","mesh"] }
@@ -2626,8 +2534,8 @@ default = true
 condition = { arg="detect_method", value=["template","mesh"] }
 
 [tabs.tomo_srf.detect_offset]
-name = "Particle height offset (A)"
-description = "Cut particles above membrane by this amount"
+name = "Height offset (A)"
+description = "Move particle positions along membrane direction by this amount"
 type = "int"
 default = 0
 condition = { arg="detect_method", value=["template","mesh"] }
@@ -2647,7 +2555,7 @@ _description = "Sub-tomogram detection parameters"
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", auto="size-based", import="import", manual="manual" }
+enum = { none="none", auto="size-based", import="import", manual="manual", virions="spherical" }
 default = "none"
 
 [tabs.tomo_spk.rad]
@@ -2747,6 +2655,55 @@ description = "Randomize particle orientations during extraction to reduce misin
 type = "bool"
 default = true
 condition = { arg="method", value=["auto","import","manual","pyp-eval"] }
+
+[tabs.tomo_spk.vir_rad]
+name = "Virion radius (A)"
+description = "Approximate virion radius to use for detection"
+type = "float"
+default = 0
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_number]
+name = "Max number of virions per tomogram"
+description = "Limit the number of virions during detection"
+type = "int"
+default = 25
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_det_tol]
+name = "Tolerance for virion radius during detection"
+description = "Allow virion radius variations within this tolerance (percentage)"
+type = "float"
+default = 20.0
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_iterations]
+name = "Denoising iterations before virion detection"
+description = "Number denoising iterations (anisotropic diffusion)"
+type = "int"
+default = 25
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_canny_low]
+name = "Low threshold for Canny edge detector"
+description = "Allows to control the performance of virion detection"
+type = "float"
+default = 0.2
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_canny_high]
+name = "High threshold for Canny edge detector"
+description = "Allows to control the performance of virion detection"
+type = "float"
+default = 0.5
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_binn]
+name = "Virion additional binning"
+description = "Increase binning to speed up virion detection and reduce noise"
+type = "int"
+default = 2
+condition = { arg="method", value="virions" }
 
 [tabs.tomo_ext]
 _name = "Sub-tomogram extraction"
