@@ -482,7 +482,6 @@ def milotrain(args):
 
     fig, ax = plt.subplots(nrows=3, ncols=1, figsize=[8, 5], sharex=True)
 
-    ax[0].set_title("MiLoPYP (training)")
     ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Loss")
     ax[0].set_ylabel("Loss")
     ax[0].legend()
