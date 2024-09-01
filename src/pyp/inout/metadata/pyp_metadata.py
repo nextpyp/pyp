@@ -686,8 +686,9 @@ class LocalMetadata:
                 logger.info(
                     f"Virion parameters will be re-computed"
                 )
-                del self.data["vir"]
-                meta_update = True
+                if not parameters.get("micromon_block") == "tomo-segmentation-closed":
+                    del self.data["vir"]
+                    meta_update = True
             # also remove tomo spk
             if "box" in self.data:
                 del self.data["box"]
