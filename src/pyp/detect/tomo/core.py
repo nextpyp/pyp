@@ -668,6 +668,8 @@ def process_virions(
     # detect virions
     if not os.path.exists(f"{name}.vir"):
         detect_virions(parameters, virion_size, binning, name)
+    else:
+        logger.warning("Using previously detected virions")
 
     if os.path.isfile("{0}.vir".format(name)):
         # load virion coordinates (and apply binning)

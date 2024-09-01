@@ -1740,6 +1740,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         or metadata is None or metadata is not None and "vir" not in metadata or parameters["data_import"]
     ):
         tilt_metadata["virion_coordinates"] = virion_coordinates
+        if len(virion_coordinates) > 0:
+            logger.info(f"Total number of virions = {len(virion_coordinates):,}")
 
     tilt_metadata["spike_coordinates"] = spike_coordinates
     if len(spike_coordinates) > 0:
