@@ -2481,6 +2481,62 @@ default = 2
 condition = { arg="method", value="auto" }
 hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
+[tabs.tomo_vir.detect_method]
+name = "Spike detection method"
+description = "Strategy to use for spike detection"
+type = "enum"
+enum = { none="none", template="template search (template file required)", mesh="uniform" }
+default = "none"
+
+[tabs.tomo_vir.detect_ref]
+name = "Template for spike search (*.mrc)"
+description = "Path to file containing the template (dimensions must match the binned tomograms)"
+type = "path"
+condition = { arg="detect_method", value="template" }
+path = { type="files" }
+
+[tabs.tomo_vir.detect_thre]
+name = "Spike correlation threshold"
+description = "Minimum correlation value to use for spike detection (lower values, more spikes)"
+type = "float"
+condition = { arg="detect_method", value="template" }
+default = 0.2
+
+[tabs.tomo_vir.detect_dist]
+name = "Minimum distance between spikes (voxels)"
+description = "Minimum distance between neighboring spikes"
+type = "int"
+default = 10
+condition = { arg="detect_method", value=["template","mesh"] }
+
+[tabs.tomo_vir.detect_band]
+name = "Size of equatorial band to restrict spike picking (A)"
+description = "Only pick spikes within a band centered around the virion equator"
+type = "int"
+default = 100
+condition = { arg="detect_method", value=["template","mesh"] }
+
+[tabs.tomo_vir.detect_rand]
+name = "Randomize in-plane spike rotations"
+description = "Randomize spike rotations (around direction normal to virion surface) to reduce missing wedge effects"
+type = "bool"
+default = true
+condition = { arg="detect_method", value=["template","mesh"] }
+
+[tabs.tomo_vir.detect_offset]
+name = "Spike height offset (A)"
+description = "Cut particles above membrane surface by this amount"
+type = "int"
+default = 0
+condition = { arg="detect_method", value=["template","mesh"] }
+
+[tabs.tomo_vir.force]
+name = "Force recalculation of parameters"
+description = "Force recalculation of virion parameters"
+type = "bool"
+default = false
+hidden = true
+
 [tabs.tomo_srf]
 _name = "Particle detection"
 _description = "Particle detection parameters"
