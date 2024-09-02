@@ -1788,6 +1788,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.remove(f"{name}.mrc")
             os.rename(f"{name}.raw.mrc", f"{name}.mrc") 
 
+        # do not save .mrc and .rec if in tomo-picking and segmentation blocks
+        if parameters.get("micromon_block") == "tomo-picking" or parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
+            os.remove(f"{name}.mrc")
+            os.remove(f"{name}.rec")
+    
         with open( f"{name}.pickle", 'wb') as f:
             pickle.dump(tilt_metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
 
