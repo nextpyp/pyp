@@ -1671,10 +1671,11 @@ def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth):
 
         virion_volume = "{0}_binned_nad_seg.mrc".format(virion_name)
 
-        command = "{0}/bin/newstack {1} {1} -mode 2".format(
-            get_imod_path(), virion_volume
-        )
-        local_run.run_shell_command(command)
+        if mrc.readHeaderFromFile(virion_volume)['mode'] != 2:
+            command = "{0}/bin/newstack {1} {1} -mode 2".format(
+                get_imod_path(), virion_volume
+            )
+            local_run.run_shell_command(command)
 
         volume = mrc.read(virion_volume)
         contour = float(threshold)
