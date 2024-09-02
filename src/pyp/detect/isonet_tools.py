@@ -258,14 +258,16 @@ def isonet_refine(input_star, output, parameters):
     mse = [ line.split("mse:")[1].split()[0] for line in output.split("\n") if "ETA:" in line]
     
     import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style("dark")
 
-    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 5], sharex=True)
+    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6], sharex=True)
 
-    ax[0].set_title("IsoNet training (refine)")
+    ax[0].set_title("IsoNet training loss (refine)")
     ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Loss")
     ax[0].set_ylabel("Loss")
     ax[0].legend()
-    ax[1].plot(np.array(mse).astype('f'),".-",color="red",label="MSE")
+    ax[1].plot(np.array(mse).astype('f'),".-",color="red",label="Mean Squared Error")
     ax[1].set_ylabel("MSE")
     ax[1].set_xlabel("Step")
     ax[1].legend()

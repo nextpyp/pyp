@@ -273,6 +273,37 @@ def tomotrain(args):
         with open( list(Path(os.getcwd()).rglob('log.txt'))[0], ) as f:
             for line in f.readlines():
                 logger.info(line.rstrip('\r\n'))
+
+        with open( list(Path(os.getcwd()).rglob('log.txt'))[0], ) as f:
+            output = f.read()
+
+            loss = [ line.split("loss")[1].split()[0] for line in output.split("\n") if len(line)]
+            hmloss = [ line.split("hm_loss")[1].split()[0] for line in output.split("\n") if len(line)]
+            crloss = [ line.split("cr_loss")[1].split()[0] for line in output.split("\n") if len(line)]
+            consisloss = [ line.split("consis_loss")[1].split()[0] for line in output.split("\n") if len(line)]
+            
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+            sns.set_style("dark")
+
+            fig, ax = plt.subplots(nrows=4, ncols=1, figsize=[8, 6], sharex=True)            
+        
+            ax[0].set_title("Training loss")
+            ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Total loss")
+            ax[0].set_ylabel("Total")
+            ax[0].legend()
+            ax[1].plot(np.array(hmloss).astype('f'),".-",color="green",label="Heatmap loss")
+            ax[1].set_ylabel("Heatmap")
+            ax[1].legend()
+            ax[2].plot(np.array(crloss).astype('f'),".-",color="red",label="Contrastive loss")
+            ax[2].set_ylabel("Contrastive")
+            ax[2].legend()
+            ax[3].plot(np.array(consisloss).astype('f'),".-",color="orange",label="Consistency loss")
+            ax[3].set_ylabel("Consistency")
+            ax[3].legend()
+            plt.xlabel("Epoch")
+            plt.savefig( os.path.join( train_folder, "training_loss.svgz"))
+            plt.close()
     except:
         logger.warning("No log found for training command")
         pass
@@ -479,14 +510,17 @@ def milotrain(args):
     std = [ line.split("output_std")[1].split()[0] for line in output.split("\n") if len(line)]
     
     import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style("dark")
 
-    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=[8, 5], sharex=True)
+    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=[8, 6], sharex=True)
 
-    ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Loss")
-    ax[0].set_ylabel("Loss")
+    ax[0].set_title("Training loss")
+    ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Total loss")
+    ax[0].set_ylabel("Total")
     ax[0].legend()
-    ax[1].plot(np.array(closs).astype('f'),".-",color="green",label="Cosine Loss")
-    ax[1].set_ylabel("Cosine Loss")
+    ax[1].plot(np.array(closs).astype('f'),".-",color="green",label="Cosine loss")
+    ax[1].set_ylabel("Cosine")
     ax[1].legend()
     ax[2].plot(np.array(std).astype('f'),".-",color="red",label="STD")
     ax[2].set_ylabel("STD")
