@@ -76,47 +76,49 @@ def process_virion_multiprocessing(
     )
     local_run.run_shell_command(command,parameters["slurm_verbose"])
 
-    # increase the contrast of virus volume
-    command = "{0}/bin/nad_eed_3d -n 10 {1}_binned.mrc {1}_binned_nad.mrc".format(
-        get_imod_path(), virion_name,
-    )
-    local_run.run_shell_command(command,verbose=False)
+    if not os.path.exists(f"{virion_name}_binned_nad_seg.mrc"):
 
-    # produce virus membrane (surface only)
-    correction = binning / float(spk_pick_binning) / virion_binning * parameters["tomo_vir_binn"]
-
-    # get value of radius from virion detection operation
-    radius = float(virion[-1]) * correction
-
-    # read in tolerance value (making sure it is expressed in percentage)
-    tolerance = min(100,abs(parameters["tomo_vir_seg_tol"])) / 100.
-
-    # calculate admissible radius range
-    min_radius = radius * ( 1 - tolerance )
-    max_radius = radius + ( 1 + tolerance )
-
-    # Run segmentation
-    # USAGE: virus_segment_membrane input.mrc iradius oradius weight iterations variances output.mrc
-    check_env()
-
-    weight = 1
-    iterations = 500
-    variances = 10
-    command = f"{get_tomo_path()}/virus_segment_membrane {virion_name}_binned_nad.mrc {min_radius:.2f} {max_radius:.2f} {weight} {iterations} {variances} {virion_name}_binned_nad_seg.mrc"
-    local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-
-    if os.path.exists("%s_binned_nad.mrc" % (virion_name)):
-        # produce visualization for selecting thresholds of iso-surfaces
-        command = "{0}/virus_segment_membrane_select_threshold {1}_binned_nad".format(
-            get_tomo_path(), virion_name
+        # increase the contrast of virus volume
+        command = "{0}/bin/nad_eed_3d -n 10 {1}_binned.mrc {1}_binned_nad.mrc".format(
+            get_imod_path(), virion_name,
         )
-        local_run.run_shell_command(command,parameters["slurm_verbose"])
-        command = "convert -resize 1080x360 {1}_binned_nad.png {1}_binned_nad.png".format(
-            get_imod_path(), virion_name
-        )
-        local_run.run_shell_command(command,parameters["slurm_verbose"])
+        local_run.run_shell_command(command,verbose=False)
 
-        img2webp(f"{virion_name}_binned_nad.png", f"{virion_name}_binned_nad.webp")
+        # produce virus membrane (surface only)
+        correction = binning / float(spk_pick_binning) / virion_binning * parameters["tomo_vir_binn"]
+
+        # get value of radius from virion detection operation
+        radius = float(virion[-1]) * correction
+
+        # read in tolerance value (making sure it is expressed in percentage)
+        tolerance = min(100,abs(parameters["tomo_vir_seg_tol"])) / 100.
+
+        # calculate admissible radius range
+        min_radius = radius * ( 1 - tolerance )
+        max_radius = radius + ( 1 + tolerance )
+
+        # Run segmentation
+        # USAGE: virus_segment_membrane input.mrc iradius oradius weight iterations variances output.mrc
+        check_env()
+
+        weight = 1
+        iterations = 500
+        variances = 10
+        command = f"{get_tomo_path()}/virus_segment_membrane {virion_name}_binned_nad.mrc {min_radius:.2f} {max_radius:.2f} {weight} {iterations} {variances} {virion_name}_binned_nad_seg.mrc"
+        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+
+        if os.path.exists("%s_binned_nad.mrc" % (virion_name)):
+            # produce visualization for selecting thresholds of iso-surfaces
+            command = "{0}/virus_segment_membrane_select_threshold {1}_binned_nad".format(
+                get_tomo_path(), virion_name
+            )
+            local_run.run_shell_command(command,parameters["slurm_verbose"])
+            command = "convert -resize 1080x360 {1}_binned_nad.png {1}_binned_nad.png".format(
+                get_imod_path(), virion_name
+            )
+            local_run.run_shell_command(command,parameters["slurm_verbose"])
+
+            img2webp(f"{virion_name}_binned_nad.png", f"{virion_name}_binned_nad.webp")
 
     # flipy if raw data is dm4
     if os.path.exists("isdm4"):
