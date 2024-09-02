@@ -427,6 +427,8 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
     file_patterns = [
         f"sva/{name}_vir????_cut.txt",
         f"raw/{name}.order",  # retrieve order file for dose weighting
+        f"mrc/{name}_vir????_binned_nad.mrc",
+        f"mrc/{name}_vir????_binned_nad_seg.mrc"
     ]
 
     filelist = []
