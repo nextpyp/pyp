@@ -112,7 +112,7 @@ Step 2: Import raw tilt-series
 Step 3: Pre-processing
 ----------------------
 
-.. dropdown:: Movie frame alignment, CTF estimation and particle picking (:fa:`stopwatch` 6 min)
+.. dropdown:: Movie frame alignment, CTF estimation and particle picking (:fa:`stopwatch` 5 min)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
@@ -141,14 +141,6 @@ Step 3: Pre-processing
         - Set ``Binning factor for reconstruction`` to 8
 
         - Set ``Thickness of reconstruction (unbinned voxels)`` to 2048
-
-        - Click on the **Virion/spike detection** tab
-
-      .. tabbed:: Virion/spike detection
-
-        - Set ``Virion radius (A)`` to 500.0
-
-        - Set ``Virion detection method`` to auto
 
         - Click on the **Resources** tab
 
@@ -204,26 +196,45 @@ Step 3: Pre-processing
           .. figure:: ../images/tutorial_tomo_pre_process_reconstruction.webp
             :alt: Tilt-series (Reconstruction)
 
-        .. tabbed:: Segmentation
-
-          .. figure:: ../images/tutorial_tomo_pre_process_segmentation.webp
-            :alt: Tilt-series (Segmentation)
-
 .. tip::
 
   While on the **Tilt Series** tab, use the navigation bar at the top of the page to look at the results for other tilt-series
 
-Step 4 (optional): Virion segmentation
---------------------------------------
+Step 4: Virion selection
+------------------------
 
-.. dropdown:: Detection and segmentation of virions (interactive step)
+.. dropdown:: Selection of virion centers (:fa:`stopwatch` 1 min)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
 
+    * Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
+
+    * Go to the **Particle detection** tab:
+
+      .. tabbed:: Particle detection
+
+        - Set ``Detection method`` to spherical
+
+        - Set ``Virion radius (A)`` to 500
+
+    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. Follow the status of the run in the **Jobs** panel
+
+Step 5: Virion segmentation
+---------------------------
+
+.. dropdown:: Segment virions (:fa:`stopwatch` 1 min)
+    :container: + shadow
+    :title: bg-primary text-white text-left
+    :open:
+
+    * Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking,badge-secondary` block) and select :badge:`Segmentation (closed surfaces),badge-primary`
+
+    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. Follow the status of the run in the **Jobs** panel
+
     This step is optional, but it showcases tools available in ``nextPYP`` to work with virions:
 
-    * Go inside the :badge:`Pre-processing,badge-secondary` block, click on the **Tilt Series** tab, and select :badge:`Segmentation,badge-primary`
+    * Go inside the :badge:`Segmentation (closed surfaces),badge-secondary` block and click on the **Segmentation** tab
 
       .. figure:: ../images/tutorial_tomo_pre_process_virions.webp
         :alt: Virion segmentation
@@ -236,40 +247,36 @@ Step 4 (optional): Virion segmentation
 
   Click on `> Keyboard shortcuts` (under the virion image) to reveal instructions on how to speed up the threshold selection process
 
-Step 5: Particle detection
---------------------------
+Step 6: Particle picking
+------------------------
 
-.. dropdown:: Particle detection from virion surfaces (:fa:`stopwatch` 3 min)
+.. dropdown:: Select particles from the surface of virions (:fa:`stopwatch` 3 min)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
 
-    * In the :badge:`Pre-processing,badge-primary` block, click on the menu icon :fa:`bars, text-primary` and select the :fa:`edit, text-primary` Edit option.
+    * Click on :guilabel:`Segmentation (closed)` (output of the :badge:`Segmentation (closed surfaces),badge-secondary` block) and select :badge:`Particle-Picking (closed surfaces),badge-primary`
 
-    * Go to the **Virion/spike detection** tab:
+    * Go to the **Particle detection** tab:
 
-      .. tabbed:: Virion/spike detection
+      .. tabbed:: Particle detection
 
-        - Set ``Spike detection method`` to uniform
+        - Set ``Detection method`` to uniform
+
+        - Set ``Particle radius (A)`` to 50
 
         - Set ``Minimum distance between spikes (voxels)`` to 8
 
         - Set ``Size of equatorial band to restrict spike picking (A)`` to 800
 
-        - Click on the **Particle detection** tab
+    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. Follow the status of the run in the **Jobs** panel
 
-      .. tabbed:: Particle detection
-
-        - Set ``Detection radius (A)`` to 50
-
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
-
-    * Navigate to the :badge:`Reconstruction,badge-primary` group inside the **Tilt-series** tab to inspect the virion and spike coordinates:
+    * Navigate to the :badge:`Reconstruction,badge-primary` tab to inspect the particle coordinates:
 
       .. figure:: ../images/tutorial_tomo_pre_process_spikes.webp
         :alt: Spike coordinates
 
-Step 6: Reference-based refinement
+Step 7: Reference-based refinement
 ----------------------------------
 
 .. dropdown:: Reference-based particle alignment (:fa:`stopwatch` 8 hr)
@@ -351,7 +358,7 @@ Step 6: Reference-based refinement
         :alt: Iter 2
 
 
-Step 7. Fully constrained refinement
+Step 8. Fully constrained refinement
 ------------------------------------
 
 .. dropdown:: Tilt-geometry parameters and particle poses are refined in this step (:fa:`stopwatch` 1.5 hr)
@@ -398,7 +405,7 @@ Step 7. Fully constrained refinement
 
   Use the navigation bar at the top left of the page to look at the results for different iterations
 
-Step 8. Filter particles
+Step 9. Filter particles
 ------------------------
 
 .. dropdown:: Identify duplicates and particles with low alignment scores (:fa:`stopwatch` 4 min)
@@ -432,7 +439,7 @@ Step 8. Filter particles
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. You can see how many particles were left after filtering by looking at the job logs.
 
-Step 9 (optional): Permanently remove bad particles
+Step 10 (optional): Permanently remove bad particles
 ---------------------------------------------------
 
 .. dropdown:: Permanently remove bad particles to improve processing efficiency downstream (:fa:`stopwatch` 1 min)
@@ -453,7 +460,7 @@ Step 9 (optional): Permanently remove bad particles
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to launch the job
 
 
-Step 10. Region-based local refinement (before masking)
+Step 11. Region-based local refinement (before masking)
 -------------------------------------------------------
 
 .. dropdown:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 1 hr)
@@ -509,7 +516,7 @@ Step 10. Region-based local refinement (before masking)
         :alt: Iter 3
 
 
-Step 11: Create shape mask
+Step 12: Create shape mask
 --------------------------
 
 .. dropdown:: Use most recent reconstruction to create a shape mask (:fa:`stopwatch` <1 min)
@@ -539,7 +546,7 @@ Step 11: Create shape mask
 
   You may need to adjust the binarization threshold to obtain a mask that includes the protein density and excludes the background (a pre-calculated mask is provided with the raw data if you rather use that).
 
-Step 12: Region-based constrained refinement
+Step 13: Region-based constrained refinement
 --------------------------------------------
 
 .. dropdown:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 2 hr)
@@ -568,7 +575,7 @@ Step 12: Region-based constrained refinement
       .. figure:: ../images/tutorial_tomo_region_iter6.webp
         :alt: Iter 6
 
-Step 13: Particle-based CTF refinement
+Step 14: Particle-based CTF refinement
 --------------------------------------
 
 .. dropdown:: Per-particle CTF refinement using most recent reconstruction (:fa:`stopwatch` 3 hr)
@@ -605,7 +612,7 @@ Step 13: Particle-based CTF refinement
       .. figure:: ../images/tutorial_tomo_ctf_iter7.webp
         :alt: Iter 7
 
-Step 14: Movie frame refinement
+Step 15: Movie frame refinement
 -------------------------------
 
 .. dropdown:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 3 hr)
@@ -652,7 +659,7 @@ Step 14: Movie frame refinement
       .. figure:: ../images/tutorial_tomo_movie_iter2.webp
         :alt: Iter 2
 
-Step 15: Refinement after movie frame refinement
+Step 16: Refinement after movie frame refinement
 ------------------------------------------------
 
 .. dropdown:: Additional refinement using new frame alignment parameters (:fa:`stopwatch` 1 hr)
@@ -699,7 +706,7 @@ Step 15: Refinement after movie frame refinement
       .. figure:: ../images/tutorial_tomo_after_movie_iter3.webp
         :alt: Iter 3
 
-Step 16: Map sharpening
+Step 17: Map sharpening
 -----------------------
 
 .. dropdown:: Apply B-factor weighting in frequency space (:fa:`stopwatch` <1 min)
