@@ -63,9 +63,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
 
     # ctf_input = name + "_ctf.pkl"
 
-    options = f"--checkpoint {parameters['heterogeneity_tomodrgn_train_checkpoint']} \
-        --log-interval {parameters['heterogeneity_tomodrgn_train_log_interval']} \
-        --num-workers 0 "
+    options = f"--checkpoint {parameters['heterogeneity_tomodrgn_train_checkpoint']} --log-interval {parameters['heterogeneity_tomodrgn_train_log_interval']} --num-workers 0"
     
         # --max-threads {parameters['slurm_tasks']}
 
@@ -107,24 +105,8 @@ def tomodrgn_train(parameters, input_dir, name, output):
     # --emb-type {parameters['heterogeneity_tomodrgn_emd_type']} \
     # --pose-lr {parameters['heterogeneity_tomodrgn_pose_lr']} \
 
-    training_parameters = f"-n {parameters['heterogeneity_tomodrgn_train_epochs']} \
-        -b {parameters['heterogeneity_tomodrgn_train_batch']} \
-        --wd {parameters['heterogeneity_tomodrgn_train_wd']} \
-        --lr {parameters['heterogeneity_tomodrgn_train_lr']} \
-        --enc-layers-A {parameters['heterogeneity_tomodrgn_enc_lya']} \
-        --enc-dim-A {parameters['heterogeneity_tomodrgn_enc_dima']} \
-        --out-dim-A {parameters['heterogeneity_tomodrgn_out_dima']} \
-        --enc-layers-B {parameters['heterogeneity_tomodrgn_enc_lyb']} \
-        --enc-dim-B {parameters['heterogeneity_tomodrgn_enc_dimb']} \
-        --dec-layers {parameters['heterogeneity_tomodrgn_dec_hl']} \
-        --dec-dim {parameters['heterogeneity_tomodrgn_dec_dim']} \
-        --pe-type {parameters['heterogeneity_tomodrgn_pe_type']} \
-        --pooling-function {parameters['heterogeneity_tomodrgn_pool']} \
-        --activation {parameters['heterogeneity_tomodrgn_activation']} \
-        --num-seeds {parameters['heterogeneity_tomodrgn_num_seeds']} \
-        --num-heads {parameters['heterogeneity_tomodrgn_num_heads']} \
-        --l-extent {parameters['heterogeneity_tomodrgn_l_ext']} \
-        "
+    training_parameters = f"-n {parameters['heterogeneity_tomodrgn_train_epochs']} -b {parameters['heterogeneity_tomodrgn_train_batch']} --wd {parameters['heterogeneity_tomodrgn_train_wd']} --lr {parameters['heterogeneity_tomodrgn_train_lr']} --enc-layers-A {parameters['heterogeneity_tomodrgn_enc_lya']} --enc-dim-A {parameters['heterogeneity_tomodrgn_enc_dima']} --out-dim-A {parameters['heterogeneity_tomodrgn_out_dima']} --enc-layers-B {parameters['heterogeneity_tomodrgn_enc_lyb']} --enc-dim-B {parameters['heterogeneity_tomodrgn_enc_dimb']} --dec-layers {parameters['heterogeneity_tomodrgn_dec_hl']} --dec-dim {parameters['heterogeneity_tomodrgn_dec_dim']} --pe-type {parameters['heterogeneity_tomodrgn_pe_type']} --pooling-function {parameters['heterogeneity_tomodrgn_pool']} --activation {parameters['heterogeneity_tomodrgn_activation']} --num-seeds {parameters['heterogeneity_tomodrgn_num_seeds']} --num-heads {parameters['heterogeneity_tomodrgn_num_heads']} --l-extent {parameters['heterogeneity_tomodrgn_l_ext']}"
+
     if parameters["heterogeneity_tomodrgn_layer_norm"]:
         training_parameters += " --layer-norm"
 
@@ -169,7 +151,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
         tomo += f" --use-first-nptcls {parameters['heterogeneity_tomodrgn_use_ptl']}"
     
     if parameters["heterogeneity_tomodrgn_sequential_order"]:
-        tomo += " --sequential-tilt-sampling "
+        tomo += " --sequential-tilt-sampling"
     
     if parameters["heterogeneity_tomodrgn_use_firstn"] > 0:
         tomo += f" --use-first-ntilts {parameters['heterogeneity_tomodrgn_use_firstn']}"
@@ -270,12 +252,12 @@ def run_tomodrgn(project_dir, parameters):
     os.chdir(working_path)
 
     input_path =os.path.join(
-        project_dir, "frealign", "stacks",
+        project_params.resolve_path(parameters["data_parent"]), "frealign", "stacks",
     )
     name = parameters['data_set']
     starfile = name + "_particles.star"
 
-    input_star = Path(input_path) / starfile 
+    input_star = Path(project_params.resolve_path(parameters["heterogeneity_input_star"]))
     assert input_star.exists(), "Can not find input star file, run the extract stacks first."
 
     # this is the input star and partilces stacks folder
@@ -313,7 +295,7 @@ def run_tomodrgn(project_dir, parameters):
 
     if (working_path / "train_output" / "weights.pkl").exists() and (working_path / "train_output" / "z.train.pkl").exists():
         saved_folder = os.path.join(project_dir, "train")
-        logger.info(f"TomoDRGN finishes training, saving the training results to {saved_folder}")
+        logger.info(f"Training finished successfully, saving results to {saved_folder}")
 
         shutil.copytree((working_path / "train_output"), Path(saved_folder), dirs_exist_ok=True)
     else:
@@ -341,7 +323,7 @@ def train_nn(parameters, input_dir, name, output):
 
     options = f"--checkpoint {parameters['heterogeneity_tomodrgn_train_checkpoint']} \
         --log-interval {parameters['heterogeneity_tomodrgn_train_log_interval']} \
-        --num-workers 0 "
+        --num-workers 0"
 
     if parameters.get("heterogeneity_tomodrgn_train_weight") and os.path.exists(parameters["heterogeneity_tomodrgn_train_weight"]):
         options += f" --load {parameters['heterogeneity_tomodrgn_train_weight']}"
@@ -386,18 +368,10 @@ def train_nn(parameters, input_dir, name, output):
     # --enc-layers-B {parameters['heterogeneity_tomodrgn_enc_lyb']} \
     # --enc-dim-B {parameters['heterogeneity_tomodrgn_enc_dimb']} \
 
-    training_parameters = f"-n {parameters['heterogeneity_tomodrgn_train_epochs']} \
-        -b {parameters['heterogeneity_tomodrgn_train_batch']} \
-        --wd {parameters['heterogeneity_tomodrgn_train_wd']} \
-        --lr {parameters['heterogeneity_tomodrgn_train_lr']} \
-        --layers {parameters['heterogeneity_tomodrgn_layers']} \
-        --dim {parameters['heterogeneity_tomodrgn_dim']} \
-        --pe-dim {parameters['heterogeneity_tomodrgn_pe_type']} \
-        --dec-layers {parameters['heterogeneity_tomodrgn_dec_hl']} \
-        --pe-type {parameters['heterogeneity_tomodrgn_pe_type']} \
-        --activation {parameters['heterogeneity_tomodrgn_activation']} \
-        --l-extent {parameters['heterogeneity_tomodrgn_l_ext']} \
-        "
+    training_parameters = f"-n {parameters['heterogeneity_tomodrgn_train_epochs']} -b {parameters['heterogeneity_tomodrgn_train_batch']} --wd {parameters['heterogeneity_tomodrgn_train_wd']} --lr {parameters['heterogeneity_tomodrgn_train_lr']} \
+        --layers {parameters['heterogeneity_tomodrgn_layers']} --dim {parameters['heterogeneity_tomodrgn_dim']} --pe-dim {parameters['heterogeneity_tomodrgn_pe_type']} --dec-layers {parameters['heterogeneity_tomodrgn_dec_hl']} \
+        --pe-type {parameters['heterogeneity_tomodrgn_pe_type']} --activation {parameters['heterogeneity_tomodrgn_activation']} --l-extent {parameters['heterogeneity_tomodrgn_l_ext']}"
+
     if parameters["heterogeneity_tomodrgn_layer_norm"]:
         training_parameters += " --layer-norm"
 
@@ -442,7 +416,7 @@ def train_nn(parameters, input_dir, name, output):
         tomo += f" --sample-ntilts {parameters['heterogeneity_tomodrgn_sample_tilt']}"
     
     if parameters["heterogeneity_tomodrgn_sequential_order"]:
-        tomo += " --sequential-tilt-sampling "
+        tomo += " --sequential-tilt-sampling"
     
     if parameters["heterogeneity_tomodrgn_use_firstn"] > 0:
         tomo += f" --use-first-ntilts {parameters['heterogeneity_tomodrgn_use_firstn']}"
@@ -498,20 +472,9 @@ def convergence_vae(parameters, input_dir, output):
     """
     pixelsize = parameters['scope_pixel'] * parameters["data_bin"] * parameters["extract_bin"]
 
-    options = f" --poch-interval {parameters['heterogeneity_tomodrgn_epoch_interval']} \
-        --subset {parameters['heterogeneity_tomodrgn_subset']} \
-        --random-state {parameters['heterogeneity_tomodrgn_randomstate']} \
-        --n-epochs-umap {parameters['heterogeneity_tomodrgn_epochs_umap']} \
-        --n-bins {parameters['heterogeneity_tomodrgn_nbins']} \
-        --pruned-maxima {parameters['heterogeneity_tomodrgn_pruned_maxima']} \
-        --radius {parameters['heterogeneity_tomodrgn_radius']} \
-        --final-maxima {parameters['heterogeneity_tomodrgn_final_maxima']} \
-        --Apix {pixelsize} \
-        --max-threads {parameters['heterogeneity_tomodrgn_max_threads']} \
-        --thresh {parameters['heterogeneity_tomodrgn_thresh']} \
-        --dilate {parameters['heterogeneity_tomodrgn_dilate']} \
-        --dist {parameters['heterogeneity_tomodrgn_dist']} \
-        "
+    options = f" --poch-interval {parameters['heterogeneity_tomodrgn_epoch_interval']} --subset {parameters['heterogeneity_tomodrgn_subset']} --random-state {parameters['heterogeneity_tomodrgn_randomstate']} --n-epochs-umap {parameters['heterogeneity_tomodrgn_epochs_umap']} --n-bins {parameters['heterogeneity_tomodrgn_nbins']} \
+        --pruned-maxima {parameters['heterogeneity_tomodrgn_pruned_maxima']} --radius {parameters['heterogeneity_tomodrgn_radius']} --final-maxima {parameters['heterogeneity_tomodrgn_final_maxima']} --Apix {pixelsize} \
+        --max-threads {parameters['heterogeneity_tomodrgn_max_threads']} --thresh {parameters['heterogeneity_tomodrgn_thresh']} --dilate {parameters['heterogeneity_tomodrgn_dilate']} --dist {parameters['heterogeneity_tomodrgn_dist']}"
     
     if parameters["heterogeneity_tomodrgn_smooth"]:
         options += f" --smooth --smooth-width {parameters['heterogeneity_tomodrgn_smooth_width']}"

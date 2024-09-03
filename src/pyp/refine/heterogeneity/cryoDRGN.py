@@ -309,12 +309,12 @@ def run_cryodrgn(project_dir, parameters):
     os.chdir(working_path)
 
     input_path =os.path.join(
-        project_dir, "frealign", "stacks",
+        project_params.resolve_path(parameters["data_parent"]), "frealign", "stacks",
     )
     name = parameters['data_set']
     starfile = name + "_particles.star"
 
-    input_star = Path(input_path) / starfile 
+    input_star = Path(project_params.resolve_path(parameters["heterogeneity_input_star"]))
     assert input_star.exists(), "Can not find input star file, run the extract stacks first."
 
     # this is the input star and partilces stacks folder
@@ -352,7 +352,7 @@ def run_cryodrgn(project_dir, parameters):
 
     if (working_path / "train_output" / "weights.pkl").exists() and (working_path / "train_output" / "z.pkl").exists():
         saved_folder = os.path.join(project_dir, "train")
-        logger.info(f"CryoDRGN finishes training, saving the training results to {saved_folder}")
+        logger.info(f"Training finished successfully, saving results to {saved_folder}")
 
         shutil.copytree((working_path / "train_output"), Path(saved_folder), dirs_exist_ok=True)
     else:

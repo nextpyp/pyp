@@ -4358,7 +4358,7 @@ if __name__ == "__main__":
             try:
                 parameters = parse_arguments("pre_process")
 
-                if not "none" in parameters["heterogeneity_method"]:
+                if parameters["micromon_block"] == "tomo-drgn":
                     if parameters["data_mode"] == "spr":
                         set_up.prepare_spr_dir()
                     else:
@@ -4392,10 +4392,10 @@ if __name__ == "__main__":
 
                     project_dir = os.getcwd()
 
-                    if "CryoDRGN" in parameters["heterogeneity_method"]:
+                    if parameters["heterogeneity_method"] == "cryoDRGN":
                         cryoDRGN.run_cryodrgn(project_dir, parameters=parameters)
                     
-                    elif "TomoDRGN" in parameters["heterogeneity_method"]:
+                    elif parameters["heterogeneity_method"] == "tomoDRGN":
                         tomoDRGN.run_tomodrgn(project_dir, parameters=parameters)
                     
                     else:

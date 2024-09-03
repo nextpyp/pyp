@@ -4191,22 +4191,23 @@ hidden = true
 
 # heterogeneity analysis with ML
 [tabs.heterogeneity]
-_name = "CryoDRGN"
-_description = "CryoDRGN analysis"
+_name = "Continuous heterogeneity"
+_description = "Continuous heterogeneity analysis"
 _hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.heterogeneity.method]
-name = "Heterogeneity method"
-description = "CryoDGRGN run subtomogram or not"
+name = "Method"
+description = "Select method to use for heterogeneity analysis"
 type = "enum"
-enum = {CryoDRGN="CryoDRGN", TomoDRGN="TomoDRGN", none="none"}
-default = "none"
+enum = {cryoDRGN="cryoDRGN", tomoDRGN="tomoDRGN"}
+default = "tomoDRGN"
 
 [tabs.heterogeneity.input_star]
-name = "Input particle parameters"
-description = "Star file with particle alignment and metadata"
+name = "Input file"
+description = "Star file with particle alignments and metadata"
 type = "path"
 path = { type="files" }
+input = { type="starfile" }
 required = false
 
 [tabs.heterogeneity.cryodrgn_downsample_size]
@@ -4214,14 +4215,14 @@ name = "Downsample boxsize"
 description = "Downsampled particle boxsize for training"
 type = "float"
 default = 128
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_zdim]
 name = "ZDIM"
 description = "Dimension of latent variable"
 type = "int"
 default = 8
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_weight]
 name = "initial traning model"
@@ -4229,28 +4230,28 @@ description = "Initialize training from a checkpoint"
 type = "path"
 path = { type="files" }
 required = false
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_checkpoint]
 name = "Checkpoint interval"
 description = "Checkpointing interval in N_EPOCHS (default: 1)"
 type = "int"
 default = 1
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_log_interval]
 name = "Log interval"
 description = "Logging interval in N_IMGS (default: 1000)"
 type = "int"
 default = 1000
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_seed]
 name = "Random seed"
 description = "Random seed for training"
 type = "int"
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_ind]
 name = "Filter index"
@@ -4258,7 +4259,7 @@ description = "Filter particle stack by these indices, (pkl format)"
 type = "path"
 path = { type="files" }
 required = false
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_invert]
 name = "Invert data sign"
@@ -4266,14 +4267,14 @@ description = "Invert data sign or not"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_windowing]
 name = "Real space windowing"
 description = "Real space windowing of dataset"
 type = "bool"
 default = false
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_window_r]
 name = "Windowing radius"
@@ -4288,7 +4289,7 @@ description = "Path prefix to particle stack if loading relative paths from a .s
 type = "path"
 path = { type="folders" }
 required = false
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_lazy]
 name = "Lazy loading"
@@ -4296,7 +4297,7 @@ description = "Lazy loading if full dataset is too large to fit in memory"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_shufflersize]
 name = "Shuffler size"
@@ -4304,7 +4305,7 @@ description = "If non-zero, will use a data shuffler for faster lazy data loadin
 type = "int"
 default = 0
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 # [tabs.heterogeneity.cryodrgn_data_tilt]
 # name = "Tilt series particles stack"
@@ -4316,73 +4317,73 @@ condition = { arg="method", value="CryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_epochs]
 name = "Number of epochs"
-description = "Number of training epochs (default: 20)"
+description = "Number of training epochs"
 type = "int"
 default = 20
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_batch]
 name = "Batch size"
-description = "Minibatch size (default: 8)"
+description = "Minibatch size"
 type = "int"
 default = 8
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_wd]
 name = "Weight decay"
-description = "Weight decay in Adam optimizer (default: 0)"
+description = "Weight decay in Adam optimizer"
 type = "int"
 default = 0
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_lr]
 name = "Learning rate"
-description = "Learning rate in Adam optimizer (default: 0.0001)"
+description = "Learning rate in Adam optimizer"
 type = "float"
 default = 0.0001
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_beta]
 name = "Beta schedual"
 description = "Choice of beta schedule or a constant for KLD weight (default: 1/zdim), for tomo, use 0.025"
 type = "float"
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_beta_control]
 name = "Beta control"
 description = "KL-Controlled VAE gamma. Beta is KL target"
 type = "float"
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_norm]
 name = "Data normalization"
 description = "Data normalization as shift, 1/scale (default: mean, std of dataset)"
 type = "str"
 default = "None"
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_amp]
 name = "Use mixed_precision"
 description = "Use mixed-precision training"
 type = "bool"
 default = false
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_pose_sgd]
 name = "Pose SGD"
 description = "Refine poses with gradient descent"
 type = "bool"
 default = false
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_pretrain]
 name = "Pre-train epochs"
 description = "Number of epochs with fixed poses before pose SGD (default: 1)"
 type = "int"
 default = 1
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_emd_type]
 name = "Embedding type"
@@ -4390,28 +4391,28 @@ description = "SO(3) embedding type for pose SGD (default: quat)"
 type = "enum"
 enum = { s2s2="s2s2", quat="quat" }
 default = "quat"
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_pose_lr]
 name = "Pose learning rate"
 description = "Learning rate for pose optimizer (default: 0.0003)"
 type = "float"
 default = 0.0003
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_enc_hl]
 name = "Encoder layers"
 description = "Number of hidden layers for Encoder (default: 3)"
 type = "int"
 default = 3
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_enc_dim]
 name = "Encoder nodes"
 description = "Number of nodes in Encoder hidden layers (default: 1024)"
 type = "int"
 default = 1024
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_enc_mode]
 name = "Encoder Network"
@@ -4419,13 +4420,13 @@ description = "Type of encoder network (default: resid)"
 type = "enum"
 enum = { conv="conv", resid="resid", mlp="mlp", tilt="tilt" }
 default = "resid"
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_enc_mask]
 name = "Encoder mask"
 description = "Circular mask of image for encoder (default: D/2; -1 for no mask)"
 type = "float"
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_use_real]
 name = "Use real space"
@@ -4440,7 +4441,7 @@ description = "Number of decoder hidden layers (default: 3)"
 type = "int"
 default = 3
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_dec_dim]
 name = "Decoder nodes"
@@ -4448,7 +4449,7 @@ description = "Number of nodes in decoder hidden layers (default: 1024)"
 type = "int"
 default = 1024
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_pe_type]
 name = "Position encoding type"
@@ -4456,7 +4457,7 @@ description = "Type of positional encoding type (default: gausssian)"
 type = "enum"
 enum = {geom_ft="geom_ft", geom_full="geom_full", geom_lowf="geom_lowf", geom_nohighf="geom_nohighf", linear_lowf="linear_lowf", gaussian="gaussian", none="none"}
 default = "gaussian"
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_feat_sigma]
 name = "Gaussian features"
@@ -4464,14 +4465,14 @@ description = "Scale for random Gaussian features (default: 0.5)"
 type = "float"
 default = 0.5
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_pe_dim]
 name = "Positional frequencies"
 description = "Num frequencies in positional encoding (default: image D/2)"
 type = "float"
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_dec_domain]
 name = "Decoder representation"
@@ -4479,7 +4480,7 @@ description = "Volume decoder representation (default: Fourier)"
 type = "enum"
 enum = {hartley="hartley", fourier="fourier"}
 default = "fourier"
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_activation]
 name = "Activation"
@@ -4487,7 +4488,7 @@ description = "Activation"
 type = "enum"
 enum = {relu="relu", leaky_relu="leaky_relu"}
 default = "relu"
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_epoch]
 name = "Analysis epochs"
@@ -4495,21 +4496,21 @@ description = "Epoch number N to analyze (0-based indexing, corresponding to z.N
 type = "int"
 default = 0
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_skipv]
 name = "Skip volume generation"
 description = "Skip generation of volumes"
 type = "bool"
 default = false
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_skipumap]
 name = "Skip UMAP"
 description = "Skip running UMAP"
 type = "bool"
 default = false
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_flip]
 name = "Flip handedness"
@@ -4517,7 +4518,7 @@ description = "Flip handedness of output volumes"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_invert]
 name = "Invert contrast"
@@ -4525,27 +4526,27 @@ description = "Invert constast of output volumes"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_downsample]
 name = "Downsample output"
 description = "Downsample volumes to this box size (pixels)"
 type = "int"
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_pc]
 name = "Principal components"
 description = "Number of principal component traversals to generate (default: 2)"
 type = "int"
 default = 2
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_ksample]
-name = "kmeans samples"
-description = "Number of kmeans samples to generate (default: 20)"
+name = "K-means samples"
+description = "Number of k-means samples to generate (default: 20)"
 type = "int"
 default = 20
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_analysis_istart]
 name = "Start index"
@@ -4553,7 +4554,7 @@ description = "Default value of start index for volume generation (default: 0)"
 type = "int"
 default = 0
 advanced = true
-condition = { arg="method", value="CryoDRGN" }
+condition = { arg="method", value="cryoDRGN" }
 
 # [tabs.heterogeneity.tomodrgn_downsample_size]
 # name = "Downsample boxsize"
@@ -4567,14 +4568,14 @@ description = "TomoDRGN command type want to run"
 type = "enum"
 enum = {train_nn="train_nn", convergence_nn="convergence_nn", train_vae="train_vae", convergence_vae="convergence_vae", analysis="analysis", filter_star="filter_star", eval_vol="eval_vol", subtomo2chimerax="subtom2chimerax", eval_images="eval_images"}
 default = "train_vae"
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_zdim]
 name = "ZDIM"
 description = "Dimension of latent variable"
 type = "int"
 default = 128
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_weight]
 name = "initial traning model"
@@ -4582,7 +4583,7 @@ description = "Initialize training from a checkpoint"
 type = "path"
 path = { type="files" }
 required = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_checkpoint]
 name = "Checkpoint interval"
@@ -4595,14 +4596,14 @@ name = "Log interval"
 description = "Logging interval in N_IMGS (default: 1000)"
 type = "int"
 default = 1000
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_seed]
 name = "Random seed"
 description = "Random seed for training"
 type = "int"
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_data_ind]
 name = "Filter index"
@@ -4611,7 +4612,7 @@ type = "path"
 path = { type="files" }
 required = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_data_invert]
 name = "Invert data sign"
@@ -4619,14 +4620,14 @@ description = "Invert data sign or not"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_data_windowing]
 name = "Real space windowing"
 description = "Real space windowing of dataset"
 type = "bool"
 default = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_data_window_r]
 name = "Windowing radius"
@@ -4641,7 +4642,7 @@ description = "Path prefix to particle stack if loading relative paths from a .s
 type = "path"
 path = { type="folders" }
 required = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_data_lazy]
 name = "Lazy loading"
@@ -4649,112 +4650,112 @@ description = "Lazy loading if full dataset is too large to fit in memory"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_tilt_weight]
 name = "Cosine weight by tilt"
 description = "Weight reconstruction loss by cosine(tilt_angle)"
 type = "bool"
 default = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_dose_weight]
 name = "Weight by dose"
 description = "Weight reconstruction loss per tilt per pixel by dose dependent amplitude attenuation"
 type = "bool"
 default = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_dose]
 name = "Dose override"
 description = "Manually specify dose in e- / A2 / tilt"
 type = "float"
 default = 0.0
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_dose_mask]
 name = "Dose mask"
 description = "Do not train on frequencies exposed to > 2.5x critical dose. Training lattice is intersection of this with --l-extent"
 type = "bool"
 default = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_use_ptl]
 name = "Sample particles"
 description = "Keep the first N particles in the sorted star file. Default -1 means to use all"
 type = "int"
 default = -1
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_use_firstn]
 name = "Sample tilt"
 description = "Number of tilts to sample from each particle per epoch. Default: min(ntilts) from dataset"
 type = "int"
 default = 32
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_sequential_order]
 name = "Sequential order"
 description = "Supply particle images of one particle to encoder in starfile order"
 type = "bool"
 default = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_epochs]
 name = "Number of epochs"
-description = "Number of training epochs (default: 20)"
+description = "Number of training epochs"
 type = "int"
-default = 50
-condition = { arg="method", value="TomoDRGN" }
+default = 20
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_batch]
 name = "Batch size"
 description = "Minibatch size (default: 8)"
 type = "int"
-default = 8
-condition = { arg="method", value="TomoDRGN" }
+default = 1
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_wd]
 name = "Weight decay"
-description = "Weight decay in Adam optimizer (default: 0)"
+description = "Weight decay in Adam optimizer"
 type = "int"
 default = 0
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_lr]
 name = "Learning rate"
-description = "Learning rate in Adam optimizer (default: 0.0001)"
+description = "Learning rate in Adam optimizer"
 type = "float"
 default = 0.0001
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_beta]
 name = "Beta schedual"
 description = "Choice of beta schedule or a constant for KLD weight (default: 1/zdim)"
 type = "float"
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_beta_control]
 name = "Beta control"
 description = "KL-Controlled VAE gamma. Beta is KL target"
 type = "float"
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_data_norm]
 name = "Data normalization"
 description = "Data normalization as shift, 1/scale (default: mean, std of dataset)"
 type = "str"
 default = "None"
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_train_amp]
 name = "Use mixed_precision"
 description = "Use mixed-precision training"
 type = "bool"
 default = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 # [tabs.heterogeneity.tomodrgn_pose_sgd]
 # name = "Pose SGD"
@@ -4783,14 +4784,14 @@ condition = { arg="method", value="TomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_layers]
 name = "layers"
-description = "Number of hidden layers(default: 3)"
+description = "Number of hidden layers"
 type = "int"
 default = 3
 condition = {arg="tomodrgn_mode", value="train_nn"}
 
 [tabs.heterogeneity.tomodrgn_dim]
 name = "Number of nodes"
-description = "Number of nodes in hidden layers (default: 256)"
+description = "Number of nodes in hidden layers"
 type = "int"
 default = 256
 condition = {arg="tomodrgn_mode", value="train_nn"}
@@ -4812,17 +4813,17 @@ condition = {arg="tomodrgn_mode", value="convergence_nn"}
 
 [tabs.heterogeneity.tomodrgn_dc]
 name = "Include-dc"
-description = "Include FSC calculation for DC component, default False because DC component default excluded during training (default: False)"
+description = "Include FSC calculation for DC component, default False because DC component default excluded during training"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="convergence_nn"}
 
 [tabs.heterogeneity.tomodrgn_fscmask]
 name = "Fsc-mask"
-description = "Type of mask applied to volumes before calculating FSC (default: soft)"
+description = "Type of mask applied to volumes before calculating FSC"
 type = "enum"
 enum = { none="none", sphere="sphere", tight="tight", soft="soft" }
-default = "none"
+default = "soft"
 condition = {arg="tomodrgn_mode", value="convergence_nn"}
 
 # convergence_vae
@@ -4835,21 +4836,21 @@ condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_epoch_interval]
 name = "Epoch interval"
-description = "Interval of epochs between calculating most convergence heuristics (default: 5)"
+description = "Interval of epochs between calculating most convergence heuristics"
 type = "int"
 default = 5
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_force_umapcpu]
 name = "force-umap-cpu"
-description = "Override default UMAP GPU-bound implementation via cuML to use umap-learn library instead (default: False)"
+description = "Override default UMAP GPU-bound implementation via cuML to use umap-learn library instead"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_subset]
 name = "subset"
-description = "Max number of particles to be used for UMAP calculations. 'None' means use all ptcls (default: 50000)"
+description = "Max number of particles to be used for UMAP calculations. 'None' means use all ptcls"
 type = "int"
 default = 50000
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
@@ -4870,63 +4871,63 @@ condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_epochs_umap]
 name = "n-epochs-umap"
-description = "Number of epochs to train the UMAP embedding via cuML for a given z.pkl, as described in the cuml.UMAP documentation (default: 25000)"
+description = "Number of epochs to train the UMAP embedding via cuML for a given z.pkl, as described in the cuml.UMAP documentation"
 type = "int"
 default = 25000
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_skip_umap]
 name = "skip umap"
-description = "Skip UMAP embedding. Requires that UMAP be precomputed for downstream calcs. Useful for tweaking volume generation settings. (default: False)"
+description = "Skip UMAP embedding. Requires that UMAP be precomputed for downstream calcs. Useful for tweaking volume generation settings"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_nbins]
 name = "n-bins"
-description = "The number of bins along UMAP1 and UMAP2 (default: 30)"
+description = "The number of bins along UMAP1 and UMAP2"
 type = "int"
 default = 30
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_smooth]
 name = "smooth"
-description = "Mooth the 2D histogram before identifying local maxima (default: True)"
+description = "Mooth the 2D histogram before identifying local maxima"
 type = "bool"
 default = true
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_smooth_width]
 name = "smooth width"
-description = "Width of gaussian kernel for smoothing 2D histogram expressed as multiple of one bin's width (default: 1.0)"
+description = "Width of gaussian kernel for smoothing 2D histogram expressed as multiple of one bin's width"
 type = "float"
 default = 1.0
 condition = {arg="tomodrgn_smooth", value="true"}
 
 [tabs.heterogeneity.tomodrgn_pruned_maxima]
 name = "pruned-maxima"
-description = "Prune poorly-separated maxima until this many maxima remain (default: 12)"
+description = "Prune poorly-separated maxima until this many maxima remain"
 type = "int"
 default = 12
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_radius]
 name = "radius"
-description = "Distance at which two maxima are considered poorly-separated and are candidates for pruning (euclidean distance in bin-space) (default: 5.0)"
+description = "Distance at which two maxima are considered poorly-separated and are candidates for pruning (euclidean distance in bin-space)"
 type = "float"
 default = 5.0
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_final_maxima]
 name = "final-maxima"
-description = "select this many local maxima, sorted by highest bin count after pruning, for which to generate volumes (default: 10)"
+description = "select this many local maxima, sorted by highest bin count after pruning, for which to generate volumes"
 type = "int"
 default = 10
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_skip_vgen]
 name = "skip-volgen"
-description = "kip volume generation. Requires that volumes already exist for downstream CC + FSC calcs (default: False)"
+description = "kip volume generation. Requires that volumes already exist for downstream CC + FSC calcs"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
@@ -4940,28 +4941,28 @@ condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_max_threads]
 name = "max-threads"
-description = "Max number of threads used to parallelize mask generation (default: 8)"
+description = "Max number of threads used to parallelize mask generation"
 type = "int"
 default = 8
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_thresh]
 name = "Mask threshold"
-description = "Float, isosurface at which to threshold mask; default 0 uses 50th percentile (default: 0)"
+description = "Float, isosurface at which to threshold mask; default 0 uses 50th percentile"
 type = "float"
 default = 0
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_dist]
 name = "Mask soft edge"
-description = "Number of voxels over which to apply a soft cosine falling edge from dilated mask boundary (default: 10)"
+description = "Number of voxels over which to apply a soft cosine falling edge from dilated mask boundary"
 type = "int"
 default = 10
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_dilate]
 name = "Mask dilate"
-description = "Number of voxels to dilate thresholded isosurface outwards from mask boundary (default: 3)"
+description = "Number of voxels to dilate thresholded isosurface outwards from mask boundary"
 type = "int"
 default = 3
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
@@ -4972,38 +4973,38 @@ condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_enc_lya]
 name = "enc-layers-A"
-description = "Number of hidden layers for each tilt (default: 3)"
+description = "Number of hidden layers for each tilt"
 type = "int"
 default = 3
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_enc_dima]
 name = "enc-dim-A"
-description = "Number of nodes in hidden layers for each tilt (default: 256)"
+description = "Number of nodes in hidden layers for each tilt"
 type = "int"
 default = 256
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_out_dima]
 name = "out-dim-A"
-description = "Number of nodes in output layer of encA == ntilts * number of nodes input to encB (default: 128)"
+description = "Number of nodes in output layer of encA == ntilts * number of nodes input to encB"
 type = "int"
 default = 128
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_enc_lyb]
 name = "enc-layers-B"
-description = "Number of hidden layers encoding merged tilts (default: 3)"
+description = "Number of hidden layers encoding merged tilts"
 type = "int"
 default = 3
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_enc_dimb]
 name = "enc-dim-B"
 description = "Number of nodes in hidden layers encoding merged tilts (default: 512)"
 type = "int"
 default = 256
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_pool]
 name = "Pooling-function"
@@ -5012,38 +5013,38 @@ type = "enum"
 enum = { concatenate="concatenate", max="max", mean="mean", median="median", set_encoder="set_encoder" }
 default = "concatenate"
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_enc_mask]
 name = "Encoder mask"
 description = "Circular mask of image for encoder (default: D/2; -1 for no mask)"
 type = "float"
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_num_seeds]
 name = "Num-seeds"
-description = "Transformer number of seeds for PMA (default: 1)"
+description = "Transformer number of seeds for PMA"
 type = "int"
 default = 1
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_num_heads]
 name = "Num-heads"
-description = "number of heads for multi head attention blocks (default: 4)"
+description = "number of heads for multi head attention blocks"
 type = "int"
 default = 4
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_layer_norm]
 name = "layer-norm"
-description = "whether to apply layer normalization in the set transformer block (default: False)"
+description = "whether to apply layer normalization in the set transformer block"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 # [tabs.heterogeneity.tomodrgn_use_real]
 # name = "Use real space"
@@ -5054,11 +5055,11 @@ condition = { arg="method", value="TomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_dec_hl]
 name = "Decoder layers"
-description = "Number of decoder hidden layers (default: 3)"
+description = "Number of decoder hidden layers"
 type = "int"
 default = 3
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_dec_dim]
 name = "Decoder nodes"
@@ -5066,15 +5067,15 @@ description = "Number of nodes in decoder hidden layers (default: 1024)"
 type = "int"
 default = 256
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_l_ext]
 name = "l-extent"
-description = "Coordinate lattice size (if not using positional encoding) (default: 0.5)"
+description = "Coordinate lattice size (if not using positional encoding)"
 type = "float"
 default = 0.5
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_pe_type]
 name = "Position encoding type"
@@ -5082,11 +5083,11 @@ description = "Type of positional encoding type (default: gausssian)"
 type = "enum"
 enum = {geom_ft="geom_ft", geom_full="geom_full", geom_lowf="geom_lowf", geom_nohighf="geom_nohighf", linear_lowf="linear_lowf", gaussian="gaussian", none="none"}
 default = "gaussian"
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_feat_sigma]
 name = "Gaussian features"
-description = "Scale for random Gaussian features (default: 0.5)"
+description = "Scale for random Gaussian features"
 type = "float"
 default = 0.5
 advanced = true
@@ -5097,7 +5098,7 @@ name = "Positional frequencies"
 description = "Num frequencies in positional encoding (default: image D/2)"
 type = "float"
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 # [tabs.heterogeneity.tomodrgn_dec_domain]
 # name = "Decoder representation"
@@ -5112,39 +5113,39 @@ description = "Activation"
 type = "enum"
 enum = {relu="relu", leaky_relu="leaky_relu"}
 default = "relu"
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_num_workers]
 name = "Number of workers"
-description = "Number of workers to use when batching particles for training. Has moderate impact on epoch time (default: 0)"
+description = "Number of workers to use when batching particles for training. Has moderate impact on epoch time"
 type = "int"
 default = 0
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_prefetch_factor]
 name = "prefetch-factor"
-description = "Number of particles to prefetch per worker for training. Has moderate impact on epoch time (default: 2)"
+description = "Number of particles to prefetch per worker for training. Has moderate impact on epoch time"
 type = "int"
 default = 2
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_pst_wkrs]
 name = "Persistent-workers"
-description = "Whether to persist workers after dataset has been fully consumed. Has minimal impact on run time (default: false)"
+description = "Whether to persist workers after dataset has been fully consumed. Has minimal impact on run time"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_pin_mem]
 name = "Persistent-workers"
-description = "Whether to use pinned memory for dataloader. Has large impact on epoch time. Recommended. (default: false)"
+description = "Whether to use pinned memory for dataloader. Has large impact on epoch time. Recommended"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_epoch]
 name = "Analysis epochs"
@@ -5152,21 +5153,21 @@ description = "Epoch number N to analyze (0-based indexing, corresponding to z.N
 type = "int"
 default = 49
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_skipv]
 name = "Skip volume generation"
 description = "Skip generation of volumes"
 type = "bool"
 default = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_skipumap]
 name = "Skip UMAP"
 description = "Skip running UMAP"
 type = "bool"
 default = false
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_flip]
 name = "Flip handedness"
@@ -5174,7 +5175,7 @@ description = "Flip handedness of output volumes"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_invert]
 name = "Invert contrast"
@@ -5182,35 +5183,35 @@ description = "Invert constast of output volumes"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_downsample]
 name = "Downsample output"
 description = "Downsample volumes to this box size (pixels)"
 type = "int"
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_pc]
 name = "Principal components"
-description = "Number of principal component traversals to generate (default: 2)"
+description = "Number of principal component traversals to generate"
 type = "int"
 default = 2
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_ksample]
-name = "kmeans samples"
-description = "Number of kmeans samples to generate (default: 20)"
+name = "K-means samples"
+description = "Number of k-means samples to generate"
 type = "int"
 default = 20
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 [tabs.heterogeneity.tomodrgn_analysis_pc_ondata]
 name = "pc-ondata"
-description = "Find closest on-data latent point to each PC percentile (default: False)"
+description = "Find closest on-data latent point to each PC percentile"
 type = "bool"
 default = false
 advanced = true
-condition = { arg="method", value="TomoDRGN" }
+condition = { arg="method", value="tomoDRGN" }
 
 # Sub-Volume Averaging
 
