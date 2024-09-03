@@ -260,7 +260,7 @@ def create_micrographs_list(parameters):
             data_folder = data_path.parent
             mdocs = list(data_folder.glob(mdoc_pattern))
 
-        if parameters["data_mode"] == "tomo": 
+        if parameters["data_mode"] == "tomo" and not parameters["movie_no_frames"]:
             if not parameters["movie_mdoc"] and len(parameters["movie_pattern"]) > 0 and len(glob.glob("raw/*" + movie_extension)) > 0:
                 regex = movie2regex(parameters["movie_pattern"], filename="*")
                 r = re.compile(regex)
@@ -275,8 +275,8 @@ def create_micrographs_list(parameters):
                 files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
                 logger.info("Create micrograph list using mdocs files")
                 # NOTE: one mdoc for one tilt-series (rather than one tilt)
-            else:
-                logger.info("Create micrograph list using detected files (one mrc per tilt-series)")
+        else:
+            logger.info("Create micrograph list using detected files (one mrc per tilt-series)")
 
         files = sorted(list(set(files)))
         logger.info("Found {} unique file(s) for processing".format(len(files)))
@@ -503,6 +503,19 @@ def parse_parameters(my_parameters,block,mode):
 
     # only check tabs included in current block and mode
     blocks = [ specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and ( ( block in b and block != "import" ) or b.endswith("_import_raw") ) ]
+
+    extra_blocks = []
+    if "tomo" in mode:
+        if "pre_process" in block:
+            extra_blocks = ["tomo_denoise", "tomo_segment_open", "tomo_segment_close", "tomo_picking", "tomo_drgn", "tomo_segment", "tomo_milo", "tomo_par_open" ]
+    else:
+        if "pre_process" in block:
+            extra_blocks = [ "spr_denoise", "spr_picking", "spr_drgn" ]
+
+    if len(extra_blocks) > 0:    
+        for extra_block in extra_blocks:
+            blocks.extend([specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and extra_block in b ])
+
     blocks = list(np.unique(np.concatenate(blocks).flat))
     tabs = {}
     tabs["_name"] = specifications["tabs"]["_name"]
@@ -880,6 +893,9 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     new_parameters["tomo_rec_force"] = True
                     new_parameters["tomo_vir_force"] = True
                     clean_tomo_vir_particles(project_dir)
+                    new_parameters["detect_force"] = True
+                    clean_picking_files(project_dir)
+                    new_parameters["ctf_force"] = True
 
                 elif "tomo_rec" in k:
                     logger.info(
@@ -889,8 +905,10 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     if not "tomo_rec_erase_fiducials" in k:
                         new_parameters["tomo_vir_force"] = True
                         clean_tomo_vir_particles(project_dir)
+                        new_parameters["detect_force"] = True
+                        clean_picking_files(project_dir)
 
-                elif "tomo_vir_" in k and "tomo_vir_detect_" not in k:
+                elif ( "tomo_vir_" in k and "tomo_srf_detect_" not in k ) or "tomo_sphere_" in k or ("tomo_spk_" in k and new_parameters["micromon_block"] == "tomo-picking") or new_parameters["micromon_block"] == "tomo-segmentation-closed":
                     logger.info(
                         f"Virions will be re-computed to reflect change in parameter {k}"
                     )

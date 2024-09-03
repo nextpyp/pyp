@@ -18,7 +18,7 @@ from pyp.merge import weights as pyp_weights
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import get_imod_path, get_aretomo_path, get_topaz_path, get_gpu_id
+from pyp.system.utils import get_imod_path, get_aretomo_path, get_topaz_path, get_gpu_ids
 from pyp.utils import get_relative_path
 from pyp.utils.timer import Timer
 
@@ -297,7 +297,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     if 'imod' in parameters["tomo_rec_method"].lower():
 
-        if False and parameters["tomo_rec_square"]:
+        if False and parameters["tomo_ali_square"]:
             command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -SLICE 0,{2} -THICKNESS {3} -WIDTH {4} -IMAGEBINNED {5} -FULLIMAGE {6},{4} {7} {8}".format(
                 get_imod_path(), name, x - 1, thickness, y, binning, x, tilt_options, zfact,
             )
@@ -340,42 +340,5 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 {reconstruct_option} \
 -Align 0 \
--Gpu {get_gpu_id()}"
+-Gpu {get_gpu_ids(parameters,separator=' ')}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
-
-    if parameters["tomo_rec_topaz_denoise"]:
-
-        """
-        usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
-                    [-a EVEN_TRAIN_PATH] [-b ODD_TRAIN_PATH] [--N-train N_TRAIN]
-                    [--N-test N_TEST] [-c CROP]
-                    [--base-kernel-width BASE_KERNEL_WIDTH]
-                    [--optim {adam,adagrad,sgd}] [--lr LR] [--criteria {L1,L2}]
-                    [--momentum MOMENTUM] [--batch-size BATCH_SIZE]
-                    [--num-epochs NUM_EPOCHS] [-w WEIGHT_DECAY]
-                    [--save-interval SAVE_INTERVAL] [--save-prefix SAVE_PREFIX]
-                    [--num-workers NUM_WORKERS] [-j NUM_THREADS] [-g GAUSSIAN]
-                    [-s PATCH_SIZE] [-p PATCH_PADDING] [-d DEVICE]
-                    [volumes ...]
-        """
-
-        # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
-        import torch
-        if torch.cuda.is_available():
-            devices = 0
-        else:
-            devices = -1
-
-        time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
-        logger.info("Denoising tomogram using Topaz")
-        command = f"{get_topaz_path()}/topaz denoise3d \
-{name}.rec \
---model {parameters['tomo_rec_topaz_model']} \
---device {devices} \
---gaussian {parameters['tomo_rec_topaz_gaussian']} \
---patch-size {parameters['tomo_rec_topaz_patch_size']} \
---patch-padding {parameters['tomo_rec_topaz_patch_padding']} \
---output {os.getcwd()} \
-2>&1 | tee {time_stamp}_topaz_denoise3d.log"
-
-        run_shell_command(command, verbose=parameters['slurm_verbose'])

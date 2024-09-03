@@ -22,14 +22,14 @@ logger = initialize_pyp_logger(log_name=relative_path)
 
 def tomo_spk_is_required(parameters):
     """Whether to detect and extract spikes."""
-    return "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0
+    return "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 or parameters.get("tomo_srf_detect_method") != "none"
 
 def tomo_subvolume_extract_is_required(parameters):
     return "tomo_ext_size" in parameters and parameters["tomo_ext_size"] > 0 and parameters["tomo_ext_fmt"] != "none"
 
 def tomo_vir_is_required(parameters):
     """Whether to detect and extract virions."""
-    return "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" and "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0
+    return "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" and "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0 or parameters["micromon_block"] == "tomo-picking-closed"
 
 
 def is_required(parameters,name):
@@ -1091,6 +1091,17 @@ def pick_particles(
                     "{}.box".format(name), boxes * data_bin * auto_binning, fmt="%i\t"
                 )
 
+        elif mparameters["detect_method"] == "import" and os.path.exists(project_params.resolve_path(mparameters["detect_files"])):
+            box_file = os.path.join(project_params.resolve_path(mparameters["detect_files"]), f"{name}.box")
+            if os.path.exists(box_file):
+                boxes = np.loadtxt(box_file, ndmin=2)
+                add_columns = np.zeros([boxes.shape[0], 2])
+                boxes = np.hstack((boxes, add_columns))
+                np.savetxt(
+                        "{}.box".format(name), boxes, fmt="%f\t"
+                        )
+            else:
+                logger.warning("Couldn't find any box file for this image")
         else:
             logger.error(
                 f"Particle picking strategy not recognized: {mparameters['detect_method']}"

@@ -127,7 +127,7 @@ done
         if csp_no_stacks and "classmerge" not in jobtype:
             cmdlist.append("unset %s \n" % jobtype)
             cmdlist.append(
-                "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path '{1}/$OUTPUT_BASENAME'\n".format(
+                "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path {1}/$OUTPUT_BASENAME\n".format(
                     run_pyp(command="pyp", script=True, cpus=threads),
                     Path(os.environ["PYP_SCRATCH"]),
                 ),
@@ -313,12 +313,12 @@ def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None, acco
         "--cpus-per-task=%d" % threads,
         "--time=%s" % walltime,
         "--mem=%sG" % memory,
-        "--job-name='%s'" % jobname,
+        "--job-name=%s" % jobname,
     ]
     if gres != "" and gres != None:
-        args.append("--gres=%s" % json.dumps(gres))
+        args.append("--gres=%s" % gres)
     if account != "" and account != None:
-        args.append("--account=%s" % json.dumps(account))
+        args.append("--account=%s" % account)
     return args
 
 def submit_script(

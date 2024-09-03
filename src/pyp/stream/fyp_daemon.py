@@ -14,7 +14,7 @@ import numpy as np
 
 from pyp.inout.image import mrc
 from pyp.inout.metadata import frealign_parfile, pyp_metadata, generateRelionParFileNew
-from pyp.inout.metadata.core import spa_extract_coordinates, get_max_resolution
+from pyp.inout.metadata.core import spa_extract_coordinates_legacy, get_max_resolution
 from pyp.refine.frealign import frealign
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import mpi, project_params
@@ -55,7 +55,7 @@ def get_allboxes_and_allparxs_from_box(
     current_directory = Path.cwd()
     os.chdir(project_folder)
     try:
-        [allboxes, allparxs] = spa_extract_coordinates(
+        [allboxes, allparxs] = spa_extract_coordinates_legacy(
             filename=pkl_file.stem,
             parameters=parameters,
             only_inside=False,
@@ -141,7 +141,7 @@ def get_positions_and_new_particle_count_from_box_files(
                                 logger.info(f"Number of particles from {film_name}: {len(lines)}")
                             if len(lines) != len(allboxes):
                                 logger.error(
-                                    "Number of particles does not match number of coordinates to extract. "
+                                    "Number of particles does not match number of coordinates to extract"
                                     f"Removing {allparxs_fpath}"
                                 )
                                 os.remove(allparxs_fpath)

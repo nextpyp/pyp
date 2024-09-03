@@ -10,13 +10,15 @@ import numpy as np
 import pandas as pd
 import scipy
 from pathlib import Path
+import json
 
 from pyp import merge
 from pyp.analysis import statistics, plot, geometry
 from pyp.inout.image import mrc
-from pyp.inout.metadata import frealign_parfile, pyp_metadata 
+from pyp.inout.metadata import frealign_parfile, pyp_metadata , get_particles_tilt_index
+from pyp.inout.metadata import cistem_star_file
 from pyp.refine.frealign import frealign
-from pyp.system import project_params, user_comm
+from pyp.system import project_params, mpi
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path, timer, symlink_relative
@@ -206,7 +208,7 @@ def per_frame_scoring(
 
 
 def assign_angular_defocus_groups(
-    parfile: str, angles: int, defocuses: int, frealignx: bool = False
+    input, angles: int, defocuses: int
 ):
     """Divide particles in parameter file into a discrete number of angular and defocus groups.
 
@@ -232,7 +234,7 @@ def assign_angular_defocus_groups(
     """
 
 
-    
+    """
     # load .parx file
     if os.path.isfile(parfile):
 
@@ -249,22 +251,26 @@ def assign_angular_defocus_groups(
     else:
         logger.error("{} not found.".format(parfile))
         sys.exit(0)
+    """
+    par_obj = cistem_star_file.Parameters()
+    theta = par_obj.get_index_of_column(cistem_star_file.THETA)
+    defocus_1 = par_obj.get_index_of_column(cistem_star_file.DEFOCUS_1)
 
-    angular_group = np.floor(np.mod(input[:, 2], 180) * angles / 180)
+    angular_group = np.floor(np.mod(input[:, theta], 180) * angles / 180)
     if input.shape[0] > 0:
         mind, maxd = (
-            int(math.floor(input[:, 8].min())),
-            int(math.ceil(input[:, 8].max())),
+            int(math.floor(input[:, defocus_1].min())),
+            int(math.ceil(input[:, defocus_1].max())),
         )
     else:
         mind = maxd = 0
     if maxd == mind:
         defocus_group = np.zeros(angular_group.shape)
     else:
-        defocus_group = np.round((input[:, 8] - mind) / (maxd - mind) * (defocuses - 1))
+        defocus_group = np.round((input[:, defocus_1] - mind) / (maxd - mind) * (defocuses - 1))
 
     # return input, angular_group, defocus_group
-    return par_obj, angular_group, defocus_group
+    return angular_group, defocus_group
 
 
 def generate_cluster_stacks(inputstack, parfile, angles=25, defocuses=25):
@@ -312,37 +318,64 @@ def shape_phase_residuals(
     reverse,
     consistency,
     scores,
-    frealignx,
     odd,
     even,
-    outputparfile,
-    png_file
+    outputparfile
 ):
 
+    cistem_par = cistem_star_file.Parameters.from_file(inputparfile)
+    filmid = cistem_par.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+    field = cistem_par.get_index_of_column(cistem_star_file.SCORE)
+    occ = cistem_par.get_index_of_column(cistem_star_file.OCCUPANCY)
+    tind = cistem_par.get_index_of_column(cistem_star_file.TIND)
+    defocus1 = cistem_par.get_index_of_column(cistem_star_file.DEFOCUS_1)
+    ptlindex = cistem_par.get_index_of_column(cistem_star_file.PIND)
 
-    if scores and not frealignx:
-        field = 14
-        occ = 11
-    elif frealignx:
-        field = 15
-        occ = 12
-    else:
-        field = 11
+    input = cistem_par.get_data()
+    films = np.unique(input[:, filmid])
 
     # read interesting part of input file
-    par_obj, angular_group, defocus_group = assign_angular_defocus_groups(
-        inputparfile, angles, defocuses, frealignx
+    angular_group, defocus_group = assign_angular_defocus_groups(
+        input, angles, defocuses
     )
-    input = par_obj.data
 
     # figure out tomo or spr by check tilt angles
-    tltangle = field + 3
-    ptlindex = field + 2
-    
-    if np.any(input[:, tltangle] !=0 ):
+    # tilts_dict = cistem_par.get_extended_data().get_tilts()
+    merged_extend = inputparfile.replace(".cistem", ".json")
+    with open(merged_extend, 'r') as jsonfile:
+        tilts_dict = json.load(jsonfile)
+        any_key = next(iter(tilts_dict.keys()))
+
+    if any(abs(value) > 0 for value in tilts_dict[any_key].values()):
         is_tomo = True
     else:
         is_tomo = False
+        
+    tiltangle = []
+
+    if is_tomo:
+        for f in films:
+            # contruct a tilt angle dictionary
+            # tind_angle_dict = {i: tilts_dict[f][i][0].angle for i in tilts_dict[f].keys()}
+            tind_angle_dict = tilts_dict[str(int(f))]
+
+            tind_angle_dict_int = {int(k): v for k, v in tind_angle_dict.items()} # json way saving dict as str but we need int
+            tind_in_film = input[input[:, filmid]==f][:, tind]
+
+            df_tind = pd.DataFrame(tind_in_film, columns=["Tind"])
+            # mapped_angles = np.vectorize(tind_angle_dict.get)(tind_in_film)
+            df_tind["Angle"] = df_tind["Tind"].map(tind_angle_dict_int)
+            tiltangle.append(df_tind["Angle"].to_numpy())
+            # for ti in input[input[:, filmid]==f][:, tind]:
+            #    tiltangle.append(tilts_dict[f][ti][0].angle )
+        tilt_angle_array = np.concatenate(tiltangle).reshape(-1, 1)
+
+    else:
+        tilt_angle_array = np.array([0] * input.shape[0]).reshape(-1, 1)
+
+    input = np.hstack((input, tilt_angle_array))
+
+    tltangle = -1 # tilt angle column as the last column temporarily
 
     import matplotlib as mpl
 
@@ -351,7 +384,7 @@ def shape_phase_residuals(
     from matplotlib import cm
 
     # additional sorting if matches available
-    name = inputparfile[:-4]
+    name = inputparfile[:-7]
     fmatch_stack = "../maps/{0}_match_unsorted.mrc".format(name)
     metric_weights = np.ones(input.shape[0])
     if os.path.exists(fmatch_stack):
@@ -361,10 +394,12 @@ def shape_phase_residuals(
     else:
         msize = 0
         mask = np.array([])
-
+    
+    """
     pool = multiprocessing.Pool()
     manager = multiprocessing.Manager()
     results = manager.Queue()
+    """
 
     # determine per-cluster threshold
     thresholds = np.empty([angles, defocuses])
@@ -373,6 +408,7 @@ def shape_phase_residuals(
     min_scores[:] = np.nan
     max_scores = np.empty([angles, defocuses])
     max_scores[:] = np.nan
+
     for g in range(angles):
         for f in range(defocuses):
             # get all images in present cluster
@@ -399,7 +435,18 @@ def shape_phase_residuals(
                 # find cluster threshold using either percentage of size or absolute number of images
 
                 if threshold == 0:
-                    prs = np.extract(cluster == 1, input[:, field])
+                    
+                    if is_tomo:
+                        bool_array = np.full(input.shape[0], False, dtype=bool)
+                        bool_array[cluster] = True
+                        take_values = np.logical_and(bool_array, np.abs(input[:, tltangle]) <= 12)
+                        used_array = input[take_values]
+                        scores_used = used_array[:, [field, ptlindex]]
+                        pf = pd.DataFrame(scores_used, columns=["score", "pind"])
+                        prs = pf.groupby("pind")["score"].mean()
+                    else:
+                        prs = np.extract(cluster == 1, input[:, field])
+                        
                     optimal_threshold = 1.075 * statistics.optimal_threshold(samples=prs, criteria="optimal")
                     if prs.size > 1:
                         mythreshold = optimal_threshold
@@ -420,35 +467,41 @@ def shape_phase_residuals(
 
                 elif threshold <= 1:
                     # cluster = input[ np.logical_and( angular_group == g, defocus_group == f ) ]
-                    if scores or frealignx:
+                    if scores:
                         # thresholds[g,f] = cluster[ cluster[:,field].argsort() ][ int( (cluster.shape[0]-1) * (1-threshold) ), field ]
                         if is_tomo:
                             bool_array = np.full(input.shape[0], False, dtype=bool)
                             bool_array[cluster] = True
-                            take_values = np.logical_and(bool_array, np.abs(input[:, tltangle]) < 10)
+                            take_values = np.logical_and(bool_array, np.abs(input[:, tltangle]) <= 12)
                             used_array = input[take_values]
                             scores_used = used_array[:, [field, ptlindex]]
-                            take_mean = []
-                            for i in np.unique(scores_used[:, 1]):
-                                take_mean.append(np.mean(scores_used[:, 0], where=scores_used[:,1]==i))
+                            pf = pd.DataFrame(scores_used, columns=["score", "pind"])
+                            meanscore = pf.groupby("pind")["score"].mean()
+                            
+                            # take_mean = []
+                            # for i in np.unique(scores_used[:, 1]):
+                            #     take_mean.append(np.mean(scores_used[:, 0], where=scores_used[:,1]==i))
 
-                            meanscore = np.array(take_mean)
+                            # meanscore = np.array(take_mean)
                             thresholds[g, f] = np.sort(meanscore)[
                                 int((meanscore.shape[0] - 1) * (1 - threshold))
                             ]
-                            logger.info(f"Minimum score used for reconstruction = {thresholds[g, f]:.2f}")
+                            
                         else:
                             thresholds[g, f] = np.sort(input[cluster, field])[
                                 int((cluster.shape[0] - 1) * (1 - threshold))
                             ]
+
+                        logger.info(f"Minimum score used for reconstruction = {thresholds[g, f]:.2f}")
                     else:
                         # thresholds[g,f] = cluster[ cluster[:,field].argsort() ][ int( (cluster.shape[0]-1) * threshold ), field ]
                         thresholds[g, f] = np.sort(input[cluster, field])[
                             int((cluster.shape[0] - 1) * threshold)
                         ]
+
                 else:
                     # cluster = input[ np.logical_and( angular_group == g, defocus_group == f ) ]
-                    if scores or frealignx:
+                    if scores:
                         thresholds[g, f] = cluster[cluster[:, field].argsort()][
                             min(cluster.shape[0] - threshold, cluster.shape[0]) - 1,
                             field,
@@ -475,7 +528,8 @@ def shape_phase_residuals(
 
             else:
                 logger.warning("No points in angular/defocus group.")
-
+    
+    """
     pool.close()
     pool.join()
 
@@ -496,6 +550,7 @@ def shape_phase_residuals(
             )
         bad_particles += np.where(current[4] == 0, 1, 0).sum()
         total_particles += len(current[3])
+    """
 
     from scipy.ndimage.filters import gaussian_filter
 
@@ -514,23 +569,40 @@ def shape_phase_residuals(
     for g in range(angles):
         for f in range(defocuses):
             # if threshold != 1:
-            if scores or frealignx:
+            if scores:
                 # input[:,field] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), np.nan, input[:,field] )
                 # input[:,occ] = np.where( np.logical_and( np.logical_and( angular_group == g, defocus_group == f ), input[:,field] < thresholds[g,f] ), 0, input[:,occ] )
                 if is_tomo and thresholds[g, f] > 0:
-                    input_group = input[np.logical_and(angular_group == g, defocus_group == f)]
-                    ptl_index = np.unique(input_group[:, ptlindex])
+                    group_mask = np.logical_and(angular_group == g, defocus_group == f)
+                    input_group = input[group_mask]
 
-                    for i in ptl_index:
-                        ptl_field_array = input_group[input_group[:, ptlindex] == i, field]
-                        tltangle_array = input_group[input_group[:, ptlindex] == i, tltangle]
-                        meanfrom = ptl_field_array[np.abs(tltangle_array) < 10]
+                    crop_array = input_group[:, [occ, field, ptlindex, tltangle]]
+                    crop_by_tltangle = crop_array[np.abs(crop_array[:, -1]) < 10]
+                    ptl_index = np.unique(crop_by_tltangle[:, 2])
+                    df = pd.DataFrame(crop_by_tltangle, columns=["occ", "score", "pind", "tltangle"])
+                    meanscore = df.groupby("pind")["score"].mean().to_numpy()
+                    above_threshold = meanscore >= thresholds[g, f]
+                    discarded = ptl_index[above_threshold == False].size
+                    if discarded > 0:
+                        logger.info(f"{discarded} particles scores are below the threshold and being removed from reconstruction")
+                    modification_mask = np.isin(input_group[:, ptlindex], ptl_index[above_threshold == False])
 
-                        input[input[:, ptlindex] == i, occ] = np.where(
-                        np.array( [ 0 if meanfrom.size == 0 else np.mean(meanfrom) ] * ptl_field_array.shape[0] ) < thresholds[g, f],
+                    group_mask[group_mask == True] = modification_mask
+                    input[group_mask, occ] = 0 
+                    
+                    # enable the score range threshold
+                    input[:, occ] = np.where(
+                        np.logical_and(
+                            np.logical_and(angular_group == g, defocus_group == f),
+                            np.logical_or(
+                                input[:, field] < min_scores[g, f],
+                                input[:, field] > max_scores[g, f],
+                            ),
+                        ),
                         0,
-                        input[input[:, ptlindex] == i, occ],
-                        )
+                        input[:, occ],
+                    )
+
                 else:
                     input[:, occ] = np.where(
                         np.logical_and(
@@ -545,9 +617,7 @@ def shape_phase_residuals(
                         ),
                         0,
                         input[:, occ],
-                    )
-                number = input[input[:, occ]==0].shape[0]
-                logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
+                    )  
 
     if os.path.exists(fmatch_stack):
         logger.info(
@@ -567,23 +637,17 @@ def shape_phase_residuals(
         )
 
     # ignore if defocus outside permissible range
-    if scores or frealignx:
+    if scores:
         input[:, occ] = np.where(
-            np.logical_or(input[:, 8] < mindefocus, input[:, 8] > maxdefocus),
+            np.logical_or(input[:, defocus1] < mindefocus, input[:, defocus1] > maxdefocus),
             0,
             input[:, occ],
         )
-    """
-    else:
-        input[:, field] = np.where(
-            np.logical_or(input[:, 8] < mindefocus, input[:, 8] > maxdefocus),
-            np.nan,
-            input[:, field],
-        )
-    """
+
+
     # shape accorging to assigned top/side view orientations using mintilt and maxtilt values
     if maxazh < 180 or minazh > 0:
-        if scores or frealignx:
+        if scores:
             input[:, occ] = np.where(
                 np.logical_or(
                     np.mod(input[:, 2], 180) < minazh, np.mod(input[:, 2], 180) > maxazh
@@ -591,74 +655,26 @@ def shape_phase_residuals(
                 0,
                 input[:, occ],
             )
-        """
-        else:
-            input[:, field] = np.where(
-                np.logical_or(
-                    np.mod(input[:, 2], 180) < minazh, np.mod(input[:, 2], 180) > maxazh
-                ),
-                np.nan,
-                input[:, field],
-            )
-        """
-    # if extended .parx format
 
-    if (scores and input.shape[1] > 16) or (frealignx and input.shape[1] > 17):
+    if scores:
 
         # shape based on exposure sequence
         if lastframe > -1:
-            if scores and not frealignx:
+            if scores:
                 input[:, occ] = np.where(
-                    np.logical_or(input[:, 19] < firstframe, input[:, 19] > lastframe),
+                    np.logical_or(input[:, tind] < firstframe, input[:, tind] > lastframe),
                     0,
                     input[:, occ],
                 )
-            elif frealignx:
-                input[:, occ] = np.where(
-                    np.logical_or(input[:, 20] < firstframe, input[:, 20] > lastframe),
-                    0,
-                    input[:, occ],
-                )
-            """
-            else:
-                input[:, field] = np.where(
-                    np.logical_or(input[:, 19] < firstframe, input[:, 19] > lastframe),
-                    np.nan,
-                    input[:, field],
-                )
-            """
-        else:
-            if scores and not frealignx:
-                input[:, occ] = np.where(input[:, 19] < firstframe, 0, input[:, occ])
-            elif frealignx:
-                input[:, occ] = np.where(input[:, 20] < firstframe, 0, input[:, occ])
-            """
-            else:
-                input[:, field] = np.where(
-                    input[:, 19] < firstframe, np.nan, input[:, field]
-                )
-            """
+
         # shape based on tilt-angle
-        if scores and not frealignx:
+        if scores:
             input[:, occ] = np.where(
-                np.logical_or(input[:, 17] < mintilt, input[:, 17] > maxtilt),
+                np.logical_or(input[:, -1] < mintilt, input[:, -1] > maxtilt),
                 0,
                 input[:, occ],
             )
-        elif frealignx:
-            input[:, occ] = np.where(
-                np.logical_or(input[:, 18] < mintilt, input[:, 18] > maxtilt),
-                0,
-                input[:, occ],
-            )
-        """
-       else:
-            input[:, field] = np.where(
-                np.logical_or(input[:, 17] < mintilt, input[:, 17] > maxtilt),
-                np.nan,
-                input[:, field],
-            )
-        """
+
     # revert phase residual polarity so that lowest PR become highest and viceversa
     if reverse:
         min_pr = np.extract(np.isfinite(input[:, field]), input[:, field]).min()
@@ -717,7 +733,7 @@ def shape_phase_residuals(
             )
 
     if odd:
-        if scores or frealignx:
+        if scores:
             input[::2, occ] = 0
         else:
             input[::2, field] = np.nan
@@ -728,59 +744,17 @@ def shape_phase_residuals(
         else:
             input[1::2, field] = np.nan
 
-    # write output parameter file
-    # new_par_obj = frealign_parfile.Parameters(version, extended=extended, data=input, prologue=prologue, epilogue=epilogue)
-    # new_par_obj.write_file(outputparfile)
+    number = input[input[:, occ]==0].shape[0]
+    logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
 
-    par_obj.write_file(outputparfile)
-    return par_obj
-    # f = open(outputparfile, "w")
-    # for line in open(inputparfile):
-    #     if line.startswith("C"):
-    #         f.write(line)
-    # for i in range(input.shape[0]):
-    #     if scores:
-    #         f.write(frealign_parfile.NEW_PAR_STRING_TEMPLATE % tuple(input[i, :16]))
-    #     elif frealignx:
-    #         f.write(frealign_parfile.FREALIGNX_PAR_STRING_TEMPLATE % tuple(input[i, :17]))
-    #     else:
-    #         f.write(frealign_parfile.CCLIN_PAR_STRING_TEMPLATE % tuple(input[i, :13]))
-    #     f.write("\n")
-    # f.close()
-    #
-    # if scores:
-    #     columns = 16
-    #     width = 137
-    # elif frealignx:
-    #     columns = 17
-    #     width = 145
-    # else:
-    #     columns = 13
-    #     width = 103
-
-    # if input.shape[1] > columns:
-    #     # compose extended .parx file
-    #     long_file = [line for line in open(inputparfile) if not line.startswith("C")]
-    #     short_file = [line for line in open(outputparfile) if not line.startswith("C")]
-    #     if (
-    #         len(long_file[0].split()) > columns
-    #         and not len(short_file[0].split()) > columns
-    #         and not "star" in outputparfile
-    #     ):
-
-    #         logger.info("merging", inputparfile, "with", outputparfile, "into", outputparfile)
-
-    #         f = open(outputparfile, "w")
-    #         [f.write(line) for line in open(inputparfile) if line.startswith("C")]
-    #         for i, j in zip(short_file, long_file):
-    #             f.write(i[:-1] + j[width - 1 :])
-    #         f.close()
+    cistem_par.set_data(input[:, :-1]) # not including the tilt angle column
+    cistem_par.to_binary(outputparfile)
 
 @timer.Timer(
     "call_shape_phase_residuals", text="Shaping scores took: {}", logger=logger.info
 )
 def call_shape_phase_residuals(
-    input_par_file, output_par_file, png_file, fp, iteration
+    input_par_file, output_par_file, fp, iteration
 ):
 
     mindefocus = float(project_params.param(fp["reconstruct_mindef"], iteration))
@@ -815,13 +789,8 @@ def call_shape_phase_residuals(
     odd = False
     even = False
     scores = True
-    is_frealignx = True or ("frealignx" in project_params.param(fp["refine_metric"], iteration)
-    or project_params.param(fp["dose_weighting_enable"], iteration) 
-    or "tomo" in project_params.param(fp["data_mode"], iteration)
-    or "local" in project_params.param(fp["extract_fmt"], iteration)
-    )
 
-    par_obj = shape_phase_residuals(
+    shape_phase_residuals(
         input_par_file,
         angle_groups,
         defocus_groups,
@@ -840,14 +809,11 @@ def call_shape_phase_residuals(
         reverse,
         consistency,
         scores,  # since we are always using scores (not phase residuals)
-        is_frealignx,
         odd,
         even,
-        output_par_file,
-        png_file
+        output_par_file
     )
     
-    return par_obj
 
 def eval_phase_residual(
     defocus, mparameters, fparameters, input, name, film, scanor, tolerance
@@ -943,173 +909,63 @@ def eval_phase_residual(
     return -scores.mean()
 
 
-def score_particles_fromparx(par_data, mintilt: float, maxtilt: float, min_num_projections: int, pixel_size: float, metric="new"):
+def filter_particles(parameter_file: str, mintilt: float, maxtilt: float, dist: float, threshold: float, pixel_size: float):
     """ Compute scores of sub-volume from their corresponding projections in the parfile
         Scores will be updated in box3d files, which will be later used for CSP
+    """        
+    tiltseries = str(Path(parameter_file).name).split("_r")[0]
+    alignment_parameters = cistem_star_file.Parameters.from_file(input_file=parameter_file)
+    data = alignment_parameters.get_data()
+    alignment_parameters.update_particle_score(tind_range=[], tiltang_range=[mintilt, maxtilt])
 
-    Parameters:
-    ----------
-        par_data (numpy array): 
-            information from parx file
-        metric (str): 
-            The format of the input parfile (currently only support extended metric new)
-    """
-    scores = {}
-    shifts_3d = {}
-    weights = []
-
-    if metric == "new":
-        film_col = 7
-        occ_col = 11
-        score_col = 14
-        ptlidx_col = 16
-        tiltan_col = 17
-        scanord_col = 19
-        normx_col = 24 - 1
-        normy_col = 25 - 1
-        normz_col = 26 - 1
-        matrix0_col = 27 - 1
-        matrix15_col = 42 - 1
-    else:
-        logger.error("Currently not support other metrics except metric new")
-        sys.exit()
-
-    # First, compute the weights for scoring
-    max_scanord = max(np.unique(par_data[:, scanord_col].astype("int")))
-    # prepare weights data structure
-    # while len(weights) < max_scanord + 1:
-    #     weights.append([])
-
-    # # # compute average score per tilt
-    # # for scanord, average in enumerate(weights):
-
-    # #     scores = par_data[par_data[:, scanord_col] == scanord]
-
-    # #     if len(scores) > 0 and scores.ndim != 1:
-    # #         scores = scores[:, score_col]
-    # #         weights[scanord] = sum(scores) / len(scores)
-    # #     else:
-    # #         weights[scanord] = 0.0
-
-    # iterate through particles (ptlidx) in different tilt-series (film)
-    films = np.unique(par_data[:, film_col].astype("int"))
-
-    for film in films:
-
-        tiltseries = par_data[par_data[:, film_col] == film]
-        particles = np.unique(tiltseries[:, ptlidx_col].astype("int"))
-        scores[film] = [-1.0 for _ in range(max(particles)+1)]
-        shifts_3d[film] = [[0,0,0] for _ in range(max(particles)+1)]
-        
-        for ptl in particles:
-
-            particle = tiltseries[tiltseries[:, ptlidx_col] == ptl]
-            
-            sum_score = 0.0
-            if particle.ndim != 1:
-
-                # take care of particle that does not have complete enough tilt coverage
-                tilt_angles = particle[:, tiltan_col]
-                valid_tilt_angles = [
-                    angle for angle in tilt_angles if mintilt <= angle and angle <= maxtilt 
-                ]
-                if len(valid_tilt_angles) >= min_num_projections:
-                    sum_weight = 0.0
-                    for proj in particle:
-                        weight = 1.0 
-                        if proj[tiltan_col] <= maxtilt and proj[tiltan_col] >= mintilt:
-                            sum_score += weight * proj[score_col]
-                            sum_weight += weight
-                    
-                    if sum_weight > 0 and particle[0, occ_col] > 0:
-                        sum_score /= sum_weight
-                    else: 
-                        sum_score = -1
-                    
-                    scores[film][ptl] = sum_score
-                
-                matrix = particle[0,matrix0_col: matrix15_col+1]
-                matrix[12: 16] = np.array([0,0,0,1])
-                dx, dy, dz = geometry.getShiftsForRecenter(particle[0,normx_col:normz_col+1], matrix, 0)
-                dx, dy, dz = dx/pixel_size, dy/pixel_size, dz/pixel_size
-                shifts_3d[film][ptl] = [dx, dy, dz]
-            else:
-                scores[film][ptl] = -1.0
-
-    return scores, shifts_3d
-
-
-def clean_particles_tomo(box3dfile, dist: float, threshold: float, shifts_3d_film: list):
-    """Clean particles/sub-volume based on their distances/scores by setting the KEEP field in box3d files
-
-    Parameters
-    ----------
-        box3dfile : list[str]
-            Tomo particle metadata 
-        dist int :
-            Distance cutoff in 3D
-
-    Returns
-    ----------
-        list: return box3d lines that stores ptlidx, 3d coord, scores and keep
-    """
+    extended_parameters = alignment_parameters.get_extended_data()
+    tilt_parameters = extended_parameters.get_tilts()
+    particle_parameters = extended_parameters.get_particles()
+    
     if dist < 0.0:
         logger.error(
             "Distance cutoff has to be greater than 0. Dist of 0 to keep ALL particles,"
         )
         sys.exit()
 
-    # remove header
-    box3dfile = box3dfile[1:]
-    # correct type
-    for data in box3dfile:
-        data[0], data[1], data[2], data[3], data[4], data[5] = (
-            int(data[0]),
-            float(data[1]),
-            float(data[2]),
-            float(data[3]),
-            float(data[4]),
-            str(data[5]),
-        )
-
     # sort based on scores
-    box3dfile = sorted(box3dfile, key=lambda x: x[4], reverse=True)
+    particles = [particle_parameters[pind] for pind in particle_parameters.keys()]
+    particles.sort(key=lambda x: x.score, reverse=True)
 
     # save valid points in 3D
-    valid_points = np.array(box3dfile[0][1:4], ndmin=2)
-
-    for idx, data in enumerate(box3dfile):
-        
+    best_particle = particles[0]
+    valid_particles = np.array([best_particle.x_position_3d - (best_particle.shift_x/pixel_size), 
+                                best_particle.y_position_3d - (best_particle.shift_y/pixel_size), 
+                                best_particle.z_position_3d - (best_particle.shift_z/pixel_size)
+                                ], ndmin=2)
+    
+    for idx, particle in enumerate(particles):
+        pind = particle.particle_index
         if idx == 0:
-            if box3dfile[0][4] >= threshold:
-                data[5] = "Yes"
-            else:
-                data[5] = "No"
+            particle_parameters[pind].occ = particle_parameters[pind].occ if particle.score >= threshold else 0.0
             continue
+        
+        posx_with_shift = particle.x_position_3d - (particle.shift_x/pixel_size)
+        posy_with_shift = particle.y_position_3d - (particle.shift_y/pixel_size)
+        posz_with_shift = particle.z_position_3d - (particle.shift_z/pixel_size)
 
-        ptlind = data[0]
-        pos_x, pos_y, pos_z = data[1], data[2], data[3]
-        try:
-            # some ptlind in the parfiles may be removed
-            pos_x += shifts_3d_film[ptlind][0] 
-            pos_y += shifts_3d_film[ptlind][1] 
-            pos_z += shifts_3d_film[ptlind][2]
-        except:
-            pass
         # check if the point is close to previous evaluated points
         dmin = scipy.spatial.distance.cdist(
-            np.array([pos_x, pos_y, pos_z], ndmin=2), valid_points
+            np.array([posx_with_shift, posy_with_shift, posz_with_shift], ndmin=2), valid_particles
         ).min()
-        if data[4] < threshold or dmin <= dist:
-            data[5] = "No"
+        if particle.score < threshold or dmin <= dist:
+            particle_parameters[pind].occ = 0.0
         else:
-            data[5] = "Yes"
-            valid_points = np.vstack((valid_points, np.array([pos_x, pos_y, pos_z])))
+            valid_particles = np.vstack((valid_particles, np.array([posx_with_shift, posy_with_shift, posz_with_shift])))
 
-    # sort the box based on particle index before return
-    box3dfile = sorted(box3dfile, key=lambda x: x[0])
+    scores = [particle_parameters[pind].score for pind in particle_parameters.keys()]
 
-    return box3dfile
+    extended_parameters.set_data(particles=particle_parameters, tilts=tilt_parameters)
+    alignment_parameters.set_data(data=data, extended_parameters=extended_parameters)
+    alignment_parameters.sync_particle_occ()
+    alignment_parameters.to_binary(output=parameter_file)
+
+    plot.histogram_particle_tomo(scores, threshold, tiltseries, "csp")
 
 
 def particle_cleaning(parameters: dict):
@@ -1132,33 +988,53 @@ def particle_cleaning(parameters: dict):
             "{} does not exists".format("{}.films".format(parameters["data_set"]))
         )
 
-    parfile = project_params.resolve_path(parameters["clean_parfile"])
+    parameter_folder = project_params.resolve_path(parameters["clean_parfile"])
+    
+    assert Path(parameter_folder).exists(), f"{parameter_folder} does not exists."
+
+    # decompress the parametere file (if needed), and copy it over to the particle filtering block
+    parameter_folder_init = f"{parameters['data_set']}_r01_02" if parameters["clean_discard"] else f"{parameters['data_set']}_r01_01"
+
+    parameter_folder_current = Path("frealign", "maps", parameter_folder_init) 
+
+    # just get the class function 
+    p_obj = cistem_star_file.Parameters()
 
     # first check class selection, and generate one parfile with occ=0 to mark the discarded particles
     if parameters["clean_class_selection"] and not parameters["clean_discard"]:
         sel = parameters["clean_class_selection"]
         selist = sel.split(",")
         selection = [int(x) for x in selist]
-        merge_align = parameters["clean_class_merge_alignment"]
+        # merge_align = parameters["clean_class_merge_alignment"]
         
-        output_parfile = pyp_metadata.merge_par_selection(parfile, selection, parameters, merge_align=merge_align)
-    
-        parfile = output_parfile
+        output_parfile = parameter_folder_current 
+        os.makedirs(output_parfile)
 
-        parameters["refine_parfile"] = parfile
- 
-    if os.path.exists(parfile) and parfile.endswith(".bz2"):
-        parfile = frealign_parfile.Parameters.decompress_parameter_file(parfile, parameters["slurm_tasks"])
+        all_zero_list = pyp_metadata.merge_par_selection(parameter_folder, output_parfile, films, selection, parameters)
+        parameter_folder = output_parfile
+        parameters["refine_parfile"] = output_parfile
+
+    else:
+        if os.path.exists(parameter_folder) and parameter_folder.endswith(".bz2"):
+            ref = int(parameter_folder.split("_r")[-1].split("_")[0]) 
+            frealign_parfile.Parameters.decompress_parameter_file_and_move(file=Path(parameter_folder), 
+                                                                        new_file=parameter_folder_current, 
+                                                                        micrograph_list=[f"{f}_r{ref:02d}" for f in films],
+                                                                        threads=parameters["slurm_tasks"])
+            parameter_folder = str(parameter_folder_current)  
+            parameters["clean_parfile"] = Path(parameter_folder).absolute()
 
     # single class cleaning regard to box files
     if "spr" in parameters["data_mode"]:
+        all_binary = os.listdir(parameter_folder)
+        binary_list = [os.path.join(parameter_folder,filename) for image in films for filename in all_binary if image in filename if "_stat.cistem" not in filename and "_extended.cistem" not in filename]
 
-        pardata = frealign_parfile.Parameters.from_file(parfile).data
+        par_data = cistem_star_file.merge_all_binary_with_filmid(binary_list)
 
         if parameters["clean_spr_auto"]:
             # figure out optimal score threshold
-
-            samples = np.array(frealign.get_phase_residuals(pardata,parfile,parameters,2))
+            score_col = p_obj.get_index_of_column(column_code=cistem_star_file.SCORE)
+            samples = np.sort( par_data[:, score_col] )
             # samples = pardata[:, 14].astype("f")
 
             threshold = 1.075 * statistics.optimal_threshold(
@@ -1168,295 +1044,162 @@ def particle_cleaning(parameters: dict):
         else:
             threshold = parameters["clean_threshold"]
 
-        parameters, new_pardata = clean_particle_sprbox(pardata, threshold, parameters, metapath="./pkl")
-        
-        if parameters["clean_discard"]:
-            
-            current_dir = os.getcwd()
-            # clean_parfile = os.path.join(current_dir, "frealign", "maps", os.path.basename(parfile).replace(".par", "_clean.par").replace(".bz2", ""))
-            clean_parfile = os.path.basename(parfile).replace(".par", "_clean.par").replace(".bz2", "")
-            os.chdir("./frealign/maps/")
-            frealign_parfile.Parameters.write_parameter_file(clean_parfile, new_pardata, parx=True, frealignx=False)
-            
-            frealign_parfile.Parameters.compress_parameter_file(clean_parfile, clean_parfile.replace(".par", ".par.bz2"), parameters["slurm_tasks"])
-            # link the parfile and reference for workflows
-            conventional_auto = clean_parfile.replace("_clean", "").replace(".par", ".par.bz2")
-            if not Path(conventional_auto).exists():
-                shutil.copy2(clean_parfile, clean_parfile.replace("_clean", ""))
-                frealign_parfile.Parameters.compress_parameter_file(clean_parfile.replace("_clean", ""), conventional_auto)
-                os.remove(clean_parfile.replace("_clean", ""))
+        parameters, new_pardata = clean_particle_sprbox(par_data, threshold, parameters, metapath="./pkl")
 
-            os.remove(clean_parfile)
-            os.chdir(current_dir)
+        if parameters["clean_discard"]:
+            film_col = p_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+            film_index = get_particles_tilt_index(new_pardata, ptl_col= film_col)
+            film_ids = np.unique(new_pardata[:, film_col])
+            clean_output_folder = str(parameter_folder_current) + "_clean"
+            
+            if os.path.exists(clean_output_folder):
+                shutil.rmtree(clean_output_folder)
+            
+            os.makedirs(clean_output_folder)
+            
+            for film_id, image_name in enumerate(films):
+                # film_id += 1 # film index from 0
+                if film_id in film_ids:
+                    # get external data by reading the input binary files
+                    input_image_binary = os.path.join(str(parameter_folder_current), image_name + "_r01.cistem")
+                    output_binary = os.path.join(clean_output_folder, image_name + "_r01.cistem" )
+                    image_par_obj = cistem_star_file.Parameters.from_file(input_image_binary)
+                    image_array = new_pardata[film_index[film_id][0]:film_index[film_id][1]]
+                    # renumber the pid
+                    id = np.arange(1, image_array.shape[0] + 1 )
+                    image_array[:, 0] = id
+                    image_par_obj.set_data(image_array)
+                    image_par_obj.sync_particle_occ(ptl_to_prj=False)
+                    image_par_obj.sync_particle_ptlid()
+                    image_par_obj.to_binary(output_binary, extended_output=output_binary.replace(".cistem", "_extended.cistem"))
+
             # update extract selection after cleaning
             parameters["extract_cls"] += 1
 
-            generate_clean_spk(is_tomo=False)
+            generate_clean_spk(parameter_folder_current, is_tomo=False)
+
+            current_dir = Path().cwd()
+            os.chdir(Path("frealign", "maps"))
+            frealign_parfile.Parameters.compress_parameter_file(os.path.basename(clean_output_folder), 
+                                                                os.path.basename(clean_output_folder) + ".bz2", 
+                                                                parameters["slurm_merge_tasks"])
+            os.chdir(current_dir)
 
     # we don't have box3d in spr, so this only works for tomo so far
     elif "tomo" in parameters["data_mode"]:
-        
+
+        parameter_files = [str(f) for f in Path(parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f) and "_stat.cistem" not in str(f)]
+
         if not parameters["clean_discard"]:
-
-            # update mean scores if parfile is provided
-            if os.path.exists(parfile):
-
-                par_data = frealign_parfile.Parameters.from_file(parfile).data
-                scores, shifts_3d = score_particles_fromparx(par_data, parameters["clean_mintilt"], 
-                                                            parameters["clean_maxtilt"], 
-                                                            parameters["clean_min_num_projections"],
-                                                            parameters["scope_pixel"] 
-                                                            )
-                # update mean scores in boxes3d
-                update_scores(films, scores)
-
-            # remove bad particles with threshold and distance, and plot histograms
-            thresholding_and_plot(films, shifts_3d, parameters)
-
-        else:
-            # completely remove particle projections from parfile and allboxes coordinate
-            newfilms = deep_clean_parfile(parfile,films,parameters["data_set"])
             
-            # update film file
-            if newfilms.shape[0] < films.shape[0]:
-                os.rename(filmlist_file, filmlist_file.replace(".films", ".films_original"))
-                np.savetxt(filmlist_file, newfilms, fmt="%s")
-                shutil.copy2(filmlist_file, filmlist_file.replace(".films", ".micrographs"))
+            mpi_args = []
 
+            for parameter_file in parameter_files:
+                mpi_args.append((parameter_file, 
+                                parameters["clean_mintilt"], 
+                                parameters["clean_maxtilt"], 
+                                parameters["clean_dist"], 
+                                parameters["clean_threshold"],
+                                parameters["scope_pixel"]))
+            if len(mpi_args) > 0:
+                mpi.submit_function_to_workers(filter_particles, mpi_args, verbose=parameters["slurm_verbose"])
+
+            # Statistics             
+            clean_particle_count = 0
+            all_particle_count = 0
+
+            for parameter_file in parameter_files:
+                extended_parameters = cistem_star_file.Parameters.from_file(parameter_file).get_extended_data()
+                clean_particle_count += extended_parameters.get_num_clean_particles()
+                all_particle_count += extended_parameters.get_num_particles()
+
+            logger.warning(
+                "{:,} particles ({:.1f}%) from {} tilt-series will be used".format(
+                    clean_particle_count,
+                    (float(clean_particle_count) / all_particle_count * 100),
+                    len(parameter_files),
+                )
+            )
+        else:
+            clean_parameter_folder = Path(str(parameter_folder_current) + "_clean")
+            if clean_parameter_folder.exists():
+                shutil.rmtree(clean_parameter_folder)
+            os.mkdir(clean_parameter_folder)
+            
+            mpi_args = []
+
+            # completely remove particle projections from parfile and allboxes coordinate
+            for parameter_file in parameter_files:
+                mpi_args.append((parameter_file, clean_parameter_folder))
+            
+            if len(mpi_args) > 0:
+                mpi.submit_function_to_workers(deep_clean_particles, mpi_args, verbose=parameters["slurm_verbose"])
+
+            clean_micrograph_list = np.array([str(f.name).split("_r")[0] for f in Path(clean_parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f)])
+            
             binning = parameters["tomo_rec_binning"]
             thickness = parameters["tomo_rec_thickness"]
-            generate_clean_spk(binning=binning, thickness=thickness)
+            generate_clean_spk(clean_parameter_folder, binning=binning, thickness=thickness)
+
+            current_dir = Path().cwd()
+            os.chdir(Path("frealign", "maps"))
+            frealign_parfile.Parameters.compress_parameter_file(str(clean_parameter_folder.name), 
+                                                                str(clean_parameter_folder.name) + ".bz2", 
+                                                                parameters["slurm_merge_tasks"])
+            os.chdir(current_dir)
+
+            # update film file
+            if len(clean_micrograph_list) < len(parameter_files):
+                os.rename(filmlist_file, filmlist_file.replace(".films", ".films_original"))
+                np.savetxt(filmlist_file, clean_micrograph_list, fmt="%s")
+                shutil.copy2(filmlist_file, filmlist_file.replace(".films", ".micrographs"))
 
     return parameters 
 
 
-def thresholding_and_plot(films, shifts_3d: list, parameters: dict):
-    films_used_particles = [[film, 0] for film in films]
-    film_count = 0
-    particle_used_count = 0
-    particle_all_count = 0
+def deep_clean_particles(parameter_file: str, clean_parameter_folder: Path):
 
-    for film, tiltseries in enumerate(films):
-        box3dfile = "csp/{}_boxes3d.txt".format(tiltseries)
-        newbox3dfile = "csp/{}_boxes3d_clean.txt".format(tiltseries)
-        particle_used_film = 0
+    alignment_parameters = cistem_star_file.Parameters.from_file(input_file=parameter_file)
+    alignment_parameters.sync_particle_occ()
 
-        if not os.path.exists(box3dfile):
-            logger.warning("{} does not exist".format(box3dfile))
-        else:
-            newf = open(newbox3dfile, "w")
-            newf.write(
-                "%8s\t%8s\t%8s\t%8s\t%8s\t%8s\n"
-                % ("PTLIDX", "X", "Y", "Z", "Score", "Keep_CSP")
-            )
-            with open(box3dfile, "r") as f:
-                box3d = [line.split() for line in f.readlines()]
-                newbox3d = clean_particles_tomo(box3d, parameters["clean_dist"], parameters["clean_threshold"], shifts_3d[film])
+    data = alignment_parameters.get_data()
+    extended_parameters = alignment_parameters.get_extended_data()
+    particle_parameters = extended_parameters.get_particles()
+    tilt_parameters = extended_parameters.get_tilts()
 
-                for line in newbox3d:
-                    newf.write(
-                        "%8d\t%8.1f\t%8.1f\t%8.1f\t%8.2f\t%8s\n" % tuple(line)
-                    )
-                    particle_all_count += 1
-                    if "Yes" in line[5]:
-                        particle_used_count += 1
-                        particle_used_film += 1
-
-            newf.close()
-            os.remove(box3dfile)
-            os.rename(newbox3dfile, box3dfile)
-
-            mean_scores = [_[4] for _ in newbox3d]
-            plot.histogram_particle_tomo(mean_scores, parameters["clean_threshold"], tiltseries, "csp")
-
-
-        films_used_particles[film][1] = particle_used_film
-        film_count += 1
-
-    logger.warning(
-        "{:,} particles ({:.1f}%) from {} tilt-series will be used".format(
-            particle_used_count,
-            (particle_used_count / particle_all_count * 100),
-            film_count,
-        )
+    # remove projections that have 0 occ
+    data = np.delete(
+        data, np.argwhere(data[:, alignment_parameters.get_index_of_column(cistem_star_file.OCCUPANCY)] == 0.0), axis=0
     )
 
-
-def update_scores(films, scores: list): 
+    # remove both binary files if there is no particle left
+    if data.shape[0] == 0:
+        return 
     
-    # parse new scores into 3d boxes
-    for film, tiltseries in enumerate(films):
-        box3dfile = "csp/{}_boxes3d.txt".format(tiltseries)
-        newbox3dfile = "csp/{}_boxes3d_clean.txt".format(tiltseries)
-        if not os.path.exists(box3dfile):
-            logger.warning("{} does not exist".format(box3dfile))
-        else:
-            newf = open(newbox3dfile, "w")
-            with open(box3dfile, "r") as f:
-                for line in f.readlines():
-                    if line.strip().startswith("PTLIDX"):
-                        newf.write(line)
-                    else:
-                        data = line.split()
-                        # PTLIDX, X, Y, Z, Score, Keep
-                        (
-                            data[0],
-                            data[1],
-                            data[2],
-                            data[3],
-                            data[4],
-                            data[5],
-                        ) = (
-                            int(data[0]),
-                            float(data[1]),
-                            float(data[2]),
-                            float(data[3]),
-                            float(data[4]),
-                            str(data[5]),
-                        )
+    data[:, alignment_parameters.get_index_of_column(cistem_star_file.POSITION_IN_STACK)] = np.array(
+        [(_ + 1) for _ in range(data.shape[0])]
+    )
 
-                        try:
-                            data[4] = scores[film][data[0]]
-                        except:
-                            data[4] = -1.0 # happend at the end and might be discarded in parfile
-
-                        newf.write(
-                            "%8d\t%8.1f\t%8.1f\t%8.1f\t%8.2f\t%8s\n"
-                            % tuple(data)
-                        )
-            newf.close()
-            shutil.copy2(newbox3dfile, box3dfile)
-            os.remove(newbox3dfile)
-
-def deep_clean_parfile(parfile: str, films, dataset: str):
-    assert (os.path.exists(parfile)), f"{parfile} is required to remove particle projections from parfile and allboxes"
-
-    FILM_COL = 8 - 1
-    OCC_COL = 12 - 1
-    ORI_TAG = "_original"
-    parx_name, parx_format = os.path.splitext(parfile)
-    par = frealign_parfile.Parameters.from_file(parfile)
-    par_data = par.data
-
-    par_data_clean = par_data[par_data[:, OCC_COL] != 0.0]
-    allboxes_line_count = 0
-    empty_films = []
-
-    for idx, film in enumerate(films):
-        # check which allboxes we should use: frame format (*local.allboxes) is the first priority
-        if os.path.exists(os.path.join("csp", film + "_local.allboxes")):
-            allboxes_file = os.path.join("csp", film + "_local.allboxes")
-            allboxes = np.loadtxt(
-                os.path.join("csp", film + "_local.allboxes"), ndmin=2
-            )
-        elif os.path.exists(os.path.join("csp", film + ".allboxes")):
-            allboxes_file = os.path.join("csp", film + ".allboxes")
-            allboxes = np.loadtxt(
-                os.path.join("csp", film + ".allboxes"), ndmin=2
-            )
-        else:
-            raise Exception(f"{film} allboxes not found")
-
-        allboxes_name, allboxes_format = os.path.splitext(allboxes_file)
-
-        par_data_film = par_data[par_data[:, FILM_COL] == idx]
-
-        if par_data_film.shape[0] != allboxes.shape[0]:
-            raise Exception(
-                f"The number of lines in {parfile} and {allboxes_file} does not match - {par_data_film.shape[0]} v.s. {allboxes.shape[0]}\n\
-                        You probably deep-clean particles already. Try to look for *_clean.par.bz2 from a downstream block"
-            )
-
-        allboxes = np.delete(
-            allboxes, np.argwhere(par_data_film[:, OCC_COL] == 0), axis=0
-        )
-
-        if allboxes.shape[0] == 0:
-            empty_films.append(film)
-            os.remove(allboxes_file)
-        else:
-            allboxes_line_count += allboxes.shape[0]
+    # remove particles that have 0 occ (occ should be sync between projections and particles)
+    for pind in extended_parameters.get_particle_list():
+        particle = particle_parameters[pind]
+        if particle.occ == 0.0:
+            particle_parameters.pop(pind)
         
-        if allboxes.shape[0] > 0:
-            os.rename(allboxes_file, allboxes_name + ORI_TAG + allboxes_format)
-            np.savetxt(allboxes_file, allboxes.astype(int), fmt="%i")
+    extended_parameters.set_data(particles=particle_parameters, tilts=tilt_parameters)
+    alignment_parameters.set_data(data=data, extended_parameters=extended_parameters)
+    alignment_parameters.to_binary(output=str(clean_parameter_folder / Path(parameter_file).name))
+    return 
 
-    if par_data_clean.shape[0] != allboxes_line_count:
-        [
-            os.rename(f, f.replace(ORI_TAG + allboxes_format, allboxes_format))
-            for f in [
-                os.path.join("csp", file)
-                for file in os.listdir("csp")
-                if file.endswith(ORI_TAG + allboxes_format)
-            ]
-        ]
-        raise Exception(
-            f"After cleaning the total number of lines in {parfile} and allboxes does not match - {par_data_clean.shape[0]} v.s. {allboxes_line_count}"
-        )
-
-    par_data_clean[:, 0] = np.array(
-        [(_i + 1) % 10000000 for _i in range(par_data_clean.shape[0])]
-    )
-
-    # re-number films start from 0
-    new_film_ids = par_data_clean[:, 7]
-    uniquefilm = np.unique(new_film_ids)
-    for i, old_id in enumerate(uniquefilm):
-        film_mask = par_data_clean[:, 7] == old_id
-        par_data_clean[film_mask, 7] = i
-
-    par.data = par_data_clean
-    current_dir = os.getcwd()
-    # clean_parfile = os.path.join(os.getcwd() , "frealign", "maps" + os.path.basename(parfile).replace(".par", "_clean.par").replace(".bz2", ""))
-    
-    clean_parfile = f"{dataset}_r01_02_clean.par"
-    parfile = clean_parfile.replace("_clean", "")
-    # clean_parfile = os.path.basename(parfile).replace(".par", "_clean.par").replace(".bz2", "")
-    # os.rename(parfile, parfile.replace(parx_format, ORI_TAG + parx_format))
-    
-    os.chdir("./frealign/maps/")
-    par.write_file(clean_parfile)
-
-    compressed_clean_parfile = clean_parfile.replace(".par", ".par.bz2")
-    compressed_parfile = compressed_clean_parfile.replace("_clean", "")
-    reference = compressed_parfile.replace(".par.bz2", ".mrc")
-    prev_reference = reference.replace("_02.mrc", "_01.mrc")
-
-    frealign_parfile.Parameters.compress_parameter_file(clean_parfile, compressed_clean_parfile)
-
-    # link the parfile and reference for workflows
-    if not Path(compressed_parfile).exists():
-        shutil.copy2(clean_parfile, parfile)
-        frealign_parfile.Parameters.compress_parameter_file(parfile, compressed_parfile)
-        os.remove(parfile)
-    if not Path(reference).exists() and Path(prev_reference).exists():
-        shutil.copy2(prev_reference, reference)
-
-    os.remove(clean_parfile)
-    os.chdir(current_dir)
-    
-    logger.info("Successfully remove particles from the parfile and allboxes!")
-
-    # remove empty film from original film list
-    if len(empty_films) > 0:
-        indices = np.where(np.isin(films, empty_films))
-        newfilms = np.delete(films, indices)
-        return newfilms
-    else:
-        return films
-    # return clean_parfile.replace(".par", ".par.bz2") 
 
 def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapath="./pkl"):
 
      # select particles based on Frealign score distribution 
      # modify pkl files to reflect the coordinates change
+    p_obj = cistem_star_file.Parameters()
+    field = p_obj.get_index_of_column(cistem_star_file.SCORE)
+    occ_field = p_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
 
-    if not isfrealignx:
-        field = 14
-        occ_field = 11
-    else:
-        field = 15
-        occ_field = 12
     classification_pass = parameters["extract_cls"] + 1 
     occ_thresh = parameters["reconstruct_min_occ"]
 
@@ -1492,7 +1235,8 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
             
     else:
         # indexes are in base-0
-        discard_filmid = np.unique(discard[:,7].astype(int))
+        film_id = p_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+        discard_filmid = np.unique(discard[:,film_id].astype(int))
         filmlist_file = "{}.films".format(parameters["data_set"])
         film_list = np.loadtxt(filmlist_file, dtype='str')
         discard_filmlist = film_list[discard_filmid]
@@ -1500,7 +1244,7 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
         
         emptyfilm = [] # record films with no particles left 
 
-        # updating metadata 
+        # updating metadata (updating meta box somehow maybe not necessary after using cistem binary)
         is_spr=True
         current_dir = os.getcwd()
         os.chdir(metapath)
@@ -1527,7 +1271,7 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
                 boxx_valid = np.argwhere(np.logical_and(boxx[:, 4] >= 1, boxx[:, 5] >= classification_pass - 1))
                 boxx_valid = boxx_valid.ravel()
                 
-                ptls_infilm = pardata[pardata[:, 7] == filmid] 
+                ptls_infilm = pardata[pardata[:, film_id] == filmid] 
                 assert len(boxx_valid) == ptls_infilm.shape[0], f"Valid particles in box {len(boxx_valid)} not equal to particles in parfile {ptls_infilm.shape[0]}"
                 
                 # the index want to keep from the current valid particles.
@@ -1552,22 +1296,6 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
                 metadata.updateData({'box':df})    
                 metadata.write()
 
-                # update allboxes here
-                allboxfile = os.path.join(current_dir, "csp", film + ".allboxes")
-                allboxes = np.loadtxt(allboxfile, ndmin=2).astype(int).tolist()
-                previous_valid = boxx[boxx_valid]
-                indexes = np.argwhere(
-                    np.logical_and(
-                        previous_valid[:, 4] == 1, previous_valid[:, 5] >= classification_pass
-                    )
-                )
-
-                if len(allboxes) > len(indexes):
-                    allboxes = [allboxes[i[0]] for i in indexes]
-                    if Path(allboxfile).is_symlink():
-                        os.remove(allboxfile)
-                    np.savetxt(allboxfile, np.array(allboxes), fmt="%i")
-
             else:
                 Exception("No box info from Pickle file.")
 
@@ -1584,9 +1312,11 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
 
         # produce corresponding .par file
         # reorder index
-        newinput_keep[:, 0] = list(range(newinput_keep.shape[0]))
-        newinput_keep[:, 0] += 1
+        # Do this when split the new par data
+        # newinput_keep[:, 0] = list(range(newinput_keep.shape[0]))
+        # newinput_keep[:, 0] += 1
 
+        # the new cistem binary will ignore the box, so this is not necessary. 
         if newinput_keep.shape[0] != len(global_indexes_to_keep):
             logger.error(
                 "Number of clean particles does not match number of particles to keep: {0} != {1}".format(
@@ -1594,14 +1324,15 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
                 )
             )
             sys.exit()
-
-        # re-number films start from 0
-        new_film_ids = newinput_keep[:, 7]
-        uniquefilm = np.unique(new_film_ids)
-        for i, old_id in enumerate(uniquefilm):
-            film_mask = newinput_keep[:, 7] == old_id
-            newinput_keep[film_mask, 7] = i
         
+        
+        # re-number films start from 0
+        # new_film_ids = newinput_keep[:, 7]
+        # uniquefilm = np.unique(new_film_ids)
+        # for i, old_id in enumerate(uniquefilm):
+        #     film_mask = newinput_keep[:, 7] == old_id
+        #     newinput_keep[film_mask, 7] = i
+
         """
         current_film = newinput_keep[0, 7]
         current_film = 0
@@ -1786,25 +1517,29 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
     field : int
         index where the score column is
     """
-
-    FILM_COL = 8 - 1 
+    p_obj = cistem_star_file.Parameters()
+    FILM_COL = p_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+    shiftx = p_obj.get_index_of_column(cistem_star_file.X_SHIFT)
+    shifty = p_obj.get_index_of_column(cistem_star_file.Y_SHIFT)
+    x_coord = p_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
+    y_coord = p_obj.get_index_of_column(cistem_star_file.ORIGINAL_Y_POSITION)
     pixel_size = parameters["scope_pixel"]
 
-    filmlist_file = "{}.films".format(parameters["data_set"])
-    film_list = np.loadtxt(filmlist_file, dtype='str')
+    # filmlist_file = "{}.films".format(parameters["data_set"])
+    # film_list = np.loadtxt(filmlist_file, dtype='str')
 
     films = np.unique(pardata[:, FILM_COL].astype("int"))
 
     for film in films:
         micrograph = pardata[pardata[:, FILM_COL] == film]
-        metadata = pyp_metadata.LocalMetadata("pkl/" + film_list[film] + ".pkl", is_spr=True)
-        box = metadata.data["box"].to_numpy()
+        # metadata = pyp_metadata.LocalMetadata("pkl/" + film_list[film] + ".pkl", is_spr=True)
+        # box = metadata.data["box"].to_numpy()
 
-        micrograph[:, -2:] = box[:, :2]
+        # micrograph[:, -2:] = box[:, :2]
         sort_pardata = micrograph[np.argsort(micrograph[:, field])][::-1]
 
         valid_points = np.array(
-            [sort_pardata[0][-2] + (sort_pardata[0][4]/pixel_size), sort_pardata[0][-1]] + (sort_pardata[0][5]/pixel_size), 
+            [sort_pardata[0][x_coord] + (sort_pardata[0][shiftx]/pixel_size), sort_pardata[0][y_coord]] + (sort_pardata[0][shifty]/pixel_size), 
             ndmin=2
             )
 
@@ -1812,26 +1547,27 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
             if idx == 0:
                 continue
 
-            coordinate = np.array([line[-2] + (line[4]/pixel_size), line[-1] + (line[5]/pixel_size)], ndmin=2)
+            coordinate = np.array([line[x_coord] + (line[shiftx]/pixel_size), line[y_coord] + (line[shifty]/pixel_size)], ndmin=2)
             dmin = scipy.spatial.distance.cdist(coordinate, valid_points).min()
             if dmin <= parameters["clean_dist"]:
-                pardata[int(line[0]-1)][occ_field] = 0.0
+                pardata[pardata[:, FILM_COL] == film][int(line[0]-1), occ_field] = 0.0
             else:
                 valid_points = np.vstack((valid_points, coordinate))
 
     return pardata
 
 
-def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/selected_particles", is_tomo=True, thickness=2048):
+def generate_clean_spk(input_parameter_folder, binning=1, output_path="./frealign/selected_particles", is_tomo=True, thickness=2048):
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
     if is_tomo:
-        coordinates = "*_boxes3d.txt"
+        cistem_binary = "*_extended.cistem"
     else:
-        coordinates = "*.allboxes"
-    inputfiles = glob.glob(os.path.join(input_path, coordinates))
+        cistem_binary = "*_r01.cistem"
+
+    inputfiles = glob.glob(os.path.join(input_parameter_folder, cistem_binary))
 
     if is_tomo:
 
@@ -1844,18 +1580,24 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
         logger.info(f"Exporting clean particle coordinates for {len(inputfiles)} tomograms")
         with tqdm(desc="Progress", total=len(inputfiles), file=TQDMLogger()) as pbar:
             for file in inputfiles:
-                read_array = np.loadtxt(file, dtype='str', comments="  PTLIDX", ndmin=2, usecols=(1,2,3,5))
+                coords = []
+                parameter_obj = cistem_star_file.ExtendedParameters.from_file(file)
 
-                clean_array = read_array[read_array[:, -1]=="Yes"][:, :-1].astype('float')
+                particle_data = parameter_obj.get_particles()
+
+                for i in particle_data.keys():
+                    coords.append([particle_data[i].x_position_3d, particle_data[i].y_position_3d, particle_data[i].z_position_3d])
+
+                clean_array = np.array(coords)
 
                 if clean_array.size > 0:
                     clean_array[:, -1] = thickness - clean_array[:, -1]
                     clean_array = clean_array / binning
 
-                    np.savetxt(file.replace("_boxes3d.txt", ".box"), clean_array, fmt='%.1f')
+                    np.savetxt(file.replace("_extended.cistem", ".box"), clean_array, fmt='%.1f')
 
-                    outfile = os.path.join(output_path, os.path.basename(file).replace('_boxes3d.txt', '.mod'))
-                    command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_boxes3d.txt', '.box')} {outfile}"
+                    outfile = os.path.join(output_path, os.path.basename(file).replace("_extended.cistem", ".mod"))
+                    command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_extended.cistem', '.box')} {outfile}"
                     run_shell_command(command, verbose=False)
 
                     run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
@@ -1869,7 +1611,14 @@ def generate_clean_spk(input_path="./csp", binning=1, output_path="./frealign/se
         else:
             logger.warning("Unable to export clean particle coordiantes")
     else:
+        p_obj = cistem_star_file.Parameters()
+        x = p_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
+        y = p_obj.get_index_of_column(cistem_star_file.ORIGINAL_Y_POSITION)
         for file in inputfiles:
-            outfile = os.path.join(output_path, os.path.basename(file).replace('.allboxes', '.spk'))
-            command = f"{get_imod_path()}/bin/point2model -scat -circle 5 {file} {outfile}"
+            parameter_obj = cistem_star_file.Parameters.from_file(file)
+            coords = parameter_obj.get_data()[:, [x, y]]     
+            outfile = os.path.join(output_path, os.path.basename(file).replace('.cistem', '.spk'))
+            np.savetxt(outfile.replace(".spk", ".box"), coords, fmt='%.1f')
+
+            command = f"{get_imod_path()}/bin/point2model -scat -circle 5 {outfile.replace('.spk', '.box')} {outfile}"
             run_shell_command(command, verbose=False)

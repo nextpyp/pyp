@@ -3,7 +3,6 @@ import os
 import socket
 from pwd import getpwnam
 from pyp.system.singularity import get_pyp_configuration
-from pyp.streampyp.web import Web
 
 def timeout_command(command, time, full_path=False):
     if full_path:
@@ -75,23 +74,56 @@ def get_motioncor3_path():
 def get_gpu_id():
     return 0
 
+def get_gpu_ids(parameters,separator=","):
+    # return list of GPU devices based on gres variable
+    gres = parameters["slurm_gres"]
+    if "gpu" in gres:
+        for g in gres.split(","):
+            if "gpu" in g:
+                for i in g.split(":"):
+                    if i.isdigit():
+                        gpus = int(i)
+                        break
+        return separator.join(str(x) for x in range(gpus))
+    else:
+        return 0
+
 def get_gpu_file():
     return os.path.join(os.environ["PYP_SCRATCH"],"gpu_device.id")
 
 def needs_gpu(parameters):
     # enable Nvidia GPU?
-    if ( ( "movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters.get("movie_force") )
-        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters.get("tomo_ali_force") )
-        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters.get("tomo_rec_force") )
-        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters.get("detect_force") )
-        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters.get("detect_force") )
-        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters.get("tomo_vir_force") )
-        or ( parameters.get("tomo_rec_topaz_denoise") and parameters.get("tomo_rec_topaz_use_gpu") and parameters.get("tomo_rec_force") )
-        or "gpu:" in parameters.get("slurm_gres")
-        ):
-        return True
-    else:
-        return False
+    
+    gpu_for_movies = parameters.get("movie_force") and parameters.get("movie_ali") == 'motioncor'
+
+    gpu_for_alignment = parameters.get("tomo_ali_force") and parameters.get("tomo_ali_method") == "aretomo"
+    
+    gpu_for_reconstrucion = parameters.get("tomo_rec_force") and parameters.get("tomo_rec_method") == "aretomo"
+    
+    gpu_for_denoising = "tomo-denoising" in parameters.get("micromon_block") and (
+        ( parameters.get("tomo_denoise_method") == "topaz" and parameters.get("tomo_denoise_topaz_use_gpu") )
+        or parameters.get("tomo_denoise_method") == "cryocare"
+        or parameters.get("tomo_denoise_method_train") == "isonet"
+    )
+
+    gpu_for_segmentation = parameters.get("micromon_block") == "tomo-segmentation-open"
+
+    gpu_for_mining = "tomo-milo" in parameters.get("micromon_block")
+
+    gpu_for_picking = parameters.get("micromon_block") == "tomo-particles-train"
+    
+    gpu_for_heterogeneity = parameters.get("micromon_block") == "tomo-drgn"
+
+    return (
+        gpu_for_movies
+        or gpu_for_alignment
+        or gpu_for_reconstrucion
+        or gpu_for_denoising
+        or gpu_for_segmentation
+        or gpu_for_mining
+        or gpu_for_picking
+        or gpu_for_heterogeneity
+    ) 
 
 def get_gpu_queue(parameters):
     # try to get the gpu partition
@@ -133,7 +165,7 @@ def get_bsoft_path():
     return "{0}/external/bsoft".format(os.environ["PYP_DIR"])
 
 def get_topaz_path():
-    return "/usr/local/envs/pyp/bin"
+    return "/opt/conda/envs/pyp/bin"
 
 def get_embfactor_path():
     return "{0}/external/embfactor".format(os.environ["PYP_DIR"])

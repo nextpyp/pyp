@@ -70,6 +70,8 @@ def save_results(files, project_path,verbose=False):
                     )
                 )
     from pyp.system import mpi
-    mpi.submit_function_to_workers(
-        transfer_files, arguments, verbose=verbose, silent = True
-    )
+    
+    if len(arguments) > 0:
+        mpi.submit_function_to_workers(
+            transfer_files, arguments, verbose=verbose, silent = True
+        )

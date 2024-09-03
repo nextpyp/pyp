@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
@@ -221,14 +222,24 @@ def optimal_threshold_bayes(samples, criteria="optimal", plot_results=""):
     return 0
 
 
-def weighted_by_tilt_angle(ptl_occ_tltang):
-    """Calculate weighted frame occ and logp according to tilt angles, input are parx array [occ : tltang+1] values"""
+def weighted_by_tilt_angle(ptl_data, tltang_dict):
+    """Calculate weighted frame occ and logp according to tilt angles"""
     # occ = ptl_occ_tltang[:, 0].ravel()
-    logp = ptl_occ_tltang[:, 1].ravel()
+    logp = ptl_data[:, 2].ravel()
     # sigma = ptl_occ_tltang[:, 2].ravel()
-    tltang = ptl_occ_tltang[:, -1].ravel()
+    tltind = ptl_data[:, -1]
+    # tiltangle = []
+    tind_angle_dict = {i: tltang_dict[i][0].angle for i in tltang_dict.keys()}
+    df_tind = pd.DataFrame(tltind, columns=["Tind"])
+    # mapped_angles = np.vectorize(tind_angle_dict.get)(tind_in_film)
+    df_tind["Angle"] = df_tind["Tind"].map(tind_angle_dict)
+    
+    #for tlt_ind in tltind:
+    #    proj_tlt_angle  =  tltang_dict[tlt_ind][0].angle
+    #    tiltangle.append(proj_tlt_angle)
 
-    if np.count_nonzero(tltang) > 1:
+    tltang = df_tind["Angle"].to_numpy()
+    if np.count_nonzero(tltang) >= 1:
         max_angle = np.amax(np.abs(tltang))
         gsigma = max_angle / 6
         gauss_weight = []
@@ -238,12 +249,8 @@ def weighted_by_tilt_angle(ptl_occ_tltang):
         logp = np.sum(logp * np.array(gauss_weight)) / np.sum(np.array(gauss_weight))
         # sigma = np.sum(sigma * np.array(gauss_weight)) / np.sum(np.array(gauss_weight))
     else:
-        # occ = ptl_occ_tltang[:30, 0].ravel()
-        logp = ptl_occ_tltang[:30, 1].ravel()
-        # sigma = ptl_occ_tltang[:30, 2].ravel()
-        # occ = np.mean(occ)
+        # logp = ptl_data[:30, 1].ravel()
         logp = np.mean(logp)
-        # sigma = np.mean(sigma)
 
     return logp
 

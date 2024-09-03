@@ -868,6 +868,8 @@ def get_image_dimensions(name):
 
     command = "{0}/bin/header -size '{1}'".format(get_imod_path(), name)
     [output, error] = run_shell_command(command, verbose=False)
+    if "ERROR" in output:
+        logger.error(output)
     return [int(num) for num in output.split()]
 
 
@@ -1388,22 +1390,22 @@ def compress_images(input, output, cpus=1):
 def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
 
     commands = []
-    if parameters["tomo_rec_square"]:
+    if parameters["tomo_ali_square"]:
         square_enabled = True
     else:
         square_enabled = False
-    squares = [ "%s_%04d_square.mrc"%(name, idx) for idx in range(z) ]
+    
     if len(aligned_tilts) > 0:
         from_frames = True
         # make individual tilted images squares
-        for tilt in aligned_tilts:
+        for i, tilt in enumerate(aligned_tilts):
             if square_enabled:
-                command = "{0}/bin/newstack {1} {2}_square.mrc -size {3},{3} -taper 1,1 -bin {4}".format(
-                    get_imod_path(), tilt, tilt.replace(".mrc", ""), int(square / binning), binning
+                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4}".format(
+                    get_imod_path(), tilt, name, int(square / binning), binning, i
                 )
             else:
-                command = "{0}/bin/newstack {1} {2}_square.mrc -taper 1,1 -bin {3}".format(
-                    get_imod_path(), tilt, tilt.replace(".mrc", ""), binning
+                command = "{0}/bin/newstack {1} {2}_{4:04d}_square.mrc -taper 1,1 -bin {3}".format(
+                    get_imod_path(), tilt, name, binning, i
                 )
             commands.append(command)
     else:
@@ -1417,6 +1419,8 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
                     get_imod_path(), tilt_idx, name, binning
                 )
             commands.append(command)
+
+    squares = [ "%s_%04d_square.mrc"%(name, idx) for idx in range(z) ]
 
     from pyp.system import mpi
     mpi.submit_jobs_to_workers(commands, os.getcwd())
@@ -1437,7 +1441,7 @@ def get_tilt_axis_angle(name, parameters):
     # figure out tilt-axis angle and store in metadata
     [output, _] = run_shell_command(
         "%s/bin/xf2rotmagstr %s.xf" % (get_imod_path(), name), 
-        verbose=parameters["slurm_verbose"],
+        verbose=False,
     )
     xf_rot_mag = output.split("\n")
     axis_mean = counter = 0
@@ -1457,7 +1461,7 @@ def get_tilt_axis_angle(name, parameters):
     return axis / counter
 
 
-def generate_aligned_tiltseries(name, parameters, tilt_metadata):
+def generate_aligned_tiltseries(name, parameters):
 
     # align unbinned data
     sec = 0 
@@ -1549,7 +1553,6 @@ def cistem_mask_create(parameters: dict, model: str, output: str):
         + "0.35\n"
         + "eot\n"
     )
-    print(threshold)
 
     run_shell_command(command, verbose=parameters["slurm_verbose"])
     command = f"{get_imod_path()}/bin/alterheader -del {model_pixel},{model_pixel},{model_pixel} {output_mask}"

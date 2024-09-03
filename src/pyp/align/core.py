@@ -7,6 +7,7 @@ import os
 import random
 import shutil
 import socket
+import copy
 import sys
 import time
 import datetime
@@ -33,11 +34,11 @@ from pyp.inout.metadata import (
     frealign_parfile,
     get_non_empty_lines_from_par,
     get_particles_from_par,
+    cistem_star_file,
 )
 from pyp.inout.metadata.frealign_parfile import ParameterEntry, Parameters
 from pyp.refine.csp.particle_cspt import (
-    clean_tomo_particles,
-    merge_parx_particle_cspt,
+    merge_alignment_parameters,
     prepare_particle_cspt,
 )
 from pyp.refine.frealign import frealign
@@ -53,7 +54,7 @@ from pyp.system.utils import (
     get_unblur_path,
     get_unblur2_path,
     get_motioncor3_path,
-    get_gpu_id,
+    get_gpu_ids,
     imod_load_command,
 )
 from pyp.system.wrapper_functions import avgstack
@@ -691,9 +692,12 @@ def align_spr_local_inner(
     return clean_shifts
 
 
-def get_csp_command():
-    return os.path.join(os.environ["PYP_DIR"], "external/CSP/csp")
-
+def get_csp_command(grid_search=False):
+    # return os.path.join(os.environ["PYP_DIR"], "external/CSP/csp")
+    if grid_search:
+        return os.path.join(os.environ["PYP_DIR"], "external/CSP/csp_GS")
+    else:
+        return os.path.join(os.environ["PYP_DIR"], "external/CSP/csp")
 
 def frealign_refinement(new_par_file, name, parameters, fp, target, working_path):
     # evaluate scores using mode 1, mask 0,0,0,0,0 (MOVE INTO FUNCTION)
@@ -876,7 +880,7 @@ def prepare_to_run_frealign(
     shutil.copy2(target, os.environ["PYP_SCRATCH"])
 
 def csp_run_refinement(
-    parxfile,
+    alignment_parameters, 
     parameters,
     dataset,
     name,
@@ -892,18 +896,24 @@ def csp_run_refinement(
     frame_tag = "_local" if use_frames else ""
 
     if current_class > 1:
-        os.remove(os.path.join("frealign", "maps", "%s_frames_CSP_01.parx" % dataset))
-        os.remove(os.path.join("frealign", "scratch", "%s_frames_CSP_01.mrc" % dataset))
-        os.remove(os.path.join(local_scratch, "%s_frames_CSP_01.mrc" % dataset))
-        os.remove(os.path.join(local_scratch, "_frames_CSP_01.mrc"))
-    shutil.copy2(
-        parxfile,
-        os.path.join("frealign", "maps", "%s_frames_CSP_01.parx" % dataset),
-    )
+        try:
+        # os.remove(os.path.join("frealign", "maps", "%s_frames_CSP_01.parx" % dataset))
+            os.remove(os.path.join("frealign", "scratch", "%s_frames_CSP_01.mrc" % dataset))
+            os.remove(os.path.join(local_scratch, "%s_frames_CSP_01.mrc" % dataset))
+            os.remove(os.path.join(local_scratch, "_frames_CSP_01.mrc"))
+        except:
+            pass
+
+    parameter_file = f"frealign/maps/{name}.cistem"
+    extended_parameter_file = parameter_file.replace(".cistem", "_extended.cistem")
+
+    # sync projection occ with particle occ
+    alignment_parameters.sync_particle_occ()
+    alignment_parameters.to_binary(output=parameter_file)
 
     # reconstruction
     source = os.path.join(
-        os.getcwd(), "frealign", "scratch", "%s_%02d.mrc" % (name, iteration - 1)
+        os.getcwd(), "frealign", "scratch", "%s.mrc" % (name)
     )
 
     # link needed by csp
@@ -920,12 +930,9 @@ def csp_run_refinement(
     symlink_force(source, target3)
 
     # get number of tilts and particles
-    allparxs = get_non_empty_lines_from_par(parxfile)
-    ptlind_list = np.sort(np.unique(np.asarray([int(round(float(f.split()[16]))) for f in allparxs])))
-    scanord_list = np.sort(np.unique(np.asarray([int(round(float(f.split()[19]))) for f in allparxs])))
-    frame_list = np.sort(np.unique(np.asarray([int(round(float(f.split()[20]))) for f in allparxs])))
-
-    stackfile = "frealign/" + name[:-4] + "_stack.mrc"
+    ptlind_list = alignment_parameters.get_extended_data().get_particle_list() 
+    scanord_list = alignment_parameters.get_extended_data().get_tilt_list() 
+    frame_list = np.sort(np.unique(alignment_parameters.get_data()[:, alignment_parameters.get_index_of_column(cistem_star_file.FIND)])) 
 
     cpus = int(parameters["slurm_tasks"])
 
@@ -957,13 +964,13 @@ def csp_run_refinement(
 
     # check if we wanna do patch-based refinement 
     if 'tomo' in parameters["data_mode"].lower():
-        for ind, numGrid in enumerate(grids):
+        for i, numGrid in enumerate(grids):
             if numGrid > 1: 
                 patch_refinement = True
             elif numGrid <= 0:
                 grids[i] = 1 # it shouldn't be 0 
     else:
-        for ind, numGrid in enumerate(grids):
+        for i, numGrid in enumerate(grids):
             if numGrid <= 0:
                 grids[i] = 1 # it shouldn't be 0 
 
@@ -995,37 +1002,13 @@ def csp_run_refinement(
             if not parameters["refine_skip"] and parameters["class_num"] == 1:
                 csp_modes += [3]
 
-
-    # this is where we will save the output
-    new_par_file = "frealign/maps/%s_frames_CSP_%02d.parx" % (dataset, 1)
-    allboxes_file = name.split("_r")[0] + frame_tag + ".allboxes"
-
-    # prev is input and reg is output of regularization function
-    prev_par_file = new_par_file.replace(".parx", "_prev.parx")
-    reg_par_file = new_par_file.replace(".parx", "_reg.parx")
-    local_par_file = new_par_file.replace(".parx", "_local.parx")
-
-
-    # clean particles by modifying OCC in the parfile
-    boxes3d = "{}_boxes3d.txt".format(name.split("_r")[0])
-
-    if os.path.exists(boxes3d):
-        parx_object = Parameters.from_file(new_par_file)
-        cleaned_input = clean_tomo_particles(
-            parx_object.data, boxes3d, metric="new"
-        )
-        parx_object.data = cleaned_input
-
-        parx_object.write_file(new_par_file)
-
-    # check if the number of rows in parfile matches allboxes before proceeding
-    check_parfile_match_allboxes(par_file=new_par_file, allboxes_file=allboxes_file)
-
     for i in range(1):
 
-        starting_number_of_frames = frealign_parfile.Parameters.from_file(
-            parxfile
-        ).data.shape[0]
+        prev_alignment_parameters = copy.deepcopy(alignment_parameters)
+
+        starting_num_projections = alignment_parameters.get_num_rows()
+        starting_num_particles = alignment_parameters.get_extended_data().get_num_tilts()
+        starting_num_tilts = alignment_parameters.get_extended_data().get_num_tilts()
 
         ###############################
         # The available modes in CSPT #
@@ -1036,6 +1019,7 @@ def csp_run_refinement(
         # Mode 2 - Particle shifts ( pX, pY, pZ )
         # Mode 3 - Micrograph shifts ( mX, mY )     ## note: global
         # Mode 4 - Micrograph defocus ( defocus offset ) under construction
+
         for mode in csp_modes:
 
             outputs_pattern = "_??????_??????"
@@ -1050,33 +1034,34 @@ def csp_run_refinement(
                 t = Timer(text="Particle refinement (mode 2) took: {}", logger=logger.info)
                 t.start()
 
-            parx_object = Parameters.from_file(new_par_file)
+            # parx_object = Parameters.from_file(new_par_file)
             merged_stack = "frealign/%s_stack.mrc" % (name.split("_r")[0])
             frame_refinement = False
 
-            logger.info(
-                "Running CSPT (mode %s) using exposures %d to %d"
-                % (
-                    int(mode),
-                    int(use_images_for_refinement_min),
-                    int(use_images_for_refinement_max)
-                )
-            )
+            logger.info(f"Running CSPT (mode {mode}) using exposures {use_images_for_refinement_min} to {use_images_for_refinement_max}")
 
-            # TODO:
             if not use_frames:
                 if mode != -2 and mode != 7 and mode != 2 and mode != 4:
                     parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = 0, -1
                 else:
                     parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = csp_refine_min, csp_refine_max
 
+            if mode == 2 and "csp_RandomParticles" in parameters and parameters["csp_RandomParticles"] > 0 and parameters["csp_abinitio"]:
+                parameters["csp_RandomSkipRatio"] = round(max(0.00, 1 - float(parameters["csp_RandomParticles"] / ptlind_list[-1])), 2)
+                logger.info(f"Random skip ratio is {parameters['csp_RandomSkipRatio']} for CSP ab inito")
+
             project_params.save_parameters(parameters)
+
+            if parameters["csp_GridSearch"]:
+                grid_search = True
+            else:
+                grid_search = False
 
             if mode in (0, 3):
                 if "spr" in parameters["data_mode"].lower():
                     commands, count, movie_list = create_csp_split_commands(
                         get_csp_command(),
-                        new_par_file,
+                        parameter_file,
                         mode,
                         cpus,
                         name,
@@ -1090,7 +1075,7 @@ def csp_run_refinement(
                 else:
                     commands, count, movie_list = create_csp_split_commands(
                         get_csp_command(),
-                        new_par_file,
+                        parameter_file,
                         mode,
                         cpus,
                         name,
@@ -1104,8 +1089,8 @@ def csp_run_refinement(
 
             elif mode in (-1, -2, -2.1, 1, 2):
                 commands, count, movie_list = create_csp_split_commands(
-                    get_csp_command(),
-                    new_par_file,
+                    get_csp_command(grid_search),
+                    parameter_file,
                     mode,
                     cpus,
                     name,
@@ -1123,13 +1108,12 @@ def csp_run_refinement(
                     MODE = "P"
 
                 split_parx_list = prepare_particle_cspt(
-                    name[:-4], dataset, new_par_file, stackfile, parx_object, MODE, cpus, parameters, grids=grids, use_frames=use_frames
+                    name[:-4], parameter_file, alignment_parameters, parameters, grids=grids, use_frames=use_frames
                 )
                 if not split_parx_list:
                     logger.error("Mode %d stops running." % mode)
                     continue
 
-                use_images_for_refinement_min, use_images_for_refinement_max = 0, -1
                 outputs_pattern = "_region????_??????_??????"
 
                 if mode == 5:
@@ -1150,7 +1134,7 @@ def csp_run_refinement(
                     pass
 
                 commands, count, movie_list = create_csp_split_commands(
-                    get_csp_command(),
+                    get_csp_command(grid_search),
                     split_parx_list,
                     mode,
                     cpus,
@@ -1182,20 +1166,18 @@ def csp_run_refinement(
             if extract_only and current_class == 1:
                 # first check if every stack exists since we discard some particles in parfile
                 merged_stack = "frealign/%s_stack.mrc" % (name.split("_r")[0]) if mode == -2 else "frealign/%s_stack_weighted_average.mrc" % (name.split("_r")[0])
-
                 movie_list = [stack for stack in movie_list if os.path.exists(stack)]
+
                 try:
                     mrc.merge_fast(movie_list,merged_stack,remove=True)
                 except:
                     raise Exception("Particle extraction fails. Perhaps your slurm_memory is not enough. (currently %d G)" % (parameters["slurm_memory"]))
-
                 [
                     os.remove(f)
                     for f in glob.glob(
                         "%s_csp%s.log" % (name.split("_r")[0], outputs_pattern)
                     )
                 ]
-
                 t.stop()
 
                 # stop here if extracting particle stacks
@@ -1215,73 +1197,54 @@ def csp_run_refinement(
 
                 os.remove(f)
 
-            shutil.copy2( new_par_file, prev_par_file )
-
-            # produce new parfile after refinement 
+            # merge updated parameter files
             if not extract_only:
-                parx_object.data = merge_parx_particle_cspt(
-                    parx_object, new_par_file, outputs_pattern
-                )
-                assert (type(parx_object.data) == np.ndarray), "CSP failed to produce an output parfile"
+                alignment_parameters = merge_alignment_parameters(parameter_file, mode, outputs_pattern)
+                alignment_parameters.update_particle_score(tind_range=[use_images_for_refinement_min, use_images_for_refinement_max])
+                alignment_parameters.to_binary(output=parameter_file)
 
-            parx_object.write_file(new_par_file)
-
-
-            # clean-up frealign/maps/*parx
+            # clean-up intermediate results after merge
             [
                 os.remove(f)
-                for f in glob.glob(
-                    "frealign/maps/*_??????_??????.parx"
-                )
-                if not f == new_par_file
+                for f in set(glob.glob(f"frealign/maps/{name}{outputs_pattern}*.cistem") 
+                + glob.glob(f"frealign/maps/*region*.cistem"))
             ]
-
 
             # regularize particle trajectories if we're doing particle frame refinement
             if frame_refinement and not only_evaluate:
 
                 if parameters["csp_rotreg"] or parameters["csp_transreg"]:
-
-                    fit.regularize( name.split("_r")[0], new_par_file, prev_par_file, reg_par_file, parameters )
+                    
+                    fit.regularize(filename=name.split("_r")[0], 
+                                   prev_alignment_parameters=prev_alignment_parameters, 
+                                   alignment_parameters=alignment_parameters, 
+                                   parameters=parameters)
+                    # NOTE: regularize() function updates the shifts in "alignment_parameters", so we just need to write a new file so that csp can read it
+                    alignment_parameters.to_binary(output=parameter_file)
 
                     csp_modes.append(5)
-                    parameters["csp_UseImagesForRefinementMin"] = int(len(scanord_list))
-                    parameters["csp_UseImagesForRefinementMax"] = int(len(scanord_list))
+                    parameters["csp_UseImagesForRefinementMin"] = int(max(scanord_list)) + 1
+                    parameters["csp_UseImagesForRefinementMax"] = int(max(scanord_list)) + 1
                     only_evaluate = True 
 
                     project_params.save_parameters(parameters)
-
-                    os.remove(new_par_file)
-                    os.rename(reg_par_file, new_par_file)
 
             elif only_evaluate:
                 parameters["csp_UseImagesForRefinementMin"], parameters["csp_UseImagesForRefinementMax"] = csp_refine_min, csp_refine_max
                 project_params.save_parameters(parameters)
                 only_evaluate = False
-
-            os.remove(prev_par_file)
-
-            # overwrite inputs with new output
-            old_par_file = "frealign/maps/%s_frames_r01_%02d.par" % (dataset, i + 1)
-            if os.path.exists(old_par_file):
-                os.remove(old_par_file)
-
-            shutil.copy2(new_par_file, old_par_file)
-
-            current_number_of_frames = frealign_parfile.Parameters.from_file(
-                new_par_file
-            ).data.shape[0]
-
-
+            
             t.stop()
 
-            if starting_number_of_frames != current_number_of_frames:
-                message = "Number of frames before and after refinement differ: {} != {}".format(
-                    starting_number_of_frames, current_number_of_frames
-                )
-                raise Exception(message)
-
-    return os.path.join(os.getcwd(), new_par_file)
+            num_projections = alignment_parameters.get_num_rows()
+            num_particles = alignment_parameters.get_extended_data().get_num_tilts()
+            num_tilts = alignment_parameters.get_extended_data().get_num_tilts()
+            
+            assert (starting_num_projections == num_projections), f"Number of projections (in {parameter_file}) before and after refinement differ: {starting_num_projections} != {num_projections}"
+            assert (starting_num_particles == num_particles), f"Number of particles (in {extended_parameter_file}) before and after refinement differ: {starting_num_particles} != {num_particles}"
+            assert (starting_num_tilts == num_tilts), f"Number of tilts (in {extended_parameter_file}) before and after refinement differ: {starting_num_tilts} != {num_tilts}"
+            
+    return Path().cwd() / parameter_file
 
 
 def csp_run_spa_refinement(
@@ -1379,10 +1342,22 @@ def postprocess_after_refinement(
 
     new_name = name + "_r%02d" % current_class
 
+    global_dataset_name =  mp_local["data_set"]
+    global_decompressed_foler = os.path.join(current_path, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (current_class, iteration - 1))
+    global_stat_file = os.path.join(global_decompressed_foler, global_dataset_name + "_r%02d_stat.cistem" % current_class)
+    
     # create symlinks in scratch folder
+    if os.path.exists(os.path.join("scratch", f"{new_name}.cistem")):
+        os.remove(os.path.join("scratch", f"{new_name}.cistem"))
+
     symlink_relative(
-        new_par_file, os.path.join("scratch", new_name + "_%02d.par" % iteration)
+        new_par_file, os.path.join("scratch", f"{new_name}.cistem")
     )
+
+    if os.path.exists(global_stat_file) and not os.path.exists(os.path.join("scratch", f"{new_name}_stat.cistem")):
+        symlink_relative(
+            global_stat_file, os.path.join("scratch", f"{new_name}_stat.cistem")
+        )
 
     # reset occupancies if not doing classification
     if iteration == 2:
@@ -1430,7 +1405,7 @@ def postprocess_after_refinement(
 
         mp_local["refine_mask"] = ",".join(refine_mask)
 
-    # run refinement (produces short_file_name)
+    # run refinement (produces short_file_name in the scratch folder)
     frealign.split_refinement(
         mp_local,
         current_class,
@@ -1438,7 +1413,6 @@ def postprocess_after_refinement(
         1,
         frames,
         iteration,
-        project_params.param(mp["refine_metric"], iteration),
     )
 
     # save log file to frealign directory (only if not in mode=0)
@@ -1446,77 +1420,62 @@ def postprocess_after_refinement(
         with open(glob.glob(os.path.join(current_path, "*.micrographs"))[0]) as f:
             micrographs = f.read().split("\n")
         if name == micrographs[0]:
-            shutil.copy2(
-                glob.glob("*_msearch_n.log_*")[0],
-                os.path.join(
-                    current_path,
-                    "frealign",
-                    "log",
-                    "%s_r%02d_%02d_msearch.log"
-                    % (mp["data_set"], current_class, iteration),
-                ),
-            )
-            # send output to user interface
-            if 'slurm_verbose' in mp and mp['slurm_verbose']:
-                with open(glob.glob("*_msearch_n.log_*")[0]) as f:
-                    logger.info(f.read())
+            if not mp["refine_beamtilt"]:
+                shutil.copy2(
+                    glob.glob("*_msearch_n.log_*")[0],
+                    os.path.join(
+                        current_path,
+                        "frealign",
+                        "log",
+                        "%s_r%02d_%02d_msearch.log"
+                        % (mp["data_set"], current_class, iteration),
+                    ),
+                )
+                # send output to user interface
+                if 'slurm_verbose' in mp and mp['slurm_verbose']:
+                    with open(glob.glob("*_msearch_n.log_*")[0]) as f:
+                        logger.info(f.read())
+            else:
+                shutil.copy2(
+                    glob.glob("*_msearch_ctf_n.log_*")[0],
+                    os.path.join(
+                        current_path,
+                        "frealign",
+                        "log",
+                        "%s_r%02d_%02d_msearch_ctf.log"
+                        % (mp["data_set"], current_class, iteration),
+                    ),
+                )
+                # send output to user interface
+                if 'slurm_verbose' in mp and mp['slurm_verbose']:
+                    with open(glob.glob("*_msearch_ctf_n.log_*")[0]) as f:
+                        logger.info(f.read())
         # remove log files
         if not mp["refine_debug"]:
-            [os.remove(f) for f in glob.glob("*_msearch_n.log_*")]
+            [os.remove(f) for f in glob.glob("*_msearch*_n.log_*")]
 
-    # compose extended .parx file
-    long_file_name = os.path.join("maps", new_par_file)
-    short_file_name = new_name + "_%02d.par_%07d_%07d" % (iteration, 1, frames,)
-    # remove outliers after refine3d
-    frealign_parfile.Parameters.remove_outliers(short_file_name, "score", 0, 100)
+    # output_refine3d = new_name + "_%07d_%07d.cistem" % (1, frames)
+    output_refine3d = new_name + "_refined.cistem" # current dir is frealign/scratch/
     
-    concatenate_par_files(long_file_name, short_file_name, mp)
+    # compose extended .parx file
+    # long_file_name = os.path.join("maps", new_par_file)
+    # short_file_name = new_name + "_%02d.par_%07d_%07d" % (iteration, 1, frames,)
+    # remove outliers after refine3d
+    # frealign_parfile.Parameters.remove_outliers(short_file_name, "score", 0, 100)
+    # concatenate_par_files(long_file_name, short_file_name, mp)
+    
+    newpar_obj = cistem_star_file.Parameters.from_file(output_refine3d)
+    newpar_obj.modify_outliers_in_column(newpar_obj.get_index_of_column(cistem_star_file.SCORE), min=0, max=100)
 
-    if classes == 1:
+    if classes == 1:    
+        col_index = newpar_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
+        newpar_obj.modify_projdata_by_column(col_index, 100)
 
         logger.info("Resetting occupancies to 100.0 since classes = 1")
 
-        # here we reformat columns to force the standard format (even if that means columns will be joint)
-        input = np.array(
-            [line for line in open(long_file_name) if not line.startswith("C")]
-        )
-
-        if "frealignx" in project_params.param(mp["refine_metric"], iteration).lower():
-            scores = 15
-            occ = 12
-        else:
-            scores = 14
-            occ = 11
-
-        comments = [line for line in open(long_file_name) if line.startswith("C")]
-
-        (
-            fieldwidths,
-            fieldstring,
-            _,
-            _,
-        ) = frealign_parfile.Parameters.format_from_parfile(long_file_name)
-
-        # write output
-        with open(long_file_name, "w") as f:
-
-            f.write("".join(comments))
-
-            for line in input:
-                values = np.array(line.split(), dtype="f")
-                if occ > 0 and mp["data_mode"] == "spr":
-                    values[occ] = 100
-                # truncate scores to prevent overflow
-                # if values[scores] > 9999:
-                #     values[scores] = 0
-                #     values[scores + 1] = 0
-                f.write(fieldstring % tuple(values))
-
-    # No longer needed: save alignments to working directory (remove comments and first column)
-    # com = "grep -v C {0} | cut -c8- > {1}".format(
-    #    long_file_name, os.path.join(working_path, new_name + ".allparxs")
-    # )
-    # subprocess.check_output(com, stderr=subprocess.STDOUT, shell=True, text=True)
+    os.remove(new_par_file)
+    # replace the cistem scratch folder
+    shutil.copy2( output_refine3d, new_par_file)
 
     # go back to working directory
     os.chdir(working_path)
@@ -1530,7 +1489,7 @@ def csp_refinement(
     current_path,
     working_path,
     use_frames,
-    parxfile,
+    allparxs,
     iteration,
 ):
     """Unified stack-less single-particle refinement.
@@ -1561,7 +1520,9 @@ def csp_refinement(
         classes = 1
     else:
         classes = int(project_params.param(mp["class_num"], iteration))
-
+    
+    # parx file not needed.
+    """
     # write parx file for class=1 by pre-pending particle index (frealign/maps/name_r01_01.parx -> parxfile)
     with Timer(
         "particle re-index", text = "Pre-pending index to par took: {}", logger=logger.info
@@ -1571,6 +1532,7 @@ def csp_refinement(
             parxfile,
             "frealignx" in project_params.param(mp["refine_metric"], iteration),
         )
+    """
 
     # copy maps to working maps directory
     [
@@ -1584,6 +1546,8 @@ def csp_refinement(
         )
     ]
 
+    # not being used
+    """
     if classes > 1:
 
         # frealign/name_r??_01.parx -> frealign/name_r??_01.par
@@ -1615,7 +1579,7 @@ def csp_refinement(
             shutil.copy2(
                 new_class_parxfile, new_class_parxfile.replace(".parx", ".par")
             )
-
+    """
     # prepare, run and post-process after refinement (do this for each class)
     for class_index in range(classes):
 
@@ -1638,7 +1602,7 @@ def csp_refinement(
             raise Exception(message)
 
         # output map from this iteration
-        target = new_name + "_%02d.mrc" % (iteration - 1)
+        target = new_name + ".mrc"
         target = os.path.join(local_frealign_folder, "scratch", target)
 
         # copy initial model to local frealign folder
@@ -1647,29 +1611,19 @@ def csp_refinement(
         # apply shape masking if needed
         shape_mask_reference(mp, iteration, target, target)
 
-        # re-normalize reference
-        """
-        normalize_volume(
-            target,
-            radius=float(mp["particle_rad"]),
-            pixelsize=float(mp["scope_pixel"]) * float(mp["extract_bin"]),
-        )
-        """
         is_tomo = "tomo" in mp["data_mode"].lower()
 
-        class_parxfile = parxfile.replace("_r01_", "_r%02d_" % current_class)
+        # class_parxfile = parxfile.replace("_r01_", "_r%02d_" % current_class)
+
+        # Everything that modifies parameter files falls here
+        allparxs[class_index].update_pixel_size(mp["scope_pixel"] * mp["extract_bin"]) # data_bin?
+        parameter_file = Path().cwd() / "frealign" / "maps" / f"{new_name}.cistem"
 
         # execute refinement
         if is_tomo:
-            
-            # set SCANORD back to normal (without having frame index added) before going to csp
-            t = Timer(text="Modifying scanning order took: {}", logger=logger.info)
-            t.start()
-            frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile, False)
-            t.stop()
 
-            new_par_file = csp_run_refinement(
-                class_parxfile,
+            parameter_file = csp_run_refinement(
+                allparxs[class_index],
                 mp,
                 dataset,
                 new_name,
@@ -1678,26 +1632,13 @@ def csp_refinement(
                 current_path,
                 use_frames,
             )
-            try:
-                os.remove(class_parxfile)
-            except:
-                pass
 
-            shutil.copy2(new_par_file, class_parxfile)
-
-            t = Timer(text="Modifying scanning order 2 took: {}", logger=logger.info)
-            t.start()
-            # add frame index to SCANRORD (scanord = scanord * num_frames + frame) for dose weighting 
-            frealign_parfile.Parameters.addFrameIndexInScanord(class_parxfile, class_parxfile)
-            t.stop() 
+            allparxs[class_index] = cistem_star_file.Parameters.from_file(str(parameter_file))
 
         elif use_frames or mp["csp_refine_ctf"]: # run csp for only refine ctf or frame refinement 
 
-            # set SCARORD to 0 before going to csp
-            frealign_parfile.Parameters.populateFrameIndexInScanord(class_parxfile, class_parxfile, False)
-
-            new_par_file = csp_run_refinement(
-                class_parxfile,
+            parameter_file = csp_run_refinement(
+                allparxs[class_index],
                 mp,
                 dataset,
                 new_name,
@@ -1706,50 +1647,23 @@ def csp_refinement(
                 current_path,
                 use_frames,
             )
-            try:
-                os.remove(class_parxfile)
-            except:
-                pass
 
-            # SCANORD has to be set to frame index to make dose weighting working
-            frealign_parfile.Parameters.populateFrameIndexInScanord(new_par_file, class_parxfile)
+            allparxs[class_index] = cistem_star_file.Parameters.from_file(str(parameter_file))
+
+        else:
+            # we need parameter file on disk for spr
+            allparxs[class_index].to_binary(str(parameter_file))
+        
+        if mp["refine_beamtilt"]:
+            refine_beamtilt = True
+        else:
+            refine_beamtilt = False
 
         # run frealign refinement
-        is_frealignx = False
         if (classes > 1 or not use_frames) and not mp["refine_skip"]:
-
-            # check if not frealignx format par but want to refine with frealignx
-            input_par_data = frealign_parfile.Parameters.from_file(class_parxfile).data
-            if (
-                "frealignx" in project_params.param(mp["refine_metric"], iteration)
-                and input_par_data[0].shape[0] < 46
-            ) :
-                logger.info("Changing parfile format to frealign")
-                is_frealignx = True
-                if input_par_data[0, 7] == 0:
-                    # add 1 for film column, frealignx start from 1
-                    input_par_data[:, 7] += 1
-
-                # add the pshift column
-                pshift = np.zeros((input_par_data.shape[0], 1), dtype='float')
-                frealignx_pardata = np.hstack((input_par_data[:, :11], pshift, input_par_data[:, 11:]))
-                frealign_parfile.Parameters.write_parameter_file(class_parxfile, frealignx_pardata, parx=True, frealignx=True)
-
-            film_total = np.loadtxt(os.path.join(current_path, mp["data_set"] + ".films"), dtype=str, ndmin=2)
-            if classes > 1 and film_total.shape[0] > 1 and iteration > 2:
-
-                frealign_parfile.Parameters.add_lines_with_statistics(
-                    class_parxfile,
-                    current_class,
-                    current_path,
-                    is_frealignx=is_frealignx,
-                )
-
-            else:
-                logger.info("Skip modifying metadata to change statistics")
-
+            mp["refine_beamtilt"] = False
             postprocess_after_refinement(
-                class_parxfile,
+                str(parameter_file),
                 name,
                 mp,
                 current_class,
@@ -1757,13 +1671,27 @@ def csp_refinement(
                 working_path,
                 iteration,
             )
-   
+        
+        if refine_beamtilt:
+            mp["refine_beamtilt"] = True
+            postprocess_after_refinement(
+                str(parameter_file),
+                name,
+                mp,
+                current_class,
+                current_path,
+                working_path,
+                iteration,
+            )
+
+
     # write out the stack file and par file into a txt for later processing
     with open(os.path.join(os.environ["PYP_SCRATCH"], "stacks.txt"), "a") as f:
         f.write(os.path.join(name, "frealign/" + name + "_stack.mrc\n"))
 
+    # save the first class name here only
     with open(os.path.join(os.environ["PYP_SCRATCH"], "pars.txt"), "a") as f:
-        f.write(os.path.join(name, parxfile + "\n"))
+        f.write(str(parameter_file).replace(f"_r{classes:02d}", f"_r01") + "\n")
 
     # if the project directory file is not written
     project_dir_file = os.path.join(os.environ["PYP_SCRATCH"], "project_dir.txt")
@@ -4560,8 +4488,7 @@ def align_movie_super(parameters, name, suffix, isfirst = False):
 {patches} \
 {dose_weighting_options} \
 {mag_correction_options} \
--Gpu {get_gpu_id()} \
--UseGpus 1"
+-Gpu {get_gpu_ids(parameters,separator=' ')}"
         [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
         if "Segmentation fault" in error or "Killed" in error:
@@ -4886,7 +4813,7 @@ def align_tilt_series(name, parameters, rotation=0):
     if not 'aretomo' in parameters["tomo_ali_method"].lower():
         logger.info("Doing pre-alignment using IMODs tiltxcorr")
 
-        if parameters["tomo_rec_square"]:
+        if parameters["tomo_ali_square"]:
             tapper_size = int(
                 min(int(512 / binning), min(tilt_series_size_x, tilt_series_size_y) / 4)
             )
@@ -5202,8 +5129,17 @@ def align_tilt_series(name, parameters, rotation=0):
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
 -OutImod 2 {patches} \
--Gpu {get_gpu_id()}"
+-Gpu {get_gpu_ids(parameters,separator=' ')}"
             [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+
+            if "Tilt offset" in output:
+                tilt_offset = float([s.split()[1] for s in output.split("\n") if "Tilt offset" in s ][0])
+                if tilt_offset > 0:
+                    # overwrite rawtlt files to reflect the angles offset changes
+                    rawtlt_file = f"{name}.rawtlt"
+                    tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
+                    tiltangles += tilt_offset
+                    np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
 
             # save output
             try:

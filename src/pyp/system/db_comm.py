@@ -16,6 +16,7 @@ from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
 from pyp.utils import flatten, get_relative_path, symlink_relative
+from pyp.inout.metadata import pyp_metadata
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -389,6 +390,28 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
     elif 'tomo_rec_force' in parameters and parameters['tomo_rec_force']:
         initial_files.remove("mrc/{0}.rec")
 
+    if parameters.get("tomo_ali_method") == "import" and os.path.exists(project_params.resolve_path(parameters["tomo_ali_import"])):
+        # cp .tlt .xf 
+        tlt_file = name + ".tlt"
+        xf_file = name + ".xf"
+        external_tlt = os.path.join(project_params.resolve_path(parameters["tomo_ali_import"]), tlt_file)
+        if os.path.exists(external_tlt):
+            logger.info(f"Import tilt-angles from: {external_tlt}")
+            shutil.copy2(external_tlt, working_path)
+        else:
+            logger.warning("No corresponding .tlt file from import path found for this tilt-series")
+
+        external_xf = os.path.join(project_params.resolve_path(parameters["tomo_ali_import"]), xf_file)
+        if os.path.exists(external_xf):
+            logger.info(f"Import tilt-series alignments from: {external_xf}")
+            shutil.copy2(external_xf, working_path)
+        else:
+            logger.warning("No corresponding .xf file from import path found for this tilt-series")
+
+        # read metadata and save into pickle file
+        data = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)
+        data.loadFiles()
+
     if "tomo_spk_files" in parameters:
         if os.path.exists(project_params.resolve_path(parameters["tomo_spk_files"])):
             external_spk_file = os.path.join(
@@ -404,6 +427,8 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
     file_patterns = [
         f"sva/{name}_vir????_cut.txt",
         f"raw/{name}.order",  # retrieve order file for dose weighting
+        f"mrc/{name}_vir????_binned_nad.mrc",
+        f"mrc/{name}_vir????_binned_nad_seg.mrc"
     ]
 
     filelist = []
@@ -434,7 +459,7 @@ def save_tomo_results(name, parameters, current_path, verbose=False):
         name
     )
 
-    if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")):
+    if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")) and not os.path.exists(os.path.join(current_path,"mrc",name+".mrc")):
         symlink_relative(
             os.path.join(current_path,"raw",name+".mrc"),
             os.path.join(current_path,"mrc",name+".mrc")
@@ -464,7 +489,7 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
 
     files[
         "mrc"
-    ] = "{0}.rec {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
+    ] = "{0}.rec {0}_bin.ali {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
         name
     )
 
@@ -527,15 +552,15 @@ def save_csp_results(name, parameters, current_path, verbose=False):
     """Save sp swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
-    iteration = parameters["refine_iter"]
-    if iteration == 2:
-        files[
-        "csp"
-        ] = "{0}.allboxes {0}_local.allboxes".format(name)
-    else:
-        files[
-            "csp"
-        ] = "{0}.allboxes {0}_local.allboxes".format(name)
-    files["csp"] += " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
+    # iteration = parameters["refine_iter"]
+    # if iteration == 2:
+    #     files[
+    #     "csp"
+    #     ] = "{0}.allboxes {0}_local.allboxes".format(name)
+    # else:
+    #     files[
+    #         "csp"
+    #     ] = "{0}.allboxes {0}_local.allboxes".format(name)
+    files["csp"] = " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
 
     save_results(files, current_path, verbose=verbose)

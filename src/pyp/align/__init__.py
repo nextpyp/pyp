@@ -12,4 +12,5 @@ from .core import (
     concatenate_par_files,
     csp_refinement,
     generate_thumbnail,
+    apply_alignments_and_average,
 )

@@ -12,7 +12,7 @@ from typing import Union
 import numpy as np
 
 import pyp.inout.image as imageio
-from pyp.detect import tomo_subvolume_extract_is_required, tomo_vir_is_required
+from pyp.detect import tomo_subvolume_extract_is_required, tomo_vir_is_required, detect_gold_beads
 from pyp import align, preprocess, merge
 from pyp import ctf as ctf_mod
 from pyp.inout.image import digital_micrograph as dm4
@@ -319,14 +319,14 @@ def read_tilt_series(
                 plt.close()
 
         elif os.path.isfile(name + ".mrc"):
-            
+
             if not parameters["movie_mdoc"]:
                 # .rawtlt and .order should be moved to the local scratch at this point
                 assert Path(f"{name}.rawtlt").exists(), "Please provide .rawtlt file containing the initial tilt angles."
                 assert Path(f"{name}.order").exists(), "Please provide .order file containing the acquisition order."
-                           
+
             elif len(mdocs) > 0 and parameters["movie_mdoc"]:
-                
+
                 tilts = frames_from_mdoc(mdocs, parameters)
                 tilts.sort(key=lambda x: x[1])
 
@@ -335,10 +335,10 @@ def read_tilt_series(
 
                 np.savetxt(f"{name}.rawtlt", tilt_angles, fmt="%.2f")
                 np.savetxt(f"{name}.order", order, fmt="%d")
-        
+
             else:
                 raise Exception("Please either provide .rawtlt/.order files or .mdoc file(s) for initial tilt angles and acquisition order.")
-  
+
 
             if not os.path.isfile("{0}.rawtlt".format(name)):
                 # write to .rawtlt
@@ -357,9 +357,9 @@ def read_tilt_series(
                 shifts[i] = np.zeros([1, 2])
 
             x, y, z = get_image_dimensions(name + ".mrc")
-            
+
             # sanity check if number of tilts derived from .rawtlt is correct
-            assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"      
+            assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"
             assert (z == len(order)), f"{z} tilts in {name+'.mrc'} != {len(order)} from .order"
 
             pixel_size = parameters["scope_pixel"]
@@ -382,7 +382,7 @@ def read_tilt_series(
 
             # read image dimensions
             [micrographinfo, error] = local_run.run_shell_command(
-                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=parameters["slurm_verbose"]
+                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=False
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
@@ -613,7 +613,8 @@ def read_tilt_series(
 
     else:
         logger.error("Cannot read %s", filename)
-    if metadata:
+
+    if metadata and metadata.get("drift"):
         drift_metadata["drift"] = {}
         if metadata.get("drift"):
             for i in metadata["drift"]:
@@ -640,7 +641,7 @@ def read_tilt_series(
         float(tilt_axis),
     )
 
-    if parameters["tomo_rec_format"]:
+    if parameters["tomo_ali_format"]:
         squarex = math.ceil(x / 512.0) * 512
         squarey = math.ceil(y / 512.0) * 512
     else:
@@ -649,31 +650,29 @@ def read_tilt_series(
 
     square = max(squarex, squarey)
 
-    if binning > 1 or square != x or True:
+    # only need squared tilt-series when: 
+    # 1. tiltseries alignment is not done yet
+    # 2. squared aligned tiltseries needs to be generated (for producing downsampled tomogram or subvolume/virion extraction)
+    if not project_params.tiltseries_align_is_done(metadata) or \
+        not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
+        ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
+        parameters["tomo_vir_force"] or \
+        parameters["tomo_rec_force"] or \
+        tomo_subvolume_extract_is_required(parameters) or \
+        tomo_vir_is_required(parameters) or \
+        not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path):
 
         t = timer.Timer(text="Convert tilt-series into squares took: {}", logger=logger.info)
         t.start()
-
-        # only need squared tilt-series when: 
-        # 1. tiltseries alignment is not done yet
-        # 2. squared aligned tiltseries needs to be generated (for producing downsampled tomogram or subvolume/virion extraction)
-        if not project_params.tiltseries_align_is_done(metadata) or \
-            not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
-            ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
-            parameters["tomo_vir_force"] or \
-            parameters["tomo_rec_force"] or \
-            tomo_subvolume_extract_is_required(parameters) or \
-            tomo_vir_is_required(parameters) or \
-            not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path):
-            imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
+        imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
         t.stop()
 
-        f = open("{0}.mrc".format(name), "rb")
-        headerbytes = f.read(1024)
-        headerdict = imageio.mrc.parseHeader(headerbytes)
-        x, y, z = headerdict["nx"], headerdict["ny"], headerdict["nz"]
+    f = open("{0}.mrc".format(name), "rb")
+    headerbytes = f.read(1024)
+    headerdict = imageio.mrc.parseHeader(headerbytes)
+    x, y, z = headerdict["nx"], headerdict["ny"], headerdict["nz"]
 
-        pixel_size *= binning
+    pixel_size *= binning
 
     # invert contrast if needed
     if parameters["data_invert"]:
@@ -746,7 +745,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         or scaling > 1.01
         or int(mparameters["extract_box"]) != model_box_size
     ):
-        logger.warning(f"Rescaling {initial_model} pixel size to binning {1/scaling:.2f}, which would be {model_pixel_size/scaling:.2f}")
+        logger.warning(f"Rescaling reference {initial_model} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
         command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
             get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, initial_model,
         )
@@ -823,3 +822,129 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
     return frames_set
 
 
+def regenerate_average_quick(
+    filename, parameters, dims, frame_list
+):
+
+    binning = int(parameters["data_bin"])
+    aligned_tilts = []
+
+    name = os.path.basename(filename)
+
+    # escape special character in case it contains [
+    filename = glob.escape(filename)
+
+    # generate gain reference
+    _, gain_reference_file = get_gain_reference(
+        parameters, dims[0], dims[1],
+    )
+
+    if gain_reference_file is not None:
+        commands = []
+
+        for movie in frame_list:
+            com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}; rm -f {1}~'.format(
+                get_imod_path(), movie, gain_reference_file,
+            )
+            commands.append(com)
+
+        mpi.submit_jobs_to_workers(commands, os.getcwd())
+
+    # regenerate average in each tilt
+    t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
+    t.start()
+    logger.info(f"Processing individual frames using existing alignment")
+    arguments = []
+    for movie in frame_list:
+        m_name = movie.replace(".mrc", "")
+        arguments.append((movie, m_name, parameters, "imod"))
+  
+    mpi.submit_function_to_workers(align.apply_alignments_and_average, arguments, verbose=parameters["slurm_verbose"])
+
+    t.stop()
+
+    # compose drift-corrected tilt-series
+    aligned_tilts = [frame.replace(".mrc", ".avg") for frame in frame_list]
+    aligned_tilts_str = " ".join(aligned_tilts)
+
+    command = "{0}/bin/newstack {2} {1}.mrc".format(
+        get_imod_path(), name, aligned_tilts_str
+    )
+
+    # suppress long log
+    if parameters["slurm_verbose"]:
+        logger.info(command)
+    local_run.run_shell_command(command, verbose=False)
+
+    # read image dimensions
+    [micrographinfo, error] = local_run.run_shell_command(
+        "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name),verbose=False
+    )
+    x, y, z = list(map(int, micrographinfo.split()))
+    
+    if parameters["tomo_ali_format"]:
+        squarex = math.ceil(x / 512.0) * 512
+        squarey = math.ceil(y / 512.0) * 512
+    else:
+        squarex = x
+        squarey = y
+
+    square = max(squarex, squarey)
+
+    # squared tilt-series: 
+    if True:
+        t = timer.Timer(text="Convert tilt-series into squares took: {}", logger=logger.info)
+        t.start()
+        imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
+        t.stop()
+ 
+    # invert contrast if needed
+    if parameters["data_invert"]:
+        preprocess.invert_contrast(name)
+
+
+def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
+    """
+    Erase gold beads and reconstruct tomograms
+    """
+
+    gold_mod = f"{name}_gold.mod"
+
+    if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
+        # create binned aligned stack
+        if not os.path.exists(f'{name}_bin.ali'):
+            command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
+                get_imod_path(), name, binning
+            )
+            local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+
+        detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+
+    if parameters["tomo_rec_erase_fiducials"]:
+
+        # save projected gold coordinates as txt file
+        com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
+        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+
+        # calculate unbinned tilt-series coordinates
+        gold_coordinates = np.loadtxt(name + "_gold_ccderaser.txt",ndmin=2)
+        gold_coordinates[:,:2] *= binning
+        np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
+
+        # convert back to imod model using one point per contour
+        com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
+        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+
+        # erase gold on (unbinned) aligned tilt-series
+        erase_factor = parameters["tomo_rec_erase_factor"]
+        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand 5 -order 0 -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
+        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+
+        try:
+            os.remove(name + "_gold_ccderaser.txt")
+            os.remove(name + "_gold_ccderaser.mod")
+        except:
+            pass
+
+        # re-calculate reconstruction using gold-erased tilt-series
+        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)

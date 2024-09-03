@@ -605,14 +605,40 @@ class Parameters:
             input += ".bz2"
         if input.endswith(".bz2"):
             # decompress file in local scratch directory
+            folder = Path(input).absolute().parent
             current_dir = os.getcwd()
-            os.chdir(os.environ["PYP_SCRATCH"])
+            try:
+                # try to go to local scratch first
+                os.chdir(os.environ["PYP_SCRATCH"])
+            except: 
+                # if we don't have permission or it does not exist, 
+                # try to go to the folder where the input is 
+                os.chdir(folder)
             Parameters.decompress_file(input, threads)
             output = os.path.join(os.getcwd(), Path(input).name[:-4])
             os.chdir(current_dir)
         else:
             output = input
         return output
+    
+    @staticmethod
+    def decompress_parameter_file_and_move(file: Path, new_file: Path, micrograph_list: list = [], threads=1):
+        # delete the file if it already exists in the new path
+        if new_file.exists(): 
+            shutil.rmtree(new_file)
+        
+        # decompress the file into folder
+        assert (str(file).endswith(".bz2")), f"{file} needs to be compressed in .bz2 format."
+        decompressed_file = Parameters.decompress_parameter_file(str(file), threads)
+        assert (os.path.isdir(decompressed_file)), f"{file} is not a folder after decompression."
+
+        # check if the folder contains all the parameter files
+        if len(micrograph_list) > 0:
+            for micrograph in micrograph_list:
+                assert ((Path(decompressed_file) / f"{micrograph}.cistem").exists()), f"{micrograph}.cistem is not in {file}."
+                assert ((Path(decompressed_file) / f"{micrograph}_extended.cistem").exists()), f"{micrograph}_extended.cistem is not in {file}."
+
+        shutil.move(decompressed_file, new_file)
 
     @staticmethod
     def write_parameter_file(output_fname, contents, parx=False, frealignx=False):

@@ -11,7 +11,7 @@ _description = "Block types for web UI"
 [blocks.spr_import_raw]
 name = "SPA import raw"
 description = "Data Import for SPA"
-tabs = [ "data", "gain", "scope", "slurm" ]
+tabs = [ "data", "gain", "scope", "slurm", "micromon" ]
 
 [blocks.spr_import]
 name = "SPA import"
@@ -24,9 +24,16 @@ description = "Star data import for SPA"
 tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
 
 [blocks.spr_pre_process]
-name = "SPA pre-processing"
+name = "SPA pre-processing (legacy)"
 description = "Micrograph pre-processing"
 tabs = [ "movie", "ctf", "detect", "detect_nn2d", "detect_topaz2d", "slurm" ]
+forwarded_tabs = [ "data", "scope", "gain" ]
+
+[blocks.spr_pure_preprocess]
+name = "SPA pre-processing"
+description = "Micrograph pre-processing"
+tabs = [ "movie", "ctf", "slurm" ]
+forwarded_tabs = [ "data", "scope", "gain" ]
 
 [blocks.spr_coarse_refine]
 name = "SPA Coarse Refinement"
@@ -38,10 +45,25 @@ name = "SPA Fine Refinement"
 description = "Fine refinement for SPA"
 tabs = [ "extract", "refine", "reconstruct", "class", "denoise", "export", "slurm" ]
 
+[blocks.spr_heterogeneity]
+name = "Heterogeneity analysis"
+description = "Conformational heterogeneity analysis"
+tabs = [ "heterogeneity", "slurm" ]
+
 [blocks.spr_flexible_refine]
 name = "SPA Frame Refinement"
 description = "Movie frame refinement"
 tabs = [ "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
+
+[blocks.spr_denoise]
+name = "SPA Denoising"
+description = "Denoising"
+tabs = [ "denoise2d", "slurm", "micromon" ] # TODO
+
+[blocks.spr_picking]
+name = "SPA Particle-picking"
+description = "Particle picking"
+tabs = [ "detect", "detect_nn2d", "detect_topaz2d", "slurm" ] # TODO
 
 [blocks.spr_map_clean]
 name = "Particle Filtering"
@@ -53,7 +75,7 @@ tabs = [ "clean", "particle", "extract", "refine", "csp", "reconstruct", "dose_w
 [blocks.tomo_import_raw]
 name = "TOMO import"
 description = "Data Import for TOMO"
-tabs = [ "data", "gain", "scope", "slurm"  ]
+tabs = [ "data", "gain", "scope", "slurm", "micromon" ]
 
 [blocks.tomo_import]
 name = "TOMO import"
@@ -66,14 +88,80 @@ description = "Star data import for TOMO"
 tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
 [blocks.tomo_pre_process]
-name = "TOMO Pre-processing"
+name = "TOMO Pre-processing (legacy)"
 description = "Alignment, CTF and particle picking"
 tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+forwarded_tabs = [ "data", "scope", "gain" ]
+
+[blocks.tomo_pure_preprocess]
+name = "TOMO Pre-processing"
+description = "Alignment, CTF and Reconstruction"
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
+[blocks.tomo_segment_open]
+name = "TOMO Segmentation (open)"
+description = "Segment open surfaces"
+tabs = [ "tomo_mem", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
+[blocks.tomo_segment_close]
+name = "TOMO Segmentation (close)"
+description = "Segment closed surfaces"
+tabs = [ "tomo_sphere", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
+[blocks.tomo_picking]
+name = "TOMO Particle-picking"
+description = "Particle picking"
+tabs = [ "tomo_spk", "tomo_ext", "slurm" ]
+forwarded_tabs = [ "data", "scope", "movie" ]
+
+[blocks.tomo_par_open]
+name = "TOMO Particle-picking"
+description = "Particle picking on open surfaces"
+tabs = [ "tomo_srf", "tomo_ext", "slurm" ]
+forwarded_tabs = [ "data", "scope", "movie" ]
+
+[blocks.tomo_par_close]
+name = "TOMO Particle-picking"
+description = "Particle picking on closed surfaces"
+tabs = [ "tomo_srf", "tomo_ext", "slurm" ]
+forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_coarse_refine]
 name = "TOMO Coarse Refinement"
 description = "Constrained particle alignment"
 tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "dose_weighting", "denoise", "export", "slurm" ]
+
+[blocks.tomo_drgn]
+name = "Heterogeneity analysis"
+description = "Conformational heterogeneity analysis"
+tabs = [ "heterogeneity", "slurm" ]
+
+[blocks.tomo_milo_train]
+name = "MiLoPYP training"
+description = "Train model for molecular pattern mining"
+tabs = [ "detect_milo", "slurm" ]
+forwarded_tabs = [] # TODO ?
+
+[blocks.tomo_milo_eval]
+name = "MiLoPYP evaluation"
+description = "Evaluate model for molecular pattern mining"
+tabs = [ "detect_milo", "slurm" ]
+forwarded_tabs = [] # TODO ?
+
+[blocks.tomo_particles_train]
+name = "TOMO Particles Training"
+description = "Train model for particle picking"
+tabs = [ "detect_nn3d", "slurm" ] # TODO ?
+forwarded_tabs = [] # TODO ?
+
+[blocks.tomo_particles_eval]
+name = "TOMO Particles Evaluation"
+description = "Evaluate model for particle picking"
+tabs = [ "detect_nn3d", "slurm" ] # TODO ?
+forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_clean]
 name = "TOMO Particle Cleaning"
@@ -84,6 +172,21 @@ tabs = [ "clean", "slurm" ]
 name = "TOMO Mask Generation"
 description = "Mask generation for TOMO"
 tabs = [ "mask", "slurm" ]
+
+[blocks.tomo_denoise]
+name = "TOMO Denoising"
+description = "Tomogram denoising"
+tabs = [ "tomo_denoise", "slurm", "micromon" ]
+
+[blocks.tomo_denoise_train]
+name = "TOMO Denoising (training)"
+description = "Train model for tomogram denoising"
+tabs = [ "tomo_denoise", "slurm", "micromon" ]
+
+[blocks.tomo_denoise_eval]
+name = "TOMO Denoising (eval)"
+description = "Evaluate model for tomogram denoising "
+tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
 [blocks.tomo_flexible_refine]
 name = "TOMO Frame Refinement"
@@ -132,6 +235,20 @@ tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "tomo_ali", "tomo_re
 _name = "Parameter groups to use as tabs in web UI and for PYP CLI parameter definition"
 _description = "Data analysis parameters grouped according to their function"
 _help = "PYP - Cryo-EM/ET image analysis"
+
+# 3D reconstruction parameters
+
+[tabs.micromon]
+_name = "Micromon options"
+_description = "Micromon options without real use for now"
+_hidden = [ "spr_import_raw", "spr_denoise", "tomo_denoise" ]
+
+[tabs.micromon.block]
+name = "Apply symmetry"
+description = "Apply symmetry during reconstruction"
+type = "str"
+default = ""
+hidden = true
 
 # Miroscope parameters
 
@@ -610,6 +727,13 @@ type = "bool"
 default = true
 hidden = true
 
+[tabs.ctf.method]
+name = "CTF estimation method"
+description = "Which CTF estimation method to use"
+type = "enum"
+enum = { ctffind4="ctffind4", ctffind5="ctffind5" }
+default = "ctffind5"
+
 [tabs.ctf.min_res]
 name = "Min resolution (A)"
 description = "Minimum resolution used for CTF estimation"
@@ -687,6 +811,95 @@ type = "float"
 default = 50.0
 hidden = [ "stream_spr", "spr_pre_process" ]
 
+[tabs.ctf.phase_shift]
+name = "Find phase shift"
+description = "Find additional phase shift"
+type = "bool"
+default = false
+condition={ arg="method", value="ctffind5" }
+
+[tabs.ctf.min_rad]
+name = "Min phase shift (rad)"
+description = "Minimum phase shift"
+type = "float"
+default = 0.0
+condition={ arg="phase_shift", value="true" }
+
+[tabs.ctf.max_rad]
+name = "Max phase shift (rad)"
+description = "Maximum phase shift"
+type = "float"
+default = 0.0
+condition={ arg="phase_shift", value="true" }
+
+[tabs.ctf.ps_step]
+name = "Search step"
+description = "Phase shift search step"
+type = "float"
+default = 0.0
+condition={ arg="phase_shift", value="true" }
+
+[tabs.ctf.determine_tilt]
+name = "Detect tilt axis and angle"
+description = "Image tilt axis and tilt angle estimation"
+type = "bool"
+default = false
+condition={ arg="method", value="ctffind5" }
+
+[tabs.ctf.tilt_axis_known]
+name = "Tilt axis is known"
+description = "Estimiate CTF with known tilt axis"
+type = "bool"
+default = false
+condition={ arg="method", value="ctffind5" }
+
+[tabs.ctf.tilt_axis]
+name = "Known tilt axis angle"
+description = "Tilt axis used for CTF estimation, angle from X-axis, counterclockwise as positive. (The angle that actually used for tomogram reconstruction)"
+type = "float"
+default = 0.0
+condition={ arg="method", value="ctffind5" }
+
+[tabs.ctf.determine_thickness]
+name = "Detect sample thickness"
+description = "Sample thickness estimation"
+type = "bool"
+default = false
+condition={ arg="method", value="ctffind5" }
+
+[tabs.ctf.known_ast]
+name = "Known astigmatism"
+description = "Astigmatism values (Angstrom)"
+type = "float"
+default = 0.0
+condition={ arg="method", value="ctffind5" }
+
+[tabs.ctf.known_ast_angle]
+name = "Known astigmatism angle"
+description = "Astigmatism angle values (degree)"
+type = "float"
+default = 0.0
+condition={ arg="method", value="ctffind5" }
+
+[tabs.denoise2d]
+_name = "Micrograph denoising"
+_description = "Parameters to denoise micrographs"
+
+[tabs.denoise2d.method]
+name = "Method"
+description = "Denoise tomograms with selected method"
+type = "enum"
+enum = {none="none", topaz="topaz"}
+default = "none"
+
+[tabs.denoise2d.topaz_model]
+name = "Pre-trained model"
+description = "Pre-trained model to use for denoising"
+type = "enum"
+enum = { unet-3d-10a="unet-3d-10a", unet-3d="unet-3d", unet-3d-20a="unet-3d-20a" }
+default = "unet-3d-10a"
+condition = { arg="method", value="topaz" }
+
 # Particle detection parameters
 
 [tabs.detect]
@@ -706,7 +919,7 @@ default = false
 hidden = true
 
 [tabs.detect.method]
-name = "Detection method"
+name = "Method"
 description = "Strategy to use for particle detection"
 type = "enum"
 enum = { none="none", auto="auto", all="all", manual="manual (list of positions required)", import="import (path to particle coordinates required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)", topaz-train="topaz-train (list of positions required)", topaz-eval="topaz-eval (trained model required)" }
@@ -1087,87 +1300,234 @@ description = "Path to trained model"
 type = "path"
 path = { type="files" }
 input = { type="trainedModel3D" }
-hidden = [ "tomo_import" ]
+hidden = [ "tomo_import", "tomo_particles_train" ]
 
 [tabs.detect_nn3d.down_ratio]
 name = "Downsample"
 description = "Down ratio for output"
 type = "int"
 default = 2
-hidden = true
+hidden = [ "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.compress]
 name = "Additional binning in Z"
 description = "Apply additional 2x binning in Z-dimension"
 type = "bool"
 default = true
+hidden = [ "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.num_epochs]
 name = "Epochs"
 description = "Number of epochs used during training"
 type = "int"
 default = 10
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.bbox]
 name = "Bounding box"
 description = "Box size for particles, used to generate Guassian kernel during training"
 type = "int"
 default = 16
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.thresh]
 name = "Threshold for soft/hard positives"
 description = "Threshold for soft/hard positives"
 type = "float"
 default = 0.85
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_train"]
 
 [tabs.detect_nn3d.cr_weight]
 name = "Contrastive regularization weight"
 description = "Weight for contrastive regularization term"
 type = "float"
 default = 0.1
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.max_objects]
 name = "Max number of particles"
 description = "Expected number of particles per tomogram"
 type = "int"
 default = 1200
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_train" ]
 
 [tabs.detect_nn3d.lr]
 name = "Learning rate"
 description = "Rate to use during training"
 type = "float"
 default = 0.0005
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.val_interval]
 name = "Interval to perform validation"
 description = "Run validation every this number of epochs"
 type = "int"
 default = 5
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.temp]
 name = "inforNCE temperature"
 description = "inforNCE temperature"
 type = "float"
 default = 0.07
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.tau]
 name = "Class prior probability"
 description = "Class prior probability (tau)"
 type = "float"
 default = 0.01
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.debug]
 name = "Debug mode"
 description = "Save intermediate results to output folder train/"
+type = "bool"
+default = false
+hidden = ["tomo_particles_eval"]
+
+#feature detect with milo
+[tabs.detect_milo]
+_name = "Pattern mining"
+_description = "Settings for tomogram content exploration using MiLo"
+
+[tabs.detect_milo.model]
+name = "Trained model (*.pth)"
+description = "Path to trained model"
+type = "path"
+path = { type="files" }
+input = { type="trainedModel3D" }
+hidden = [ "tomo_milo_train" ]
+
+[tabs.detect_milo.mode]
+name = "Input type"
+description = "Whether to use 2D or 3D data"
+type = "enum"
+enum = { 2d3d="2D + 3D", 3d="3D only" }
+default = "2d3d"
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.num_epochs]
+name = "Epochs"
+description = "Number of epochs used during training"
+type = "int"
+default = 60
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.num_clusters]
+name = "Clusters"
+description = "Number of clusters to train"
+type = "int"
+default = 60
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.bbox]
+name = "Bounding box"
+description = "Bounding box for cropped patches, should be bigger than particle size"
+type = "int"
+default = 36
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.lr]
+name = "Learning rate"
+description = "Rate to use during training"
+type = "float"
+default = 0.001
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.batch_size]
+name = "Batch size"
+description = "Batch size for training"
+type = "int"
+default = 256
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.val_interval]
+name = "Interval to perform validation"
+description = "Run validation within this interval"
+type = "int"
+default = 20
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.gauss]
+name = "Gaussian filter"
+description = "Size of Gaussian filter used to denoise tilt series and tomograms"
+type = "float"
+default = 0.8
+
+[tabs.detect_milo.dog]
+name = "Class prior probability"
+description = "Kernel sizes for Difference of Gaussians (DoG) pyramid, comma delimited"
+type = "str"
+default = "3,5"
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.last_k]
+name = "Last kernel size"
+description = "Kernel size for the last convolution prior to projection"
+type = "int"
+default = 3
+
+[tabs.detect_milo.with_score]
+name = "Save scores"
+description = "Whether to add score column in output text files"
+type = "bool"
+default = false
+
+[tabs.detect_milo.compress]
+name = "Slice averaging in Z"
+description = "Whether to combine 2 slices into 1 during reading of the dataset"
+type = "bool"
+default = true
+
+[tabs.detect_milo.order]
+name = "Dimension order"
+description = "Input order of dimensions for reconstructed tomogram"
+type = "str"
+default = "xzy"
+advanced = true
+
+[tabs.detect_milo.cutoff_z]
+name = "Remove Z-slices"
+description = "Remove this number of leading and trailing Z slices"
+type = "int"
+default = 10
+
+[tabs.detect_milo.nms]
+name = "Neighborhood for NMS"
+description = "Radius for running non-max supression"
+type = "int"
+default = 3
+
+[tabs.detect_milo.distance_cutoff]
+name = "Distance cutoff"
+description = "Distance cutoff for whether two points are connected in graph"
+type = "float"
+default = 15.0
+
+[tabs.detect_milo.fiber_mode]
+name = "Use fiber mode"
+description = "Enable fiber detection mode"
+type = "bool"
+default = false
+
+[tabs.detect_milo.r2_cutoff]
+name = "Fit curve residual"
+description = "Max residual for fitted curve, omit if above the residual/bad fitting"
+type = "float"
+default = 30.0
+condition = { arg="fiber_mode", value="true" }
+
+[tabs.detect_milo.curvature_cutoff]
+name = "Max curvature"
+description = "Max curvature for fitted curve, for microtubules the curvature should be small"
+type = "float"
+default = 0.003
+condition = { arg="fiber_mode", value="true" }
+
+[tabs.detect_milo.debug]
+name = "Debug mode"
+description = "Save intermediate results"
 type = "bool"
 default = false
 
@@ -1274,11 +1634,10 @@ default = 0.0
 hidden = true
 
 [tabs.extract.stacks]
-name = "Stacks"
-description = "Produce particle and micrographs sub-stacks (legacy)"
+name = "Save particle stacks"
+description = "Save particle stacks to use in external programs"
 type = "bool"
 default = false
-hidden = true
 
 [tabs.extract.using_frames]
 name = "Using frames"
@@ -1307,12 +1666,32 @@ default = 8
 condition = { arg="auto_bin", value="false" }
 advanced = true
 
+[tabs.tomo_ali.square]
+name = "Reshape tilt-images into squares"
+description = "Tilt images will be reshaped into squares before processing"
+type = "bool"
+default = true
+
+[tabs.tomo_ali.format]
+name = "Resize squares to closest multiple of 512"
+description = "Tilt images will be reshaped into squares using the closest multiple of 512 as size"
+type = "bool"
+default = true
+condition = { arg="square", value="true" }
+
 [tabs.tomo_ali.method]
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
 type = "enum"
-enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)" }
+enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)", import="import (from path)" }
 default = "imod_gold"
+
+[tabs.tomo_ali.import]
+name = "Import path"
+description = "Location of .xf and .tlt files to use for import"
+type = "path"
+condition = { arg="method", value="import" }
+path = { type="folders" }
 
 [tabs.tomo_ali.fiducial]
 name = "Fiducial diameter (A)"
@@ -1370,19 +1749,19 @@ type = "int"
 default = 600
 condition = { arg="method", value="aretomo" }
 
-[tabs.tomo_ali.aretomo_tiltoff]
-name = "Add tilt offset"
-description = "Add tilt offset to the tilt angle before alignment, instead of measuring the offset automatically"
-type = "float"
-default = 0.0
-condition = { arg="method", value="aretomo" }
-
 [tabs.tomo_ali.aretomo_measure_tiltoff]
 name = "Measure tilt offset"
 description = "Measure the tilt offset automatically. Note that the tilt angles might change"
 type = "bool"
 default = true
 condition = { arg="method", value="aretomo" }
+
+[tabs.tomo_ali.aretomo_tiltoff]
+name = "Add tilt offset"
+description = "Add tilt offset to the tilt angle before alignment, instead of measuring the offset automatically"
+type = "float"
+default = 0.0
+condition = { arg="aretomo_measure_tiltoff", value="false" }
 
 [tabs.tomo_ali.aretomo_bft]
 name = "B-factors for low-pass filter"
@@ -1457,19 +1836,6 @@ default = 1.0
 condition = { arg="erase_fiducials", value="true" }
 advanced = true
 
-[tabs.tomo_rec.square]
-name = "Reshape tilt-images into squares"
-description = "Tilt images will be reshaped into squares before processing"
-type = "bool"
-default = true
-
-[tabs.tomo_rec.format]
-name = "Resize squares to closest multiple of 512"
-description = "Tilt images will be reshaped into squares using the closest multiple of 512 as size"
-type = "bool"
-default = true
-condition = { arg="square", value="true" }
-
 [tabs.tomo_rec.thickness]
 name = "Thickness of reconstruction (unbinned voxels)"
 description = "Height of tomograms (z-dimension) to use during tomographic reconstruction"
@@ -1510,57 +1876,546 @@ type = "int"
 default = 5
 condition = { arg="aretomo_sart", value="true" }
 
-[tabs.tomo_rec.topaz_denoise]
-name = "Denoise tomograms using Topaz denoise"
-description = "Denoise tomograms using Topaz pre-trained model"
-type = "bool"
-default = false
+[tabs.tomo_denoise]
+_name = "Tomogram denoising"
+_description = "Parameters for tomograms denoising"
 
-[tabs.tomo_rec.topaz_model]
+[tabs.tomo_denoise.method]
+name = "Method"
+description = "Denoise tomograms with selected method"
+type = "enum"
+enum = {cryocare="cryocare", topaz="topaz"}
+default = "cryocare"
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.method_train]
+name = "Method"
+description = "Denoise tomograms with selected method"
+type = "enum"
+enum = {isonet="isonet"}
+default = "isonet"
+hidden = [ "tomo_denoise" ]
+
+[tabs.tomo_denoise.topaz_model]
 name = "Pre-train model"
 description = "Pre-trained model to use for denoising"
 type = "enum"
 enum = { unet-3d-10a="unet-3d-10a", unet-3d="unet-3d", unet-3d-20a="unet-3d-20a" }
 default = "unet-3d-10a"
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
-[tabs.tomo_rec.topaz_gaussian]
+[tabs.tomo_denoise.topaz_gaussian]
 name = "Gaussian filter"
 description = "Standard deviation of Gaussian filter for post-processing (0 means no postprocessing)"
 type = "float"
 default = 0.0
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
-[tabs.tomo_rec.topaz_patch_size]
+[tabs.tomo_denoise.topaz_patch_size]
 name = "Patch size"
 description = "Denoises volumes in patches of this size"
 type = "int"
 default = 96
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
-[tabs.tomo_rec.topaz_patch_padding]
+[tabs.tomo_denoise.topaz_patch_padding]
 name = "Patch padding size"
 description = "Padding around each patch to remove edge artifacts"
 type = "int"
 default = 48
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
 
-[tabs.tomo_rec.topaz_use_gpu]
+[tabs.tomo_denoise.topaz_use_gpu]
 name = "Use GPU"
 description = "Request a GPU to run Topaz denoise"
 type = "bool"
 default = false
-condition = { arg="topaz_denoise", value="true" }
+condition = { arg="method", value="topaz" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.masksize]
+name = "Mask shape"
+description = "Mask shape in x,y,z covering the center of tomogram"
+type = "str"
+default = "0,0,0"
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_patch]
+name = "Patch shape"
+description = "Per dimension size of the sub-volumes used for training (cubic shape >= 64x64x64)"
+type = "int"
+default = 72
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_slices]
+name = "Number of slices"
+description = "Number of sub-volumes extracted per tomogram"
+type = "int"
+default = 500
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_split]
+name = "Split ratio"
+description = "Train/validation ratio"
+type = "float"
+default = 0.9
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_samples]
+name = "Sub-tomograms for statistics"
+description = "Number of sub-volumes per tomogram used to compute mean and standard deviation for normalization (<number of slices)"
+type = "int"
+default = 400
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_epochs]
+name = "Number of epochs (train)"
+description = "Number of epochs used to train the network"
+type = "int"
+default = 60
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_steps]
+name = "Gradient steps (train)"
+description = "Number of gradient steps performed per epoch"
+type = "int"
+default = 200
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_batchsize]
+name = "Batch size (train)"
+description = "Used training batch size"
+type = "int"
+default = 16
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_kern]
+name = "Kernel size (train)"
+description = "Convolution kernel size of the U-Net. Has to be an odd number"
+type = "int"
+default = 3
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_depth]
+name = "Unet depth (train)"
+description = "Depth of the U-Net"
+type = "int"
+default = 3
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_nfirst]
+name = "Initial feature channels (train)"
+description = "Number of initial feature channels"
+type = "int"
+default = 16
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_lr]
+name = "Learning rate (train)"
+description = "Learning rate of the model training"
+type = "float"
+default = 0.0004
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_tiles]
+name = "Initial tiles (prediction)"
+description = "Initial tiles per dimension"
+type = "int"
+default = 1
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_overwrite]
+name = "Overwrite tomograms (prediction)"
+description = "Allow previous tomograms to be overwritten"
+type = "bool"
+default = false
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_CTFdeconvol]
+name = "CTF deconvolution"
+description = "Do CTF deconvolution for tomograms"
+type = "bool"
+default = true
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_snrfalloff]
+name = "SNR falloff"
+description = "SNR fall rate with the frequency. High values means losing more high frequency"
+type = "float"
+default = 1.0
+condition = { arg="isonet_CTFdeconvol", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_hp]
+name = "Highpass filter"
+description = "Highpass filter for at very low frequency"
+type = "float"
+default = 0.02
+condition = { arg="isonet_CTFdeconvol", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_mask]
+name = "Use masking"
+description = "Mask out background areas"
+type = "bool"
+default = true
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_densityPercent]
+name = "Density percentage"
+description = "The approximate percentage of pixels to keep based on their local pixel density"
+type = "int"
+default = 50
+condition = { arg="isonet_mask", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_stdPercent]
+name = "Standard deviation percentage"
+description = "The approximate percentage of pixels to keep based on their local standard deviation"
+type = "int"
+default = 50
+condition = { arg="isonet_mask", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_patchsize]
+name = "Patch size for statistics"
+description = "Size of box from which the max-filter and std-filter are calculated"
+type = "int"
+default = 4
+condition = { arg="isonet_mask", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_zcrop]
+name = "Z-crop fraction"
+description = "Exclude top and bottom regions of tomogram along Z (0.2 will mask out the top/bottom 20%)"
+type = "float"
+default = 0.2
+condition = { arg="isonet_mask", value="true" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_model]
+name = "Trained model"
+description = "Trained model (.h5)"
+type = "path"
+path = { type="files" }
+input = { type="isonetTrainedModel" }
+condition = { arg="method_train", value=["isonet"] }
+hidden = [ "tomo_denoise", "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.isonet_pretrained_model]
+name = "Pre-trained model"
+description = "A trained model to start training with"
+type = "path"
+path = { type="files" }
+input = { type="isonetTrainedModel" }
+condition = { arg="method_train", value=["isonet"] }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_json]
+name = "Continue from (.json)"
+description = "A Json file (from previous training) to continue from"
+type = "path"
+default = "None"
+path = { type="files" }
+condition = { arg="method_train", value="isonet" }
+hidden = true
+
+[tabs.tomo_denoise.isonet_cubesize]
+name = "Cube size for training"
+description = "Should be divisible by 8. Actual sizes are this value plus 16"
+type = "int"
+default = 64
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_iters]
+name = "Training iterations"
+description = "Number of training iterations"
+type = "int"
+default = 30
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_epochs]
+name = "Training epochs"
+description = "Number of epochs for each iteraction"
+type = "int"
+default = 10
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_batchsize]
+name = "Mini-batch size"
+description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be divisible by the number of gpus"
+type = "int"
+default = 4
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_steps]
+name = "Steps per epoch"
+description = "Steps per epoch. 0 corresponds to: min(num_of_subtomograms * 6 / batch_size , 200)"
+type = "int"
+default = 0
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_nl]
+name = "Noise level"
+description = "Level of noise STD(added noise)/STD(data) after the iteration defined in noise_start_iter"
+type = "str"
+default = "0.05,0.1,0.15,0.2"
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_ns]
+name = "Noise start iteration"
+description = "Iteration that start to add noise of corresponding noise level"
+type = "str"
+default = "11,16,21,26"
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_nm]
+name = "Noise mode"
+description = "Filter names when generating noise volumes"
+type = "enum"
+enum = {ramp="ramp", hamming="hamming", noFilter="noFilter", none="none"}
+default = "none"
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_dropout]
+name = "Dropout rate"
+description = "Dropout rate to reduce overfitting"
+type = "float"
+default = 0.3
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_lr]
+name = "Learning rate"
+description = "learning rate for network training"
+type = "float"
+default = 0.0004
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_layers]
+name = "Convolution layers"
+description = "Number of convolution layers for each depth"
+type = "int"
+default = 3
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_kernel]
+name = "Convolution kernel size"
+description = "Kernel size for convolution"
+type = "str"
+default = "3,3,3"
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_depth]
+name = "U-Net depth"
+description = "Depth of U-Net"
+type = "int"
+default = 3
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_base]
+name = "Filter base"
+description = "The base number of channels after convolution"
+type = "int"
+default = 64
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_normalization]
+name = "Use batch normalization"
+description = "Use batch normalization layer"
+type = "bool"
+default = true
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_pool]
+name = "Use pooling"
+description = "Use pooling layer instead of stride convolution layer"
+type = "str"
+default = ""
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_threshold]
+name = "Use percent thresholding"
+description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively. Otherwise, normalize input to 0 mean and unit standard deviation"
+type = "bool"
+default = true
+condition = { arg="method", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_debug]
+name = "Debug"
+description = "Save intermediate files to results directory"
+type = "bool"
+default = false
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+
+[tabs.tomo_mem]
+_name = "Segmentation"
+_description = "Parameters for tomogram membrane segmentation using MemBrain-seg"
+
+[tabs.tomo_mem.method]
+name = "Method"
+description = "Pre-process input tomograms"
+type = "enum"
+enum = { membrain="membrain" }
+default = "membrain"
+
+[tabs.tomo_mem.preprocessing]
+name = "Pre-process tomograms"
+description = "Pre-process input tomograms"
+type = "bool"
+default = false
+condition = { arg="method", value="membrain" }
+
+[tabs.tomo_mem.pixel]
+name = "Pixel size rescaling"
+description = "Rescale the tomogram pixel size to this value"
+type = "float"
+default = 0.0
+condition = { arg="preprocessing", value="true" }
+
+[tabs.tomo_mem.match_ps]
+name = "Match spectrum"
+description = "Match amplitude of Fourier spectrum from input tomogram to target spectrum"
+type = "bool"
+default = false
+condition = { arg="preprocessing", value="true" }
+
+[tabs.tomo_mem.target]
+name = "Target tomogram"
+description = "Target tomogram for matching"
+type = "path"
+default = "None"
+path = { type="files" }
+condition = { arg="preprocessing", value="true" }
+
+[tabs.tomo_mem.deconvolve]
+name = "Deconvolution filter"
+description = "Perform the deconvolution filter to enhance tomogram contrast"
+type = "bool"
+default = false
+condition = { arg="preprocessing", value="true" }
+
+[tabs.tomo_mem.model]
+name = "Segmentation model"
+description = "Path to pre-trained membrane segmentation model"
+type = "path"
+default = "None"
+path = { type="files" }
+condition = { arg="method", value="membrain" }
+
+[tabs.tomo_mem.rescale_patches]
+name = "Rescale patches"
+description = "Should patches be rescaled on-the-fly during inference?"
+type = "bool"
+default = false
+condition = { arg="method", value="membrain" }
+
+[tabs.tomo_mem.patch_pxl]
+name = "Patch pixel size"
+description = "Pixel size to which patches will be rescaled internally (should normally be 10)"
+type = "float"
+default = 10.0
+condition = { arg="rescale_patches", value="true" }
+
+[tabs.tomo_mem.store_probabilities]
+name = "Store probabilities"
+description = "Should probability maps be output in addition to segmentations?"
+type = "bool"
+default = false
+condition = { arg="method", value="membrain" }
+
+[tabs.tomo_mem.connected_map]
+name = "Compute connected components"
+description = "Should connected components of the segmentation be computed?"
+type = "bool"
+default = false
+condition = { arg="method", value="membrain" }
+
+[tabs.tomo_mem.connected_thres]
+name = "Connected components threshold"
+description = "Components smaller than this will be removed from the segmentation"
+type = "int"
+default = 0
+condition = { arg="connected_map", value="true" }
+
+[tabs.tomo_mem.augmentation]
+name = "Test time augmentation"
+description = "Should 8-fold test time augmentation be used?"
+type = "bool"
+default = true
+condition = { arg="method", value="membrain" }
+
+[tabs.tomo_mem.seg_thres]
+name = "Segmentation threshold"
+description = "Threshold used in scoremap to increase/decrease segmented membranes"
+type = "float"
+default = 0.0
+condition = { arg="method", value="membrain" }
+
+[tabs.tomo_mem.sliding_wd]
+name = "Sliding window size"
+description = "Integer sliding window size used for inference"
+type = "int"
+default = 160
+condition = { arg="method", value="membrain" }
+
+[tabs.tomo_sphere]
+_name = "Sphere segmentation"
+_description = "Sphere segmentation parameters"
+
+[tabs.tomo_sphere.seg_tol]
+name = "Segmentation radius tolerance"
+description = "Allow variations around specified radius within this tolerance (percentage)"
+type = "float"
+default = 20.0
 
 [tabs.tomo_vir]
-_name = "Virion/spike detection"
-_description = "Virion and spike detection parameters"
+_name = "Virion detection"
+_description = "Virion detection parameters"
 
 [tabs.tomo_vir.rad]
 name = "Virion radius (A)"
 description = "Approximate virion radius to use for detection"
 type = "float"
 default = 0
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.method]
 name = "Virion detection method"
@@ -1568,6 +2423,7 @@ description = "Strategy for virion detection"
 type = "enum"
 enum = { none="none", auto="auto", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)" }
 default = "none"
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.number]
 name = "Max number of virions per tomogram"
@@ -1575,6 +2431,7 @@ description = "Limit the number of virions during detection"
 type = "int"
 default = 25
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.det_tol]
 name = "Tolerance for virion radius during detection"
@@ -1582,6 +2439,7 @@ description = "Allow virion radius variations within this tolerance (percentage)
 type = "float"
 default = 20.0
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.seg_tol]
 name = "Tolerance for virion radius during segmentation"
@@ -1589,6 +2447,7 @@ description = "Allow virion radius variations within this tolerance (percentage)
 type = "float"
 default = 20.0
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.iterations]
 name = "Denoising iterations before virion detection"
@@ -1596,6 +2455,7 @@ description = "Number denoising iterations (anisotropic diffusion)"
 type = "int"
 default = 25
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.canny_low]
 name = "Low threshold for Canny edge detector"
@@ -1603,6 +2463,7 @@ description = "Allows to control the performance of virion detection"
 type = "float"
 default = 0.2
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.canny_high]
 name = "High threshold for Canny edge detector"
@@ -1610,6 +2471,7 @@ description = "Allows to control the performance of virion detection"
 type = "float"
 default = 0.5
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.binn]
 name = "Virion additional binning"
@@ -1617,6 +2479,7 @@ description = "Increase binning to speed up virion detection and reduce noise"
 type = "int"
 default = 2
 condition = { arg="method", value="auto" }
+hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.detect_method]
 name = "Spike detection method"
@@ -1674,22 +2537,89 @@ type = "bool"
 default = false
 hidden = true
 
+[tabs.tomo_srf]
+_name = "Particle detection"
+_description = "Particle detection parameters"
+
+[tabs.tomo_srf.detect_method]
+name = "Method"
+description = "Strategy to use for particle detection"
+type = "enum"
+enum = { template="template search", mesh="uniform" }
+default = "mesh"
+
+[tabs.tomo_srf.detect_rad]
+name = "Particle radius (A)"
+description = "Particle radius in A"
+type = "float"
+dfault = 0
+
+[tabs.tomo_srf.detect_ref]
+name = "Template (*.mrc)"
+description = "Path to file containing the template (dimensions must match the binned tomograms)"
+type = "path"
+condition = { arg="detect_method", value="template" }
+path = { type="files" }
+
+[tabs.tomo_srf.detect_thre]
+name = "Correlation threshold"
+description = "Minimum correlation value to use for particle detection (lower values, more particles)"
+type = "float"
+condition = { arg="detect_method", value="template" }
+default = 0.2
+
+[tabs.tomo_srf.detect_dist]
+name = "Minimum distance between particles (voxels)"
+description = "Minimum distance between neighboring particles"
+type = "int"
+default = 10
+condition = { arg="detect_method", value=["template","mesh"] }
+
+[tabs.tomo_srf.detect_band]
+name = "Size of equatorial band to restrict search (A)"
+description = "Only pick particles within a band centered around the equator"
+type = "int"
+default = 100
+condition = { arg="detect_method", value=["template","mesh"] }
+
+[tabs.tomo_srf.detect_rand]
+name = "Randomize in-plane particle rotations"
+description = "Randomize particle rotations (around direction normal to surface) to reduce missing wedge effects"
+type = "bool"
+default = true
+condition = { arg="detect_method", value=["template","mesh"] }
+
+[tabs.tomo_srf.detect_offset]
+name = "Height offset (A)"
+description = "Move particle positions along membrane direction by this amount"
+type = "int"
+default = 0
+condition = { arg="detect_method", value=["template","mesh"] }
+
+[tabs.tomo_srf.force]
+name = "Force recalculation of parameters"
+description = "Force recalculation of virion parameters"
+type = "bool"
+default = false
+hidden = true
+
 [tabs.tomo_spk]
 _name = "Particle detection"
 _description = "Sub-tomogram detection parameters"
-
-[tabs.tomo_spk.rad]
-name = "Detection radius (A)"
-description = "Size to use for particle detection"
-type = "float"
-default = 0
 
 [tabs.tomo_spk.method]
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", auto="auto", import="import (path to particle coordinates required)", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)" }
+enum = { none="none", auto="size-based", import="import", manual="manual", virions="spherical" }
 default = "none"
+
+[tabs.tomo_spk.rad]
+name = "Particle radius (A)"
+description = "Size to use for particle detection"
+type = "float"
+default = 0
+condition = { arg="method", value=[ "auto", "import", "manual" ] }
 
 [tabs.tomo_spk.files]
 name = "Import particle coordinates (*.spk)"
@@ -1782,6 +2712,55 @@ type = "bool"
 default = true
 condition = { arg="method", value=["auto","import","manual","pyp-eval"] }
 
+[tabs.tomo_spk.vir_rad]
+name = "Virion radius (A)"
+description = "Approximate virion radius to use for detection"
+type = "float"
+default = 0
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_number]
+name = "Max number of virions per tomogram"
+description = "Limit the number of virions during detection"
+type = "int"
+default = 25
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_det_tol]
+name = "Tolerance for virion radius during detection"
+description = "Allow virion radius variations within this tolerance (percentage)"
+type = "float"
+default = 20.0
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_iterations]
+name = "Denoising iterations before virion detection"
+description = "Number denoising iterations (anisotropic diffusion)"
+type = "int"
+default = 25
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_canny_low]
+name = "Low threshold for Canny edge detector"
+description = "Allows to control the performance of virion detection"
+type = "float"
+default = 0.2
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_canny_high]
+name = "High threshold for Canny edge detector"
+description = "Allows to control the performance of virion detection"
+type = "float"
+default = 0.5
+condition = { arg="method", value="virions" }
+
+[tabs.tomo_spk.vir_binn]
+name = "Virion additional binning"
+description = "Increase binning to speed up virion detection and reduce noise"
+type = "int"
+default = 2
+condition = { arg="method", value="virions" }
+
 [tabs.tomo_ext]
 _name = "Sub-tomogram extraction"
 _description = "Sub-tomogram extraction parameters"
@@ -1789,7 +2768,7 @@ _hidden = [ "stream_tomo" ]
 
 [tabs.tomo_ext.fmt]
 name = "Extraction format"
-description = "Format to use to extract sub-tomogram"
+description = "Format to extract sub-tomograms"
 type = "enum"
 enum = { none="none", eman="eman (invert contrast)", 3DAVG="3davg (do not invert contrast)" }
 default = "none"
@@ -2001,6 +2980,7 @@ description = "Parameter file containing poses from sub-volume averaging"
 type = "path"
 path = { type="files" }
 input = { type="txtfile" }
+copyToNewBlock = false
 hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.parfile]
@@ -2115,6 +3095,14 @@ default = true
 condition = { arg="skip", value="false" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
+[tabs.refine.global_stat]
+name = "Use global statistics"
+description = "Use global statistics for refinement and reconstruction"
+type = "bool"
+default = false
+condition = { arg="skip", value="false" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
 [tabs.refine.mode]
 name = "Search mode"
 description = "Search strategy used during alignment"
@@ -2217,7 +3205,7 @@ name = "Refine beam-tilt"
 description = "Use beam tilt refinement"
 type = "bool"
 default = false
-hidden = true
+condition = { arg="skip", value="false" }
 
 [tabs.refine.adjust]
 name = "TBA"
@@ -2323,6 +3311,13 @@ description = "Shape mask to use during refinement"
 type = "path"
 path = { type="files" }
 input = { type="initialModel" }
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.refine.automask]
+name = "Auto masking"
+description = "Use auto masking during refinement"
+type = "bool"
+default = false
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.merge_normalize]
@@ -2885,6 +3880,84 @@ description = "Tolerance value to use in Powell optimization"
 type = "float"
 default = 0.0001
 
+[tabs.csp.abinitio]
+name = "Ab initio refinement"
+description = "Enable ab initio refinement"
+type = "bool"
+default = false
+copyToNewBlock = false
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+
+[tabs.csp.InitialResolution]
+name = "Starting resolution limit"
+description = "Initial resolution used for ab initio refinement"
+type = "float"
+default = 60.0
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+condition = { arg="abinitio", value="true" }
+
+[tabs.csp.ResolutionLimit]
+name = "Final resolution limit"
+description = "Highest resolution used for ab initio refinement"
+type = "float"
+default = 16.0
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+condition = { arg="abinitio", value="true" }
+
+[tabs.csp.InitialSkip]
+name = "Skip initialization"
+description = "Skip initialization during ab initio refinement"
+type = "bool"
+default = false
+copyToNewBlock = false
+hidden = true
+condition = { arg="abinitio", value="true" }
+
+[tabs.csp.RandomSkipRatio]
+name = "Skip ratio for csp refinement"
+description = "Ratio to skip for csp random refinement"
+type = "float"
+default = 0.0
+copyToNewBlock = false
+hidden = true
+condition = { arg="abinitio", value="true" }
+
+[tabs.csp.RandomParticles]
+name = "Particle batch size (per tilt-series)"
+description = "Particles per tilt-series in each batch to use for ab initio refinement"
+type = "int"
+default = 10
+copyToNewBlock = false
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+condition = { arg="abinitio", value="true" }
+
+[tabs.csp.GridSearch]
+name = "Grid search"
+description = "Use uniform grid search instead of random search"
+type = "bool"
+default = false
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+copyToNewBlock = false
+condition = { arg="abinitio", value="true" }
+
+[tabs.csp.AngleStep]
+name = "Angle Step"
+description = "Angle step to use for global search (degrees)"
+type = "float"
+default = 20
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+copyToNewBlock = false
+condition = { arg="GridSearch", value="true" }
+
+[tabs.csp.ShiftStep]
+name = "Shift Step"
+description = "Shift step to use for global search (A)"
+type = "float"
+default = 6
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+copyToNewBlock = false
+condition = { arg="GridSearch", value="true" }
+
 [tabs.csp.refine_micrographs]
 name = "Refine tilt-geometry"
 description = "Optimize tilt-axis orientation and position for each tilt-image"
@@ -2921,6 +3994,7 @@ name = "Refine particle alignments"
 description = "Optimize sub-tomogram orientations and translations in 3D"
 type = "bool"
 default = false
+copyToNewBlock = false
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
 
 [tabs.csp.ToleranceParticlesPhi]
@@ -3114,6 +4188,1030 @@ description = "Output none debug info"
 type = "bool"
 default = false
 hidden = true
+
+# heterogeneity analysis with ML
+[tabs.heterogeneity]
+_name = "Continuous heterogeneity"
+_description = "Continuous heterogeneity analysis"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.heterogeneity.method]
+name = "Method"
+description = "Select method to use for heterogeneity analysis"
+type = "enum"
+enum = {cryoDRGN="cryoDRGN", tomoDRGN="tomoDRGN"}
+default = "tomoDRGN"
+
+[tabs.heterogeneity.input_star]
+name = "Input file"
+description = "Star file with particle alignments and metadata"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
+required = false
+
+[tabs.heterogeneity.cryodrgn_downsample_size]
+name = "Downsample boxsize"
+description = "Downsampled particle boxsize for training"
+type = "float"
+default = 128
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_zdim]
+name = "ZDIM"
+description = "Dimension of latent variable"
+type = "int"
+default = 8
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_weight]
+name = "initial traning model"
+description = "Initialize training from a checkpoint"
+type = "path"
+path = { type="files" }
+required = false
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_checkpoint]
+name = "Checkpoint interval"
+description = "Checkpointing interval in N_EPOCHS (default: 1)"
+type = "int"
+default = 1
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_log_interval]
+name = "Log interval"
+description = "Logging interval in N_IMGS (default: 1000)"
+type = "int"
+default = 1000
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_seed]
+name = "Random seed"
+description = "Random seed for training"
+type = "int"
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_data_ind]
+name = "Filter index"
+description = "Filter particle stack by these indices, (pkl format)"
+type = "path"
+path = { type="files" }
+required = false
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_data_invert]
+name = "Invert data sign"
+description = "Invert data sign or not"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_data_windowing]
+name = "Real space windowing"
+description = "Real space windowing of dataset"
+type = "bool"
+default = false
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_data_window_r]
+name = "Windowing radius"
+description = "Windowing radius (default: 0.85)"
+type = "float"
+default = 0.85
+condition = { arg="cryodrgn_data_windowing", value="true" }
+
+[tabs.heterogeneity.cryodrgn_data_dir]
+name = "Input data directory"
+description = "Path prefix to particle stack if loading relative paths from a .star or .cs file"
+type = "path"
+path = { type="folders" }
+required = false
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_data_lazy]
+name = "Lazy loading"
+description = "Lazy loading if full dataset is too large to fit in memory"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_data_shufflersize]
+name = "Shuffler size"
+description = "If non-zero, will use a data shuffler for faster lazy data loading"
+type = "int"
+default = 0
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+# [tabs.heterogeneity.cryodrgn_data_tilt]
+# name = "Tilt series particles stack"
+# description = "Particle stack file (.mrcs) from tilt series"
+# type = "path"
+# path = { type="files" }
+# required = false
+# hidden = [ "spr_heterogeneity" ]
+
+[tabs.heterogeneity.cryodrgn_train_epochs]
+name = "Number of epochs"
+description = "Number of training epochs"
+type = "int"
+default = 20
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_batch]
+name = "Batch size"
+description = "Minibatch size"
+type = "int"
+default = 8
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_wd]
+name = "Weight decay"
+description = "Weight decay in Adam optimizer"
+type = "int"
+default = 0
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_lr]
+name = "Learning rate"
+description = "Learning rate in Adam optimizer"
+type = "float"
+default = 0.0001
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_beta]
+name = "Beta schedual"
+description = "Choice of beta schedule or a constant for KLD weight (default: 1/zdim), for tomo, use 0.025"
+type = "float"
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_beta_control]
+name = "Beta control"
+description = "KL-Controlled VAE gamma. Beta is KL target"
+type = "float"
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_data_norm]
+name = "Data normalization"
+description = "Data normalization as shift, 1/scale (default: mean, std of dataset)"
+type = "str"
+default = "None"
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_train_amp]
+name = "Use mixed_precision"
+description = "Use mixed-precision training"
+type = "bool"
+default = false
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_pose_sgd]
+name = "Pose SGD"
+description = "Refine poses with gradient descent"
+type = "bool"
+default = false
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_pretrain]
+name = "Pre-train epochs"
+description = "Number of epochs with fixed poses before pose SGD (default: 1)"
+type = "int"
+default = 1
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_emd_type]
+name = "Embedding type"
+description = "SO(3) embedding type for pose SGD (default: quat)"
+type = "enum"
+enum = { s2s2="s2s2", quat="quat" }
+default = "quat"
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_pose_lr]
+name = "Pose learning rate"
+description = "Learning rate for pose optimizer (default: 0.0003)"
+type = "float"
+default = 0.0003
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_enc_hl]
+name = "Encoder layers"
+description = "Number of hidden layers for Encoder (default: 3)"
+type = "int"
+default = 3
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_enc_dim]
+name = "Encoder nodes"
+description = "Number of nodes in Encoder hidden layers (default: 1024)"
+type = "int"
+default = 1024
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_enc_mode]
+name = "Encoder Network"
+description = "Type of encoder network (default: resid)"
+type = "enum"
+enum = { conv="conv", resid="resid", mlp="mlp", tilt="tilt" }
+default = "resid"
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_enc_mask]
+name = "Encoder mask"
+description = "Circular mask of image for encoder (default: D/2; -1 for no mask)"
+type = "float"
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_use_real]
+name = "Use real space"
+description = "Use real space image for encoder (for convolutional encoder)"
+type = "bool"
+default = false
+condition = {arg="cryodrgn_enc_mode", value="conv"}
+
+[tabs.heterogeneity.cryodrgn_dec_hl]
+name = "Decoder layers"
+description = "Number of decoder hidden layers (default: 3)"
+type = "int"
+default = 3
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_dec_dim]
+name = "Decoder nodes"
+description = "Number of nodes in decoder hidden layers (default: 1024)"
+type = "int"
+default = 1024
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_pe_type]
+name = "Position encoding type"
+description = "Type of positional encoding type (default: gausssian)"
+type = "enum"
+enum = {geom_ft="geom_ft", geom_full="geom_full", geom_lowf="geom_lowf", geom_nohighf="geom_nohighf", linear_lowf="linear_lowf", gaussian="gaussian", none="none"}
+default = "gaussian"
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_feat_sigma]
+name = "Gaussian features"
+description = "Scale for random Gaussian features (default: 0.5)"
+type = "float"
+default = 0.5
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_pe_dim]
+name = "Positional frequencies"
+description = "Num frequencies in positional encoding (default: image D/2)"
+type = "float"
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_dec_domain]
+name = "Decoder representation"
+description = "Volume decoder representation (default: Fourier)"
+type = "enum"
+enum = {hartley="hartley", fourier="fourier"}
+default = "fourier"
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_activation]
+name = "Activation"
+description = "Activation"
+type = "enum"
+enum = {relu="relu", leaky_relu="leaky_relu"}
+default = "relu"
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_epoch]
+name = "Analysis epochs"
+description = "Epoch number N to analyze (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
+type = "int"
+default = 0
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_skipv]
+name = "Skip volume generation"
+description = "Skip generation of volumes"
+type = "bool"
+default = false
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_skipumap]
+name = "Skip UMAP"
+description = "Skip running UMAP"
+type = "bool"
+default = false
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_flip]
+name = "Flip handedness"
+description = "Flip handedness of output volumes"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_invert]
+name = "Invert contrast"
+description = "Invert constast of output volumes"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_downsample]
+name = "Downsample output"
+description = "Downsample volumes to this box size (pixels)"
+type = "int"
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_pc]
+name = "Principal components"
+description = "Number of principal component traversals to generate (default: 2)"
+type = "int"
+default = 2
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_ksample]
+name = "K-means samples"
+description = "Number of k-means samples to generate (default: 20)"
+type = "int"
+default = 20
+condition = { arg="method", value="cryoDRGN" }
+
+[tabs.heterogeneity.cryodrgn_analysis_istart]
+name = "Start index"
+description = "Default value of start index for volume generation (default: 0)"
+type = "int"
+default = 0
+advanced = true
+condition = { arg="method", value="cryoDRGN" }
+
+# [tabs.heterogeneity.tomodrgn_downsample_size]
+# name = "Downsample boxsize"
+# description = "Downsampled particle boxsize for training"
+# type = "float"
+# default = 128
+
+[tabs.heterogeneity.tomodrgn_mode]
+name = "TomoDRGN command"
+description = "TomoDRGN command type want to run"
+type = "enum"
+enum = {train_nn="train_nn", convergence_nn="convergence_nn", train_vae="train_vae", convergence_vae="convergence_vae", analysis="analysis", filter_star="filter_star", eval_vol="eval_vol", subtomo2chimerax="subtom2chimerax", eval_images="eval_images"}
+default = "train_vae"
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_zdim]
+name = "ZDIM"
+description = "Dimension of latent variable"
+type = "int"
+default = 128
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_weight]
+name = "initial traning model"
+description = "Initialize training from a checkpoint"
+type = "path"
+path = { type="files" }
+required = false
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_checkpoint]
+name = "Checkpoint interval"
+description = "Checkpointing interval in N_EPOCHS (default: 1)"
+type = "int"
+default = 1
+
+[tabs.heterogeneity.tomodrgn_train_log_interval]
+name = "Log interval"
+description = "Logging interval in N_IMGS (default: 1000)"
+type = "int"
+default = 1000
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_seed]
+name = "Random seed"
+description = "Random seed for training"
+type = "int"
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_data_ind]
+name = "Filter index"
+description = "Filter particle stack by these indices, (pkl format)"
+type = "path"
+path = { type="files" }
+required = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_data_invert]
+name = "Invert data sign"
+description = "Invert data sign or not"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_data_windowing]
+name = "Real space windowing"
+description = "Real space windowing of dataset"
+type = "bool"
+default = false
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_data_window_r]
+name = "Windowing radius"
+description = "Windowing radius (default: 0.85)"
+type = "float"
+default = 0.96
+condition = { arg="tomodrgn_data_windowing", value="true" }
+
+[tabs.heterogeneity.tomodrgn_data_dir]
+name = "Input data directory"
+description = "Path prefix to particle stack if loading relative paths from a .star or .cs file"
+type = "path"
+path = { type="folders" }
+required = false
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_data_lazy]
+name = "Lazy loading"
+description = "Lazy loading if full dataset is too large to fit in memory"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_tilt_weight]
+name = "Cosine weight by tilt"
+description = "Weight reconstruction loss by cosine(tilt_angle)"
+type = "bool"
+default = false
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_dose_weight]
+name = "Weight by dose"
+description = "Weight reconstruction loss per tilt per pixel by dose dependent amplitude attenuation"
+type = "bool"
+default = false
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_dose]
+name = "Dose override"
+description = "Manually specify dose in e- / A2 / tilt"
+type = "float"
+default = 0.0
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_dose_mask]
+name = "Dose mask"
+description = "Do not train on frequencies exposed to > 2.5x critical dose. Training lattice is intersection of this with --l-extent"
+type = "bool"
+default = false
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_use_ptl]
+name = "Sample particles"
+description = "Keep the first N particles in the sorted star file. Default -1 means to use all"
+type = "int"
+default = -1
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_use_firstn]
+name = "Sample tilt"
+description = "Number of tilts to sample from each particle per epoch. Default: min(ntilts) from dataset"
+type = "int"
+default = 32
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_sequential_order]
+name = "Sequential order"
+description = "Supply particle images of one particle to encoder in starfile order"
+type = "bool"
+default = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_epochs]
+name = "Number of epochs"
+description = "Number of training epochs"
+type = "int"
+default = 20
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_batch]
+name = "Batch size"
+description = "Minibatch size (default: 8)"
+type = "int"
+default = 1
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_wd]
+name = "Weight decay"
+description = "Weight decay in Adam optimizer"
+type = "int"
+default = 0
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_lr]
+name = "Learning rate"
+description = "Learning rate in Adam optimizer"
+type = "float"
+default = 0.0001
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_beta]
+name = "Beta schedual"
+description = "Choice of beta schedule or a constant for KLD weight (default: 1/zdim)"
+type = "float"
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_beta_control]
+name = "Beta control"
+description = "KL-Controlled VAE gamma. Beta is KL target"
+type = "float"
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_data_norm]
+name = "Data normalization"
+description = "Data normalization as shift, 1/scale (default: mean, std of dataset)"
+type = "str"
+default = "None"
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_train_amp]
+name = "Use mixed_precision"
+description = "Use mixed-precision training"
+type = "bool"
+default = false
+condition = { arg="method", value="tomoDRGN" }
+
+# [tabs.heterogeneity.tomodrgn_pose_sgd]
+# name = "Pose SGD"
+# description = "Refine poses with gradient descent"
+# type = "bool"
+# default = true
+
+# [tabs.heterogeneity.tomodrgn_pretrain]
+# name = "Pre-train epochs"
+# description = "Number of epochs with fixed poses before pose SGD (default: 1)"
+# type = "int"
+# default = 1
+
+# [tabs.heterogeneity.tomodrgn_emd_type]
+# name = "Embedding type"
+# description = "SO(3) embedding type for pose SGD (default: quat)"
+# type = "enum"
+# enum = { s2s2="s2s2", quat="quat" }
+# default = "quat"
+
+# [tabs.heterogeneity.tomodrgn_pose_lr]
+# name = "Pose learning rate"
+# description = "Learning rate for pose optimizer (default: 0.0003)"
+# type = "float"
+# default = "0.0003"
+
+[tabs.heterogeneity.tomodrgn_layers]
+name = "layers"
+description = "Number of hidden layers"
+type = "int"
+default = 3
+condition = {arg="tomodrgn_mode", value="train_nn"}
+
+[tabs.heterogeneity.tomodrgn_dim]
+name = "Number of nodes"
+description = "Number of nodes in hidden layers"
+type = "int"
+default = 256
+condition = {arg="tomodrgn_mode", value="train_nn"}
+
+[tabs.heterogeneity.tomodrgn_ref]
+name = "Reference volume"
+description = "volume against which to calculate FSC"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+condition = {arg="tomodrgn_mode", value="convergence_nn"}
+
+[tabs.heterogeneity.tomodrgn_max_epoch]
+name = "Max epoch"
+description = "Maximum epoch for which to calculate FSCs (default: None)"
+type = "int"
+default = 0
+condition = {arg="tomodrgn_mode", value="convergence_nn"}
+
+[tabs.heterogeneity.tomodrgn_dc]
+name = "Include-dc"
+description = "Include FSC calculation for DC component, default False because DC component default excluded during training"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_nn"}
+
+[tabs.heterogeneity.tomodrgn_fscmask]
+name = "Fsc-mask"
+description = "Type of mask applied to volumes before calculating FSC"
+type = "enum"
+enum = { none="none", sphere="sphere", tight="tight", soft="soft" }
+default = "soft"
+condition = {arg="tomodrgn_mode", value="convergence_nn"}
+
+# convergence_vae
+[tabs.heterogeneity.tomodrgn_epoch_index]
+name = "Epoch index"
+description = "Latest epoch number N to analyze convergence (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
+type = "int"
+default = 0
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_epoch_interval]
+name = "Epoch interval"
+description = "Interval of epochs between calculating most convergence heuristics"
+type = "int"
+default = 5
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_force_umapcpu]
+name = "force-umap-cpu"
+description = "Override default UMAP GPU-bound implementation via cuML to use umap-learn library instead"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_subset]
+name = "subset"
+description = "Max number of particles to be used for UMAP calculations. 'None' means use all ptcls"
+type = "int"
+default = 50000
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_randomseed]
+name = "random-seed"
+description = "Manually specify the seed used for selection of subset particles (default: None)"
+type = "int"
+default = 0
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_randomstate]
+name = "random-state"
+description = "Random state seed used by UMAP for reproducibility at slight cost of performance (default 42, None means slightly faster but non-reproducible))"
+type = "str"
+default = "42"
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_epochs_umap]
+name = "n-epochs-umap"
+description = "Number of epochs to train the UMAP embedding via cuML for a given z.pkl, as described in the cuml.UMAP documentation"
+type = "int"
+default = 25000
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_skip_umap]
+name = "skip umap"
+description = "Skip UMAP embedding. Requires that UMAP be precomputed for downstream calcs. Useful for tweaking volume generation settings"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_nbins]
+name = "n-bins"
+description = "The number of bins along UMAP1 and UMAP2"
+type = "int"
+default = 30
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_smooth]
+name = "smooth"
+description = "Mooth the 2D histogram before identifying local maxima"
+type = "bool"
+default = true
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_smooth_width]
+name = "smooth width"
+description = "Width of gaussian kernel for smoothing 2D histogram expressed as multiple of one bin's width"
+type = "float"
+default = 1.0
+condition = {arg="tomodrgn_smooth", value="true"}
+
+[tabs.heterogeneity.tomodrgn_pruned_maxima]
+name = "pruned-maxima"
+description = "Prune poorly-separated maxima until this many maxima remain"
+type = "int"
+default = 12
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_radius]
+name = "radius"
+description = "Distance at which two maxima are considered poorly-separated and are candidates for pruning (euclidean distance in bin-space)"
+type = "float"
+default = 5.0
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_final_maxima]
+name = "final-maxima"
+description = "select this many local maxima, sorted by highest bin count after pruning, for which to generate volumes"
+type = "int"
+default = 10
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_skip_vgen]
+name = "skip-volgen"
+description = "kip volume generation. Requires that volumes already exist for downstream CC + FSC calcs"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_gt]
+name = "ground-truth"
+description = "Relative path containing wildcards to ground_truth_vols*.mrc for map-map CC calcs (default: None)"
+type = "str"
+default = "None"
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_max_threads]
+name = "max-threads"
+description = "Max number of threads used to parallelize mask generation"
+type = "int"
+default = 8
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_thresh]
+name = "Mask threshold"
+description = "Float, isosurface at which to threshold mask; default 0 uses 50th percentile"
+type = "float"
+default = 0
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_dist]
+name = "Mask soft edge"
+description = "Number of voxels over which to apply a soft cosine falling edge from dilated mask boundary"
+type = "int"
+default = 10
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+[tabs.heterogeneity.tomodrgn_dilate]
+name = "Mask dilate"
+description = "Number of voxels to dilate thresholded isosurface outwards from mask boundary"
+type = "int"
+default = 3
+condition = {arg="tomodrgn_mode", value="convergence_vae"}
+
+
+##############
+##############
+
+[tabs.heterogeneity.tomodrgn_enc_lya]
+name = "enc-layers-A"
+description = "Number of hidden layers for each tilt"
+type = "int"
+default = 3
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_enc_dima]
+name = "enc-dim-A"
+description = "Number of nodes in hidden layers for each tilt"
+type = "int"
+default = 256
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_out_dima]
+name = "out-dim-A"
+description = "Number of nodes in output layer of encA == ntilts * number of nodes input to encB"
+type = "int"
+default = 128
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_enc_lyb]
+name = "enc-layers-B"
+description = "Number of hidden layers encoding merged tilts"
+type = "int"
+default = 3
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_enc_dimb]
+name = "enc-dim-B"
+description = "Number of nodes in hidden layers encoding merged tilts (default: 512)"
+type = "int"
+default = 256
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_pool]
+name = "Pooling-function"
+description = "Function used to pool features along ntilts dimension after encA (default: concatenate)"
+type = "enum"
+enum = { concatenate="concatenate", max="max", mean="mean", median="median", set_encoder="set_encoder" }
+default = "concatenate"
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_enc_mask]
+name = "Encoder mask"
+description = "Circular mask of image for encoder (default: D/2; -1 for no mask)"
+type = "float"
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_num_seeds]
+name = "Num-seeds"
+description = "Transformer number of seeds for PMA"
+type = "int"
+default = 1
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_num_heads]
+name = "Num-heads"
+description = "number of heads for multi head attention blocks"
+type = "int"
+default = 4
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_layer_norm]
+name = "layer-norm"
+description = "whether to apply layer normalization in the set transformer block"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+# [tabs.heterogeneity.tomodrgn_use_real]
+# name = "Use real space"
+# description = "Use real space image for encoder (for convolutional encoder)"
+# type = "bool"
+# default = false
+# condition = {arg="enc_mode", value="conv"}
+
+[tabs.heterogeneity.tomodrgn_dec_hl]
+name = "Decoder layers"
+description = "Number of decoder hidden layers"
+type = "int"
+default = 3
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_dec_dim]
+name = "Decoder nodes"
+description = "Number of nodes in decoder hidden layers (default: 1024)"
+type = "int"
+default = 256
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_l_ext]
+name = "l-extent"
+description = "Coordinate lattice size (if not using positional encoding)"
+type = "float"
+default = 0.5
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_pe_type]
+name = "Position encoding type"
+description = "Type of positional encoding type (default: gausssian)"
+type = "enum"
+enum = {geom_ft="geom_ft", geom_full="geom_full", geom_lowf="geom_lowf", geom_nohighf="geom_nohighf", linear_lowf="linear_lowf", gaussian="gaussian", none="none"}
+default = "gaussian"
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_feat_sigma]
+name = "Gaussian features"
+description = "Scale for random Gaussian features"
+type = "float"
+default = 0.5
+advanced = true
+condition = { arg="tomodrgn_pe_type", value="gaussian" }
+
+[tabs.heterogeneity.tomodrgn_pe_dim]
+name = "Positional frequencies"
+description = "Num frequencies in positional encoding (default: image D/2)"
+type = "float"
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+# [tabs.heterogeneity.tomodrgn_dec_domain]
+# name = "Decoder representation"
+# description = "Volume decoder representation (default: fourier)"
+# type = "enum"
+# enum = {hartley="hartley", fourier="fourier"}
+# default = "fourier"
+
+[tabs.heterogeneity.tomodrgn_activation]
+name = "Activation"
+description = "Activation"
+type = "enum"
+enum = {relu="relu", leaky_relu="leaky_relu"}
+default = "relu"
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_num_workers]
+name = "Number of workers"
+description = "Number of workers to use when batching particles for training. Has moderate impact on epoch time"
+type = "int"
+default = 0
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_prefetch_factor]
+name = "prefetch-factor"
+description = "Number of particles to prefetch per worker for training. Has moderate impact on epoch time"
+type = "int"
+default = 2
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_pst_wkrs]
+name = "Persistent-workers"
+description = "Whether to persist workers after dataset has been fully consumed. Has minimal impact on run time"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_pin_mem]
+name = "Persistent-workers"
+description = "Whether to use pinned memory for dataloader. Has large impact on epoch time. Recommended"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_epoch]
+name = "Analysis epochs"
+description = "Epoch number N to analyze (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
+type = "int"
+default = 49
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_skipv]
+name = "Skip volume generation"
+description = "Skip generation of volumes"
+type = "bool"
+default = false
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_skipumap]
+name = "Skip UMAP"
+description = "Skip running UMAP"
+type = "bool"
+default = false
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_flip]
+name = "Flip handedness"
+description = "Flip handedness of output volumes"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_invert]
+name = "Invert contrast"
+description = "Invert constast of output volumes"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_downsample]
+name = "Downsample output"
+description = "Downsample volumes to this box size (pixels)"
+type = "int"
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_pc]
+name = "Principal components"
+description = "Number of principal component traversals to generate"
+type = "int"
+default = 2
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_ksample]
+name = "K-means samples"
+description = "Number of k-means samples to generate"
+type = "int"
+default = 20
+condition = { arg="method", value="tomoDRGN" }
+
+[tabs.heterogeneity.tomodrgn_analysis_pc_ondata]
+name = "pc-ondata"
+description = "Find closest on-data latent point to each PC percentile"
+type = "bool"
+default = false
+advanced = true
+condition = { arg="method", value="tomoDRGN" }
 
 # Sub-Volume Averaging
 
@@ -4164,21 +6262,21 @@ name = "Threads per task (pre-processing daemon)"
 description = "Number of CPUs used during pre-processing"
 type = "int"
 default = 1
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 
 [tabs.slurm.daemon_memory]
 name = "Memory per task (pre-processing daemon)"
 description = "Amount of memory used for pre-processing daemon (GB)"
 type = "int"
 default = 2
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 
 [tabs.slurm.daemon_gres]
 name = "Gres (pre-processing daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 advanced = true
 
 [tabs.slurm.daemon_account]
@@ -4186,7 +6284,7 @@ name = "Slurm account (pre-processing daemon)"
 description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 advanced = true
 
 [tabs.slurm.daemon_walltime]
@@ -4194,7 +6292,7 @@ name = "Walltime per task (pre-processing daemon)"
 description = "Max running time for pre-processing task (dd-hh:mm:ss)"
 type = "str"
 default = "5-00:00:00"
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 
 [tabs.slurm.daemon_queue]
 name = "CPU partition (pre-processing daemon)"
@@ -4202,28 +6300,28 @@ description = "SLURM partition to use for pre-processing jobs"
 type = "str"
 input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
-hidden = ["spr_import_raw", "tomo_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "tomo_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 
 [tabs.slurm.class2d_tasks]
 name = "Threads per task (refinement daemon)"
 description = "Number of CPUs used during 2D/3D refinement"
 type = "int"
 default = 1
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 
 [tabs.slurm.class2d_memory]
 name = "Memory per task (refinement daemon)"
 description = "Amount of memory used for 2D/3D refinement daemon (GB)"
 type = "int"
 default = 4
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 
 [tabs.slurm.class2d_gres]
 name = "Gres (refinement daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 advanced = true
 
 [tabs.slurm.class2d_account]
@@ -4231,7 +6329,7 @@ name = "Slurm account (refinement daemon)"
 description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 advanced = true
 
 [tabs.slurm.class2d_walltime]
@@ -4239,7 +6337,7 @@ name = "Walltime (refinement daemon)"
 description = "Max running time for 2D/3D refinement daemon (dd-hh:mm:ss)"
 type = "str"
 default = "5-00:00:00"
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 
 [tabs.slurm.class2d_queue]
 name = "Partition (refinement daemon)"
@@ -4247,7 +6345,7 @@ description = "SLURM partition to use for 2D/3D refinement jobs"
 type = "str"
 input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise" ]
 
 [tabs.slurm.profile]
 name = "Save profiling information"

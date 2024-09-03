@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: conda/miniconda3-centos7
+From: continuumio/miniconda3
 IncludeCmd: no
 
 %help
@@ -18,6 +18,7 @@ IncludeCmd: no
 	external/ /opt/pyp
 	../AreTomo2/ /opt/pyp/external
 	../MotionCor3/ /opt/pyp/external
+	../tomoDRGN /opt/pyp/external
 
 %environment
 
@@ -27,8 +28,8 @@ IncludeCmd: no
 	# somehow, after all that installation trouble, conda *STILL* doesn't manage to make the packages available to python
 	# probably because we don't have any way to "activate" the conda environment inside the container
 	# so we'll have to do it manually... sigh
-	export LD_LIBRARY_PATH=/usr/local/envs/pyp/lib:$LD_LIBRARY_PATH
-	export PATH=$PYP_DIR/bin:/usr/local/envs/pyp/bin:$PATH
+	export LD_LIBRARY_PATH=/opt/conda/envs/pyp/lib:$LD_LIBRARY_PATH
+	export PATH=$PYP_DIR/bin:/opt/conda/envs/pyp/bin:$PATH
 	export PYTHONPATH=/opt/pyp/src
 	export IMOD_DIR=/opt/IMOD
 	export PATH=$PATH:$IMOD_DIR/bin
@@ -38,11 +39,14 @@ IncludeCmd: no
 	# remove .git directory to save space
 	rm -rf /opt/pyp/.git
 	# install packages required by ETTK
-	yum -y update
-	yum install -y which openssh gcc-4.8.5 gcc-c++-4.8.5 libXt-devel freeglut-devel git make vim nano bzip2 bzip2-libs bzip2-devel numactl-devel libjpeg ImageMagick wget epel-release graphviz fftw fftw_devel libtiff-devel
-	yum groupinstall -y "Development Tools"
-	yum clean all
+	apt-get -y update
+	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file
+	## apt-get install -y which openssh gcc-4.8.5 gcc-c++-4.8.5 libXt-devel freeglut-devel git make vim nano bzip2 bzip2-libs bzip2-devel numactl-devel libjpeg ImageMagick=6.9.11 wget epel-release graphviz fftw fftw_devel libtiff-devel
+	## apt-get groupinstall -y "Development Tools"
+	## apt-get clean all
 
+	dpkg --configure -a
+ 
 	# install pbzip2 from source
         NAME=pbzip2-1.1.13
         TARFILE=${NAME}.tar.gz
@@ -75,32 +79,36 @@ IncludeCmd: no
 	rm -rf postprocessing/.git
 	cd -
 
-	# Install CUDA-11.4
-	CUDA_HOME=/usr/local/cuda-11.4
-	CUDA_RPM=cuda-repo-rhel7-11-4-local-11.4.0_470.42.01-1.x86_64.rpm
-	wget https://developer.download.nvidia.com/compute/cuda/11.4.0/local_installers/${CUDA_RPM}
-	rpm -i ${CUDA_RPM}
-	rm -rf ${CUDA_RPM}
-	yum clean all
-	yum -y install nvidia-driver-latest-dkms cuda
-	yum -y install cuda-drivers
+	apt-get -y install software-properties-common
+	
+	# install IMOD
+	IMOD_FILE=imod_4.11.24_RHEL7-64_CUDA8.0.sh
+	wget --no-check-certificate https://bio3d.colorado.edu/imod/AMD64-RHEL5/${IMOD_FILE}
+	sh ${IMOD_FILE} -yes -skip -name IMOD -dir /opt
+	rm -rf ${IMOD_FILE}
 
+	# install CUDA-12.5
+	CUDA_HOME=/usr/local/cuda-12.5
+	wget https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/cuda-keyring_1.1-1_all.deb
+	dpkg -i cuda-keyring_1.1-1_all.deb
+	add-apt-repository contrib
+	apt-get update
+	apt-get -y install cuda-toolkit-12-5
+	apt-get -y install libcudnn8
+	apt-get -y install libcu++-dev
+
+	# load AreTomo2 and MotionCor3
 	cd /opt/pyp/external/AreTomo2
 	# git clone https://github.com/czimaginginstitute/AreTomo2.git --depth 1
 	# cd AreTomo2
-	make exe -f makefile11 CUDAHOME=${CUDA_HOME} -j 4
+	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
 	cd -
 	# git clone https://github.com/czimaginginstitute/MotionCor3.git --depth 1
 	# cd MotionCor3
 	cd /opt/pyp/external/MotionCor3
 	# git clone https://github.com/czimaginginstitute/AreTomo2.git
-	make exe -f makefile11 CUDAHOME=${CUDA_HOME} -j 4
+	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
 	cd -
-
-	# install IMOD
-	wget --no-check-certificate https://bio3d.colorado.edu/imod/AMD64-RHEL5/imod_4.11.24_RHEL7-64_CUDA8.0.sh
-	sh imod_4.11.24_RHEL7-64_CUDA8.0.sh -yes -skip -name IMOD -dir /opt
-	rm -rf imod_4.11.24_RHEL7-64_CUDA8.0.sh
 
 	# Conda is apparently a terrible package manager and
 	# totally fails to install 2 packages (two!!) in less than 30 minutes! (didn't try waiting longer...)
@@ -110,51 +118,182 @@ IncludeCmd: no
 	# https://pythonspeed.com/articles/activate-conda-dockerfile/
 
 	# write the conda script
-cat << EOF > /root/conda.sh
+cat << EOF > /root/conda_pyp.sh
 
 	# just for posterity ...
 	conda --version
 
 	# install the python packages we need
 
-	conda install pymongo pillow toml seaborn requests pytest scikit-learn scikit-image matplotlib pandas
-	conda install -c conda-forge conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click
+	conda install pymongo pillow toml seaborn requests pytest scikit-learn scikit-image 
+	conda install matplotlib 
+	conda install pandas
+	conda install -c conda-forge conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses
 	conda install -c conda-forge colored-traceback
-	# conda install -c pspuhler matlab_engine
+	conda update numpy
 	conda install topaz -c tbepler
+	
+	conda install faiss-gpu
 	conda update libstdcxx-ng
 	conda clean --all
-	
+
+	rm -rf /tmp/env.tar
 	conda-pack -n pyp -o /tmp/env.tar && \
-		mkdir /venv && cd /venv && tar xf /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
 		rm /tmp/env.tar
-	/venv/bin/conda-unpack
-	
+	/venv/bin/conda-unpack	
 EOF
 	# need to create a new environment for conda to actually install anything without failing, see:
 	# https://github.com/conda/conda/issues/9367#issuecomment-558863143
 	# alas, we can't actually "activate" this environment, because conda fails saying the envrionment is unsupported
-	/usr/local/bin/conda update conda
-	/usr/local/bin/conda create --name pyp python=3.8
+	conda update conda
+	conda create --name pyp python=3.8
 
 	# run the conda script in the pyp environment
 	# tragically conda buffers stdout and stderr, which is basically terrible
 	# so try to redirect them somewhere we'll see them sooner
 	# like the stdout of *this* script: /proc/$$/fd/1
-	chmod +x /root/conda.sh
-	/usr/local/bin/conda run -n pyp /bin/bash -c "/root/conda.sh > /proc/$$/fd/1 2>&1"
-	export PATH=/usr/local/envs/pyp/bin:$PATH
-
-	pip install torch==2.0.1 torchvision==0.15.2 tensorboard h5py imagesize tqdm
-	pip install torchio==0.18.92 healpy==1.14.0 phoenix==0.9.1 dataset==1.6.2 Pillow==10.0.1 pyarrow==11.0.0 scikit_network==0.28.2
-	pip install mrcfile pytorch_metric_learning progress faiss-gpu
+	chmod +x /root/conda_pyp.sh
+	conda run -n pyp /bin/bash -c "/root/conda_pyp.sh > /proc/$$/fd/1 2>&1"
+	export PATH=/opt/conda/envs/pyp/bin:$PATH
+	
+	# do all the pip installs (on the base environment?)
+	pip install torch==2.2.0 torchvision==0.17.0 tensorboard h5py imagesize tqdm
+	pip install torchio==0.18.92
+	pip install healpy
+	pip install phoenix==0.9.1
+	pip install dataset==1.6.2 
+	pip install Pillow==10.0.1 
+	pip install pyarrow==11.0.0 
+	pip install scikit_network==0.28.2
+	pip install mrcfile pytorch_metric_learning progress nptyping==2.5.0 umap_learn==0.5.3
 	pip install nibabel
 	pip install numba
 	pip install gputil
 	pip install dipy
 	pip install bm4d
 	pip install filelock
-	pip cache purge
+
+	# Install tomoDRGN
+cat << EOF > /root/conda_tomodrgn.sh
+
+	# install the python packages we need
+
+	conda install "pytorch-gpu>=1.11.0" "cudatoolkit>=11.0" -c pytorch
+	conda install pandas seaborn scikit-learn
+	conda install umap-learn notebook -c conda-forge
+	pip install "ipyvolume>=0.6.0" "pythreejs>=2.4.2" ipython_genutils
+
+	# Clone source code and install
+	# git clone https://github.com/bpowell122/tomodrgn.git
+	# use custom version
+	cd /opt/pyp/external/tomoDRGN
+	pip install .	
+
+	conda clean --all
+	
+	rm -rf /tmp/env.tar
+	conda-pack -n tomodrgn -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	conda create --name tomodrgn "python>=3.7"
+
+	# run the conda script in the new environment
+	chmod +x /root/conda_tomodrgn.sh
+	conda run -n tomodrgn /bin/bash -c "/root/conda_tomodrgn.sh > /proc/$$/fd/1 2>&1"
+
+	# Install cryoCARE
+cat << EOF > /root/conda_cryocare.sh
+
+	# install the python packages we need
+	conda install cuda-toolkit
+	
+	pip install tensorflow-gpu==2.4.0
+	pip install tifffile==2019.7.26
+	pip install cryoCARE
+
+	conda clean --all
+	
+	rm -rf /tmp/env.tar
+	conda-pack -n cryocare -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	conda create --name cryocare python=3.8 cudatoolkit=11.0 cudnn=8.0 -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/conda_cryocare.sh
+	conda run -n cryocare /bin/bash -c "/root/conda_cryocare.sh > /proc/$$/fd/1 2>&1"
+	
+	# Install cryoDRGN
+cat << EOF > /root/conda_cryodrgn.sh
+
+	# install the python packages we need
+
+	pip install cryodrgn
+
+	conda clean --all
+	
+	rm -rf /tmp/env.tar
+	conda-pack -n cryodrgn -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	conda create --name cryodrgn python=3.9
+
+	# run the conda script in the new environment
+	chmod +x /root/conda_cryodrgn.sh
+	conda run -n cryodrgn /bin/bash -c "/root/conda_cryodrgn.sh > /proc/$$/fd/1 2>&1"
+
+	# Install membrain
+cat << EOF > /root/conda_membrain.sh
+
+	# install the python packages we need
+
+	pip install membrain-seg
+
+	conda clean --all
+	
+	rm -rf /tmp/env.tar
+	conda-pack -n membrain -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	conda create --name membrain python=3.9
+
+	# run the conda script in the new environment
+	chmod +x /root/conda_membrain.sh
+	conda run -n membrain /bin/bash -c "/root/conda_membrain.sh > /proc/$$/fd/1 2>&1"
+
+	# Install IsoNet
+cat << EOF > /root/conda_isonet.sh
+
+	# install the python packages we need
+
+	git clone https://github.com/IsoNet-cryoET/IsoNet.git
+	cd IsoNet
+	pip install -r requirements.txt
+
+	conda clean --all
+	
+	rm -rf /tmp/env.tar
+	conda-pack -n isonet -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	conda create --name isonet "python>=3.7" tensorflow-gpu
+
+	# run the conda script in the new environment
+	chmod +x /root/conda_isonet.sh
+	conda run -n isonet /bin/bash -c "/root/conda_isonet.sh > /proc/$$/fd/1 2>&1"
+
+	# pip install --upgrade numpy==1.23.4
 
 %startscript
 

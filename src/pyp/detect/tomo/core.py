@@ -76,47 +76,49 @@ def process_virion_multiprocessing(
     )
     local_run.run_shell_command(command,parameters["slurm_verbose"])
 
-    # increase the contrast of virus volume
-    command = "{0}/bin/nad_eed_3d -n 10 {1}_binned.mrc {1}_binned_nad.mrc".format(
-        get_imod_path(), virion_name,
-    )
-    local_run.run_shell_command(command,verbose=False)
+    if not os.path.exists(f"{virion_name}_binned_nad_seg.mrc"):
 
-    # produce virus membrane (surface only)
-    correction = binning / float(spk_pick_binning) / virion_binning * parameters["tomo_vir_binn"]
-
-    # get value of radius from virion detection operation
-    radius = float(virion[-1]) * correction
-
-    # read in tolerance value (making sure it is expressed in percentage)
-    tolerance = min(100,abs(parameters["tomo_vir_seg_tol"])) / 100.
-
-    # calculate admissible radius range
-    min_radius = radius * ( 1 - tolerance )
-    max_radius = radius + ( 1 + tolerance )
-
-    # Run segmentation
-    # USAGE: virus_segment_membrane input.mrc iradius oradius weight iterations variances output.mrc
-    check_env()
-
-    weight = 1
-    iterations = 500
-    variances = 10
-    command = f"{get_tomo_path()}/virus_segment_membrane {virion_name}_binned_nad.mrc {min_radius:.2f} {max_radius:.2f} {weight} {iterations} {variances} {virion_name}_binned_nad_seg.mrc"
-    local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-
-    if os.path.exists("%s_binned_nad.mrc" % (virion_name)):
-        # produce visualization for selecting thresholds of iso-surfaces
-        command = "{0}/virus_segment_membrane_select_threshold {1}_binned_nad".format(
-            get_tomo_path(), virion_name
+        # increase the contrast of virus volume
+        command = "{0}/bin/nad_eed_3d -n 10 {1}_binned.mrc {1}_binned_nad.mrc".format(
+            get_imod_path(), virion_name,
         )
-        local_run.run_shell_command(command,parameters["slurm_verbose"])
-        command = "convert -resize 1080x360 {1}_binned_nad.png {1}_binned_nad.png".format(
-            get_imod_path(), virion_name
-        )
-        local_run.run_shell_command(command,parameters["slurm_verbose"])
+        local_run.run_shell_command(command,verbose=False)
 
-        img2webp(f"{virion_name}_binned_nad.png", f"{virion_name}_binned_nad.webp")
+        # produce virus membrane (surface only)
+        correction = binning / float(spk_pick_binning) / virion_binning * parameters["tomo_vir_binn"]
+
+        # get value of radius from virion detection operation
+        radius = float(virion[-1]) * correction
+
+        # read in tolerance value (making sure it is expressed in percentage)
+        tolerance = min(100,abs(parameters["tomo_vir_seg_tol"])) / 100.
+
+        # calculate admissible radius range
+        min_radius = radius * ( 1 - tolerance )
+        max_radius = radius + ( 1 + tolerance )
+
+        # Run segmentation
+        # USAGE: virus_segment_membrane input.mrc iradius oradius weight iterations variances output.mrc
+        check_env()
+
+        weight = 1
+        iterations = 500
+        variances = 10
+        command = f"{get_tomo_path()}/virus_segment_membrane {virion_name}_binned_nad.mrc {min_radius:.2f} {max_radius:.2f} {weight} {iterations} {variances} {virion_name}_binned_nad_seg.mrc"
+        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+
+        if os.path.exists("%s_binned_nad.mrc" % (virion_name)):
+            # produce visualization for selecting thresholds of iso-surfaces
+            command = "{0}/virus_segment_membrane_select_threshold {1}_binned_nad".format(
+                get_tomo_path(), virion_name
+            )
+            local_run.run_shell_command(command,parameters["slurm_verbose"])
+            command = "convert -resize 1080x360 {1}_binned_nad.png {1}_binned_nad.png".format(
+                get_imod_path(), virion_name
+            )
+            local_run.run_shell_command(command,parameters["slurm_verbose"])
+
+            img2webp(f"{virion_name}_binned_nad.png", f"{virion_name}_binned_nad.webp")
 
     # flipy if raw data is dm4
     if os.path.exists("isdm4"):
@@ -134,7 +136,7 @@ def process_virion_multiprocessing(
     autopick_template = virion_name + "_autopick_template.mrc"
 
     # run autopick
-    if parameters["tomo_vir_detect_method"] != "none":
+    if parameters["tomo_srf_detect_method"] != "none":
 
         fresh_template_match = False
 
@@ -147,7 +149,7 @@ def process_virion_multiprocessing(
         if (
             not os.path.exists(virion_name + "_cut.txt")
         ):
-            if "template" in parameters["tomo_vir_detect_method"]:
+            if "template" in parameters["tomo_srf_detect_method"]:
                 # pick and extract particles
                 lower_slice = int(
                     virion_size / 2 / virion_binning - band_width / virion_binning
@@ -157,10 +159,10 @@ def process_virion_multiprocessing(
                 )
 
                 # if using standard template, rescale template volume to match data pixel size
-                parameters["tomo_vir_detect_ref"] = project_params.resolve_path(parameters["tomo_vir_detect_ref"]) if "tomo_vir_detect_ref" in parameters else ""
+                parameters["tomo_srf_detect_ref"] = project_params.resolve_path(parameters["tomo_srf_detect_ref"]) if "tomo_srf_detect_ref" in parameters else ""
                 if (
                     "hiv1bal-ang90_global_average_symmetrized.mrc.filtered.mrc"
-                    in parameters["tomo_vir_detect_ref"]
+                    in parameters["tomo_srf_detect_ref"]
                 ):
                     # size = int( 36.0 * factor )
                     size = int(64.0 * factor)
@@ -168,16 +170,16 @@ def process_virion_multiprocessing(
                         size += 1
 
                     resample_and_resize(
-                        input=parameters["tomo_vir_detect_ref"],
+                        input=parameters["tomo_srf_detect_ref"],
                         output=autopick_template,
                         scale=factor,
                         size=size,
                     )
 
-                # elif parameters["tomo_vir_detect_method"] == "mesh":
+                # elif parameters["tomo_srf_detect_method"] == "mesh":
                 #     size_x = size_y = size_z = 8
-                if os.path.exists(parameters["tomo_vir_detect_ref"]):
-                    shutil.copy2(parameters["tomo_vir_detect_ref"], autopick_template)
+                if os.path.exists(parameters["tomo_srf_detect_ref"]):
+                    shutil.copy2(parameters["tomo_srf_detect_ref"], autopick_template)
                     size_x = size_z = 0
                     size_y = autopick_template
                 else: 
@@ -217,22 +219,22 @@ def process_virion_multiprocessing(
                     max(tilt_angles),
                     lower_slice,
                     upper_slice,
-                    str(parameters["tomo_vir_detect_dist"]),
-                    str(parameters["tomo_vir_detect_thre"]),
+                    str(parameters["tomo_srf_detect_dist"]),
+                    str(parameters["tomo_srf_detect_thre"]),
                     autopick_template,
                 )
                 t = timer.Timer(text="Spike detection using Correlation3DNew took: {}", logger=logger.info)
                 t.start()
-                command = f"{get_tomo_path()}/Correlation3DNew {virion_name} {virion_name}_binned_nad_seg.mrc {threshold} {spk_pick_binning} {min(tilt_angles)} {max(tilt_angles)} 2 {lower_slice} {upper_slice} {size_x} {size_y} {size_z} {parameters['tomo_vir_detect_dist']} {parameters['tomo_vir_detect_thre']} {virion_name}_cut.txt {virion_name}_ccc.xml {virion_name}_spikes.xml"
+                command = f"{get_tomo_path()}/Correlation3DNew {virion_name} {virion_name}_binned_nad_seg.mrc {threshold} {spk_pick_binning} {min(tilt_angles)} {max(tilt_angles)} 2 {lower_slice} {upper_slice} {size_x} {size_y} {size_z} {parameters['tomo_srf_detect_dist']} {parameters['tomo_srf_detect_thre']} {virion_name}_cut.txt {virion_name}_ccc.xml {virion_name}_spikes.xml"
                 local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
                 t.stop()
                 fresh_template_match = True
 
             # Using uniform coordinates from virion surface
-            elif  "tomo_vir_detect_method" in parameters and parameters["tomo_vir_detect_method"] == "mesh":
+            elif  "tomo_srf_detect_method" in parameters and parameters["tomo_srf_detect_method"] == "mesh":
                 fresh_template_match = True
                 bandwidth = band_width / virion_binning
-                distance = parameters["tomo_vir_detect_dist"]
+                distance = parameters["tomo_srf_detect_dist"]
                 # scale_factor = virion_binning * spk_pick_binning
                 mesh_coordinate_generator(virion_name, threshold, distance, bandwidth)
 
@@ -282,7 +284,7 @@ def process_virion_multiprocessing(
 
                 # spike height default = 228A
                 spike_height = (
-                    float(parameters["tomo_vir_detect_offset"])
+                    float(parameters["tomo_srf_detect_offset"])
                     / parameters["scope_pixel"]
                     / virion_binning
                 )
@@ -291,7 +293,7 @@ def process_virion_multiprocessing(
                 # offset = - ( spike_height + 4 ) / 2
                 offset = -spike_height
 
-                if offset != 0 or "mesh" in parameters["tomo_vir_detect_method"]:
+                if offset != 0 or "mesh" in parameters["tomo_srf_detect_method"]:
                     com = "{0}/LoopCreateVolumeList {1} {2} {3} {4}.rec {4}.pos {5} {4}_binned_nad_seg.mrc {6} {4}_cut.txt".format(
                         get_tomo_path(),
                         spk_pick_binning,
@@ -394,7 +396,7 @@ def process_virion_multiprocessing(
                                 # if not, only process the lines which are height corrected
 
                                 if (
-                                        fresh_template_match and float(parameters["tomo_vir_detect_offset"])
+                                        fresh_template_match and float(parameters["tomo_srf_detect_offset"])
                                 ) > 0 and data[6] != "0":
                                     continue
 
@@ -486,35 +488,7 @@ def process_virion_multiprocessing(
     if os.path.exists(virion_name + "_unbinned.rec"):
         os.remove(virion_name + "_unbinned.rec")
 
-
-def process_virions(
-    name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
-):
-    """Performs virion detection/extraction in tomogram then spike detection/extraction in virion.
-
-    Input files
-    -----------
-    name.vir : file, optional
-        Virion coordinates in tomo volume
-
-    Output files
-    ------------
-    name.vir
-        Virion coordinates in tomo volume
-    virion_name.txt
-        Spike coordinates in extracted virion volume
-    virion_name.rec
-        Extracted virion volume
-    """
-
-    band_width = parameters["tomo_vir_detect_band"] / parameters["scope_pixel"]
-    spike_size = parameters["tomo_ext_size"] if "tomo_ext_size" in parameters  else 0
-
-    virion_binning, virion_size = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
-    rec_x, rec_z, rec_y = get_image_dimensions(f"{name}.rec")
-
-    if virion_size <= 0:
-        return
+def detect_virions(parameters, virion_size, binning, name):
 
     # HF vir: change the pixel size in the header of .rec binned tomogram
     # HoughMaxRadius is still set to 200 (Angstrom)
@@ -534,7 +508,7 @@ def process_virions(
     [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
 
     # find virions
-    if not os.path.isfile("{0}.vir".format(name)) and parameters["tomo_vir_method"] == "auto":
+    if not os.path.isfile("{0}.vir".format(name)) and ( parameters["tomo_vir_method"] == "auto" or parameters["tomo_spk_method"] == "virions" ):
 
         extension = "rec"
         if parameters['tomo_vir_binn'] > 1:
@@ -658,9 +632,46 @@ def process_virions(
         # cleanup
         if parameters['tomo_vir_binn'] > 1:
             os.remove(name + ".bin")
+            
+        rec_x, rec_z, rec_y = get_image_dimensions(f"{name}.rec")
 
         command = f"{get_imod_path()}/bin/imodtrans -Y -n {rec_x},{rec_y},{rec_z} -sx {parameters['tomo_vir_binn']} -sy {parameters['tomo_vir_binn']} -sz {parameters['tomo_vir_binn']} {name}.vir {name}.vir"
         [output, error] = local_run.run_shell_command(command,False)
+
+def process_virions(
+    name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
+):
+    """Performs virion detection/extraction in tomogram then spike detection/extraction in virion.
+
+    Input files
+    -----------
+    name.vir : file, optional
+        Virion coordinates in tomo volume
+
+    Output files
+    ------------
+    name.vir
+        Virion coordinates in tomo volume
+    virion_name.txt
+        Spike coordinates in extracted virion volume
+    virion_name.rec
+        Extracted virion volume
+    """
+
+    spike_size = parameters["tomo_ext_size"] if "tomo_ext_size" in parameters  else 0
+
+    virion_binning, virion_size = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
+    rec_x, rec_z, rec_y = get_image_dimensions(f"{name}.rec")
+
+    if virion_size <= 0:
+        logger.warning("Virion size not set, skipping virion processing")
+        return
+
+    # detect virions
+    if not os.path.exists(f"{name}.vir"):
+        detect_virions(parameters, virion_size, binning, name)
+    else:
+        logger.warning("Using previously detected virions")
 
     if os.path.isfile("{0}.vir".format(name)):
         # load virion coordinates (and apply binning)
@@ -711,6 +722,8 @@ def process_virions(
 
             if seg_thresh < 8:
 
+                band_width = parameters["tomo_srf_detect_band"] / parameters["scope_pixel"]
+
                 arguments.append(
                     (
                         name,
@@ -732,11 +745,11 @@ def process_virions(
                 )
 
                 if virion_name.endswith("_vir0000"):
-                    if parameters["tomo_vir_detect_method"] != "none":
+                    if parameters["tomo_srf_detect_method"] != "none":
                         if not os.path.exists(virion_name + "_cut.txt"):
-                            if "template" in parameters["tomo_vir_detect_method"]:
+                            if "template" in parameters["tomo_srf_detect_method"]:
                                 logger.info("Detecting spikes using template search")
-                            elif  "tomo_vir_detect_method" in parameters and parameters["tomo_vir_detect_method"] == "mesh":
+                            elif  "tomo_srf_detect_method" in parameters and parameters["tomo_srf_detect_method"] == "mesh":
                                 logger.info("Detecting spikes using mesh vertices")
                             else:
                                 logger.warning("No spike detection method provided")
@@ -765,7 +778,7 @@ def process_virions(
             mpi.submit_function_to_workers(process_virion_multiprocessing, arguments, verbose=parameters["slurm_verbose"])
 
             # save all coordinates as .spk file
-            if parameters["tomo_vir_detect_method"] != "none":
+            if parameters["tomo_srf_detect_method"] != "none":
                 global_spike_coordiantes = get_global_spike_coordiantes( name, parameters, x, y )
                 if len(global_spike_coordiantes) > 0:
                     np.savetxt(f"{name}_all_spikes.txt", np.asarray(global_spike_coordiantes,dtype='f'))
@@ -790,7 +803,7 @@ def get_global_spike_coordiantes( name, parameters, micrographsize_x, micrograph
         virion_boxsize = 0
 
     # tomogram binning factor with respect to raw micrographs
-    squred_image = parameters["tomo_rec_square"]
+    squred_image = parameters["tomo_ali_square"]
     binning = parameters["tomo_rec_binning"]
 
     recZ = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
@@ -1142,13 +1155,12 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
     virion_binning = parameters["tomo_vir_binn"]
 
     # particle picking
-    if "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none":
+    if "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" or parameters["micromon_block"] == "tomo-segmentation-closed" or parameters["micromon_block"] == "tomo-picking-closed":
 
         radius_in_pixels = int(parameters["tomo_vir_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"])
 
         if not os.path.exists("%s.vir" % name):
-
-            if parameters["tomo_vir_method"] == "manual":
+            if parameters["tomo_vir_method"] == "manual"  or parameters["micromon_block"] == "tomo-segmentation-closed":
                 logger.info("Using virion manual picking")
                 # reset virion binning since we are considering above it already
                 virion_binning = 1
@@ -1157,22 +1169,20 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                     logger.warning("Cannot find coordinates file for this tilt-series")
                 else:
                     logger.info("Using manually picked coordinates")
-                    # convert coordinates from next to pyp format
-                    joint.coordinates_next2pyp("{0}.next".format(name),binning=binning/8.,radius=radius_in_pixels)
-                    local_run.run_shell_command("{0}/bin/point2model -scat -sphere {2} -values 1 {1}.next {1}.mod".format(get_imod_path(), name,radius_in_pixels),verbose=parameters["slurm_verbose"])
-
-                    # adjust geometry of models to match tomogram dimensions
-                    local_run.run_shell_command("{0}/bin/imodtrans -Y -T {1}.mod {1}.vir".format(get_imod_path(), name),verbose=parameters["slurm_verbose"])
-
+                    
+                    # add radius to virion coordinates
+                    coordinates = np.loadtxt(f"{name}.next",ndmin=2)
+                    virion_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"]
+                    coordinates_with_radius = np.hstack( ( coordinates, virion_radius * np.ones((coordinates.shape[0],1)) ) )
+                    np.savetxt(f"{name}.next",coordinates_with_radius)
+                    local_run.run_shell_command("{0}/bin/point2model -scat -sphere {2} -values 1 {1}.next {1}.vir".format(get_imod_path(), name,radius_in_pixels),verbose=parameters["slurm_verbose"])
+ 
                     # clean up
                     remote_next_file = os.path.join( current_path, 'next', name + '.next' )
                     if os.path.exists(remote_next_file):
                         os.remove(remote_next_file)
                     if os.path.exists(name + ".next"):
                         os.remove( name + ".next")
-                    if os.path.exists(name + ".mod"):
-                        os.remove( name + ".mod")
-                    os.system(f'cp -p *.vir {current_path}/next')
 
             elif parameters["tomo_vir_method"] == "pyp-eval":
                 logger.info("Using virion NN-picking")
@@ -1247,7 +1257,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             except:
                 logger.warning("No particles picked for this tomogram")
 
-        elif parameters["tomo_spk_method"] == "pyp-eval":
+        elif parameters.get("micromon_block") == "tomo-particles-eval":
             logger.info("Using NN-based particle picking")
 
             if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
@@ -1272,7 +1282,30 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
                         os.remove( name + ".box")
                         os.remove( name + ".mod")
+                        
+        elif parameters["tomo_spk_method"] == "virions":
 
+            # figure out virion parameters
+            virion_binning, virion_size = get_vir_binning_boxsize(parameters["tomo_spk_vir_rad"], parameters["scope_pixel"])
+            
+            # use new parameters for figuring out virion size
+            parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"]
+
+            # virion detection
+            detect_virions(parameters, virion_size, parameters["tomo_rec_binning"], name)
+
+            # save (X,Y,Z) coordinates to imod model
+            spike_coordinates = imod.coordinates_from_mod_file("%s.vir" % name)[:,[0,1,2]]
+            np.savetxt("{}.box".format(name), spike_coordinates.astype('int').astype('str'), fmt='%s', delimiter='\t')
+    
+            # convert to IMOD model          
+            radius_in_pixels = 10
+            command = (
+                f"{get_imod_path()}/bin/point2model -scat -sphere {radius_in_pixels} -input {name}.box -output {name}.spk"
+            )
+            local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+            os.remove(f"{name}.box")
+            
         elif parameters["tomo_spk_method"] == "auto":
             logger.info("Using size-based particle picking")
 
@@ -1280,7 +1313,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             picker.pick(name,radius=parameters["tomo_spk_rad"],pixelsize=parameters["scope_pixel"],auto_binning = binning,contract_times=parameters["tomo_spk_contract_times_3d"],gaussian=parameters["tomo_spk_gaussian_3d"],sigma=parameters["tomo_spk_sigma_3d"],stdtimes_cont=parameters["tomo_spk_stdtimes_cont_3d"],min_size=parameters["tomo_spk_min_size_3d"],dilation=parameters["tomo_spk_dilation_3d"],radius_times=parameters["tomo_spk_radiustimes_3d"],inhibit=parameters["tomo_spk_inhibit_3d"],detection_width=parameters["tomo_spk_detection_width_3d"],stdtimes_filt=parameters["tomo_spk_stdtimes_filt_3d"],remove_edge=parameters["tomo_spk_remove_edge_3d"],show=False)
 
     # Directly extract spikes from tomogram
-    if (
+    if not parameters.get("micromon_block") == "tomo-picking-closed" and (
         os.path.isfile("%s.spk" % name)
         or os.path.isfile("%s.txt" % name)
         or os.path.isfile("%s.openmod" % name)
@@ -1311,15 +1344,21 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         # switch y and z if these come auto pick
         if parameters["tomo_spk_method"] == "auto":
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
-        elif parameters["tomo_spk_method"] == "pyp-eval":
+        elif parameters.get("micromon_block") == "tomo-particles-eval":
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
-        if parameters["tomo_vir_detect_method"] == "template" or parameters["tomo_vir_detect_method"] == "mesh":
+        elif parameters.get("micromon_block") == "tomo-picking-closed":
             # reverse z-dimension to display on website
             spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
         spike_coordinates_with_radius = np.hstack( ( spike_coordinates, parameters["tomo_spk_rad"] / binning * np.ones((spike_coordinates.shape[0],1)) ) )
     else:
         spike_coordinates_with_radius = np.array([])
 
+    if parameters["tomo_spk_method"] == "virions" and parameters["micromon_block"] == "tomo-picking":
+        spike_coordinates_with_radius = virion_coordinates
+        spike_coordinates_with_radius[:,-1] *= parameters["tomo_spk_vir_binn"]
+    elif parameters["tomo_spk_method"] == "tomo-segmentation-closed":
+        spike_coordinates_with_radius = np.array([])
+        
     # CAPSID, TSR: generation of unbinned regions from tomograms
     if os.path.isfile("%s_regions.mod" % name):
         """Extracts specified regions from tomo volume."""
@@ -1634,10 +1673,11 @@ def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth):
 
         virion_volume = "{0}_binned_nad_seg.mrc".format(virion_name)
 
-        command = "{0}/bin/newstack {1} {1} -mode 2".format(
-            get_imod_path(), virion_volume
-        )
-        local_run.run_shell_command(command)
+        if mrc.readHeaderFromFile(virion_volume)['mode'] != 2:
+            command = "{0}/bin/newstack {1} {1} -mode 2".format(
+                get_imod_path(), virion_volume
+            )
+            local_run.run_shell_command(command)
 
         volume = mrc.read(virion_volume)
         contour = float(threshold)
@@ -1655,7 +1695,6 @@ def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth):
         verts = np.asarray(verts, dtype=np.float32)
         faces = np.asarray(faces, dtype=np.int32)
 
-        # normals = normals.astype(int)
         normals = compute_normals(verts, faces)
 
         clean_vts, clean_norms = clean_verts(verts, normals, distance)

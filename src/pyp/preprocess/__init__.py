@@ -6,4 +6,6 @@ from .core import (
     resample_and_resize,
     resize_initial_model,
     frames_from_mdoc,
+    regenerate_average_quick,
+    erase_gold_beads,
 )

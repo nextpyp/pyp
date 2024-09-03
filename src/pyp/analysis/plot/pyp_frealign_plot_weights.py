@@ -16,10 +16,13 @@ def plot_weights(name, input, frames, frames_per_tilt, boxsize, pixel):
 
     A = numpy.loadtxt(input)
 
+    frames = int(A.shape[0] / ((boxsize + 1) * (boxsize / 2)))
     W = numpy.zeros([frames, int(boxsize / 2 + 1), boxsize])
 
     count = 0
-    for frame in range(frames):
+    frame = 0 
+    # for frame in range(frames):
+    while count < A.shape[0]:
         for j in range(boxsize):
             for i in range(1, int(boxsize / 2 + 1)):
                 W[frame, i, j] = A[count]
@@ -28,6 +31,7 @@ def plot_weights(name, input, frames, frames_per_tilt, boxsize, pixel):
             i = 0
             W[frame, i, j] = A[count]
             count += 1
+        frame += 1
 
     weights = numpy.swapaxes(W, 2, 1) / W.sum(axis=0).mean()
 

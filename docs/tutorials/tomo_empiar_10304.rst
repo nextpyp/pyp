@@ -140,12 +140,12 @@ Step 3: Pre-processing
 Step 4: Particle detection
 --------------------------
 
-.. dropdown:: Particle detection from virion surfaces (:fa:`stopwatch` 2 min)
+.. dropdown:: Particle detection from tomograms (:fa:`stopwatch` 2 min)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
 
-    * In the :badge:`Pre-processing,badge-primary` block, click on the menu icon :fa:`bars, text-primary` and select the :fa:`edit, text-primary` Edit option.
+    * Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
 
     * Go to the **Particle detection** tab:
 

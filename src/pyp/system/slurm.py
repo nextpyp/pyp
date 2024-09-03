@@ -79,7 +79,7 @@ def calculate_rec_swarm_required_resources(mparameters, fparameters, particles):
     return increment, threads
 
 
-def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.swarm"):
+def create_pyp_swarm_file(parameters, files, timestamp, run_mode, swarm_file="pre_process.swarm"):
 
     # enable Nvidia GPU?
     gpu = needs_gpu(parameters)
@@ -121,7 +121,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
                             ),
                             timestamp,
                             s,
-                            parameters["data_mode"],
+                            run_mode,
                             os.getcwd(),
                         )
                         for s in files
@@ -133,12 +133,12 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
     return swarm_file, gpu
 
 
-def create_train_swarm_file(parameters, timestamp, swarm_file="train.swarm"):
+def create_train_swarm_file(timestamp, train_type, swarm_file="train.swarm"):
     with open(os.path.join("swarm", swarm_file), "w") as f:
         f.write(
             "cd '{2}'; export {1}train={1}train; {0} 2>&1 | tee log/{3}_{1}train.log".format(
-                run_pyp(command="pyp", script=True),
-                parameters["data_mode"],
+                run_pyp(command="pyp", script=True, gpu=True),
+                train_type,
                 os.getcwd(),
                 timestamp,
             )
@@ -146,6 +146,67 @@ def create_train_swarm_file(parameters, timestamp, swarm_file="train.swarm"):
         f.write("\n")
 
     return swarm_file
+
+
+def create_milo_swarm_file(parameters, timestamp, swarm_file="miloeval.swarm"):
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+        f.write(
+            "cd {2}; export {1}eval={1}eval; {0} 2>&1 | tee log/{3}_{1}milo_eval.log".format(
+                run_pyp(command="pyp", script=True, gpu=True),
+                "milo",
+                os.getcwd(),
+                timestamp,
+            )
+        )
+        f.write("\n")
+
+    return swarm_file
+
+
+def create_other_swarm_file(parameters, timestamp, swarm_file, run_mode):
+    gpu = needs_gpu(parameters)
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+        f.write(
+            "cd '{2}'; export {1}={1}; {0} 2>&1 | tee log/{3}_{1}.log".format(
+                run_pyp(command="pyp", script=True, gpu=gpu),
+                run_mode,
+                os.getcwd(),
+                timestamp,
+            )
+        )
+        f.write("\n")
+
+    return swarm_file
+
+
+def create_tomohalf_swarm_file(parameters, files, timestamp, swarm_file="cryocare.swarm"):
+    # enable Nvidia GPU?
+    gpu = needs_gpu(parameters)
+
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+
+        f.write(
+            "\n".join(
+                [
+                    "cd '{4}/swarm'; export {3}={3}; {0} --file {2} --path '{4}' 2>&1 | tee ../log/{2}.log".format(
+                        run_pyp(
+                            command="pyp",
+                            script=True,
+                            cpus=parameters["slurm_tasks"],
+                            gpu=gpu,
+                        ),
+                        timestamp,
+                        s,
+                        "cryocare",
+                        os.getcwd(),
+                    )
+                    for s in files
+                ]
+            )
+        )
+        f.write("\n")
+
+    return swarm_file, gpu
 
 
 def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swarm"):
@@ -390,6 +451,8 @@ def submit_jobs(
             firstline = f.readline()
             is_list = "#" not in firstline
             is_script = "#" in firstline and "bash" in firstline
+        import stat
+        os.chmod(myfile,stat.S_IRWXU)
 
     if is_list:
         with open(myfile) as file:
@@ -405,7 +468,7 @@ def submit_jobs(
         depend = " --dependency=afterany:{0}".format(dependencies)
 
     # call the corresponding submission function
-    if is_list:
+    if is_list and procs > 1:
         id = jobs.submit_commands(
             submit_dir,
             command_file,
