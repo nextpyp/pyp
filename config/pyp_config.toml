@@ -101,13 +101,13 @@ forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_segment_open]
 name = "TOMO Segmentation (open)"
-description = "Segmentation"
+description = "Segment open surfaces"
 tabs = [ "tomo_mem", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_segment_close]
 name = "TOMO Segmentation (close)"
-description = "Segmentation"
+description = "Segment closed surfaces"
 tabs = [ "tomo_sphere", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
@@ -119,13 +119,13 @@ forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_par_open]
 name = "TOMO Particle-picking"
-description = "Particle picking"
+description = "Particle picking on open surfaces"
 tabs = [ "tomo_srf", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_par_close]
 name = "TOMO Particle-picking"
-description = "Particle picking"
+description = "Particle picking on closed surfaces"
 tabs = [ "tomo_srf", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "movie" ]
 
@@ -141,25 +141,25 @@ tabs = [ "heterogeneity", "slurm" ]
 
 [blocks.tomo_milo_train]
 name = "MiLoPYP training"
-description = "MiLoPYP parameters"
+description = "Train model for molecular pattern mining"
 tabs = [ "detect_milo", "slurm" ]
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_milo_eval]
 name = "MiLoPYP evaluation"
-description = "MiLoPYP parameters"
+description = "Evaluate model for molecular pattern mining"
 tabs = [ "detect_milo", "slurm" ]
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_particles_train]
 name = "TOMO Particles Training"
-description = "Particle model training"
+description = "Train model for particle picking"
 tabs = [ "detect_nn3d", "slurm" ] # TODO ?
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_particles_eval]
 name = "TOMO Particles Evaluation"
-description = "Particle model evaluation"
+description = "Evaluate model for particle picking"
 tabs = [ "detect_nn3d", "slurm" ] # TODO ?
 forwarded_tabs = [] # TODO ?
 
@@ -175,17 +175,17 @@ tabs = [ "mask", "slurm" ]
 
 [blocks.tomo_denoise]
 name = "TOMO Denoising"
-description = "Denoising"
+description = "Tomogram denoising"
 tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
 [blocks.tomo_denoise_train]
 name = "TOMO Denoising (training)"
-description = "Denoising"
+description = "Train model for tomogram denoising"
 tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
 [blocks.tomo_denoise_eval]
 name = "TOMO Denoising (eval)"
-description = "Denoising"
+description = "Evaluate model for tomogram denoising "
 tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
 [blocks.tomo_flexible_refine]
