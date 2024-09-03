@@ -1721,11 +1721,14 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     if parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
         # use spike radius as virion radius
-        parameters["tomo_vir_rad"] = parameters["tomo_spk_rad"]
+        parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"]
         if parameters.get("micromon_block") == "tomo-picking-closed":
             parameters["tomo_spk_rad"] = parameters["tomo_srf_detect_rad"]
         if os.path.exists(name+".spk"):
             os.remove(name+".spk")
+    if parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_spk_method") == "virions":
+        # use spike radius as virion radius
+        parameters["tomo_spk_rad"] = parameters["tomo_spk_vir_rad"]
 
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
