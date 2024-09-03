@@ -430,11 +430,14 @@ def extract_particles_non_mpi(
             image = mrc.read(input + ".mrc")
         nx, ny, frames = image.shape[-2], image.shape[-1], image.ndim - 1
     
-    boxes_obj = cistem_obj[0] # only read 1 class
+    if isinstance(cistem_obj,cistem_star_file.ExtendedParameters):
+        boxes_obj = cistem_obj[0] # only read 1 class
 
-    x_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
-    y_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_Y_POSITION)
-    boxes = boxes_obj.get_data()[:, [x_coord_col, y_coord_col]].tolist()
+        x_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
+        y_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_Y_POSITION)
+        boxes = boxes_obj.get_data()[:, [x_coord_col, y_coord_col]].tolist()
+    else:
+        boxes = cistem_obj
     
     boxes.reverse()
     count = 0

@@ -1612,6 +1612,450 @@ def spa_extract_coordinates(
     return allparxs
 
 
+def spa_extract_coordinates_legacy(
+    filename, parameters, only_inside, use_frames, use_existing_frame_alignments, path="."
+):
+    """Extract per-frame box and parx for SPR.
+
+    Parameters
+    ----------
+    filename : str, Path
+        Movie filename
+    parameters : dict
+        Main configurations taken from .pyp_config
+    only_inside : bool, optional
+        Whether to only extract particles inside image boundary, by default False
+    use_frames : bool, optional
+        Whether to use frames for coordinate extraction, by default False
+    use_existing_frame_alignments : bool, optional
+        Whether to use local trajectories saved from in ali/, by default False
+
+    Returns
+    ----------
+    allboxes
+        Box array for all frames in all particles
+    allparxs
+        Parx strings for all frames in all particles
+    """
+
+    pkl = os.path.join(path, filename + ".pkl")
+    assert (os.path.exists(pkl)), f"{pkl} does not exist, please re-run sprswarm"
+    metadata_object = pyp_metadata.LocalMetadata(pkl)
+    metadata = metadata_object.data
+
+    for key in ["image", "box", "ctf", "drift"]:
+        assert (key in metadata), f"{key} is not included in {pkl}, please re-run sprswarm"
+
+    # read extended box file
+    # if os.path.exists( os.path.join(path, "{}.boxx".format(filename))):
+    #     boxx = np.loadtxt( os.path.join(path,"{}.boxx".format(filename)), ndmin=2)
+    #     box = boxx[
+    #         np.logical_and(boxx[:, 4] == 1, boxx[:, 5] >= parameters["extract_cls"])
+    #     ]
+    #     # box = boxx[ boxx[:,5] >= int(parameters['extract_cls'] ) ]
+    # else:
+    #     box = np.loadtxt(os.path.join(path,"{}.box".format(filename)), ndmin=2)
+
+    boxx = metadata["box"].to_numpy()
+    box = boxx[
+        np.logical_and(boxx[:, 4] == 1, boxx[:, 5] >= parameters["extract_cls"])
+    ]
+
+    ctf = metadata["ctf"].to_numpy() # np.loadtxt(os.path.join(path,"{}.ctf".format(filename)))
+    dims = np.array([ctf[6][0], ctf[7][0]])
+    xf = metadata["drift"].to_numpy() # np.loadtxt(os.path.join(path,"{}.xf".format(filename)), ndmin=2)
+
+    allboxes = []
+    allparxs = []
+    allparxs.append([])
+
+    if not box.size > 0:
+        logger.warning("You have empty partilce coordinates, return empty parfile")
+        return allboxes, allparxs
+
+    scores = False
+
+    if "refine_parfile" in parameters.keys():
+        refinement = project_params.resolve_path(parameters["refine_parfile"])
+    else:
+        refinement = "none"
+
+    if (
+        "refine_parfile" in parameters.keys()
+        and Path(refinement).exists()
+        and not "relion_frames" in parameters["extract_fmt"]
+    ):
+        # find zero-indexed film number for this micrograph
+        series = project_params.get_film_order(parameters, filename) - 1
+
+        ref = np.array(
+            [
+                line.split()
+                for line in open(refinement)
+                if not line.startswith("C") and line.split()[7] == "{}".format(series)
+            ],
+            dtype=float,
+        )
+
+        if ref.shape[-1] > 13:
+            scores = True
+
+        if box.shape[0] != ref.shape[0]:
+            raise Exception(
+                "Number of particles and parameters do not match: {0} != {1}".format(
+                    box.shape[0], ref.shape[0]
+                )
+            )
+    else:
+        ref = None
+   
+    boxsize = int(parameters["extract_box"]) * int(parameters["extract_bin"])
+
+    pixel = (
+        float(parameters["scope_pixel"])
+        * float(parameters["data_bin"])
+        * float(parameters["extract_bin"])
+    )
+
+    wgh = parameters["scope_wgh"]
+    cs = parameters["scope_cs"]
+    voltage = parameters["scope_voltage"]
+    binning = float(parameters["data_bin"]) * float(parameters["extract_bin"])
+    magnification = ctf[11]
+    dstep = float(pixel) * magnification / 10000.0
+    ccc = ctf[5]
+
+    if "ctf_use_ast" in parameters.keys() and not parameters["ctf_use_ast"]:
+        df1 = df2 = ctf[0]  # TOMOCTFFIND
+        angast = 45.0
+    else:
+        df1 = ctf[2]  # CTFFIND3
+        df2 = ctf[3]  # CTFFIND3
+        angast = ctf[4]  # CTFFIND3
+
+    # global .parx parameters
+    dose = tilt = ppsi = ptheta = pphi = 0
+    norm0 = norm1 = norm2 = 0
+    a00 = a05 = a10 = a15 = 1
+    a01 = a02 = a04 = a06 = a08 = a09 = 0
+    a03 = a07 = a11 = a12 = a13 = a14 = 0
+
+    sx = sy = 0
+    mag = magnification
+    film = 0
+    presa = dpres = 0
+    occ = 100
+    sigma = 0.5
+    logp = change = 0
+    score = 0.5
+    # for frame in range(xf.shape[0]):
+    last = parameters["movie_last"]
+    z = xf.shape[0]
+    if last >= 0 and last <= z:
+        z = last
+    local_frame = 0
+    global_counter = 0
+    # for micrograph input
+    if parameters["movie_first"] == z:
+        z += 1
+    for frame in range(parameters["movie_first"], z):
+
+        # atan2( a21 - a12, a22 + a11 )
+        axis = math.degrees(
+            math.atan2(xf[frame][2] - xf[frame][1], xf[frame][3] + xf[frame][0])
+        )
+
+        # current's frame transformation
+        transformation = np.linalg.inv(
+            np.vstack([xf[frame].take([0, 1, 4]), xf[frame].take([2, 3, 5]), [0, 0, 1]])
+        )
+        local_particle = 0
+
+        for particle in range(box.shape[0]):
+
+            # particle's coordinates with respect to center of micrograph
+            coordinates = np.append(
+                box[particle, 0:2] + box[particle, 3] / 2 - dims / 2.0, 1
+            )
+
+            # correct for local drift if available
+            if use_existing_frame_alignments:
+                # use local drifts saved in ali instead
+                local_drifts = "ali/local_drifts/{0}_P{1}_frames.xf".format(
+                    filename, "%04d" % particle
+                )
+            else:
+                local_drifts = "{0}/{1}/{1}_P{2}_frames.xf".format(
+                    os.environ["PYP_SCRATCH"], filename, "%04d" % particle
+                )
+
+            if os.path.exists(local_drifts):
+
+                if particle == 0 and frame == int(parameters["movie_first"]):
+                    logger.info("Using local alignments %s", local_drifts)
+
+                xf_local = np.loadtxt(local_drifts, ndmin=2)
+
+                # current's frame transformation
+                # XD: if local, rounds the global translations first, check if frame refinement does the same
+                transformation = np.linalg.inv(
+                    np.vstack(
+                        [
+                            np.round(xf[frame]).take([0, 1, 4])
+                            + [0, 0, xf_local[frame][4]],
+                            np.round(xf[frame]).take([2, 3, 5])
+                            + [0, 0, xf_local[frame][5]],
+                            [0, 0, 1],
+                        ]
+                    )
+                )
+            else:
+                # current's frame transformation
+                transformation = np.linalg.inv(
+                    np.vstack(
+                        [
+                            xf[frame].take([0, 1, 4]),
+                            xf[frame].take([2, 3, 5]),
+                            [0, 0, 1],
+                        ]
+                    )
+                )
+
+            if use_frames:
+                # transformed coordinates in current frame (boxer format)
+                pos = transformation.dot(coordinates)[0:2]
+            else:
+                pos = coordinates[0:2]
+
+            pos = pos + dims / 2.0  # - boxsize / 2.0
+            box_pos = pos.round()
+
+            # because can only extract particles in integer coordinates, account for the box error when inputting parx
+            box_error = pos - box_pos
+
+            # check if new box is contained in micrograph
+            if (
+                box_pos[0] - (boxsize / 2.0) < 0
+                or box_pos[1] - (boxsize / 2.0) < 0
+                or box_pos[0] >= dims[0] - (boxsize / 2.0)
+                or box_pos[1] >= dims[1] - (boxsize / 2.0)
+            ):
+                # print dims, boxsize
+                """
+                logger.info(
+                    "Particle {3} = [ {0}, {1} ] falls outside frame {2} dimensions".format(
+                        box_pos[0], box_pos[1], local_frame, particle
+                    )
+                )
+                """
+                if only_inside:
+                    logger.info("Skipping particle frame.")
+                    continue
+            if (
+                ref is None
+                or not scores
+                and ref[particle][11] < parameters["csp_thresh"]
+                or scores
+                and ref[particle][14] >= parameters["csp_thresh"]
+            ):
+
+                if ref is None:
+                    psi, the, phi = 0, 0, 0
+                else:
+                    # HF - preserve identity matrix for later frame alignment 
+                    pass
+                    """
+                    psi, the, phi = np.radians(ref[particle][1:4])
+
+                    a00 = cos(phi) * cos(the) * cos(psi) - sin(phi) * sin(psi)
+                    a01 = -sin(phi) * cos(the) * cos(psi) + cos(phi) * sin(psi)
+                    a02 = -sin(the) * cos(psi)
+
+                    a04 = cos(phi) * cos(the) * sin(psi) + sin(phi) * cos(psi)
+                    a05 = -sin(phi) * cos(the) * sin(psi) + cos(phi) * cos(psi)
+                    a06 = -sin(the) * sin(psi)
+
+                    a08 = sin(the) * cos(phi)
+                    a09 = -sin(the) * sin(phi)
+                    a10 = cos(the)
+                    """
+
+                if ref is not None:
+                    if not scores:
+                        (
+                            count,
+                            psi,
+                            the,
+                            phi,
+                            sx,
+                            sy,
+                            mag,
+                            film,
+                            df1,
+                            df2,
+                            angast,
+                            presa,
+                            dpres,
+                        ) = ref[particle][:13]
+                    else:
+                        (
+                            count,
+                            psi,
+                            the,
+                            phi,
+                            sx,
+                            sy,
+                            mag,
+                            film,
+                            df1,
+                            df2,
+                            angast,
+                            occ,
+                            logp,
+                            sigma,
+                            score,
+                            change,
+                        ) = ref[particle][:16]
+
+                # correct for .box quantization error
+                if use_existing_frame_alignments:
+                    xshift, yshift = sx + box_error[0], sy + box_error[1]
+                else:
+                    xshift, yshift = sx, sy
+
+                scan_order, confidence, ptl_CCX = (
+                    local_frame,
+                    -local_frame,
+                    local_frame + 1,
+                )
+
+                allboxes.append([box_pos[0], box_pos[1], local_frame])
+
+                if False and "cc" in project_params.param(
+                    parameters["refine_metric"], iteration=2
+                ):
+
+                    """
+                    C FREALIGN NEW parameter file
+                    C     1       2       3       4         5         6       7     8        9       10      11      12        13         14      15      16
+                    C    NO     PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC      LOGP      SIGMA   SCORE  CHANGE
+                    """
+                    allparxs[0].append(
+                        frealign_parfile.EXTENDED_CCLIN_PAR_STRING_TEMPLATE_WO_NO
+                        % (
+                            psi,
+                            the,
+                            phi,
+                            xshift,
+                            yshift,
+                            mag,
+                            film,
+                            df1,
+                            df2,
+                            angast,
+                            occ,
+                            logp,
+                            sigma,
+                            score,
+                            change,
+                            local_particle,
+                            tilt,
+                            dose,
+                            scan_order,
+                            confidence,
+                            ptl_CCX,
+                            axis,
+                            norm0,
+                            norm1,
+                            norm2,
+                            a00,
+                            a01,
+                            a02,
+                            a03,
+                            a04,
+                            a05,
+                            a06,
+                            a07,
+                            a08,
+                            a09,
+                            a10,
+                            a11,
+                            a12,
+                            a13,
+                            a14,
+                            a15,
+                            ppsi,
+                            ptheta,
+                            pphi,
+                        )
+                    )
+
+                else:
+                    """C     1       2       3       4         5         6       7     8        9       10      11      12        13         14      15      16       17        18        19        20        21        22        23        24        25        26        27        28        29        30        31        32        33        34        35        36        37        38        39        40        41        42        43        44        45"""
+                    """C    NO     PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC      LOGP      SIGMA   SCORE  CHANGE   PTLIND    TILTAN    DOSEXX    SCANOR    CNFDNC    PTLCCX      AXIS     NORM0     NORM1     NORM2  MATRIX00  MATRIX01  MATRIX02  MATRIX03  MATRIX04  MATRIX05  MATRIX06  MATRIX07  MATRIX08  MATRIX09  MATRIX10  MATRIX11  MATRIX12  MATRIX13  MATRIX14  MATRIX15      PPSI    PTHETA      PPHI"""
+
+                    # frealign_v9
+                    #           PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC     -LogP      SIGMA   SCORE  CHANGE
+                    allparxs[0].append(
+                        frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
+                        % (
+                            psi,
+                            the,
+                            phi,
+                            xshift,
+                            yshift,
+                            mag,
+                            film,
+                            df1,
+                            df2,
+                            angast,
+                            occ,
+                            logp,
+                            sigma,
+                            score,
+                            change,
+                            local_particle,
+                            tilt,
+                            dose,
+                            scan_order,
+                            confidence,
+                            ptl_CCX,
+                            axis,
+                            norm0,
+                            norm1,
+                            norm2,
+                            a00,
+                            a01,
+                            a02,
+                            a03,
+                            a04,
+                            a05,
+                            a06,
+                            a07,
+                            a08,
+                            a09,
+                            a10,
+                            a11,
+                            a12,
+                            a13,
+                            a14,
+                            a15,
+                            ppsi,
+                            ptheta,
+                            pphi,
+                        )
+                    )
+            local_particle += 1
+            global_counter += 1
+
+        # if not using frames, we are done
+        if not use_frames:
+            break
+
+        local_frame += 1
+
+    return allboxes, allparxs
+
 @timer.Timer(
     "csp_extract_coordinates", text="Reading and converting coordinates took: {}", logger=logger.info
 )
