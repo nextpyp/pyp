@@ -1418,6 +1418,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     os.chdir(project_path)
 
     parameters = project_params.load_pyp_parameters()
+ 
+    # ensure backwards compatibility
+    for key in parameters.copy().keys():
+        if key.startswith("tomo_vir") and not parameters.get(key.replace("tomo_vir","tomo_srf")):
+            parameters[key.replace("tomo_vir","tomo_srf")] = parameters.get(key)
     
     # get file name
     name = os.path.basename(filename)
