@@ -153,7 +153,7 @@ Step 4: Particle detection
 
         - Set ``Detection radius (A)`` to 80
 
-        - Set ``Detection method`` to auto
+        - Set ``Detection method`` to size-based
 
         - Set ``Threshold for contamination detection`` to 2.0
 
@@ -169,7 +169,7 @@ Step 4: Particle detection
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-    * Navigate to the :badge:`Reconstruction,badge-primary` group inside the **Tilt-series** tab to inspect the picked coordinates
+    * Navigate to the :badge:`Particle-Picking,badge-primary` block to inspect the coordinates
 
 Step 5: Reference-based refinement
 ----------------------------------
@@ -179,7 +179,7 @@ Step 5: Reference-based refinement
     :title: bg-primary text-white text-left
     :open:
 
-    * Click on :guilabel:`Particles` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle refinement,badge-primary`
+    * Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking,badge-secondary` block) and select :badge:`Particle refinement,badge-primary`
 
     * Go to the **Sample** tab:
 

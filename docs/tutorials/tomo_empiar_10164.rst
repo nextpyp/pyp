@@ -284,7 +284,7 @@ Step 7: Reference-based refinement
     :title: bg-primary text-white text-left
     :open:
 
-    * Click on :guilabel:`Particles` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle refinement,badge-primary`
+    * Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking (closed surfaces),badge-secondary` block) and select :badge:`Particle refinement,badge-primary`
 
     * Go to the **Sample** tab:
 
