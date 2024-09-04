@@ -452,7 +452,10 @@ def submit_jobs(
             is_list = "#" not in firstline
             is_script = "#" in firstline and "bash" in firstline
         import stat
-        os.chmod(myfile,stat.S_IRWXU)
+        try:
+            os.chmod(myfile,stat.S_IRWXU)
+        except:
+            pass
 
     if is_list:
         with open(myfile) as file:
