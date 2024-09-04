@@ -949,7 +949,7 @@ def split(parameters):
         milo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo-train"
         milo_eval = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo"
         isonet_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-train" 
-        heterogeneity = "drgn" in parameters.get("micromon_block")                
+        heterogeneity = "drgn" in parameters.get("micromon_block")
 
         if gpu:
             # try to get the gpu partition
@@ -4358,7 +4358,7 @@ if __name__ == "__main__":
             try:
                 parameters = parse_arguments("pre_process")
 
-                if parameters["micromon_block"] == "tomo-drgn":
+                if "drgn" in parameters.get("micromon_block"):
                     if parameters["data_mode"] == "spr":
                         set_up.prepare_spr_dir()
                     else:

@@ -204,12 +204,12 @@ def tomotrain(args):
     """
     train_folder = os.path.join( os.getcwd(), "train" )
 
-    if "detect_milo_parquet" in args and os.path.exists(args["detect_milo_parquet"]):
+    if "detect_nn3d_milo_parquet" in args and os.path.exists(args["detect_nn3d_milo_parquet"]):
 
         train_coords = os.path.join(train_folder, 'training_coordinates.txt')
         train_images = os.path.join(train_folder, 'training_images.txt')
 
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {args['detect_milo_parquet']} --output {train_coords}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {args['detect_nn3d_milo_parquet']} --output {train_coords}"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         if os.path.exists(train_coords):
 
