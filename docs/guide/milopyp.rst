@@ -13,10 +13,10 @@ To analyze the results of MiLoPYP, you will need to install `Phoenix-Arize <http
   
 .. code-block:: bash
 
-source ${INSTALLATION_PATH}/miniconda3/bin/activate
-conda create -n "phoenix" python=3.10 -y
-conda activate phoenix
-conda install -c conda-forge arize-phoenix==0.0.28 pandas -y
+    source ${INSTALLATION_PATH}/miniconda3/bin/activate
+    conda create -n "phoenix" python=3.10 -y
+    conda activate phoenix
+    conda install -c conda-forge arize-phoenix==0.0.28 pandas -y
 
 Step 1: Training
 ----------------
@@ -71,10 +71,10 @@ Once the membeddings are available, we use Phoenix to interactively select our t
   
 .. code-block:: bash
 
-wget https://raw.githubusercontent.com/nextpyp/cet_pick/main/cet_pick/phoenix_visualization.py
-python phoenix_visualization.py --input interactive_info_parquet.gzip
+    wget https://raw.githubusercontent.com/nextpyp/cet_pick/main/cet_pick/phoenix_visualization.py
+    python phoenix_visualization.py --input interactive_info_parquet.gzip
 
-
+To be continued...
 
 .. seealso::
 
