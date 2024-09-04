@@ -53,6 +53,28 @@ The following sections describe the main components and functionality of ``nextP
 
    ---
 
+   :fa:`hand-sparkles fa-4x text-white`
+
+   +++
+
+   .. link-button:: guide/denoising
+      :type: ref
+      :text: Tomogram denoising
+      :classes: btn-outline-primary btn-block stretched-link
+
+   ---
+
+   :fa:`draw-polygon fa-4x text-white`
+
+   +++
+
+   .. link-button:: guide/segmentation
+      :type: ref
+      :text: Segmentation
+      :classes: btn-outline-primary btn-block stretched-link
+
+   ---
+
    :fa:`brain fa-4x text-white`
 
    +++
@@ -63,6 +85,18 @@ The following sections describe the main components and functionality of ``nextP
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
+
+   :fa:`dot-fingeprint fa-4x text-white`
+
+   +++
+
+   .. link-button:: guide/milopyp
+      :type: ref
+      :text: Pattern mining
+      :classes: btn-outline-primary btn-block stretched-link
+
+   ---
+
 
    :fa:`eye fa-4x text-white`
 

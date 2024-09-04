@@ -7,31 +7,31 @@ Changelog
 v0.7.0 (6/24/2024)
 ******************
 
-   :fa:`star,text-success` Add support for multiple GPUs in MotionCor, AreTomo, IsoNet and cryoCARE.
+   :fa:`star,text-success` Add support for multiple GPUs (currently only used by MotionCor, AreTomo, IsoNet and cryoCARE).
 
-   :fa:`star,text-success` Incorporated external program tomoDRGN for continuous variability analysis.
+   :fa:`star,text-success` Add wrappers for running `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_ for continuous variability analysis.
 
-   :fa:`star,text-success` Incorporated external program cryoDRGN and cryoDRGN-ET for continuous variability analysis.
+   :fa:`star,text-success` Add wrapper for running `cryoDRGN <https://github.com/ml-struct-bio/cryodrgn>`_ and `cryoDRGN-ET <https://github.com/ml-struct-bio/cryodrgn>`_ for continuous variability analysis.
 
-   :fa:`star,text-success` Incorporated external program MemBrain-Seg for segmenting tomograms.
+   :fa:`star,text-success` Add wrappers for running `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ for segmenting tomograms.
 
-   :fa:`star,text-success` Incorporated external program IsoNet for denoising tomograms.
+   :fa:`star,text-success` Add rrappers for running `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ for denoising tomograms.
 
-   :fa:`star,text-success` Incorporated external program cryoCARE for denoising tomograms.
+   :fa:`star,text-success` Add wrappers for running `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ for denoising tomograms.
 
-   :fa:`star,text-success` Incorporated CTF estimation using CTFFIND5.
+   :fa:`star,text-success` Add wrappers for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_ for CTF estimation.
 
    :fa:`star,text-success` nextPYP can now submit slurm jobs using individual OS user accounts.
 
    :fa:`star,text-success` Implement ab-initio refinement strategy for tomography pipeline.
 
-   :fa:`star,text-success` Add option to do automasking during refinement.
+   :fa:`star,text-success` Add option for density auto-masking during refinement.
 
-   :fa:`star,text-success` Molecular pattern mining and particle localization (MiLoPYP).
+   :fa:`star,text-success` Integrate routines for Molecular pattern mining and particle localization (MiLoPYP).
 
    :fa:`star,text-success` Start saving refinement metadata in cisTEM's binary format (2x speedup during reference-based refinement).
 
-   :fa:`star,text-success` Add support for beam-tilt refinement and correction (as implemented in cisTEM).
+   :fa:`star,text-success` Add support for beam-tilt refinement and correction (not fully tested).
 
    :fa:`plus-square,text-primary` Allow selection of blocks using a single click in the Run jobs menu.
 
@@ -50,6 +50,8 @@ v0.7.0 (6/24/2024)
    :fa:`bug,text-danger` Fix bug where tomogram dimensions and binning were not properly updated.
 
    :fa:`bug,text-danger` Fix bug that prevented the recalculation of tomograms when using AreTomo if the reconstruction parameters changed.
+
+   :fa:`bug,text-danger` Several other bug fixes and improvements.
 
 v0.6.5 (4/6/2024)
 ******************
