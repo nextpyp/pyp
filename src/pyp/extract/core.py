@@ -430,7 +430,7 @@ def extract_particles_non_mpi(
             image = mrc.read(input + ".mrc")
         nx, ny, frames = image.shape[-2], image.shape[-1], image.ndim - 1
     
-    if isinstance(cistem_obj,cistem_star_file.ExtendedParameters):
+    if isinstance(cistem_obj,cistem_star_file.ExtendedParameters) or isinstance(cistem_obj[0],cistem_star_file.Parameters):
         boxes_obj = cistem_obj[0] # only read 1 class
 
         x_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
