@@ -45,7 +45,7 @@ name = "SPA Fine Refinement"
 description = "Fine refinement for SPA"
 tabs = [ "extract", "refine", "reconstruct", "class", "denoise", "export", "slurm" ]
 
-[blocks.spr_heterogeneity]
+[blocks.spr_drgn]
 name = "Heterogeneity analysis"
 description = "Conformational heterogeneity analysis"
 tabs = [ "heterogeneity", "slurm" ]
@@ -1291,7 +1291,7 @@ default = false
 advanced = true
 
 [tabs.detect_nn3d]
-_name = "Training/Evaluation (pyp)"
+_name = "Training"
 _description = "Settings for particle detection using neural networks"
 
 [tabs.detect_nn3d.ref]
@@ -1301,6 +1301,13 @@ type = "path"
 path = { type="files" }
 input = { type="trainedModel3D" }
 hidden = [ "tomo_import", "tomo_particles_train" ]
+
+[tabs.detect_nn3d.milo_parquet]
+name = "Particles from MiLoPYP (*.parquet)"
+description = "Path to parquet file produced by Arize-AI's Phoenix"
+type = "path"
+path = { type="files" }
+hidden = [ "tomo_import" ]
 
 [tabs.detect_nn3d.down_ratio]
 name = "Downsample"
@@ -1359,7 +1366,7 @@ default = 0.0005
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.val_interval]
-name = "Interval to perform validation"
+name = "Validation interval (epochs)"
 description = "Run validation every this number of epochs"
 type = "int"
 default = 5
@@ -1381,7 +1388,7 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.debug]
 name = "Debug mode"
-description = "Save intermediate results to output folder train/"
+description = "Save diagnostic results to train/ folder"
 type = "bool"
 default = false
 hidden = ["tomo_particles_eval"]
@@ -2619,7 +2626,7 @@ name = "Particle radius (A)"
 description = "Size to use for particle detection"
 type = "float"
 default = 0
-condition = { arg="method", value=[ "auto", "import", "manual" ] }
+condition = { arg="method", value=[ "none", "auto", "import", "manual" ] }
 
 [tabs.tomo_spk.files]
 name = "Import particle coordinates (*.spk)"
