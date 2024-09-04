@@ -4384,7 +4384,7 @@ if __name__ == "__main__":
                         if not input.exists():               
                             os.symlink( input_source, input ) 
                     else:
-                        logger.info("Taking current project stacks as input to CryoDRGN")
+                        logger.info("Taking current project stacks as input to cryoDRGN")
 
                     # clear local scratch and report free space
                     clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
