@@ -68,7 +68,7 @@ def run_shell_command(command, verbose=False):
     ).communicate()
     if verbose and len(output) > 0:
         logger.info("\n".join([s for s in output.split("\n") if "your model does not fully load the pre-trained weight" not in s]))
-    if len(error) > 0 and "BZIP2" not in error and "no version information available" not in error and "Format: lossy" not in error and "p_observed" not in error and "it/s" not in error and "sleeping and retrying" not in error and "TIFFReadDirectory: Warning" not in error and "Found device" not in error and "your model does not fully load the pre-trained weight" not in error:
+    if len(error) > 0 and "BZIP2" not in error and "no version information available" not in error and "Format: lossy" not in error and "p_observed" not in error and "it/s" not in error and "sleeping and retrying" not in error and "TIFFReadDirectory: Warning" not in error and "Found device" not in error and "your model does not fully load the pre-trained weight" not in error and "We recommend you start setting" not in error:
         logger.error(error)
     return output, error
 
