@@ -32,7 +32,7 @@ Method 1: Manual picking (2D and 3D)
 
     - You can remove particles from a list by right-clicking on a marker
     - Particle lists are saved automatically every time you add or delete a particle
-    - You can copy an existing list using :badge:Copy,badge-primary`, delete an existing list using :badge:`Delete,badge-primary`, or load a list using :badge:`Load,badge-primary`
+    - You can copy an existing list using :badge:`Copy,badge-primary`, delete an existing list using :badge:`Delete,badge-primary`, or load a list using :badge:`Load,badge-primary`
 
 Method 2: Size-based picking (2D and 3D)
 ========================================
@@ -116,7 +116,7 @@ Virion segmentation consists in finding a closed surface around the virion cente
 
 * Select a virion from the table to show its 3D slices and the segmentation thresholds (8 different thresholds are shown as yellow contours in columns 1-8). The highlighted column number represents the current threshold selection (default is 1, click on a different column to select a better threshold). If none of the columns look reasonable (or if you want to ignore the current virion), select the last column labeled as "-"
 
-* Repeat this process for all virion in the tilt-series and all tilt-series in the dataset
+* Repeat this process for all virions in the tilt-series and all tilt-series in the dataset
 
 .. figure:: ../images/tutorial_tomo_pre_process_segmentation.webp
     :alt: Virion segmentation
