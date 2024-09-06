@@ -2,7 +2,7 @@
 Visualization in ChimeraX/ArtiaX
 ================================
 
-``nextPYP`` produces all the necessary files to visualize a refined map into the original tomogram positions using ChimeraX/ArtiaX.
+``nextPYP`` produces all the necessary files to visualize a refined map in the original tomogram positions using ChimeraX/ArtiaX.
 
 Step 1: Download the necessary files
 ------------------------------------
