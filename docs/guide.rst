@@ -10,8 +10,6 @@ User guide
    guide/overview
    guide/filters
    guide/picking
-   guide/denoising
-   guide/segmentation
    guide/neural_network
    guide/milopyp
    guide/chimerax_artiax
@@ -52,28 +50,6 @@ The following sections describe the main components and functionality of ``nextP
    .. link-button:: guide/picking
       :type: ref
       :text: Particle picking
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`hand-sparkles fa-4x text-white`
-
-   +++
-
-   .. link-button:: guide/denoising
-      :type: ref
-      :text: Tomogram denoising
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`draw-polygon fa-4x text-white`
-
-   +++
-
-   .. link-button:: guide/segmentation
-      :type: ref
-      :text: Segmentation
       :classes: btn-outline-primary btn-block stretched-link
 
    ---

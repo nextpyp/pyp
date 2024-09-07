@@ -5,7 +5,9 @@ MiLoPYP - Molecular pattern mining
 Step 0: Pre-requisites
 ----------------------
 
-To analyze the results of MiLoPYP, you will need to install `Phoenix-Arize <https://docs.arize.com/phoenix>`_ in your local machine. For macOS, follow these steps:
+To analyze the results of ``MiLoPYP``, you will first need to install `Phoenix-Arize <https://docs.arize.com/phoenix>`_ in your local machine (even if you are accessing ``nextPYP`` remotely). 
+
+For macOS, for example, follow these steps:
 
 * Download and install miniconda following `these <https://conda.io/projects/conda/en/latest/user-guide/install/macos.html>`_ instructions
 
@@ -14,34 +16,45 @@ To analyze the results of MiLoPYP, you will need to install `Phoenix-Arize <http
 .. code-block:: bash
 
     source ${INSTALLATION_PATH}/miniconda3/bin/activate
-    conda create -n "phoenix" python=3.10 -y
+    conda create -n "phoenix" python=3.8 -y
     conda activate phoenix
     conda install -c conda-forge arize-phoenix==0.0.28 pandas -y
+
+Since ``MiLoPYP`` operates on reconstructured tomograms, you first need to import and pre-process your data in ``nextPYP``.
+
+To run ``MiLoPYP`` we will use a sequence of four blocks: 
+* MiloPYP (train)
+* MiLoPYP (eval)
+* Particle-Picking (train)
+* Particle-Picking (eval)
+
+.. figure:: ../images/milopyp_workflow.webp
+    :alt: MiLoPYP workflow
 
 Step 1: Training
 ----------------
 
-The first step is to train a MiLoPYP pattern mining model:
+To train a MiLoPYP model:
 
 * Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`MiLoPYP (train),badge-primary`
 
-* Select the training parameters
+* Change the training parameters as needed
 
-* (optional) You can train on a subset of the tomograms by creating a :doc:`Filter<filters>` in the :badge:`Pre-processing,badge-secondary` block and selecting its name from the `Filter tomograms` dropdown menu
+* (optional) If you want to train MiLoPYP on a subset of the tomograms, create a :doc:`Filter<filters>` in the :badge:`Pre-processing,badge-secondary` block and select its name from the `Filter tomograms` dropdown menu
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-* Navigate to the :badge:`MiLoPYP (training),badge-primary` block to inspect the results of training
+* Navigate to the :badge:`MiLoPYP (train),badge-primary` block to inspect the training metrics
 
 
 Step 2: Evaluation
 -------------------
 
-Once a model has been trained, evaluation can proceed to visualize the results:
+We can now evaluate the model to visualize the results:
 
 * Click on :guilabel:`MiLoPYP model` (output of the :badge:`MiLoPYP (train),badge-secondary` block) and select :badge:`MiLoPYP (eval),badge-primary`
 
-* Select the trained model from the block upstream
+* Select the trained model from the block upstream (*.pth), for example, model_last_contrastive.pth
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
@@ -49,32 +62,100 @@ Once a model has been trained, evaluation can proceed to visualize the results:
 
 .. note::
 
-    Unlike training, Evalution is always done on the entire set of tomograms
+    Unlike training, Evaluation is always done on the entire set of tomograms
 
 Step 3: Target selection
 ------------------------
 
-Once the membeddings are available, we use Phoenix to interactively select our target particles:
+Next, we use Phoenix to interactively select our target particles:
 
-* Navigate to the :badge:`MiLoPYP (eval),badge-primary` block and download the **.tbz** file to your local machine
+* Navigate to the :badge:`MiLoPYP (eval),badge-primary` block and download the file **_milo.tbz** to your local machine
 
-* Open a terminal, decompress the **.tbz** file, and run Phoenix:
+* Open a terminal in your local machine, decompress the **_milo.tbz** file, and run Phoenix:
 
 .. code-block:: bash
 
     cd $WORK_DIRECTORY
-    tar xvfz milopyp_interactive.tbz
+    tar xvfz *_milo.tbz
     conda activate phoenix
-    python -m http.server 7000
+    curl https://raw.githubusercontent.com/nextpyp/cet_pick/main/cet_pick/phoenix_visualization.py -o phoenix_visualization.py
+    python phoenix_visualization.py --input interactive_info_parquet.gzip
 
-* On another shell, download and run the visualization script: 
+You should see an output like this:
+
+.. code-block:: bash
+
+        name           coord                                         embeddings  label                             image
+    0  TS_43   [299, 57, 96]  [-0.006966044, 0.014659109, -0.020045772, 0.00...     29  http://localhost:7000/imgs/0.png
+    1  TS_43  [421, 145, 87]  [-0.024671286, 0.0323345, -0.06243068, 0.02977...     53  http://localhost:7000/imgs/1.png
+    2  TS_43  [57, 267, 124]  [-0.016118556, 0.021317916, -0.044905104, 0.01...     29  http://localhost:7000/imgs/2.png
+    3  TS_43  [288, 61, 104]  [-0.015271036, 0.024842143, -0.028918939, 0.00...     29  http://localhost:7000/imgs/3.png
+    4  TS_43   [278, 71, 98]  [-0.022570543, 0.034957167, -0.03830565, 0.016...     29  http://localhost:7000/imgs/4.png
+    🌍 To view the Phoenix app in your browser, visit http://localhost:57534/
+    📺 To view the Phoenix app in a notebook, run `px.active_session().view()`
+    📖 For more information on how to use Phoenix, check out https://docs.arize.com/phoenix
+
+* On another shell (in the same directory), activate the miniconda environment and start the image server: 
   
 .. code-block:: bash
 
-    wget https://raw.githubusercontent.com/nextpyp/cet_pick/main/cet_pick/phoenix_visualization.py
-    python phoenix_visualization.py --input interactive_info_parquet.gzip
+    conda activate phoenix
+    cd $WORK_DIRECTORY
+    python -m http.server 7000
 
-To be continued...
+.. note::
+
+    By default, Phoenix's web server runs on port 7000. If that port is not available on your computer, you can specify a custom one using ``phoenix_visualization.py``'s ``--port`` option, for example, ``phoenix_visualization.py --input interactive_info_parquet.gzip --port 8000``. In this case, you will need to specify the same port number when running the http.server, for example, ``python -m http.server 8000``.
+
+Step 4: Interactive target selection
+------------------------------------
+
+* Open a browser and visit the url as displayed above, for example: http://localhost:57534/
+
+* Under **Embeddings**, click on ``image_embedding`` and you will be able to visualize the results. Clicking on individual points will show the assocaited image in the bottom panel. You can also select a cluster using the left side bar to visualize a set of points (the correspoinding image gallery will be shown at the bottom of the page)
+
+* Select the points or clusters of interest using the **Select** tool
+
+* Export your selection using the **Export** button and Download the results as a ``.parquet`` file
+
+Step 5: Upload .parquet file to ``nextPYP``
+-------------------------------------------
+
+* Go back to ``nextPYP`` and navigate to the :badge:`MiLoPYP (eval),badge-primary` block
+
+* Click on the Upload button :fa:`upload, text-primary`, browse to the location of your ``.parquet`` file, and upload the file
+
+.. note::
+
+    The uploaded file will be named ``particles.parquet`` regardless of the the original file name.
+
+Step 6: Train particle refinement module
+----------------------------------------
+
+* Click on :guilabel:`MiLoPYP Particles` (output of the :badge:`MiLoPYP (eval),badge-secondary` block) and select :badge:`Particle-Picking (train),badge-primary`
+
+* Select ``Import results from MiLoPYP`` and specify the coordiantes file (.parquet) you uploaded in the previous step, for example, ``particles.parquet``
+
+* Set parameters for training as needed
+
+* Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+
+* Navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the results
+
+Step 7: Evaluate particle refinemnt module
+------------------------------------------
+
+* Click on :guilabel:`Particles Model` (output of the :badge:`Particle-Picking (train),badge-secondary` block) and select :badge:`Particle-Picking (eval),badge-primary`
+
+* Select a ``Trained model`` (*.pth) using the file browser
+
+* Set parameters for evaluation as needed
+
+* Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+
+* Navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the results
+
+Now that we have a set of particles, we can proceed to 3D refinement by connecting the output of the :badge:`Particle-Picking (eval),badge-primary` block to a :badge:`Particle refinement (train),badge-secondary` block
 
 .. seealso::
 

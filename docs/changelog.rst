@@ -6,7 +6,6 @@ Changelog
 
 v0.7.0 (9/09/2024)
 ******************
-
 ..
    :fa:`star,text-success` Add support for multiple GPUs (currently only used by MotionCor, AreTomo, IsoNet and cryoCARE).
 
