@@ -549,7 +549,7 @@ def miloeval(args):
 
             output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
-        [ output, error ] = local_run.run_shell_command(command, verbose=False)
+        [ output, error ] = local_run.run_shell_command(command, verbose=args["slurm_verbose"])
         
         if args.get('slurm_verbose'):
             with open(train_folder + '_testing.log') as f:
