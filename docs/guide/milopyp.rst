@@ -27,7 +27,7 @@ The first step is to train a MiLoPYP pattern mining model:
 
 * Select the training parameters
 
-* (optional) You can train on a subset of the tomograms by creating a :doc:`Filter <filters>`_ in the :badge:`Pre-processing,badge-secondary` block and selecting its name from the `Filter tomograms` dropdown menu
+* (optional) You can train on a subset of the tomograms by creating a :doc:`Filter<filters>` in the :badge:`Pre-processing,badge-secondary` block and selecting its name from the `Filter tomograms` dropdown menu
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 

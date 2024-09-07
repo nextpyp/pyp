@@ -2,7 +2,7 @@
 Tomogram denoising
 ==================
 
-``nextPYP`` has wrappers for several tomogram denosing methods, including `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `Topaz-Denoise <https://github.com/tbepler/topaz>`_ and `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_.
+``nextPYP`` has wrappers for several tomogram denoising methods, including `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `Topaz-Denoise <https://github.com/tbepler/topaz>`_ and `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_.
 
 
 One-step denosing (cryoCARE, Topaz)
@@ -31,7 +31,7 @@ Two-step denoising is done in the :badge:`Denosing (training),badge-secondary` a
 
 * Select the desired algorithm and corresponding parameters
 
-* (optional) To train on a subset of tomograms, create a :doc:`Filter <filters>`_ in the :badge:`Pre-processing,badge-secondary` block and select its name from the `Filter tomograms` dropdown menu
+* (optional) To train on a subset of tomograms, create a :doc:`Filter<filters>` in the :badge:`Pre-processing,badge-secondary` block and select its name from the `Filter tomograms` dropdown menu
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
