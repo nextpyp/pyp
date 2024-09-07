@@ -105,8 +105,12 @@ def cryocare(working_path, project_path, name, parameters):
     with open(predict_config_file, 'w') as file:
         json.dump(predcit_config, file, indent=4)
 
+    if parameters["slurm_verbose"]:
+        with open(predict_config_file) as file:
+            logger.warning(file.read())
+
     command = f"{command_base}cryoCARE_predict.py --conf {predict_config_file}"
-    local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])    
+    output, error = local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])    
 
 def tomo_swarm_half( name, project_path, working_path, parameters):
     """
