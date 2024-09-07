@@ -513,18 +513,15 @@ def milotrain(args):
     import seaborn as sns
     sns.set_style("dark")
 
-    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=[8, 6], sharex=True)
+    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6], sharex=True)
 
     ax[0].set_title("Training loss")
-    ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Total loss")
-    ax[0].set_ylabel("Total")
+    ax[0].plot(np.array(closs).astype('f'),".-",color="blue",label="Cosine loss")
+    ax[0].set_ylabel("Cosine")
     ax[0].legend()
-    ax[1].plot(np.array(closs).astype('f'),".-",color="green",label="Cosine loss")
-    ax[1].set_ylabel("Cosine")
+    ax[1].plot(np.array(std).astype('f'),".-",color="red",label="Variation in learned embedding")
+    ax[1].set_ylabel("STD")
     ax[1].legend()
-    ax[2].plot(np.array(std).astype('f'),".-",color="red",label="STD")
-    ax[2].set_ylabel("STD")
-    ax[2].legend()
     plt.xlabel("Epoch")
     plt.savefig( os.path.join( train_folder, "milo_training.svgz"))
     plt.close()
