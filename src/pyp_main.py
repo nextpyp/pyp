@@ -3896,7 +3896,9 @@ if __name__ == "__main__":
                             # NOTE: spr does not really require a parfile first time we run csp
                             if parameters["refine_parfile"] is not None:
                                 parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
-
+                            elif parameters["refine_parfile_tomo"] is not None:
+                                parameters["refine_parfile_tomo"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto" else parameters["refine_parfile_tomo"]
+                            
                             project_params.save_parameters(parameters)
 
                         if (

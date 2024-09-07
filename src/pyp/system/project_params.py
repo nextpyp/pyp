@@ -982,15 +982,21 @@ def get_latest_refinement_reference(parent_path: str):
         
     """
 
+    # look for par files in frealign/maps/ first
     parent_refinement_path = Path(parent_path) / "frealign" / "maps"
-    
-    if not parent_refinement_path.exists():
-        return None, None
-    
-    parfiles = sorted(list(parent_refinement_path.glob("*_r01_??.par*")), key=lambda x: str(x))
-    references = sorted(list(parent_refinement_path.glob("*_r01_??.mrc")), key=lambda x: str(x))
+    if parent_refinement_path.exists():
+        parfiles = sorted(list(parent_refinement_path.glob("*_r01_??.par*")), key=lambda x: str(x))
+        references = sorted(list(parent_refinement_path.glob("*_r01_??.mrc")), key=lambda x: str(x))
+        latest_parfile = parfiles[-1] if len(parfiles) > 0 else None
+        latest_reference = references[-1] if len(references) > 0 else None
+        return latest_parfile, latest_reference
 
-    latest_parfile = parfiles[-1] if len(parfiles) > 0 else None
-    latest_reference = references[-1] if len(references) > 0 else None
+    # then look for txt file in frealign/
+    parent_refinement_tomo_path = Path(parent_path) / "frealign"
+    if parent_refinement_tomo_path.exists():
+        parfiles = sorted(list(parent_refinement_tomo_path.glob("*_original_volumes.txt")), key=lambda x: str(x))
+        latest_parfile = parfiles[-1] if len(parfiles) > 0 else None
+        return latest_parfile, None
 
-    return latest_parfile, latest_reference
+    # else, give up
+    return None, None
