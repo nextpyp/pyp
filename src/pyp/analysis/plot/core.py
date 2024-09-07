@@ -1498,7 +1498,9 @@ def plot_trajectories(
         plt.savefig("{0}.pdf".format(name_png), bbox_inches="tight", pad_inches=0)
     plt.close()
 
-    run_shell_command(f"convert -density 500 {name_png}.pdf {name_png}_local.webp")
+    # workaround ImageMagic's error caused by security policy used to convert PDF files
+    run_shell_command(f"gs -dSAFER -r500 -sDEVICE=pngalpha -o {name_png}.png {name_png}.pdf")
+    run_shell_command(f"convert {name_png}.png {name_png}_local.webp")
 
 
 def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, save_path: str):
