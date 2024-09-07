@@ -340,12 +340,7 @@ def tomoeval(args,name):
     with open( test_file, 'w' ) as f:
         f.write("image_name\tx_coord\ty_coord\tz_coord\n")
 
-    if args['detect_milo_compress']:
-        z_compress = "--compress"
-    else:
-        z_compress = ""
-    
-    if args['detect_milo_with_score']:
+    if args['detect_nn3d_with_score']:
         with_score = "--with_score"
     else:
         with_score = ""
@@ -365,8 +360,7 @@ def tomoeval(args,name):
         else:
             compress = ""
 
-
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test --with_score --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
