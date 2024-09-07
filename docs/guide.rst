@@ -10,7 +10,10 @@ User guide
    guide/overview
    guide/filters
    guide/picking
+   guide/denoising
+   guide/segmentation
    guide/neural_network
+   guide/milopyp
    guide/chimerax_artiax
 
 The following sections describe the main components and functionality of ``nextPYP``.
