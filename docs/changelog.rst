@@ -4,9 +4,10 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.7.0 (6/24/2024)
+v0.7.0 (9/09/2024)
 ******************
 
+..
    :fa:`star,text-success` Add support for multiple GPUs (currently only used by MotionCor, AreTomo, IsoNet and cryoCARE).
 
    :fa:`star,text-success` Add wrappers for running `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_ for continuous variability analysis.
@@ -15,31 +16,36 @@ v0.7.0 (6/24/2024)
 
    :fa:`star,text-success` Add wrappers for running `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ for segmenting tomograms.
 
-   :fa:`star,text-success` Add rrappers for running `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ for denoising tomograms.
+   :fa:`star,text-success` Add wrappers for running `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ for denoising tomograms.
 
    :fa:`star,text-success` Add wrappers for running `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ for denoising tomograms.
-
-   :fa:`star,text-success` Add wrappers for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_ for CTF estimation.
 
    :fa:`star,text-success` nextPYP can now submit slurm jobs using individual OS user accounts.
 
    :fa:`star,text-success` Implement ab-initio refinement strategy for tomography pipeline.
 
-   :fa:`star,text-success` Add option for density auto-masking during refinement.
+   :fa:`star,text-success` Add support for beam-tilt refinement and correction.
+.
 
-   :fa:`star,text-success` Integrate routines for Molecular pattern mining and particle localization (MiLoPYP).
+   :fa:`star,text-success` New blocks for Molecular pattern mining and particle localization (MiLoPYP).
 
-   :fa:`star,text-success` Start saving refinement metadata in cisTEM's binary format (2x speedup during reference-based refinement).
+   :fa:`star,text-success` Add wrappers for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_ for CTF estimation.
 
-   :fa:`star,text-success` Add support for beam-tilt refinement and correction (not fully tested).
+   :fa:`star,text-success` Add dedicated blocks for particle picking to decouple particle picking from other pre-procesing tasks.
 
-   :fa:`plus-square,text-primary` Allow selection of blocks using a single click in the Run jobs menu.
+   :fa:`star,text-success` Allow selection of blocks using single click "Only" option in the Run jobs menu.
+
+   :fa:`star,text-success` Add option for density auto-masking during 3D refinement.
+
+   :fa:`star,text-success` Add option to import existing tilt-series alignments from IMOD files (*.xf and *.tlt).
+
+   :fa:`star,text-success` Add option to save particle stacks for use in external programs.
+
+   :fa:`star,text-success` Save refinement metadata in cisTEM's new binary format (faster 3D refinement and classification).
+
+   :fa:`plus-square,text-primary` Checkbox to "Show advanced options" has global scope now.
 
    :fa:`plus-square,text-primary` Move options to reshape images into squares from Reconstruction to Tilt-series alignment tab.
-
-   :fa:`plus-square,text-primary` Add option to import existing tilt-series alignments from IMOD files (*.xf and *.tlt).
-
-   :fa:`plus-square,text-primary` Add option to save particle stacks for use in external programs.
 
    :fa:`bug,text-danger` Fix bug in navigation bar for refiement blocks when multiple classes were used.
 
