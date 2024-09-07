@@ -204,12 +204,12 @@ def tomotrain(args):
     """
     train_folder = os.path.join( os.getcwd(), "train" )
 
-    if "detect_nn3d_milo_parquet" in args and os.path.exists(args["detect_nn3d_milo_parquet"]):
+    if args.get("detect_nn3d_milo_import") and "detect_nn3d_milo_parquet" in args and os.path.exists( project_params.resolve_path(args["detect_nn3d_milo_parquet"])):
 
         train_coords = os.path.join(train_folder, 'training_coordinates.txt')
         train_images = os.path.join(train_folder, 'training_images.txt')
 
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {args['detect_nn3d_milo_parquet']} --output {train_coords}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {project_params.resolve_path(args['detect_nn3d_milo_parquet'])} --output {train_coords}"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         if os.path.exists(train_coords):
 
@@ -217,16 +217,14 @@ def tomotrain(args):
             image_names = np.unique(train_data[:,0])
             if image_names.size > 0:
                 with open(train_images, 'w') as f:
-                    f.write("image_name\tpath\n")
+                    f.write("image_name\trec_path\n")
                     for name in image_names:
                         rec_path = os.path.join( os.getcwd(), "mrc", name+".rec" )
-                        f.write(name + "\t" + rec_path)
+                        f.write(name + "\t" + rec_path + "\n")
             else:
                 raise Exception("Converted coordinates file is empty, please check the input parquet file")
-
         else:
             raise Exception("Failed to convert the parquet to coordinates")
-
     else:
     
         train_name = "particles"
@@ -270,11 +268,13 @@ def tomotrain(args):
 
     # display log if available
     try:
-        with open( list(Path(os.getcwd()).rglob('log.txt'))[0], ) as f:
+        log_file = list(Path(os.getcwd()).rglob('log.txt'))[0]
+
+        with open(log_file) as f:
             for line in f.readlines():
                 logger.info(line.rstrip('\r\n'))
 
-        with open( list(Path(os.getcwd()).rglob('log.txt'))[0], ) as f:
+        with open(log_file) as f:
             output = f.read()
 
             loss = [ line.split("loss")[1].split()[0] for line in output.split("\n") if len(line)]
