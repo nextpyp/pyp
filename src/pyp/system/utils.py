@@ -106,7 +106,7 @@ def needs_gpu(parameters):
         or parameters.get("tomo_denoise_method_train") == "isonet"
     )
 
-    gpu_for_segmentation = parameters.get("micromon_block") == "tomo-segmentation-open"
+    gpu_for_segmentation = parameters.get("micromon_block") == "tomo-segmentation-open" and parameters.get("tomo_mem_use_gpu")
 
     gpu_for_mining = "tomo-milo" in parameters.get("micromon_block")
 
