@@ -82,7 +82,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
     if not parameters["heterogeneity_tomodrgn_data_windowing"]:
         options += " --no-window"
     else:
-        options += f" --window-r {parameters['heterogeneity_tomodrgn_data_window_r']} --window-r-outer 1.12"
+        options += f" --window-r {parameters['heterogeneity_tomodrgn_data_window_r']} --window-r-outer {parameters['heterogeneity_tomodrgn_data_window_r_outer']}"
     
     if parameters.get("heterogeneity_tomodrgn_data_dir"):
         data_dir = project_params.resolve_path(parameters["heterogeneity_tomodrgn_data_dir"])
@@ -340,7 +340,7 @@ def train_nn(parameters, input_dir, name, output):
     if not parameters["heterogeneity_tomodrgn_data_windowing"]:
         options += " --no-window"
     else:
-        options += f" --window-r {parameters['heterogeneity_tomodrgn_data_window_r']}"
+        options += f" --window-r {parameters['heterogeneity_tomodrgn_data_window_r']} --window-r-outer {parameters['heterogeneity_tomodrgn_data_window_r_outer']}"
     
     if parameters.get("heterogeneity_tomodrgn_data_dir"):
         data_dir = project_params.resolve_path(parameters["heterogeneity_tomodrgn_data_dir"])
