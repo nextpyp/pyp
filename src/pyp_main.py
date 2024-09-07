@@ -4361,7 +4361,10 @@ if __name__ == "__main__":
                 parameters = parse_arguments("pre_process")
 
                 if "drgn" in parameters.get("micromon_block"):
+
                     if parameters["data_mode"] == "spr":
+                        if parameters.get("heterogeneity_method") == "tomoDRGN":
+                            raise Exception("tomoDRGN only works for tomography")                            
                         set_up.prepare_spr_dir()
                     else:
                         set_up.prepare_tomo_dir()
