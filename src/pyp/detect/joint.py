@@ -29,6 +29,7 @@ def sprtrain(args):
     train_folder = os.path.join( os.getcwd(), "train" )
     with open( os.path.join( train_folder, "current_list.txt" ) ) as f:
         train_name = f.read()
+    train_name = "particles"
     train_images = os.path.join( train_folder, train_name + "_images.txt" )
     train_coords = os.path.join( train_folder, train_name + "_coordinates.txt" )
     validation_images = train_images
@@ -39,7 +40,7 @@ def sprtrain(args):
 
     # generate binned versions of images
     files = np.loadtxt( os.path.join( "train", train_name + "_images.txt"), comments="image_name", dtype="str", ndmin=2)[:,0]
-    binning = args["tomo_spk_detect_nn2d_bin"]
+    binning = args["detect_nn2d_bin"]
 
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
     logger.info(f"Binning coordinates ({number_of_labels} labels)")
@@ -73,7 +74,7 @@ def sprtrain(args):
     os.chdir(scratch_train)
 
     logger.info(f"Training pyp model")
-    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py train start --algorithm {args['tomo_spk_detect_nn2d_algorithm']} --noise_value {args['tomo_spk_detect_nn2d_noise_value']} --noise_style {args['tomo_spk_detect_nn2d_noise_style']} --tau {args['tomo_spk_detect_nn2d_tau']} --runs_dir '{runs_dir}' --train_dataset '{train_images}' --train_label '{train_coords}' --iterations {args['tomo_spk_detect_nn2d_iterations']} --alpha {args['tomo_spk_detect_nn2d_alpha']} --train_batch_size {args['tomo_spk_detect_nn2d_batch_size']} --nms {args['tomo_spk_detect_dist']} --num {args['tomo_spk_detect_nn2d_num']} --bb {args['tomo_spk_detect_nn2d_bb']} --patch_size {args['tomo_spk_detect_nn2d_patch_size']} --validation_dataset '{validation_images}' --validation_label '{validation_coords}' 2>&1 | tee {os.path.join(os.getcwd(), 'log', time_stamp + '_spr_pick_train.log')}"
+    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py train start --algorithm {args['detect_nn2d_algorithm']} --noise_value {args['detect_nn2d_noise_value']} --noise_style {args['detect_nn2d_noise_style']} --tau {args['detect_nn2d_tau']} --runs_dir '{runs_dir}' --train_dataset '{train_images}' --train_label '{train_coords}' --iterations {args['detect_nn2d_iterations']} --alpha {args['detect_nn2d_alpha']} --train_batch_size {args['detect_nn2d_batch_size']} --nms {args['detect_dist']} --num {args['detect_nn2d_num']} --bb {args['detect_nn2d_bb']} --patch_size {args['detect_nn2d_patch_size']} --validation_dataset '{validation_images}' --validation_label '{validation_coords}' 2>&1 | tee {os.path.join(os.getcwd(), 'log', time_stamp + '_spr_pick_train.log')}"
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # check for failure if not output was produced
@@ -85,7 +86,7 @@ def sprtrain(args):
     for path in Path(os.getcwd()).rglob('*.training'):
         shutil.copy2( path, output_folder )
 
-    if args.get("tomo_spk_detect_nn2d_debug"):
+    if args.get("detect_nn2d_debug"):
         debug_folder = os.path.join( output_folder, "debug" )
         os.makedirs( debug_folder )
         logger.info(f"Saving intermediate results to {debug_folder}")
@@ -102,14 +103,14 @@ def spreval(args,name):
         f.write("image_name\tpath\n")
         f.write( name + "_bin\t" + os.path.join( os.getcwd(), name + "_bin.mrc") )
 
-    if 'tomo_spk_detect_nn2d_ref' in args.keys() and os.path.exists( project_params.resolve_path(args['tomo_spk_detect_nn2d_ref']) ):
-        logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['tomo_spk_detect_nn2d_ref'])).name}")
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py eval --model '{project_params.resolve_path(args['tomo_spk_detect_nn2d_ref'])}' --dataset '{os.path.join( os.getcwd(), imgs_file)}' --runs_dir '{os.getcwd()}' --num 1"
+    if 'detect_nn2d_ref' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_nn2d_ref']) ):
+        logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn2d_ref'])).name}")
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py eval --model '{project_params.resolve_path(args['detect_nn2d_ref'])}' --dataset '{os.path.join( os.getcwd(), imgs_file)}' --runs_dir '{os.getcwd()}' --num 1"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = glob.glob("./*/")[0]
 
         # use this to save intermediate files generated by NN particle picking
-        if args.get("tomo_spk_detect_nn2d_debug"):
+        if args.get("detect_nn2d_debug"):
             with open("project_folder.txt") as f:
                 project_folder = f.read()
             for f in glob.glob( results_folder + "eval_imgs/*" ):
@@ -137,8 +138,8 @@ def spreval(args,name):
                 boxes = coordinates.copy()[:,1:].astype('f')
                 # mean = boxes[:,-1].mean()
                 # boxes[:,-1] = ( boxes[:,-1] - mean )
-                coordinates = boxes[ boxes[:,-1] > args["tomo_spk_detect_nn2d_thresh"] ]
-                logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["tomo_spk_detect_nn2d_thresh"]))
+                coordinates = boxes[ boxes[:,-1] > args["detect_nn2d_thresh"] ]
+                logger.info(str(len(coordinates)) + " positions with confidence greater than " + str(args["detect_nn2d_thresh"]))
 
                 if len(coordinates) > 0:
                     return coordinates[:,:2].astype('i') * 8
