@@ -110,7 +110,7 @@ def needs_gpu(parameters):
 
     gpu_for_mining = "tomo-milo" in parameters.get("micromon_block")
 
-    gpu_for_picking = parameters.get("micromon_block") == "tomo-particles-train"
+    gpu_for_picking = parameters.get("micromon_block") == "tomo-particles-train" or parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
     
     gpu_for_heterogeneity = "drgn" in parameters.get("micromon_block")
 
