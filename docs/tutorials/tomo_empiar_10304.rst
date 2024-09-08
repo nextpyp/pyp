@@ -93,7 +93,7 @@ Step 2: Import raw tilt-series
 Step 3: Pre-processing
 ----------------------
 
-.. dropdown:: Movie frame alignment, CTF estimation and particle picking (:fa:`stopwatch` 4 min)
+.. dropdown:: Movie frame alignment, CTF estimation and tomogram reconstruction (:fa:`stopwatch` 4 min)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
@@ -137,7 +137,7 @@ Step 3: Pre-processing
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. Follow the status of the run in the **Jobs** panel
 
 
-Step 4: Particle detection
+Step 4: Particle picking
 --------------------------
 
 .. dropdown:: Particle detection from tomograms (:fa:`stopwatch` 2 min)
@@ -170,6 +170,16 @@ Step 4: Particle detection
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
     * Navigate to the :badge:`Particle-Picking,badge-primary` block to inspect the coordinates
+
+.. note::
+
+    In this tutorial, we use the ``size-based`` method for particle detection. Other methods are available, including manual picking, spherical picking, and neural network-based picking.
+
+.. seealso::
+
+    * :doc:`2D particle picking<picking2d>`
+    * :doc:`3D particle picking<picking3d>`
+    * :doc:`Pattern mining<milopyp>`
 
 Step 5: Reference-based refinement
 ----------------------------------
@@ -246,6 +256,8 @@ Step 5: Reference-based refinement
         - Set ``Memory per task`` to at least 4x the number of ``Threads per task``
 
         - Set ``Walltime per task`` to 72:00:00
+
+        - Set the ``Threads``, ``Memory``, and ``Walltime`` parameters for the ``Merge`` job to match the settings above
 
     * :badge:`Save,badge-primary` your changes, click :badge:`Run,badge-primary` and :badge:`Start Run for 1 block,badge-primary`
 
@@ -373,6 +385,10 @@ Step 8. Fully constrained refinement
         - Check ``Global weights``
 
         - Set ``Frame weight fraction`` to 4
+
+      .. tabbed:: Resources
+
+        - Decrease the ``Threads per task`` or increase the ``Memory per task`` as needed
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to execute three rounds of refinement and reconstruction
 
