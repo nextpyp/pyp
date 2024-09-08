@@ -388,7 +388,10 @@ Step 8. Fully constrained refinement
 
       .. tabbed:: Resources
 
-        - Decrease the ``Threads per task`` or increase the ``Memory per task`` as needed
+        - Set ``Threads per task`` to the maximum allowable by your system
+
+        - Set ``Memory per task`` to at least 6x the number of ``Threads per task``
+        
 
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to execute three rounds of refinement and reconstruction
 
