@@ -37,7 +37,7 @@ Data pre-processing
 Since ``MiLoPYP`` operates on reconstructured tomograms, you first need to pre-process your tilt-series using the :badge:`Pre-processing,badge-primary` block
 
 Step 1: Pattern mining (training)
--__------------------------------
+-----------------------------------
 
 To train the mining/exploration module:
 
@@ -79,7 +79,7 @@ Next, we use Phoenix to interactively select the target particles:
     tar xvfz *_milo.tbz
     conda activate phoenix
     curl https://raw.githubusercontent.com/nextpyp/cet_pick/main/cet_pick/phoenix_visualization.py -o phoenix_visualization.py
-    python phoenix_visualization.py --input interactive_info_parquet.gzip
+    python phoenix_visualization.py --input interactive_info_parquet.gzip --port 7000
 
 If everything went well, you should see an output like this:
 
