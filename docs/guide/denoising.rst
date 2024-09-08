@@ -57,7 +57,8 @@ Two-step denoising is done in the :badge:`Denosing (training),badge-secondary` a
 
 .. seealso::
 
-    * :doc:`Particle picking<picking>`
+    * :doc:`2D particle picking<picking2d>`
+    * :doc:`3D particle picking<picking3d>`
     * :doc:`Segmentation<segmentation>`
     * :doc:`Pattern mining<milopyp>`
     * :doc:`Filter micrographs/tilt-series<filters>`

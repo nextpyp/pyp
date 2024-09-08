@@ -115,13 +115,67 @@ Single-particle projects and tomography projects will have slightly differing bl
     :Input: None
     :Output: ``Tilt-series``
 
-  .. dropdown:: :fa:`chart-bar fa-2x` Pre-processing
+  .. dropdown:: :fa:`chart-bar fa-2x` Pre-processing (legacy)
     :container: + shadow
     :title: bg-primary text-white text-left font-weight-bold
     :open:
 
     :Description: Frame and tilt-series alignment, tomogram reconstruction, CTF estimation, and particle picking.
     :Input: ``Tilt-series``
+    :Output: ``Particles``
+
+  .. dropdown:: :fa:`chart-bar fa-2x` Pre-processing
+    :container: + shadow
+    :title: bg-primary text-white text-left font-weight-bold
+    :open:
+
+    :Description: Frame and tilt-series alignment, tomogram reconstruction, and CTF estimation.
+    :Input: ``Tilt-series``
+    :Output: ``Tomograms``
+
+  .. dropdown:: :fa:`crosshairs fa-2x` Particle-Picking
+    :container: + shadow
+    :title: bg-primary text-white text-left font-weight-bold
+    :open:
+
+    :Description: Import, manual and size-based particle picking.
+    :Input: ``Tomograms``
+    :Output: ``Particles``
+
+  .. dropdown:: :fa:`search fa-2x` MiLoPYP (train)
+    :container: + shadow
+    :title: bg-primary text-white text-left font-weight-bold
+    :open:
+
+    :Description: Train neural network for pattern mining.
+    :Input: ``Tomograms``
+    :Output: ``MiLoPYP Model``
+
+  .. dropdown:: :fa:`search fa-2x` MiLoPYP (eval)
+    :container: + shadow
+    :title: bg-primary text-white text-left font-weight-bold
+    :open:
+
+    :Description: Evaluate neural network model for pattern mining.
+    :Input: ``MiLoPYP Model``
+    :Output: ``MiLoPYP Particles``
+
+  .. dropdown:: :fa:`crosshairs fa-2x` Particle-Picking (train)
+    :container: + shadow
+    :title: bg-primary text-white text-left font-weight-bold
+    :open:
+
+    :Description: Train neural network for particle picking.
+    :Input: ``Particles``, ``MiLoPYP Particles``
+    :Output: ``Particles Model``
+
+  .. dropdown:: :fa:`crosshairs fa-2x` Particle-Picking (eval)
+    :container: + shadow
+    :title: bg-primary text-white text-left font-weight-bold
+    :open:
+
+    :Description: Evaluate neural network model for particle picking.
+    :Input: ``Tomograms``
     :Output: ``Particles``
 
   .. dropdown:: :fa:`dot-circle fa-2x` Particle refinement
@@ -148,7 +202,7 @@ Single-particle projects and tomography projects will have slightly differing bl
     :open:
 
     :Description: Per-particle tilt movie refinement and reconstruction, data-driven dose-weighting.
-    :Input: ``Particles``or ``Frames``
+    :Input: ``Particles`` or ``Frames``
     :Output: ``Frames``
 
   .. dropdown:: :fa:`crop fa-2x` Create mask
@@ -157,7 +211,7 @@ Single-particle projects and tomography projects will have slightly differing bl
     :open:
 
     :Description: Creation of shape mask.
-    :Input: ``Particles``or ``Frames``
+    :Input: ``Particles`` or ``Frames``
     :Output: ``None``
 
   .. dropdown:: :fa:`star fa-2x` Post-processing
@@ -190,7 +244,7 @@ Block status
 Blocks can be in one of three states (indicated by icons displayed on the top bar of each block):
 
 * Block is up-to-date (no graphical indication)
-* :fa:`recycle text-primary` Modified (parameters were modified and the block is not up-to-date)
+* :fa:`recycle text-primary` Modified (parameters were modified and the block needs to be updated)
 * :fa:`cog fa-pulse text-primary` Running (the block is currently running)
 
 Block parameters
@@ -208,6 +262,7 @@ Jobs can be in one of four states:
 * :fa:`stopwatch` Scheduled
 * :fa:`cog fa-pulse` Running
 * :fa:`check-circle` Completed
+* :fa:`ban` Canceled
 * :fa:`exclamation-triangle` Failed
 
 Jobs are arranged hierarchically according to their dependencies, and the number of jobs in each state is updated continuously.
@@ -232,12 +287,10 @@ Use the breadcrumb menu at the top of the page to navigate to the **Dashboard** 
 .. figure:: ../images/tutorial_tomo_pre_process_page.webp
   :alt: Breadcrums
 
-.. tip::
-    Some pages in ``nextPYP`` can be bookmarked and saved for later reference
-
 .. seealso::
 
-    * :doc:`Particle picking<picking>`
-    * :doc:`Neural-network picking<neural_network>`
+    * :doc:`2D particle picking<picking2d>`
+    * :doc:`3D particle picking<picking3d>`
+    * :doc:`Pattern mining (MiLoPYP)<milopyp>`
     * :doc:`Filter micrographs/tilt-series<filters>`
     * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`

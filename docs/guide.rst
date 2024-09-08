@@ -14,7 +14,7 @@ User guide
    guide/milopyp
    guide/chimerax_artiax
 
-The following sections describe the main components and functionality of ``nextPYP``.
+The following sections describe the main components and functionality available in ``nextPYP``.
 
 .. panels::
    :container: container-fluid pb-1
@@ -43,18 +43,18 @@ The following sections describe the main components and functionality of ``nextP
 
    ---
 
-   :fa:`dot-circle fa-4x text-white`
+   :fa:`search fa-4x text-white`
 
    +++
 
-   .. link-button:: guide/picking2d
+   .. link-button:: guide/milopyp
       :type: ref
-      :text: 2D particle picking
+      :text: Pattern mining (MiLoPYP)
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
 
-   :fa:`dot-circle fa-4x text-white`
+   :fa:`cubes fa-4x text-white`
 
    +++
 
@@ -65,17 +65,16 @@ The following sections describe the main components and functionality of ``nextP
 
    ---
 
-   :fa:`fingeprint fa-4x text-white`
+   :fa:`layer-group fa-4x text-white`
 
    +++
 
-   .. link-button:: guide/milopyp
+   .. link-button:: guide/picking2d
       :type: ref
-      :text: Pattern mining
+      :text: 2D particle picking
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
-
 
    :fa:`eye fa-4x text-white`
 
@@ -83,7 +82,7 @@ The following sections describe the main components and functionality of ``nextP
 
    .. link-button:: guide/chimerax_artiax
       :type: ref
-      :text: Visualization in ChimeraX/ArtiaX
+      :text: ChimeraX/ArtiaX visualization
       :classes: btn-outline-primary btn-block stretched-link
 
 .. seealso::

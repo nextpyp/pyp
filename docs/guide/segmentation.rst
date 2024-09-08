@@ -57,7 +57,9 @@ Open surfaces (membrain-seg)
 .. seealso::
 
     * :doc:`Denoising<denoising>`
-    * :doc:`Particle picking<picking>`
+    * :doc:`2D particle picking<picking2d>`
+    * :doc:`3D particle picking<picking3d>`
+    * :doc:`Pattern mining (MiLoPYP)<milopyp>`
     * :doc:`Filter micrographs/tilt-series<filters>`
     * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
     * :doc:`Overview<overview>`

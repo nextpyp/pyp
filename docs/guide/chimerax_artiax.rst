@@ -1,6 +1,6 @@
-================================
-Visualization in ChimeraX/ArtiaX
-================================
+=======================
+ChimeraX/ArtiaX display
+=======================
 
 ``nextPYP`` produces all the necessary files to visualize a refined map in the original tomogram positions using ChimeraX/ArtiaX.
 
@@ -48,6 +48,7 @@ If everything went well, you should obtain a result similar to this:
 .. seealso::
 
     * :doc:`Filter micrographs/tilt-series<filters>`
-    * :doc:`Particle picking<picking>`
-    * :doc:`Neural-network picking<neural_network>`
+    * :doc:`2D particle picking<picking2d>`
+    * :doc:`3D particle picking<picking3d>`
+    * :doc:`Pattern mining (MiLoPYP)<milopyp>`
     * :doc:`Overview<overview>`

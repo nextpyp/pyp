@@ -44,7 +44,8 @@ Step 2: Apply the filter
 
 .. seealso::
 
-    * :doc:`Particle picking<picking>`
+    * :doc:`2D particle picking<picking2d>`
+    * :doc:`3D particle picking<picking3d>`
+    * :doc:`Pattern mining<milopyp>`
     * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
-    * :doc:`Neural-network picking<neural_network>`
     * :doc:`Overview<overview>`

@@ -20,17 +20,6 @@ These step-by-step guides explain the main data processing protocols available i
    :body: bg-primary text-centered text-white font-weight-bold
    :header: text-center
 
-   :fa:`layer-group fa-4x text-white`
-
-   +++
-
-   .. link-button:: tutorials/spa_empiar_10025
-      :type: ref
-      :text: Single-particle analysis
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
    :fa:`cubes fa-4x text-white`
 
    +++
@@ -49,6 +38,17 @@ These step-by-step guides explain the main data processing protocols available i
    .. link-button:: tutorials/tomo_empiar_10304
       :type: ref
       :text: Constrained classification
+      :classes: btn-outline-primary btn-block stretched-link
+
+   ---
+
+   :fa:`layer-group fa-4x text-white`
+
+   +++
+
+   .. link-button:: tutorials/spa_empiar_10025
+      :type: ref
+      :text: Single-particle analysis
       :classes: btn-outline-primary btn-block stretched-link
 
    ---

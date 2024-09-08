@@ -25,7 +25,6 @@ v0.7.0 (9/09/2024)
 
    :fa:`star,text-success` Add support for beam-tilt refinement and correction.
 .
-
    :fa:`star,text-success` New blocks for Molecular pattern mining and particle localization (MiLoPYP).
 
    :fa:`star,text-success` Add wrappers for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_ for CTF estimation.
