@@ -97,9 +97,15 @@ References
 
 ``nextPYP`` implements algorithms reported in the following publications:
 
+   - Huang, Q., Zhou, Y., Bartesaghi, A. (2024), `MiLoPYP: self-supervised molecular pattern mining and particle localization in situ <https://www.nature.com/articles/s41592-024-02403-6>`_, Nature Methods, in press.
+
+   - Jin, W., Zhou, Y., Bartesaghi, A. (2024), `Accurate size-based protein localization from cryo-ET tomograms <https://doi.org/10.1016/j.yjsbx.2024.100104>`_, Journal of Structural Biology: X, 10:100104.
+  
+   - Huang, Q., Zhou, Y., Liu, HF., Bartesaghi, A. (2023) `Joint micrograph denoising and protein localization in cryo-electron microscopy <https://doi.org/10.1017/S2633903X24000035>`_, Biological Imaging, 2024;4:e4.
+
    - Liu, HF., Zhou, Y., Huang, Q., Piland, J., Jin, W., Mandel, J., Du, X., Martin, J., Bartesaghi, A. (2023), `nextPYP: a comprehensive and scalable platform for characterizing protein variability in-situ using single-particle cryo-electron tomography <https://www.nature.com/articles/s41592-023-02045-0>`_, Nature Methods, 20:1909–1919.
 
-   - Huang, Q., Zhou, Y., Liu, HF., Bartesaghi, A. (2022) `Weakly Supervised Learning for Joint Image Denoising and Protein Localization in Cryo-Electron Microscopy <https://openaccess.thecvf.com/content/WACV2022/html/Huang_Weakly_Supervised_Learning_for_Joint_Image_Denoising_and_Protein_Localization_WACV_2022_paper.html>`_, IEEE/CVF Winter Conference on Applications of Computer Vision (WACV), pp. 3246-3255.
+   - Huang, Q., Zhou, Y., Liu, HF., Bartesaghi, A. (2022) `Weakly Supervised Learning for Joint Image Denoising and Protein Localization in Cryo-Electron Microscopy <https://doi.org/10.1109/WACV51458.2022.00332>`_, IEEE/CVF Winter Conference on Applications of Computer Vision (WACV), pp. 3246-3255.
   
    - Huang, Q., Zhou, Y., Liu, HF., Bartesaghi, A. (2022) `Accurate Detection of Proteins in Cryo-Electron Tomograms from Sparse Labels <https://doi.org/10.1007/978-3-031-19803-8_38>`_, European Conference on Computer Vision (ECCV) 13681, pp. 644-660.
 

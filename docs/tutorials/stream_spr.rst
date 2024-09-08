@@ -1,6 +1,6 @@
-#######################
-Single-particle session
-#######################
+##########################
+Single-particle on-the-fly
+##########################
 
 This tutorial shows how to process micrographs on-the-fly during data collection. ``nextPYP`` implements streaming using three parallel tracks:
 

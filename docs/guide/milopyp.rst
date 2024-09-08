@@ -37,7 +37,7 @@ Data pre-processing
 Since ``MiLoPYP`` operates on reconstructured tomograms, you first need to pre-process your tilt-series using the :badge:`Pre-processing,badge-primary` block
 
 Step 1: Pattern mining (training)
------------------------------------
+---------------------------------
 
 To train the mining/exploration module:
 
@@ -124,8 +124,8 @@ Step 4: Upload .parquet file to ``nextPYP``
 
 * Click on the Upload button :fa:`upload, text-primary`, browse to the location of the ``.parquet`` file, and upload the file
 
-Step 5: Train refinement model
-------------------------------
+Step 5: Particle refinement (training)
+--------------------------------------
 
 We will use the resulting positions from the exploration module to train the refinement module:
 
@@ -139,8 +139,10 @@ We will use the resulting positions from the exploration module to train the ref
 
 #. Navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the training metrics
 
-Step 6: Evaluate refinement model
----------------------------------
+Step 6: Particle refinement (evaluation)
+----------------------------------------
+
+The last step is to evaluate the model and obtain the final particle positions:
 
 #. Click on :guilabel:`Particles Model` (output of the :badge:`Particle-Picking (train),badge-secondary` block) and select :badge:`Particle-Picking (eval),badge-primary`
 

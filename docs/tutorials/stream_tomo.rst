@@ -1,6 +1,6 @@
-##################
-Tomography session
-##################
+#####################
+Tomography on-the-fly
+#####################
 
 This tutorial shows how to process tilt-series on-the-fly during data collection. ``nextPYP`` implements streaming using two parallel tracks:
 

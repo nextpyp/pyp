@@ -71,9 +71,7 @@ This method selects particle positions based on a target particle size:
 Method 4: Neural-network picking
 ================================
 
-``nextPYP`` has its own joint denoising-picking algorithm and a wrapper for `Topaz <https://github.com/tbepler/topaz>`_
-
-Neural-network based methods require an existing list of particles and have a training and evaluation stage:
+Neural-network based methods require an existing list of particles for training a neural network. To pick particles, the trained model is then evaluated on the entire dataset. ``nextPYP`` uses a self-supervised approach that only needs sparsely annotated data. A wrapper for `Topaz <https://github.com/tbepler/topaz>`_ picking is also included. 
 
 Training
 ^^^^^^^^
