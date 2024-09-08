@@ -26,7 +26,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    .. link-button:: tutorials/spa_empiar_10025
       :type: ref
-      :text: Single-particle tutorial
+      :text: Single-particle analysis
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
@@ -37,7 +37,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    .. link-button:: tutorials/tomo_empiar_10164
       :type: ref
-      :text: Tomography tutorial
+      :text: Sub-tomogram averaging
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
@@ -48,7 +48,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    .. link-button:: tutorials/tomo_empiar_10304
       :type: ref
-      :text: Classification tutorial
+      :text: Constrained classification
       :classes: btn-outline-primary btn-block stretched-link
 
    ---

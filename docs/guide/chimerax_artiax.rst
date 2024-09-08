@@ -43,7 +43,7 @@ If everything went well, you should obtain a result similar to this:
 
 .. tip::
 
-    Depending on the dimensions of the refined map and the number of particles in the tomogram, you may need to downsample the map to make ChimeraX more responsive.
+    Depending on the dimensions of the refined map and the number of particles in the tomogram, you may need to downsample the map to make ChimeraX more responsive
 
 .. seealso::
 

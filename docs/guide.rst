@@ -9,8 +9,8 @@ User guide
 
    guide/overview
    guide/filters
-   guide/picking
-   guide/neural_network
+   guide/picking2d
+   guide/picking3d
    guide/milopyp
    guide/chimerax_artiax
 
@@ -47,25 +47,25 @@ The following sections describe the main components and functionality of ``nextP
 
    +++
 
-   .. link-button:: guide/picking
+   .. link-button:: guide/picking2d
       :type: ref
-      :text: Particle picking
+      :text: 2D particle picking
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
 
-   :fa:`brain fa-4x text-white`
+   :fa:`dot-circle fa-4x text-white`
 
    +++
 
-   .. link-button:: guide/neural_network
+   .. link-button:: guide/picking3d
       :type: ref
-      :text: Neural-network picking
+      :text: 3D particle picking
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
 
-   :fa:`dot-fingeprint fa-4x text-white`
+   :fa:`fingeprint fa-4x text-white`
 
    +++
 
