@@ -109,12 +109,12 @@ forwarded_tabs = [ "data", "scope" ]
 name = "TOMO Segmentation (close)"
 description = "Segment virions or vescicles"
 tabs = [ "tomo_sphere", "slurm" ]
-forwarded_tabs = [ "data", "scope" ]
+forwarded_tabs = [ "data", "scope", "tomo_pick", "tomo_spk" ]
 
 [blocks.tomo_picking]
 name = "TOMO Particle-picking"
-description = "Size-based, import, manual and spherical"
-tabs = [ "tomo_spk", "tomo_ext", "slurm" ]
+description = "Size-based, import, manual and virions"
+tabs = [ "tomo_pick", "tomo_spk", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_par_open]
@@ -2613,7 +2613,7 @@ _description = "Sub-tomogram detection parameters"
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", auto="size-based", import="import", manual="manual", virions="virions" }
+enum = { none="none", auto="auto", import="import (path to particle coordinates required)", manual="manual (list of positions required)", pyp-train="pyp-train (list of positions required)", pyp-eval="pyp-eval (trained model required)" }
 default = "none"
 
 [tabs.tomo_spk.rad]
@@ -2714,49 +2714,158 @@ type = "bool"
 default = true
 condition = { arg="method", value=["auto","import","manual","pyp-eval"] }
 
-[tabs.tomo_spk.vir_rad]
+[tabs.tomo_pick]
+_name = "Particle detection"
+_description = "Sub-tomogram detection parameters"
+
+[tabs.tomo_pick.method]
+name = "Detection method"
+description = "Strategy to use for particle detection"
+type = "enum"
+enum = { auto="size-based", import="import", manual="manual", virions="virions" }
+default = "auto"
+
+[tabs.tomo_pick.rad]
+name = "Particle radius (A)"
+description = "Size to use for particle detection"
+type = "float"
+default = 0
+condition = { arg="method", value=[ "none", "auto", "import", "manual" ] }
+
+[tabs.tomo_pick.files]
+name = "Import particle coordinates (*.spk)"
+description = "Folder containing files with particle coordinates"
+type = "path"
+condition = { arg="method", value="import" }
+path = { type="folders" }
+
+[tabs.tomo_pick.contract_times_3d]
+name = "Binning factor"
+description = "Reduce size of tomograms before contamination detection to speed up processing"
+type = "int"
+condition = { arg="method", value="auto" }
+default = 1
+
+[tabs.tomo_pick.gaussian_3d]
+name = "Apply Gaussian filter"
+description = "Filter tomograms using a Gaussian filter before contamination detection"
+type = "bool"
+default=false
+condition = { arg="method", value="auto" }
+
+[tabs.tomo_pick.sigma_3d]
+name = "Sigma (voxels)"
+description = "Standard deviation used for the Gaussian filter"
+type = "int"
+default = 15
+condition = { arg="gaussian_3d", value="true" }
+
+[tabs.tomo_pick.stdtimes_cont_3d]
+name = "Threshold for contamination detection"
+description = "Number of standard deviations below mean used for contamination detection"
+type = "float"
+condition = { arg="method", value="auto" }
+default = 1
+
+[tabs.tomo_pick.min_size_3d]
+name = "Minimum contamination size (voxels)"
+description = "Groups of voxels smaller than this value will not be considered as contamination"
+type = "int"
+condition = { arg="method", value="auto" }
+default = 125
+
+[tabs.tomo_pick.dilation_3d]
+name = "Contamination mask dilation (voxels)"
+description = "Dilate contamination mask to avoid picking too close to contaminants"
+type = "float"
+condition = { arg="method", value="auto" }
+default = 100
+
+[tabs.tomo_pick.radiustimes_3d]
+name = "Minimum distance between particles"
+description = "Discard particles that are closer than this threshold (in multiple of the particle radius)"
+type = "float"
+condition = { arg="method", value="auto" }
+default = 4
+
+[tabs.tomo_pick.inhibit_3d]
+name = "Local refinement"
+description = "Use iterative criteria to detect particle candidates (select this option to get more particles)"
+type = "bool"
+condition = { arg="method", value="auto" }
+default = false
+
+[tabs.tomo_pick.detection_width_3d]
+name = "Z-axis detection range (binned slices)"
+description = "Restrict particle picking around the central slice of the tomogram"
+type = "float"
+default = 128
+condition = { arg="method", value="auto" }
+
+[tabs.tomo_pick.stdtimes_filt_3d]
+name = "Particle detection threshold"
+description = "Only keep candidate positions within this number of standard deviations above the mean (higher numbers give fewer particles)"
+type = "float"
+condition = { arg="method", value="auto" }
+default = 1
+
+[tabs.tomo_pick.remove_edge_3d]
+name = "Filter positions by relative contrast"
+description = "Reject particle positions that have higher foreground variance than the background"
+type = "bool"
+condition = { arg="method", value="auto" }
+default = false
+
+[tabs.tomo_pick.rand]
+name = "Randomize particle rotations"
+description = "Randomize particle orientations during extraction to reduce mising wegde effects"
+type = "bool"
+default = true
+condition = { arg="method", value=["auto","import","manual","pyp-eval"] }
+
+[tabs.tomo_pick.vir_rad]
 name = "Virion radius (A)"
 description = "Approximate virion radius to use for detection"
 type = "float"
 default = 0
 condition = { arg="method", value="virions" }
 
-[tabs.tomo_spk.vir_number]
+[tabs.tomo_pick.vir_number]
 name = "Max number of virions per tomogram"
 description = "Limit the number of virions"
 type = "int"
 default = 25
 condition = { arg="method", value="virions" }
 
-[tabs.tomo_spk.vir_det_tol]
+[tabs.tomo_pick.vir_det_tol]
 name = "Tolerance for virion radius"
 description = "Allow virion radius variations within this tolerance (percentage)"
 type = "float"
 default = 20.0
 condition = { arg="method", value="virions" }
 
-[tabs.tomo_spk.vir_iterations]
+[tabs.tomo_pick.vir_iterations]
 name = "Denoising iterations before detection"
 description = "Number denoising iterations (anisotropic diffusion)"
 type = "int"
 default = 25
 condition = { arg="method", value="virions" }
 
-[tabs.tomo_spk.vir_canny_low]
+[tabs.tomo_pick.vir_canny_low]
 name = "Low threshold for Canny edge detector"
 description = "Allows to control the performance of virion detection"
 type = "float"
 default = 0.2
 condition = { arg="method", value="virions" }
 
-[tabs.tomo_spk.vir_canny_high]
+[tabs.tomo_pick.vir_canny_high]
 name = "High threshold for Canny edge detector"
 description = "Allows to control the performance of virion detection"
 type = "float"
 default = 0.5
 condition = { arg="method", value="virions" }
 
-[tabs.tomo_spk.vir_binn]
+[tabs.tomo_pick.vir_binn]
 name = "Additional binning"
 description = "Larger values can speed up detection and reduce noise"
 type = "int"

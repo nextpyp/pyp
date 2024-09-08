@@ -1423,6 +1423,9 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     for key in parameters.copy().keys():
         if key.startswith("tomo_vir") and not parameters.get(key.replace("tomo_vir","tomo_srf")):
             parameters[key.replace("tomo_vir","tomo_srf")] = parameters.get(key)
+        # move parameters over froom tomo_pick to tomo_spk
+        if key.startswith("tomo_pick") and not parameters.get(key.replace("tomo_pick","tomo_spk")):
+            parameters[key.replace("tomo_pick","tomo_spk")] = parameters.get(key)
     
     # get file name
     name = os.path.basename(filename)
@@ -1719,16 +1722,20 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.remove(name+".spk")
         parameters["tomo_spk_method"] = "pyp-eval"
 
+    # virion segmentation and surface-constrained particle pickiing
     if parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
         # use spike radius as virion radius
-        parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"]
+        parameters["tomo_vir_rad"] = parameters["tomo_pick_rad"]
         if parameters.get("micromon_block") == "tomo-picking-closed":
             parameters["tomo_spk_rad"] = parameters["tomo_srf_detect_rad"]
         if os.path.exists(name+".spk"):
             os.remove(name+".spk")
-    if parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_spk_method") == "virions":
+
+    # virion detection
+    if parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_pick_method") == "virions":
         # use spike radius as virion radius
-        parameters["tomo_spk_rad"] = parameters["tomo_spk_vir_rad"]
+        parameters["tomo_spk_method"] = parameters["tomo_pick_method"]
+        parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
 
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
@@ -4904,7 +4911,7 @@ EOF
 
                 # set the correct virion radius if in tomo-picking-closed block to ensure proper particle extraction
                 if parameters.get("micromon_block") == "tomo-picking-closed":
-                    parameters["tomo_vir_rad"] = parameters["tomo_spk_rad"]
+                    parameters["tomo_vir_rad"] = parameters["tomo_pick_rad"]
 
                 # save configuration
                 project_params.save_parameters(parameters)

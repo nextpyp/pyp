@@ -1230,7 +1230,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
         )
 
-    elif "tomo_spk_method" in parameters and parameters["tomo_spk_method"] != "none" and not os.path.exists("%s.spk" % name):
+    elif ( "tomo_spk_method" in parameters and parameters["tomo_spk_method"] != "none" or parameters.get("tomo_pick_method") == "virions" ) and not os.path.exists("%s.spk" % name):
 
         if parameters["tomo_spk_rad"] == 0:
             raise Exception("Please specify a particle radius > 0 (-tomo_spk_rad)")
@@ -1283,7 +1283,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                         os.remove( name + ".box")
                         os.remove( name + ".mod")
                         
-        elif parameters["tomo_spk_method"] == "virions":
+        elif parameters["tomo_spk_method"] == "virions" or parameters["tomo_pick_method"] == "virions":
 
             # figure out virion parameters
             virion_binning, virion_size = get_vir_binning_boxsize(parameters["tomo_spk_vir_rad"], parameters["scope_pixel"])
