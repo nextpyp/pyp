@@ -2613,7 +2613,7 @@ _description = "Sub-tomogram detection parameters"
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", auto="size-based", import="import", manual="manual", virions="spherical" }
+enum = { none="none", auto="size-based", import="import", manual="manual", virions="virions" }
 default = "none"
 
 [tabs.tomo_spk.rad]
@@ -2723,20 +2723,20 @@ condition = { arg="method", value="virions" }
 
 [tabs.tomo_spk.vir_number]
 name = "Max number of virions per tomogram"
-description = "Limit the number of virions during detection"
+description = "Limit the number of virions"
 type = "int"
 default = 25
 condition = { arg="method", value="virions" }
 
 [tabs.tomo_spk.vir_det_tol]
-name = "Tolerance for virion radius during detection"
+name = "Tolerance for virion radius"
 description = "Allow virion radius variations within this tolerance (percentage)"
 type = "float"
 default = 20.0
 condition = { arg="method", value="virions" }
 
 [tabs.tomo_spk.vir_iterations]
-name = "Denoising iterations before virion detection"
+name = "Denoising iterations before detection"
 description = "Number denoising iterations (anisotropic diffusion)"
 type = "int"
 default = 25
@@ -2757,8 +2757,8 @@ default = 0.5
 condition = { arg="method", value="virions" }
 
 [tabs.tomo_spk.vir_binn]
-name = "Virion additional binning"
-description = "Increase binning to speed up virion detection and reduce noise"
+name = "Additional binning"
+description = "Larger values can speed up detection and reduce noise"
 type = "int"
 default = 2
 condition = { arg="method", value="virions" }
