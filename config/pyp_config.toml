@@ -141,25 +141,25 @@ tabs = [ "heterogeneity", "slurm" ]
 
 [blocks.tomo_milo_train]
 name = "MiLoPYP training"
-description = "Train ML model for pattern mining"
+description = "Train MiLoPYP model for pattern mining"
 tabs = [ "detect_milo", "slurm" ]
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_milo_eval]
 name = "MiLoPYP evaluation"
-description = "Evaluate ML model for pattern mining"
+description = "Evaluate MiLoPYP (trained model required)"
 tabs = [ "detect_milo", "slurm" ]
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_particles_train]
 name = "TOMO Particles Training"
-description = "Train ML model for particle picking"
+description = "Train NN model for particle picking"
 tabs = [ "detect_nn3d", "slurm" ] # TODO ?
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_particles_eval]
 name = "TOMO Particles Evaluation"
-description = "Evaluate ML model for particle picking"
+description = "NN-based picking (trained model required)"
 tabs = [ "detect_nn3d", "slurm" ] # TODO ?
 forwarded_tabs = [] # TODO ?
 
@@ -1291,7 +1291,7 @@ default = false
 advanced = true
 
 [tabs.detect_nn3d]
-_name = "Training"
+_name = "Training/Evaluation"
 _description = "Settings for particle detection using neural networks"
 
 [tabs.detect_nn3d.ref]
