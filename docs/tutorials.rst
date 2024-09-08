@@ -9,8 +9,8 @@ Tutorials
 
    Single-particle (EMPIAR-10025) <tutorials/spa_empiar_10025>
    Tomography (EMPIAR-10164) <tutorials/tomo_empiar_10164>
-   Single-particle on-the-fly<tutorials/stream_spr>
-   Tomography on-the-fly<tutorials/stream_tomo>
+   Single-particle (on-the-fly)<tutorials/stream_spr>
+   Tomography (on-the-fly)<tutorials/stream_tomo>
    Classification (EMPIAR-10304) <tutorials/tomo_empiar_10304>
    Import/export data <tutorials/import_export>
 
@@ -48,7 +48,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    .. link-button:: tutorials/stream_spr
       :type: ref
-      :text: Single-particle on-the-fly
+      :text: Single-particle (on-the-fly)
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
@@ -59,7 +59,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    .. link-button:: tutorials/stream_tomo
       :type: ref
-      :text: Tomography on-the-fly
+      :text: Tomography (on-the-fly)
       :classes: btn-outline-primary btn-block stretched-link
 
    ---

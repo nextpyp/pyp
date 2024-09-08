@@ -124,6 +124,10 @@ Step 4: Upload .parquet file to ``nextPYP``
 
 * Click on the Upload button :fa:`upload, text-primary`, browse to the location of the ``.parquet`` file, and upload the file
 
+.. note::
+
+    Currently, the file will be uploaded and renamed to ``particles.parquet`` on the remote server. If a file with that name already exists, it will be overwriten with the new file
+
 Step 5: Particle refinement (training)
 --------------------------------------
 
@@ -131,7 +135,7 @@ We will use the resulting positions from the exploration module to train the ref
 
 #. Click on :guilabel:`MiLoPYP Particles` (output of the :badge:`MiLoPYP (eval),badge-secondary` block) and select :badge:`Particle-Picking (train),badge-primary`
 
-#. Select ``Import results from MiLoPYP`` and specify the location of the ``.parquet`` file you uploaded in the previous step, for example, ``particles.parquet``
+#. Select ``Import results from MiLoPYP`` and specify the location of the ``.parquet`` file you uploaded in the previous step: ``particles.parquet``
 
 #. Set parameters for training as needed
 
