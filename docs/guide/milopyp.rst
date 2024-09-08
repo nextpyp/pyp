@@ -79,7 +79,7 @@ Next, we use Phoenix to interactively select the target particles:
     tar xvfz *_milo.tbz
     conda activate phoenix
     curl https://raw.githubusercontent.com/nextpyp/cet_pick/main/cet_pick/phoenix_visualization.py -o phoenix_visualization.py
-    python phoenix_visualization.py --input interactive_info_parquet.gzip --port 7000
+    python phoenix_visualization.py --input interactive_info_parquet.gzip
 
 If everything went well, you should see an output like this:
 
