@@ -1752,15 +1752,16 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     if (
         "tomo_vir_force" in parameters and parameters["tomo_vir_force"]
-        or metadata is None or metadata is not None and "vir" not in metadata or parameters["data_import"]
+        or metadata is None or metadata is not None and "vir" not in metadata or parameters["data_import"] or parameters.get("micromon_block") == "tomo-segmentation-closed"
     ):
         tilt_metadata["virion_coordinates"] = virion_coordinates
         if len(virion_coordinates) > 0:
             logger.info(f"Total number of virions = {len(virion_coordinates):,}")
 
-    tilt_metadata["spike_coordinates"] = spike_coordinates
-    if len(spike_coordinates) > 0:
-        logger.info(f"Total number of particles = {len(spike_coordinates):,}")
+    if parameters.get("micromon_block") != "tomo-segmentation-closed":
+        tilt_metadata["spike_coordinates"] = spike_coordinates
+        if len(spike_coordinates) > 0:
+            logger.info(f"Total number of particles = {len(spike_coordinates):,}")
 
     mpi_funcs, mpi_args = [ ], [ ]
     if ctffind_tilt:

@@ -1325,19 +1325,30 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         )
         t.stop()
 
+    # do not send list if doing manual particle picking
+    #if os.path.exists("%s.spk" % name) and parameters["tomo_spk_method"] != "manual":
+    _, rec_z, _ = get_image_dimensions(f"{name}.rec")
+
     # populate database with new virion and spike coordinates
     if os.path.exists("%s.vir" % name):
         virion_coordinates = imod.coordinates_from_mod_file("%s.vir" % name)
         # remove fourth column from IMOD model and keep virion radius
         if len(virion_coordinates) > 0 and virion_coordinates.shape[1] == 5:
             virion_coordinates = virion_coordinates[:,[0,1,2,4]]
+        # legacy pre-processing block and sessions
+        if parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "":
+            # reverse z-dimension to display on website
+            virion_coordinates[:,0:2] /= virion_binning
+            # undd binning in particle radius
+            virion_coordinates[:,2] /= virion_binning
+        elif parameters.get("micromon_block") == "tomo-picking":
+            # scale radius by virion binning since the website will be displaying these as particles (not virions)
+            virion_coordinates[:,-1] *= virion_binning
+        else:
+            # scale radius by virion binning
             virion_coordinates[:,-1] *= virion_binning
     else:
         virion_coordinates = np.array([])
-
-    # do not send list if doing manual particle picking
-    #if os.path.exists("%s.spk" % name) and parameters["tomo_spk_method"] != "manual":
-    _, rec_z, _ = get_image_dimensions(f"{name}.rec")
 
     if os.path.exists("%s.spk" % name):
         spike_coordinates = imod.coordinates_from_mod_file("%s.spk" % name)
@@ -1346,16 +1357,17 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
         elif parameters.get("micromon_block") == "tomo-particles-eval":
             spike_coordinates = spike_coordinates[:, [0, 1, 2]]
-        elif parameters.get("micromon_block") == "tomo-picking-closed":
+        elif parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "":
             # reverse z-dimension to display on website
             spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
         spike_coordinates_with_radius = np.hstack( ( spike_coordinates, parameters["tomo_spk_rad"] / binning * np.ones((spike_coordinates.shape[0],1)) ) )
     else:
         spike_coordinates_with_radius = np.array([])
 
+    # if picking virions, send coordinates as particles (not virions)
     if parameters["tomo_spk_method"] == "virions" and parameters["micromon_block"] == "tomo-picking":
         spike_coordinates_with_radius = virion_coordinates
-        spike_coordinates_with_radius[:,-1] *= parameters["tomo_spk_vir_binn"]
+        spike_coordinates_with_radius[:,-1] /= parameters['tomo_pick_vir_binn']
     elif parameters["tomo_spk_method"] == "tomo-segmentation-closed":
         spike_coordinates_with_radius = np.array([])
         
