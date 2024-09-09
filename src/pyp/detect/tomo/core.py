@@ -661,7 +661,7 @@ def process_virions(
     spike_size = parameters["tomo_ext_size"] if "tomo_ext_size" in parameters  else 0
 
     virion_binning, virion_size = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
-    rec_x, rec_z, rec_y = get_image_dimensions(f"{name}.rec")
+    _, rec_z, _ = get_image_dimensions(f"{name}.rec")
 
     if virion_size <= 0:
         logger.warning("Virion size not set, skipping virion processing")
