@@ -2875,13 +2875,12 @@ condition = { arg="method", value="virions" }
 [tabs.tomo_ext]
 _name = "Sub-tomogram extraction"
 _description = "Sub-tomogram extraction parameters"
-_hidden = [ "stream_tomo" ]
 
 [tabs.tomo_ext.fmt]
 name = "Extraction format"
 description = "Format to extract sub-tomograms"
 type = "enum"
-enum = { none="none", eman="eman (invert contrast)", 3DAVG="3davg (do not invert contrast)" }
+enum = { none="none", eman="eman (invert contrast)", 3davg="3davg (do not invert contrast)" }
 default = "none"
 
 [tabs.tomo_ext.size]
