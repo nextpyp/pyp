@@ -4912,6 +4912,10 @@ EOF
                 if parameters.get("micromon_block") == "tomo-picking-closed":
                     parameters["tomo_vir_rad"] = parameters["tomo_pick_rad"]
 
+                # set particle radius based on bbox size                
+                if parameters.get("micromon_block") == "tomo-particles-eval":
+                    parameters["tomo_spk_rad"] = parameters["detect_nn3d_bbox"] * parameters["data_bin"] * parameters["tomo_rec_binning"] * parameters["scope_pixel"]
+
                 # save configuration
                 project_params.save_parameters(parameters)
 
