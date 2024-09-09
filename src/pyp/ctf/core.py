@@ -691,10 +691,6 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
     plt.savefig("{0}_CTFprof.png".format(name), bbox_inches="tight")
     plt.close()
 
-    # compose png
-
-    plot.plot_spr_ctf(name, parameters["slurm_verbose"])
-
     ctf_params = np.array(
         [
             df,
