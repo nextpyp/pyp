@@ -109,12 +109,12 @@ forwarded_tabs = [ "data", "scope" ]
 name = "TOMO Segmentation (close)"
 description = "Segment virions or vescicles"
 tabs = [ "tomo_sphere", "slurm" ]
-forwarded_tabs = [ "data", "scope", "tomo_pick", "tomo_spk" ]
+forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_picking]
 name = "TOMO Particle-picking"
 description = "Size-based, import, manual and virions"
-tabs = [ "tomo_pick", "tomo_spk", "tomo_ext", "slurm" ]
+tabs = [ "tomo_pick", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_par_open]
