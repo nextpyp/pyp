@@ -853,11 +853,11 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 except OSError:
                     logger.exception("Error while deleting files.")
 
-        # create link(s) for compatibility with 3DAVG
+        # create link(s) for compatibility with 3DAVG (only if extracting sub)
         volumes_file = "frealign/{0}_original_volumes.txt".format(parameters["data_set"])
-        if os.path.lexists(volumes_file):
+        if os.path.exists(volumes_file):
             os.remove(volumes_file)
-        symlink_relative(os.path.join(os.getcwd(), new_volumes_file), volumes_file)
+        shutil.move(os.path.join(os.getcwd(), new_volumes_file), volumes_file)
 
 
     if not Web.exists:
