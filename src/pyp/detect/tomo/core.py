@@ -136,7 +136,7 @@ def process_virion_multiprocessing(
     autopick_template = virion_name + "_autopick_template.mrc"
 
     # run autopick
-    if parameters["tomo_srf_detect_method"] != "none":
+    if parameters["tomo_srf_detect_method"] != "none" and parameters.get("micromon_block") != "tomo-segmentation-closed":
 
         fresh_template_match = False
 
@@ -745,7 +745,7 @@ def process_virions(
                 )
 
                 if virion_name.endswith("_vir0000"):
-                    if parameters["tomo_srf_detect_method"] != "none":
+                    if parameters["tomo_srf_detect_method"] != "none" and parameters["micromon_block"] != "tomo-segmentation-closed":
                         if not os.path.exists(virion_name + "_cut.txt"):
                             if "template" in parameters["tomo_srf_detect_method"]:
                                 logger.info("Detecting spikes using template search")
