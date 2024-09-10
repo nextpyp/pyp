@@ -2738,7 +2738,7 @@ _description = "Sub-tomogram detection parameters"
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { auto="size-based", import="import", manual="manual", virions="virions" }
+enum = { none="none", auto="size-based", import="import", manual="manual", virions="virions" }
 default = "auto"
 
 [tabs.tomo_pick.rad]
