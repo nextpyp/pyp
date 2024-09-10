@@ -702,7 +702,7 @@ def process_virions(
                 # using thresholds from website?
                 seg_thresh = 0
                 virion_thresholds = "virion_thresholds.next"
-                if os.path.exists(virion_thresholds) and os.stat("virion_thresholds.next").st_size > 0:
+                if os.path.exists(virion_thresholds) and os.stat("virion_thresholds.next").st_size > 0 and parameters.get("micromon_block") != "tomo-segmentation-closed":
                     metadata = np.loadtxt( virion_thresholds, ndmin=2, dtype="str" )
                     virions_in_tilt_series = metadata[ metadata[:,0] == name ]
                     threshold = virions_in_tilt_series[ virions_in_tilt_series[:,1] == str(virion) ]
