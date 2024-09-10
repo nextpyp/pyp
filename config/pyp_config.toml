@@ -1303,19 +1303,28 @@ input = { type="trainedModel3D" }
 hidden = [ "tomo_import", "tomo_particles_train" ]
 
 [tabs.detect_nn3d.milo_import]
-name = "Import results from MiLoPYP"
-description = "Use MiLoPYP particles instead of particle from upstream block"
-type = "bool"
-default = false
+name = "Import from MiLoPYP"
+description = "Use MiLoPYP particles for training"
+type = "enum"
+enum = { none="none", phoenix="parquet", classes="class labels" }
+default = "none"
 hidden = [ "tomo_import", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.milo_parquet]
-name = "Coordinates file (*.parquet)"
-description = "Path to parquet file produced by Arize-AI's Phoenix"
+name = "Parquet file"
+description = "Path to parquet file produced by Phoenix"
 type = "path"
 path = { type="files" }
 input = { type="parquetfile" }
-condition = { arg="milo_import", value="true" }
+condition = { arg="milo_import", value="phoenix" }
+
+[tabs.detect_nn3d.milo_classes]
+name = "Class IDs"
+description = "Comma separated list of classes to be selected for training"
+type = "str"
+default = ""
+condition = { arg="milo_import", value="classes" }
+hidden = [ "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.down_ratio]
 name = "Downsample"
@@ -1457,6 +1466,13 @@ description = "Use particle projections (2D) or subvolumes (3D)"
 type = "enum"
 enum = { 2d3d="2D + 3D", 3d="3D only" }
 default = "2d3d"
+
+[tabs.detect_milo.lightweight]
+name = "Use lighweight model"
+description = "Requires less GPU memory"
+type = "bool"
+default = false
+hidden = true
 
 [tabs.detect_milo.num_epochs]
 name = "Epochs"

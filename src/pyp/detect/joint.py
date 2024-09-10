@@ -205,27 +205,66 @@ def tomotrain(args):
     """
     train_folder = os.path.join( os.getcwd(), "train" )
 
-    if args.get("detect_nn3d_milo_import") and "detect_nn3d_milo_parquet" in args and os.path.exists( project_params.resolve_path(args["detect_nn3d_milo_parquet"])):
+    train_coords = os.path.join(train_folder, 'training_coordinates.txt')
+    train_images = os.path.join(train_folder, 'training_images.txt')
 
-        train_coords = os.path.join(train_folder, 'training_coordinates.txt')
-        train_images = os.path.join(train_folder, 'training_images.txt')
+    scratch_folder = os.path.join( os.environ["PYP_SCRATCH"], "milopyp")
+    os.makedirs( scratch_folder, exist_ok=True)
+    
+    if args.get("detect_nn3d_milo_import") and args.get("detect_nn3d_milo_import") != "none":
 
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {project_params.resolve_path(args['detect_nn3d_milo_parquet'])} --output {train_coords}"
-        [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
-        if os.path.exists(train_coords):
-
-            train_data = np.loadtxt(train_coords, dtype=str, ndmin=2, comments="image_name")
-            image_names = np.unique(train_data[:,0])
-            if image_names.size > 0:
-                with open(train_images, 'w') as f:
-                    f.write("image_name\trec_path\n")
-                    for name in image_names:
-                        rec_path = os.path.join( os.getcwd(), "mrc", name+".rec" )
-                        f.write(name + "\t" + rec_path + "\n")
+        # select classes manually
+        if args.get("detect_nn3d_milo_import") == "classes":
+            if len(args.get("detect_nn3d_milo_classes").split(",")) == 0:
+                raise Exception("Please specify a list of classes to select")
             else:
-                raise Exception("Converted coordinates file is empty, please check the input parquet file")
-        else:
-            raise Exception("Failed to convert the parquet to coordinates")
+                if_double = "--if_double" if args.get("detect_nn3d_compress") else ""
+                
+                # extract specific classes
+                command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {args.get('detect_nn3d_milo_classes')}"
+                [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+                
+                # extract coordinates
+                command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/utils/generate_train_file.py --dir {scratch_folder} --out {os.path.join(scratch_folder,'test')}"
+                [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+
+                shutil.copy2( os.path.join( scratch_folder, "test_train_coords.txt"), train_coords)
+                
+                train_data = np.loadtxt(train_coords, dtype=str, ndmin=2, comments="image_name")
+                image_names = np.unique(train_data[:,0])
+                if image_names.size > 0:
+                    with open(train_images, 'w') as f:
+                        f.write("image_name\trec_path\n")
+                        for name in image_names:
+                            rec_path = os.path.join( os.getcwd(), "mrc", name+".rec" )
+                            f.write(name + "\t" + rec_path + "\n")
+
+                number_of_coordinates = np.loadtxt(train_coords, comments='image_name', ndmin=2, dtype='str').shape[0]
+                if number_of_coordinates == 0:
+                    raise Exception(f"Class selection {args.get('detect_nn3d_milo_classes')} contains no particles")
+                logger.info(f"Selecting class IDs: {args.get('detect_nn3d_milo_classes')} containing {number_of_coordinates:,} particles")
+        
+        # load classes from Phoenix
+        elif "detect_nn3d_milo_import" == "phoenix":
+            if not os.path.exists( project_params.resolve_path(args["detect_nn3d_milo_parquet"])):
+                raise Exception("Please specify the location of a .parquet file")
+            else:
+                command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {project_params.resolve_path(args['detect_nn3d_milo_parquet'])} --output {train_coords}"
+                [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+                if os.path.exists(train_coords):
+
+                    train_data = np.loadtxt(train_coords, dtype=str, ndmin=2, comments="image_name")
+                    image_names = np.unique(train_data[:,0])
+                    if image_names.size > 0:
+                        with open(train_images, 'w') as f:
+                            f.write("image_name\trec_path\n")
+                            for name in image_names:
+                                rec_path = os.path.join( os.getcwd(), "mrc", name+".rec" )
+                                f.write(name + "\t" + rec_path + "\n")
+                    else:
+                        raise Exception("Converted coordinates file is empty, please check the input parquet file")
+                else:
+                    raise Exception("Failed to convert the parquet to coordinates")
     else:
     
         train_name = "particles"
@@ -239,7 +278,7 @@ def tomotrain(args):
 
     # substitute coordinate files with binned values
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
-    logger.info(f"Binning coordinates ({number_of_labels} labels)")
+    logger.info(f"Binning coordinates ({number_of_labels:,} labels)")
 
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
