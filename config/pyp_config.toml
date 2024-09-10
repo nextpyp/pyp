@@ -2570,7 +2570,7 @@ default = "mesh"
 name = "Particle radius (A)"
 description = "Particle radius in A"
 type = "float"
-dfault = 0
+default = 0
 
 [tabs.tomo_srf.detect_ref]
 name = "Template (*.mrc)"
