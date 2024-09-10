@@ -831,7 +831,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 # print vector
                 vector[0] = str(count)
                 # randomize phi angle in +/- 180
-                if parameters["tomo_srf_detect_rand"] or parameters["tomo_spk_rand"]:
+                if parameters["tomo_vir_detect_rand"] or parameters["tomo_spk_rand"]:
                     vector[10] = "%.4f" % (360 * (random.random() - 0.5))
                 vector[-1] = os.getcwd() + "/sva/" + vector[-1]
                 f.write("\t".join([v for v in vector]) + "\n")
