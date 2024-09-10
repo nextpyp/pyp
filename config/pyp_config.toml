@@ -4012,7 +4012,7 @@ description = "Enable ab initio refinement"
 type = "bool"
 default = false
 copyToNewBlock = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "spr_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_coarse_refine" ]
 
 [tabs.csp.InitialResolution]
 name = "Starting resolution limit"
