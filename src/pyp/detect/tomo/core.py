@@ -1230,7 +1230,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
         )
 
-    elif ( "tomo_spk_method" in parameters and parameters["tomo_spk_method"] != "none" or parameters.get("tomo_pick_method") == "virions" ) and not os.path.exists("%s.spk" % name):
+    elif ( "tomo_spk_method" in parameters and parameters["tomo_spk_method"] != "none" or parameters.get("tomo_pick_method") == "virions" ) and not os.path.exists("%s.spk" % name) or parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_spk_method") == "manual":
 
         if parameters["tomo_spk_rad"] == 0:
             raise Exception("Please specify a particle radius > 0 (-tomo_spk_rad)")
