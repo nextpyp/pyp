@@ -1419,14 +1419,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     parameters = project_params.load_pyp_parameters()
  
-    # ensure backwards compatibility
-    for key in parameters.copy().keys():
-        if key.startswith("tomo_vir") and not parameters.get(key.replace("tomo_vir","tomo_srf")):
-            parameters[key.replace("tomo_vir","tomo_srf")] = parameters.get(key)
-        # move parameters over froom tomo_pick to tomo_spk
-        if key.startswith("tomo_pick") and not parameters.get(key.replace("tomo_pick","tomo_spk")):
-            parameters[key.replace("tomo_pick","tomo_spk")] = parameters.get(key)
-    
     # get file name
     name = os.path.basename(filename)
 
@@ -1725,7 +1717,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # virion segmentation and surface-constrained particle pickiing
     if parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
         # use spike radius as virion radius
-        parameters["tomo_vir_rad"] = parameters["tomo_pick_rad"]
         if parameters.get("micromon_block") == "tomo-picking-closed":
             parameters["tomo_spk_rad"] = parameters["tomo_srf_detect_rad"]
         if os.path.exists(name+".spk"):
@@ -1735,7 +1726,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_pick_method") == "virions":
         # use spike radius as virion radius
         parameters["tomo_spk_method"] = parameters["tomo_pick_method"]
-        parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
+        parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_vir_rad"]
 
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
@@ -4908,9 +4899,34 @@ EOF
                 if "extract_cls" not in parameters.keys():
                     parameters["extract_cls"] = 0
 
-                # set the correct virion radius if in tomo-picking-closed block to ensure proper particle extraction
-                if parameters.get("micromon_block") == "tomo-picking-closed":
-                    parameters["tomo_vir_rad"] = parameters["tomo_pick_rad"]
+                # ensure backwards compatibility
+                
+                # read specification file to figure out default parameters
+                import toml
+                specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+
+                # copy tomo_pick_vir to tomo_vir and tomo_spk_vir
+                if parameters["micromon_block"] != "tomo-preprocessing" and parameters["micromon_block"] != "" and parameters["micromon_block"] != "tomo-pure-preprocessing":
+                    new_parameters = parameters.copy()
+                    for k in parameters.keys():
+                        if k.startswith("tomo_pick_vir_"):
+                            default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
+                            if parameters[k] != default:
+                                logger.warning(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                                new_parameters[k.replace("tomo_pick_vir_","tomo_vir_")] = parameters[k]
+                        # copy tomo_pick_ to tomo_spk
+                        elif k.startswith("tomo_pick_"):
+                            default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
+                            if parameters[k] != default and not k.endswith('_method'):
+                                logger.warning(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
+                                new_parameters[k.replace("tomo_pick_","tomo_spk_")] = parameters[k]
+                        # copy tomo_srf parameters to tomo_vir
+                        if k.startswith("tomo_srf_"):
+                            default = specifications.get("tabs").get("tomo_srf").get(k.replace("tomo_srf_","")).get("default")
+                            if parameters[k] != default:
+                                logger.warning(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                                new_parameters[k.replace("tomo_srf_","tomo_vir_")] = parameters[k]
+                    parameters = new_parameters.copy()
 
                 # set particle radius based on bbox size                
                 if parameters.get("micromon_block") == "tomo-particles-eval":
