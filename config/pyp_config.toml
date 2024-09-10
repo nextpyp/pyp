@@ -2739,7 +2739,7 @@ name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
 enum = { none="none", auto="size-based", import="import", manual="manual", virions="virions" }
-default = "auto"
+default = "none"
 
 [tabs.tomo_pick.rad]
 name = "Particle radius (A)"
