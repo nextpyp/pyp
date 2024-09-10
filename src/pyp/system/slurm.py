@@ -471,7 +471,7 @@ def submit_jobs(
         depend = " --dependency=afterany:{0}".format(dependencies)
 
     # call the corresponding submission function
-    if is_list and procs > 1:
+    if is_list and ( procs > 1 or jobtype == "cspswarm"):
         id = jobs.submit_commands(
             submit_dir,
             command_file,
