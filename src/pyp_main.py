@@ -201,9 +201,9 @@ def parse_arguments(block):
 
             # detect errors
             if parent_parameters["data_import"]:
-                if parent_parameters["micromon_block"] == "sp-import" and parent_parameters["data_mode"] != "spr":
+                if parent_parameters["micromon_block"] == "sp-import" and parameters_existing["data_mode"] != "spr":
                     raise Exception(f"Cannot import tomography project as single-particle project")
-                elif parent_parameters["micromon_block"] == "tomo-import" and parent_parameters["data_mode"] != "tomo":
+                elif parent_parameters["micromon_block"] == "tomo-import" and parameters_existing["data_mode"] != "tomo":
                     raise Exception(f"Cannot import single-particle project as tomography project")
 
             # if importing an spr session, reset all the "force" flags
