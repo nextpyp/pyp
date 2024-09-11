@@ -200,7 +200,7 @@ def parse_arguments(block):
                                 del parameters_existing[f"{t}_{p}"]
 
             # if importing an spr session, reset all the "force" flags
-            if parent_parameters["micromon_block"] == "spr-session":
+            if parent_parameters["micromon_block"] == "sp-session":
                 parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['detect_force'] = False
 
             # if importing a tomo session, reset all the "force" flags
