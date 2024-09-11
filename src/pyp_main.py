@@ -199,12 +199,23 @@ def parse_arguments(block):
                             elif f"{t}_{p}" in parameters_existing:
                                 del parameters_existing[f"{t}_{p}"]
 
+            # detect errors
+            if parent_parameters["data_import"]:
+                if parent_parameters["micromon_block"] == "sp-import" and parent_parameters["data_mode"] != "spr":
+                    raise Exception(f"Cannot import tomography project as single-particle project")
+                elif parent_parameters["micromon_block"] == "tomo-import" and parent_parameters["data_mode"] != "tomo":
+                    raise Exception(f"Cannot import single-particle project as tomography project")
+
             # if importing an spr session, reset all the "force" flags
             if parent_parameters["micromon_block"] == "sp-session":
+                if parent_parameters["data_mode"] != "spr":
+                    raise Exception(f"Cannot import tomography session as single-particle session")
                 parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['detect_force'] = False
 
             # if importing a tomo session, reset all the "force" flags
             if parent_parameters["micromon_block"] == "tomo-session":
+                if parent_parameters["data_mode"] != "tomo":
+                    raise Exception(f"Cannot import single-particle session as tomography session")
                 parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['tomo_ali_force'] = parameters_existing['tomo_rec_force'] = parameters_existing['detect_force'] = parameters_existing['tomo_vir_force'] = False
 
     else:
