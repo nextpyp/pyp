@@ -142,9 +142,9 @@ Now, we will use the positions selected in the previous step to train the refine
 
 * Click on :guilabel:`MiLoPYP Particles` (output of the :badge:`MiLoPYP (eval),badge-secondary` block) and select :badge:`Particle-Picking (train),badge-primary`
 
-* Option A: From the ``Import from MiLoPYP`` menu select "parquet", and specify the location of the ``.parquet`` file you uploaded in the previous step: ``particles.parquet``
+* **Option A**: From the ``Import from MiLoPYP`` menu select "parquet", and specify the location of the ``.parquet`` file you uploaded in the previous step: ``particles.parquet``
 
-* Option B: From the ``Import from MiLoPYP`` menu select "class labels" and specify the list of classes you want to use for training (as displayed in the **Class Labels** panel)
+* **Option B**: From the ``Import from MiLoPYP`` menu select "class labels" and specify the list of classes you want to use for training (as displayed in the **Class Labels** panel)
 
 * Set parameters for training as needed
 
