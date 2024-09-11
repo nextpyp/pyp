@@ -23,6 +23,11 @@ name = "SPA Star Import"
 description = "Star data import for SPA"
 tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
 
+[blocks.spr_session]
+name = "SPA Session Import"
+description = "Star data import for SPA"
+tabs = [ "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
+
 [blocks.spr_pre_process]
 name = "SPA pre-processing (legacy)"
 description = "Frame alignment, CTF, and particle picking"
@@ -86,6 +91,11 @@ tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk",
 name = "TOMO Star Import"
 description = "Star data import for TOMO"
 tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+
+[blocks.tomo_session]
+name = "TOMO Session Import"
+description = "Star data import for TOMO"
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
 [blocks.tomo_pre_process]
 name = "TOMO Pre-processing (legacy)"
