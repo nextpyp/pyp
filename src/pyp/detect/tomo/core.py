@@ -1358,7 +1358,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 spike_coordinates = spike_coordinates[:, [0, 1, 2]]
 
             # reverse z-dimension for legacy blocks
-            elif parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "":
+            elif parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "tomo-session" or parameters.get("micromon_block") == "":
                 spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
 
             spike_coordinates_with_radius = np.hstack( ( spike_coordinates, parameters["tomo_spk_rad"] / binning * np.ones((spike_coordinates.shape[0],1)) ) )
