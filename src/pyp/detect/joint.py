@@ -592,12 +592,12 @@ def miloeval(args):
         input_model = project_params.resolve_path(args['detect_milo_model'])
 
         if '2d' in args['detect_milo_mode']:
-            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {train_folder + '_testing.log'}"
+            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
 
         else:
-            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {train_folder + '_testing.log'}"
+            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
@@ -612,7 +612,7 @@ def miloeval(args):
         os.makedirs( output_folder )
         
         # generate 2D visualization plots
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {train_folder +  '_plot2d.log'}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {scratch_train +  '_plot2d.log'}"
 
         local_run.run_shell_command(command, verbose=args["slurm_verbose"])             
 
@@ -629,29 +629,35 @@ def miloeval(args):
 
         # TODO: generate 3D tomogram visualization plots
         color_file = os.path.join(output_folder,'all_colors.npy')
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {train_folder + '_plot3d.log'}"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
-        rec_file = glob.glob('exp/simsiam2d3d/test_sample/*_rec3d.npy')[0]
-        name = Path(rec_file).stem.replace('_rec3d','')
-        hm_file = glob.glob(f'exp/simsiam2d3d/test_sample/{name}_hm3d*.npy')[0]
-        rec = np.load(rec_file)
-        hm = np.load(hm_file)
-
-        # extract middle slice from tomogram
-        slice_rec = rec[int(rec.shape[0]/2),:,:,:]
- 
-        # extract middle slice from colormap
-        med_slice_index = 4 if args.get("detect_milo_compress") else 2
-        slice_color = hm[int(hm.shape[0]/med_slice_index),:,:,:]
-
-        # produce weighted image
-        weight = args.get('detect_milo_blend_ratio')
-        slice = ( 1 - weight ) * slice_rec + weight * slice_color
-        
-        # save as webp
         import matplotlib.image
-        matplotlib.image.imsave(os.path.join(train_folder,'3d_visualization_out.webp'), slice.astype('uint8') )
+        first = True
+        rec_files = glob.glob('exp/simsiam2d3d/test_sample/*_rec3d.npy')
+
+        for rec_file in rec_files:
+            name = Path(rec_file).stem.replace('_rec3d','')
+            
+            # get corresponding volume slice from pyp reconstruction
+            slice_rec = matplotlib.image.imread( os.path.join( Path(train_folder).parents[0] / 'webp', name + '.webp' ))
+    
+            hm_file = glob.glob(f'exp/simsiam2d3d/test_sample/{name}_hm3d*.npy')[0]
+            hm = np.load(hm_file)
+            
+            # extract middle slice from colormap (considering binning)
+            med_slice_index = 4 if args.get("detect_milo_compress") else 2
+            slice_color = hm[int(hm.shape[0]/med_slice_index),:,:,:]
+
+            # produce weighted image
+            weight = args.get('detect_milo_blend_ratio')
+            slice = ( 1 - weight ) * slice_rec + weight * np.flip(slice_color,0)
+            
+            # save result as webp
+            if first:
+                matplotlib.image.imsave(os.path.join(train_folder,'3d_visualization_out.webp'), slice.astype('uint8') )
+                first = False
+            matplotlib.image.imsave(os.path.join(train_folder,name + '_3d_visualization.webp'), slice.astype('uint8') )
 
     else:
         raise Exception("Model to run MiLoPYP inference is missing")
