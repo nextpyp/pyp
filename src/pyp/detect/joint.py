@@ -573,6 +573,40 @@ def miloeval(args):
     rec_folder = os.path.join( os.getcwd(), "mrc" ) 
     imgs_file = os.path.join( project_params.resolve_path(args.get("data_parent")), "train",  "train_images.txt" )
 
+    # if training file doesn't exist, create one from the list of micrographs
+    if not os.path.exists(imgs_file):
+        micrographs = f"{args['data_set']}.micrographs"
+        if not os.path.exists(micrographs):
+            raise Exception('No micrographs file in ' + os.getcwd())
+        else:
+            imgs_file = os.path.join( os.getcwd(), "train",  "train_images.txt" )
+            input_list = [line.strip() for line in open(micrographs)]
+
+            with open(imgs_file, 'w') as f:
+                f.write("image_name\trec_path\ttilt_path\tangle_path\n")
+                for file in input_list:                    
+                    # retrieve metadata from pkl file
+                    pkl_file = os.path.join("pkl", file + ".pkl")
+
+                    # unpack pkl file
+                    metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+
+                    # save into rawtlt file
+                    tlt_file = pkl_file.replace("pkl/","train/").replace(".pkl",".rawtlt")
+                    np.savetxt(tlt_file, metadata.data["tlt"].values, fmt="%.2f")
+                    
+                    # check tilt bin.ali file
+                    if not os.path.exists(os.path.join("mrc", file + "_bin.ali")):
+                        try:
+                            binning = args["tomo_rec_binning"]
+                            comm = "{0}/bin/newstack -input mrc/{1}.mrc -output mrc/{1}_bin.ali -mode 2 -origin -linear -bin {2}".format( get_imod_path(), file, binning )
+
+                            [output, error] =local_run.run_shell_command(comm,verbose=args["slurm_verbose"])
+                        except:
+                            raise Exception("Can't find aligned tilt series images")
+
+                    f.write( file + "\t" + os.path.join( os.getcwd(), 'mrc', file + ".rec") + "\t" + os.path.join( os.getcwd(), 'mrc', file + "_bin.ali") + "\t" + os.path.join( os.getcwd(), 'train', file + ".rawtlt") + "\n" )                    
+
     if 'detect_milo_model' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_milo_model']) ):
 
         logger.info(f"Evaluating MiLoPYP's exploration module using {Path(project_params.resolve_path(args['detect_milo_model'])).name}")
