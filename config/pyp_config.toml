@@ -1317,6 +1317,7 @@ type = "path"
 path = { type="files" }
 input = { type="parquetfile" }
 condition = { arg="milo_import", value="phoenix" }
+hidden = [ "tomo_import", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.milo_classes]
 name = "Class IDs"
@@ -1324,7 +1325,7 @@ description = "Comma separated list of classes to be selected for training"
 type = "str"
 default = ""
 condition = { arg="milo_import", value="classes" }
-hidden = [ "tomo_particles_eval" ]
+hidden = [ "tomo_import", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.down_ratio]
 name = "Downsample"
