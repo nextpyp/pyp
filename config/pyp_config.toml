@@ -1474,6 +1474,12 @@ type = "bool"
 default = false
 hidden = true
 
+[tabs.detect_milo.compress]
+name = "Additional binning in Z"
+description = "Average consecutive slices in Z (2x binning)"
+type = "bool"
+default = true
+
 [tabs.detect_milo.num_epochs]
 name = "Epochs"
 description = "Number of passes through the entire dataset"
@@ -1534,6 +1540,13 @@ description = "Kernel size for the last convolution layer prior to projection op
 type = "int"
 default = 3
 hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.blend_ratio]
+name = "Blend ratio"
+description = "Mixing ratio to use for 3D visualization (0=less color, 1=more color)"
+type = "float"
+default = 0.2
+hidden = [ "tomo_milo_train" ]
 
 [tabs.detect_milo.debug]
 name = "Debug mode"

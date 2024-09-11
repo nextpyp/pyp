@@ -514,7 +514,7 @@ def milotrain(args):
     # make sure all output stays under the train folder
     os.chdir(scratch_train)
 
-    if args.get("detect_nn3d_compress"):
+    if args.get("detect_milo_compress"):
         compress = "--compress"
     else:
         compress = ""
@@ -570,6 +570,7 @@ def milotrain(args):
 def miloeval(args):
 
     train_folder = os.path.join( os.getcwd(), "train" ) 
+    rec_folder = os.path.join( os.getcwd(), "mrc" ) 
     imgs_file = os.path.join( project_params.resolve_path(args.get("data_parent")), "train",  "train_images.txt" )
 
     if 'detect_milo_model' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_milo_model']) ):
@@ -583,7 +584,7 @@ def miloeval(args):
         # make sure all output stays under the train folder
         os.chdir(scratch_train)
 
-        if args.get("detect_nn3d_compress"):
+        if args.get("detect_milo_compress"):
             compress = "--compress"
         else:
             compress = ""
@@ -600,11 +601,7 @@ def miloeval(args):
 
             output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
-        [ output, error ] = local_run.run_shell_command(command, verbose=args["slurm_verbose"])
-        
-        if args.get('slurm_verbose'):
-            with open(train_folder + '_testing.log') as f:
-                logger.info("\n".join([s for s in f.read().split("\n") if not s.startswith('No param') and not s.startswith('Drop parameter layer')]))
+        local_run.run_shell_command(command, verbose=args["slurm_verbose"])
         
         # check for failure if no output was produced
         if not os.path.isfile(output_file):
@@ -617,10 +614,7 @@ def miloeval(args):
         # generate 2D visualization plots
         command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {train_folder +  '_plot2d.log'}"
 
-        local_run.run_shell_command(command, verbose=args["slurm_verbose"])
-        if args.get('slurm_verbose'):
-            with open(train_folder + '_plot2d.log') as f:
-                logger.info("\n".join([s for s in f.read().split("\n") if s]))                
+        local_run.run_shell_command(command, verbose=args["slurm_verbose"])             
 
         # copy results to project folder
         for file in [ 'interactive_info_parquet.gzip', "2d_visualization_labels.webp", "2d_visualization_out.webp" ]:
@@ -634,19 +628,30 @@ def miloeval(args):
         local_run.run_shell_command(command, verbose=False)
 
         # TODO: generate 3D tomogram visualization plots
-        """
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {outputfile} --color exp/simsiam2d3d/test_sample/all_colors.npy --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir sample_data/ 2>&1 | tee {train_folder + '_plot3d.log'}"
-        [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
-        if args.get('slurm_verbose'):
-            with open(train_folder + '_plot3d.log') as f:
-                logger.info("\n".join([s for s in output.read().split("\n") if s]))
-          
-        logger.warning(glob.glob("*.*"))      
-        # The two arrays can be blended using weighted averaging        
-        # w x rec_3d.npy + (1-w) x hm3d_simsiam.npy
-        weight = 0.5
-        output = weight * np.load("rec_3d.npy") + ( 1 - weight) * np.load("hm3d_simsiam.npy")
-        """
+        color_file = os.path.join(output_folder,'all_colors.npy')
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {train_folder + '_plot3d.log'}"
+        local_run.run_shell_command(command, verbose=args['slurm_verbose'])
+
+        rec_file = glob.glob('exp/simsiam2d3d/test_sample/*_rec3d.npy')[0]
+        name = Path(rec_file).stem.replace('_rec3d','')
+        hm_file = glob.glob(f'exp/simsiam2d3d/test_sample/{name}_hm3d*.npy')[0]
+        rec = np.load(rec_file)
+        hm = np.load(hm_file)
+
+        # extract middle slice from tomogram
+        slice_rec = rec[int(rec.shape[0]/2),:,:,:]
+ 
+        # extract middle slice from colormap
+        med_slice_index = 4 if args.get("detect_milo_compress") else 2
+        slice_color = hm[int(hm.shape[0]/med_slice_index),:,:,:]
+
+        # produce weighted image
+        weight = args.get('detect_milo_blend_ratio')
+        slice = ( 1 - weight ) * slice_rec + weight * slice_color
+        
+        # save as webp
+        import matplotlib.image
+        matplotlib.image.imsave(os.path.join(train_folder,'3d_visualization_out.webp'), slice.astype('uint8') )
 
     else:
         raise Exception("Model to run MiLoPYP inference is missing")
