@@ -4914,6 +4914,9 @@ EOF
                             if parameters[k] != default:
                                 logger.warning(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
                                 new_parameters[k.replace("tomo_pick_vir_","tomo_vir_")] = parameters[k]
+                        # map particle picking methods
+                        elif k == "tomo_pick_method" and parameters[k] != "virions":
+                            new_parameters["tomo_spk_method"] = parameters[k]
                         # copy tomo_pick_ to tomo_spk
                         elif k.startswith("tomo_pick_"):
                             default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
