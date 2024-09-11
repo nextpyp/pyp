@@ -1486,7 +1486,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             metadata_object = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)
 
             # clean entries based on _force in parameters
-            logger.warning(parameters)
             metadata_object.refresh_entries(parameters, update_virion=updating_virion)
 
             metadata = metadata_object.data
