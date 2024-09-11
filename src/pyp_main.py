@@ -170,6 +170,7 @@ def parse_arguments(block):
     parser.add_argument("-data_mode", "--data_mode")
     parser.add_argument("-data_import", "--data_import",action="store_true",default=False)
     parser.add_argument("-csp_no_stacks", "--csp_no_stacks",action="store_true",default=False)
+    parser.add_argument("-micromon_block", "--micromon_block")
     args, unknown = parser.parse_known_args()
     parent_parameters = vars(args)
 
@@ -197,6 +198,14 @@ def parse_arguments(block):
                                 parameters_existing[f"{t}_{p}"] = specifications["tabs"][t][p]["default"]
                             elif f"{t}_{p}" in parameters_existing:
                                 del parameters_existing[f"{t}_{p}"]
+
+            # if importing an spr session, reset all the "force" flags
+            if parent_parameters["micromon_block"] == "spr-session":
+                parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['detect_force'] = False
+
+            # if importing a tomo session, reset all the "force" flags
+            if parent_parameters["micromon_block"] == "tomo-session":
+                parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['tomo_ali_force'] = parameters_existing['tomo_rec_force'] = parameters_existing['detect_force'] = parameters_existing['tomo_vir_force'] = False
 
     else:
         parameters_existing = project_params.load_parameters()
@@ -1477,6 +1486,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             metadata_object = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)
 
             # clean entries based on _force in parameters
+            logger.warning(parameters)
             metadata_object.refresh_entries(parameters, update_virion=updating_virion)
 
             metadata = metadata_object.data
