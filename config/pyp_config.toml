@@ -2572,18 +2572,18 @@ hidden = true
 _name = "Particle detection"
 _description = "Particle detection parameters"
 
-[tabs.tomo_srf.detect_method]
-name = "Method"
-description = "Strategy to use for particle detection"
-type = "enum"
-enum = { template="template search", mesh="uniform" }
-default = "mesh"
-
 [tabs.tomo_srf.detect_rad]
 name = "Particle radius (A)"
 description = "Particle radius in A"
 type = "float"
 default = 0
+
+[tabs.tomo_srf.detect_method]
+name = "Method"
+description = "Strategy to use for particle detection"
+type = "enum"
+enum = { none="none", template="template search", mesh="uniform" }
+default = "none"
 
 [tabs.tomo_srf.detect_ref]
 name = "Template (*.mrc)"
