@@ -2,10 +2,14 @@
 MiLoPYP - Pattern mining
 ========================
 
-The ``MiLoPYP`` workflow consists of a pattern mining and a refinement stage, each implemented using two blocks:
+`MiLoPYP <https://nextpyp.app/milopyp/>`_ can be used to map the entire contents of a set of tomograms, with the goal of identifying targets of interest for sub-tomogram averaging. The algorithms are described `here<https://www.nature.com/articles/s41592-024-02403-6>`_.
 
-#. Pattern minning: :badge:`MiLoPYP (train),badge-primary` and :badge:`MiLoPYP (eval),badge-primary` blocks 
-#. Refinement: :badge:`Particle-Picking (train),badge-primary` and :badge:`Particle-Picking (eval),badge-primary` blocks
+The ``MiLoPYP`` workflow in ``nextPYP`` consists of two steps and is implemented using four blocks:
+
+#. **Pattern minning** uses the :badge:`MiLoPYP (train),badge-primary` and :badge:`MiLoPYP (eval),badge-primary` blocks 
+#. **Position refinement** uses the :badge:`Particle-Picking (train),badge-primary` and :badge:`Particle-Picking (eval),badge-primary` blocks
+
+Here is an example of how the workflow looks in the project view (relevant blocks are highlighted in blue):
 
 .. figure:: ../images/milopyp_workflow.webp
     :alt: MiLoPYP workflow
@@ -16,9 +20,9 @@ Step 0: Pre-requisites
 Visualization
 ^^^^^^^^^^^^^
 
-To analyze the results of ``MiLoPYP`` interactively, you need to install `Phoenix-Arize <https://docs.arize.com/phoenix>`_ in your *local* machine
+To analyze the results of ``MiLoPYP`` interactively, you need to install and run `Phoenix-Arize <https://docs.arize.com/phoenix>`_ either `remotely <https://nextpyp.app/milopyp/explore/#3d-interactive-session>`_ or in your *local* machine.
 
-For macOS, for example, follow these steps:
+For a local installaton on macOS, for example, follow these steps:
 
 #. Download and install miniconda following `these <https://conda.io/projects/conda/en/latest/user-guide/install/macos.html>`_ instructions
 
@@ -34,7 +38,7 @@ For macOS, for example, follow these steps:
 Data pre-processing
 ^^^^^^^^^^^^^^^^^^^
 
-Since ``MiLoPYP`` operates on reconstructured tomograms, you first need to pre-process your tilt-series using the :badge:`Pre-processing,badge-primary` block
+Since ``MiLoPYP`` operates on reconstructured tomograms, you first need to pre-process your tilt-series using the :badge:`Pre-processing,badge-primary` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar-10304>` tutorials)
 
 Step 1: Pattern mining (training)
 ---------------------------------
@@ -45,11 +49,11 @@ To train the mining/exploration module:
 
 #. Set the training parameters as needed
 
-#. (optional) If you want to train MiLoPYP on a subset of tomograms, create a :doc:`Filter<filters>` in the :badge:`Pre-processing,badge-secondary` block and select its name from the **Filter tomograms** dropdown menu
+#. (optional) If you want to train MiLoPYP on a subset of the tomograms in your dataset, create a :doc:`Filter<filters>` in the :badge:`Pre-processing,badge-secondary` block and select its name from the **Filter tomograms** dropdown menu at the top of the form. For datasets with many tomograms, doing this will considerably speed up training
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-#. Navigate to the :badge:`MiLoPYP (train),badge-primary` block to monitor the training metrics
+#. Once the run completes, navigate to the :badge:`MiLoPYP (train),badge-primary` block to monitor the training metrics
 
 Step 2: Pattern mining (evaluation)
 -----------------------------------
@@ -58,26 +62,29 @@ The trained model can now be evaluated to visualize the results:
 
 #. Click on :guilabel:`MiLoPYP model` (output of the :badge:`MiLoPYP (train),badge-secondary` block) and select :badge:`MiLoPYP (eval),badge-primary`
 
-#. Select the trained model from the block upstream (``*.pth``), for example, ``model_last_contrastive.pth``
+#. Select the trained model from the block upstream (``*.pth``), for example, ``model_last_contrastive.pth``. The models will be organized in sub-folders named after the date and time of training: ``YYYYMMDD_HHMMSS``
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-#. Navigate to the :badge:`MiLoPYP (eval),badge-primary` block to visualize the embedding and the cluster labels
+#. Once the run completes, navigate to the :badge:`MiLoPYP (eval),badge-primary` block to visualize the embedding and the cluster labels
+
+.. figure:: ../images/milopyp_eval.webp
+    :alt: MiLoPYP evaluation
 
 Step 3: Target selection
 ------------------------
 
-There are two ways to select paticles for training the refinement module:
+There are two ways to select target positions to train the refinement module:
 
 Option A: Manual cluster selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is the simplest option and does not require running any external tools, it only requires specifying a list of cluster numbers as displayed in the **Class Labels** panel
+This option only requires specifying a list of cluster numbers as displayed in the **Class Labels** panel, and can be done within ``nextPYP`` without running any external tools
 
 Option B: Interactive target selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This option requires access to Phoenix to interactively select particles:
+This option requires running the program `Phoenix-Arize <https://docs.arize.com/phoenix>`_ to interactively select locations of interest:
 
 * Navigate to the :badge:`MiLoPYP (eval),badge-primary` block and download the file ***_milo.tbz**
 
@@ -129,16 +136,16 @@ With Phoenix now running:
 
 * Go back to ``nextPYP`` and navigate to the :badge:`MiLoPYP (eval),badge-primary` block
 
-* Click on the Upload button :fa:`upload, text-primary`, browse to the location of the ``.parquet`` file, and upload the file
+* Click on the **Upload** button :fa:`upload, text-primary`, browse to the location of the ``.parquet`` file you exported from Phoenix, and upload the file
 
 .. note::
 
-    Currently, the file will be uploaded and renamed to ``particles.parquet`` on the remote server. If a file with that name already exists, it will be overwriten with the new file
+    Currently, the file will be uploaded and always be renamed to ``particles.parquet`` on the remote server. If a file with that name already exists, it will be overwriten with the new file
 
 Step 4: Particle refinement (training)
 --------------------------------------
 
-Now, we will use the positions selected in the previous step to train the refinement module:
+Now that we have identified our targets of interest, we will use them to train the refinement module:
 
 * Click on :guilabel:`MiLoPYP Particles` (output of the :badge:`MiLoPYP (eval),badge-secondary` block) and select :badge:`Particle-Picking (train),badge-primary`
 
@@ -150,24 +157,24 @@ Now, we will use the positions selected in the previous step to train the refine
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-#. Navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the training metrics
+#. Once the run completes, navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the training metrics
 
 Step 5: Particle refinement (evaluation)
 ----------------------------------------
 
-The last step is to evaluate the model and obtain the final particle positions:
+The last step is to evaluate the model and obtain the final particle positions on all tomograms in the dataset:
 
 #. Click on :guilabel:`Particles Model` (output of the :badge:`Particle-Picking (train),badge-secondary` block) and select :badge:`Particle-Picking (eval),badge-primary`
 
-#. Select the location of the ``Trained model (*.pth)`` using the file browser
+#. Select the location of the ``Trained model (*.pth)`` using the file browser. The models will be organized in sub-folders named after the date and time of training: ``YYYYMMDD_HHMMSS``
 
 #. Set parameters for evaluation as needed
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-#. Navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the particle picking results
+#. Once the run completes, navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the particle picking results
 
-The resulting set of particles can be used for 3D refinement using the :badge:`Particle refinement,badge-secondary` block
+The resulting set of particles can be used for 3D refinement using the :badge:`Particle refinement,badge-secondary` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar-10304>` tutorials)
 
 .. seealso::
 
