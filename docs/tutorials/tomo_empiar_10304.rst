@@ -607,6 +607,6 @@ Step 13: 3D classification
 .. seealso::
 
     * :doc:`Single-particle tutorial<spa_empiar_10025>`
-    * :doc:`Single-particle session<stream_spr>`
+    * :doc:`Single-particle (on-the-fly)<stream_spr>`
     * :doc:`Tomography tutorial<tomo_empiar_10164>`
-    * :doc:`Tomography session<stream_tomo>`
+    * :doc:`Tomography (on-the-fly)<stream_tomo>`

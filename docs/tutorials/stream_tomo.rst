@@ -115,7 +115,7 @@ Step 5 (optional): Filter tilt-series and export metadata
 
 .. seealso::
 
-    * :doc:`Single-particle session<stream_spr>`
+    * :doc:`Single-particle (on-the-fly)<stream_spr>`
     * :doc:`Tomography tutorial<tomo_empiar_10164>`
     * :doc:`Classification tutorial<tomo_empiar_10304>`
     * :doc:`Single-particle tutorial<spa_empiar_10025>`

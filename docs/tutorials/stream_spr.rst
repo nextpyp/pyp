@@ -111,7 +111,7 @@ Step 5 (optional): Filter micrographs and export metadata
 
 .. seealso::
 
-    * :doc:`Tomography session<stream_tomo>`
+    * :doc:`Tomography (on-the-fly)<stream_tomo>`
     * :doc:`Single-particle tutorial<spa_empiar_10025>`
     * :doc:`Tomography tutorial<tomo_empiar_10164>`
     * :doc:`Classification tutorial<tomo_empiar_10304>`

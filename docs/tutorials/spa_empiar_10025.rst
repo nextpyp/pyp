@@ -554,7 +554,7 @@ Step 13: Map sharpening
 
 .. seealso::
 
-    * :doc:`Single-particle session<stream_spr>`
+    * :doc:`Single-particle (on-the-fly)<stream_spr>`
     * :doc:`Tomography tutorial<tomo_empiar_10164>`
     * :doc:`Classification tutorial<tomo_empiar_10304>`
-    * :doc:`Tomography session<stream_tomo>`
+    * :doc:`Tomography (on-the-fly)<stream_tomo>`

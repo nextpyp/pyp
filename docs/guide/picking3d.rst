@@ -57,8 +57,8 @@ This is a simple method that works very effectively on purified samples as well 
 
 #. Navigate to the :badge:`Particle-Picking,badge-primary` block to inspect the results
 
-Virions picking
----------------
+Virion picking
+--------------
 
 This method estimates the position and the approximate radius of virions (useful for doing segmentation later):
 

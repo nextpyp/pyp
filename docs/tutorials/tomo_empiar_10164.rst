@@ -739,5 +739,5 @@ Step 17: Map sharpening
 
     * :doc:`Classification tutorial<tomo_empiar_10304>`
     * :doc:`Single-particle tutorial<spa_empiar_10025>`
-    * :doc:`Single-particle session<stream_spr>`
-    * :doc:`Tomography session<stream_tomo>`
+    * :doc:`Single-particle (on-the-fly)<stream_spr>`
+    * :doc:`Tomography (on-the-fly)<stream_tomo>`
