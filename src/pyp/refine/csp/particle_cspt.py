@@ -365,7 +365,7 @@ def merge_movie_files_in_job_arr(
     if fp["extract_stacks"]:
 
         saved_path =os.path.join(
-                    project_path, "frealign", "stacks",
+                    project_path, "relion", "stacks",
                 )
 
         if not os.path.exists(saved_path):
@@ -1277,7 +1277,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     # merge individual extracted star files 
     if mp["extract_stacks"]:
 
-        stacks_folder = os.path.join(project_dir, "frealign", "stacks")
+        stacks_folder = os.path.join(project_dir, "relion", "stacks")
         merged_star = os.path.join(stacks_folder, fp["data_set"] + "_particles.star")
 
         # delete merged_star if already exists
@@ -1286,7 +1286,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
         except:
             pass
 
-        individual_star_files = glob.glob( os.path.join(project_dir, "frealign", "stacks", "*.star"))
+        individual_star_files = glob.glob( os.path.join(project_dir, "relion", "stacks", "*.star"))
 
         shutil.move(individual_star_files[0], merged_star)
 

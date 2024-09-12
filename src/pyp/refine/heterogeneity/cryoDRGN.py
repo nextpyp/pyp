@@ -309,7 +309,7 @@ def run_cryodrgn(project_dir, parameters):
     os.chdir(working_path)
 
     input_path =os.path.join(
-        project_params.resolve_path(parameters["data_parent"]), "frealign", "stacks",
+        project_params.resolve_path(parameters["data_parent"]), "relion", "stacks",
     )
     name = parameters['data_set']
     starfile = name + "_particles.star"
