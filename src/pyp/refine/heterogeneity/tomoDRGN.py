@@ -92,9 +92,6 @@ def tomodrgn_train(parameters, input_dir, name, output):
     if parameters["heterogeneity_tomodrgn_data_lazy"]:
         options += " --lazy"
 
-        if parameters['heterogeneity_tomodrgn_data_shufflersize'] > 0:
-            options += f" --shuffler-size {parameters['heterogeneity_tomodrgn_data_shufflersize']}"
-
     if parameters["slurm_verbose"]:
         options += " -v"
 
@@ -302,7 +299,7 @@ def run_tomodrgn(project_dir, parameters):
         raise Exception("Training did not finish successfully")
 
     # analyze
-    logger.info("Running tomodrgn analyze")
+    logger.info("Running tomoDRGN analyze")
     tomodrgn_analyze("train_output", "analyze_output", parameters)
 
     final_output = os.path.join(project_dir, "train", "heterogeneity_tomodrgn_analyze_" + str(parameters["heterogeneity_tomodrgn_analysis_epoch"]))
