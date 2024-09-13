@@ -948,6 +948,7 @@ name = "Template for reference-based picking (*.mrc)"
 description = "Path to 3D template"
 type = "path"
 path = { type="files" }
+input = { type="initialModel" }
 hidden = [ "stream_tomo", "stream_spr", "spr_pre_process" ]
 
 [tabs.detect.dist]
@@ -6264,25 +6265,28 @@ default = false
 hidden = true
 
 [tabs.import.refine_star]
-name = "Relion refinement star file"
+name = "Relion refinement file (*.star)"
 description = "Star file from RELION refine3d job"
 type = "path"
 path = { type="files" }
+input = { type="starfile" }
 required = false
 
 [tabs.import.tomo_star]
-name = "Relion tomogram star file"
+name = "Relion tomograms file (*.star)"
 description = "Star from RELION ImportTomo job"
 type = "path"
 path = { type="files" }
+input = { type="starfile" }
 hidden = [ "spr_import_star" ]
 required = false
 
 [tabs.import.motion_star]
-name = "Relion motioncorr star file"
+name = "Relion motioncorr file (*.star)"
 description = "Star from RELION motion correction job, with image names and motion metadata names"
 type = "path"
 path = { type="files" }
+input = { type="starfile" }
 hidden = [ "tomo_import_star" ]
 required = false
 
