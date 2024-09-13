@@ -816,7 +816,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                 new_parameters["tomo_vir_force"] = False
                 new_parameters["tomo_rec_force"] = False
 
-    if len(differences) > 0:
+    if len(differences) > 0 and new_parameters.get("micromon_block") != "tomo-particles-train":
 
         for k in differences:
 
