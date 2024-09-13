@@ -3224,7 +3224,7 @@ hidden = [ "spr_map_clean", "tomo_map_clean" ]
 name = "Skip refinement"
 description = "Skip refinement step, only do reconstruction"
 type = "bool"
-default = false
+default = true
 copyToNewBlock = false
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
