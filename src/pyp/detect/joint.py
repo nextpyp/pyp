@@ -220,9 +220,8 @@ def tomotrain(args):
                 raise Exception("Please specify a list of classes to select")
             else:
 
-                
                 # extract specific classes
-                command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {args.get('detect_nn3d_milo_classes')}"
+                command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {args.get('detect_nn3d_milo_classes').replace(' ','')}"
                 [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
                 
                 # extract coordinates
@@ -243,7 +242,7 @@ def tomotrain(args):
                 number_of_coordinates = np.loadtxt(train_coords, comments='image_name', ndmin=2, dtype='str').shape[0]
                 if number_of_coordinates == 0:
                     raise Exception(f"Class selection {args.get('detect_nn3d_milo_classes')} contains no particles")
-                logger.info(f"Selecting class IDs: {args.get('detect_nn3d_milo_classes')} containing {number_of_coordinates:,} particles")
+                logger.info(f"Selecting class IDs: {args.get('detect_nn3d_milo_classes').replace(' ','')} containing {number_of_coordinates:,} particles")
         
         # load classes from Phoenix
         elif "detect_nn3d_milo_import" == "phoenix":
