@@ -392,12 +392,15 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
 
     if parameters.get("tomo_ali_method") == "import" and os.path.exists(project_params.resolve_path(parameters["tomo_ali_import"])):
         # cp .tlt .xf 
+        raw_tlt_file = name + ".rawtlt"
         tlt_file = name + ".tlt"
         xf_file = name + ".xf"
         external_tlt = os.path.join(project_params.resolve_path(parameters["tomo_ali_import"]), tlt_file)
         if os.path.exists(external_tlt):
             logger.info(f"Import tilt-angles from: {external_tlt}")
             shutil.copy2(external_tlt, working_path)
+            # also copy as .rawtlt
+            shutil.copy2(external_tlt, os.path.join(working_path,raw_tlt_file))
         else:
             logger.warning("No corresponding .tlt file from import path found for this tilt-series")
 
