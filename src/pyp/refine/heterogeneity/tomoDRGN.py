@@ -233,7 +233,7 @@ def tomodrgn_analyze(input_dir, output, parameters):
     if parameters['heterogeneity_tomodrgn_analysis_epoch'] == 0 or parameters['heterogeneity_tomodrgn_analysis_epoch'] >= parameters['heterogeneity_tomodrgn_train_epochs']:
         parameters['heterogeneity_tomodrgn_analysis_epoch'] = parameters['heterogeneity_tomodrgn_train_epochs'] - 1
 
-    command = f"{get_tomodrgn_path()} analyze {input_dir} {parameters['heterogeneity_tomodrgn_analysis_epoch']} -o {output} --pc {parameters['heterogeneity_tomodrgn_analysis_pc']} --ksample {parameters['heterogeneity_tomodrgn_analysis_ksample']} {options} --Apix {output_pixel}"
+    command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['heterogeneity_tomodrgn_analysis_epoch']} -o {output} --pc {parameters['heterogeneity_tomodrgn_analysis_pc']} --ksample {parameters['heterogeneity_tomodrgn_analysis_ksample']} {options}"
 
     local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
 
