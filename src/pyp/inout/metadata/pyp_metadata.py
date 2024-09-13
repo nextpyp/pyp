@@ -673,7 +673,7 @@ class LocalMetadata:
                 del self.data["ctf_tilt"]
                 meta_update = True
 
-        if "movie_force" in parameters and parameters["movie_force"]:
+        if "movie_force" in parameters and parameters["movie_force"] and not ( parameters["data_mode"] == "tomo" and parameters["movie_no_frames"] ):
             logger.info(
                 f"Movie drift parameters will be re-computed"
             )

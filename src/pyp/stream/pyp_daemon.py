@@ -651,7 +651,7 @@ def clean_pkl_items(parameters, namelist, current_path):
                     if "ali" in metadata:
                         del metadata["ali"]
                         meta_update = True
-                if "movie_force" in parameters and parameters["movie_force"]:
+                if "movie_force" in parameters and parameters["movie_force"] and not parameters["movie_no_frames"]:
                     if first:
                         logger.info(
                             f"Movie drift parameters will be re-computed"
