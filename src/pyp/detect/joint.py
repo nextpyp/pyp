@@ -210,8 +210,7 @@ def tomotrain(args):
 
     scratch_folder = os.path.join( os.environ["PYP_SCRATCH"], "milopyp")
     os.makedirs( scratch_folder, exist_ok=True)
-    
-    if args.get("detect_nn3d_milo_import") and args.get("detect_nn3d_milo_import") != "none":
+    if args.get("detect_nn3d_milo_import") != "none":
 
         if_double = "--if_double" if args.get("detect_nn3d_compress") else ""
         # select classes manually
@@ -245,7 +244,7 @@ def tomotrain(args):
                 logger.info(f"Selecting class IDs: {args.get('detect_nn3d_milo_classes').replace(' ','')} containing {number_of_coordinates:,} particles")
         
         # load classes from Phoenix
-        elif "detect_nn3d_milo_import" == "phoenix":
+        elif args.get("detect_nn3d_milo_import") == "phoenix":
             if not os.path.exists( project_params.resolve_path(args["detect_nn3d_milo_parquet"])):
                 raise Exception("Please specify the location of a .parquet file")
             else:
@@ -400,7 +399,7 @@ def tomoeval(args,name):
         else:
             compress = ""
 
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
+        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {fiber} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
