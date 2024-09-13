@@ -535,6 +535,7 @@ description = "Amount of super-resolution information to retain (1=none, 2=2x, 4
 type = "int"
 default = 1
 condition = { arg="ali", value=[ "unblur", "motioncor", "skip" ] }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.eer_frames]
 name = "EER frames to average"
@@ -542,6 +543,7 @@ description = "Successive frames to average when reading EER files"
 type = "int"
 default = 1
 condition = { arg="ali", value=[ "unblur", "motioncor" ] }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.first]
 name = "First frame"
@@ -549,6 +551,7 @@ description = "Discard frames lower than this value (0=do not discard early fram
 type = "int"
 default = 0
 condition = { arg="ali", value=[ "unblur", "motioncor", "skip" ] }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.last]
 name = "Last frame"
@@ -556,6 +559,7 @@ description = "Discard frames higher than this value (-1=do not discard late fra
 type = "int"
 default = -1
 condition = { arg="ali", value=[ "unblur", "motioncor", "skip" ] }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.group]
 name = "Frame grouping"
@@ -610,6 +614,7 @@ description = "Force integer shifts to preserve high-resolution information"
 type = "bool"
 default = false
 condition = { arg="ali", value=[ "unblur", "motioncor" ] }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.bin]
 name = "Binning"
@@ -625,6 +630,7 @@ description = "Bfactor to use during frame alignment (use larger values for nois
 type = "float"
 condition = { arg="ali", value="unblur" }
 default = 1500
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_bin]
 name = "Image binning"
@@ -632,6 +638,7 @@ description = "Binning factor in Fourier space (use values >= 1)"
 type = "float"
 condition = { arg="ali", value="motioncor" }
 default = 1.0
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_bfactor_global]
 name = "Global Bfactor"
@@ -639,6 +646,7 @@ description = "Global Bfactor to use during frame alignment (use larger values f
 type = "float"
 condition = { arg="ali", value="motioncor" }
 default = 500.0
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_bfactor_local]
 name = "Local Bfactor"
@@ -646,6 +654,7 @@ description = "Local Bfactor to use during frame alignment (use larger values fo
 type = "float"
 condition = { arg="ali", value="motioncor" }
 default = 150.0
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_tol]
 name = "Shifts tolerance"
@@ -653,6 +662,7 @@ description = "Tolerance for shifts during iterative alignment"
 type = "float"
 default = 0.1
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_iter]
 name = "Maximum iterations"
@@ -660,6 +670,7 @@ description = "Maximum number of iterations during iterative alignment"
 type = "int"
 default = 7
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_phase_only]
 name = "Use phase only"
@@ -667,6 +678,7 @@ description = "Use phase only during cross-correlation"
 type = "bool"
 default = true
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_corr_interp]
 name = "Interpolation compensation"
@@ -674,6 +686,7 @@ description = "Use interpolation compensation during alignment"
 type = "bool"
 default = false
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_in_frame_motion]
 name = "In frame motion"
@@ -681,6 +694,7 @@ description = "Take into account motion-induced blurring of each frame"
 type = "bool"
 default = false
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_patch_x]
 name = "Number of patches in X axis"
@@ -688,6 +702,7 @@ description = "Number of patches in X axis used for frame alignment"
 type = "int"
 default = 1
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_patch_y]
 name = "Number of patches in Y axis"
@@ -695,6 +710,7 @@ description = "Number of patches in Y axis used for frame alignment"
 type = "int"
 default = 1
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_patch_overlap]
 name = "Overlap between patches"
@@ -702,6 +718,7 @@ description = "Percent overlap between adjacent patches"
 type = "int"
 default = 50
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_frameref]
 name = "Frame used for reference"
@@ -709,6 +726,7 @@ description = "The frame used for reference during alignment (1 means the first 
 type = "int"
 default = 0
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_sumrange_min]
 name = "Minimum dose"
@@ -716,6 +734,7 @@ description = "Frames between minimum and maximum dose in e-/A^2 are used for av
 type = "float"
 default = 3.0
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_sumrange_max]
 name = "Maximum dose"
@@ -723,6 +742,7 @@ description = "Frames between minimum and maximum dose in e-/A^2 are used for av
 type = "float"
 default = 25.0
 condition = { arg="ali", value="motioncor" }
+hidden = ["spr_import_star","tomo_import_star"]
 
 # Contrast transfer function parameters
 
