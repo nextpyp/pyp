@@ -101,8 +101,8 @@ def process_virion_multiprocessing(
         # USAGE: virus_segment_membrane input.mrc iradius oradius weight iterations variances output.mrc
         check_env()
 
-        weight = 1
-        iterations = 500
+        weight = parameters["tomo_vir_seg_smoothness"]
+        iterations = parameters["tomo_vir_seg_iterations"]
         variances = 10
         command = f"{get_tomo_path()}/virus_segment_membrane {virion_name}_binned_nad.mrc {min_radius:.2f} {max_radius:.2f} {weight} {iterations} {variances} {virion_name}_binned_nad_seg.mrc"
         local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
