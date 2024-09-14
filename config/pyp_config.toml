@@ -2524,6 +2524,22 @@ default = 20.0
 condition = { arg="method", value="auto" }
 hidden = [ "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
+[tabs.tomo_vir.seg_smoothness]
+name = "Smoothness constant"
+description = "Larger values produce smoother surfaces, smaller values more accurately follow edges"
+type = "float"
+default = 1.0
+condition = { arg="method", value="auto" }
+hidden = [ "tomo_par_close", "tomo_par_open", "tomo_picking"]
+
+[tabs.tomo_vir.seg_iterations]
+name = "Max-flow iterations"
+description = "Number of iterations to solve the min-cut/max-flow problem"
+type = "int"
+default = 500
+condition = { arg="method", value="auto" }
+hidden = [ "tomo_par_close", "tomo_par_open", "tomo_picking"]
+
 [tabs.tomo_vir.iterations]
 name = "Denoising iterations before virion detection"
 description = "Number denoising iterations (anisotropic diffusion)"
