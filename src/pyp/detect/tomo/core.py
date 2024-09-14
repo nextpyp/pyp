@@ -1338,14 +1338,11 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             if virion_coordinates.shape[1] == 5:
                 virion_coordinates = virion_coordinates[:,[0,1,2,4]]
 
-            # legacy pre-processing block and sessions
-            if parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "":
-
-                # undo coordinate binning
-                virion_coordinates[:,0:2] /= virion_binning
-
                 # undo binning in particle radius
-                virion_coordinates[:,2] /= virion_binning
+                virion_coordinates /= parameters['tomo_vir_binn']
+                if parameters.get("micromon_block") == "tomo-segmentation-closed":
+                    virion_coordinates[:,-1] /= parameters['tomo_vir_binn']
+
     else:
         virion_coordinates = np.array([])
 
