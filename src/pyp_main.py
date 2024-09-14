@@ -1763,7 +1763,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     if (
         "tomo_vir_force" in parameters and parameters["tomo_vir_force"]
-        or metadata is None or metadata is not None and "vir" not in metadata or parameters["data_import"] or parameters.get("micromon_block") == "tomo-segmentation-closed"
+        or metadata is None or metadata is not None and "vir" not in metadata or parameters["data_import"] or parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed"
     ):
         tilt_metadata["virion_coordinates"] = virion_coordinates
         if len(virion_coordinates) > 0:
