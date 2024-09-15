@@ -2,17 +2,20 @@
 3D particle picking
 ===================
 
-``nextPYP`` provides three types of methods for particle picking that are implemented using specialized blocks (separate from the pre-procesing block). These include the :badge:`Particle-Picking,badge-primary`, :badge:`Segmentation (closed surfaces),badge-primary`, :badge:`Particle-Picking (closed surfaces),badge-primary`, :badge:`Particle-Picking (train),badge-primary` and :badge:`Particle-Picking (eval),badge-primary` blocks
+``nextPYP`` provides a suite of methods for picking particles in 3D, including size-based, geoemtry-based and neura network-based picking. It also provides an interactive interface to pick particles manually and to import coordinates from other programs.
 
-1: Import, manual, size-based, and virion picking
-=================================================
+
+Import, manual, size-based picking
+==================================
 
 These methods are implemented in the :badge:`Particle-Picking,badge-primary` block.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary` to create a new particle picking block
 
 Import coordinates
 ------------------
 
-``nextPYP`` can import external particles saved as IMOD models (``*.spk``):
+``nextPYP`` can import external particles saved as IMOD models (``*.spk``) or xyz coordinates in plain text format (``*.box``):
+
+#.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
 
 #. Select "import" as the ``Detectiom method``
 
@@ -31,6 +34,8 @@ Manual picking
 
 ``nextPYP`` provides a user-friendly UI to easily pick particles from many tomograms:
 
+#.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
+
 #. Select "manual" as the ``Detectiom method``
 
 #. Set the ``Particle radius (A)`` (for visualization purposes)
@@ -47,7 +52,9 @@ Manual picking
 Size-based picking
 ------------------
 
-This is a simple method that works very effectively on purified samples as well as large complexes imaged in-situ:
+This method described in `Jin et al., JSB (2024)<https://cryoem.cs.duke.edu/node/accurate-size-based-protein-localization-from-cryo-et-tomograms/>`_ works very effectively on purified samples as well as large complexes imaged in-situ:
+
+#.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
 
 #. Select "size-based" as the ``Detectiom method``
 
@@ -57,10 +64,21 @@ This is a simple method that works very effectively on purified samples as well 
 
 #. Navigate to the :badge:`Particle-Picking,badge-primary` block to inspect the results
 
-Virion picking
---------------
+.. tip::
 
-This method estimates the position and the approximate radius of virions (useful for doing segmentation later):
+    To manually edit the results of a particle picking method: create a copy of the :badge:`Particle-Picking,badge-primary` block using the "Copy" function, select ``Copy files and data``, select ``Make automatically-picked particles editable``, and then click :badge:`Next,badge-primary`. Once the copy is done, you can navigate to the new block and manually add/delete particles
+
+Geometry-based picking
+======================
+
+This method described in `Liu et al., Nat Meth (2023)<https://cryoem.cs.duke.edu/node/nextpyp-a-comprehensive-and-scalable-platform-for-characterizing-protein-variability-in-situ-using-single-particle-cryo-electron-tomography/>`_ is useful to detect particles that are attached to surfaces such as virions or vesicles. It has three stages: virion detection, virion segmentation and constrained particle picking:
+
+Detection of virion centers
+---------------------------
+
+The first step is to estimate the position and the approximate radius of each virion:
+
+#.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
 
 #. Select "virions" as the ``Detectiom method``
 
@@ -72,34 +90,16 @@ This method estimates the position and the approximate radius of virions (useful
 
 .. tip::
 
-    To manually edit the results of a particle picking method: create a copy of the :badge:`Particle-Picking,badge-primary` block using the "Copy" function, select ``Copy files and data``, select ``Make automatically-picked particles editable``, and then click :badge:`Next,badge-primary`. Once the copy is done, you can navigate to the new block and manually add/delete particles
-
-2: Geometry-based picking
-=========================
-
-This method is useful to detect particles that are attached to surfaces such as virions or vesicles. It has three stages: virion detection, virion segmentation and constrained particle picking (each done using a dedicated block):
-
-Detection of virion centers
----------------------------
-
-Virions centers can be detected using any of the methods available in the :badge:`Particle-Picking,badge-secondary` block, but the "virions" method is most commonly used:
-
-#.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
-
-#. Select "virions" as the ``Detection method`` and specify the approximate radius in A
-
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
-
-#. Navigate to the :badge:`Particle-Picking,badge-primary` block and inspect the results
+    Virion centers can also be obtained using any other method for particle picking available in ``nextPYP`` (manual, size-based, neural network-based, etc). Since the virion radius will not be estimated automatically in this case, the value of ``Virion radius (A)`` will be used instead
 
 Virion segmentation
 -------------------
 
-The next step is to segment each virion in 3D:
+The next step is to segment each virion in 3D using methods described in `Bartesaghi et al., IEEE-TIP (2005)<https://cryoem.cs.duke.edu/node/energy-based-segmentation-of-cryo-em-tomograms/>`_:
 
 #. Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking,badge-secondary` block) and select :badge:`Segmentation (closed surfaces),badge-primary`
 
-#. The only parameter required here is the ``Segmentation radius tolerance``, which limits the segmentation to be within a range of the estimated virion radius
+#. Adjust the segmentaton paraemters as needed (defaults should work fine for 10164, for example)
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
@@ -130,19 +130,19 @@ The last step is to pick particles from the surface of virions which is done usi
 #. Navigate to the :badge:`Particle-Picking (closed surfaces),badge-primary` block to inspect the results
 
 
-3: Neural-network picking
-=========================
+Neural-network picking
+======================
 
-This method has two stages (training and evaluation) and uses the :badge:`Particle-Picking (train),badge-primary` and :badge:`Particle-Picking (eval),badge-primary` blocks
+This method described in `Huang et al., ECCV (2022)<https://cryoem.cs.duke.edu/node/accurate-detection-of-proteins-in-cryo-electron-tomograms-from-sparse-labels/>`_ uses consistency regularization to minimize the number of annotations and speedup training.
 
 Model training
 --------------
 
-The first step is to train the neural network:
+The first step is to obtain a set of particles using any of the methods implemented in the :badge:`Pre-processing,badge-primary` block (import, manual, size-based, or virions) or the :badge:`MiloPYP (eval),badge-primary` block so we can train the neural network:
 
-#. Click on :guilabel:`Particles` (output of any of the particle picking blocks, e.g., :badge:`Particle-Picking,badge-primary`, :badge:`Particle-Picking (closed surfaces),badge-primary`, or :badge:`MiLoPYP (eval,badge-primary`) and select :badge:`Particle-Picking (train),badge-primary`
+#. Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking,badge-primary` or :badge:`Particle-Picking (closed surfaces),badge-primary` blocks), or on :guilabel:`MiLoPYP Particles` (output of the :badge:`MiLoPYP (eval,badge-primary`) block) and select :badge:`Particle-Picking (train),badge-primary`
 
-#. Select the parameters for training
+#. Adjust the parameters for training as needed. If using MiLoPYP particles, see instructions on how to set paraemters :doc:`here<milopyp>`
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
@@ -150,12 +150,12 @@ The first step is to train the neural network:
 
 .. note::
     
-    The trained models for each run will be saved as ``train/YYYYMMDD_HHMMSS/*.pth``
+    The trained models for each run will be saved in the project folder as ``train/YYYYMMDD_HHMMSS/*.pth``
 
 Model evaluation
 ----------------
 
-Once the model has been trained, it can be avaluated on the entire dataset:
+Once the model has been trained, it can be evaluated on the entire dataset:
 
 #. Click on :guilabel:`Particles Model` (output of the :badge:`Particle-Picking (train),badge-primary` block) and select :badge:`Particle-Picking (eval),badge-primary`
 
@@ -167,7 +167,7 @@ Once the model has been trained, it can be avaluated on the entire dataset:
 
 .. note::
 
-    To detect particles distributed along fibers or tubules, use the ``Use fiber mode`` option and set the corresponding parameters as needed
+    To detect particles distributed along fibers or tubules, select ``Fiber mode``. This will group neighboring particles, fit a smooth trajectory to them, and re-sample positions along the fitted curve
 
 .. seealso::
 

@@ -229,6 +229,8 @@ Step 4: Reference-based refinement
 
       - Set ``Last iteration`` to 5
 
+      - Unheck ``Skip refinement``
+
       - Check ``Use alignment priors``
 
       - Click on the **Reconstruction** tab

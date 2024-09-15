@@ -3,16 +3,19 @@ nextPYP: a scalable platform for cryo-EM/ET image analysis
 
 `nextPYP <https://nextpyp.app/>`_ is a comprehensive platform for single-particle cryo-EM/ET image analysis developed and maintained by the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_ at `Duke University <http://www.duke.edu>`_.
 
+The software was designed to allow users with and without technical expertise to overcome the complexity and challenges of processing cryo-EM/ET data. ``nextPYP`` combines the use of tried-and-tested data processing tools (e.g., IMOD, cisTEM, etc.), with unique `methods<https://cryoem.cs.duke.edu/research/methods/>`_ developed in our group over the years.
+
 Main features
 -------------
 - Portable, easy-to-use, fully featured web-based GUI
 - On-the-fly data pre-processing (single-particle and tomography)
 - End-to-end pipeline for high-resolution structure determination (single-particle and tomography)
+- Molecular pattern exploration and particle localization from tomograms (MiLoPYP)
 - 2D/3D particle picking using size-based, geometry-based and neural network-based approaches
 - Scalable, small storage footprint (no need to save full size tomograms, sub-volumes, or particle stacks)
 - Multi-mode constrained refinement and constrained classification for heterogeneity analysis
 - Particle-based CTF refinement, movie frame refinement and self-tuning exposure weighting
-- Import/export metadata in .star format to interface with external programs
+- Import/export metadata in various formats to interface with external programs
 
 Select from the following options:
 

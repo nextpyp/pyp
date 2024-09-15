@@ -112,7 +112,7 @@ Step 2: Import raw tilt-series
 Step 3: Pre-processing
 ----------------------
 
-.. dropdown:: Movie frame alignment, CTF estimation and particle picking (:fa:`stopwatch` 5 min)
+.. dropdown:: Movie frame alignment, and CTF estimation (:fa:`stopwatch` 5 min)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
@@ -223,7 +223,7 @@ Step 4: Virion selection
 Step 5: Virion segmentation
 ---------------------------
 
-.. dropdown:: Segment virions (:fa:`stopwatch` 1 min)
+.. dropdown:: Segment virions using minimal surfaces (:fa:`stopwatch` 1 min)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
@@ -279,7 +279,7 @@ Step 6: Particle picking
 Step 7: Reference-based refinement
 ----------------------------------
 
-.. dropdown:: Reference-based particle alignment (:fa:`stopwatch` 8 hr)
+.. dropdown:: Constrained reference-based particle alignment (:fa:`stopwatch` 8 hr)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
@@ -315,8 +315,6 @@ Step 7: Reference-based refinement
         - Set ``Max resolution (A)`` to 8.0
 
         - Check ``Use signed correlation``
-
-        - Check ``Skip refinement``
 
         - Click on the **Constrained refinement** tab
 
@@ -370,7 +368,7 @@ Step 8. Fully constrained refinement
 
       .. tabbed:: Refinement
 
-        - Set ``Max resolution (A)`` to 8:10:8:6
+        - Set ``Max resolution (A)`` to 8:10:8:6 (this will use an 8A limit for the first iteration, 10A for the second, etc.)
 
         - Set ``Last iteration`` to 5
 
@@ -495,8 +493,6 @@ Step 11. Region-based local refinement (before masking)
         - Set ``Max resolution (A)`` to 6:5
 
         - Set ``Last iteration`` to 3
-
-        - Check ``Skip refinement``
 
         - Click on the **Constrained refinement** tab
 

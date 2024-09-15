@@ -4,7 +4,7 @@ Classification tutorial (EMPIAR-10304)
 
 This tutorial shows how to convert raw tilt-series from `EMPIAR-10304 (E. coli. ribosomes) <https://www.ebi.ac.uk/empiar/EMPIAR-10304/>`_ into a ~4.9A resolution structure and resolve 8 different conformations. 
 
-Total running time required to complete this tutorial: 32 hrs.
+Total running time required to complete this tutorial: 20 hrs.
 
 We first use the command line to download and decompress a tbz file containing: 1) a script to download the raw tilt-series from EMPIAR, 2) corresponding metadata with tilt angles and acquisition order, and 3) an initial model:
 
@@ -184,7 +184,7 @@ Step 4: Particle picking
 Step 5: Reference-based refinement
 ----------------------------------
 
-.. dropdown:: Reference-based particle alignment (:fa:`stopwatch` 26 hr)
+.. dropdown:: Reference-based particle alignment (:fa:`stopwatch` 14 hr)
     :container: + shadow
     :title: bg-primary text-white text-left
     :open:
@@ -218,8 +218,6 @@ Step 5: Reference-based refinement
         - Set ``Max resolution (A)`` to 22.0
 
         - Check ``Use signed correlation``
-
-        - Check ``Skip refinement``
 
         - Click on the **Constrained refinement** tab
 
@@ -353,8 +351,6 @@ Step 8. Fully constrained refinement
         - Check ``Use signed correlation``
 
         - Set ``Last iteration`` to 3
-
-        - Check ``Skip refinement``
 
         - Click on the **Constrained refinement** tab
 
@@ -571,6 +567,8 @@ Step 13: 3D classification
         - Set ``Max resolution (A)`` to 8
 
         - Set ``Last iteration`` to 20
+
+        - Uncheck ``Skip refinement``
 
         - Click on the **Constrained refinement** tab
 

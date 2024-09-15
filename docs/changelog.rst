@@ -25,11 +25,11 @@ v0.7.0 (9/09/2024)
 
    :fa:`star,text-success` Add support for beam-tilt refinement and correction.
 .
-   :fa:`star,text-success` New blocks for Molecular pattern mining and particle localization (MiLoPYP).
+   :fa:`star,text-success` New blocks to run Molecular pattern mining and particle localization (MiLoPYP).
 
-   :fa:`star,text-success` Add wrappers for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_ for CTF estimation.
+   :fa:`star,text-success` New suite of blocks for particle picking to decouple particle picking from other pre-procesing tasks.
 
-   :fa:`star,text-success` Add dedicated blocks for particle picking to decouple particle picking from other pre-procesing tasks.
+   :fa:`star,text-success` Wrapper for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_.
 
    :fa:`star,text-success` Allow selection of blocks using single click "Only" option in the Run jobs menu.
 
@@ -39,7 +39,7 @@ v0.7.0 (9/09/2024)
 
    :fa:`star,text-success` Add option to save particle stacks for use in external programs.
 
-   :fa:`star,text-success` Save refinement metadata in cisTEM's new binary format (faster 3D refinement and classification).
+   :fa:`star,text-success` Start saving refinement metadata in cisTEM's binary format (2x faster refinement and classification).
 
    :fa:`plus-square,text-primary` Checkbox to "Show advanced options" has global scope now.
 
