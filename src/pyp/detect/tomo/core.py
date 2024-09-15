@@ -1154,13 +1154,14 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
     virion_binning = parameters["tomo_vir_binn"]
 
-    # particle picking
+    # legacy virion picking (manual, pyp-eval, auto) + virion segmentation + spike picking (uniform, template)
     if "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" or parameters["micromon_block"] == "tomo-segmentation-closed" or parameters["micromon_block"] == "tomo-picking-closed":
 
         radius_in_pixels = int(parameters["tomo_vir_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"])
 
+        # virion picking
         if not os.path.exists("%s.vir" % name):
-            if parameters["tomo_vir_method"] == "manual"  or parameters["micromon_block"] == "tomo-segmentation-closed":
+            if parameters.get("tomo_vir_method") == "manual" or parameters.get("micromon_block") == "tomo-segmentation-closed":
                 logger.info("Using virion manual picking")
                 # reset virion binning since we are considering above it already
                 virion_binning = 1
@@ -1172,6 +1173,9 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                     
                     # add radius to virion coordinates
                     coordinates = np.loadtxt(f"{name}.next",ndmin=2)
+                    
+                    # website now saves unbinned coordinates
+                    coordinates /= binning
                     virion_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"]
                     coordinates_with_radius = np.hstack( ( coordinates, virion_radius * np.ones((coordinates.shape[0],1)) ) )
                     np.savetxt(f"{name}.next",coordinates_with_radius)
@@ -1230,11 +1234,13 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
         )
 
+    # virion picking (new blocks) + spike only picking
     elif ( "tomo_spk_method" in parameters and parameters["tomo_spk_method"] != "none" or parameters.get("tomo_pick_method") == "virions" ) and not os.path.exists("%s.spk" % name) or parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_spk_method") == "manual":
 
         if parameters["tomo_spk_rad"] == 0:
             raise Exception("Please specify a particle radius > 0 (-tomo_spk_rad)")
 
+        # manual spike picking
         if parameters["tomo_spk_method"] == "manual":
             logger.info("Using manual particle picking")
 
@@ -1257,6 +1263,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             except:
                 logger.warning("No particles picked for this tomogram")
 
+        # neural-network evalaution
         elif parameters.get("micromon_block") == "tomo-particles-eval":
             logger.info("Using NN-based particle picking")
 
@@ -1282,7 +1289,8 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
                         os.remove( name + ".box")
                         os.remove( name + ".mod")
-                        
+
+        # "virion" detection
         elif parameters["tomo_spk_method"] == "virions" or parameters["tomo_pick_method"] == "virions":
 
             # figure out virion parameters
@@ -1305,14 +1313,15 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             )
             local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
             os.remove(f"{name}.box")
-            
+        
+        # size-based picking
         elif parameters["tomo_spk_method"] == "auto":
             logger.info("Using size-based particle picking")
 
             from pyp.detect.tomo import picker
             picker.pick(name,radius=parameters["tomo_spk_rad"],pixelsize=parameters["scope_pixel"],auto_binning = binning,contract_times=parameters["tomo_spk_contract_times_3d"],gaussian=parameters["tomo_spk_gaussian_3d"],sigma=parameters["tomo_spk_sigma_3d"],stdtimes_cont=parameters["tomo_spk_stdtimes_cont_3d"],min_size=parameters["tomo_spk_min_size_3d"],dilation=parameters["tomo_spk_dilation_3d"],radius_times=parameters["tomo_spk_radiustimes_3d"],inhibit=parameters["tomo_spk_inhibit_3d"],detection_width=parameters["tomo_spk_detection_width_3d"],stdtimes_filt=parameters["tomo_spk_stdtimes_filt_3d"],remove_edge=parameters["tomo_spk_remove_edge_3d"],show=False)
 
-    # Directly extract spikes from tomogram
+    # extract particles if needed
     if not parameters.get("micromon_block") == "tomo-picking-closed" and (
         os.path.isfile("%s.spk" % name)
         or os.path.isfile("%s.txt" % name)
@@ -1335,13 +1344,13 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         # remove fourth column from IMOD model and keep virion radius
         if len(virion_coordinates) > 0:
+            
+            virion_coordinates *= ( parameters['data_bin'] * parameters['tomo_rec_binning'] )
+    
+            # if we did manual or neural-network picking, remove last column and set radius in unbinned voxels
             if virion_coordinates.shape[1] == 5:
                 virion_coordinates = virion_coordinates[:,[0,1,2,4]]
-
-                # undo binning in particle radius
-                virion_coordinates /= parameters['tomo_vir_binn']
-                if parameters.get("micromon_block") == "tomo-segmentation-closed":
-                    virion_coordinates[:,-1] /= parameters['tomo_vir_binn']
+                virion_coordinates[:,-1] = parameters["tomo_vir_rad"] / parameters["scope_pixel"]
 
     else:
         virion_coordinates = np.array([])
@@ -1358,6 +1367,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             elif parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "tomo-session" or parameters.get("micromon_block") == "":
                 spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
 
+            spike_coordinates *= ( parameters['data_bin'] * parameters['tomo_rec_binning'] )
             spike_coordinates_with_radius = np.hstack( ( spike_coordinates, parameters["tomo_spk_rad"] / binning * np.ones((spike_coordinates.shape[0],1)) ) )
         else:
             spike_coordinates_with_radius = np.array([])
@@ -1367,8 +1377,6 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
     # if picking virions, send coordinates as particles as well and change adjust scaling for virion radius
     if parameters["tomo_spk_method"] == "virions" and parameters["micromon_block"] == "tomo-picking" or parameters["micromon_block"] == "tomo-segmentation-closed":
         spike_coordinates_with_radius = virion_coordinates
-        if len(spike_coordinates_with_radius):
-            spike_coordinates_with_radius[:,-1] *= parameters['tomo_vir_binn']
         
     # CAPSID, TSR: generation of unbinned regions from tomograms
     if os.path.isfile("%s_regions.mod" % name):
