@@ -1334,10 +1334,10 @@ input = { type="trainedModel3D" }
 hidden = [ "tomo_import", "tomo_particles_train" ]
 
 [tabs.detect_nn3d.milo_import]
-name = "Import from MiLoPYP"
+name = "Coordinates for training"
 description = "Use MiLoPYP particles for training"
 type = "enum"
-enum = { none="none", phoenix="parquet", classes="class labels" }
+enum = { none="particles from upstream particle-picking block", phoenix="parquet file from upstream MiLoPYP block", classes="class labels from upstream MiLoPYP block" }
 default = "none"
 hidden = [ "tomo_import", "tomo_particles_eval" ]
 
@@ -1359,15 +1359,15 @@ condition = { arg="milo_import", value="classes" }
 hidden = [ "tomo_import", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.down_ratio]
-name = "Downsample"
-description = "Down ratio for output"
+name = "Additional binning for training"
+description = "Bin data by this factor before training"
 type = "int"
 default = 2
 hidden = [ "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.compress]
 name = "Additional binning in Z"
-description = "Average consecutive slices in Z (2x binning)"
+description = "Average consecutive slices in Z to reduce missing wedge effects (use same value for training/evaluation)"
 type = "bool"
 default = true
 
@@ -1387,13 +1387,13 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" 
 
 [tabs.detect_nn3d.thresh]
 name = "Threshold for soft/hard positives"
-description = "Threshold for soft/hard positives"
+description = "Higher values give fewer partiles, lower values give more particles"
 type = "float"
 default = 0.85
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_train"]
 
 [tabs.detect_nn3d.cr_weight]
-name = "Contrastive regularization weight"
+name = "Contrastive regularization"
 description = "Weight for contrastive regularization term"
 type = "float"
 default = 0.1
@@ -1435,8 +1435,8 @@ default = 0.01
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.fiber_mode]
-name = "Use fiber mode"
-description = "Detect fibers or filaments"
+name = "Fiber mode"
+description = "Detect particles along fibers or filaments"
 type = "bool"
 default = false
 hidden = ["stream_tomo", "tomo_particles_train"]
@@ -1470,6 +1470,7 @@ name = "Save scores"
 description = "Add score column to output text files"
 type = "bool"
 default = false
+advanced = true
 hidden = ["stream_tomo", "tomo_particles_train"]
 
 [tabs.detect_nn3d.debug]
