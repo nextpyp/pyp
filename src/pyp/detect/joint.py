@@ -269,6 +269,11 @@ def tomotrain(args):
         train_name = "particles"
         train_images = os.path.join( train_folder, train_name + "_images.txt" )
         train_coords = os.path.join( train_folder, train_name + "_coordinates.txt" )
+        
+        # bin coordinates since website is now saving unbinned coordiantes
+        coordinates = np.loadtxt(train_coords, dtype='str',ndmin=2)
+        coordinates[1:,1:] = (coordinates[1:,1:].astype('int') / args['tomo_rec_binning']).astype('int').astype('str')
+        np.savetxt( train_coords, coordinates, delimiter="\t", fmt="%s" )
 
     validation_images = train_images
     validation_coords = train_coords
