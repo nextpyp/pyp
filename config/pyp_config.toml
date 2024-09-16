@@ -2917,6 +2917,7 @@ description = "Randomize particle orientations during extraction to reduce misin
 type = "bool"
 default = true
 condition = { arg="method", value=["auto","import","manual","pyp-eval"] }
+hidden = [ "tomo_picking" ]
 
 [tabs.tomo_pick.vir_rad]
 name = "Virion radius (A)"
