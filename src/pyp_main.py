@@ -3585,7 +3585,7 @@ if __name__ == "__main__":
                 try:
                     tomo_merge(parameters)
                 except:
-                    Web.failed()
+                    Web().failed()
                     pass
                 # reset all flags for re-calculation
                 parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
