@@ -767,7 +767,7 @@ name = "CTF estimation method"
 description = "Which CTF estimation method to use"
 type = "enum"
 enum = { ctffind4="ctffind4", ctffind5="ctffind5" }
-default = "ctffind5"
+default = "ctffind4"
 
 [tabs.ctf.min_res]
 name = "Min resolution (A)"
