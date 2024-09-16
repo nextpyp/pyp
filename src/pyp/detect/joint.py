@@ -332,17 +332,18 @@ def tomotrain(args):
 
             fig, ax = plt.subplots(nrows=4, ncols=1, figsize=[8, 6], sharex=True)            
         
+            epochs = np.arange(1,len(loss)+1)
             ax[0].set_title("Training loss")
-            ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Total loss")
+            ax[0].plot(epochs,np.array(loss).astype('f'),".-",color="blue",label="Total loss")
             ax[0].set_ylabel("Total")
             ax[0].legend()
-            ax[1].plot(np.array(hmloss).astype('f'),".-",color="green",label="Heatmap loss")
+            ax[1].plot(epochs,np.array(hmloss).astype('f'),".-",color="green",label="Heatmap loss")
             ax[1].set_ylabel("Heatmap")
             ax[1].legend()
-            ax[2].plot(np.array(crloss).astype('f'),".-",color="red",label="Contrastive loss")
+            ax[2].plot(epochs,np.array(crloss).astype('f'),".-",color="red",label="Contrastive loss")
             ax[2].set_ylabel("Contrastive")
             ax[2].legend()
-            ax[3].plot(np.array(consisloss).astype('f'),".-",color="orange",label="Consistency loss")
+            ax[3].plot(epochs,np.array(consisloss).astype('f'),".-",color="orange",label="Consistency loss")
             ax[3].set_ylabel("Consistency")
             ax[3].legend()
             plt.xlabel("Epoch")
@@ -548,7 +549,6 @@ def milotrain(args):
     # parse output
     with open("log.txt") as f:
         output = f.read()
-    loss = [ line.split("loss")[1].split()[0] for line in output.split("\n") if len(line)]
     closs = [ line.split("cosine_loss")[1].split()[0] for line in output.split("\n") if len(line)]
     std = [ line.split("output_std")[1].split()[0] for line in output.split("\n") if len(line)]
     
@@ -558,11 +558,12 @@ def milotrain(args):
 
     fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6], sharex=True)
 
+    epochs = np.arange(1,len(closs)+1)
     ax[0].set_title("Training loss")
-    ax[0].plot(np.array(closs).astype('f'),".-",color="blue",label="Cosine loss")
+    ax[0].plot(epochs,np.array(closs).astype('f'),".-",color="blue",label="Cosine loss")
     ax[0].set_ylabel("Cosine")
     ax[0].legend()
-    ax[1].plot(np.array(std).astype('f'),".-",color="red",label="Variation in learned embedding")
+    ax[1].plot(epochs,np.array(std).astype('f'),".-",color="red",label="Variation in learned embedding")
     ax[1].set_ylabel("STD")
     ax[1].legend()
     plt.xlabel("Epoch")
