@@ -1322,11 +1322,11 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             picker.pick(name,radius=parameters["tomo_spk_rad"],pixelsize=parameters["scope_pixel"],auto_binning = binning,contract_times=parameters["tomo_spk_contract_times_3d"],gaussian=parameters["tomo_spk_gaussian_3d"],sigma=parameters["tomo_spk_sigma_3d"],stdtimes_cont=parameters["tomo_spk_stdtimes_cont_3d"],min_size=parameters["tomo_spk_min_size_3d"],dilation=parameters["tomo_spk_dilation_3d"],radius_times=parameters["tomo_spk_radiustimes_3d"],inhibit=parameters["tomo_spk_inhibit_3d"],detection_width=parameters["tomo_spk_detection_width_3d"],stdtimes_filt=parameters["tomo_spk_stdtimes_filt_3d"],remove_edge=parameters["tomo_spk_remove_edge_3d"],show=False)
 
     # extract particles if needed
-    if not parameters.get("micromon_block") == "tomo-picking-closed" and (
+    if (
         os.path.isfile("%s.spk" % name)
         or os.path.isfile("%s.txt" % name)
         or os.path.isfile("%s.openmod" % name)
-    ) and not ("tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none"):
+    ) and parameters.get("tomo_vir_method") == "none" and parameters.get("micromon_block") != "tomo-picking-closed":
         t = timer.Timer(text="Sub-volume extraction took: {}", logger=logger.info)
         t.start()
         extract_spk_direct(
