@@ -1350,8 +1350,12 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             # if we did manual or neural-network picking, remove last column and set radius in unbinned voxels
             if virion_coordinates.shape[1] == 5:
                 virion_coordinates = virion_coordinates[:,[0,1,2,4]]
+            
+            # set fixed radius if not detecting virions         
+            if parameters["tomo_vir_method"] == "auto" or parameters["tomo_pick_method"] == "virions":
+                virion_coordinates[:,-1] *= parameters["tomo_vir_binn"]
+            else:
                 virion_coordinates[:,-1] = parameters["tomo_vir_rad"] / parameters["scope_pixel"]
-
     else:
         virion_coordinates = np.array([])
 
