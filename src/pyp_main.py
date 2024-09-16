@@ -821,7 +821,8 @@ def tomo_merge(parameters, check_for_missing_files=True):
             f.close()
     else:
         inputlist = input_all_list
-        raise Exception("Either all tilt-series failed or no particles were found, stopping")
+        if parameters["tomo_vir_method"] != "manual" and parameters["tomo_pick_method"] != "manual":
+            raise Exception("Either all tilt-series failed or no particles were found, stopping")
 
     if detect.tomo_spk_is_required(parameters) > 0:
         # produce .txt file for 3DAVG
