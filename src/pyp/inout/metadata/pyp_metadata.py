@@ -422,6 +422,12 @@ class LocalMetadata:
                     elif key == "ctf_tilt" and self.parameters is not None:
                         template = [str(self.files[key]["path"] % (self.micrograph)).replace("????", "%04d" % (index)) for index in data.keys()]
                         transpose = True
+                        # convert metadata from ctffind4 to ctffind5 format for backwards compatibility
+                        if len(data[0].keys()) == 6:
+                            # add three new columns: "tilt_axis_angle", "tilt_angle", "thickness"
+                            data["tilt_axis_angle"] = 0
+                            data["tilt_angle"] = 0
+                            data["thickness"] = 0
                     elif key == "global_ctf" and self.parameters is not None:
                         ctf = self.data["global_ctf"].to_numpy()
                         np.savetxt(os.path.join(path, name + ".ctf"), ctf)
