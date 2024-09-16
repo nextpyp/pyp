@@ -1367,8 +1367,9 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             elif parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "tomo-session" or parameters.get("micromon_block") == "":
                 spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
 
+            # convert to unbinned coordiantes
             spike_coordinates *= ( parameters['data_bin'] * parameters['tomo_rec_binning'] )
-            spike_coordinates_with_radius = np.hstack( ( spike_coordinates, parameters["tomo_spk_rad"] / binning * np.ones((spike_coordinates.shape[0],1)) ) )
+            spike_coordinates_with_radius = np.hstack( ( spike_coordinates, parameters["tomo_spk_rad"] / parameters["scope_pixel"] * np.ones((spike_coordinates.shape[0],1)) ) )
         else:
             spike_coordinates_with_radius = np.array([])
     else:
