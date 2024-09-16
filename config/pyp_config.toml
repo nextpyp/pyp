@@ -87,6 +87,11 @@ name = "TOMO import"
 description = "CLI Import for TOMO"
 tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
+[blocks.tomo_import_pure]
+name = "TOMO import"
+description = "CLI Import for TOMO"
+tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+
 [blocks.tomo_import_star]
 name = "TOMO Star Import"
 description = "Star data import for TOMO"
