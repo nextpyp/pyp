@@ -391,7 +391,7 @@ def tomoeval(args,name):
         with_score = ""
 
     if args['detect_nn3d_fiber_mode']:
-        fiber = f"--fiber --distance_cutoff {args['detect_nn3d_distance_cutoff']} --r2_cutoff {args['detect_nn3d_r2_cutoff']} --curvature_cutoff {args['detect_nn3d_curvature_cutoff']}"
+        fiber = f"--fiber --distance_cutoff {args['detect_nn3d_distance_cutoff']} --r2_cutoff {args['detect_nn3d_r2_cutoff']} --curvature_cutoff {args['detect_nn3d_curvature_cutoff']} --distance_scale {args['detect_nn3d_curvature_sampling']}"
     else:
         fiber = ""
 

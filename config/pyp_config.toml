@@ -1470,6 +1470,14 @@ default = 0.003
 condition = { arg="fiber_mode", value="true" }
 hidden = ["stream_tomo", "tomo_particles_train"]
 
+[tabs.detect_nn3d.curvature_sampling]
+name = "Spacing (binned voxels)"
+description = "Distance between sampled points along each fiber"
+type = "int"
+default = 2
+condition = { arg="fiber_mode", value="true" }
+hidden = ["stream_tomo", "tomo_particles_train"]
+
 [tabs.detect_nn3d.with_score]
 name = "Save scores"
 description = "Add score column to output text files"
