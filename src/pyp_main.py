@@ -1768,9 +1768,13 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         tilt_metadata["virion_coordinates"] = virion_coordinates
         if len(virion_coordinates) > 0:
             logger.info(f"Total number of virions = {len(virion_coordinates):,}")
+            if parameters.get("slurm_verbose"):
+                logger.warning(virion_coordinates)
 
     tilt_metadata["spike_coordinates"] = spike_coordinates
     logger.info(f"Total number of particles = {len(spike_coordinates):,}")
+    if parameters.get("slurm_verbose"):
+        logger.warning(spike_coordinates)
 
     mpi_funcs, mpi_args = [ ], [ ]
     if ctffind_tilt:
@@ -2339,7 +2343,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             if len(frame_list) > 0:
                 imagefile = frame_list
             else:
-                logger.error("Either data do not have frames or pre-processing was incomplate. ")
+                logger.error("Either data do not have frames or pre-processing was incomplete")
                 raise Exception("Frames not found.")
 
         elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
@@ -2348,7 +2352,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         elif os.path.exists(os.path.join("raw", filename + ".mrc")):
             imagefile = "raw/" + filename
         else:
-            raise Exception("Image not found")
+            raise Exception(f"Image {filename}.mrc not found")
     elif use_frames:
         imagefile = "raw/" + filename
 
