@@ -1344,7 +1344,7 @@ description = "Select source for particle coorinates for training"
 type = "enum"
 enum = { none="particles from particle picking block", phoenix="parquet file from MiLoPYP block", classes="class labels from MiLoPYP block" }
 default = "none"
-hidden = [ "tomo_import", "tomo_import_pure", "tomo_particles_eval" ]
+hidden = [ "tomo_import", "tomo_import_pure", "tomo_pre_process", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.milo_parquet]
 name = "Parquet file"
@@ -1444,7 +1444,7 @@ name = "Fiber mode"
 description = "Detect particles along fibers or filaments"
 type = "bool"
 default = false
-hidden = ["stream_tomo", "tomo_particles_train"]
+hidden = ["stream_tomo", "tomo_pre_process", "tomo_particles_train"]
 
 [tabs.detect_nn3d.distance_cutoff]
 name = "Distance cutoff"
@@ -1452,7 +1452,7 @@ description = "Maximum distance between points used to form a graph"
 type = "float"
 default = 15.0
 condition = { arg="fiber_mode", value="true" }
-hidden = ["stream_tomo", "tomo_particles_train"]
+hidden = ["stream_tomo", "tomo_pre_process", "tomo_particles_train"]
 
 [tabs.detect_nn3d.r2_cutoff]
 name = "Fit curve residual"
@@ -1460,7 +1460,7 @@ description = "Max residual for fitted curve, omit if above the residual/bad fit
 type = "float"
 default = 30.0
 condition = { arg="fiber_mode", value="true" }
-hidden = ["stream_tomo", "tomo_particles_train"]
+hidden = ["stream_tomo", "tomo_pre_process", "tomo_particles_train"]
 
 [tabs.detect_nn3d.curvature_cutoff]
 name = "Max curvature"
@@ -1468,7 +1468,7 @@ description = "Max curvature for fitted curve, for microtubules the curvature sh
 type = "float"
 default = 0.003
 condition = { arg="fiber_mode", value="true" }
-hidden = ["stream_tomo", "tomo_particles_train"]
+hidden = ["stream_tomo", "tomo_pre_process", "tomo_particles_train"]
 
 [tabs.detect_nn3d.curvature_sampling]
 name = "Spacing (binned voxels)"
@@ -1476,7 +1476,7 @@ description = "Distance between sampled points along each fiber"
 type = "int"
 default = 2
 condition = { arg="fiber_mode", value="true" }
-hidden = ["stream_tomo", "tomo_particles_train"]
+hidden = ["stream_tomo", "tomo_pre_process", "tomo_particles_train"]
 
 [tabs.detect_nn3d.with_score]
 name = "Save scores"
