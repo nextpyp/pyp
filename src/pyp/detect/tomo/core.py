@@ -1248,7 +1248,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             radius_in_pixels = int(parameters["tomo_spk_rad"] / parameters["scope_pixel"] / binning)
             # convert coordinates from next to pyp format
             try:
-                joint.coordinates_next2pyp("{0}.next".format(name),1)
+                joint.coordinates_next2pyp("{0}.next".format(name),binning)
                 local_run.run_shell_command("{0}/bin/point2model -scat -sphere {2} {1}.next {1}.mod".format(get_imod_path(), name,radius_in_pixels),verbose=parameters["slurm_verbose"])
 
                 # adjust geometry of models to match tomogram dimensions
