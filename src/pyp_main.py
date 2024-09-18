@@ -1588,15 +1588,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         parameters, scope_pixel, scope_voltage, scope_mag, save=False
     )
 
-    # actual stack sizes
-    originalx = x
-    originaly = y
-    originalz = z
-    headers = mrc.readHeaderFromFile(name + ".mrc")
-    x = int(headers["nx"])
-    y = int(headers["ny"])
-    z = int(headers["nz"])
-
     # binned reconstruction
     binning = parameters["tomo_rec_binning"]
 
@@ -1679,8 +1670,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 mpi_args.append(ctffind_tilt_args)
 
         # write global ctf file
-        ctf[6] = originalx
-        ctf[7] = originaly
+        ctf[6] = x
+        ctf[7] = y
         ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
         ctf[11] = parameters['tomo_rec_binning']
         np.savetxt("{}.ctf".format(name), ctf)

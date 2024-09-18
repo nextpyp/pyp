@@ -667,10 +667,8 @@ def read_tilt_series(
         imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
         t.stop()
 
-    f = open("{0}.mrc".format(name), "rb")
-    headerbytes = f.read(1024)
-    headerdict = imageio.mrc.parseHeader(headerbytes)
-    x, y, z = headerdict["nx"], headerdict["ny"], headerdict["nz"]
+    if parameters["tomo_ali_square"]:
+        x, y, z = square, square, parameters["tomo_rec_thickness"]
 
     pixel_size *= binning
 
