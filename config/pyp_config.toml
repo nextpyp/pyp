@@ -2484,7 +2484,7 @@ type = "float"
 default = 20.0
 
 [tabs.tomo_sphere.smoothness]
-name = "Smoothness constant"
+name = "Smoothness"
 description = "Larger values produce smoother surfaces, smaller values more accurately follow edges"
 type = "float"
 default = 1.0
@@ -4485,7 +4485,7 @@ advanced = true
 condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_data_windowing]
-name = "Real space windowing"
+name = "Use masking"
 description = "Real space windowing of dataset"
 type = "bool"
 default = false
