@@ -812,7 +812,7 @@ def generate_plots(
 
             histogram_particle_tomo(mean_score, threshold=0, tiltseries=output_name, save_path="../maps")
     except:
-        logger.info("Per particle score plot for tomo was not successful")
+        logger.info("Unable to produce particle score plot, too few particles maybe?")
         pass
 
     occ_n, occ_bins, occ_patches = ax[1, 0].hist(
