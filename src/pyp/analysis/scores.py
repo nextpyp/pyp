@@ -582,6 +582,8 @@ def shape_phase_residuals(
                     df = pd.DataFrame(crop_by_tltangle, columns=["occ", "score", "pind", "tltangle"])
                     meanscore = df.groupby("pind")["score"].mean().to_numpy()
                     above_threshold = meanscore >= thresholds[g, f]
+                    if threshold == 1:
+                        above_threshold = meanscore == meanscore
                     discarded = ptl_index[above_threshold == False].size
                     if discarded > 0:
                         logger.info(f"{discarded} particles scores are below the threshold and being removed from reconstruction")
