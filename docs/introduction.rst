@@ -3,18 +3,18 @@ nextPYP: a scalable platform for cryo-EM/ET image analysis
 
 `nextPYP <https://nextpyp.app/>`_ is a comprehensive platform for single-particle cryo-EM/ET image analysis developed and maintained by the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_ at `Duke University <http://www.duke.edu>`_. 
 
-Designed to lower the barrier of access to complex protocols for cryo-EM/ET data processing, ``nextPYP`` provides state-of-the-art results using a combination of established tools in the field with unique `methods <https://cryoem.cs.duke.edu/research/methods/>`_ developed in the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_.
+By combining established tools in the field with `methods <https://cryoem.cs.duke.edu/research/methods/>`_ developed in our lab, ``nextPYP`` achieves state-of-the-art results while being easy-to-use and resource efficent.
 
 Main features
 -------------
 - **Ease-of-use**: portable, user-friendly, and fully featured web-based GUI
-- **Scalability**: parallel processing with small storage footprint (no need to save tomograms, sub-volumes, or particle stacks)
-- **End-to-end workflows**: run all steps required to convert raw data into high-resolution structures (cryo-EM/ET)
-- **Pattern mining**: deep-learning based cellular tomogram exploration and accurate particle localization (cryo-ET)
-- **Particle picking suite**: size-based, geometry-based and neural network-based methods (cryo-EM/ET)
-- **Constrained refinement**: multi-mode constrained refinement and classification for heterogeneity analysis (cryo-ET)
-- **High-resolution refinement**: per-particle CTF and frame refinement, and self-tuning exposure weighting (cryo-EM/ET)
-- **On-the-fly pre-processing**: analyze raw data during data collection in high-throughput mode (cryo-EM/ET)
+- **Scalability**: parallel processing and small storage footprint (no sub-volumes or particle stacks saved)
+- **End-to-end workflows**: run all steps required to convert raw data into high-resolution structures
+- **Pattern mining**: deep-learning based cellular tomogram exploration and accurate particle localization
+- **Particle picking suite**: size-based, geometry-based and neural network-based methods
+- **Constrained refinement**: multi-mode constrained refinement and classification for heterogeneity analysis
+- **High-resolution refinement**: per-particle CTF and frame refinement, and self-tuning exposure weighting
+- **On-the-fly pre-processing**: analyze raw data during data collection in high-throughput mode
 - **Interoperability**: import/export metadata in multiple formats to interface with external programs
 
 Select from the following options:
