@@ -2435,7 +2435,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         try:
             # increase the contrast of virus volume
             volume = scratch + name
-            if fp["denoise_method"] == "imod-nad":
+            if fp["denoise_method"] == "nad":
                 iterations = fp["denoise_iters"] 
                 command = f"{get_imod_path()}/bin/nad_eed_3d -n {iterations} {volume}.mrc {volume}_denoised.mrc".format(
                 )
