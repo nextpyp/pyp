@@ -1363,12 +1363,8 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         spike_coordinates = imod.coordinates_from_mod_file("%s.spk" % name)
 
         if len(spike_coordinates) > 0:
-            # switch y and z if these come auto pick
-            if parameters["tomo_spk_method"] == "auto" or parameters.get("micromon_block") == "tomo-particles-eval":
-                spike_coordinates = spike_coordinates[:, [0, 1, 2]]
-
-            # reverse z-dimension for legacy blocks
-            elif parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "tomo-session" or parameters.get("micromon_block") == "":
+            # reverse z-dimension for some blocks?
+            if parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-session" or parameters.get("micromon_block") == "":
                 spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
 
             # convert to unbinned coordiantes
