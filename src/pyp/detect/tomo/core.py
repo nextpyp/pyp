@@ -1294,7 +1294,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         elif parameters["tomo_spk_method"] == "virions" or parameters["tomo_pick_method"] == "virions":
 
             # figure out virion parameters
-            virion_binning, virion_size = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
+            _, virion_size = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
             
             # use new parameters for figuring out virion size
             parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"]
