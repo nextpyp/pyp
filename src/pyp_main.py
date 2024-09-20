@@ -3838,10 +3838,11 @@ if __name__ == "__main__":
 
                         if not os.path.exists(par_input):
                             try:
+                                logger.warning(f"No input parfile specified, trying to find one automatically")
                                 par_input = os.path.join(os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01_%02d" % parameters["refine_iter"] + ".bz2")
                                 logger.info(f"Using parfile {par_input} as template for alignment")
                             except:
-                                logger.error("Can find any available parfile to read alignment")
+                                raise Exception("Cannot find parfile to read particle alignments")
 
                         if os.path.isdir(par_input):
                             parfile = par_input
@@ -3849,8 +3850,7 @@ if __name__ == "__main__":
                             parfile = par_input.replace(".bz2", "")
                             frealign_parfile.Parameters.decompress_parameter_file_and_move(Path(par_input), Path(parfile), threads=parameters["slurm_tasks"])
                         else:
-                            logger.error("Can't recognize the parfile")
-                            sys.exit()
+                            raise Exception(f"Unknown parfile format: {parfile}")
 
                         imagelist = list(micrographs.keys())
 
