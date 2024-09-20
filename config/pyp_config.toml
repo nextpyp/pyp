@@ -1342,7 +1342,7 @@ hidden = [ "tomo_import", "tomo_particles_train" ]
 name = "Coordinates for training"
 description = "Select source for particle coorinates for training"
 type = "enum"
-enum = { none="particles from particle picking block", phoenix="parquet file from MiLoPYP block", classes="class labels from MiLoPYP block" }
+enum = { none="particles from upstream block", phoenix="parquet file from MiLoPYP", classes="class labels from MiLoPYP" }
 default = "none"
 hidden = [ "tomo_import", "tomo_import_pure", "tomo_pre_process", "tomo_particles_eval" ]
 
