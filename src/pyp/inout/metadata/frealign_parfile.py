@@ -624,8 +624,11 @@ class Parameters:
     @staticmethod
     def decompress_parameter_file_and_move(file: Path, new_file: Path, micrograph_list: list = [], threads=1):
         # delete the file if it already exists in the new path
-        if new_file.exists(): 
-            shutil.rmtree(new_file)
+        if new_file.exists():
+            if os.path.isdir(new_file): 
+                shutil.rmtree(new_file)
+            else:
+                raise Exception(f"Incompatible file format in {new_file}. If this file was produced by a version of nextPYP older than 0.7.0, you may need to run an additional refinement iteration and use the new parfile as input for this operation.")
         
         # decompress the file into folder
         assert (str(file).endswith(".bz2")), f"{file} needs to be compressed in .bz2 format."
