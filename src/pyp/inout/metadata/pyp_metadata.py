@@ -813,7 +813,9 @@ class GlobalMetadata:
                 }, 
                 index=["particle"]
                 )
-        except: 
+        except:
+            type, value, traceback = sys.exc_info()
+            sys.__excepthook__(type, value, traceback)
             logger.warning("Some PYP parameters are missing, metadata initialized with empty tables")
             self.scope_data = pd.DataFrame()
             self.micrograph_global = pd.DataFrame()
