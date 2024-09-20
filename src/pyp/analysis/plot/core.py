@@ -1568,4 +1568,7 @@ def par2bild(parfile, output, parameters):
 
     comm= os.environ["PYP_DIR"] + f"/external/postprocessing/par_to_bild.py --input '{parfile}' --output '{output}' {is_tomo} --apix {parameters['scope_pixel']*parameters['data_bin']*parameters['extract_bin']} --healpix_order 4 --boxsize {parameters['extract_box']} --height_scale 0.3 --width_scale 0.5 --occ_cutoff {parameters['reconstruct_cutoff']} --sym {parameters['particle_sym']} "
 
-    run_shell_command(comm, verbose=False)
+    run_shell_command(comm, verbose=parameters["slurm_verbose"])
+    
+    if not os.path.exists(output):
+        logger.error(f"Failed to produce {output}. Try increasing the amount of RAM and re-running this job.")
