@@ -3850,7 +3850,7 @@ if __name__ == "__main__":
                             parfile = par_input.replace(".bz2", "")
                             frealign_parfile.Parameters.decompress_parameter_file_and_move(Path(par_input), Path(parfile), threads=parameters["slurm_tasks"])
                         else:
-                            raise Exception(f"Unknown parfile format: {parfile}")
+                            raise Exception(f"Unknown parfile format: {par_input}")
 
                         imagelist = list(micrographs.keys())
 
