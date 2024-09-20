@@ -786,8 +786,8 @@ class GlobalMetadata:
                     {
                         "tomo_rec_binning" : parameters["tomo_rec_binning"], 
                         "tomo_rec_thickness" : parameters["tomo_rec_thickness"], 
-                        "tomo_ali_square" : "true" if parameters["tomo_ali_square"] else "false", 
-                        "tomo_alu_format" : "true" if parameters["tomo_ali_format"] else "false",
+                        "tomo_ali_square" : "true" if parameters.get("tomo_ali_square") else "false", 
+                        "tomo_ali_format" : "true" if parameters.get("tomo_ali_format") else "false",
                     }, 
                     index=["tomogram"]
                 )
