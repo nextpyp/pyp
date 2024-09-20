@@ -2,7 +2,7 @@
 MiLoPYP - Pattern mining
 ========================
 
-`MiLoPYP <https://nextpyp.app/milopyp/>`_ can be used to map the entire contents of a set of tomograms, with the goal of identifying targets of interest for sub-tomogram averaging. The algorithms are described `here<https://www.nature.com/articles/s41592-024-02403-6>`_.
+`MiLoPYP <https://nextpyp.app/milopyp/>`_ can be used to map the contents of a set of tomograms, with the goal of identifying targets of interest for sub-tomogram averaging as described in `Huang et al., Nat Meth <https://cryoem.cs.duke.edu/node/milopyp-self-supervised-molecular-pattern-mining-and-particle-localization-in-situ/>`_.
 
 The ``MiLoPYP`` workflow in ``nextPYP`` consists of two steps and is implemented using four blocks:
 
@@ -38,7 +38,7 @@ For a local installaton on macOS, for example, follow these steps:
 Data pre-processing
 ^^^^^^^^^^^^^^^^^^^
 
-Since ``MiLoPYP`` operates on reconstructured tomograms, you first need to pre-process your tilt-series using the :badge:`Pre-processing,badge-primary` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar-10304>` tutorials)
+Since ``MiLoPYP`` operates on reconstructed tomograms, you first need to pre-process your tilt-series using the :badge:`Pre-processing,badge-primary` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
 
 Step 1: Pattern mining (training)
 ---------------------------------
@@ -62,7 +62,7 @@ The trained model can now be evaluated to visualize the results:
 
 #. Click on :guilabel:`MiLoPYP model` (output of the :badge:`MiLoPYP (train),badge-secondary` block) and select :badge:`MiLoPYP (eval),badge-primary`
 
-#. Select the trained model from the block upstream (``*.pth``), for example, ``model_last_contrastive.pth``. The models will be organized in sub-folders named after the date and time of training: ``YYYYMMDD_HHMMSS``
+#. Select the trained model from the block upstream (``*.pth``), for example, ``model_last_contrastive.pth``. The models will be saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
@@ -79,7 +79,7 @@ There are two ways to select target positions to train the refinement module:
 Option A: Manual cluster selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This option only requires specifying a list of cluster numbers as displayed in the **Class Labels** panel, and can be done within ``nextPYP`` without running any external tools
+This option only requires specifying a list of cluster numbers as displayed in the **Class Labels** panel, and can be done within ``nextPYP`` without running any external tools (see Step 4 below)
 
 Option B: Interactive target selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -149,15 +149,15 @@ Now that we have identified our targets of interest, we will use them to train t
 
 * Click on :guilabel:`MiLoPYP Particles` (output of the :badge:`MiLoPYP (eval),badge-secondary` block) and select :badge:`Particle-Picking (train),badge-primary`
 
-* **Option A**: From the ``Import from MiLoPYP`` menu select "parquet", and specify the location of the ``.parquet`` file you uploaded in the previous step: ``particles.parquet``
+* **Option A**: From the ``Coordinates for training`` menu select "class labels from MiLoPYP" and specify a comma separated list of classes using the class IDs displayed in the **Class Labels** panel
 
-* **Option B**: From the ``Import from MiLoPYP`` menu select "class labels" and specify the list of classes you want to use for training (as displayed in the **Class Labels** panel)
+* **Option B**: From the ``Coordinates for training`` menu select "parquet file from MiLoPYP", and specify the location of the ``.parquet`` file you uploaded in the previous step: ``particles.parquet``
 
 * Set parameters for training as needed
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-#. Once the run completes, navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the training metrics
+* Once the run completes, navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the training metrics
 
 Step 5: Particle refinement (evaluation)
 ----------------------------------------
@@ -166,7 +166,7 @@ The last step is to evaluate the model and obtain the final particle positions o
 
 #. Click on :guilabel:`Particles Model` (output of the :badge:`Particle-Picking (train),badge-secondary` block) and select :badge:`Particle-Picking (eval),badge-primary`
 
-#. Select the location of the ``Trained model (*.pth)`` using the file browser. The models will be organized in sub-folders named after the date and time of training: ``YYYYMMDD_HHMMSS``
+#. Select the location of the ``Trained model (*.pth)`` using the file browser. The models will be saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
 
 #. Set parameters for evaluation as needed
 
@@ -174,7 +174,11 @@ The last step is to evaluate the model and obtain the final particle positions o
 
 #. Once the run completes, navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the particle picking results
 
-The resulting set of particles can be used for 3D refinement using the :badge:`Particle refinement,badge-secondary` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar-10304>` tutorials)
+The resulting set of particles can be used for 3D refinement using the :badge:`Particle refinement,badge-secondary` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
+
+.. tip::
+
+    * To detect particles distributed along fibers or tubules, select ``Fiber mode``. This will group neighboring particles, fit a smooth trajectory to them, and re-sample positions along the fitted curve
 
 .. seealso::
 
