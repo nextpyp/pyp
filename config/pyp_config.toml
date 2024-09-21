@@ -6500,6 +6500,14 @@ input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
 hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn", "spr_drgn"]
 
+[tabs.slurm.merge_retries]
+name = "Retries (merge task)"
+description = "Number of times to retry launching failed tasks"
+type = "int"
+default = 1
+advanced = true
+hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn", "spr_drgn"]
+
 [tabs.slurm.daemon_tasks]
 name = "Threads per task (pre-processing daemon)"
 description = "Number of CPUs used during pre-processing"

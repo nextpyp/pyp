@@ -564,31 +564,67 @@ def spr_merge(parameters, check_for_missing_files=True):
     else:
         inputlist = input_all_list
 
+    retries = 0
+    retry_flag = "{}.retries".format(data_set)
+    if os.path.exists(retry_flag):
+        with open(retry_flag) as f:
+            retries = int(f.read())
+    
+    # increment retry counter
+    retries += 1
+    
     # check if all processes ended successfully
     if check_for_missing_files:
         missing_files = project_params.get_missing_files(parameters, inputlist)
 
         if len(missing_files) > 0:
-            if micrographs.endswith("_missing"):
-                # missing files remaining after retrying
-                try:
-                    os.remove(micrographs)
-                    logger.warning("Detected errors even after retrying. Stopping.")
-                except:
-                    pass
-
+            if retries > parameters.get("slurm_merge_retries"):
+                Web().failed()
+                if micrographs.endswith("_missing"):
+                    # missing files remaining after retrying
+                    try:
+                        os.remove(micrographs)
+                    except:
+                        pass
+                if os.path.exists(retry_flag):
+                    try:
+                        os.remove(retry_flag)
+                    except:
+                        pass
+                raise Exception("Reached maximum number of retries. Please check for errors in the logs")
             else:
                 logger.warning(
-                    "{0} jobs failed, attempting to re-submit".format(
-                        len(missing_files)
+                    "{0} jobs failed, attempt {1} of {2} to re-submit jobs".format(
+                        len(missing_files), retries, parameters.get("slurm_merge_retries")
                     )
                 )
-                micrographs_file = micrographs + "_missing"
+                if micrographs.endswith("_missing"):
+                    micrographs_file = micrographs
+                else:
+                    micrographs_file = micrographs + "_missing"
                 with open(micrographs_file, "w") as f:
                     f.write("\n".join([m for m in missing_files]))
+
+                # save retry counter
+                with open(retry_flag,'w') as f:
+                    f.write(str(retries))
+
                 # re-submit only jobs that failed
                 split(parameters)
                 return
+        else:
+            if micrographs.endswith("_missing"):
+                # remove the missing file list 
+                try:
+                    os.remove(micrographs)
+                except:
+                    pass
+            if os.path.exists(retry_flag):
+                try:
+                    os.remove(retry_flag)
+                except:
+                    pass
+            logger.info("All jobs finished successfully")
 
     logger.info(f"Total number of micrographs = {len(input_all_list)}")
 
@@ -774,29 +810,51 @@ def tomo_merge(parameters, check_for_missing_files=True):
     else:
         inputlist = input_all_list
 
+    retries = 0
+    retry_flag = "{}.retries".format(data_set)
+    if os.path.exists(retry_flag):
+        with open(retry_flag) as f:
+            retries = int(f.read())
+    
+    # increment retry counter
+    retries += 1
+    
     # check if all processes ended successfully
     if check_for_missing_files:
         missing_files = project_params.get_missing_files(parameters, inputlist)
 
         if len(missing_files) > 0:
-            if micrographs.endswith("_missing"):
-                # missing files remaining after retrying
-                try:
-                    os.remove(micrographs)
-                    logger.error("Second attempt failed, stopping. Please check for errors in the logs")
-                    Web().failed()
-                    raise
-                except:
-                    pass
+            if retries > parameters.get("slurm_merge_retries"):
+                Web().failed()
+                if micrographs.endswith("_missing"):
+                    # missing files remaining after retrying
+                    try:
+                        os.remove(micrographs)
+                    except:
+                        pass
+                if os.path.exists(retry_flag):
+                    try:
+                        os.remove(retry_flag)
+                    except:
+                        pass
+                raise Exception("Reached maximum number of retries. Please check for errors in the logs")
             else:
                 logger.warning(
-                    "{0} jobs failed, attempting to re-submit".format(
-                        len(missing_files)
+                    "{0} jobs failed, attempt {1} of {2} to re-submit jobs".format(
+                        len(missing_files), retries, parameters.get("slurm_merge_retries")
                     )
                 )
-                micrographs_file = micrographs + "_missing"
+                if micrographs.endswith("_missing"):
+                    micrographs_file = micrographs
+                else:
+                    micrographs_file = micrographs + "_missing"
                 with open(micrographs_file, "w") as f:
                     f.write("\n".join([m for m in missing_files]))
+
+                # save retry counter
+                with open(retry_flag,'w') as f:
+                    f.write(str(retries))
+
                 # re-submit only jobs that failed
                 split(parameters)
                 return
@@ -805,9 +863,14 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 # remove the missing file list 
                 try:
                     os.remove(micrographs)
-                    logger.warning("Image(s) that failed last time succeeded in new job(s), deleting missing file list")
                 except:
                     pass
+            if os.path.exists(retry_flag):
+                try:
+                    os.remove(retry_flag)
+                except:
+                    pass
+            logger.info("All jobs finished successfully")
 
     # save final micrograph list (excluding micrographs with no boxes)
     inputlist = get_new_input_list(parameters, input_all_list)
