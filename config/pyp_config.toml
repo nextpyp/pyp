@@ -1363,6 +1363,13 @@ default = ""
 condition = { arg="milo_import", value="classes" }
 hidden = [ "tomo_import", "tomo_import_pure", "tomo_particles_eval" ]
 
+[tabs.detect_nn3d.rad]
+name = "Particle radius (A)"
+description = "Radius assigned to output particles"
+type = "float"
+default = 0
+hidden = [ "tomo_particles_train", "tomo_pre_process" ]
+
 [tabs.detect_nn3d.down_ratio]
 name = "Additional binning for training"
 description = "Bin data by this factor before training"
