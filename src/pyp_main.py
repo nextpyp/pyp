@@ -1028,7 +1028,7 @@ def split(parameters):
                 pass
 
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
-        tomo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-particles-train"
+        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["micromon_block"] == "tomo-particles-train" or parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" and parameters["tomo_vir_method"] == "none" )
         milo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo-train"
         milo_eval = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo"
         isonet_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-train" 
