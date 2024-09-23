@@ -961,7 +961,8 @@ def clean_picking_files(project_dir):
 
 def clean_tomo_vir_particles(project_dir):
 
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_vir????_binned_nad.*") )]
+    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_vir????_binned_nad*.mrc") )]
+    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "webp", "*_vir????_binned_nad.webp") )]
     [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*_vir*.*") )]
     [os.remove(f) for f in glob.glob( os.path.join(project_dir, "next", "virion_thresholds.next") )]
     [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
