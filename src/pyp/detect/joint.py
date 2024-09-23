@@ -170,31 +170,6 @@ def bin_next_coordinates(coordinates,binning):
     np.savetxt(coordinates, coordinate_file, fmt='%s', delimiter='\t')
 
 
-def coordinates_next2pyp(coordinates,binning,radius=0):
-
-    # read coordinate file written by nextPYP
-    coordinate_file = np.loadtxt( coordinates, dtype='str', ndmin=2)
-    next_coordinates = coordinate_file.astype("float")
-
-    # store coordinates in pyp format
-    if radius > 0:
-        pyp_coordinates = np.zeros( [ next_coordinates.shape[0], next_coordinates.shape[1] + 1 ] )
-        pyp_coordinates[:,-1] = radius
-    else:
-        pyp_coordinates = next_coordinates.copy()
-
-    # apply binning in x-dimension
-    pyp_coordinates[:,0] = next_coordinates[:,0] / binning
-
-    # apply 2x binning in z-dimension
-    pyp_coordinates[:,1] = next_coordinates[:,2] / binning
-
-    # apply binning and flip in y-dimension
-    pyp_coordinates[:,2] = next_coordinates[:,1] / binning
-
-    # overwrite original file with pyp coordinates
-    np.savetxt(coordinates, pyp_coordinates.astype('int').astype('str'), fmt='%s', delimiter='\t')
-
 def tomotrain(args):
     """Train NN for 3D particle picking.
 
@@ -282,7 +257,7 @@ def tomotrain(args):
 
     # substitute coordinate files with binned values
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
-    logger.info(f"Binning coordinates ({number_of_labels:,} labels)")
+    logger.info(f"Binning coordinates ({number_of_labels:,} points)")
 
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
