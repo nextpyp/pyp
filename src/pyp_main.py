@@ -1796,11 +1796,14 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if os.path.exists(name+".spk"):
             os.remove(name+".spk")
 
-    # virion detection
-    if parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_pick_method") == "virions":
-        # use spike radius as virion radius
+    # map new to old parameters during virion detection
+    if parameters.get("micromon_block") == "tomo-picking":
         parameters["tomo_spk_method"] = parameters["tomo_pick_method"]
-        parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_vir_rad"]
+        # use spike radius as virion radius
+        if parameters.get("tomo_pick_method") == "virions":
+            parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_vir_rad"]
+        elif parameters.get("tomo_pick_method") == "manual":
+            parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
 
     # particle detection and extraction
     virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
