@@ -273,7 +273,16 @@ def parse_arguments(block):
         if parameters["data_parent"] != None and not parameters["data_parent"] == ".":
 
             # link all necessary metadata directories
-            if not parameters["data_import"] and parameters["micromon_block"] != "tomo-denoising" and parameters["micromon_block"] != "tomo-denoising-eval" and parameters["micromon_block"] != "tomo-segmentation-open" and parameters["micromon_block"] != "tomo-picking-closed" and parameters["micromon_block"] != "tomo-segmentation-closed":
+            if (
+                not parameters["data_import"] 
+                and parameters["micromon_block"] != "tomo-denoising" 
+                and parameters["micromon_block"] != "tomo-denoising-eval" 
+                and parameters["micromon_block"] != "tomo-segmentation-open" 
+                and parameters["micromon_block"] != "tomo-picking-closed" 
+                and parameters["micromon_block"] != "tomo-segmentation-closed"
+                and parameters["micromon_block"] != "tomo-particles-eval"
+                and parameters["micromon_block"] != "tomo-picking"
+            ):
                 folders = ["raw", "sva", "mrc", "webp"]
                 for f in folders:
                     source = os.path.join(parameters["data_parent"], f)
