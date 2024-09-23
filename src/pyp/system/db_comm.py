@@ -514,6 +514,9 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
     ] = "{0}_region_*.rec {0}_spk????.rec {0}_vir????_spk????.mrc {0}_vir????.txt {0}_vir????_cut.txt {0}_spk????.proj".format(
         name
     )
+    if parameters.get("tomo_ext_coords"):
+        files["sva"] += " {0}.spk".format(name)
+
     files["pkl"] = "{0}.pkl".format(name)
 
     save_results(files, current_path, verbose=verbose)

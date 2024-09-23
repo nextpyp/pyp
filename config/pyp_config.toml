@@ -2984,14 +2984,14 @@ default = 2
 condition = { arg="method", value="virions" }
 
 [tabs.tomo_ext]
-_name = "Sub-tomogram extraction"
+_name = "Particle extraction"
 _description = "Sub-tomogram extraction parameters"
 
 [tabs.tomo_ext.fmt]
-name = "Extraction format"
-description = "Format to extract sub-tomograms"
+name = "Sub-volume format"
+description = "Select format to extract sub-tomograms"
 type = "enum"
-enum = { none="none", eman="eman (invert contrast)", 3DAVG="3davg (do not invert contrast)" }
+enum = { none="none", 3DAVG="3davg (do not invert contrast)", eman="eman (invert contrast)" }
 default = "none"
 
 [tabs.tomo_ext.size]
@@ -3014,6 +3014,12 @@ description = "Binning factor used to extract sub-tomgrams"
 type = "int"
 default = 1
 condition = { arg="fmt", value=["eman","3DAVG"] }
+
+[tabs.tomo_ext.coords]
+name = "Export coordinates"
+description = "Export particle coordinates in IMOD format (sva/*.spk)"
+type = "bool"
+default = false
 
 # 2D classification parameters
 
