@@ -59,11 +59,18 @@ def coordinates_to_model_file(coordinates,filename,radius=50):
     numpy.savetxt("{}.box".format(name), coordinates.astype('int').astype('str'), fmt='%s', delimiter='\t')
 
     # convert to IMOD model
-    command = f"{get_imod_path()}/bin/point2model -scat -sphere {radius} -values 1 -input {name}.box -output {filename}"
+    command = f"{get_imod_path()}/bin/point2model -scat -sphere {radius} -values 1 -input {name}.box -output {name}.mod"
+    run_shell_command(command)
+
+    command = f"{get_imod_path()}/bin/imodtrans -T {name}.mod {filename}"
     run_shell_command(command)
 
     try:
         os.remove( name + ".box")
+    except:
+        pass
+    try:
+        os.remove( name + ".mod")
     except:
         pass
 
