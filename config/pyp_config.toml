@@ -1741,7 +1741,6 @@ description = "Bin tilt-series by this factor before alignment"
 type = "int"
 default = 8
 condition = { arg="auto_bin", value="false" }
-advanced = true
 
 [tabs.tomo_ali.square]
 name = "Reshape tilt-images into squares"
@@ -4794,7 +4793,7 @@ condition = { arg="method", value="cryoDRGN" }
 name = "Operation"
 description = "tomoDRGN command to run"
 type = "enum"
-enum = {train_nn="train_nn (decoder-only network to learn a homogeneous structure)", train_vae="train_vae (learn heterogeneity landscape and volume decoder)"}
+enum = {train_vae="train_vae (learn heterogeneity landscape and volume decoder)"}
 default = "train_vae"
 condition = { arg="method", value="tomoDRGN" }
 
@@ -4832,8 +4831,8 @@ condition = {arg="tomodrgn_mode", value="convergence_nn"}
 [tabs.heterogeneity.tomodrgn_epoch_index]
 name = "Epoch index"
 description = "Latest epoch number N to analyze convergence (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
-type = "int"
-default = 0
+type = "str"
+default = "latest"
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_epoch_interval]
@@ -4877,13 +4876,6 @@ description = "Requires that UMAP be precomputed for downstream calcs. Useful fo
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
-
-[tabs.heterogeneity.tomodrgn_epochs_umap]
-name = "N-epochs-umap"
-description = "Number of epochs to train the UMAP embedding via cuML for a given z.pkl"
-type = "int"
-default = 25000
-condition = {arg="tomodrgn_skip_umap", value="false"}
 
 [tabs.heterogeneity.tomodrgn_nbins]
 name = "N-bins"
@@ -4939,13 +4931,6 @@ name = "Ground-truth"
 description = "Relative path containing wildcards to ground_truth_vols*.mrc for map-map CC calcs"
 type = "str"
 default = "None"
-condition = {arg="tomodrgn_mode", value="convergence_vae"}
-
-[tabs.heterogeneity.tomodrgn_max_threads]
-name = "Max-threads"
-description = "Max number of threads used to parallelize mask generation"
-type = "int"
-default = 8
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
 
 [tabs.heterogeneity.tomodrgn_thresh]

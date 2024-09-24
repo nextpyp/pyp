@@ -271,6 +271,7 @@ def run_tomodrgn(project_dir, parameters):
         command = f"cp {stack} {os.getcwd()}/input_data/"
         tasks.append(command)
 
+    logger.info(f"Copying {len(particles_stacks):,} particle stacks to local scratch:")
     mpi.submit_jobs_to_workers(tasks, os.getcwd(), verbose=False)
         
     # particle_stack_list = [os.path.basename(p) for p in particles_stacks]
@@ -298,9 +299,9 @@ def run_tomodrgn(project_dir, parameters):
     else:
         raise Exception("Training did not finish successfully")
 
-    # analyze
-    logger.info("Running tomoDRGN analyze")
-    tomodrgn_analyze("train_output", "analyze_output", parameters)
+    # convergence
+    logger.info("Running tomoDRGN convergence_vae")
+    convergence_vae(parameters, "train_output", "analyze_output")
 
     final_output = os.path.join(project_dir, "train", "heterogeneity_tomodrgn_analyze_" + str(parameters["heterogeneity_tomodrgn_analysis_epoch"]))
     
@@ -469,12 +470,9 @@ def convergence_vae(parameters, input_dir, output):
     """
     pixelsize = parameters['scope_pixel'] * parameters["data_bin"] * parameters["extract_bin"]
 
-    options = f" --poch-interval {parameters['heterogeneity_tomodrgn_epoch_interval']} --subset {parameters['heterogeneity_tomodrgn_subset']} --random-state {parameters['heterogeneity_tomodrgn_randomstate']} --n-epochs-umap {parameters['heterogeneity_tomodrgn_epochs_umap']} --n-bins {parameters['heterogeneity_tomodrgn_nbins']} \
-        --pruned-maxima {parameters['heterogeneity_tomodrgn_pruned_maxima']} --radius {parameters['heterogeneity_tomodrgn_radius']} --final-maxima {parameters['heterogeneity_tomodrgn_final_maxima']} --Apix {pixelsize} \
-        --max-threads {parameters['heterogeneity_tomodrgn_max_threads']} --thresh {parameters['heterogeneity_tomodrgn_thresh']} --dilate {parameters['heterogeneity_tomodrgn_dilate']} --dist {parameters['heterogeneity_tomodrgn_dist']}"
+    options = f" --epoch-interval {parameters['heterogeneity_tomodrgn_epoch_interval']} --subset {parameters['heterogeneity_tomodrgn_subset']} --random-state {parameters['heterogeneity_tomodrgn_randomstate']} --n-bins {parameters['heterogeneity_tomodrgn_nbins']} --pruned-maxima {parameters['heterogeneity_tomodrgn_pruned_maxima']} --radius {parameters['heterogeneity_tomodrgn_radius']} --final-maxima {parameters['heterogeneity_tomodrgn_final_maxima']} --thresh {parameters['heterogeneity_tomodrgn_thresh']} --dilate {parameters['heterogeneity_tomodrgn_dilate']} --dist {parameters['heterogeneity_tomodrgn_dist']}"
     
-    if parameters["heterogeneity_tomodrgn_smooth"]:
-        options += f" --smooth --smooth-width {parameters['heterogeneity_tomodrgn_smooth_width']}"
+    options += f" --smooth {parameters['heterogeneity_tomodrgn_smooth']} --smooth-width {parameters['heterogeneity_tomodrgn_smooth_width']}"
 
     if parameters["heterogeneity_tomodrgn_force_umapcpu"]:
         options += " --force-umap-cpu"
@@ -498,6 +496,6 @@ def convergence_vae(parameters, input_dir, output):
     if not "None" in parameters["heterogeneity_tomodrgn_gt"]:
         options += f" --ground-truth {parameters['heterogeneity_tomodrgn_gt']}"
 
-    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options}"
+    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options}"
 
     local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
