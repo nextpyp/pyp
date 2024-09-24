@@ -1797,13 +1797,20 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.remove(name+".spk")
         parameters["tomo_spk_method"] = "pyp-eval"
 
-    # virion segmentation and surface-constrained particle pickiing
+    # virion segmentation and surface-constrained particle picking
     if parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
+        
         # use spike radius as virion radius
-        if parameters.get("micromon_block") == "tomo-picking-closed":
+        if (
+            parameters.get("micromon_block") == "tomo-picking-closed"
+        ):
             parameters["tomo_spk_rad"] = parameters["tomo_srf_detect_rad"]
-        if os.path.exists(name+".spk"):
-            os.remove(name+".spk")
+        
+        elif (
+            parameters.get("micromon_block") == "tomo-segmentation-closed" 
+            and parameters["tomo_spk_rad"] == 0
+        ):
+            parameters["tomo_spk_rad"] = parameters["tomo_srf_detect_rad"]
 
     # map new to old parameters during virion detection
     if parameters.get("micromon_block") == "tomo-picking":
