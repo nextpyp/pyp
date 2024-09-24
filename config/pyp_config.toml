@@ -6248,14 +6248,12 @@ description="Select format to compress movie data"
 type = "enum"
 enum = { none="none", tif="tif", tbz="tbz" }
 default = "none"
-advanced = true
 
 [tabs.stream.transfer_age]
 name = "Minimum file age (minutes)"
 description="Only transfer files that are older than given age"
 type = "int"
 default = 2
-advanced = true
 
 [tabs.stream.process_format]
 name = "Output format"
