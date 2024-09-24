@@ -5023,8 +5023,11 @@ EOF
                     parameters = new_parameters.copy()
 
                 # set particle radius based on bbox size                
-                if parameters.get("micromon_block") == "tomo-particles-eval" and parameters.get("tomo_spk_rad") == 0:
-                    parameters["tomo_spk_rad"] = parameters["detect_nn3d_bbox"] * parameters["data_bin"] * parameters["tomo_rec_binning"] * parameters["scope_pixel"]
+                if parameters.get("micromon_block") == "tomo-particles-eval":
+                    if parameters.get("detect_nn3d_rad") > 0:
+                        parameters["tomo_spk_rad"] = parameters["tomo_pick_rad"] = parameters["tomo_vir_rad"] =parameters.get("detect_nn3d_rad")
+                    elif parameters.get("tomo_spk_rad") == 0:
+                        parameters["tomo_spk_rad"] = parameters["tomo_pick_rad"] = parameters["tomo_vir_rad"] = parameters["detect_nn3d_bbox"] * parameters["data_bin"] * parameters["tomo_rec_binning"] * parameters["scope_pixel"]
 
                 # save configuration
                 project_params.save_parameters(parameters)
