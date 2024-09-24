@@ -36,7 +36,7 @@ html_favicon = '_static/favicon.png'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx_immaterial",
+#    "sphinx_immaterial",
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
@@ -67,18 +67,12 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_immaterial"
-# html_theme = "sphinx_book_theme"
+# html_theme = "sphinx_immaterial"
+html_theme = "sphinx_book_theme"
 # html_theme = "sphinx_rtd_theme"
 # html_theme_options = {'page_width': 'auto'}
 html_theme_options = { "repository_url": "https://github.com/nextpyp", "use_repository_button": True, "use_issues_button": False, "repository_branch": "master", "use_fullscreen_button": True, "navbar_end": ["theme-switcher", "navbar-icon-links"], "content_width": "1200px" }
-#html_theme_options = { 
-#                      "palette": { "primary": "pink" },
-#                      "repo_url": "https://github.com/nextpyp", 
-#                      "site_url": "https://nextpyp.app", 
-#                      "content_width": "1200px"
-#                      }
-html_logo = "_static/nextPYP_logo_white.svg"
+html_logo = "_static/nextPYP_logo.svg"
 html_title = ""
 
 # Add any paths that contain custom static files (such as style sheets) here,
