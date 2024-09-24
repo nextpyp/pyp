@@ -27,7 +27,7 @@ v0.7.0 (9/09/2024)
 .
    :fa:`star,text-success` New blocks to run molecular pattern mining and particle localization (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
 
-   :fa:`star,text-success` New suite of blocks for particle picking to decouple particle detection from other pre-procesing tasks.
+   :fa:`star,text-success` New suite of blocks for particle picking to decouple particle detection from other pre-processing tasks.
 
    :fa:`star,text-success` Size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
 

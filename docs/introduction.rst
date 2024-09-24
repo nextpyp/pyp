@@ -17,6 +17,8 @@ Main features
 - **On-the-fly processing**: high-throughput analysis of micrographs/tilt-series during data collection
 - **Interoperability**: import/export metadata in multiple formats to interface with external programs
 
+**See what's new in the :doc:`changelog<changelog>`**
+
 Select from the following options:
 
 .. panels::

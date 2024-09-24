@@ -58,6 +58,9 @@ Then move the contents of the existing shared folder to the new location.
 Finally, make sure this folder and all its sub-files and folders
 are readable and writable by the ``nextPYP`` service account.
 
+.. important::
+
+    Make sure the new location and the original installation folder are both accessible from the web server and the compute nodes.
 
 Step 3: Configuration
 ---------------------

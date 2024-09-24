@@ -6,6 +6,8 @@ This tutorial shows how to convert raw tilt-series from `EMPIAR-10164 (HIV-1 Gag
 
 Total running time required to complete this tutorial: ~20 hrs.
 
+Pre-calculated results are available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/project/ab690@duke.edu/EMPIAR-10164-RtQMJrzN90C81gbU>`_.
+
 We first use the command line to download and decompress a tbz file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
 
 .. code-block:: bash

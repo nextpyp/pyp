@@ -2,9 +2,11 @@
 Single-particle tutorial (EMPIAR-10025)
 #######################################
 
-This tutorial shows how to convert raw movies from `EMPIAR-10025 (T20S proteasome) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a ~3A resolution structure.
+This tutorial shows how to convert raw movies from `EMPIAR-10025 (T20S proteasome) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a ~3A resolution structure. 
 
 Total running time required to complete this tutorial: 45 min.
+
+Pre-calculated results are available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/project/ab690@duke.edu/EMPIAR-10025-RtQMJrzN90C81PHx>`_.
 
 We first use the command line to download and decompress a tbz file containing a subset of 20 movies, the gain reference, and an initial model:
 

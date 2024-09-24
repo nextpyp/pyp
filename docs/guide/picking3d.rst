@@ -8,7 +8,7 @@
 Import, manual, and size-based picking
 ======================================
 
-These three methods are implemented in the :badge:`Particle-Picking,badge-primary` block which takes tomograms as input.
+These three methods are implemented in the :badge:`Particle-Picking,badge-primary` block which takes :guilabel:`Tomograms` as input.
 
 1. Import coordinates
 ---------------------
@@ -44,7 +44,7 @@ These three methods are implemented in the :badge:`Particle-Picking,badge-primar
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-#. Once the run completes, navigate to the :badge:`Particle-Picking,badge-primary` block and select particles by clicking on them. Go to other tomograms using the navigation bar and add particles as needed
+#. Once the run completes, navigate to the :badge:`Particle-Picking,badge-primary` block, inspect different tomogram slices using the slider and select particles by clicking on them. Go to other tomograms using the navigation bar at the top of the page and add particles as needed
 
 .. tip::
 
@@ -60,7 +60,7 @@ This method described in `Jin et al., JSB (2024) <https://cryoem.cs.duke.edu/nod
 
 #. Select "size-based" as the ``Detectiom method``
 
-#. Set the ``Particle radius (A)`` and other parameters as needed
+#. Set the ``Particle radius (A)`` and other parameters as needed (see the :doc:`classification tutorial<../tutorials/class_empiar_10304>` for an example)
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
@@ -68,7 +68,7 @@ This method described in `Jin et al., JSB (2024) <https://cryoem.cs.duke.edu/nod
 
 .. tip::
 
-    You can manually edit the results of this or any particle picking method by creating a copy of the :badge:`Particle-Picking,badge-primary` block using the "Copy" function: select ``Copy files and data`` and ``Make automatically-picked particles editable``, and then click :badge:`Next,badge-primary`. Once the copy is done, you can navigate to the new block and manually add/delete particles
+    You can manually edit the results of this or any particle picking method by creating a copy of the :badge:`Particle-Picking,badge-primary` block using the "Copy" function, selecting ``Copy files and data`` and ``Make automatically-picked particles editable``, and then clicking :badge:`Next,badge-primary`. Once the copy is done, you can navigate to the new block and manually add/delete particles
 
 Geometry-based picking
 ======================
@@ -153,7 +153,7 @@ The first step is to obtain a set of particles using any of the methods implemen
 .. note::
     
     * 40-50 particles from 2-3 tomograms are usually suficient to succesfully train a model
-    * The trained models for each run will be saved in the project folder under ``train/YYYYMMDD_HHMMSS/*.pth``
+    * Trained models for each run will be saved in the project folder under ``train/YYYYMMDD_HHMMSS/*.pth``
 
 2. Model evaluation
 -------------------
