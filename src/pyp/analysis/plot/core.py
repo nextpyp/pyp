@@ -1571,4 +1571,4 @@ def par2bild(parfile, output, parameters):
     run_shell_command(comm, verbose=parameters["slurm_verbose"])
     
     if not os.path.exists(output):
-        logger.error(f"Failed to produce {output}. Try increasing the amount of RAM and re-running this job.")
+        logger.error(f"Failed to produce {output}")
