@@ -68,6 +68,8 @@ def save_micrograph_to_website(name,verbose=False):
                 xf = [Web.XF(*x) for x in np.loadtxt(xf_path, ndmin=2)]
             else:
                 logger.warning("Cannot find xf information to submit to database")
+            if len(xf) == 0:
+                xf = None
 
             # scan particles info
             boxx_path = "%s.boxx" % name
@@ -79,6 +81,8 @@ def save_micrograph_to_website(name,verbose=False):
                 ]
             else:
                 boxx = []
+            if len(boxx) == 0:
+                boxx = None
 
             # actually send the micrograph to the website
             Web().write_micrograph(name, ctf, avgrot, xf, boxx)
