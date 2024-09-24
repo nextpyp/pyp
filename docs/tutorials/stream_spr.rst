@@ -2,7 +2,11 @@
 Single-particle on-the-fly
 ##########################
 
-This tutorial shows how to process micrographs on-the-fly during data collection. ``nextPYP`` implements streaming using three parallel tracks:
+This tutorial shows how to process micrographs on-the-fly during data collection. 
+
+A sample session is available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/session/singleParticle/ezhDW8jzkdLCAzWP>`_.
+
+``nextPYP`` implements streaming using three parallel tracks:
 
 * **File transfer** from the microscope computer to a permanent storage location
 

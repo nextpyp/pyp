@@ -2,7 +2,11 @@
 Tomography on-the-fly
 #####################
 
-This tutorial shows how to process tilt-series on-the-fly during data collection. ``nextPYP`` implements streaming using two parallel tracks:
+This tutorial shows how to process tilt-series on-the-fly during data collection. 
+
+A sample session is available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/session/tomography/ezlP0oGzfmCPUkqB>`_.
+
+``nextPYP`` implements streaming using two parallel tracks:
 
 * **File transfer** from the microscope computer to a permanent storage location
 
