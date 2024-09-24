@@ -670,8 +670,6 @@ def process_virions(
     # detect virions
     if not os.path.exists(f"{name}.vir"):
         detect_virions(parameters, virion_size, binning, name)
-    else:
-        logger.warning("Using previously detected virions")
 
     if os.path.isfile("{0}.vir".format(name)):
         # load virion coordinates (and apply binning)
@@ -1152,176 +1150,188 @@ def spk_extract_and_process(
 
 def detect_and_extract_particles( name, parameters, current_path, binning, x, y, zfact, tilt_angles, tilt_options, exclude_virions ):
 
-    virion_binning = parameters["tomo_vir_binn"]
+    virion_mode = ( 
+                   parameters.get("tomo_vir_method") != "none" and parameters.get("tomo_vir_rad") > 0
+                   or parameters["micromon_block"] == "tomo-segmentation-closed"
+                   or parameters["micromon_block"] == "tomo-picking-closed" )
 
-    # legacy virion picking (manual, pyp-eval, auto) + virion segmentation + spike picking (uniform, template)
-    if "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" or parameters["micromon_block"] == "tomo-segmentation-closed" or parameters["micromon_block"] == "tomo-picking-closed":
-
-        radius_in_pixels = int(parameters["tomo_vir_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"])
-
-        # virion picking
-        if not os.path.exists("%s.vir" % name):
-            if parameters.get("tomo_vir_method") == "manual" or parameters.get("micromon_block") == "tomo-segmentation-closed":
-                logger.info("Using virion manual picking")
-                # reset virion binning since we are considering above it already
-                virion_binning = 1
-
-                if not os.path.exists( name + ".next" ):
-                    logger.warning("Cannot find coordinates file for this tilt-series")
-                else:
-                    logger.info("Using manually picked coordinates")
-                    
-                    # add radius to virion coordinates
-                    coordinates = np.loadtxt(f"{name}.next",ndmin=2)
-                    
-                    # website now saves unbinned coordinates
-                    coordinates /= binning
-                    virion_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"]
-                    coordinates_with_radius = np.hstack( ( coordinates, virion_radius * np.ones((coordinates.shape[0],1)) ) )
-                    np.savetxt(f"{name}.next",coordinates_with_radius)
-                    local_run.run_shell_command("{0}/bin/point2model -scat -sphere {2} -values 1 {1}.next {1}.vir".format(get_imod_path(), name,radius_in_pixels),verbose=parameters["slurm_verbose"])
+    spike_mode = ( parameters.get("tomo_spk_rad") > 0 and not virion_mode and
+                  ( parameters.get("tomo_spk_method") != "none"
+                  or parameters.get("tomo_pick_method") != "none" 
+                  or parameters.get("tomo_srf_detect_method") != "none" )
+                  or virion_mode and parameters.get("tomo_vir_detect_method") != "none"
+                  or parameters.get("micromon_block") == "tomo-particles-eval"
+                  )
  
-                    # clean up
-                    remote_next_file = os.path.join( current_path, 'next', name + '.next' )
-                    if os.path.exists(remote_next_file):
-                        os.remove(remote_next_file)
-                    if os.path.exists(name + ".next"):
-                        os.remove( name + ".next")
+     # initialize coordinates variables
+    coordinates = virion_coordinates = spike_coordinates = np.array([])
+    
+    # 1. pyp-eval (legacy-only), output: coordinates
+    if ( 
+        parameters.get("micromon_block") == "tomo-preprocessing"
+        and ( 
+             virion_mode and parameters.get("tomo_vir_method") == "pyp-eval"
+             or not virion_mode and parameters.get("tomo_spk_method") == "pyp-eval"
+        )
+        or parameters.get("micromon_block") == "tomo-particles-eval"
+    ):
 
-            elif parameters["tomo_vir_method"] == "pyp-eval":
-                logger.info("Using virion NN-picking")
+        logger.info("Doing NN-based picking")
 
-                # reset virion binning since we are considering above it already
-                virion_binning = 1
+        if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
+            logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
+        else:
+            coordinates = joint.tomoeval(parameters,name)
+            if len(coordinates) > 0:
+                coordinates = coordinates.copy()[:,[0,2,1]]
 
-                if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
-                    logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
+    # 2. virions (new-only), output: {name}.vir file
+    elif parameters.get("tomo_pick_method") == "virions" and parameters.get("micromon_block") == "tomo-picking":
+
+        logger.info("Doing automatic virion picking")
+
+        # figure out virion parameters
+        _, virion_size = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
+        
+        # use new parameters for figuring out virion size
+        parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"]
+
+        # virion detection, output = {name}.vir file
+        detect_virions(parameters, virion_size, parameters["tomo_rec_binning"], name)
+
+    # 3. size-based, output: {name}.spk file
+    elif parameters.get("tomo_spk_method") == "auto" or parameters.get("tomo_pick_method") == "auto":
+
+        logger.info("Doing size-based picking")
+
+        from pyp.detect.tomo import picker
+        picker.pick( 
+                    name,
+                    radius = parameters["tomo_spk_rad"],
+                    pixelsize = parameters["scope_pixel"],
+                    auto_binning = binning,
+                    contract_times = parameters["tomo_spk_contract_times_3d"],
+                    gaussian = parameters["tomo_spk_gaussian_3d"],
+                    sigma = parameters["tomo_spk_sigma_3d"],
+                    stdtimes_cont = parameters["tomo_spk_stdtimes_cont_3d"],
+                    min_size = parameters["tomo_spk_min_size_3d"],
+                    dilation = parameters["tomo_spk_dilation_3d"],
+                    radius_times = parameters["tomo_spk_radiustimes_3d"],
+                    inhibit = parameters["tomo_spk_inhibit_3d"],
+                    detection_width = parameters["tomo_spk_detection_width_3d"],
+                    stdtimes_filt = parameters["tomo_spk_stdtimes_filt_3d"],
+                    remove_edge = parameters["tomo_spk_remove_edge_3d"],
+                    show = False
+                    )
+
+    # 4. manual, output: coordinates
+    elif ( 
+          ( parameters.get("tomo_spk_method") == "manual" and not virion_mode ) 
+          or parameters.get("tomo_vir_method") == "manual" 
+          or parameters.get("tomo_pick_method") == "manual" ):
+        
+        logger.info("Using manual picking")
+
+        if not os.path.exists( name + ".next" ):
+            logger.warning("No coordinates file found for this tilt-series")
+        else:
+            # read unbinned coordinates from website
+            coordinates = np.loadtxt(f"{name}.next",ndmin=2) / binning
+            
+            if virion_mode:
+                coordinates[:,-1] /= parameters["tomo_vir_binn"]
+
+            # clean up
+            remote_next_file = os.path.join( current_path, 'next', name + '.next' )
+            if os.path.exists(remote_next_file):
+                os.remove(remote_next_file)
+            if os.path.exists(name + ".next"):
+                os.remove( name + ".next")
+
+    if virion_mode:
+        
+        # convert virion coordinates to .vir file, if needed
+        if not os.path.exists(f"{name}.vir"):
+            if len(coordinates) > 0:
+                if coordinates.shape[1] == 3:
+                    virion_radius_in_pixels = int(parameters["tomo_vir_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"])
+                    imod.coordinates_to_model_file( coordinates, f"{name}.vir", virion_radius_in_pixels )
+                elif coordinates.shape[1] == 5:
+                    coordinates = coordinates[:,[0,1,2,4]].copy()
                 else:
-                    boxs = joint.tomoeval(parameters,name)
-                    if boxs is not None:
-                        if len(boxs) > 0:
-
-                            logger.info(f"{len(boxs)} virions found")
-                            # add additional column so we can specify the radius using point2model
-                            boxs = np.append(boxs, radius_in_pixels * np.ones((boxs.shape[0],1)),1)
-                            np.savetxt("{}.box".format(name), boxs.astype('int').astype('str'), fmt='%s', delimiter='\t')
-
-                            # convert to IMOD model
-                            command = (
-                                f"{get_imod_path()}/bin/point2model -scat -sphere {radius_in_pixels} -values 1 -input {name}.box -output {name}.mod"
-                            )
-                            local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-                            command = (
-                                f"{get_imod_path()}/bin/imodtrans -Y -T {name}.mod {name}.vir"
-                            )
-                            local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-
-                            os.remove( name + ".box")
-                            os.remove( name + ".mod")
-
-                    # clean up
-                    remote_next_file = os.path.join( current_path, 'next', name + '.next' )
-                    if os.path.exists(remote_next_file):
-                        os.remove(remote_next_file)
-                    if os.path.exists(name + ".next"):
-                        os.remove(name + ".next")
-                    os.system(f'cp -p *.vir {current_path}/next')
-            else:
-                logger.info("Using virion auto-picking")
-
-        """Performs virion detection/extraction in tomogram then spike detection/extraction in virion."""
+                    imod.coordinates_to_model_file( coordinates, f"{name}.vir" )
+            elif os.path.exists(f"{name}.spk"):
+                # when converting from .spk to .vir we need to add tomo_vir_binn to the radius
+                coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
+                logger.warning(coordinates.shape)
+                if coordinates.shape[1] > 3:
+                    coordinates[:,-1] /= parameters.get("tomo_vir_binn")
+                if coordinates.shape[1] == 5:
+                    coordinates = coordinates[:,[0,1,2,4]].copy()
+                imod.coordinates_to_model_file( coordinates, f"{name}.vir")
+                try:
+                    os.remove(f"{name}.spk")
+                except:
+                    pass
+  
+        # Performs virion detection/extraction, then spike detection/extraction
         process_virions(
             name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
         )
 
-    # virion picking (new blocks) + spike only picking
-    elif ( "tomo_spk_method" in parameters and parameters["tomo_spk_method"] != "none" or parameters.get("tomo_pick_method") == "virions" ) and not os.path.exists("%s.spk" % name) or parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_spk_method") == "manual":
+        # read virion coordinates
+        if os.path.exists(f"{name}.vir"):
+            virion_coordinates = imod.coordinates_from_mod_file("%s.vir" % name)
+            if virion_coordinates.shape[1] == 5:
+                virion_coordinates = virion_coordinates[:,[0,1,2,4]].copy()
 
-        if parameters["tomo_spk_rad"] == 0:
-            raise Exception("Please specify a particle radius > 0 (-tomo_spk_rad)")
-
-        # manual spike picking
-        if parameters["tomo_spk_method"] == "manual":
-            logger.info("Using manual particle picking")
-
-            # convert manually picked coordinates to spk file
-            radius_in_pixels = int(parameters["tomo_spk_rad"] / parameters["scope_pixel"] / binning)
-            # convert coordinates from next to pyp format
-            try:
-                joint.coordinates_next2pyp("{0}.next".format(name),binning)
-                local_run.run_shell_command("{0}/bin/point2model -scat -sphere {2} {1}.next {1}.mod".format(get_imod_path(), name,radius_in_pixels),verbose=parameters["slurm_verbose"])
-
-                # adjust geometry of models to match tomogram dimensions
-                local_run.run_shell_command("{0}/bin/imodtrans -Y -T {1}.mod {1}.spk".format(get_imod_path(), name),verbose=parameters["slurm_verbose"])
-
-                # clean up
-                remote_next_file = os.path.join( current_path, 'next', name + '.next' )
-                if os.path.exists(remote_next_file):
-                    os.remove(remote_next_file)
-                os.remove( name + ".next")
-                os.remove( name + ".mod")
-            except:
-                logger.warning("No particles picked for this tomogram")
-
-        # neural-network evalaution
-        elif parameters.get("micromon_block") == "tomo-particles-eval":
-            logger.info("Using NN-based particle picking")
-
-            if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
-                logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
+        # calculate unbinned coordinates to send to website         
+        if len(virion_coordinates) > 0:
+            virion_coordinates *= ( parameters.get("data_bin") * parameters.get("tomo_rec_binning") )
+            if parameters["tomo_vir_method"] == "auto" or parameters["tomo_pick_method"] == "virions" or parameters["tomo_pick_method"] == "manual":
+                virion_coordinates[:,-1] *= parameters["tomo_vir_binn"]
             else:
-                boxs = joint.tomoeval(parameters,name)
-                if boxs is not None:
-                    if len(boxs) > 0:
+                virion_coordinates[:,-1] = parameters["tomo_vir_rad"] / parameters["scope_pixel"]
 
-                        logger.info(f"{len(boxs)} particles found")
-                        np.savetxt("{}.box".format(name), boxs, fmt="%i\t")
+    if spike_mode:
 
-                        # convert to IMOD model
-                        command = (
-                            f"{get_imod_path()}/bin/point2model -scat -sphere 10 -color 0,255,0 -input {name}.box -output {name}.mod"
-                        )
-                        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-                        command = (
-                            f"{get_imod_path()}/bin/imodtrans -Y -T {name}.mod {name}.spk"
-                        )
-                        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+        spike_binned_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / parameters['data_bin'] / parameters['tomo_rec_binning']
 
-                        os.remove( name + ".box")
-                        os.remove( name + ".mod")
+        # save coordinates to file, if needed
+        if not os.path.exists(f"{name}.spk"):
+            # save to IMOD model
+            if len(coordinates) > 0:
+                # add radius, if needed
+                if coordinates.shape[1] == 3:
+                    coordinates = np.hstack( ( coordinates.copy(), spike_binned_radius * np.ones((coordinates.shape[0],1)) ) )
+                imod.coordinates_to_model_file( coordinates, f"{name}.spk")
+            elif os.path.exists(f"{name}.vir"):
+                coordinates = imod.coordinates_from_mod_file(f"{name}.vir")
+                coordinates[:,-1] *= parameters.get("tomo_vir_binn")
+                imod.coordinates_to_model_file( coordinates, f"{name}.spk")
 
-        # "virion" detection
-        elif parameters["tomo_spk_method"] == "virions" or parameters["tomo_pick_method"] == "virions":
+        # load coordinates from file
+        if os.path.exists(f"{name}.spk"):
+            spike_coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
+            # remove extra columns, if needed
+            if spike_coordinates.shape[1] == 5:
+                spike_coordinates = spike_coordinates[:,[0,1,2,4]].copy()
+            # save modified coordinates
+            imod.coordinates_to_model_file( spike_coordinates, f"{name}.spk" )
 
-            # figure out virion parameters
-            _, virion_size = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
-            
-            # use new parameters for figuring out virion size
-            parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"]
+        # calculate unbinned coordinates to send to website         
+        if len(spike_coordinates) > 0:
+            # reverse z-dimension for some blocks?
+            if parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-session" or parameters.get("micromon_block") == "":
+                _, rec_z, _ = get_image_dimensions(f"{name}.rec")
+                spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
 
-            # virion detection
-            detect_virions(parameters, virion_size, parameters["tomo_rec_binning"], name)
+            # calculate unbinned coordinates
+            spike_coordinates *= ( parameters['data_bin'] * parameters['tomo_rec_binning'] )
+            if spike_coordinates.shape[1] == 3:
+                spike_coordinates = np.hstack( ( spike_coordinates.copy(), parameters["tomo_spk_rad"] / parameters["scope_pixel"] * np.ones((spike_coordinates.shape[0],1)) ) )
 
-            # save (X,Y,Z) coordinates to imod model
-            spike_coordinates = imod.coordinates_from_mod_file("%s.vir" % name)[:,[0,1,2]]
-            np.savetxt("{}.box".format(name), spike_coordinates.astype('int').astype('str'), fmt='%s', delimiter='\t')
-    
-            # convert to IMOD model          
-            radius_in_pixels = 10
-            command = (
-                f"{get_imod_path()}/bin/point2model -scat -sphere {radius_in_pixels} -input {name}.box -output {name}.spk"
-            )
-            local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-            os.remove(f"{name}.box")
-        
-        # size-based picking
-        elif parameters["tomo_spk_method"] == "auto":
-            logger.info("Using size-based particle picking")
-
-            from pyp.detect.tomo import picker
-            picker.pick(name,radius=parameters["tomo_spk_rad"],pixelsize=parameters["scope_pixel"],auto_binning = binning,contract_times=parameters["tomo_spk_contract_times_3d"],gaussian=parameters["tomo_spk_gaussian_3d"],sigma=parameters["tomo_spk_sigma_3d"],stdtimes_cont=parameters["tomo_spk_stdtimes_cont_3d"],min_size=parameters["tomo_spk_min_size_3d"],dilation=parameters["tomo_spk_dilation_3d"],radius_times=parameters["tomo_spk_radiustimes_3d"],inhibit=parameters["tomo_spk_inhibit_3d"],detection_width=parameters["tomo_spk_detection_width_3d"],stdtimes_filt=parameters["tomo_spk_stdtimes_filt_3d"],remove_edge=parameters["tomo_spk_remove_edge_3d"],show=False)
-
-    # extract particles if needed
+    # generate *_volumes.txt file and extract particles, if needed
     if (
         os.path.isfile("%s.spk" % name)
         or os.path.isfile("%s.txt" % name)
@@ -1334,59 +1344,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         )
         t.stop()
 
-    # figure out tomogram dimensions
-    _, rec_z, _ = get_image_dimensions(f"{name}.rec")
-
-    # populate database with new virion and spike coordinates
-    if os.path.exists("%s.vir" % name):
-
-        virion_coordinates = imod.coordinates_from_mod_file("%s.vir" % name)
-
-        # remove fourth column from IMOD model and keep virion radius
-        if len(virion_coordinates) > 0:
-            
-            virion_coordinates *= ( parameters['data_bin'] * parameters['tomo_rec_binning'] )
-    
-            # if we did manual or neural-network picking, remove last column and set radius in unbinned voxels
-            if virion_coordinates.shape[1] == 5:
-                virion_coordinates = virion_coordinates[:,[0,1,2,4]]
-            
-            # set fixed radius if not detecting virions         
-            if parameters["tomo_vir_method"] == "auto" or parameters["tomo_pick_method"] == "virions":
-                virion_coordinates[:,-1] *= parameters["tomo_vir_binn"]
-            else:
-                virion_coordinates[:,-1] = parameters["tomo_vir_rad"] / parameters["scope_pixel"]
-    else:
-        virion_coordinates = np.array([])
-
-    if os.path.exists("%s.spk" % name):
-        spike_coordinates = imod.coordinates_from_mod_file("%s.spk" % name)
-
-        if len(spike_coordinates) > 0:
-            # reverse z-dimension for some blocks?
-            if parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-session" or parameters.get("micromon_block") == "":
-                spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
-
-            # convert to unbinned coordiantes
-            spike_coordinates *= ( parameters['data_bin'] * parameters['tomo_rec_binning'] )
-            spike_coordinates_with_radius = np.hstack( ( spike_coordinates, parameters["tomo_spk_rad"] / parameters["scope_pixel"] * np.ones((spike_coordinates.shape[0],1)) ) )
-        else:
-            spike_coordinates_with_radius = np.array([])
-    else:
-        spike_coordinates_with_radius = np.array([])
-
-    # if picking virions, send coordinates as particles as well and change adjust scaling for virion radius
-    if parameters["tomo_spk_method"] == "virions" and parameters["micromon_block"] == "tomo-picking" or parameters["micromon_block"] == "tomo-segmentation-closed":
-        spike_coordinates_with_radius = virion_coordinates
-        
-    # CAPSID, TSR: generation of unbinned regions from tomograms
-    if os.path.isfile("%s_regions.mod" % name):
-        """Extracts specified regions from tomo volume."""
-        extract_regions(
-            parameters, name, x, y, binning, zfact, tilt_options
-        )
-
-    return virion_coordinates, spike_coordinates_with_radius
+    return virion_coordinates, spike_coordinates
 
 def extract_spk_direct(
     parameters, name, x, y, binning, zfact, tilt_angles, tilt_options
