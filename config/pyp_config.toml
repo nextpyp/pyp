@@ -175,7 +175,7 @@ forwarded_tabs = [] # TODO ?
 [blocks.tomo_particles_eval]
 name = "TOMO Particles Evaluation"
 description = "NN-based picking (trained model required)"
-tabs = [ "detect_nn3d", "extract", "slurm" ]
+tabs = [ "detect_nn3d", "tomo_ext", "slurm" ]
 forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_clean]
