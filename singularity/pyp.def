@@ -40,10 +40,7 @@ IncludeCmd: no
 	rm -rf /opt/pyp/.git
 	# install packages required by ETTK
 	apt-get -y update
-	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file
-	## apt-get install -y which openssh gcc-4.8.5 gcc-c++-4.8.5 libXt-devel freeglut-devel git make vim nano bzip2 bzip2-libs bzip2-devel numactl-devel libjpeg ImageMagick=6.9.11 wget epel-release graphviz fftw fftw_devel libtiff-devel
-	## apt-get groupinstall -y "Development Tools"
-	## apt-get clean all
+	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file openssh-server openssh-client
 
 	dpkg --configure -a
  
