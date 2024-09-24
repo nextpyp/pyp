@@ -19,6 +19,4 @@ docs/_build/
 config/config.toml
 /.idea/
 .pyp_history
-external/postprocessing/
-external/spr_pick/
-external/cet_pick/
+external/
