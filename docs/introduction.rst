@@ -1,5 +1,5 @@
-nextPYP: a scalable platform for cryo-EM/ET image analysis
-----------------------------------------------------------
+A scalable platform for cryo-EM/ET image analysis
+-------------------------------------------------
 
 `nextPYP <https://nextpyp.app/>`_ is a comprehensive platform for single-particle cryo-EM/ET image analysis developed and maintained by the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_ at `Duke University <http://www.duke.edu>`_.
 
@@ -17,9 +17,7 @@ Main features
 - **On-the-fly processing**: high-throughput analysis of micrographs/tilt-series during data collection
 - **Interoperability**: import/export metadata in multiple formats to interface with external programs
 
-See the :doc:`changelog<changelog>` for the latest features!
-
-Select from the following options:
+See the :doc:`changelog<changelog>` for the latest set of features!
 
 .. panels::
    :body: bg-primary text-centered text-white font-weight-bold
