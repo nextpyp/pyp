@@ -2,8 +2,7 @@ alabaster==0.7.12
 appdirs==1.4.4
 imageio==2.9.0
 imagesize==1.2.0
-importlib-metadata==3.10.1
-importlib_metadata==3.10.1
+importlib-metadata>=4.4
 iniconfig==1.1.1
 ipykernel==5.5.3
 ipython==7.22.0
