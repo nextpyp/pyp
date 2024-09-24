@@ -25,9 +25,11 @@ v0.7.0 (9/09/2024)
 
    :fa:`star,text-success` Add support for beam-tilt refinement and correction.
 .
-   :fa:`star,text-success` New blocks to run Molecular pattern mining and particle localization (MiLoPYP).
+   :fa:`star,text-success` New blocks to run molecular pattern mining and particle localization (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
 
-   :fa:`star,text-success` New suite of blocks for particle picking to decouple particle picking from other pre-procesing tasks.
+   :fa:`star,text-success` New suite of blocks for particle picking to decouple particle detection from other pre-procesing tasks.
+
+   :fa:`star,text-success` Size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
 
    :fa:`star,text-success` Wrapper for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_.
 
@@ -35,17 +37,23 @@ v0.7.0 (9/09/2024)
 
    :fa:`star,text-success` Add option for density auto-masking during 3D refinement.
 
-   :fa:`star,text-success` Add option to import existing tilt-series alignments from IMOD files (*.xf and *.tlt).
+   :fa:`star,text-success` Add option to import existing tilt-series alignments from IMOD (*.xf and *.tlt).
 
-   :fa:`star,text-success` Add option to save particle stacks for use in external programs.
+   :fa:`star,text-success` Add option to export particle coordinates as IMOD models (sva/*.spk).
 
-   :fa:`star,text-success` Start saving refinement metadata in cisTEM's binary format (2x faster refinement and classification).
+   :fa:`star,text-success` Add option to save particle stacks so they can be used by external programs.
+
+   :fa:`star,text-success` Save refinement metadata in cisTEM's new binary format (2x faster refinement and classification).
 
    :fa:`plus-square,text-primary` Checkbox to "Show advanced options" has global scope now.
 
    :fa:`plus-square,text-primary` Move options to reshape images into squares from Reconstruction to Tilt-series alignment tab.
 
-   :fa:`bug,text-danger` Fix bug in navigation bar for refiement blocks when multiple classes were used.
+   :fa:`plus-square,text-primary` Allow user to specify how many times should nextPYP try to relaunch failed jobs.
+
+   :fa:`bug,text-danger` Fix bug in navigation bar for refinement blocks when multiple classes were used.
+
+   :fa:`bug,text-danger` Fix bug when applying IMOD anisotropic diffusion denoising during refinement.
 
    :fa:`bug,text-danger` Fix bug that prevented launch task parameters from being used when launching sessions.
 

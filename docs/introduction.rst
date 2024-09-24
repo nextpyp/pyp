@@ -3,18 +3,18 @@ nextPYP: a scalable platform for cryo-EM/ET image analysis
 
 `nextPYP <https://nextpyp.app/>`_ is a comprehensive platform for single-particle cryo-EM/ET image analysis developed and maintained by the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_ at `Duke University <http://www.duke.edu>`_.
 
-By combining established :doc:`tools<license#dependencies>` in the field with `methods <https://cryoem.cs.duke.edu/research/methods/>`_ developed in-house and modern software engineering, ``nextPYP`` produces state-of-the-art results while being easy-to-use, portable, and resource-efficient.
+By combining established :doc:`tools<license#dependencies>` in the field with `methods <https://cryoem.cs.duke.edu/research/methods/>`_ developed in-house, ``nextPYP`` produces state-of-the-art results while being easy-to-use, portable, and resource-efficient.
 
 Main features
 -------------
 - **Ease-of-use**: portable, user-friendly, and fully featured web-based GUI
 - **Scalability**: parallel processing and small storage footprint (no sub-volumes or particle stacks saved)
-- **End-to-end workflow**: runs all steps required to convert raw data into high-resolution structures
+- **End-to-end**: runs all steps required to convert raw data into high-resolution structures
 - **Pattern mining**: deep learning-based cellular exploration and particle localization (MiLoPYP)
 - **Particle picking suite**: size-based, geometry-based and neural network-based picking methods
 - **Constrained refinement**: multi-mode constrained refinement and classification of 3D structures
 - **High-resolution refinement**: per-particle CTF and frame refinement, and self-tuning exposure weighting
-- **On-the-fly pre-processing**: high-throughput analysis of micrographs/tilt-series during data collection
+- **On-the-fly processing**: high-throughput analysis of micrographs/tilt-series during data collection
 - **Interoperability**: import/export metadata in multiple formats to interface with external programs
 
 Select from the following options:
