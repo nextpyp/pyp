@@ -160,7 +160,7 @@ FILES_TOMO= {"image":
                 {
                     "path": "%s.spk", 
                     "format": "model", 
-                    "header": ["x", "y", "z"], 
+                    "header": ["x", "y", "z", "r"],
                     "index": None
                 },
             "vir": 
@@ -505,10 +505,13 @@ class LocalMetadata:
                     )
 
         arr = np.array(indexes)
-        # remove fourth column if using a 5-column model format
         if len(arr) > 0:
+            # remove fourth column if using a 5-column model format
             if arr.shape[1] == 5:
                 arr = np.delete( arr, 3, 1 )
+            # add fourth column if using a 3-column model format
+            elif arr.shape[1] == 3 and file.endswith(".spk"):
+                arr = np.hstack((arr, np.zeros((arr.shape[0], 1))))
             assert (len(header) == arr.shape[1]), f"Headers do not match the dimension of array ({key},{file}): {len(header)} != {arr.shape[1]}"
     
             df = pd.DataFrame(arr, columns=header)
