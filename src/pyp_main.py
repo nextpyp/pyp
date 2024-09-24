@@ -1772,7 +1772,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     for index in range(len(tilt_angles)):
         profile_file = "%s_%04d_ctffind4_avrot.txt" % ( name, index )
         if os.path.exists(profile_file):
-            ctf_profiles[index] = np.loadtxt( profile_file, comments="#")
+            ctf_profiles[index] = np.nan_to_num(np.loadtxt( profile_file, comments="#"))
         values_file = "%s_%04d.txt" % ( name, index )
         if os.path.exists(values_file):
             ctf_values[index] = np.loadtxt( values_file, comments="#")

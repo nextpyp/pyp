@@ -106,7 +106,7 @@ def save_tiltseries_to_website(name, metadata, verbose=False ):
             avgrot_path = "%s_avgrot.txt" % name
             avgrot = None
             if os.path.exists(avgrot_path):
-                avgrot = [Web.AVGROT(*x) for x in np.loadtxt(avgrot_path, comments="#").T]
+                avgrot = [Web.AVGROT(*x) for x in np.nan_to_num(np.loadtxt(avgrot_path, comments="#").T)]
 
             # scan motion info
             xf_path = "%s.xf" % name
