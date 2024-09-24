@@ -71,7 +71,8 @@ html_theme = "sphinx_immaterial"
 # html_theme = "sphinx_book_theme"
 # html_theme = "sphinx_rtd_theme"
 # html_theme_options = {'page_width': 'auto'}
-html_theme_options = { "repo_url": "https://github.com/nextpyp", "site_url": "https://nextpyp.app", "use_repository_button": True, "use_issues_button": False, "repository_branch": "master", "use_fullscreen_button": True, "navbar_end": ["theme-switcher", "navbar-icon-links"], "content_width": "1200px" }
+# html_theme_options = { "repo_url": "https://github.com/nextpyp", "site_url": "https://nextpyp.app", "use_repository_button": True, "use_issues_button": False, "repository_branch": "master", "use_fullscreen_button": True, "navbar_end": ["theme-switcher", "navbar-icon-links"], "content_width": "1200px" }
+html_theme_options = { "repo_url": "https://github.com/nextpyp", "site_url": "https://nextpyp.app", "content_width": "1200px" }
 html_logo = "_static/nextPYP_logo_white.svg"
 html_title = ""
 
