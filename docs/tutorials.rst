@@ -20,7 +20,7 @@ These step-by-step guides explain the main data processing protocols available i
    :body: bg-primary text-centered text-white font-weight-bold
    :header: text-center
 
-   :fa:`layer-group fa-4x text-white`
+   :fa:`layer-group fa-2x text-white`
 
    +++
 
@@ -31,7 +31,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    ---
 
-   :fa:`cubes fa-4x text-white`
+   :fa:`cubes fa-2x text-white`
 
    +++
 
@@ -42,7 +42,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    ---
 
-   :fa:`play fa-4x text-white`
+   :fa:`play fa-2x text-white`
 
    +++
 
@@ -53,7 +53,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    ---
 
-   :fa:`forward fa-4x text-white`
+   :fa:`forward fa-2x text-white`
 
    +++
 
@@ -64,7 +64,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    ---
 
-   :fa:`th-large fa-4x text-white`
+   :fa:`th-large fa-2x text-white`
 
    +++
 
@@ -75,7 +75,7 @@ These step-by-step guides explain the main data processing protocols available i
 
    ---
 
-   :fa:`file-import fa-4x text-white`
+   :fa:`file-import fa-2x text-white`
 
    +++
 

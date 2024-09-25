@@ -22,7 +22,7 @@ For the **latest features**, see the :doc:`Changelog<changelog>`.
 .. panels::
    :body: bg-primary text-centered text-white font-weight-bold
 
-   :fa:`cog fa-3x text-white`
+   :fa:`cog fa-2x text-white`
 
    +++
 
@@ -33,7 +33,7 @@ For the **latest features**, see the :doc:`Changelog<changelog>`.
 
    ---
 
-   :fa:`book-open fa-3x text-white`
+   :fa:`book-open fa-2x text-white`
 
    +++
 
@@ -44,7 +44,7 @@ For the **latest features**, see the :doc:`Changelog<changelog>`.
 
    ---
 
-   :fa:`user fa-3x text-white`
+   :fa:`user fa-2x text-white`
 
    +++
 
@@ -55,7 +55,7 @@ For the **latest features**, see the :doc:`Changelog<changelog>`.
 
    ---
 
-   :fa:`info fa-3x text-white`
+   :fa:`info fa-2x text-white`
 
    +++
 
@@ -66,7 +66,7 @@ For the **latest features**, see the :doc:`Changelog<changelog>`.
 
 .. admonition:: Need help?
 
-   Visit ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ to post questions and follow discussions
+   Visit GitHub's `discussion board <https://github.com/orgs/nextpyp/discussions>`_ to post questions and follow discussions
 
 .. admonition:: Citing ``nextPYP`` and ``MiLoPYP``
 

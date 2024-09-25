@@ -20,7 +20,7 @@ Command line interface
    :body: bg-primary text-centered text-white
    :header: text-center
 
-   :fa:`wrench fa-4x text-white`
+   :fa:`wrench fa-2x text-white`
 
    +++
 
@@ -31,7 +31,7 @@ Command line interface
 
    ---
 
-   :fa:`layer-group fa-4x text-white`
+   :fa:`layer-group fa-2x text-white`
    +++
 
    .. link-button:: cli/single_particle
@@ -41,7 +41,7 @@ Command line interface
 
    ---
 
-   :fa:`cubes fa-4x text-white`
+   :fa:`cubes fa-2x text-white`
    +++
 
    .. link-button:: cli/tomography
@@ -51,7 +51,7 @@ Command line interface
 
    ---
 
-   :fa:`th-large fa-4x text-white`
+   :fa:`th-large fa-2x text-white`
    +++
 
    .. link-button:: cli/classification
@@ -61,7 +61,7 @@ Command line interface
 
    ---
 
-   :fa:`file-import fa-4x text-white`
+   :fa:`file-import fa-2x text-white`
 
    +++
 
@@ -72,7 +72,7 @@ Command line interface
 
    ---
 
-   :fa:`file-export fa-4x text-white`
+   :fa:`file-export fa-2x text-white`
 
    +++
 

@@ -21,7 +21,7 @@ The following sections describe the main components and functionality available 
    :body: bg-primary text-centered text-white font-weight-bold
    :header: text-center
    
-   :fa:`globe fa-4x text-white`
+   :fa:`globe fa-2x text-white`
 
    +++
 
@@ -32,7 +32,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`filter fa-4x text-white`
+   :fa:`filter fa-2x text-white`
 
    +++
 
@@ -43,7 +43,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`search fa-4x text-white`
+   :fa:`search fa-2x text-white`
 
    +++
 
@@ -54,7 +54,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`cubes fa-4x text-white`
+   :fa:`cubes fa-2x text-white`
 
    +++
 
@@ -65,7 +65,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`layer-group fa-4x text-white`
+   :fa:`layer-group fa-2x text-white`
 
    +++
 
@@ -76,7 +76,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`eye fa-4x text-white`
+   :fa:`eye fa-2x text-white`
 
    +++
 

@@ -15,7 +15,7 @@ This section describes computing requirements and procedures needed to download,
 .. panels::
    :body: bg-primary text-centered text-white
    
-   :fa:`server fa-4x text-white`
+   :fa:`server fa-2x text-white`
 
    +++
 
@@ -26,7 +26,7 @@ This section describes computing requirements and procedures needed to download,
 
    ---
 
-   :fa:`wrench fa-4x text-white`
+   :fa:`wrench fa-2x text-white`
 
    +++
 

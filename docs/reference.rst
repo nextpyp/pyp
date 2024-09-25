@@ -24,7 +24,7 @@ These sections contain detailed information about components and aspects of ``ne
    :body: bg-primary text-centered text-white font-weight-bold
    :header: text-center
    
-   :fa:`microchip fa-4x text-white`
+   :fa:`microchip fa-2x text-white`
 
    +++
 
@@ -35,7 +35,7 @@ These sections contain detailed information about components and aspects of ``ne
 
    ---
 
-   :fa:`cogs fa-4x text-white`
+   :fa:`cogs fa-2x text-white`
 
    +++
 
@@ -46,7 +46,7 @@ These sections contain detailed information about components and aspects of ``ne
 
    ---
 
-   :fa:`wrench fa-4x text-white`
+   :fa:`wrench fa-2x text-white`
 
    +++
 
@@ -57,7 +57,7 @@ These sections contain detailed information about components and aspects of ``ne
 
    ---
 
-   :fa:`project-diagram fa-4x text-white`
+   :fa:`project-diagram fa-2x text-white`
 
    +++
 
@@ -68,7 +68,7 @@ These sections contain detailed information about components and aspects of ``ne
 
    ---
 
-   :fa:`bug fa-4x text-white`
+   :fa:`bug fa-2x text-white`
 
    +++
 
@@ -79,7 +79,7 @@ These sections contain detailed information about components and aspects of ``ne
 
    ---
 
-   :fa:`terminal fa-4x text-white`
+   :fa:`terminal fa-2x text-white`
 
    +++
 
@@ -91,7 +91,7 @@ These sections contain detailed information about components and aspects of ``ne
 ..
    ---
 
-   :fa:`file-code fa-4x text-white`
+   :fa:`file-code fa-2x text-white`
 
    +++
 
