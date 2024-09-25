@@ -2501,6 +2501,12 @@ description = "Number of iterations to solve the min-cut/max-flow problem"
 type = "int"
 default = 500
 
+[tabs.tomo_sphere.debug]
+name = "Save first unbinned virion"
+description = "Save unbinned virion reconstruction for first virion to sva/ folder"
+type = "bool"
+default = false
+
 [tabs.tomo_vir]
 _name = "Virion detection"
 _description = "Virion detection parameters"
@@ -2557,6 +2563,14 @@ name = "Max-flow iterations"
 description = "Number of iterations to solve the min-cut/max-flow problem"
 type = "int"
 default = 500
+condition = { arg="method", value="auto" }
+hidden = [ "tomo_par_close", "tomo_par_open", "tomo_picking"]
+
+[tabs.tomo_vir.seg_debug]
+name = "Save first unbinned virion"
+description = "Save unbinned virion reconstruction for first virion to sva/ folder"
+type = "bool"
+default = false
 condition = { arg="method", value="auto" }
 hidden = [ "tomo_par_close", "tomo_par_open", "tomo_picking"]
 

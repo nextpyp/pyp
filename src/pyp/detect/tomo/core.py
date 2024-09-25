@@ -485,7 +485,11 @@ def process_virion_multiprocessing(
             shutil.copy(tmp_coordinate_file, coordinate_file)
 
     # cleanup
-    if os.path.exists(virion_name + "_unbinned.rec"):
+    if (
+        os.path.exists(virion_name + "_unbinned.rec")
+        and not parameters.get("tomo_vir_seg_debug")
+        and not virion_name.endswith("_vir0000")
+    ):
         os.remove(virion_name + "_unbinned.rec")
 
 def detect_virions(parameters, virion_size, binning, name):
