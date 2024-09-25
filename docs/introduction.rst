@@ -17,13 +17,12 @@ Main features
 - **On-the-fly processing**: high-throughput analysis of micrographs/tilt-series during data collection
 - **Interoperability**: import/export metadata in multiple formats to interface with external programs
 
-See the :doc:`Changelog<changelog>` for the latest features.
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+For the **latest features**, see the :doc:`Changelog<changelog>`.
 
 .. panels::
    :body: bg-primary text-centered text-white font-weight-bold
 
-   :fa:`cog fa-4x text-white`
+   :fa:`cog fa-3x text-white`
 
    +++
 
@@ -34,7 +33,7 @@ See the :doc:`Changelog<changelog>` for the latest features.
 
    ---
 
-   :fa:`book-open fa-4x text-white`
+   :fa:`book-open fa-3x text-white`
 
    +++
 
@@ -45,7 +44,7 @@ See the :doc:`Changelog<changelog>` for the latest features.
 
    ---
 
-   :fa:`user fa-4x text-white`
+   :fa:`user fa-3x text-white`
 
    +++
 
@@ -56,7 +55,7 @@ See the :doc:`Changelog<changelog>` for the latest features.
 
    ---
 
-   :fa:`info fa-4x text-white`
+   :fa:`info fa-3x text-white`
 
    +++
 
