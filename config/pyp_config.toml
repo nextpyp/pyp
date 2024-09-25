@@ -4793,7 +4793,7 @@ condition = { arg="method", value="cryoDRGN" }
 name = "Operation"
 description = "tomoDRGN command to run"
 type = "enum"
-enum = {train_vae="train_vae (learn heterogeneity landscape and volume decoder)"}
+enum = {train_vae="train_vae (learn heterogeneity landscape and volume decoder)", convergence_vae="convergence_vae (assess convergence of VAE model)"}
 default = "train_vae"
 condition = { arg="method", value="tomoDRGN" }
 
