@@ -38,7 +38,7 @@ These three methods are implemented in the :badge:`Particle-Picking,badge-primar
 
 #.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
 
-#. Select "manual" as the ``Detectiom method``
+#. Select "manual" as the ``Detection method``
 
 #. Set the ``Particle radius (A)`` (for visualization purposes)
 
@@ -58,7 +58,7 @@ This method described in `Jin et al., JSB (2024) <https://cryoem.cs.duke.edu/nod
 
 #.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
 
-#. Select "size-based" as the ``Detectiom method``
+#. Select "size-based" as the ``Detection method``
 
 #. Set the ``Particle radius (A)`` and other parameters as needed (see the :doc:`classification tutorial<../tutorials/class_empiar_10304>` for an example)
 
@@ -78,11 +78,11 @@ This method described in `Liu et al., Nat Meth (2023) <https://cryoem.cs.duke.ed
 1. Detection of virion centers
 ------------------------------
 
-The first step is to estimate the position and the approximate radius of each virion or vescicle:
+The first step is to estimate the position and the approximate radius of each virion or vesicle:
 
 #.  Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
 
-#. Select "virions" as the ``Detectiom method``
+#. Select "virions" as the ``Detection method``
 
 #. Set the expected ``Virion radius (A)`` and other parameters as needed
 
@@ -101,13 +101,13 @@ The next step is to segment virions in 3D using methods described in `Bartesaghi
 
 #. Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking,badge-secondary` block) and select :badge:`Segmentation (closed surfaces),badge-primary`
 
-#. Adjust the segmentaton parameters as needed (defaults should work fine for 10164, for example)
+#. Adjust the segmentation parameters as needed (defaults should work fine for 10164, for example)
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
 #. Once the run completes, navigate to the :badge:`Particle-Segmentation (closed surfaces),badge-primary` block and go to the **Segmentation** tab to inspect the results
 
-``nextPYP`` calculates segmentations using implicit surface representations that require specifying a threshold value to uniquely define the detected surface. To faciliate the threshold selection process for each virion, the user can choose from 8 different threshold values (represented as columns in a table). If none of the columns look reasonable (or if a virion should be ignored), the last column labeled as "-" should be selected. This process can be repeated for all virions in a tilt-series and for all tilt-series in the dataset
+``nextPYP`` calculates segmentations using implicit surface representations that require specifying a threshold value to uniquely define the detected surface. To facilitate the threshold selection process for each virion, the user can choose from 8 different threshold values (represented as columns in a table). If none of the columns look reasonable (or if a virion should be ignored), the last column labeled as "-" should be selected. This process can be repeated for all virions in a tilt-series and for all tilt-series in the dataset
 
 .. note::
 
@@ -152,7 +152,7 @@ The first step is to obtain a set of particles using any of the methods implemen
 
 .. note::
     
-    * 40-50 particles from 2-3 tomograms are usually suficient to succesfully train a model
+    * 40-50 particles from 2-3 tomograms are usually sufficient to successfully train a model
     * Trained models for each run will be saved in the project folder under ``train/YYYYMMDD_HHMMSS/*.pth``
 
 2. Model evaluation

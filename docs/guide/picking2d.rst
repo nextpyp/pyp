@@ -17,7 +17,7 @@ External coordinates can be imported as EMAN box files (``*.box``) or IMOD model
   
 #. Specify the particle radius in A (for visualization purposes)
 
-#. Select the location to ``Import particle coordinates (*.box, *.spk)`` (the folder should contain seaprate ``.box`` or ``.spk`` files for each micrograph)
+#. Select the location to ``Import particle coordinates (*.box, *.spk)`` (the folder should contain separate ``.box`` or ``.spk`` files for each micrograph)
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to update the block
 
@@ -34,7 +34,7 @@ Method 2: Manual picking
 
 #. Select particles in the current micrograph by clicking on them
 
-#. Navigate to other micrographs in the dataset usng the navigation bar and select more particles as needed
+#. Navigate to other micrographs in the dataset using the navigation bar and select more particles as needed
 
 #. Open the settings of the :badge:`Pre-processing,badge-secondary` block and go to the **Particle detection** tab
  

@@ -22,7 +22,7 @@ Visualization
 
 To analyze the results of ``MiLoPYP`` interactively, you need to install and run `Phoenix-Arize <https://docs.arize.com/phoenix>`_ either `remotely <https://nextpyp.app/milopyp/explore/#3d-interactive-session>`_ or in your *local* machine.
 
-For a local installaton on macOS, for example, follow these steps:
+For a local installation on macOS, for example, follow these steps:
 
 #. Download and install miniconda following `these <https://conda.io/projects/conda/en/latest/user-guide/install/macos.html>`_ instructions
 
@@ -124,7 +124,7 @@ With Phoenix now running:
 
 * Open a browser and visit the url as displayed above, for example: http://localhost:57534/
 
-* Under **Embeddings**, click on ``image_embedding`` to visualize the results. Clicking on a point in the cloud will show the associated image in the bottom panel. You can also select a cluster of points using the left side bar (the correspoinding image gallery will be shown at the bottom of the page)
+* Under **Embeddings**, click on ``image_embedding`` to visualize the results. Clicking on a point in the cloud will show the associated image in the bottom panel. You can also select a cluster of points using the left side bar (the corresponding image gallery will be shown at the bottom of the page)
 
 * Select the points or clusters of interest using the **Select** tool
 
@@ -140,7 +140,7 @@ With Phoenix now running:
 
 .. note::
 
-    Currently, the file will be uploaded and always be renamed to ``particles.parquet`` on the remote server. If a file with that name already exists, it will be overwriten with the new file
+    Currently, the file will be uploaded and always be renamed to ``particles.parquet`` on the remote server. If a file with that name already exists, it will be overwritten with the new file
 
 Step 4: Particle refinement (training)
 --------------------------------------

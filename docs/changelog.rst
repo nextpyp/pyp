@@ -4,8 +4,6 @@ Changelog
 
 **Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
 
-v0.7.0 (9/09/2024)
-******************
 ..
    :fa:`star,text-success` Add support for multiple GPUs (currently only used by MotionCor, AreTomo, IsoNet and cryoCARE).
 
@@ -24,7 +22,10 @@ v0.7.0 (9/09/2024)
    :fa:`star,text-success` Implement ab-initio refinement strategy for tomography pipeline.
 
    :fa:`star,text-success` Add support for beam-tilt refinement and correction.
-.
+
+v0.7.0 (9/27/2024)
+******************
+
    :fa:`star,text-success` New blocks to run molecular pattern mining and particle localization (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
 
    :fa:`star,text-success` New suite of blocks for particle picking to decouple particle detection from other pre-processing tasks.
