@@ -122,7 +122,7 @@ forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_segment_close]
 name = "TOMO Segmentation (close)"
-description = "Segment virions or vescicles"
+description = "Segment virions or vesicles"
 tabs = [ "tomo_sphere", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
@@ -292,7 +292,7 @@ hidden = true
 
 [tabs.scope.cs]
 name = "Spherical aberration"
-description = "Spherial aberration of the microscope (Cs)"
+description = "Spherical aberration of the microscope (Cs)"
 type = "float"
 default = 2.7
 advanced = true
@@ -411,7 +411,7 @@ hidden = ["spr_import_star", "tomo_import_star", "spr_import_raw", "tomo_import_
 
 [tabs.data.import]
 name = "Import data"
-description = "Import data from exisitng pyp session"
+description = "Import data from existing pyp session"
 type = "bool"
 default = false
 hidden = true
@@ -448,7 +448,7 @@ advanced = true
 
 [tabs.data.auto]
 name = "data_auto"
-description = "Enable automated data streamming"
+description = "Enable automated data streaming"
 type = "bool"
 default = false
 hidden = true
@@ -630,8 +630,8 @@ condition = { arg="ali", value="unblur" }
 hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.bfactor]
-name = "Bfactor for alignment"
-description = "Bfactor to use during frame alignment (use larger values for noisier data)"
+name = "B-factor for alignment"
+description = "B-factor to use during frame alignment (use larger values for noisier data)"
 type = "float"
 condition = { arg="ali", value="unblur" }
 default = 1500
@@ -646,16 +646,16 @@ default = 1.0
 hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_bfactor_global]
-name = "Global Bfactor"
-description = "Global Bfactor to use during frame alignment (use larger values for noisier data)"
+name = "Global B-factor"
+description = "Global B-factor to use during frame alignment (use larger values for noisier data)"
 type = "float"
 condition = { arg="ali", value="motioncor" }
 default = 500.0
 hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.motioncor_bfactor_local]
-name = "Local Bfactor"
-description = "Local Bfactor to use during frame alignment (use larger values for noisier data)"
+name = "Local B-factor"
+description = "Local B-factor to use during frame alignment (use larger values for noisier data)"
 type = "float"
 condition = { arg="ali", value="motioncor" }
 default = 150.0
@@ -883,7 +883,7 @@ condition={ arg="method", value="ctffind5" }
 
 [tabs.ctf.tilt_axis_known]
 name = "Tilt axis is known"
-description = "Estimiate CTF with known tilt axis"
+description = "Estimate CTF with known tilt axis"
 type = "bool"
 default = false
 condition={ arg="method", value="ctffind5" }
@@ -999,7 +999,7 @@ condition = { arg="method", value=["auto", "all"] }
 
 [tabs.detect.offset]
 name = "Height offset for 3D picking (binned voxels)"
-description = "Offset particle postions above membrane by this amount. Useful when the segmentation is not located at the base of the particles"
+description = "Offset particle positions above membrane by this amount. Useful when the segmentation is not located at the base of the particles"
 type = "int"
 default = 0
 hidden = [ "spr_pre_process", "stream_spr" ]
@@ -2480,8 +2480,8 @@ default = true
 condition = { arg="method", value="membrain" }
 
 [tabs.tomo_sphere]
-_name = "Sphere segmentation"
-_description = "Sphere segmentation parameters"
+_name = "Virion/vesicle segmentation"
+_description = "Virion segmentation parameters"
 
 [tabs.tomo_sphere.seg_tol]
 name = "Segmentation radius tolerance"
@@ -2490,7 +2490,7 @@ type = "float"
 default = 20.0
 
 [tabs.tomo_sphere.smoothness]
-name = "Smoothness"
+name = "Smoothness constant"
 description = "Larger values produce smoother surfaces, smaller values more accurately follow edges"
 type = "float"
 default = 1.0
