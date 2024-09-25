@@ -45,12 +45,12 @@ def get_singularity_command(command, parameters, gpu=False):
     container = config["pyp"]["container"]
 
     if gpu:
-        gpu_enbale = "--nv"
+        gpu_enable = "--nv"
     else:
-        gpu_enbale = ""
+        gpu_enable = ""
 
     command = (
-        f"singularity --quiet --silent exec {gpu_enbale} {binds} {container} {command} {parameters}"
+        f"mkdir -p {os.environ['PYP_SCRATCH']}; singularity --quiet --silent exec {gpu_enable} {binds} {container} {command} {parameters}"
     )
 
     return command
