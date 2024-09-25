@@ -28,7 +28,7 @@ IncludeCmd: no
 	# somehow, after all that installation trouble, conda *STILL* doesn't manage to make the packages available to python
 	# probably because we don't have any way to "activate" the conda environment inside the container
 	# so we'll have to do it manually... sigh
-	export LD_LIBRARY_PATH=/opt/conda/envs/pyp/lib:$LD_LIBRARY_PATH
+	export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/opt/conda/envs/pyp/lib:$LD_LIBRARY_PATH
 	export PATH=$PYP_DIR/bin:/opt/conda/envs/pyp/bin:$PATH
 	export PYTHONPATH=/opt/pyp/src
 	export IMOD_DIR=/opt/IMOD
@@ -40,7 +40,15 @@ IncludeCmd: no
 	rm -rf /opt/pyp/.git
 	# install packages required by ETTK
 	apt-get -y update
-	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file openssh-server openssh-client
+	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file
+
+	# increase ImageMagick resource limits
+	sed -i -E 's/name="disk" value=".+"/name="disk" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="memory" value=".+"/name="memory" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="width" value=".+"/name="width" value="64KP"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="height" value=".+"/name="heigth" value="64KP"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="map" value=".+"/name="map" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="area" value=".+"/name="area" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
 
 	dpkg --configure -a
  
@@ -177,7 +185,7 @@ cat << EOF > /root/conda_tomodrgn.sh
 	# install the python packages we need
 
 	conda install "pytorch-gpu>=1.11.0" "cudatoolkit>=11.0" -c pytorch
-	conda install pandas seaborn scikit-learn
+	conda install pandas seaborn scikit-learn encodings
 	conda install umap-learn notebook -c conda-forge
 	pip install "ipyvolume>=0.6.0" "pythreejs>=2.4.2" ipython_genutils
 
@@ -289,9 +297,7 @@ EOF
 	# run the conda script in the new environment
 	chmod +x /root/conda_isonet.sh
 	conda run -n isonet /bin/bash -c "/root/conda_isonet.sh > /proc/$$/fd/1 2>&1"
-
-	# pip install --upgrade numpy==1.23.4
-
+	
 %startscript
 
 %apprun binds
