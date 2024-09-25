@@ -1853,12 +1853,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if len(virion_coordinates) > 0:
             logger.info(f"Total number of virions = {len(virion_coordinates):,}")
             if parameters.get("slurm_verbose"):
-                logger.warning(f"Virion coordinates = \n{virion_coordinates}")
+                logger.info(f"Virion coordinates = \n{virion_coordinates}")
 
     tilt_metadata["spike_coordinates"] = spike_coordinates
     logger.info(f"Total number of particles = {len(spike_coordinates):,}")
     if parameters.get("slurm_verbose") and len(spike_coordinates) > 0:
-        logger.warning(f"Particle coordinates = \n{spike_coordinates}")
+        logger.info(f"Particle coordinates = \n{spike_coordinates}")
 
     mpi_funcs, mpi_args = [ ], [ ]
     if ctffind_tilt:
