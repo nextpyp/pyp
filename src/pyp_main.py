@@ -5038,6 +5038,12 @@ EOF
                             if parameters[k] != default:
                                 logger.warning(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
                                 new_parameters[k.replace("tomo_srf_","tomo_vir_")] = parameters[k]
+                        if k.startswith("tomo_sphere_"):
+                            default = specifications.get("tabs").get("tomo_sphere").get(k.replace("tomo_sphere_","")).get("default")
+                            if parameters[k] != default:
+                                logger.warning(f"Replacing {k.replace('tomo_sphere_','tomo_vir_seg_')} <- {k} with value {parameters[k]}")
+                                new_parameters[k.replace("tomo_sphere_","tomo_vir_seg_")] = parameters[k]
+
                     parameters = new_parameters.copy()
 
                 # set particle radius based on bbox size                
