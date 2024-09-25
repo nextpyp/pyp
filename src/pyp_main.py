@@ -515,6 +515,17 @@ def parse_arguments(block):
                                 logger.info("Retrieving " + source)
                             shutil.copy2(source, destination)
 
+                    # separately transfer .xml, .order and .rawtlt files when using movies
+                    for ext in mfiles["raw"].split():
+                        if len(glob.glob(f"raw/*{ext}")) == 0:
+                            sources = glob.glob(f"{os.path.join(Path(file).parents[0],'*'+ext)}")
+                            for source in sources:
+                                destination = "raw/" + Path(source).name
+                                if os.path.isfile(source) and not os.path.exists(destination):
+                                    if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
+                                        logger.info("Retrieving " + source)
+                                    shutil.copy2(source, destination)
+
             ctffile = "ctf/" + os.path.splitext(os.path.basename(files[0]))[0] + ".ctf"
             if os.path.isfile(ctffile):
                 ctf = np.loadtxt(ctffile)
