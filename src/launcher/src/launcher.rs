@@ -113,7 +113,7 @@ impl Launcher {
 		let config_pyp = config.get_section("pyp")?;
 		let container_path = config_pyp.get_file("container")?;
 		let binds = config_pyp.get_optional_folders("binds")?;
-		let scratch = config_pyp.get_optional_folder("scratch")?;
+		let scratch = config_pyp.get_optional_unchecked_folder("scratch")?;
 		let container_exec = config_pyp.get_container_exec("containerExec", "module", "exec")?;
 		let pyp_sources = config_pyp.get_optional_folder("sources")?;
 
