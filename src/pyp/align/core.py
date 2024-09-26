@@ -713,7 +713,7 @@ def frealign_refinement(new_par_file, name, parameters, fp, target, working_path
     fp_local = fp.copy()
     fp_local["dataset"] = name
 
-    # create all neccesary symlinks
+    # create all necessary symlinks
     os.symlink("../../" + new_par_file, "scratch/" + name + "_r01_02.par")
     os.symlink("../../" + target, "scratch/" + name + "_r01_01.mrc")
     os.symlink("../" + name + "_stack.mrc", name + "_stack.mrc")
