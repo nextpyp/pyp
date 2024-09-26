@@ -84,7 +84,9 @@ This step runs coarse 3D refinement to assign particle orientations using an ext
         -refine_maxiter 4             \
         -refine_rhref "8:7:6"         \
         -refine_fboost                \
-        -refine_priors                \
+        -no-refine_skip               \
+        -no-refine_fssnr              \
+        -no-refine_priors             \
         -reconstruct_cutoff "0"       \
         -refine_model PATH_TO/spr_tutorial/initial_model.mrc
 
@@ -124,12 +126,12 @@ This step removes bad particles based on assigned particle scores during refinem
 
     # filter bad particles
 
-    pcl -data_parent=`pwd`/../T20S"                                      \
-        -clean_spr_auto                                                  \
-        -clean_dist 20                                                   \
-        -clean_parfile=`pwd`/../T20S/frealign/maps/T20S_r01_04.par.bz2   \
-        -clean_check_reconstruction                                      \
-        -no-clean_discard                                                \
+    pcl -data_parent=`pwd`/../T20S                                   \
+        -clean_spr_auto                                              \
+        -clean_dist 20                                               \
+        -clean_parfile=`pwd`/../T20S/frealign/maps/T20S_r01_04.bz2   \
+        -clean_check_reconstruction                                  \
+        -no-clean_discard                                            \
         -refine_model=`pwd`/../T20S/frealign/maps/T20S_r01_04.mrc
 
 .. tip::
@@ -168,7 +170,7 @@ The next step is to do local alignments using a lower level of binning (using on
         -refine_maxiter 6                                                           \
         -refine_fboost                                                              \
         -no-refine_skip                                                             \
-        -refine_parfile=`pwd`/frealign/maps_clean/T20S_clean_r01_02_clean.par.bz2   \
+        -refine_parfile=`pwd`/frealign/maps_clean/T20S_clean_r01_02_clean.bz2       \
         -refine_model=`pwd`/frealign/maps_clean/T20S_clean_r01_02.mrc
 
 .. note::
@@ -229,7 +231,7 @@ This step refines shifts for movie frames of each particle using the most recent
         -csp_UseImagesForRefinementMax 60                                       \
         -csp_transreg                                                           \
         -csp_spatial_sigma 15.0                                                 \
-        -refine_parfile=`pwd`/frealign/maps_fine/T20S_clean_r01_09.par.bz2      \
+        -refine_parfile=`pwd`/frealign/maps_fine/T20S_clean_r01_09.bz2          \
         -refine_model=`pwd`/frealign/maps_fine/T20S_clean_r01_09.mrc            \
         -no-csp_refine_ctf
 

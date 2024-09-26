@@ -68,8 +68,7 @@ Detect spikes using the membrane values selected above:
 
 .. code-block:: bash
 
-    pyp -data_mode tomo                         \
-        -tomo_vir_detect_method "mesh"          \
+    pyp -tomo_vir_detect_method "mesh"          \
         -tomo_vir_detect_dist 8                 \
         -tomo_vir_detect_band 800               \
         -tomo_spk_rad 50.0
@@ -92,7 +91,6 @@ If a 3D reference is available, the ``csp`` command can be used to align the par
         -extract_box 192                            \
         -extract_bin 2                              \
         -extract_fmt frealign                       \
-        -refine_skip                                \
         -refine_fboost                              \
         -refine_maxiter 2                           \
         -refine_rhref "8.0"                         \
@@ -146,7 +144,7 @@ The next step is to remove particles with low correlation scores:
 
     mv frealign/maps frealign/fully_constrained && mkdir frealign/maps
 
-    pcl -clean_parfile=`pwd`/frealign/fully_constrained/EMPIAR-10164_r01_05.par.bz2     \
+    pcl -clean_parfile=`pwd`/frealign/fully_constrained/EMPIAR-10164_r01_05.bz2         \
         -clean_threshold 2.5                                                            \
         -clean_dist 10.0                                                                \
         -clean_mintilt -15.0                                                            \
@@ -173,7 +171,7 @@ The following command performs region-based constrained alignment:
 
     mv frealign/maps frealign/filter_particles && mkdir frealign/maps
 
-    csp -refine_parfile=`pwd`/frealign/filter_particles/EMPIAR-10164_r01_02_clean.par.bz2   \
+    csp -refine_parfile=`pwd`/frealign/filter_particles/EMPIAR-10164_r01_02_clean.bz2       \
         -refine_model=`pwd`/frealign/filter_particles/EMPIAR-10164_r01_02.mrc"              \
         -particle_rad 100.0                                                                 \
         -extract_box 384                                                                    \
@@ -241,7 +239,7 @@ Next, we refine the raw movie frames against the most recent 3D reconstruction:
 
     mv frealign/maps frealign/ctf_refine && mkdir frealign/maps
 
-    csp -refine_parfile=`pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.par.bz2   \
+    csp -refine_parfile=`pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.bz2       \
         -refine_model=`pwd`/frealign/ctf_refine/EMPIAR-10164_r01_07.mrc         \
         -particle_rad 80.0                                                      \
         -extract_fmt frealign_local                                             \

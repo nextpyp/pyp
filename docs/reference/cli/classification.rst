@@ -43,9 +43,9 @@ The next command does data pre-processing consisting of movie frame alignment, t
         -scope_tilt_axis 90.0                       \
         -movie_no_frames                            \
         -ctf_max_res 5.0                            \
+        -no-tomo_ali_format                         \
         -tomo_rec_binning 12                        \
         -tomo_rec_thickness 3072                    \
-        -no-tomo_rec_format                         \
         -tomo_rec_erase_fiducials                   \
         -slurm_tasks 42                             \
         -slurm_memory 420
@@ -80,13 +80,12 @@ If a 3D reference is available, we use the ``csp`` command to align particle pro
 .. code-block:: bash
 
     # launch coarse refinement
-    csp -refine_parfile=`pwd`/frealign/EMPIAR-10304_original_volumes.txt    \
+    csp -refine_parfile_tomo=`pwd`/frealign/EMPIAR-10304_original_volumes.txt    \
         -refine_model="/path_to_raw_data/10304_ref_bin4.mrc"                \
         -particle_mw 2000                               \
         -particle_rad 150                               \
         -extract_box 64                                 \
         -extract_bin 4                                  \
-        -refine_skip                                    \
         -extract_fmt frealign                           \
         -refine_rhref "22.0"                            \
         -refine_fboost                                  \
@@ -111,7 +110,7 @@ The next step is to remove particles with low correlation scores:
 
     mv frealign/mapsfrealign/reference_based && mkdir frealign/maps
 
-    pcl -clean_parfile=`pwd`/frealign/reference_based/EMPIAR-10304_r01_02.par.bz2   \
+    pcl -clean_parfile=`pwd`/frealign/reference_based/EMPIAR-10304_r01_02.bz2       \
         -clean_threshold 15.0                                                       \
         -clean_dist 20.0                                                            \
         -clean_mintilt -7.0                                                         \
@@ -138,7 +137,7 @@ In this step we do additional refinement using the raw data (without binning):
 
     mv frealign/maps frealign/particle_filter && mkdir frealign/maps
 
-    csp -refine_parfile=`pwd`/frealign/particle_filter/EMPIAR-10304_r01_02_clean.par.bz2    \
+    csp -refine_parfile=`pwd`/frealign/particle_filter/EMPIAR-10304_r01_02_clean.bz2        \
         -refine_model=`pwd`/frealign/particle_filter/EMPIAR-10304_r01_02.mrc                \
         -extract_box 256                                                                    \
         -extract_bin 1                                                                      \
@@ -185,7 +184,7 @@ The following command performs region-based constrained alignment:
 
     mv frealign/maps frealign/mask && mkdir frealign/maps
 
-    csp -refine_parfile=`pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.par.bz2    \
+    csp -refine_parfile=`pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.bz2        \
         -refine_model=`pwd`/frealign/fully_constrained/EMPIAR-10304_r01_03.mrc          \
         -refine_maskth=`pwd`/frealign/mask/mask.mrc"                                    \
         -refine_iter 2                                                                  \
@@ -211,7 +210,7 @@ In this step we refine the CTF parameters on a per-particle basis:
 
     mv frealign/maps frealign/region_based && mkdir frealign/maps
 
-    csp -refine_parfile=`pwd`/frealign/region_based/EMPIAR-10304_r01_06.par.bz2     \
+    csp -refine_parfile=`pwd`/frealign/region_based/EMPIAR-10304_r01_06.bz2         \
         -refine_model=`pwd`/frealign/region_based/EMPIAR-10304_r01_06.mrc           \
         -refine_iter 2                                                              \
         -refine_maxiter 2                                                           \
@@ -233,7 +232,7 @@ The following command does additional region-based refinement:
 
     mv frealign/maps frealign/ctf_refine && mkdir frealign/maps
 
-    csp -refine_parfile=`pwd`/frealign/ctf_refine/EMPIAR-10304_r01_02.par.bz2   \
+    csp -refine_parfile=`pwd`/frealign/ctf_refine/EMPIAR-10304_r01_02.bz2       \
         -refine_model=`pwd`/frealign/ctf_refine/EMPIAR-10304_r01_02.mrc         \
         -refine_iter 2                                                          \
         -refine_maxiter 4                                                       \
@@ -258,7 +257,7 @@ In the last step we perform 3D classification into 8 classes:
 
     mv frealign/maps frealign/region_based_2 && mkdir frealign/maps
 
-    csp -refine_parfile=`pwd`/frealign/region_based_2/EMPIAR-10304_r01_04.par.bz2   \
+    csp -refine_parfile=`pwd`/frealign/region_based_2/EMPIAR-10304_r01_04.bz2       \
         -refine_model=`pwd`/frealign/region_based_2/EMPIAR-10304_r01_04.mrc         \
         -refine_iter 2                                                              \
         -refine_maxiter 20                                                          \
