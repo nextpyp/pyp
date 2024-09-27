@@ -483,9 +483,10 @@ def shape_phase_residuals(
                             #     take_mean.append(np.mean(scores_used[:, 0], where=scores_used[:,1]==i))
 
                             # meanscore = np.array(take_mean)
-                            thresholds[g, f] = np.sort(meanscore)[
-                                int((meanscore.shape[0] - 1) * (1 - threshold))
-                            ]
+                            if len(meanscore) > 0:
+                                thresholds[g, f] = np.sort(meanscore)[
+                                    int((meanscore.shape[0] - 1) * (1 - threshold))
+                                ]
                             
                         else:
                             thresholds[g, f] = np.sort(input[cluster, field])[
