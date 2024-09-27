@@ -140,12 +140,16 @@ impl<'a> ConfigSectionReader<'a> {
 		}
 	}
 
-	pub fn get_optional_unchecked_folder(&self, key: &'static str) -> Result<Option<PathBuf>,LauncherError> {
+	pub fn get_optional_existing_folder(&self, key: &'static str) -> Result<Option<PathBuf>,LauncherError> {
 		match self.get_optional_str(key)? {
 			None => Ok(None),
 			Some(val) => {
 				let path = truncate_path_vars(Path::new(val));
-				Ok(Some(path))
+				if path.is_dir() {
+					Ok(Some(path))
+				} else {
+					Ok(None)
+				}
 			}
 		}
 	}
