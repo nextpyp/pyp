@@ -1739,7 +1739,7 @@ default = true
 name = "Binning for tilt-series alignment"
 description = "Bin tilt-series by this factor before alignment"
 type = "int"
-default = 8
+default = 1
 condition = { arg="auto_bin", value="false" }
 
 [tabs.tomo_ali.square]
