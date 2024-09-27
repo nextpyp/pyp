@@ -2506,6 +2506,7 @@ name = "Save first unbinned virion"
 description = "Save unbinned virion reconstruction for first virion to sva/ folder"
 type = "bool"
 default = false
+hidden = true
 
 [tabs.tomo_vir]
 _name = "Virion detection"
@@ -2572,7 +2573,7 @@ description = "Save unbinned virion reconstruction for first virion to sva/ fold
 type = "bool"
 default = false
 condition = { arg="method", value="auto" }
-hidden = [ "tomo_par_close", "tomo_par_open", "tomo_picking"]
+hidden = true
 
 [tabs.tomo_vir.iterations]
 name = "Denoising iterations before virion detection"
