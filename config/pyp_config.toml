@@ -2745,7 +2745,7 @@ name = "Particle radius (A)"
 description = "Size to use for particle detection"
 type = "float"
 default = 0
-condition = { arg="method", value=[ "none", "auto", "import", "manual" ] }
+condition = { arg="method", value=[ "none", "auto", "import", "manual", "pyp-eval" ] }
 
 [tabs.tomo_spk.files]
 name = "Import particle coordinates (*.spk)"
