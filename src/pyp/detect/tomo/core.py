@@ -1154,23 +1154,34 @@ def spk_extract_and_process(
 
 def detect_and_extract_particles( name, parameters, current_path, binning, x, y, zfact, tilt_angles, tilt_options, exclude_virions ):
 
+    # are we detecting virions?
     virion_mode = ( 
                    parameters.get("tomo_vir_method") != "none" and parameters.get("tomo_vir_rad") > 0
                    or parameters["micromon_block"] == "tomo-segmentation-closed"
-                   or parameters["micromon_block"] == "tomo-picking-closed" )
+                   or parameters["micromon_block"] == "tomo-picking-closed"
+                   )
 
-    spike_mode = ( parameters.get("tomo_spk_rad") > 0 and not virion_mode and
-                  ( parameters.get("tomo_spk_method") != "none"
-                  or parameters.get("tomo_pick_method") != "none" 
-                  or parameters.get("tomo_srf_detect_method") != "none" )
-                  or virion_mode and parameters.get("tomo_vir_detect_method") != "none"
-                  or parameters.get("micromon_block") == "tomo-particles-eval"
-                  )
- 
-     # initialize coordinates variables
+    spike_mode = ( parameters.get("tomo_spk_rad") > 0 and not virion_mode 
+                  and
+                  ( 
+                   parameters.get("tomo_spk_method") != "none"
+                   or parameters.get("tomo_pick_method") != "none" 
+                   or parameters.get("tomo_srf_detect_method") != "none"
+                   )
+                   or virion_mode and parameters.get("tomo_vir_detect_method") != "none"
+                   or parameters.get("micromon_block") == "tomo-particles-eval"
+    )
+
+    # initialize coordinate variables
     coordinates = virion_coordinates = spike_coordinates = np.array([])
-    
-    # 1. pyp-eval (legacy-only), output: coordinates
+
+    # use this radius when no estimation is available
+    unbinned_virion_radius = parameters["tomo_vir_rad"] / parameters["scope_pixel"] / parameters['data_bin'] * parameters["tomo_vir_binn"]
+    binned_virion_radius = unbinned_virion_radius / binning
+    unbinned_spike_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / parameters['data_bin']
+    binned_spike_radius = unbinned_spike_radius / binning
+
+    # TODO: 1. pyp-eval
     if ( 
         parameters.get("micromon_block") == "tomo-preprocessing"
         and ( 
@@ -1183,13 +1194,19 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         logger.info("Doing NN-based picking")
 
         if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
-            logger.error(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
+            raise Exception(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
         else:
-            coordinates = joint.tomoeval(parameters,name)
-            if len(coordinates) > 0:
-                coordinates = coordinates.copy()[:,[0,2,1]]
+            coordinates = joint.tomoeval(parameters,name)[:,[0,2,1]]
+            # calculate unbinned coordinates
+            coordinates *= binning
+            # add radius (unbinned)
+            if virion_mode:
+                radius = unbinned_virion_radius
+            else:
+                radius = unbinned_spike_radius
+            coordinates = np.hstack( ( coordinates.copy(), radius * np.ones((coordinates.shape[0],1)) ) )
 
-    # 2. virions (new-only), output: {name}.vir file
+    # 2. virions (new-only)
     elif parameters.get("tomo_pick_method") == "virions" and parameters.get("micromon_block") == "tomo-picking":
 
         logger.info("Doing automatic virion picking")
@@ -1200,10 +1217,15 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         # use new parameters for figuring out virion size
         parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"]
 
-        # virion detection, output = {name}.vir file
+        # virion detection
         detect_virions(parameters, virion_size, parameters["tomo_rec_binning"], name)
+        
+        # read output and convert to unbinned coordinates
+        coordinates = imod.coordinates_from_mod_file(f"{name}.vir")
+        coordinates *= binning
+        coordinates[:,-1] *= parameters['tomo_vir_binn']
 
-    # 3. size-based, output: {name}.spk file
+    # 3. size-based
     elif parameters.get("tomo_spk_method") == "auto" or parameters.get("tomo_pick_method") == "auto":
 
         logger.info("Doing size-based picking")
@@ -1228,7 +1250,12 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                     show = False
                     )
 
-    # 4. manual, output: coordinates
+        # read and convert output to unbinned coordinates
+        coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
+        coordinates *= binning
+        coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+
+    # 4. manual
     elif ( 
           ( parameters.get("tomo_spk_method") == "manual" and not virion_mode ) 
           or parameters.get("tomo_vir_method") == "manual" 
@@ -1240,7 +1267,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             logger.warning("No coordinates file found for this tilt-series")
         else:
             # read unbinned coordinates from website
-            coordinates = np.loadtxt(f"{name}.next",ndmin=2) / binning
+            coordinates = np.loadtxt(f"{name}.next",ndmin=2)
             
             if virion_mode:
                 coordinates[:,-1] /= parameters["tomo_vir_binn"]
@@ -1254,86 +1281,44 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
     if virion_mode:
         
-        # convert virion coordinates to .vir file, if needed
-        if not os.path.exists(f"{name}.vir"):
-            if len(coordinates) > 0:
-                if coordinates.shape[1] == 3:
-                    virion_radius_in_pixels = int(parameters["tomo_vir_rad"] / parameters["scope_pixel"] / binning / parameters["tomo_vir_binn"])
-                    imod.coordinates_to_model_file( coordinates, f"{name}.vir", virion_radius_in_pixels )
-                elif coordinates.shape[1] == 5:
-                    coordinates = coordinates[:,[0,1,2,4]].copy()
-                else:
-                    imod.coordinates_to_model_file( coordinates, f"{name}.vir" )
-            elif os.path.exists(f"{name}.spk"):
-                # when converting from .spk to .vir we need to add tomo_vir_binn to the radius
-                coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
-                logger.warning(coordinates.shape)
-                if coordinates.shape[1] > 3:
-                    coordinates[:,-1] /= parameters.get("tomo_vir_binn")
-                if coordinates.shape[1] == 5:
-                    coordinates = coordinates[:,[0,1,2,4]].copy()
-                imod.coordinates_to_model_file( coordinates, f"{name}.vir")
-                try:
-                    os.remove(f"{name}.spk")
-                except:
-                    pass
-  
-        # Performs virion detection/extraction, then spike detection/extraction
+        # convert virion (unbinned) coordinates to pyp's .vir format, if needed
+        if len(coordinates) > 0 and not os.path.exists(f"{name}.vir"):
+            pyp_coordinates = coordinates[:,[0,2,1,3]] / binning
+            imod.coordinates_to_model_file( pyp_coordinates, f"{name}.vir", radius=binned_virion_radius )
+        # Performs virion detection and/or spike detection
         process_virions(
             name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
         )
 
-        # read virion coordinates
-        if os.path.exists(f"{name}.vir"):
-            virion_coordinates = imod.coordinates_from_mod_file("%s.vir" % name)
-            if virion_coordinates.shape[1] == 5:
-                virion_coordinates = virion_coordinates[:,[0,1,2,4]].copy()
+        # read virion coordinates and convert to unbinned, if needed
+        if len(coordinates) == 0 and os.path.exists(f"{name}.vir"):
+            coordinates = imod.coordinates_from_mod_file(f"{name}.vir")
+            coordinates *= binning
 
-        # calculate unbinned coordinates to send to website         
-        if len(virion_coordinates) > 0:
-            virion_coordinates *= ( parameters.get("data_bin") * parameters.get("tomo_rec_binning") )
-            if parameters["tomo_vir_method"] == "auto" or parameters["tomo_pick_method"] == "virions" or parameters["tomo_pick_method"] == "manual":
-                virion_coordinates[:,-1] *= parameters["tomo_vir_binn"]
-            else:
-                virion_coordinates[:,-1] = parameters["tomo_vir_rad"] / parameters["scope_pixel"]
+        if len(coordinates) > 0:
+            coordinates[:,-1] *= parameters["tomo_vir_binn"]
+            virion_coordinates = coordinates
 
-    if spike_mode:
-
-        spike_binned_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / parameters['data_bin'] / parameters['tomo_rec_binning']
-
-        # save coordinates to file, if needed
-        if not os.path.exists(f"{name}.spk"):
-            # save to IMOD model
+        # read spike coordinates and convert to unbinned, if needed
+        if (
+            os.path.exists(f"{name}.spk")
+            and (
+                parameters.get("tomo_srf_detect_method") != "none"
+                or parameters.get("tomo_vir_detect_method") != "none"
+            )
+        ):
+            coordinates = imod.coordinates_from_mod_file("%s.spk" % name)
             if len(coordinates) > 0:
-                # add radius, if needed
-                if coordinates.shape[1] == 3:
-                    coordinates = np.hstack( ( coordinates.copy(), spike_binned_radius * np.ones((coordinates.shape[0],1)) ) )
-                imod.coordinates_to_model_file( coordinates, f"{name}.spk")
-            elif os.path.exists(f"{name}.vir"):
-                coordinates = imod.coordinates_from_mod_file(f"{name}.vir")
-                coordinates[:,-1] *= parameters.get("tomo_vir_binn")
-                imod.coordinates_to_model_file( coordinates, f"{name}.spk")
-
-        # load coordinates from file
-        if os.path.exists(f"{name}.spk"):
-            spike_coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
-            # remove extra columns, if needed
-            if spike_coordinates.shape[1] == 5:
-                spike_coordinates = spike_coordinates[:,[0,1,2,4]].copy()
-            # save modified coordinates
-            imod.coordinates_to_model_file( spike_coordinates, f"{name}.spk" )
-
-        # calculate unbinned coordinates to send to website         
-        if len(spike_coordinates) > 0:
-            # reverse z-dimension for some blocks?
-            if parameters.get("micromon_block") == "tomo-picking-closed" or parameters.get("micromon_block") == "tomo-session" or parameters.get("micromon_block") == "":
                 _, rec_z, _ = get_image_dimensions(f"{name}.rec")
-                spike_coordinates[:,2] = rec_z - spike_coordinates[:,2]
-
-            # calculate unbinned coordinates
-            spike_coordinates *= ( parameters['data_bin'] * parameters['tomo_rec_binning'] )
-            if spike_coordinates.shape[1] == 3:
-                spike_coordinates = np.hstack( ( spike_coordinates.copy(), parameters["tomo_spk_rad"] / parameters["scope_pixel"] * np.ones((spike_coordinates.shape[0],1)) ) )
+                coordinates[:,2] = rec_z - coordinates[:,2]
+                coordinates *= binning
+                coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+            
+    if spike_mode and len(coordinates) > 0:
+        spike_coordinates = coordinates
+        pyp_coordinates = coordinates[:,[0,2,1,3]] / binning
+        pyp_coordinates[:,-1] *= parameters.get("tomo_vir_binn")
+        imod.coordinates_to_model_file( pyp_coordinates, f"{name}.spk", radius=binned_spike_radius)
 
     # generate *_volumes.txt file and extract particles, if needed
     if (
