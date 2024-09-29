@@ -34,6 +34,43 @@ def get_virion_segmentation_thresholds(seg_thresh):
         [" 0.1 0.01 0.005 0.0025 0.001 0.0005 0.00025 0.0001 -0.000144325".split()]
     ).squeeze()[int(seg_thresh)]
 
+def resize_template(mparameters, external_template, autopick_template):
+    """Resize template for constrained template-search
+
+    Args:
+        mparameters (dict): pyp parameters
+        external_template (str): External template file (mrc format)
+        autopick_template (str): Resized template file (mrc format)
+    """
+    virion_binning, _ = get_vir_binning_boxsize(mparameters["tomo_vir_rad"], mparameters["scope_pixel"])
+    
+    actual_pixel = (
+        float(mparameters["scope_pixel"])
+        * float(mparameters["data_bin"])
+        * float(virion_binning)
+    )
+    model_box_size = int(mrc.readHeaderFromFile(external_template)["nx"])
+    model_pixel_size = float(mrc.readHeaderFromFile(external_template)["xlen"]) / float(
+        model_box_size
+    )
+    model_box_length = model_box_size * model_pixel_size
+    
+    output_box_size = int(math.ceil(model_box_length / actual_pixel /2.)*2)
+    
+    scaling = model_pixel_size / actual_pixel
+
+    if (
+        scaling < 0.99
+        or scaling > 1.01
+    ):
+        logger.warning(f"Rescaling template {external_template} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
+        command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
+            get_imod_path(), output_box_size, autopick_template, scaling, external_template,
+        )
+        local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
+
+    elif not external_template == autopick_template:
+        shutil.copy2(external_template, autopick_template)
 
 def process_virion_multiprocessing(
     name,
@@ -178,8 +215,11 @@ def process_virion_multiprocessing(
 
                 # elif parameters["tomo_vir_detect_method"] == "mesh":
                 #     size_x = size_y = size_z = 8
-                if os.path.exists(parameters["tomo_vir_detect_ref"]):
-                    shutil.copy2(parameters["tomo_vir_detect_ref"], autopick_template)
+                external_template = project_params.resolve_path(parameters["tomo_vir_detect_ref"])
+                if os.path.exists(external_template):
+                    resize_template(
+                        parameters, external_template, autopick_template
+                    )                    
                     size_x = size_z = 0
                     size_y = autopick_template
                 else: 
