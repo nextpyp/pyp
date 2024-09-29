@@ -764,7 +764,7 @@ def process_virions(
                 )
 
             else:
-                logger.warning(f"Ignoring virion {virion} with threshold column {seg_thresh}")
+                logger.warning(f"Ignoring virion {virion} with no segmentation threshold (column {seg_thresh})")
 
             #######################################################################################################
 
