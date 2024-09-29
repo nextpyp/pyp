@@ -20,6 +20,11 @@ from pyp.system.utils import get_imod_path
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
+NN_INIT_COMMANDS = "export LD_LIBRARY_PATH=/opt/conda/envs/pyp/lib/python3.8/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python"
+
+NN_INIT_COMMANDS_2D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick;"
+NN_INIT_COMMANDS_3D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick;"
+
 def bin_image( input, output, binning, verbose ):
     command = f"{get_imod_path()}/bin/newstack '{input}' '{output}' -bin {binning}; rm -f '{output}~'"
     local_run.run_shell_command(command, verbose=verbose)
@@ -74,7 +79,7 @@ def sprtrain(args):
     os.chdir(scratch_train)
 
     logger.info(f"Training pyp model")
-    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py train start --algorithm {args['detect_nn2d_algorithm']} --noise_value {args['detect_nn2d_noise_value']} --noise_style {args['detect_nn2d_noise_style']} --tau {args['detect_nn2d_tau']} --runs_dir '{runs_dir}' --train_dataset '{train_images}' --train_label '{train_coords}' --iterations {args['detect_nn2d_iterations']} --alpha {args['detect_nn2d_alpha']} --train_batch_size {args['detect_nn2d_batch_size']} --nms {args['detect_dist']} --num {args['detect_nn2d_num']} --bb {args['detect_nn2d_bb']} --patch_size {args['detect_nn2d_patch_size']} --validation_dataset '{validation_images}' --validation_label '{validation_coords}' 2>&1 | tee {os.path.join(os.getcwd(), 'log', time_stamp + '_spr_pick_train.log')}"
+    command = f"{NN_INIT_COMMANDS_2D}; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py train start --algorithm {args['detect_nn2d_algorithm']} --noise_value {args['detect_nn2d_noise_value']} --noise_style {args['detect_nn2d_noise_style']} --tau {args['detect_nn2d_tau']} --runs_dir '{runs_dir}' --train_dataset '{train_images}' --train_label '{train_coords}' --iterations {args['detect_nn2d_iterations']} --alpha {args['detect_nn2d_alpha']} --train_batch_size {args['detect_nn2d_batch_size']} --nms {args['detect_dist']} --num {args['detect_nn2d_num']} --bb {args['detect_nn2d_bb']} --patch_size {args['detect_nn2d_patch_size']} --validation_dataset '{validation_images}' --validation_label '{validation_coords}' 2>&1 | tee {os.path.join(os.getcwd(), 'log', time_stamp + '_spr_pick_train.log')}"
     local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # check for failure if not output was produced
@@ -105,7 +110,7 @@ def spreval(args,name):
 
     if 'detect_nn2d_ref' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_nn2d_ref']) ):
         logger.info(f"Evaluating using model: {Path(project_params.resolve_path(args['detect_nn2d_ref'])).name}")
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py eval --model '{project_params.resolve_path(args['detect_nn2d_ref'])}' --dataset '{os.path.join( os.getcwd(), imgs_file)}' --runs_dir '{os.getcwd()}' --num 1"
+        command = f"{NN_INIT_COMMANDS_2D}; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py eval --model '{project_params.resolve_path(args['detect_nn2d_ref'])}' --dataset '{os.path.join( os.getcwd(), imgs_file)}' --runs_dir '{os.getcwd()}' --num 1"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = glob.glob("./*/")[0]
 
@@ -195,11 +200,11 @@ def tomotrain(args):
             else:
 
                 # extract specific classes
-                command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {args.get('detect_nn3d_milo_classes').replace(' ','')}"
+                command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {args.get('detect_nn3d_milo_classes').replace(' ','')}"
                 [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
                 
                 # extract coordinates
-                command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/utils/generate_train_file.py --dir {scratch_folder} --out {os.path.join(scratch_folder,'test')}"
+                command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/utils/generate_train_file.py --dir {scratch_folder} --out {os.path.join(scratch_folder,'test')}"
                 [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
                 shutil.copy2( os.path.join( scratch_folder, "test_train_coords.txt"), train_coords)
@@ -223,7 +228,7 @@ def tomotrain(args):
             if not os.path.exists( project_params.resolve_path(args["detect_nn3d_milo_parquet"])):
                 raise Exception("Please specify the location of a .parquet file")
             else:
-                command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {project_params.resolve_path(args['detect_nn3d_milo_parquet'])} {if_double} --output {train_coords}"
+                command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {project_params.resolve_path(args['detect_nn3d_milo_parquet'])} {if_double} --output {train_coords}"
                 [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
                 if os.path.exists(train_coords):
 
@@ -282,7 +287,7 @@ def tomotrain(args):
     else:
         compress = ""
 
-    command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt '{train_images}' --train_coord_txt '{train_coords}' --val_img_txt '{validation_images}' --val_coord_txt '{validation_coords}' --test_img_txt '{validation_images}' --test_coord_txt '{validation_coords}' 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
+    command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt '{train_images}' --train_coord_txt '{train_coords}' --val_img_txt '{validation_images}' --val_coord_txt '{validation_coords}' --test_img_txt '{validation_images}' --test_coord_txt '{validation_coords}' 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
     [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
     # display log if available
@@ -380,7 +385,7 @@ def tomoeval(args,name):
         else:
             compress = ""
 
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {fiber} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
+        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {fiber} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
         [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
@@ -500,11 +505,11 @@ def milotrain(args):
 
     logger.info(f"Training MiLoPYP's exploration module")
     if 'detect_milo_mode' in args and '2d' in args['detect_milo_mode']:
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
         output_path = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample")
     else:
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
         output_path = Path(os.getcwd() + "/exp/simsiam3d/test_sample")
 
@@ -605,12 +610,12 @@ def miloeval(args):
         input_model = project_params.resolve_path(args['detect_milo_model'])
 
         if '2d' in args['detect_milo_mode']:
-            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
+            command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
 
         else:
-            command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
+            command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
@@ -625,7 +630,7 @@ def miloeval(args):
         os.makedirs( output_folder )
         
         # generate 2D visualization plots
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {scratch_train +  '_plot2d.log'}"
+        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {scratch_train +  '_plot2d.log'}"
 
         local_run.run_shell_command(command, verbose=args["slurm_verbose"])             
 
@@ -642,7 +647,7 @@ def miloeval(args):
 
         # TODO: generate 3D tomogram visualization plots
         color_file = os.path.join(output_folder,'all_colors.npy')
-        command = f"export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
+        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
         import matplotlib.image
