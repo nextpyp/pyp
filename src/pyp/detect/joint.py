@@ -250,19 +250,51 @@ def tomotrain(args):
         train_images = os.path.join( train_folder, train_name + "_images.txt" )
         train_coords = os.path.join( train_folder, train_name + "_coordinates.txt" )
         
-        # bin coordinates since website is now saving unbinned coordiantes
-        coordinates = np.loadtxt(train_coords, dtype='str',ndmin=2)
-        coordinates[1:,1:] = (coordinates[1:,1:].astype('int') / args['tomo_rec_binning']).astype('int').astype('str')
-        np.savetxt( train_coords, coordinates, delimiter="\t", fmt="%s" )
+        if os.path.exists(train_coords):
+            coordinates = np.loadtxt(train_coords, dtype='str',ndmin=2)
+            if coordinates.shape[0] > 1:
+                # bin coordinates since website is now saving unbinned coordinates
+                coordinates[1:,1:] = (coordinates[1:,1:].astype('int') / args['tomo_rec_binning']).astype('int').astype('str')
+                np.savetxt( train_coords, coordinates, delimiter="\t", fmt="%s" )
+            else:
+                os.remove(train_coords)
+        
+        if not os.path.exists(train_coords) or args.get("tomo_pick_method") != "manual":
+            micrographs = f"{args['data_set']}.micrographs"
+            if not os.path.exists(micrographs):
+                raise Exception('No micrographs file in ' + os.getcwd())
+            else:
+                input_list = [line.strip() for line in open(micrographs)]
+
+                with open(train_images, 'w') as f:
+                    f.write("image_name\trec_path\n")
+
+                    with open(train_coords, 'w') as coords:
+                        coords.write("image_name\tx_coord\tz_coord\ty_coord\n")
+
+                        for file in input_list:
+                            # retrieve metadata from pkl file
+                            pkl_file = os.path.join( project_params.resolve_path(args.get("data_parent")), "pkl", file + ".pkl")
+
+                            # unpack pkl file
+                            metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+                            if "box" in metadata.data.keys():
+                                key = "box"
+                            else:
+                                key = "vir"
+                            if len(metadata.data.get(key)) > 0:
+                                f.write( file + "\t" + os.path.join( os.getcwd(), 'mrc', file + ".rec") + "\n" )
+                                particle_data = metadata.data.get(key).to_numpy()
+                                for particle in range(particle_data.shape[0]):
+                                    coords.write( file + "\t" + str(int(particle_data[particle,0])) + "\t" + str(int(particle_data[particle,2])) + "\t" + str(int(particle_data[particle,1])) + "\n" )
 
     validation_images = train_images
     validation_coords = train_coords
 
     files = np.loadtxt( train_images, comments='image_name', dtype="str", ndmin=2)[:,1]
-
     # substitute coordinate files with binned values
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
-    logger.info(f"Binning coordinates ({number_of_labels:,} points)")
+    logger.info(f"Using {number_of_labels:,} points for training")
 
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
