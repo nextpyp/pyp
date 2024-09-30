@@ -2458,50 +2458,51 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         use_frames=use_frames,
         use_existing_frame_alignments=True,
     )
+    
+    # if the project directory file is not written
+    project_dir_file = os.path.join(os.environ["PYP_SCRATCH"], "project_dir.txt")
+    if not os.path.exists(project_dir_file):
+        with open(project_dir_file, "w") as f:
+            f.write(str(current_path))
 
-    #  parxfile = os.path.join(
-    #     working_path, "frealign", "maps", filename + "_r01_%02d.parx" % (iteration - 1)
-    # )
+    if len(allparxs) > 0:
 
-    stackfile = os.path.join(working_path, "frealign", filename + "_stack.mrc")
+        stackfile = os.path.join(working_path, "frealign", filename + "_stack.mrc")
 
-    os.chdir(current_path)
+        os.chdir(current_path)
 
-    # save copy of all boxes
-    # allboxes_saved = allboxes.copy()
-
-    # extract paticle frames and write parameter and stack files:
-    # 1) parxfile's: working_path/frealign/maps/filename_r??_??.parx
-    # 2) stackfile: working_path/filename_stack.mrc
-    actual_number_of_frames = csp_extract_frames(
-        allparxs,
-        parameters,
-        filename,
-        imagefile,
-        stackfile,
-        working_path,
-        current_path,
-    )
-
-    # refinement
-    # outputs: working_path/frealign/maps/filename_r??_??.parx
-    align.csp_refinement(
-        parameters,
-        filename,
-        current_path,
-        working_path,
-        use_frames,
-        allparxs, 
-        iteration,
-    )
-
-    # save results
-    if not debug:
-        save_csp_results(
-            filename, parameters, current_path, verbose=parameters["slurm_verbose"]
+        # extract paticle frames and write parameter and stack files:
+        # 1) parxfile's: working_path/frealign/maps/filename_r??_??.parx
+        # 2) stackfile: working_path/filename_stack.mrc
+        actual_number_of_frames = csp_extract_frames(
+            allparxs,
+            parameters,
+            filename,
+            imagefile,
+            stackfile,
+            working_path,
+            current_path,
         )
-        save_refinement_to_website(filename, iteration, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
 
+        # refinement
+        # outputs: working_path/frealign/maps/filename_r??_??.parx
+        align.csp_refinement(
+            parameters,
+            filename,
+            current_path,
+            working_path,
+            use_frames,
+            allparxs, 
+            iteration,
+        )
+
+        # save results
+        if not debug:
+            save_csp_results(
+                filename, parameters, current_path, verbose=parameters["slurm_verbose"]
+            )
+            save_refinement_to_website(filename, iteration, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
+        
     # clean-up unnecesary files
     try:
         [

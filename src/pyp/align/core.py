@@ -1684,7 +1684,6 @@ def csp_refinement(
                 iteration,
             )
 
-
     # write out the stack file and par file into a txt for later processing
     with open(os.path.join(os.environ["PYP_SCRATCH"], "stacks.txt"), "a") as f:
         f.write(os.path.join(name, "frealign/" + name + "_stack.mrc\n"))
@@ -1692,12 +1691,6 @@ def csp_refinement(
     # save the first class name here only
     with open(os.path.join(os.environ["PYP_SCRATCH"], "pars.txt"), "a") as f:
         f.write(str(parameter_file).replace(f"_r{classes:02d}", f"_r01") + "\n")
-
-    # if the project directory file is not written
-    project_dir_file = os.path.join(os.environ["PYP_SCRATCH"], "project_dir.txt")
-    if not os.path.exists(project_dir_file):
-        with open(project_dir_file, "w") as f:
-            f.write(str(current_path))
 
     # save fp and mp into the main slurm job folder
     project_params.save_pyp_parameters(mp, "..")

@@ -2867,8 +2867,12 @@ EOF
         particle_parameters = cistem_obj.get_extended_data().get_particles()
         tilt_parameters = cistem_obj.get_extended_data().get_tilts()
 
-    cistem_parameters = np.array(cistem_parameters, ndmin=2)
-    
+    if len(cistem_parameters) == 0:
+        logger.warning("No valid particle projections in this micrograph/tilt-series")
+        return np.array([])
+    else:
+        cistem_parameters = np.array(cistem_parameters, ndmin=2)
+
     parameters_obj = Parameters()
     extended_parameters = ExtendedParameters()
     extended_parameters.set_data(particles=particle_parameters,

@@ -338,76 +338,9 @@ def merge_movie_files_in_job_arr(
     When running multiple sprswarm runs in a single array job, merge the output
     """
 
-    with open(movie_file) as f:
-        movie_list = [line.strip() for line in f]
-    with open(par_file) as f:
-        par_list = [line.strip() for line in f]
-
-    # workaround for case when job array has only one component
-    if "_" not in output_basename:
-        output_basename += "_1"
-
-    # check that all files are present
-    assert len(movie_list) == len(
-        par_list
-    ), "movie files and par files must be of equal length"
-    for movie, parfile in zip(movie_list, par_list):
-        not_found = "{} is not found"
-        if not os.path.exists(movie):
-            logger.info(not_found.format(movie))
-        if not os.path.exists(parfile):
-            logger.info(not_found.format(parfile))
-
     project_path = open(project_dir_file).read()
     mp = project_params.load_pyp_parameters(project_path)
     fp = mp
-
-    if fp["extract_stacks"]:
-
-        saved_path =os.path.join(
-                    project_path, "relion", "stacks",
-                )
-
-        if not os.path.exists(saved_path):
-            os.makedirs(saved_path)
-
-        for stack in movie_list:
-            shutil.copy2( stack, os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".mrcs")) )
-            logger.info(f"Stack {Path(stack).name} saved to {saved_path}")
-
-        save_stacks = True
-        global_image = os.path.join( project_path, mp["data_set"] + ".films" ) 
-        global_imagelist = np.loadtxt(global_image, dtype=str).ravel()
-
-        mpi_funcs, mpi_args = [ ], [ ]
-        imagesize = mp["extract_box"]
-        image_binning = mp["extract_bin"]
-        doseRate = mp["scope_dose_rate"]
-
-        for par in par_list:
-            micrograph_path = os.path.join(project_path, "mrc", Path(par).stem.split("_r01")[0] + ".mrc")
-
-            filename = os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".star")) 
-            # par_obj = Parameters.from_file(par)
-            # par_obj.to_star(imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate)
-            mpi_args.append([(Parameters.from_file(par), imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate)])
-            mpi_funcs.append(Parameters.to_star)
-
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=mp["slurm_verbose"], silent=True)
-
-    with timer.Timer(
-        "merge_stack", text="Merging particle stack took: {}", logger=logger.info
-    ):
-        if len(movie_list) > 1:
-            logger.info("Merging movie files")
-            mrc.merge_fast(movie_list,f"{output_basename}_stack.mrc",remove=True)
-        else:
-            try:
-                os.symlink(movie_list[0], str(output_basename) + "_stack.mrc")
-            except:
-                pass
-
-    logger.info("Merging parameter files")
 
     iteration = fp["refine_iter"]
 
@@ -417,6 +350,85 @@ def merge_movie_files_in_job_arr(
     else:
         classes = int(project_params.param(fp["class_num"], iteration))
     
+    # workaround for case when job array has only one component
+    if "_" not in output_basename:
+        output_basename += "_1"
+
+    if os.path.exists(movie_file):
+        with open(movie_file) as f:
+            movie_list = [line.strip() for line in f]
+        with open(par_file) as f:
+            par_list = [line.strip() for line in f]
+
+        # check that all files are present
+        assert len(movie_list) == len(
+            par_list
+        ), "movie files and par files must be of equal length"
+        for movie, parfile in zip(movie_list, par_list):
+            not_found = "{} is not found"
+            if not os.path.exists(movie):
+                logger.info(not_found.format(movie))
+            if not os.path.exists(parfile):
+                logger.info(not_found.format(parfile))
+
+        if fp["extract_stacks"]:
+
+            saved_path =os.path.join(
+                        project_path, "relion", "stacks",
+                    )
+
+            if not os.path.exists(saved_path):
+                os.makedirs(saved_path)
+
+            for stack in movie_list:
+                shutil.copy2( stack, os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".mrcs")) )
+                logger.info(f"Stack {Path(stack).name} saved to {saved_path}")
+
+            save_stacks = True
+            global_image = os.path.join( project_path, mp["data_set"] + ".films" ) 
+            global_imagelist = np.loadtxt(global_image, dtype=str).ravel()
+
+            mpi_funcs, mpi_args = [ ], [ ]
+            imagesize = mp["extract_box"]
+            image_binning = mp["extract_bin"]
+            doseRate = mp["scope_dose_rate"]
+
+            for par in par_list:
+                micrograph_path = os.path.join(project_path, "mrc", Path(par).stem.split("_r01")[0] + ".mrc")
+
+                filename = os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".star")) 
+                # par_obj = Parameters.from_file(par)
+                # par_obj.to_star(imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate)
+                mpi_args.append([(Parameters.from_file(par), imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate)])
+                mpi_funcs.append(Parameters.to_star)
+
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=mp["slurm_verbose"], silent=True)
+
+        with timer.Timer(
+            "merge_stack", text="Merging particle stack took: {}", logger=logger.info
+        ):
+            if len(movie_list) > 1:
+                logger.info("Merging movie files")
+                mrc.merge_fast(movie_list,f"{output_basename}_stack.mrc",remove=True)
+            else:
+                try:
+                    os.symlink(movie_list[0], str(output_basename) + "_stack.mrc")
+                except:
+                    pass
+
+        logger.info("Merging parameter files")
+
+    # if intermediate reconstructions are empty, raise flag
+    else:
+        for class_index in range(classes):
+            current_class = class_index + 1
+            filename = f"{output_basename}_r{current_class:02d}.empty"
+            output_dir = os.path.join(project_path,"frealign","scratch")
+            os.makedirs( output_dir, exist_ok=True)
+            Path(os.path.join(output_dir, filename)).touch()
+        # nothing else to do here
+        return
+
     # refine3d film output = 1 but csp film output == 0
     # we just get the film id from the data
     sample_data = Parameters.from_file(par_list[0])
@@ -1514,6 +1526,13 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
             # done processing all micrographs
             # if len(set(micrographs.keys()) - processed_micrographs) == 0:
 
+            # check for empty micrographs/tilt-series
+            empty_files = glob.glob(os.path.join(input_dir,"*.empty"))
+            empty_file_number = len(empty_files)
+            # clear flags and revise total processed count
+            if empty_file_number > 0:
+                [ os.remove(f) for f in empty_files ]
+                processed += empty_file_number
             if total_num_bz2 - processed == 0:
                 # check the number of dumpfiles is correct
                 if merge:
