@@ -1309,7 +1309,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             # read unbinned coordinates from website
             coordinates = np.loadtxt(f"{name}.next",ndmin=2)
             
-            if virion_mode:
+            if virion_mode and len(coordinates) > 0:
                 coordinates[:,-1] /= parameters["tomo_vir_binn"]
 
             # clean up
