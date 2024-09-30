@@ -306,14 +306,14 @@ def generateRelionTomogramPositions(name, parameters):
         # check if we have picked spikes for this virion
         virion_file = "sva/%s_vir%04d_cut.txt" % (name, vir)
         if not os.path.isfile(virion_file):
-            logger.warning("File %s not found. Skipping.", virion_file)
+            logger.warning("File %s not found. Skipping", virion_file)
             continue
         else:
             spikes_in_virion = np.loadtxt(
                 virion_file, comments="number", usecols=(list(range(32))), ndmin=2
             )
             if spikes_in_virion.shape[0] == 0:
-                logger.warning("File %s not found. Skipping.", virion_file)
+                logger.warning("File %s not found. Skipping", virion_file)
                 continue
 
         # for all spikes in current virion
@@ -918,7 +918,7 @@ def csp_spr_swarm(filename, parameters, only_inside=False, csp_swarm=False):
                 )
                 """
                 if only_inside:
-                    logger.info("Skipping particle frame.")
+                    logger.info("Skipping particle frame")
                     continue
             if (
                 "relion_frames" in parameters["extract_fmt"].lower()
@@ -1482,7 +1482,7 @@ def spa_extract_coordinates(
                     )
                     """
                     if only_inside:
-                        logger.info("Skipping particle frame.")
+                        logger.info("Skipping particle frame")
                         continue
                 if (
                     ref is None
@@ -1849,7 +1849,7 @@ def spa_extract_coordinates_legacy(
                 )
                 """
                 if only_inside:
-                    logger.info("Skipping particle frame.")
+                    logger.info("Skipping particle frame")
                     continue
             if (
                 ref is None
@@ -2406,7 +2406,7 @@ EOF
                 spikes_in_virion = np.zeros([1, 7])
                 virion_bin = 1
             else:
-                logger.warning(f"File {virion_file} not found. Skipping.")
+                logger.warning(f"File {virion_file} not found. Skipping")
                 continue
 
 
@@ -2643,7 +2643,7 @@ EOF
                         >= max_micrograph_y
                     ):
                         logger.debug(
-                            "Skipping particle outside image range: [%d,%d] x=(%d,%d), y=(%d,%d)."
+                            "Skipping particle outside image range: [%d,%d] x=(%d,%d), y=(%d,%d)"
                             % (
                                 tilt_X - (cutboxsize / 2) + min_micrograph_x,
                                 tilt_Y - (cutboxsize / 2) + min_micrograph_y,
