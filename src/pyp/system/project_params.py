@@ -918,8 +918,8 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                      and "tomo_vir_detect_" not in k 
                      and not ( new_parameters.get("micromon_block") == "tomo-picking" and new_parameters.get("tomo_pick_method") == "manual" )
                     )
-                    or ("tomo_spk_" in k and new_parameters["micromon_block"] == "tomo-picking")
-                    or "tomo_pick_" in k and ( new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") != "manual" or new_parameters["micromon_block"] == "tomo-segmentation-closed" )
+                    or ("tomo_spk_" in k and new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") == "virions" )
+                    or "tomo_pick_" in k and ( new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") == "virions" or new_parameters["micromon_block"] == "tomo-segmentation-closed" )
                     or new_parameters.get("tomo_vir_method") == "pyp-eval" and new_parameters["micromon_block"] == "tomo-preprocessing" and "detect_nn3d_" in k
                 ):
                     logger.info(
