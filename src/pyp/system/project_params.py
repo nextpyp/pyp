@@ -870,7 +870,10 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     new_parameters["ctf_force"] = True
                     clean_ctf_files(project_dir)
 
-                if "detect_" in k or "tomo_spk_" in k:
+                if ( "detect_" in k 
+                    or "tomo_spk_" in k
+                    or "tomo_pick_" in k and not "tomo_pick_vir_" in k
+                ):
                     # assume we are re-picking particles
                     logger.info(
                         f"Particle positions will be re-computed to reflect change in parameter {k}"
