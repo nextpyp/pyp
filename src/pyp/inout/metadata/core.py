@@ -3023,9 +3023,6 @@ def compute_global_weights_from_par(parfile: str, weights_file: str = "global_we
         f.write("\n".join(list(map(str, weights))))
                    
 
-@timer.Timer(
-    "get index of particle frames", text="Get index of particles frames took: {}", logger=logger.info
-)
 def get_particles_tilt_index(par_data, ptl_col):
     """
     Calculate index for each particles to quickly access to the particle tilt series that belong to it in the parfile
