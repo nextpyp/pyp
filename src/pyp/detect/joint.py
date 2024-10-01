@@ -294,7 +294,7 @@ def tomotrain(args):
     files = np.loadtxt( train_images, comments='image_name', dtype="str", ndmin=2)[:,1]
     # substitute coordinate files with binned values
     number_of_labels = np.loadtxt( train_coords, dtype='str', comments="image_name", ndmin=2).shape[0]
-    logger.info(f"Using {number_of_labels:,} points for training")
+    logger.info(f"Using {number_of_labels:,} positions for training")
 
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
