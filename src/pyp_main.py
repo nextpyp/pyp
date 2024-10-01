@@ -806,6 +806,72 @@ def spr_merge(parameters, check_for_missing_files=True):
                 path = os.path.join(os.getcwd(), "frealign", "scratch")
                 particle_cspt.run_merge(path)
 
+def generate_list_of_all_subvolumes(parameters):
+    """Generate list of sub-volumes for sub-volume averaging
+
+    Args:
+        parameters (dict): pyp parameters
+
+    Returns:
+        _type_: _description_
+    """
+    if detect.tomo_spk_is_required(parameters) > 0:
+        # produce .txt file for 3DAVG
+        timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
+            "%Y%m%d_%H%M%S"
+        )
+        new_volumes_file = "frealign/{0}_{1}_original_volumes.txt".format(
+            timestamp, parameters["data_set"]
+        )
+        f = open(new_volumes_file, "w")
+        f.write(
+            """number  lwedge  uwedge  posX    posY    posZ    geomX   geomY   geomZ   normalX normalY normalZ matrix[0]       matrix[1]       matrix[2]        matrix[3]       matrix[4]       matrix[5]       matrix[6]       matrix[7]       matrix[8]       matrix[9]       matrix[10]       matrix[11]      matrix[12]      matrix[13]      matrix[14]      matrix[15]      magnification[0]       magnification[1]      magnification[2]        cutOffset       filename\n"""
+        )
+
+        count = 1
+        # combine projections into one stack if they exist
+        proj_stack = []
+
+        for file in sorted(glob.glob("sva/*_vir????.txt")):
+            for volume in [
+                line
+                for line in open(file).read().split("\n")
+                if not line.startswith("number") and line != ""
+            ]:
+                vector = volume.split("\t")
+                # print vector
+                vector[0] = str(count)
+                # randomize phi angle in +/- 180
+                if parameters["tomo_vir_detect_rand"] or parameters["tomo_spk_rand"]:
+                    vector[10] = "%.4f" % (360 * (random.random() - 0.5))
+                vector[-1] = os.getcwd() + "/sva/" + vector[-1]
+                f.write("\t".join([v for v in vector]) + "\n")
+
+                if os.path.exists(vector[-1].split(".")[0] + ".proj"):
+                    proj_stack.append(vector[-1].split(".")[0] + ".proj")
+
+                count += 1
+
+            os.remove(file)
+        f.close()
+
+        # combine all projections (from sub-volumes) into one stack if they exist
+        if len(proj_stack) != 0:
+            mrc.merge(proj_stack, "sva/%s_proj.mrc" % (parameters["data_set"]))
+            for proj in proj_stack:
+                try:
+                    os.remove(proj)
+                except OSError:
+                    logger.exception("Error while deleting files.")
+
+        # create link(s) for compatibility with 3DAVG (only if extracting sub)
+        volumes_file = "frealign/{0}_original_volumes.txt".format(parameters["data_set"])
+        if os.path.exists(volumes_file):
+            os.remove(volumes_file)
+        shutil.move(os.path.join(os.getcwd(), new_volumes_file), volumes_file)
+        return volumes_file
+    else:
+        return None
 
 def tomo_merge(parameters, check_for_missing_files=True):
     """Compiles multiple out files from TOMO swarm function.
@@ -908,61 +974,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
         if parameters["tomo_vir_method"] != "manual" and parameters["tomo_pick_method"] != "manual":
             raise Exception("Either all tilt-series failed or no particles were found, stopping")
 
-    if detect.tomo_spk_is_required(parameters) > 0:
-        # produce .txt file for 3DAVG
-        timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
-            "%Y%m%d_%H%M%S"
-        )
-        new_volumes_file = "frealign/{0}_{1}_original_volumes.txt".format(
-            timestamp, parameters["data_set"]
-        )
-        f = open(new_volumes_file, "w")
-        f.write(
-            """number  lwedge  uwedge  posX    posY    posZ    geomX   geomY   geomZ   normalX normalY normalZ matrix[0]       matrix[1]       matrix[2]        matrix[3]       matrix[4]       matrix[5]       matrix[6]       matrix[7]       matrix[8]       matrix[9]       matrix[10]       matrix[11]      matrix[12]      matrix[13]      matrix[14]      matrix[15]      magnification[0]       magnification[1]      magnification[2]        cutOffset       filename\n"""
-        )
-
-        count = 1
-        # combine projections into one stack if they exist
-        proj_stack = []
-
-        for file in sorted(glob.glob("sva/*_vir????.txt")):
-            for volume in [
-                line
-                for line in open(file).read().split("\n")
-                if not line.startswith("number") and line != ""
-            ]:
-                vector = volume.split("\t")
-                # print vector
-                vector[0] = str(count)
-                # randomize phi angle in +/- 180
-                if parameters["tomo_vir_detect_rand"] or parameters["tomo_spk_rand"]:
-                    vector[10] = "%.4f" % (360 * (random.random() - 0.5))
-                vector[-1] = os.getcwd() + "/sva/" + vector[-1]
-                f.write("\t".join([v for v in vector]) + "\n")
-
-                if os.path.exists(vector[-1].split(".")[0] + ".proj"):
-                    proj_stack.append(vector[-1].split(".")[0] + ".proj")
-
-                count += 1
-
-            os.remove(file)
-        f.close()
-
-        # combine all projections (from sub-volumes) into one stack if they exist
-        if len(proj_stack) != 0:
-            mrc.merge(proj_stack, "sva/%s_proj.mrc" % (parameters["data_set"]))
-            for proj in proj_stack:
-                try:
-                    os.remove(proj)
-                except OSError:
-                    logger.exception("Error while deleting files.")
-
-        # create link(s) for compatibility with 3DAVG (only if extracting sub)
-        volumes_file = "frealign/{0}_original_volumes.txt".format(parameters["data_set"])
-        if os.path.exists(volumes_file):
-            os.remove(volumes_file)
-        shutil.move(os.path.join(os.getcwd(), new_volumes_file), volumes_file)
-
+    generate_list_of_all_subvolumes(parameters)
 
     if not Web.exists:
         # compile "database"
@@ -3473,6 +3485,130 @@ def update_metadata_coordinates(parameters):
         metadata.write()        
 
     logger.info(f"Detected a total of {total_virions:,} manually picked virions")
+                
+def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
+
+    micrographs_file = f"{os.path.join(project_path, parameters.get('data_set'))}.micrographs"
+    micrograph_list = [line.strip() for line in open(micrographs_file, "r")]
+
+    # keep track of used tilt-series
+    films_list = []
+    
+    # detect all .next files in next/
+    next_files = [Path(f).stem for f in glob.glob( os.path.join(project_path,"next", "*.next")) if Path(f).name != "virion_thresholds.next"]
+
+    for tilt_series_name in micrograph_list:
+        
+        # retrieve metadata from pkl file
+        pkl_file = os.path.join(project_path,"pkl", tilt_series_name + ".pkl")
+        metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+        
+        # clear virion/spike coordinates, if any
+        metadata.data.pop("box", None)
+        metadata.data.pop("vir", None)
+
+        # remove original pkl file to allow saving of modified metadata
+        try:
+            os.remove(pkl_file)
+            [os.remove(f) for f in glob.glob(os.path.join("sva","*_vir????.txt"))]
+        except:
+            pass
+
+        # go to working directory
+        os.chdir(working_path)
+
+        # retrieve tilt-series name and add to list
+        if tilt_series_name in next_files:
+    
+            # read unbinned coordinates from website
+            next_file = os.path.join(project_path,"next",tilt_series_name+".next")
+            coordinates = np.loadtxt(next_file,ndmin=2)
+
+            if len(coordinates) > 0:
+                # add to list of used tilt-series
+                films_list.append(tilt_series_name)
+                
+                # convert to binned coordinates
+                coordinates /= parameters.get("tomo_rec_binning")
+                
+                # swap y and z                
+                coordinates = coordinates.copy()[:,[0,2,1,3]]
+
+                # add manual coordinates to metadata
+                header = metadata.files["box"]["header"]
+                import pandas as pd
+                df = pd.DataFrame(coordinates, columns=header)
+                metadata.updateData({'box':df})
+
+                # dump to local scratch                
+                metadata.meta2PYP(path=working_path, data_path=os.path.join(project_path, "raw/"))
+                            
+                # clean up
+                os.remove(next_file)
+
+            # Identify manually ignored views
+            excluded_views = []
+            if "exclude" in metadata.data:
+                [ excluded_views.append(f + 1) for f in metadata.data["exclude"].to_numpy()[:,-1] ]
+
+            # create link to tomogram in local scratch
+            reconstruction_file = os.path.join( project_path,"mrc", tilt_series_name + ".rec" )
+            if os.path.exists(reconstruction_file):
+                os.symlink( reconstruction_file, Path(reconstruction_file).name )
+
+            mrc_file = os.path.join( project_path,"mrc", tilt_series_name + ".mrc")
+            if os.path.exists(mrc_file):
+                x, y, _ = get_image_dimensions(mrc_file)
+            else:
+                raise Exception(f"Cannot find raw tilt-series {mrc_file} to extract dimentions")
+
+            # create txt files
+            detect_tomo.extract_spk_direct(
+                parameters=parameters, 
+                name=tilt_series_name, 
+                x=x,
+                y=y,
+                binning=parameters.get("tomo_rec_binning"), 
+                zfact="", 
+                tilt_angles=metadata.data["tlt"].to_numpy(),
+                tilt_options="-MODE 2 -OFFSET 0.00 -PERPENDICULAR -RADIAL {0},{1} -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {2}".format(
+    parameters["tomo_rec_lpradial_cutoff"], parameters["tomo_rec_lpradial_falloff"], excluded_views)
+            )
+            
+            # save txt files to sva/
+            txt_files = glob.glob("*_vir????.txt")
+            for txt_file in txt_files:
+                with open(txt_file) as f:
+                    logger.warning(f.read())
+                shutil.copy2( txt_file, os.path.join(project_path, "sva", txt_file))
+
+        # save metadata to pkl file
+        metadata.write()
+        
+    # go back to project directory
+    os.chdir(project_path)
+    
+    # create frealign directory, if needed
+    os.makedirs('frealign',exist_ok=True)
+
+    # set particle radius based on vir information, if needed
+    if parameters["tomo_spk_rad"] == 0 and parameters["tomo_vir_rad"] > 0:
+        parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"]
+    
+    # generate *_volumes.txt file
+    generate_list_of_all_subvolumes(parameters)
+
+    # save sorted final micrograph list (excluding micrographs with no boxes)
+    inputlist = get_new_input_list(parameters, films_list)
+
+    if len(inputlist) > 0:
+        films = parameters["data_set"] + ".films"
+        if Path(films).is_symlink():
+            os.remove(films)
+        with open(films, "w") as f:
+            f.write("\n".join(inputlist))
+            f.close()
+
 if __name__ == "__main__":
 
     try:
@@ -4055,6 +4191,13 @@ if __name__ == "__main__":
                         null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
 
                         if parameters["refine_iter"] == 2:
+
+                            # if using particles from manual picking, we need to populate the metadata manually
+                            parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
+                            if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking":
+                                update_metadata_coordinates_and_merge(project_path=os.getcwd(),working_path=os.environ["PYP_SCRATCH"],parameters=parameters)
+                                # set the volumes files we just calculated as reference
+                                parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
 
                             latest_parfile, latest_reference = None, None
                             # data_parent is None if running CLI
