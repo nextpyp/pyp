@@ -160,7 +160,7 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
                     per_particle_scoreweight(parx_3d[k, :,:], newlogp_col, newscanord_col, scoreavg_tilt, i)
 
         else: # tilt gaussian weights
-            logger.info("Weighting logp with tilt distribution")
+            logger.info("Weighting LogP with tilt distribution")
             for k in range(0, nclasses):
                 for i in index:
                     per_particle_tiltweight(parx_3d[k, :,:], all_extended_list[k], newlogp_col, i)
