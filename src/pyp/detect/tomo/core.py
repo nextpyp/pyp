@@ -1217,9 +1217,9 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
     # use this radius when no estimation is available
     unbinned_virion_radius = parameters["tomo_vir_rad"] / parameters["scope_pixel"] / parameters['data_bin'] * parameters["tomo_vir_binn"]
-    binned_virion_radius = unbinned_virion_radius / binning
+    binned_virion_radius = int(unbinned_virion_radius / binning)
     unbinned_spike_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / parameters['data_bin']
-    binned_spike_radius = unbinned_spike_radius / binning
+    binned_spike_radius = int(unbinned_spike_radius / binning)
 
     # TODO: 1. pyp-eval
     if ( 
