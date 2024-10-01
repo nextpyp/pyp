@@ -282,6 +282,7 @@ def parse_arguments(block):
                 and parameters["micromon_block"] != "tomo-segmentation-closed"
                 and parameters["micromon_block"] != "tomo-particles-eval"
                 and parameters["micromon_block"] != "tomo-picking"
+                and parameters["micromon_block"] != "tomo-coarse-refinement"
             ):
                 folders = ["raw", "sva", "mrc", "webp"]
                 for f in folders:
