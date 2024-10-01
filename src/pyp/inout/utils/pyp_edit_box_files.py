@@ -62,7 +62,7 @@ def coordinates_to_model_file(coordinates,filename,radius=50):
     command = f"{get_imod_path()}/bin/point2model -scat -sphere {radius} -values 1 -input {name}.box -output {name}.mod"
     run_shell_command(command)
 
-    command = f"{get_imod_path()}/bin/imodtrans -T {name}.mod {filename}"
+    command = f"{get_imod_path()}/bin/imodtrans -Y -T {name}.mod {filename}"
     run_shell_command(command)
 
     try:
