@@ -240,7 +240,7 @@ def read_tilt_series(
             # read and align intermediate frames
             if os.path.exists(filename + "_frames.tbz"):
 
-                logger.info("Processing individual frames")
+                logger.info("Processing movie frames")
 
                 # decompress frames
                 if int(parameters["slurm_tasks"]) > 0:
@@ -546,7 +546,7 @@ def read_tilt_series(
             isfirst = True
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
             t.start()
-            logger.info(f"Processing individual frames using {parameters['movie_ali']}")
+            logger.info(f"Processing movie frames using: {parameters['movie_ali']}")
             import torch
             if torch.cuda.is_available() and 'motioncor' in parameters["movie_ali"]:
                 for tilt in sorted_tilts:
@@ -556,7 +556,6 @@ def read_tilt_series(
             else:
                 # submit jobs to workers
                 for tilt in sorted_tilts:
-                    logger.info("Aligning frames for tilt angle %.2f", tilt[1])
                     frame_name = tilt[0].replace(file_format, "")
 
                     arguments.append(
@@ -578,7 +577,7 @@ def read_tilt_series(
             aligned_tilts = [sorted_tilt[0].replace(file_format, ".avg") for sorted_tilt in sorted_tilts]
             aligned_tilts_str = " ".join(aligned_tilts)
 
-            t = timer.Timer(text="Combine into one tiltseries took: {}", logger=logger.info)
+            t = timer.Timer(text="Combine into one tilt-series took: {}", logger=logger.info)
             t.start()
             command = "{0}/bin/newstack {2} {1}.mrc".format(
                 get_imod_path(), name, aligned_tilts_str
@@ -851,7 +850,7 @@ def regenerate_average_quick(
     # regenerate average in each tilt
     t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
     t.start()
-    logger.info(f"Processing individual frames using existing alignment")
+    logger.info(f"Processing movie frames using existing alignment")
     arguments = []
     for movie in frame_list:
         m_name = movie.replace(".mrc", "")

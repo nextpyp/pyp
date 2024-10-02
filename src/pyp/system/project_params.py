@@ -161,11 +161,6 @@ def get_missing_files(parameters, inputlist, verbose=True):
                 not os.path.exists(logfile)
                 or not "finished successfully" in open(logfile).read()
             ):
-                if not os.path.exists(logfile):
-                    logger.info(f"{logfile} does not exist")
-                else:
-                    logger.info(f"{sname} did not terminate successfully")
-
                 if "csp_no_stacks" in parameters.keys() and parameters["csp_no_stacks"]:
                     # find all movies that were part of the array job and add to missing files
                     series = project_params.get_film_order(parameters, sname)
@@ -177,6 +172,8 @@ def get_missing_files(parameters, inputlist, verbose=True):
         except:
             logger.error("File swarm/pre_process.swarm not found")
             pass
+
+    logger.warning(f"{len(missing_files)} jobs produced no output or failed to run")
 
     return missing_files
 
@@ -935,7 +932,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
     else:
         # rerun a failed job without changing parameters 
         if len(glob.glob("mrc/*mrc")) == 0:
-            logger.info("No processed results detected in the mrc/ folder, will force movie alignment, ctf estimation, and particle detection")
+            logger.info("No processed results detected in mrc/ folder, will force movie alignment, ctf estimation, and particle detection")
             new_parameters["movie_force"] = True
             # Triggering all following recalculations
             new_parameters["ctf_force"] = True

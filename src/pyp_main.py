@@ -1557,7 +1557,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     with open("project_folder.txt", "w") as f:
         f.write(project_params.resolve_path(current_path))
 
-    t = timer.Timer(text="Retrieving results took: {}", logger=logger.info)
+    t = timer.Timer(text="Retrieving files took: {}", logger=logger.info)
     t.start()
     # retrieve available results
     if "data_set" in parameters:
