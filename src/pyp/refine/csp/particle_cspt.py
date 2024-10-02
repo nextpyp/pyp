@@ -840,9 +840,6 @@ def run_reconstruction(
     os.chdir(curr_dir)
 
 
-@timer.Timer(
-    "merge_check_err_and_resubmit", text="Check error and resubmit took: {}", logger=logger.info
-)
 def merge_check_err_and_resubmit(
     parameters, input_dir, micrographs, iteration=2
 ):
@@ -877,33 +874,10 @@ def merge_check_err_and_resubmit(
             movies_resubmit.append(movie)
 
     if len(movies_resubmit) > 0:
-        logger.warning("The following micrographs/tiltseries failed and will be re-submitted")
-        fail_movies = ",".join(movies_resubmit)
-        logger.info(f"{fail_movies}")
         
-        # resubmit jobs (code borrowed from csp_split)
-
-        os.chdir("swarm")
-
-        if not os.path.exists(".cspswarm_retry"):
-            slurm.launch_csp(micrograph_list=movies_resubmit,
-                            parameters=parameters,
-                            swarm_folder=Path().cwd(),
-                            )
-            message = "Successfully re-submitted failed jobs"
-
-            # save flag to indicate failure
-            Path(".csp_current_fail").touch()
-            Path(".cspswarm_retry").touch()
-
-        else:
-            logger.error("Giving up retrying...")
-            os.remove(".cspswarm_retry")
-            message = "Stop re-submitting failed jobs"
-
-        raise Exception(message)
-
-
+        # raise error flag
+        Path(".cspswarm.error").touch()
+        raise Exception(f"{len(movies_resubmit)} jobs failed to run or reached the walltime. Stopping")
     else:
         logger.info(
             "All series were successfully processed, start merging reconstructions"
@@ -1591,12 +1565,10 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
             time.sleep(INTERVAL)
 
     if not succeed:
-        logger.warning("Job reached walltime. Attempting to resubmit remaining jobs but you may need to increase the walltime (merge task)")
-
         # result is incomplete after TIMEOUT -> need to resubmit failed cspswarm jobs
         if class_index == 1 and len(set(micrographs.keys()) - processed_micrographs) > 0:
             merge_check_err_and_resubmit(parameters, input_dir, micrographs, int(parameters["refine_iter"]))
-        return False
+        return True
     else:
         logger.info(f"Decompression of all micrographs/tilt-series is done, start merging reconstruction and parfiles")
 
@@ -1771,6 +1743,14 @@ def classmerge_succeed(parameters: dict) -> bool:
     INTERVAL = 10           # 10 s 
     start_time = time.time()
 
+    error_flag = os.path.join( Path().cwd().parent.parent, ".cspswarm.error" )
+    if os.path.exists(error_flag):
+        try:
+            os.remove(error_flag)
+        except:
+            pass
+        raise Exception("Classmerge failed to run. Please check for errors in the logs")
+
     while time.time() - start_time < TIMEOUT:
         
         if cspswarm_fail_tag.exists():
@@ -1789,13 +1769,4 @@ def classmerge_succeed(parameters: dict) -> bool:
 
         time.sleep(INTERVAL)
 
-    # part of the classmerge jobs failed, resubmit classmerge & cspmerge (w/o cspswarm)
-    parameters["slurm_merge_only"] = True
-    
-    slurm.launch_csp(micrograph_list=[],
-                    parameters=parameters,
-                    swarm_folder=swarm_folder,
-                    )
     return False
-
-
