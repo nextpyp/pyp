@@ -5351,7 +5351,11 @@ EOF
         com = "{0}/bin/tiltalign -param {1}_tiltalignScript.txt".format(
             get_imod_path(), name
         )
-        run_shell_command(com,verbose=parameters["slurm_verbose"])
+        output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
+
+        residuals = [line for line in output.split("\n") if "Residual error mean and sd" in line]
+        if len(residuals) > 0:
+            logger.info(residuals[0])
 
         # combine RAPTOR output with prealign step and unbinning
         if os.path.isfile("IMOD/%s_bin.xf" % name):
