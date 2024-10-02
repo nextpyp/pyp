@@ -5263,9 +5263,10 @@ EOF
 
 
                 # if using particles from manual picking, we need to populate the metadata manually
-                parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
-                if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking" and parameters.get("micromon_block") == "tomo-segmentation-closed":
-                    update_metadata_coordinates(parameters=parameters)
+                if parameters.get("data_parent"):
+                    parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
+                    if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking" and parameters.get("micromon_block") == "tomo-segmentation-closed":
+                        update_metadata_coordinates(parameters=parameters)
 
                 # save configuration
                 project_params.save_parameters(parameters)
