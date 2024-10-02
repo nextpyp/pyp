@@ -68,7 +68,7 @@ def occupancies(fparameters, iteration, nclass, path="."):
 
 
 @timer.Timer(
-    "occ_function", text="OCC calculation took: {}", logger=logger.info
+    "occ_function", text="Occupancy calculations took: {}", logger=logger.info
 )
 def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter_file_folders=".", local=False):
     """Compute occupancies based on LogP values with extended par file."""
@@ -101,7 +101,7 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
     iteration = parameters["refine_iter"] 
     if not local:
         with timer.Timer(
-        "read par for occ", text = "OCC Read par took: {}", logger=logger.info
+        "read par for occ", text = "Reading occupancies took: {}", logger=logger.info
         ):
             for k in range(nclasses):
                 class_k = k + 1

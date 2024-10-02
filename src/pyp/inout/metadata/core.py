@@ -2081,7 +2081,7 @@ def csp_extract_coordinates(
             
     if not skip and (iteration > 2 or parameter_file_folder.exists()):
 
-        logger.info("Skipping coordinate extraction (using existing frame coordinates)")
+        logger.info("Skipping coordinate re-calculation (using existing metadata)")
 
         # we can use the parameter file already in the frealign/maps (decompressed by csp_split())
         for current_class in range(classes):

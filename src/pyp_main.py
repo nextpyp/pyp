@@ -462,7 +462,7 @@ def parse_arguments(block):
             [files.remove(file) for file in files if "Gain" in file]
 
             logger.info(
-                "{0} found {1} files to link into raw folder".format(
+                "{0} found {1} file(s) to link into raw folder".format(
                     project_params.resolve_path(parameters["data_path"]), len(files)
                 )
             )
@@ -1557,7 +1557,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     with open("project_folder.txt", "w") as f:
         f.write(project_params.resolve_path(current_path))
 
-    t = timer.Timer(text="Loading results took: {}", logger=logger.info)
+    t = timer.Timer(text="Retrieving results took: {}", logger=logger.info)
     t.start()
     # retrieve available results
     if "data_set" in parameters:
@@ -2356,7 +2356,7 @@ def csp_extract_frames(
                     )
                 else:
                     logger.info(
-                        f"Total number of particle frames extracted: {totalboxes:,}"
+                        f"Total number of 2D projections extracted = {totalboxes:,}"
                     )
             else:
                 logger.info("{}.films does not exist".format(parameters["data_set"]))
@@ -3784,10 +3784,10 @@ if __name__ == "__main__":
                     with open(json_file, 'w') as fp:
                         json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
 
-                logger.info("PYP (sprmerge) finished successfully")
+                logger.info("nextPYP (sprmerge) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (sprmerge) failed")
+                logger.error("nextPYP (sprmerge) failed")
                 pass
         # swarm
         elif "sprswarm" in os.environ:
@@ -3819,10 +3819,10 @@ if __name__ == "__main__":
                 # with open(json_file, 'w') as fp:
                 #    json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
 
-                logger.info("PYP (sprswarm) finished successfully")
+                logger.info("nextPYP (sprswarm) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (sprswarm) failed")
+                logger.error("nextPYP (sprswarm) failed")
                 pass
 
             # we are done, clear local scratch
@@ -3846,10 +3846,10 @@ if __name__ == "__main__":
 
                 tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
-                logger.info("PYP (tomoswarm) finished successfully")
+                logger.info("nextPYP (tomoswarm) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (tomoswarm) failed")
+                logger.error("nextPYP (tomoswarm) failed")
                 pass
 
             # we are done, clear local scratch
@@ -3880,10 +3880,10 @@ if __name__ == "__main__":
                 # reset all flags for re-calculation
                 parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
                 project_params.save_pyp_parameters(parameters)
-                logger.info("PYP (tomomerge) finished successfully")
+                logger.info("nextPYP (tomomerge) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (tomomerge) failed")
+                logger.error("nextPYP (tomomerge) failed")
                 pass
 
         elif "tomoedit" in os.environ:
@@ -4008,10 +4008,10 @@ if __name__ == "__main__":
                         img2webp("gain_corrected.jpg","gain_corrected.webp")
                         os.remove("gain_corrected.jpg")
 
-                logger.info("PYP (import_star) finished successfully")
+                logger.info("nextPYP (import_star) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (import_star) failed")
+                logger.error("nextPYP (import_star) failed")
                 pass
 
         elif "export_session" in os.environ:
@@ -4061,11 +4061,11 @@ if __name__ == "__main__":
                         coords = False
                     globalmeta.weak_meta2Star(imagelist, output, session_path, coords=coords)
 
-                logger.info("PYP (export_session) finished successfully")
+                logger.info("nextPYP (export_session) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (export_session) failed")
+                logger.error("nextPYP (export_session) failed")
                 pass
 
         elif "export_star" in os.environ:
@@ -4102,10 +4102,10 @@ if __name__ == "__main__":
                     select = parameters["extract_cls"]
                     globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
 
-                logger.info("PYP (export_star) finished successfully")
+                logger.info("nextPYP (export_star) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (export_star) failed")
+                logger.error("nextPYP (export_star) failed")
                 pass
 
         elif "csp" in os.environ:
@@ -4161,7 +4161,7 @@ if __name__ == "__main__":
                         select = parameters["extract_cls"]
                         globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
 
-                        logger.info("PYP (export_star) finished successfully")
+                        logger.info("nextPYP (export_star) finished successfully")
 
                     else:
                         if "particle_rad" not in parameters.keys() and not "import_mode" in parameters.keys() or parameters["extract_box"] == 0:
@@ -4256,11 +4256,11 @@ if __name__ == "__main__":
                                 logger.info("\t %s", parxfile)
                                 logger.info("\t %s", stackfile)
 
-                        logger.info("PYP (csp) finished successfully")
+                        logger.info("nextPYP (csp) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (csp) failed")
+                logger.error("nextPYP (csp) failed")
                 pass
 
         elif "cspswarm" in os.environ:
@@ -4297,11 +4297,11 @@ if __name__ == "__main__":
                         json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
 
                 # disable_profiler(pr)
-                logger.info("PYP (cspswarm) finished successfully")
+                logger.info("nextPYP (cspswarm) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (cspswarm) failed")
+                logger.error("nextPYP (cspswarm) failed")
                 pass
 
         elif "classmerge" in os.environ:
@@ -4312,10 +4312,10 @@ if __name__ == "__main__":
                 args = project_params.parse_arguments("classmerge")
                 path = os.path.join(os.getcwd(), "..", "frealign", "scratch")
                 particle_cspt.csp_class_merge(class_index=args.classId, input_dir=path)
-                logger.info("PYP (classmerge) finished successfully")
+                logger.info("nextPYP (classmerge) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (classmerge) failed")
+                logger.error("nextPYP (classmerge) failed")
                 pass
 
         elif "cspmerge" in os.environ:
@@ -4343,11 +4343,11 @@ if __name__ == "__main__":
                     shutil.rmtree(os.environ["PYP_SCRATCH"])
                     logger.info("Deleted temporary files from " + os.environ["PYP_SCRATCH"])
 
-                logger.info("PYP (cspmerge) finished successfully")
+                logger.info("nextPYP (cspmerge) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (cspmerge) failed")
+                logger.error("nextPYP (cspmerge) failed")
                 pass
 
         elif "csp_local_merge" in os.environ:
@@ -4384,11 +4384,11 @@ if __name__ == "__main__":
                     with open(json_file, 'w') as fp:
                         json.dump(cspm_Tlog, fp, indent=4,separators=(',', ': '))
 
-                logger.info("PYP (csp_local_merge) finished successfully")
+                logger.info("nextPYP (csp_local_merge) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (csp_local_merge) failed")
+                logger.error("nextPYP (csp_local_merge) failed")
                 pass
 
             # clean up local scratch
@@ -4480,10 +4480,10 @@ if __name__ == "__main__":
                     topaz.sprtrain(args)
                 else:
                     joint.sprtrain(args)
-                logger.info("PYP (sprtrain) finished successfully")
+                logger.info("nextPYP (sprtrain) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (sprtrain) failed")
+                logger.error("nextPYP (sprtrain) failed")
                 pass
         elif "tomotrain" in os.environ:
             del os.environ["tomotrain"]
@@ -4496,10 +4496,10 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 joint.tomotrain(args)
-                logger.info("PYP (tomotrain) finished successfully")
+                logger.info("nextPYP (tomotrain) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (tomotrain) failed")
+                logger.error("nextPYP (tomotrain) failed")
                 pass
 
         elif "milotrain" in os.environ:
@@ -4512,10 +4512,10 @@ if __name__ == "__main__":
 
                 args = project_params.load_pyp_parameters()
                 joint.milotrain(args)
-                logger.info("PYP (milotrain) finished successfully")
+                logger.info("nextPYP (milotrain) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (milotrain) failed")
+                logger.error("nextPYP (milotrain) failed")
                 pass
         
         elif "miloeval" in os.environ:
@@ -4528,10 +4528,10 @@ if __name__ == "__main__":
 
                 args = project_params.load_pyp_parameters()
                 joint.miloeval(args)
-                logger.info("PYP (miloeval) finished successfully")
+                logger.info("nextPYP (miloeval) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (miloeval) failed")
+                logger.error("nextPYP (miloeval) failed")
                 pass
         
         elif "cryocareswarm" in os.environ:
@@ -4544,10 +4544,10 @@ if __name__ == "__main__":
 
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
 
-                logger.info("PYP (cryocare) finished successfully")
+                logger.info("nextPYP (cryocare) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (cryocare) failed")
+                logger.error("nextPYP (cryocare) failed")
                 pass
 
             # we are done, clear local scratch
@@ -4566,7 +4566,7 @@ if __name__ == "__main__":
                 project_dir = os.getcwd()
                 output = os.path.join(project_dir, "train")
                 isonet_tools.isonet_train(project_dir, output=output, parameters=parameters)
-                logger.info("PYP (isonet train) finished successfully")
+                logger.info("nextPYP (isonet train) finished successfully")
 
                 # we are done, clear local scratch
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
@@ -4574,7 +4574,7 @@ if __name__ == "__main__":
 
             except:
                 trackback()
-                logger.error("PYP (isonet train) failed")
+                logger.error("nextPYP (isonet train) failed")
                 pass
         
         elif "isonetswarm" in os.environ:
@@ -4587,10 +4587,10 @@ if __name__ == "__main__":
 
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
 
-                logger.info("PYP (isonet predict) finished successfully")
+                logger.info("nextPYP (isonet predict) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (isonet predict) failed")
+                logger.error("nextPYP (isonet predict) failed")
                 pass
         
         elif "membrainswarm" in os.environ:
@@ -4603,10 +4603,10 @@ if __name__ == "__main__":
                 
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
 
-                logger.info("PYP (membrane segmentation) finished successfully")
+                logger.info("nextPYP (membrane segmentation) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (membrane segmentation) failed")
+                logger.error("nextPYP (membrane segmentation) failed")
                 pass
         
         elif "topazswarm" in os.environ:
@@ -4662,10 +4662,10 @@ if __name__ == "__main__":
 
                 tomoswarm_epilogue( name + ".rec", name, project_path, working_path, parameters)
 
-                logger.info("PYP (topaz denoising) finished successfully")
+                logger.info("nextPYP (topaz denoising) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (topaz denoising) failed")
+                logger.error("nextPYP (topaz denoising) failed")
                 pass
         
         elif "heterogeneitytrain" in os.environ:
@@ -4719,13 +4719,13 @@ if __name__ == "__main__":
                     else:
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
 
-                    logger.info("PYP (Heterogeneity analysis) finished successfully")
+                    logger.info("nextPYP (Heterogeneity analysis) finished successfully")
                 else:
                     raise Exception("Not any of the heterogeneity analysis methods selected.")
 
             except:
                 trackback()
-                logger.error("PYP (Heterogeneity analysis) failed")
+                logger.error("nextPYP (Heterogeneity analysis) failed")
                 pass
 
         # check gain reference
@@ -4768,10 +4768,10 @@ if __name__ == "__main__":
                         # remove previously cached image
                         if os.path.exists("www/image.small.jpg"):
                             os.remove("www/image.small.jpg")
-                logger.info("PYP (pypgain) finished successfully")
+                logger.info("nextPYP (pypgain) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (pypgain) failed")
+                logger.error("nextPYP (pypgain) failed")
                 pass
 
         elif "clean" in os.environ:
@@ -4843,10 +4843,10 @@ if __name__ == "__main__":
                         for filename in files:
                             save_refinement_to_website(filename, parameters["refine_iter"], 'slurm_verbose' in parameters and parameters['slurm_verbose'])
 
-                logger.info("PYP (particle filtering) finished successfully")
+                logger.info("nextPYP (particle filtering) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (particle filtering) failed")
+                logger.error("nextPYP (particle filtering) failed")
                 pass
 
         elif "mask" in os.environ:
@@ -4914,10 +4914,10 @@ if __name__ == "__main__":
 
                 fsc = np.random.rand(10,1)
                 save_reconstruction_to_website( name=Path(masked_map).stem, fsc=fsc, plots=output, metadata=metadata )
-                logger.info("PYP (mask) finished successfully")
+                logger.info("nextPYP (mask) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (mask generation) failed")
+                logger.error("nextPYP (mask generation) failed")
                 pass
 
         elif "postprocessing" in os.environ:
@@ -5161,11 +5161,11 @@ EOF
 
                 shutil.rmtree(working_path)
 
-                logger.info("PYP (postprocessing) finished successfully")
+                logger.info("nextPYP (postprocessing) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (postprocessing) failed")
+                logger.error("nextPYP (postprocessing) failed")
                 pass
 
         # class selection
@@ -5276,7 +5276,7 @@ EOF
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
                     shutil.rmtree(os.environ["PYP_SCRATCH"])
 
-                logger.info("PYP (launch) finished successfully")
+                logger.info("nextPYP (launch) finished successfully")
 
         if Path(current_directory).name == "swarm":
             folder = Path(current_directory).parents[0]

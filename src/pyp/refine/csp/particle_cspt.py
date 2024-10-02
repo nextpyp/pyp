@@ -721,7 +721,7 @@ def get_number_of_intermediate_reconstructions(mp):
 
 
 @timer.Timer(
-    "run_reconstruction", text="Running reconstruction took: {}", logger=logger.info
+    "run_reconstruction", text="Reconstruction took: {}", logger=logger.info
 )
 def run_reconstruction(
     name,
