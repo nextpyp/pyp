@@ -2094,8 +2094,8 @@ def detect_handedness_tilt_range(name: str, input_tilt_axis: float, tilt_angles:
 
         candidates.sort() # False is the first element after sorting
         median = candidates[math.floor(len(candidates)/2)]
-        handedness = "" if median is True else "NOT "
-        logger.warning(f"Invert CTF handedness option should {handedness}be selected during refinement")
+        handedness = "*" if median is True else " not*"
+        logger.warning(f"Invert CTF handedness option *should{handedness} be selected during refinement")
 
     else:
         logger.warning("Not enough tilts to detect CTF handedness")
