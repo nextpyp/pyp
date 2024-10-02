@@ -4175,7 +4175,6 @@ if __name__ == "__main__":
                         iteration = parameters["refine_iter"]
                         if iteration < 2:
                             iteration = parameters["refine_iter"] = 2
-                        project_params.save_parameters(parameters)
 
                         if parameters["data_mode"] == "spr":
                             set_up.prepare_spr_dir()
@@ -4193,26 +4192,27 @@ if __name__ == "__main__":
                         if parameters["refine_iter"] == 2:
 
                             # if using particles from manual picking, we need to populate the metadata manually
-                            parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
-                            if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking":
-                                update_metadata_coordinates_and_merge(project_path=os.getcwd(),working_path=os.environ["PYP_SCRATCH"],parameters=parameters)
-                                # set the volumes files we just calculated as reference
-                                parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
+                            if parameters.get("data_parent"):
+                                parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
+                                if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking":
+                                    update_metadata_coordinates_and_merge(project_path=os.getcwd(),working_path=os.environ["PYP_SCRATCH"],parameters=parameters)
+                                    # set the volumes files we just calculated as reference
+                                    parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
 
-                            latest_parfile, latest_reference = None, None
-                            # data_parent is None if running CLI
-                            if "data_parent" in parameters and parameters["data_parent"] is not None:
-                                latest_parfile, latest_reference = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+                                latest_parfile, latest_reference = None, None
+                                # data_parent is None if running CLI
+                                if "data_parent" in parameters and parameters["data_parent"] is not None:
+                                    latest_parfile, latest_reference = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
 
-                            parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
+                                parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
 
-                            # NOTE: spr does not really require a parfile first time we run csp
-                            if parameters["refine_parfile"] is not None:
-                                parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
-                            elif parameters["refine_parfile_tomo"] is not None:
-                                parameters["refine_parfile_tomo"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto" else parameters["refine_parfile_tomo"]
+                                # NOTE: spr does not really require a parfile first time we run csp
+                                if parameters["refine_parfile"] is not None:
+                                    parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
+                                elif parameters["refine_parfile_tomo"] is not None:
+                                    parameters["refine_parfile_tomo"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto" else parameters["refine_parfile_tomo"]
                             
-                            project_params.save_parameters(parameters)
+                        project_params.save_parameters(parameters)
 
                         if (
                             parameters["refine_model"] is None
