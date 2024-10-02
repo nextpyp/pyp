@@ -93,10 +93,8 @@ def submit_jobs_to_workers(commands, working_path=os.getcwd(), verbose=False, si
 
     if num_cpus > 1 and len(commands) > 1:
 
-        if not silent:
-            logger.info(f"Running {len(commands):,} command(s)")
-        if verbose:
-            logger.info(f"First command is: {commands[0]}")
+        first_command = commands[0].split('\n')[0].split("/opt/pyp/")[1]
+        logger.info(f"Running {len(commands):,} command(s) ({first_command})")
 
         # NOTE: be aware of the current working directory for all the workers, as they might be initiated in a different place
         current_directory = os.getcwd()
