@@ -1,12 +1,10 @@
-import math
 import os
 import shutil
 import sys
-from pathlib import Path
 from statistics import mean
-
+from tqdm import tqdm
 import numpy as np
-import pandas as pd
+
 from pyp.analysis import statistics
 from pyp.inout.metadata import frealign_parfile, cistem_star_file
 from pyp.system import local_run, project_params
@@ -15,6 +13,8 @@ from pyp.system.utils import get_frealign_paths
 from pyp.utils import get_relative_path, symlink_force
 from pyp.utils import timer
 from pyp.inout.metadata import get_particles_tilt_index
+from pyp.streampyp.logging import TQDMLogger
+
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
@@ -127,26 +127,28 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
         with open("project_dir.txt") as f:
             project_dir = f.readline().strip("\n")
 
-        for k in range(nclasses):
-            
-            global_dataset_name = parameters["data_set"]
-            decompressed_parameter_file_folder = os.path.join(project_dir, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (k + 1, iteration - 1)) 
-            remote_par_stat = os.path.join(decompressed_parameter_file_folder, global_dataset_name + "_r%02d_stat.cistem" % (k + 1))
-            stat = cistem_star_file.Parameters.from_file(remote_par_stat).get_data()
-            occmean = stat[0, occ_col]
-            class_average_occ.append(occmean)
-
-            # reload local par files
-            par_binary = os.path.join(parameter_file_folders, dataset + "_r%02d.cistem" % (k + 1) )
-            park_data = cistem_star_file.Parameters.from_file(par_binary)
-            select_data = park_data.get_data()[:, [film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, scanord_col]]
-            parx.append(select_data)
-            all_extended_list.append(park_data.get_extended_data().get_tilts())
-
-            if "tomo" in parameters["data_mode"] and k == 0:
+        with tqdm(desc="Progress", total=nclasses, file=TQDMLogger()) as pbar:
+            for k in range(nclasses):
                 
-                index = get_particles_tilt_index(select_data, ptl_col=newptlind_col)
-        
+                global_dataset_name = parameters["data_set"]
+                decompressed_parameter_file_folder = os.path.join(project_dir, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (k + 1, iteration - 1)) 
+                remote_par_stat = os.path.join(decompressed_parameter_file_folder, global_dataset_name + "_r%02d_stat.cistem" % (k + 1))
+                stat = cistem_star_file.Parameters.from_file(remote_par_stat).get_data()
+                occmean = stat[0, occ_col]
+                class_average_occ.append(occmean)
+
+                # reload local par files
+                par_binary = os.path.join(parameter_file_folders, dataset + "_r%02d.cistem" % (k + 1) )
+                park_data = cistem_star_file.Parameters.from_file(par_binary)
+                select_data = park_data.get_data()[:, [film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, scanord_col]]
+                parx.append(select_data)
+                all_extended_list.append(park_data.get_extended_data().get_tilts())
+
+                if "tomo" in parameters["data_mode"] and k == 0:
+                    
+                    index = get_particles_tilt_index(select_data, ptl_col=newptlind_col)
+                pbar.update(1)
+      
         parx_3d = np.array(parx)
     
     if "tomo" in parameters["data_mode"]:
@@ -161,9 +163,11 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
 
         else: # tilt gaussian weights
             logger.info("Weighting LogP with tilt distribution")
-            for k in range(0, nclasses):
-                for i in index:
-                    per_particle_tiltweight(parx_3d[k, :,:], all_extended_list[k], newlogp_col, i)
+            with tqdm(desc="Progress", total=nclasses, file=TQDMLogger()) as pbar:
+                for k in range(0, nclasses):
+                    for i in index:
+                        per_particle_tiltweight(parx_3d[k, :,:], all_extended_list[k], newlogp_col, i)
+                    pbar.update(1)
 
     else:
         logger.info("Not using tilt weighting to change OCC")
