@@ -1980,7 +1980,7 @@ EOF
 
     return
 
-def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, tilt_axis: float, angle_to_detect: float = 30.0, tilt_axis_error: float = 90.0, tilt_angle_error = 20.0):
+def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, tilt_axis: float, angle_to_detect: float = 30.0, tilt_axis_error: float = 90.0, tilt_angle_error = 20.0, ctffind4 = True):
     """detect_handedness Detect tilt handedness by checking the tilt geometry estimated by ctffind_tilt
 
     Parameters
@@ -2010,25 +2010,25 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, tilt_axis: f
     tilt_angles_modified = tilt_angles - angle_to_detect
     index = np.argmin(abs(tilt_angles_modified.ravel()))
 
-    """
-    tilt_axis = float(
-                    [
-                        line.split("\n")
-                        for line in subprocess.check_output(
-                            "%s/bin/xf2rotmagstr %s" % (get_imod_path(), name + ".xf"),
-                            stderr=subprocess.STDOUT,
-                            shell=True,
-                            text=True,
-                        ).split("\n")
-                        if "rot=" in line
-                    ][index][0].split()[2][:-1]
-                )
-    """
+    if ctffind4:
+        tilt_axis = float(
+                        [
+                            line.split("\n")
+                            for line in subprocess.check_output(
+                                "%s/bin/xf2rotmagstr %s" % (get_imod_path(), name + ".xf"),
+                                stderr=subprocess.STDOUT,
+                                shell=True,
+                                text=True,
+                            ).split("\n")
+                            if "rot=" in line
+                        ][index][0].split()[2][:-1]
+                    )
+        tilt_axis = -90 + tilt_axis
 
     # tilt_axis = -1 * (tilt_axis + 90) + 180 # to compare, ctffind5 clockwise from X axis while imod/aretomo counterclockwise from Y axis, and imod may flip 180
-    
-    if tilt_axis < 0:
-        tilt_axis += 360
+    else:
+        if tilt_axis < 0:
+            tilt_axis += 360
 
     tilt_angle = tilt_angles[index]
 
@@ -2054,7 +2054,7 @@ def detect_handedness(name: str, tiltang_file: Path, xf_file: Path, tilt_axis: f
     return None
 
 
-def detect_handedness_tilt_range(name: str, input_tilt_axis: float, tilt_angles: np.ndarray, lower_tilt: float = 10.0, upper_tilt: float = 50.0): 
+def detect_handedness_tilt_range(name: str, input_tilt_axis: float, tilt_angles: np.ndarray, lower_tilt: float = 10.0, upper_tilt: float = 50.0, ctffind4 = True): 
     """ Detect the tilt handedness using multiple tilts 
         Lower bound and upper bound should be all positive. 
         For example, using lower_tilt == 10 and upper_tilt == 50, images within +10 to +50 and -10 to -50 will be used.  
@@ -2082,6 +2082,7 @@ def detect_handedness_tilt_range(name: str, input_tilt_axis: float, tilt_angles:
                                                 xf_file=Path(f"{name}.xf"), 
                                                 tilt_axis=-input_tilt_axis,
                                                 angle_to_detect=angle,
+                                                ctffind4=ctffind4
                                                 ))
     # remove tilted images that can be used 
     candidates = [_ for _ in candidates if _ is not None]

@@ -23,6 +23,8 @@ Changelog
 
    :fa:`star,text-success` Add support for beam-tilt refinement and correction.
 
+   :fa:`star,text-success` Wrapper for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_.
+
 v0.7.0 (9/27/2024)
 ******************
 
@@ -31,8 +33,6 @@ v0.7.0 (9/27/2024)
    :fa:`star,text-success` New suite of blocks for particle picking to decouple particle detection from other pre-processing tasks.
 
    :fa:`star,text-success` Size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
-
-   :fa:`star,text-success` Wrapper for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_.
 
    :fa:`star,text-success` Allow selection of blocks using single click "Only" option in the Run jobs menu.
 

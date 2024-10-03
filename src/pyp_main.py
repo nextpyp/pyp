@@ -1787,7 +1787,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                                              input_tilt_axis=input_tilt_axis,
                                              tilt_angles=tilt_angles, 
                                              lower_tilt=parameters["ctf_handedness_mintilt"], 
-                                             upper_tilt=parameters["ctf_handedness_maxtilt"],)
+                                             upper_tilt=parameters["ctf_handedness_maxtilt"],
+                                             ctffind4=parameters.get("ctf_method") == "ctffind4")
 
 
     # package CTF metadata into dictionary

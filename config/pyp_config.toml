@@ -768,6 +768,7 @@ description = "Which CTF estimation method to use"
 type = "enum"
 enum = { ctffind4="ctffind4", ctffind5="ctffind5" }
 default = "ctffind4"
+hidden = true
 
 [tabs.ctf.min_res]
 name = "Min resolution (A)"
@@ -893,7 +894,7 @@ name = "Known tilt axis angle"
 description = "Tilt axis used for CTF estimation, angle from X-axis, counterclockwise as positive. (The angle that actually used for tomogram reconstruction)"
 type = "float"
 default = 0.0
-condition={ arg="method", value="ctffind5" }
+condition={ arg="tilt_axis_known", value="true" }
 
 [tabs.ctf.determine_thickness]
 name = "Detect sample thickness"
@@ -914,7 +915,7 @@ name = "Known astigmatism angle"
 description = "Astigmatism angle values (degree)"
 type = "float"
 default = 0.0
-condition={ arg="method", value="ctffind5" }
+condition={ arg="known_ast", value="true" }
 
 [tabs.denoise2d]
 _name = "Micrograph denoising"
