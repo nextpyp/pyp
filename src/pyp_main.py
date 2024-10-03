@@ -461,11 +461,8 @@ def parse_arguments(block):
             # remove gain reference from list
             [files.remove(file) for file in files if "Gain" in file]
 
-            logger.info(
-                "{0} found {1} file(s) to link into raw folder".format(
-                    project_params.resolve_path(parameters["data_path"]), len(files)
-                )
-            )
+            logger.info(f"{project_params.resolve_path(parameters['data_path'])} found {len(files):,} file(s) to link into raw folder")
+
             for file in files:
                 # check for duplicates
                 if os.path.exists("raw/" + os.path.basename(file)):
