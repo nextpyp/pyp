@@ -173,7 +173,7 @@ def get_missing_files(parameters, inputlist, verbose=True):
             logger.error("File swarm/pre_process.swarm not found")
             pass
 
-    logger.warning(f"{len(missing_files)} jobs produced no output or failed to run")
+    logger.warning(f"{len(missing_files)} job(s) produced no output or failed to run")
 
     return missing_files
 

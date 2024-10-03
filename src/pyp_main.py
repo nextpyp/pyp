@@ -615,7 +615,7 @@ def spr_merge(parameters, check_for_missing_files=True):
                 raise Exception("Reached maximum number of retries. Please check for errors in the logs")
             else:
                 logger.warning(
-                    "{0} jobs failed, attempt {1} of {2} to re-submit jobs".format(
+                    "{0} job(s) failed, attempt {1} of {2} to re-submit jobs".format(
                         len(missing_files), retries, parameters.get("slurm_merge_retries")
                     )
                 )
@@ -927,7 +927,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 raise Exception("Reached maximum number of retries. Please check for errors in the logs")
             else:
                 logger.warning(
-                    "{0} jobs failed, attempt {1} of {2} to re-submit jobs".format(
+                    "{0} job(s) failed, attempt {1} of {2} to re-submit jobs".format(
                         len(missing_files), retries, parameters.get("slurm_merge_retries")
                     )
                 )
