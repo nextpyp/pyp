@@ -15,7 +15,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_membrane_path():
-    command_base = '. activate membrain; export PYTHONPATH=/opt/conda/envs/membrain/lib/python3.9/site-packages:$PYTHONPATH; /opt/conda/envs/membrain/bin/'
+    command_base = 'export PYTHONPATH=/opt/conda/envs/membrain/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n membrain /opt/conda/envs/membrain/bin/'
     return command_base
 
 def membrain_preprocessing(parameters, input):

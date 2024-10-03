@@ -12,7 +12,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_cryodrgn_path():
-    command_base = f". activate cryodrgn; export PYTHONPATH=/opt/conda/envs/cryodrgn/lib/python3.9/site-packages:$PYTHONPATH; /opt/conda/envs/cryodrgn/bin/cryodrgn"
+    command_base = f"export PYTHONPATH=/opt/conda/envs/cryodrgn/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n cryodrgn /opt/conda/envs/cryodrgn/bin/cryodrgn"
     return command_base
 
 def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, downsample_size):

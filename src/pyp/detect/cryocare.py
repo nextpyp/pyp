@@ -25,7 +25,7 @@ def cryocare(working_path, project_path, name, parameters):
     Will take all the *half1.rec from mrc folder as list to train and run denoise
     """
     cryocare_path = '/opt/conda/envs/cryocare'
-    command_base = f". activate cryocare; export LD_LIBRARY_PATH={cryocare_path}/lib:$LD_LIBRARY_PATH; {cryocare_path}/bin/"
+    command_base = f"export LD_LIBRARY_PATH={cryocare_path}/lib:$LD_LIBRARY_PATH; micromamba run -n cryocare {cryocare_path}/bin/"
 
     # half1_list = glob.glob(os.path.join(project_path, "mrc", "*half1.rec"))
     # half2_list = [f.replace("half1", "half2") for f in half1_list]

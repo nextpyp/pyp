@@ -12,7 +12,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_tomodrgn_path():
-    command_base = f". activate tomodrgn; /opt/conda/envs/tomodrgn/bin/tomodrgn"
+    command_base = f"micromamba run -n tomodrgn /opt/conda/envs/tomodrgn/bin/tomodrgn"
     return command_base
 
 
@@ -271,7 +271,7 @@ def run_tomodrgn(project_dir, parameters):
         command = f"cp {stack} {os.getcwd()}/input_data/"
         tasks.append(command)
 
-    logger.info(f"Copying {len(particles_stacks):,} particle stacks to local scratch:")
+    logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
     mpi.submit_jobs_to_workers(tasks, os.getcwd(), verbose=False)
         
     # particle_stack_list = [os.path.basename(p) for p in particles_stacks]
