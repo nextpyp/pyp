@@ -1344,18 +1344,18 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         # read spike coordinates and convert to unbinned, if needed
         if (
-            os.path.exists(f"{name}.spk")
-            and (
-                parameters.get("tomo_srf_detect_method") != "none"
-                or parameters.get("tomo_vir_detect_method") != "none"
-            )
+            parameters.get("tomo_srf_detect_method") != "none"
+            or parameters.get("tomo_vir_detect_method") != "none"
         ):
-            coordinates = imod.coordinates_from_mod_file("%s.spk" % name)
-            if len(coordinates) > 0:
-                _, rec_z, _ = get_image_dimensions(f"{name}.rec")
-                coordinates[:,2] = rec_z - coordinates[:,2]
-                coordinates *= binning
-                coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+            if os.path.exists(f"{name}.spk"):
+                coordinates = imod.coordinates_from_mod_file("%s.spk" % name)
+                if len(coordinates) > 0:
+                    _, rec_z, _ = get_image_dimensions(f"{name}.rec")
+                    coordinates[:,2] = rec_z - coordinates[:,2]
+                    coordinates *= binning
+                    coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+            else:
+                coordinates = np.array([])
             
     if spike_mode and len(coordinates) > 0:
         if coordinates.shape[1] == 5:
