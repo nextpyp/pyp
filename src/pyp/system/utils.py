@@ -98,12 +98,12 @@ def needs_gpu(parameters):
 
     gpu_for_alignment = parameters.get("tomo_ali_force") and parameters.get("tomo_ali_method") == "aretomo"
     
-    gpu_for_reconstrucion = parameters.get("tomo_rec_force") and parameters.get("tomo_rec_method") == "aretomo"
+    gpu_for_reconstruction = parameters.get("tomo_rec_force") and parameters.get("tomo_rec_method") == "aretomo"
     
     gpu_for_denoising = "tomo-denoising" in parameters.get("micromon_block") and (
         ( parameters.get("tomo_denoise_method") == "topaz" and parameters.get("tomo_denoise_topaz_use_gpu") )
         or parameters.get("tomo_denoise_method") == "cryocare"
-        or parameters.get("tomo_denoise_method_train") == "isonet"
+        or ( parameters.get("micromon_block") == "tomo-denoising-train" and parameters.get("tomo_denoise_method_train") == "isonet" )
     )
 
     gpu_for_segmentation = parameters.get("micromon_block") == "tomo-segmentation-open" and parameters.get("tomo_mem_use_gpu")
@@ -120,7 +120,7 @@ def needs_gpu(parameters):
     return (
         gpu_for_movies
         or gpu_for_alignment
-        or gpu_for_reconstrucion
+        or gpu_for_reconstruction
         or gpu_for_denoising
         or gpu_for_segmentation
         or gpu_for_mining
