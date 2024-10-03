@@ -2476,11 +2476,11 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         with open(project_dir_file, "w") as f:
             f.write(str(current_path))
 
+    os.chdir(current_path)
+
     if len(allparxs) > 0:
 
         stackfile = os.path.join(working_path, "frealign", filename + "_stack.mrc")
-
-        os.chdir(current_path)
 
         # extract paticle frames and write parameter and stack files:
         # 1) parxfile's: working_path/frealign/maps/filename_r??_??.parx
@@ -2513,6 +2513,11 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
                 filename, parameters, current_path, verbose=parameters["slurm_verbose"]
             )
             save_refinement_to_website(filename, iteration, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
+        
+    else:
+        
+        # save configuration file neeed by csp_local_merge
+        project_params.save_pyp_parameters(parameters, "..")
         
     # clean-up unnecesary files
     try:
