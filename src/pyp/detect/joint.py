@@ -259,7 +259,7 @@ def tomotrain(args):
             else:
                 os.remove(train_coords)
         
-        if not os.path.exists(train_coords) or args.get("tomo_pick_method") != "manual":
+        else:
             micrographs = f"{args['data_set']}.micrographs"
             if not os.path.exists(micrographs):
                 raise Exception('No micrographs file in ' + os.getcwd())
