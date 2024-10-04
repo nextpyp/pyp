@@ -269,7 +269,7 @@ def parse_arguments(block):
         raise Exception("Must specify non-zero virion radius (-tomo_vir_rad)")
 
     # initialize if no images are present
-    if not len(glob.glob("raw/*")) and block != "export_session":
+    if len(glob.glob("raw/*")) == 0 and block != "export_session" and "pypgain" not in os.environ:
         if parameters["data_parent"] != None and not parameters["data_parent"] == ".":
 
             # link all necessary metadata directories
