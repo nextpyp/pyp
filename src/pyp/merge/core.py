@@ -246,7 +246,6 @@ def weight_average(input_stack, output_stack, weights):
             mrc.write(weighted_frame, output_stack)
 
 
-@Timer("merge", text="Merging took: {}", logger=logger.info)
 def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=False):
     """Perform 3D reconstruction for tomoswarm."""
 
