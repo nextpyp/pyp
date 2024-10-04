@@ -278,7 +278,7 @@ def create_micrographs_list(parameters):
                 logger.info("Create micrograph list using detected files (one file per tilt-series)")
 
         files = sorted(list(set(files)))
-        logger.info("Found {} unique file(s) for processing".format(len(files)))
+        logger.info(f"Found {len(files):,} unique file(s) for processing")
         f = open(micrographs, "w")
         f.write("\n".join([s for s in files if len(s) > 0]))
         f.close()
