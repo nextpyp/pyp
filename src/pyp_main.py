@@ -162,6 +162,69 @@ def spr_swarm_check_error(parameters, name):
     return False
 
 
+def create_links_to_files(files,parameters):
+
+    # check for duplicates
+    for file in files:
+        if os.path.exists("raw/" + os.path.basename(file)):
+            time_stamp = time.strftime(
+                "%Y%m%d_%H%M", time.gmtime(os.path.getmtime(file))
+            )
+            target = (
+                os.path.splitext(os.path.basename(file))[0]
+                + "_"
+                + time_stamp
+                + os.path.splitext(os.path.basename(file))[1]
+            )
+        else:
+            target = os.path.basename(file)
+        symlink_relative(file, os.path.join("raw", target))
+
+        # copy all necessary metadata as well
+        name = Path(target).stem
+        mfiles = dict()
+        mfiles["raw"] = ".xml .rawtlt .order"
+        if "data_retrieve" in parameters.keys() and parameters["data_retrieve"]:
+            if "movie_ali" in parameters and not parameters["movie_ali"]:
+                mfiles["ali"] = ".xf .tlt .fid.txt _tiltalignScript.txt"
+                mfiles["ctf"] = ".def .param .ctf _CTFprof.txt _avgrot.txt"
+            mfiles["box"] = ".box .boxx"
+            mfiles["log"] = "_RAPTOR.log"
+            mfiles["csp"] = "_boxes3d.txt"
+            mfiles["mod"] = ".spk _xray.mod _gold3d.mod _boxes.mod"
+        # mfiles["tomo"] = ".rec _bin.ali _bin.mrc"
+        for d in mfiles.keys():
+            if not os.path.exists(d):
+                os.mkdir(d)
+            for f in mfiles[d].split():
+                if d == "raw":
+                    source = os.path.join(
+                        Path(file).parents[0],
+                        name + f,
+                    )
+                else:
+                    source = os.path.join(
+                        Path(file).parents[0],
+                        d,
+                        name + f,
+                    )
+                destination = d + "/" + name + f
+                if os.path.isfile(source) and not os.path.exists(destination):
+                    if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
+                        logger.info("Retrieving " + source)
+                    shutil.copy2(source, destination)
+
+            # separately transfer .xml, .order and .rawtlt files when using movies
+            for ext in mfiles["raw"].split():
+                if len(glob.glob(f"raw/*{ext}")) == 0:
+                    sources = glob.glob(f"{os.path.join(Path(file).parents[0],'*'+ext)}")
+                    for source in sources:
+                        destination = "raw/" + Path(source).name
+                        if os.path.isfile(source) and not os.path.exists(destination):
+                            if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
+                                logger.info("Retrieving " + source)
+                            shutil.copy2(source, destination)
+
 def parse_arguments(block):
 
     # load existing parameters or from data_parent
@@ -461,68 +524,22 @@ def parse_arguments(block):
             # remove gain reference from list
             [files.remove(file) for file in files if "Gain" in file]
 
-            logger.info(f"{project_params.resolve_path(parameters['data_path'])} found {len(files):,} file(s) to link into raw folder")
+            logger.info(f"{project_params.resolve_path(parameters['data_path'])} found {len(files):,} file(s) to link into raw/ folder")
 
-            for file in files:
-                # check for duplicates
-                if os.path.exists("raw/" + os.path.basename(file)):
-                    time_stamp = time.strftime(
-                        "%Y%m%d_%H%M", time.gmtime(os.path.getmtime(file))
-                    )
-                    target = (
-                        os.path.splitext(os.path.basename(file))[0]
-                        + "_"
-                        + time_stamp
-                        + os.path.splitext(os.path.basename(file))[1]
-                    )
-                else:
-                    target = os.path.basename(file)
-                symlink_relative(file, os.path.join("raw", target))
-
-                # copy all necessary metadata as well
-                name = Path(target).stem
-                mfiles = dict()
-                mfiles["raw"] = ".xml .rawtlt .order"
-                if "data_retrieve" in parameters.keys() and parameters["data_retrieve"]:
-                    if "movie_ali" in parameters and not parameters["movie_ali"]:
-                        mfiles["ali"] = ".xf .tlt .fid.txt _tiltalignScript.txt"
-                        mfiles["ctf"] = ".def .param .ctf _CTFprof.txt _avgrot.txt"
-                    mfiles["box"] = ".box .boxx"
-                    mfiles["log"] = "_RAPTOR.log"
-                    mfiles["csp"] = "_boxes3d.txt"
-                    mfiles["mod"] = ".spk _xray.mod _gold3d.mod _boxes.mod"
-                # mfiles["tomo"] = ".rec _bin.ali _bin.mrc"
-                for d in mfiles.keys():
-                    if not os.path.exists(d):
-                        os.mkdir(d)
-                    for f in mfiles[d].split():
-                        if d == "raw":
-                            source = os.path.join(
-                                Path(file).parents[0],
-                                name + f,
-                            )
-                        else:
-                            source = os.path.join(
-                                Path(file).parents[0],
-                                d,
-                                name + f,
-                            )
-                        destination = d + "/" + name + f
-                        if os.path.isfile(source) and not os.path.exists(destination):
-                            if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
-                                logger.info("Retrieving " + source)
-                            shutil.copy2(source, destination)
-
-                    # separately transfer .xml, .order and .rawtlt files when using movies
-                    for ext in mfiles["raw"].split():
-                        if len(glob.glob(f"raw/*{ext}")) == 0:
-                            sources = glob.glob(f"{os.path.join(Path(file).parents[0],'*'+ext)}")
-                            for source in sources:
-                                destination = "raw/" + Path(source).name
-                                if os.path.isfile(source) and not os.path.exists(destination):
-                                    if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
-                                        logger.info("Retrieving " + source)
-                                    shutil.copy2(source, destination)
+            # run in parallel since this can take a while for projects with many files
+            if 'SLURM_CPUS_PER_TASK' in os.environ:
+                threads = int(os.environ['SLURM_CPUS_PER_TASK'])
+            else:
+                threads = 1
+            chunk_size = min(int(math.ceil(len(files)/threads)),25)
+            chunks = []
+            for i in range(0, len(files), chunk_size):
+                chunks.append( files[i:i+chunk_size] )
+            arguments = []
+            for chunk in chunks:
+                arguments.append(((chunk,parameters)))
+            if len(arguments) > 0:
+                mpi.submit_function_to_workers(create_links_to_files,arguments=arguments,verbose=parameters["slurm_verbose"])
 
             ctffile = "ctf/" + os.path.splitext(os.path.basename(files[0]))[0] + ".ctf"
             if os.path.isfile(ctffile):
