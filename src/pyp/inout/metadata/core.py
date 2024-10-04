@@ -670,12 +670,13 @@ def get_new_input_list(parameters, inputlist):
                 else:
                     box_size = boxx.shape[0]
 
-            if not boxx_exists:
-                logger.warning(f"{sname} has no particles, removing from list")
-            else:
+            if boxx_exists:
                 newinput_dict.update({sname:box_size})
         newinputlist = sorted(newinput_dict, key=newinput_dict.get, reverse=True)
-        logger.warning("Update micrograph/tilt-series order according to number of particles")
+        difference = len(inputlist) - len(newinputlist)
+        if difference > 0:
+            logger.warning(f"Removing {difference} micrographs/tilt-series that have no particles")
+        logger.warning("Updating micrograph/tilt-series order according to number of particles")
     else:
         newinputlist = inputlist
 
