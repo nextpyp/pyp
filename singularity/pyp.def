@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: continuumio/miniconda3
+From: mambaorg/micromamba
 IncludeCmd: no
 
 %help
@@ -40,7 +40,7 @@ IncludeCmd: no
 	rm -rf /opt/pyp/.git
 	# install packages required by ETTK
 	apt-get -y update
-	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file
+	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file wget git
 
 	# increase ImageMagick resource limits
 	sed -i -E 's/name="disk" value=".+"/name="disk" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
@@ -123,43 +123,44 @@ IncludeCmd: no
 	# https://pythonspeed.com/articles/activate-conda-dockerfile/
 
 	# write the conda script
-cat << EOF > /root/conda_pyp.sh
+cat << EOF > /root/pyp.sh
 
 	# just for posterity ...
-	conda --version
+	mamba --version
 
 	# install the python packages we need
 
-	conda install pymongo pillow toml seaborn requests pytest scikit-learn scikit-image 
-	conda install matplotlib 
-	conda install pandas
-	conda install -c conda-forge conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses
-	conda install -c conda-forge colored-traceback
-	conda update numpy
-	conda install topaz -c tbepler
+	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image 
+	micromamba install -c conda-forge matplotlib 
+	micromamba install -c conda-forge pandas
+	micromamba install -c conda-forge conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses
+	micromamba install -c conda-forge colored-traceback
+	micromamba update numpy
+	micromamba install -c conda-forge -c tbepler topaz
 	
-	conda install faiss-gpu
-	conda update libstdcxx-ng
-	conda clean --all
+	micromamba install -c conda-forge faiss-gpu
+	micromamba update libstdcxx-ng
+	micromamba clean --all -y
 
 	rm -rf /tmp/env.tar
-	conda-pack -n pyp -o /tmp/env.tar && \
+	conda-pack -p /opt/conda/envs/pyp -o /tmp/env.tar && \
 		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack	
 EOF
+
 	# need to create a new environment for conda to actually install anything without failing, see:
 	# https://github.com/conda/conda/issues/9367#issuecomment-558863143
 	# alas, we can't actually "activate" this environment, because conda fails saying the envrionment is unsupported
-	conda update conda
-	conda create --name pyp python=3.8
+	#micromamba update mamba
+	micromamba create --name pyp python=3.8 -c conda-forge
 
 	# run the conda script in the pyp environment
 	# tragically conda buffers stdout and stderr, which is basically terrible
 	# so try to redirect them somewhere we'll see them sooner
 	# like the stdout of *this* script: /proc/$$/fd/1
-	chmod +x /root/conda_pyp.sh
-	conda run -n pyp /bin/bash -c "/root/conda_pyp.sh > /proc/$$/fd/1 2>&1"
+	chmod +x /root/pyp.sh
+	micromamba run -n pyp /bin/bash -c "/root/pyp.sh > /proc/$$/fd/1 2>&1"
 	export PATH=/opt/conda/envs/pyp/bin:$PATH
 	
 	# do all the pip installs (on the base environment?)
@@ -180,13 +181,13 @@ EOF
 	pip install filelock
 
 	# Install tomoDRGN
-cat << EOF > /root/conda_tomodrgn.sh
+cat << EOF > /root/tomodrgn.sh
 
 	# install the python packages we need
 
-	conda install "pytorch-gpu>=1.11.0" "cudatoolkit>=11.0" -c pytorch
-	conda install pandas seaborn scikit-learn encodings
-	conda install umap-learn notebook -c conda-forge
+	micromamba install "pytorch-gpu>=1.11.0" "cudatoolkit>=11.0" -c pytorch
+	micromamba install -c conda-forge pandas seaborn scikit-learn encodings
+	micromamba install umap-learn notebook -c conda-forge
 	pip install "ipyvolume>=0.6.0" "pythreejs>=2.4.2" ipython_genutils
 
 	# Clone source code and install
@@ -195,109 +196,117 @@ cat << EOF > /root/conda_tomodrgn.sh
 	cd /opt/pyp/external/tomoDRGN
 	pip install .	
 
-	conda clean --all
+	micromamba clean --all -y
 	
 	rm -rf /tmp/env.tar
-	conda-pack -n tomodrgn -o /tmp/env.tar && \
+	conda-pack -p /opt/conda/envs/tomodrgn -o /tmp/env.tar && \
 		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	conda create --name tomodrgn "python>=3.7"
+	micromamba create --name tomodrgn "python>=3.7" -c conda-forge
 
 	# run the conda script in the new environment
-	chmod +x /root/conda_tomodrgn.sh
-	conda run -n tomodrgn /bin/bash -c "/root/conda_tomodrgn.sh > /proc/$$/fd/1 2>&1"
+	chmod +x /root/tomodrgn.sh
+	micromamba run -n tomodrgn /bin/bash -c "/root/tomodrgn.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/tomodrgn.sh
+
+	rm -rf /opt/pyp/external/tomoDRGN/.git
 
 	# Install cryoCARE
-cat << EOF > /root/conda_cryocare.sh
+cat << EOF > /root/cryocare.sh
 
 	# install the python packages we need
-	conda install cuda-toolkit
+	micromamba install -c conda-forge cuda-toolkit
 	
 	pip install tensorflow-gpu==2.4.0
 	pip install tifffile==2019.7.26
 	pip install cryoCARE
 
-	conda clean --all
+	micromamba clean --all -y
 	
 	rm -rf /tmp/env.tar
-	conda-pack -n cryocare -o /tmp/env.tar && \
+	conda-pack -p /opt/conda/envs/cryocare -o /tmp/env.tar && \
 		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	conda create --name cryocare python=3.8 cudatoolkit=11.0 cudnn=8.0 -c conda-forge
+	micromamba create --name cryocare python=3.8 cudatoolkit=11.0 cudnn=8.0 -c conda-forge
 
 	# run the conda script in the new environment
-	chmod +x /root/conda_cryocare.sh
-	conda run -n cryocare /bin/bash -c "/root/conda_cryocare.sh > /proc/$$/fd/1 2>&1"
-	
+	chmod +x /root/cryocare.sh
+	micromamba run -n cryocare /bin/bash -c "/root/cryocare.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/cryocare.sh
+
 	# Install cryoDRGN
-cat << EOF > /root/conda_cryodrgn.sh
+cat << EOF > /root/cryodrgn.sh
 
 	# install the python packages we need
 
 	pip install cryodrgn
 
-	conda clean --all
+	micromamba clean --all -y
 	
 	rm -rf /tmp/env.tar
-	conda-pack -n cryodrgn -o /tmp/env.tar && \
+	conda-pack -p /opt/conda/envs/cryodrgn -o /tmp/env.tar && \
 		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	conda create --name cryodrgn python=3.9
+	micromamba create --name cryodrgn python=3.9 -c conda-forge
 
 	# run the conda script in the new environment
-	chmod +x /root/conda_cryodrgn.sh
-	conda run -n cryodrgn /bin/bash -c "/root/conda_cryodrgn.sh > /proc/$$/fd/1 2>&1"
+	chmod +x /root/cryodrgn.sh
+	micromamba run -n cryodrgn /bin/bash -c "/root/cryodrgn.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/cryodrgn.sh
 
 	# Install membrain
-cat << EOF > /root/conda_membrain.sh
+cat << EOF > /root/membrain.sh
 
 	# install the python packages we need
 
 	pip install membrain-seg
 
-	conda clean --all
+	micromamba clean --all -y
 	
 	rm -rf /tmp/env.tar
-	conda-pack -n membrain -o /tmp/env.tar && \
+	conda-pack -p /opt/conda/envs/membrain -o /tmp/env.tar && \
 		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	conda create --name membrain python=3.9
+	micromamba create --name membrain python=3.9 -c conda-forge
 
 	# run the conda script in the new environment
-	chmod +x /root/conda_membrain.sh
-	conda run -n membrain /bin/bash -c "/root/conda_membrain.sh > /proc/$$/fd/1 2>&1"
+	chmod +x /root/membrain.sh
+	micromamba run -n membrain /bin/bash -c "/root/membrain.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/membrain.sh
 
 	# Install IsoNet
-cat << EOF > /root/conda_isonet.sh
+cat << EOF > /root/isonet.sh
 
 	# install the python packages we need
 
 	git clone https://github.com/IsoNet-cryoET/IsoNet.git
 	cd IsoNet
 	pip install -r requirements.txt
+	pip install --upgrade numpy==1.23.4
 
-	conda clean --all
+	micromamba clean --all -y
 	
 	rm -rf /tmp/env.tar
-	conda-pack -n isonet -o /tmp/env.tar && \
+	conda-pack -p /opt/conda/envs/isonet -o /tmp/env.tar && \
 		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	conda create --name isonet "python>=3.7" tensorflow-gpu
+	micromamba create --name isonet "python>=3.7" tensorflow-gpu -c conda-forge
 
 	# run the conda script in the new environment
-	chmod +x /root/conda_isonet.sh
-	conda run -n isonet /bin/bash -c "/root/conda_isonet.sh > /proc/$$/fd/1 2>&1"
-	
+	chmod +x /root/isonet.sh
+	micromamba run -n isonet /bin/bash -c "/root/isonet.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/isonet.sh
+
 %startscript
 
 %apprun binds
