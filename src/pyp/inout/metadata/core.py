@@ -676,7 +676,8 @@ def get_new_input_list(parameters, inputlist):
         difference = len(inputlist) - len(newinputlist)
         if difference > 0:
             logger.warning(f"Removing {difference} micrographs/tilt-series that have no particles")
-        logger.warning("Updating micrograph/tilt-series order according to number of particles")
+        if len(newinputlist) > 0:
+            logger.warning("Updating micrograph/tilt-series order according to number of particles")
     else:
         newinputlist = inputlist
 
