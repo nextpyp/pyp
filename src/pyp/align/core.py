@@ -5126,7 +5126,7 @@ def align_tilt_series(name, parameters, rotation=0):
             [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
             if "Tilt offset" in output:
-                tilt_offset = float([s.split()[1] for s in output.split("\n") if "Tilt offset" in s ][0])
+                tilt_offset = float([s.split(",")[0].split("Tilt offset:")[1] for s in output.split("\n") if "Tilt offset" in s ][0])
                 if tilt_offset > 0:
                     # overwrite rawtlt files to reflect the angles offset changes
                     rawtlt_file = f"{name}.rawtlt"
