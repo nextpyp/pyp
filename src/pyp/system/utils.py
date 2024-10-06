@@ -51,6 +51,8 @@ def cuda_path_prefix(command):
     config = get_pyp_configuration()
     if 'cudaLibs' in config["pyp"]:
         command = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{':'.join(path for path in config['pyp']['cudaLibs'])}; " + command
+    else:
+        command = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/pkgs/cudatoolkit-11.0.3-h7761cd4_13/lib/:/opt/imod_4.11.24/qtlib; " + command
     return command
 
 def get_aretomo_path():
