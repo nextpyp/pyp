@@ -1295,6 +1295,31 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         coordinates *= binning
         coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
 
+    # 4. import
+    elif ( parameters.get("tomo_spk_method") == "import" or parameters.get("tomo_pick_method") == "import" ) and os.path.exists(f"{name}.spk"):
+
+        logger.info("Importing particle coordinates from .spk file")
+
+        # read and convert output to unbinned coordinates
+        coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
+        coordinates *= binning
+        if coordinates.shape[1] == 5:
+            if parameters["tomo_spk_files_flip"]:
+                coordinates = coordinates.copy()[:,[0,2,1,4]]
+            else:
+                coordinates = coordinates.copy()[:,[0,1,2,4]]    
+            coordinates[:,-1] /= parameters["tomo_vir_binn"]
+        else:
+            if parameters["tomo_spk_files_flip"]:
+                coordinates = np.hstack( ( coordinates.copy()[:,[0,2,1]], unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+            else:
+                coordinates = np.hstack( ( coordinates.copy()[:,[0,1,2]], unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+
+        try:
+            os.remove(f"{name}.spk")
+        except:
+            pass
+
     # 4. manual
     elif ( 
           ( parameters.get("tomo_spk_method") == "manual" and not virion_mode ) 

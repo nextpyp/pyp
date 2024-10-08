@@ -2755,6 +2755,13 @@ type = "path"
 condition = { arg="method", value="import" }
 path = { type="folders" }
 
+[tabs.tomo_spk.files_flip]
+name = "Flip Y-Z coordinates"
+description = "Flip IMOD model's Y-Z coordinates"
+type = "bool"
+condition = { arg="method", value="import" }
+default = false
+
 [tabs.tomo_spk.contract_times_3d]
 name = "Binning factor"
 description = "Reduce size of tomograms before contamination detection to speed up processing"
@@ -2863,6 +2870,13 @@ description = "Folder containing files with particle coordinates"
 type = "path"
 condition = { arg="method", value="import" }
 path = { type="folders" }
+
+[tabs.tomo_pick.files_flip]
+name = "Flip Y-Z coordinates"
+description = "Flip IMOD model's Y-Z coordinates"
+type = "bool"
+condition = { arg="method", value="import" }
+default = false
 
 [tabs.tomo_pick.contract_times_3d]
 name = "Binning factor"
