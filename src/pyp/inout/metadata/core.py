@@ -2317,7 +2317,7 @@ EOF
     )
     [output, error] = local_run.run_shell_command(command, verbose=False)
 
-    os.remove(f"{name}.xf")
+    os.remove(os.path.join(os.environ["PYP_SCRATCH"], f"{name}.xf"))
     inverse_xf_file = np.loadtxt(inversexf, ndmin=2)
 
     # preload frame motion correction files
@@ -2881,43 +2881,6 @@ EOF
                                  tilts=tilt_parameters)
     parameters_obj.set_data(data=cistem_parameters, extended_parameters=extended_parameters)
     parameters_obj.update_particle_score()
-
-    # parameters.to_binary(output=f"{name}_r01_02.cistem")
-
-    if len(allimodboxes) > 0:
-        with open("%s_boxes.txt" % (name), "w") as f:
-            f.writelines("%s\n" % item for item in allimodboxes)
-    else:
-        for f in glob.glob("%s_boxes.txt" % name):
-            os.remove(f)
-
-    # if len(allboxes_3d) > 0:
-    #     with open("csp/%s_boxes3d.txt" % (name), "w") as f:
-    #         f.write(
-    #             "%8s\t%8s\t%8s\t%8s\t%8s\t%8s\n"
-    #             % ("PTLIDX", "X", "Y", "Z", "Score", "Keep_CSP")
-    #         )
-    #         f.writelines(
-    #             "%8d\t%8.1f\t%8.1f\t%8.1f\t%8.2f\t%8s\n"
-    #             % (idx, item[0], item[1], item[2], 0.0, "Yes")
-    #             for idx, item in enumerate(allboxes_3d)
-    #         )
-
-    # convert coordinates to IMOD models
-    if os.path.exists(name + "_boxes.txt"):
-        com = "{0}/bin/point2model -input {1}_boxes.txt -output mod/{1}_boxes.mod -scat -circle 25".format(
-            get_imod_path(), name
-        )
-        local_run.run_shell_command(com)
-        os.remove(name + "_boxes.txt")
-
-    if os.path.exists(name + "_ali_boxes.txt"):
-        com = "{0}/bin/point2model -input {1}_ali_boxes.txt -output mod/{1}_ali_boxes.mod -scat -circle 25".format(
-            get_imod_path(), name
-        )
-        local_run.run_shell_command(com)
-        os.remove(name + "_ali_boxes.txt")
-
 
     allparxs = [parameters_obj]
 
