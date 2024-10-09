@@ -3797,13 +3797,6 @@ if __name__ == "__main__":
                 parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = False
                 project_params.save_pyp_parameters(parameters)
 
-                if parameters.get("slurm_verbose"):
-                    spa_Tlog.update(timer.Timer.timers)
-                    spa_Tlog = {k:v for k, v in spa_Tlog.items() if v}
-                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_sprmerge.json"
-                    with open(json_file, 'w') as fp:
-                        json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
-
                 logger.info("nextPYP (sprmerge) finished successfully")
             except:
                 trackback()
@@ -3832,12 +3825,6 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 spr_swarm(args.path, args.file, args.debug, args.keep, args.skip)
-
-                # spa_Tlog.update(timer.Timer.timers)
-                # spa_Tlog = {k:v for k, v in spa_Tlog.items() if v}
-                # json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_sprswarm.json"
-                # with open(json_file, 'w') as fp:
-                #    json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
 
                 logger.info("nextPYP (sprswarm) finished successfully")
             except:
@@ -4309,13 +4296,6 @@ if __name__ == "__main__":
 
                 csp_swarm(args.file, parameters, int(args.iter), args.skip, args.debug)
 
-                if parameters.get("slurm_verbose"):
-                    csp_Tlog.update(timer.Timer.timers)
-                    csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
-                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspswarm.json"
-                    with open(json_file, 'w') as fp:
-                        json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
-
                 # disable_profiler(pr)
                 logger.info("nextPYP (cspswarm) finished successfully")
 
@@ -4350,13 +4330,6 @@ if __name__ == "__main__":
                 csp_Tlog = {}
 
                 csp_merge(parameters)
-
-                if parameters.get("slurm_verbose"):
-                    csp_Tlog.update(timer.Timer.timers)
-                    csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
-                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspmerge.json"
-                    with open(json_file, 'w') as fp:
-                        json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
 
                 # clean up local scratch
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
@@ -4395,14 +4368,6 @@ if __name__ == "__main__":
                     args.output_basename,
                     args.save_stacks,
                 )
-
-                # for time
-                if parameters.get("slurm_verbose"):
-                    cspm_Tlog.update(timer.Timer.timers)
-                    cspm_Tlog = {k:v for k, v in cspm_Tlog.items() if v}
-                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_csp_local_merge.json"
-                    with open(json_file, 'w') as fp:
-                        json.dump(cspm_Tlog, fp, indent=4,separators=(',', ': '))
 
                 logger.info("nextPYP (csp_local_merge) finished successfully")
 
