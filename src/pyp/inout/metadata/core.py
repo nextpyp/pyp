@@ -2301,7 +2301,7 @@ def tomo_extract_coordinates(
         virion_coordinates = np.empty( shape=(0, 0) )
 
     # create xf from metadata
-    metadata_object.writeTextFile(metadata["ali"].to_numpy(), "%s.xf")
+    metadata_object.writeTextFile(metadata["ali"].to_numpy(), os.path.join(os.environ["PYP_SCRATCH"], "%s.xf"))
     inversexf = Path(os.environ["PYP_SCRATCH"]) / f"{name}_inverse.xf"
 
     command = """
@@ -2312,7 +2312,7 @@ def tomo_extract_coordinates(
 EOF
 """ % (
         get_imod_path(),
-        name,
+        os.path.join(os.environ["PYP_SCRATCH"], name),
         inversexf,
     )
     [output, error] = local_run.run_shell_command(command, verbose=False)

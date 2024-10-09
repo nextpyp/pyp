@@ -133,6 +133,27 @@ def preprocess_and_alignment_of_frames(
             frame_name, parameters, current_path, working_path, parameters["movie_ali"],
         )
 
+def frames_from_pattern(filename,name,pattern):
+    """Generate list of frames from movie pattern
+
+    Args:
+        filename (str): absolute path to data
+        name (str): tilt-series name
+        pattern (str): movie-pattern
+
+    Returns:
+        _type_: _description_
+    """
+    _, file_format = os.path.splitext(pattern)
+    regex = movie2regex(pattern,name)
+    r = re.compile(regex)
+
+    labels = ["TILTSERIES", "SCANORD", "ANGLE"]
+    labels = [l for l in labels if pattern.find(l) >= 0]
+    labels.sort(key=lambda x: int(pattern.find(x)))
+    detected_movies = [f for f in sorted(os.listdir(Path(filename).parents[0])) if r.match(f)]
+
+    return detected_movies
 
 def read_tilt_series(
     filename, parameters, metadata, current_path=Path.cwd(), working_path=Path.cwd(), project_path=""
@@ -183,19 +204,13 @@ def read_tilt_series(
                 shutil.copy2(project_raw_path / tilt_image_filename, ".")
             else:
                 raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
-    elif len( glob.glob(filename + "*.mrc") ) > 0:
-        for i in glob.glob(filename + "*.mrc"):
-            try:
-                shutil.copy2(i, ".")
-            except:
-                # ignore if file already exists
-                pass
-    elif len(glob.glob(filename + "*.tif")) > 0 or len(glob.glob(filename + "*.tiff")) > 0:
-        for i in glob.glob(filename + "*.tif") + glob.glob(filename + "*.tif.mdoc") + glob.glob(filename + "*.tiff") + glob.glob(filename + "*.tiff.mdoc"):
-            shutil.copy2(i, ".")
-    elif len(glob.glob(filename + "*.eer")) > 0:
-        for i in glob.glob(filename + "*.eer"):
-            shutil.copy2(i, ".")
+    else:
+        detected_movies = frames_from_pattern(filename=filename,name=name,pattern=parameters["movie_pattern"])
+        arguments = []
+        for i in detected_movies:
+            arguments.append((os.path.join(Path(filename).parents[0], i),"."))
+        if len(arguments) > 0:
+            mpi.submit_function_to_workers(shutil.copy2,arguments,verbose=True)
 
     source = os.path.split(os.path.realpath(filename))[0]
     gain_pattern_fc3 = "{0}/*CountRef*".format("/".join(source.split("/")))
