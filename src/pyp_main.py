@@ -985,7 +985,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
             f.close()
     else:
         inputlist = input_all_list
-        if parameters["tomo_vir_method"] != "manual" and parameters["tomo_pick_method"] != "manual":
+        if parameters["tomo_vir_method"] != "manual" and parameters["tomo_pick_method"] != "manual" and parameters["micromon_block"] != "tomo-segmentation-closed":
             raise Exception("Either all tilt-series failed or no particles were found, stopping")
 
     generate_list_of_all_subvolumes(parameters)
