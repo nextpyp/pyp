@@ -1214,7 +1214,7 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
 
     # discard_mask = np.logical_or(pardata[:, field] < thresh, pardata[:, 11] < occ_thresh)
     discard_mask = np.ravel(np.logical_or(pardata[:, field] < thresh, pardata[:, 11] < occ_thresh))
-    logger.info(f"Score range [{min(pardata[:, field])},{max(pardata[:, field])}], threshold = {thresh:.2f}")
+    logger.info(f"Score range [{min(pardata[:, field]):.2f},{max(pardata[:, field]):.2f}], threshold = {thresh:.2f}")
     logger.info(f"Occupancy range [{min(pardata[:, 11])},{max(pardata[:, 11])}], threshold {occ_thresh}")
     discard = pardata[discard_mask]
     newinput_keep = pardata[np.logical_not(discard_mask)]
