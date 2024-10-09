@@ -4826,7 +4826,7 @@ if __name__ == "__main__":
                             line.strip() for line in f
                         ]
                         for filename in files:
-                            save_refinement_to_website(filename, parameters["refine_iter"], 'slurm_verbose' in parameters and parameters['slurm_verbose'])
+                            save_refinement_to_website(filename, parameters["refine_iter"], verbose=False)
 
                 logger.info("nextPYP (particle filtering) finished successfully")
             except:
