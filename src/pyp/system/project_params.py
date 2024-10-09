@@ -249,8 +249,8 @@ def create_micrographs_list(parameters):
         mdocs = list()
         mdoc_pattern = "*.mdoc"
         if "data_path_mdoc" in parameters and parameters["data_path_mdoc"] != None:
-            mdoc_folder = parameters["data_path_mdoc"].parent
-            mdoc_pattern = parameters["data_path_mdoc"].name
+            mdoc_folder = Path(project_params.resolve_path(parameters["data_path_mdoc"])).parent
+            mdoc_pattern = Path(project_params.resolve_path(parameters["data_path_mdoc"])).name
             mdocs = list(mdoc_folder.glob(str(mdoc_pattern)))
         # if none found, look in raw data folder
         if len(mdocs) == 0:
