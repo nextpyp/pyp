@@ -1707,19 +1707,13 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     else:
         zfact = ""
 
-    mpi_funcs, mpi_args = [ ], [ ]
-
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
         logger.info("Using existing tilt-series alignments")
     else:
-        mpi_funcs.append(align.align_tilt_series)
-        mpi_args.append( [(name, parameters, tilt_axis)] )
-
-        t = timer.Timer(text="Tilt-series alignment + convert to tif took: {}", logger=logger.info)
+        t = timer.Timer(text="Tilt-series alignment took: {}", logger=logger.info)
         t.start()
-        if len(mpi_funcs) > 0:
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
+        align.align_tilt_series(name,parameters,tilt_axis)
         t.stop()
 
     # generate full-size aligned tiltseries only if we do not yet have binned tomogram OR 
