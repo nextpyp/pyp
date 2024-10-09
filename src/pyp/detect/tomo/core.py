@@ -1308,7 +1308,6 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 coordinates = coordinates.copy()[:,[0,2,1,4]]
             else:
                 coordinates = coordinates.copy()[:,[0,1,2,4]]    
-            coordinates[:,-1] /= parameters["tomo_vir_binn"]
         else:
             if parameters["tomo_spk_files_flip"]:
                 coordinates = np.hstack( ( coordinates.copy()[:,[0,2,1]], unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
@@ -1334,9 +1333,6 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             # read unbinned coordinates from website
             coordinates = np.loadtxt(f"{name}.next",ndmin=2)
             
-            if virion_mode and len(coordinates) > 0:
-                coordinates[:,-1] /= parameters["tomo_vir_binn"]
-
             # clean up
             remote_next_file = os.path.join( current_path, 'next', name + '.next' )
             if os.path.exists(remote_next_file):
@@ -1349,6 +1345,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         # convert virion (unbinned) coordinates to pyp's .vir format, if needed
         if len(coordinates) > 0 and not os.path.exists(f"{name}.vir"):
             pyp_coordinates = coordinates[:,[0,2,1,3]] / binning
+            pyp_coordinates[:,-1] /= parameters["tomo_vir_binn"]
             imod.coordinates_to_model_file( pyp_coordinates, f"{name}.vir", radius=binned_virion_radius )
         # Performs virion detection and/or spike detection
         process_virions(
@@ -1359,9 +1356,9 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         if len(coordinates) == 0 and os.path.exists(f"{name}.vir"):
             coordinates = imod.coordinates_from_mod_file(f"{name}.vir")
             coordinates *= binning
+            coordinates[:,-1] *= parameters["tomo_vir_binn"]
 
         if len(coordinates) > 0:
-            coordinates[:,-1] *= parameters["tomo_vir_binn"]
             if coordinates.shape[1] == 5:
                 virion_coordinates = coordinates[:,[0,1,2,4]]
             else:
@@ -1388,7 +1385,6 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         else:
             spike_coordinates = coordinates
         pyp_coordinates = spike_coordinates[:,[0,2,1,3]] / binning
-        pyp_coordinates[:,-1] *= parameters.get("tomo_vir_binn")
         imod.coordinates_to_model_file( pyp_coordinates, f"{name}.spk", radius=binned_spike_radius)
 
     # generate *_volumes.txt file and extract particles, if needed
