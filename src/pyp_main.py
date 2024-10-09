@@ -5040,7 +5040,7 @@ if __name__ == "__main__":
                 comm = comm_exe + basic + bfac + filter + fsc + automask + randomize_phase
                 local_run.run_shell_command(comm, verbose=parameters["slurm_verbose"])
                 if not os.path.exists(output_map):
-                    raise Exception("Does the postprocessing block have enough RAM assigned (launch task)?")
+                    raise Exception("Post-processing failed to run")
 
                 # produce map slices
                 radius = (

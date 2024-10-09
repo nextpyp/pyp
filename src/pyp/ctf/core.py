@@ -1619,7 +1619,7 @@ EOF
             logfile = logfile_notilt
             avrot = avrot_notilt
         else:
-            raise Exception("Do not recognize the ctffind command")
+            raise Exception(f"Unrecognized ctffind command: {estimation}")
 
         # suppress long log
         [output, error] = local_run.run_shell_command(command, verbose=False)
