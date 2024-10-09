@@ -357,7 +357,10 @@ def shape_phase_residuals(
         for f in films:
             # contruct a tilt angle dictionary
             # tind_angle_dict = {i: tilts_dict[f][i][0].angle for i in tilts_dict[f].keys()}
-            tind_angle_dict = tilts_dict[str(int(f))]
+            if str(int(f)) not in tilts_dict.keys():
+                tind_angle_dict = {}
+            else:
+                tind_angle_dict = tilts_dict[str(int(f))]
 
             tind_angle_dict_int = {int(k): v for k, v in tind_angle_dict.items()} # json way saving dict as str but we need int
             tind_in_film = input[input[:, filmid]==f][:, tind]
