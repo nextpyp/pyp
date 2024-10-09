@@ -196,21 +196,35 @@ def read_tilt_series(
     elif os.path.isfile(filename + ".tgz"):
         command = "tar xvfz " + filename + ".tgz".format(name)
         local_run.run_shell_command(command)
-    elif parameters["movie_mdoc"] and not parameters["movie_no_frames"]:
-        tilts = frames_from_mdoc(mdocs, parameters)
-        for tilt_image in tilts:
-            tilt_image_filename = tilt_image[0]
-            if (project_raw_path / tilt_image_filename).exists():
-                shutil.copy2(project_raw_path / tilt_image_filename, ".")
-            else:
-                raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
-    else:
-        detected_movies = frames_from_pattern(filename=filename,name=name,pattern=parameters["movie_pattern"])
+    elif not parameters["movie_no_frames"]:
         arguments = []
-        for i in detected_movies:
-            arguments.append((os.path.join(Path(filename).parents[0], i),"."))
+        if parameters["movie_mdoc"]:
+            tilts = frames_from_mdoc(mdocs, parameters)
+            for tilt_image in tilts:
+                tilt_image_filename = tilt_image[0]
+                if (project_raw_path / tilt_image_filename).exists():
+                    arguments.append((os.path.join(project_raw_path, tilt_image_filename), "."))
+                else:
+                    raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
+        else:
+            detected_movies = frames_from_pattern(filename=filename,name=name,pattern=parameters["movie_pattern"])
+            for i in detected_movies:
+                arguments.append((os.path.join(Path(filename).parents[0], i),"."))
         if len(arguments) > 0:
             mpi.submit_function_to_workers(shutil.copy2,arguments,verbose=True)
+    elif os.path.exists(filename + ".mrc"):
+        try:
+            shutil.copy2(filename + ".mrc", ".")
+        except:
+            # ignore if file already exists
+            pass
+    elif os.path.exists(filename + ".tif") or os.path.exists(filename + ".tif.mdoc") or os.path.exists(filename + ".tiff") or os.path.exists(filename + ".tiff.mdoc"):
+        for i in glob.glob(filename + ".tif") + glob.glob(filename + ".tif.mdoc") + glob.glob(filename + ".tiff") + glob.glob(filename + ".tiff.mdoc"):
+            try:
+                shutil.copy2(i, ".")
+            except:
+                # ignore if file already exists
+                pass
 
     source = os.path.split(os.path.realpath(filename))[0]
     gain_pattern_fc3 = "{0}/*CountRef*".format("/".join(source.split("/")))
