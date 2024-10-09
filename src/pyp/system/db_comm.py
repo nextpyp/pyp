@@ -451,7 +451,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
             spk_file = os.path.join(spk_path, name + ".spk")
             dest = os.path.join(project_path, "mod", name + ".spk")
             if os.path.exists(spk_file) and not os.path.exists(dest):
-                print("Coping ", spk_file, " to ", dest)
+                print("Copying ", spk_file, " to ", dest)
                 shutil.copy2(spk_file, dest)
 
 
@@ -525,52 +525,25 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
 
     save_results(files, current_path, verbose=verbose)
 
-
 def load_csp_results(name, parameters, project_path, working_path, verbose=False):
     """Load existing results from previous runs and standard project parameter files
     into working_path."""
 
     initial_files = [
-        "ctf/{0}.ctf",
+        "mrc/{0}.mrc",
+        "pkl/{0}.pkl",
     ]
-
-    file_patterns = [
-        "box/{0}.box",  # needed by trajectory plotting after regularization 
-        "box/{0}.boxx",
-        "csp/{0}.allboxes",
-        "csp/{0}_local.allboxes",
-        "csp/{0}_boxes3d.txt"
-    ]
-
-    if "local" in parameters["extract_fmt"].lower():
-        file_patterns.append(f"ali/{name}_*.xf")
 
     filelist = []
     project_path_escape = Path(glob.escape(str(project_path)))
-    filelist += (str(project_path / f.format(name)) for f in initial_files)
-    filelist += flatten(
-        sorted(glob.glob(str(project_path_escape / f.format(name)))) for f in file_patterns
-    )
+    filelist += (str(project_path_escape / f.format(name)) for f in initial_files)
 
     load_results(filelist, project_path, working_path, verbose=verbose)
-
-    # this is not always strictly needed
-    load_tomo_results(name, parameters, project_path, working_path, verbose=verbose)
-
 
 def save_csp_results(name, parameters, current_path, verbose=False):
     """Save sp swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
-    # iteration = parameters["refine_iter"]
-    # if iteration == 2:
-    #     files[
-    #     "csp"
-    #     ] = "{0}.allboxes {0}_local.allboxes".format(name)
-    # else:
-    #     files[
-    #         "csp"
-    #     ] = "{0}.allboxes {0}_local.allboxes".format(name)
     files["csp"] = " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
 
     save_results(files, current_path, verbose=verbose)
