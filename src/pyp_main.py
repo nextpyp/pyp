@@ -3598,8 +3598,6 @@ def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
             # save txt files to sva/
             txt_files = glob.glob("*_vir????.txt")
             for txt_file in txt_files:
-                with open(txt_file) as f:
-                    logger.warning(f.read())
                 shutil.copy2( txt_file, os.path.join(project_path, "sva", txt_file))
 
         # save metadata to pkl file
