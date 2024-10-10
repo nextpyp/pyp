@@ -330,7 +330,7 @@ def parse_xml(mp, sp):
     general = root.find("general")
     volsize = general.find("image_geometry").find("volume_size")
     volcutoff = general.find("image_geometry").find("volume_cut_offset")
-    volsize.text = str(mp["extract_box"])
+    volsize.text = str(mp["tomo_ext_size"])
     volcutoff.text = str(sp["zcorr"])
 
     # modify setting corresponding to the mode
