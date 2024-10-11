@@ -42,6 +42,7 @@ Data pre-processing consists of movie frame alignment, tilt-series alignment, to
         -tomo_vir_method "auto"                         \
         -tomo_vir_rad 500.0                             \
         -slurm_tasks 23                                 \
+        -slurm_memory 92                                \
         -movie_pattern "TILTSERIES_SCANORD_ANGLE.tif"
 
 
