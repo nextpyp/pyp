@@ -193,7 +193,7 @@ done
                 # echo In normal slurm mode
                 output_basename = "${SLURM_JOB_ID}_1"
 
-            scratch = Path(os.environ["PYP_SCRATCH"]).parent
+            scratch = Path(os.environ["PYP_SCRATCH"])
             csp_local_merge_command = f"export OPENBLAS_NUM_THREADS=1; unset {jobtype}; export csp_local_merge=csp_local_merge; {run_pyp(command='pyp', script=True, cpus=threads)} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename {output_basename} --path '{scratch}/{output_basename}'"
 
         cmdgrid = [[]]
