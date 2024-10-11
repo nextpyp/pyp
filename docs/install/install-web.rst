@@ -21,6 +21,7 @@ Supported operating systems
  * `Rocky Linux 8.6 <https://docs.rockylinux.org/release_notes/8_6>`_
  * `CentOS 7 <https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2009>`_
  * `Ubuntu 22.04.1 LTS <https://releases.ubuntu.com/22.04/>`_
+ * `Debian 12 Bookworm <https://www.debian.org/releases/bookworm>`_
 
 These instructions refer to the installation of ``nextPYP``'s' web interface. If you want to install the ``PYP`` command line interface, follow :doc:`these instructions<../reference/cli/installation>` instead.
 
