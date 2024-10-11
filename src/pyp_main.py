@@ -2523,7 +2523,8 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             save_csp_results(
                 filename, parameters, current_path, verbose=parameters["slurm_verbose"]
             )
-            save_refinement_to_website(filename, iteration, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
+            if "tomo" in parameters["data_mode"] or parameters["extract_fmt"] == "frealign_local":
+                save_refinement_to_website(filename, iteration, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
         
     else:
         
