@@ -795,10 +795,9 @@ def run_reconstruction(
     )
 
     # make sure reconstruct3d runs in parallel
-    commands[0] = (
-        "export OMP_NUM_THREADS={0}; export NCPUS={0}; ".format(cpus_per_group)
-        + commands[0]
-    )
+    prefix = "export OMP_NUM_THREADS={0}; export NCPUS={0}; ".format(cpus_per_group)
+    for i in range(len(commands)):
+        commands[i] = prefix + commands[i]
 
     recon_st = str(datetime.datetime.now())
     recon_S = time.perf_counter()
