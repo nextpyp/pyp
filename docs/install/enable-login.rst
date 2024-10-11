@@ -22,15 +22,25 @@ change the ``web.auth`` setting from ``none`` to ``login``.
 
 After making changes to your configuration file, restart the application:
 
-.. code-block:: bash
+.. tabbed:: I'm using a regular user account
 
-  sudo systemctl restart nextPYP
+  .. code-block:: bash
+
+    ./nextpyp stop
+    ./nextpyp start
+
+
+.. tabbed:: I'm using an administrator account
+
+  .. code-block:: bash
+
+    sudo systemctl restart nextPYP
 
 
 Step 2: Setup
 -------------
 
-When in login mode, the application will require some first-time setup to create
+When in ``login`` mode, the application will require some first-time setup to create
 the first administrator account.
 
 Open the application website in your browser. Then change the url in the address bar
@@ -50,3 +60,17 @@ Fill out the form, click :badge:`Create Administrator,badge-primary`, and you'll
   See the :doc:`Administration<../reference/admin>` section for information on how to create and manage users and groups in ``nextPYP``.
 
 From now on, to access the website, you'll need to login with your account name and password.
+
+
+Getting Help
+------------
+
+Getting ``nextPYP`` installed and working correctly can be tricky sometimes,
+especially since everyone's needs are just a little different.
+We've done our best to build an install process that's flexible enough to work in many different environments,
+but sometimes things still might not work out perfectly.
+
+If you have questions, need clarification on any of the installation options, or are just looking for a little
+help getting through the installation, don't hesitate to reach out on our GitHub discussion board:
+
+https://github.com/orgs/nextpyp/discussions

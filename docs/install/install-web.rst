@@ -124,13 +124,13 @@ Step 3: Download and run the installation script
   Feel free to inspect the installation script. It's fairly simple. Once you're confident that
   it does what you want, mark it executable:
 
-  .. code-block::bash
+  .. code-block:: bash
 
     chmod u+x install
 
   Finally, run the installation script to install ``nextPYP``:
 
-  .. code-block::bash
+  .. code-block:: bash
 
     ./install
 
@@ -164,7 +164,7 @@ Step 3: Download and run the installation script
   Feel free to inspect the installation script. It's fairly simple. Once you're confident that
   it does what you want, mark it executable:
 
-  .. code-block::bash
+  .. code-block:: bash
 
     sudo chmod u+x install
 
@@ -199,13 +199,13 @@ Step 3: Download and run the installation script
   Choose the options and values according to your needs and then send them as environment variables to the installer.
   For example, if you were using only the service account option ``NEXT_PYP``, you would run the installer like this:
 
-  .. code-block::bash
+  .. code-block:: bash
 
     sudo PYP_USER="service_acct" ./install
 
   Or if you're doing a cluster installation, the install command might look like this:
 
-  .. code-block::bash
+  .. code-block:: bash
 
     sudo PYP_USER="service_acct" PYP_SHARED_DATA="/nfs/nextPYP/data" PYP_SHARED_EXEC="/nfs/nextPYP/exec" ./install
 
@@ -363,7 +363,7 @@ After making changes to your configuration file, restart the application:
 
 .. tabbed:: I'm using a regular user account
 
-  .. code-block::
+  .. code-block:: bash
 
     ./nextpyp stop
     ./nextpyp start
@@ -371,7 +371,7 @@ After making changes to your configuration file, restart the application:
 
 .. tabbed:: I'm using an administrator account
 
-  .. code-block::
+  .. code-block:: bash
 
     sudo systemctl restart nextPYP
 
@@ -409,8 +409,6 @@ for the application, but you can enable other configurations using the linked in
 Upgrading to a new version
 --------------------------
 
-.. TODO: NEXTTIME: split for user/admin
-
 To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation:
 
 .. tabbed:: I'm using a regular user account
@@ -418,7 +416,7 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
   First, ``cd`` into the folder where you first installed ``nextPYP``.
   Then, stop the website, (re)run the installer, and then start the website again:
 
-  .. code-block::
+  .. code-block:: bash
 
     # stop nextPYP
     ./nextpyp stop
@@ -459,3 +457,17 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
   After the upgrade is complete, the installer will start the ``nextPYP`` daemon for you.
 
 After this, you should be able to access the application the same way you did before the upgrade.
+
+
+Getting Help
+------------
+
+Getting ``nextPYP`` installed and working correctly can be tricky sometimes,
+especially since everyone's needs are just a little different.
+We've done our best to build an install process that's flexible enough to work in many different environments,
+but sometimes things still might not work out perfectly.
+
+If you have questions, need clarification on any of the installation options, or are just looking for a little
+help getting through the installation, don't hesitate to reach out on our GitHub discussion board:
+
+https://github.com/orgs/nextpyp/discussions
