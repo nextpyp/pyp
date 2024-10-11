@@ -1316,6 +1316,8 @@ def rename_csp_local_files(dataset_name, input_dir, ordering, pattern, metric):
         new_files = []
         order = 1
 
+        files = sorted([f for f in os.listdir(os.getcwd()) if p.match(f)], key=lambda x: int(x.split("_")[1]))
+
         for f in files:
             if p.match(f):
                 match = p.match(f)
@@ -1329,7 +1331,6 @@ def rename_csp_local_files(dataset_name, input_dir, ordering, pattern, metric):
                 new_name = "{0}_map1_n{1}.mrc".format(dataset_name, order)
                 new_name2 = "{0}_map2_n{1}.mrc".format(dataset_name, order)
 
-                # logger.info("symlinking from {} to {}".format(old_name, new_name))
                 os.rename(old_name, new_name)
                 os.rename(old_name2, new_name2)
 
