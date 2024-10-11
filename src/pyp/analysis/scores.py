@@ -1536,10 +1536,13 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
 
     films = np.unique(pardata[:, FILM_COL].astype("int"))
 
+    cummulative_index = 0
     for film in films:
         micrograph = pardata[pardata[:, FILM_COL] == film]
         # metadata = pyp_metadata.LocalMetadata("pkl/" + film_list[film] + ".pkl", is_spr=True)
         # box = metadata.data["box"].to_numpy()
+
+        cummulative_index += micrograph.shape[0]
 
         # micrograph[:, -2:] = box[:, :2]
         sort_pardata = micrograph[np.argsort(micrograph[:, field])][::-1]
@@ -1556,7 +1559,7 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
             coordinate = np.array([line[x_coord] + (line[shiftx]/pixel_size), line[y_coord] + (line[shifty]/pixel_size)], ndmin=2)
             dmin = scipy.spatial.distance.cdist(coordinate, valid_points).min()
             if dmin <= parameters["clean_dist"]:
-                pardata[pardata[:, FILM_COL] == film][int(line[0]-1), occ_field] = 0.0
+                pardata[pardata[:, FILM_COL] == film][int(line[0]-1-cummulative_index), occ_field] = 0.0
             else:
                 valid_points = np.vstack((valid_points, coordinate))
 
