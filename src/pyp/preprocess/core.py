@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import datetime
 from pathlib import Path
-from typing import Union
+from tqdm import tqdm
 
 import numpy as np
 
@@ -24,6 +24,7 @@ from pyp.system.utils import get_imod_path
 from pyp.system.wrapper_functions import avgstack, cistem_rescale, cistem_resize
 from pyp.system.project_params import resolve_path
 from pyp.utils import get_relative_path, movie2regex, timer
+from pyp.streampyp.logging import TQDMLogger
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -578,10 +579,11 @@ def read_tilt_series(
             logger.info(f"Processing movie frames using {parameters['movie_ali']}")
             import torch
             if torch.cuda.is_available() and 'motioncor' in parameters["movie_ali"]:
-                for tilt in sorted_tilts:
-                    logger.info("Aligning frames for tilt angle %.2f", tilt[1])
-                    frame_name = tilt[0].replace(file_format, "")
-                    align.align_movie_super( parameters, frame_name, file_format, isfirst)
+                with tqdm(desc="Progress", total=len(sorted_tilts), file=TQDMLogger()) as pbar:
+                    for tilt in sorted_tilts:
+                        frame_name = tilt[0].replace(file_format, "")
+                        align.align_movie_super( parameters, frame_name, file_format, isfirst)
+                        pbar.update(1)
             else:
                 # submit jobs to workers
                 for tilt in sorted_tilts:
