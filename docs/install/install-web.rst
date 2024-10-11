@@ -24,6 +24,7 @@ Supported operating systems
 
 These instructions refer to the installation of ``nextPYP``'s' web interface. If you want to install the ``PYP`` command line interface, follow :doc:`these instructions<../reference/cli/installation>` instead.
 
+
 Step 1: Prerequisites for installation
 --------------------------------------
 
@@ -85,7 +86,7 @@ then vary by operating system:
 
   .. code-block:: bash
 
-	  sudo apt-get install -y wget
+    sudo apt-get install -y wget
 
   Download debian package for Apptainer:
 
@@ -103,77 +104,182 @@ then vary by operating system:
 Step 3: Download and run the installation script
 ------------------------------------------------
 
-First, create the folder where ``nextPYP`` will be installed. Something like ``/opt/nextPYP`` works well.
-Then navigate to the folder in a shell session:
+.. tabbed:: I'm using a regular user account
 
-.. code-block:: bash
+  First, create the folder where ``nextPYP`` will be installed. The location can be anywhere you have write access,
+  For example, ``~/nextPYP`` works well:
 
-  sudo mkdir -p /opt/nextPYP
-  cd /opt/nextPYP
+  .. code-block:: bash
+    cd ~/
+    mkdir nextPYP
+    cd nextPYP
 
-Then, download the installation script:
+  Then, download the installation script:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-  sudo wget https://nextpyp.app/files/pyp/latest/install
+    wget https://nextpyp.app/files/pyp/latest/install
 
-.. note::
+  Feel free to inspect the installation script. It's fairly simple. Once you're confident that
+  it does what you want, mark it executable:
 
-  Other versions can be installed by downloading an installation script by its version number.
-  If you wanted to specifically install version ``0.5.0``, you would download the installation script at
-  ``https://nextpyp.app/files/pyp/0.5.0/install``.
+  .. code-block::bash
 
-Feel free to inspect the installation script. It's fairly simple. Once you're confident that
-it does what you want, mark it executable and run it with administrator privileges.
-You'll need to supply the name of the service account as the ``$PYP_USER`` environment variable.
+    chmod u+x install
 
-.. code-block:: bash
+  Finally, run the installation script to install ``nextPYP``:
 
-  sudo chmod u+x install
-  sudo PYP_USER=nextpyp ./install
+  .. code-block::bash
 
-If the installer gives an error like ``$username is not a valid group``, then you'll
-need to set the group for the service account too, using the ``$PYP_GROUP`` environment variable:
+    ./install
 
-.. code-block:: bash
 
-  sudo PYP_USER=nextpyp PYP_GROUP=services ./install
+.. tabbed:: I'm using an administrator account
+
+  First, create the folder where ``nextPYP`` will be installed. This folder should be on the local
+  filesystem of the web server machine. Something like ``/opt/nextPYP`` works well.
+  This folder should be owned by `root` or your administrator account.
+  The installation folder should *not* be owned by the service account, for security reasons.
+
+  Navigate to the folder in a shell session:
+
+  .. code-block:: bash
+
+    sudo mkdir -p /opt/nextPYP
+    cd /opt/nextPYP
+
+  Then, download the installation script:
+
+  .. code-block:: bash
+
+    sudo wget https://nextpyp.app/files/pyp/latest/install
+
+  .. note::
+
+    Other versions can be installed by downloading an installation script by its version number.
+    If you wanted to specifically install version ``0.5.0``, you would download the installation script at
+    ``https://nextpyp.app/files/pyp/0.5.0/install``.
+
+  Feel free to inspect the installation script. It's fairly simple. Once you're confident that
+  it does what you want, mark it executable:
+
+  .. code-block::bash
+
+    sudo chmod u+x install
+
+  The installation script has a few different options, to handle different environments.
+  In privileged installation, you'll need at least the ``PYP_USER`` option, and maybe some others too.
+  All of the options are described below.
+
+  **PYP_USER**: The name of the service account. The service account should be an unprivileged user for security reasons.
+
+  **PYP_GROUP**: The group of the service account. By default, the installer will try using a group with the same
+                 name as the account. If the installer fails with an error like: ``$username is not a valid group``,
+                 then you'll need to set ``PYP_GROUP`` explicitly: eg, ``PYP_GROUP=services``
+
+  **PYP_LOCAL**: If your web server has access to fast local storage that is different than the storage used by the
+                 operating system (eg. NVMe SSDs mounted at ``/scratch``), this option will configure ``nextPYP`` to use it.
+                 Omitting this option will use a location inside the install folder for local storage instead.
+                 This setting should be the path to a folder on the local filesystem that is
+                 owned by the service account. eg. ``PYP_LOCAL="/media/nvme/nextPYP"``
+
+  If you're installing onto a compute cluster with a shared filesystem, you'll need both the ``PYP_SHARED_DATA``
+  ``PYP_SHARED_EXEC`` options.
+
+  **PYP_SHARED_DATA**: This option configures the shared location for run-time data created by ``nextPYP``.
+                       This folder should be owned by the service account and configured for read and write access.
+                       eg, ``PYP_SHARED_DATA="/nfs/users/service_acct/nextPYP/data"``
+
+  **PYP_SHARED_EXEC**: This option configures the shared location for executables and configuration.
+                       This folder should be owned by an adminisrator account and *not* the service account and configured
+                       for read-only access by the service account.
+                       eg, ``PYP_SHARED_EXEC="/nfs/users/service_acct/nextPYP/exec"``
+
+  Choose the options and values according to your needs and then send them as environment variables to the installer.
+  For example, if you were using only the service account option ``NEXT_PYP``, you would run the installer like this:
+
+  .. code-block::bash
+
+    sudo PYP_USER="service_acct" ./install
+
+  Or if you're doing a cluster installation, the install command might look like this:
+
+  .. code-block::bash
+
+    sudo PYP_USER="service_acct" PYP_SHARED_DATA="/nfs/nextPYP/data" PYP_SHARED_EXEC="/nfs/nextPYP/exec" ./install
+
+  .. note::
+
+    Create any folders referenced by the installation options before running the installer.
+    The installer will not create these folders for you.
+
 
 The install script will download the rest of the needed software components and set them up.
-Assuming fast download speeds, the installation script should finish in a few minutes.
+Total download sizes are in the tens of gibibytes, so on a fast internet connection,
+the installation script would need at least a few minutes to finish.
 
 
 Step 4: Check installation results
 ----------------------------------
 
-Among other things, the installer created a `systemd` deamon named ``nextPYP`` to start and stop the
-application automatically. The daemon should be running now. Check it with:
+.. tabbed:: I'm using a regular user account
 
-.. code-block:: bash
+  Now that ``nextPYP`` is installed, you can start the service and see if it works.
 
-  sudo systemctl status nextPYP
+  To start the ``nextPYP`` website, run:
 
-If all went well, you should be greeted with a response similar to the following.
+  .. code-block:: bash
 
-.. code-block::
+    ./nextpyp start
 
-  ● nextPYP.service - nextPYP
-     Loaded: loaded (/usr/lib/systemd/system/nextPYP.service; enabled; vendor preset: disabled)
-     Active: active (running) since Thu 2022-08-11 10:14:57 EDT; 4h 5min ago
-   Main PID: 2774 (starter-suid)
-      Tasks: 91 (limit: 23650)
-     Memory: 708.3M
-     CGroup: /system.slice/nextPYP.service
-             ├─2774 Singularity instance: nextpyp [nextPYP]
-             ├─2775 sinit
-             ├─2793 /bin/sh /.singularity.d/startscript
-             ├─2796 /bin/sh /opt/micromon/init.sh
-             ├─2802 /usr/bin/python2 /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
-             ├─2893 /bin/sh /opt/micromon/bin/micromon.sh
-             ├─2894 /usr/bin/mongod --config /tmp/mongod.conf
-             └─2895 java -Xmx2048M @bin/classpath.txt io.ktor.server.netty.EngineMain
+  If the startup process is successful, your console should show a message similar to:
 
-You can also access the website directly from the shell:
+  .. code-block::
+
+    Reading config.toml using CLI tool ...
+    Host Processor started pid=1291 (/media/micromon/run/host-processor)
+    Configuring environment ...
+    Starting singularity container ...
+    INFO:    instance started successfully
+
+  To stop the ``nextPYP`` website, run:
+
+  .. code-block:: bash
+
+    ./nextpyp stop
+
+
+.. tabbed:: I'm using an administrator account
+
+  Among other things, the installer created a ``systemd`` deamon named ``nextPYP`` to start and stop the
+  application automatically. The daemon should be running now. Check it with:
+
+  .. code-block:: bash
+
+    sudo systemctl status nextPYP
+
+  If all went well, you should be greeted with a response similar to the following.
+
+  .. code-block::
+
+    ● nextPYP.service - nextPYP
+       Loaded: loaded (/usr/lib/systemd/system/nextPYP.service; enabled; vendor preset: disabled)
+       Active: active (running) since Thu 2022-08-11 10:14:57 EDT; 4h 5min ago
+     Main PID: 2774 (starter-suid)
+        Tasks: 91 (limit: 23650)
+       Memory: 708.3M
+       CGroup: /system.slice/nextPYP.service
+               ├─2774 Singularity instance: nextpyp [nextPYP]
+               ├─2775 sinit
+               ├─2793 /bin/sh /.singularity.d/startscript
+               ├─2796 /bin/sh /opt/micromon/init.sh
+               ├─2802 /usr/bin/python2 /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+               ├─2893 /bin/sh /opt/micromon/bin/micromon.sh
+               ├─2894 /usr/bin/mongod --config /tmp/mongod.conf
+               └─2895 java -Xmx2048M @bin/classpath.txt io.ktor.server.netty.EngineMain
+
+
+To test that the ``nextPYP`` website is running, can check directly from the shell:
 
 .. code-block:: bash
 
@@ -234,7 +340,7 @@ Configure how to access system resources by specifying the following parameters:
  * ``pyp.scratch``
      Directory for large (multi-GB) temporary files used during computation.
 
-     This location should have fast read/write speeds, ideally in local storage.
+     This location should have fast read/write speeds, ideally in local storage on the compute node.
 
      This is set to the system temporary directory by default, which is usually a safe starting point.
      But if you run out of space there, you can change this to a location with more space.
@@ -244,19 +350,6 @@ Configure how to access system resources by specifying the following parameters:
      of the container will be visible to ``PYP``. To make files visible to ``PYP``, bind the directories
      containing those files into the container. Make those directories are also readable by the service account.
 
- * ``web.localDir``
-     Directory for storing the database and user data.
-
-     This location should have fast read/write speeds, ideally in local storage.
-     It also will need many GiB (or even TiB) of space available.
-     Make sure this directory is readable and writable by the service account.
-
-     The default location for this folder is in the installation folder (typically ``/opt/nextPYP``),
-     but if the OS filesystem is not very large, you should consider moving the local folder
-     to a filesystem with more available space.
-
-     When changing this setting, be sure to move existing local files to the new location.
-
 Here is an example of how to specify these options in the configuration file:
 
 .. code-block:: toml
@@ -265,18 +358,26 @@ Here is an example of how to specify these options in the configuration file:
   scratch = '/scratch/nextPYP'
   binds = [ '/nfs', '/cifs' ]
 
-  [web]
-  localDir = '/bigspace/nextpyp/local'
-
 After making changes to your configuration file, restart the application:
 
-.. code-block::
+.. tabbed:: I'm using a regular user account
 
-  sudo systemctl restart nextPYP
+  .. code-block::
 
-There are many other configuration options supported beyond the ones described here. See the :doc:`full documentation for the configuration file<../reference/config>` for details.
+    ./nextpyp stop
+    ./nextpyp start
 
-Hopefully the services will start up perfectly and you can start using ``nextPYP`` right away. If not, there are a few useful places to look for debugging information. See :doc:`troubleshooting<./troubleshooting>` for more details.
+
+.. tabbed:: I'm using an administrator account
+
+  .. code-block::
+
+    sudo systemctl restart nextPYP
+
+
+There are many other configuration options supported beyond the ones described here.
+See the :doc:`full documentation for the configuration file<../reference/config>` for details.
+
 
 Next steps
 ----------
@@ -300,29 +401,60 @@ for the application, but you can enable other configurations using the linked in
 
   For large processing jobs, using a compute cluster can speed up results significantly.
   These instructions show how to attach a SLURM cluster to your installation.
+  If you installed ``nextPYP`` using the ``PYP_SHARED_DATA`` and ``PYP_SHARED_EXEC`` options,
+  you'll want to follow this step to connect ``nextPYP`` to your SLURM cluster.
+
 
 Upgrading to a new version
 --------------------------
 
+.. TODO: NEXTTIME: split for user/admin
+
 To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation:
 
-.. code-block:: bash
+.. tabbed:: I'm using a regular user account
 
-  # stop nextPYP
-  sudo systemctl stop nextPYP
+  First, ``cd`` into the folder where you first installed ``nextPYP``.
+  Then, stop the website, (re)run the installer, and then start the website again:
 
-  # stop the reverse proxy (only required if you configured remote access through untrusted networks)
-  sudo systemctl stop nextPYP-rprox
+  .. code-block::
 
-  # download the new version
-  sudo wget https://nextpyp.app/files/pyp/latest/install -O install
-  sudo chmod u+x install
+    # stop nextPYP
+    ./nextpyp stop
 
-  # re-run the installation
-  sudo PYP_USER=nextpyp ./install
+    # download the new version's installer
+    sudo wget https://nextpyp.app/files/pyp/latest/install -O install
+    sudo chmod u+x install
 
-  # re-install the reverse proxy (only if you configured remote access through untrusted networks)
-  sudo chmod u+x install-rprox
-  sudo PYP_DOMAIN=myserver.myorganization.org ./install-rprox
+    # run the new installer to upgrade
+    ./install
+
+    # re-start nextPYP
+    ./nextpyp start
+
+
+.. tabbed:: I'm using an administrator account
+
+  .. code-block:: bash
+
+    # stop nextPYP
+    sudo systemctl stop nextPYP
+
+    # stop the reverse proxy (only required if you configured remote access through untrusted networks)
+    sudo systemctl stop nextPYP-rprox
+
+    # download the new version's installer
+    sudo wget https://nextpyp.app/files/pyp/latest/install -O install
+    sudo chmod u+x install
+
+    # re-run the installation
+    # (be sure to use the same installation options you used the first time)
+    sudo PYP_USER=nextpyp ./install
+
+    # re-install the reverse proxy (only if you configured remote access through untrusted networks)
+    sudo chmod u+x install-rprox
+    sudo PYP_DOMAIN=myserver.myorganization.org ./install-rprox
+
+  After the upgrade is complete, the installer will start the ``nextPYP`` daemon for you.
 
 After this, you should be able to access the application the same way you did before the upgrade.
