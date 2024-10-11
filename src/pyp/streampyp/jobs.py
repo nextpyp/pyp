@@ -88,6 +88,14 @@ def submit_commands(
         ]
     else:
 
+        config = get_pyp_configuration()
+        scratch_config = config["pyp"]["scratch"]
+        if "$" in scratch_config:
+            os.environ["PYP_SCRATCH"] = os.path.expandvars(config["pyp"]["scratch"])
+        else:
+            os.environ["PYP_SCRATCH"] = scratch_config
+        os.environ["PYP_SCRATCH"] = str(Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"])
+
         cmdlist = [
             "export OPENBLAS_NUM_THREADS=1\n",
             "TASKS_PER_ARR={}\n".format(tasks_per_arr),
@@ -129,7 +137,7 @@ done
             cmdlist.append(
                 "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path {1}/$OUTPUT_BASENAME\n".format(
                     run_pyp(command="pyp", script=True, cpus=threads),
-                    Path(os.environ["PYP_SCRATCH"]).parent,
+                    Path(os.environ["PYP_SCRATCH"]),
                 ),
             )
 
