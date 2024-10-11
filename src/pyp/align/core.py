@@ -1693,7 +1693,7 @@ def csp_refinement(
         f.write(str(parameter_file).replace(f"_r{classes:02d}", f"_r01") + "\n")
 
     # save fp and mp into the main slurm job folder
-    project_params.save_pyp_parameters(mp, "..")
+    project_params.save_pyp_parameters(mp, "..", website=False)
 
     # find film number for this micrograph to figure out particle alignments
     try:

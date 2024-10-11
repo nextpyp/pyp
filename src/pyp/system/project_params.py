@@ -569,19 +569,20 @@ def sanitize_parameters(parameters):
                         clean_parameters[f"{t}_{p}"] = parameters[f"{t}_{p}"]
     return clean_parameters
 
-def save_parameters(parameters, path=".", param_file_name=".pyp_config.toml"):
+def save_parameters(parameters, path=".", website=True, param_file_name=".pyp_config.toml"):
     # WARNING - toml.dump does not support saving entries that are None, so those will not be saved
     parameter_file = Path(path) / param_file_name
     with open(parameter_file, "w") as f:
         toml.dump(parameters, f)
 
     # save parameters to website
-    try:
-        save_parameters_to_website(sanitize_parameters(parameters))
-    except:
-        logger.warning("Detected inconsistencies in pyp configuration file")
-        type, value, traceback = sys.exc_info()
-        sys.__excepthook__(type, value, traceback)
+    if website:
+        try:
+            save_parameters_to_website(sanitize_parameters(parameters))
+        except:
+            logger.warning("Detected inconsistencies in pyp configuration file")
+            type, value, traceback = sys.exc_info()
+            sys.__excepthook__(type, value, traceback)
 
 def load_pyp_parameters(path="."):
     return load_parameters(path)
@@ -595,16 +596,16 @@ def load_relion_parameters(path="."):
     return load_parameters(path, param_file_name="relion.config")
 
 
-def save_pyp_parameters(parameters, path="."):
-    save_parameters(parameters, path)
+def save_pyp_parameters(parameters, path=".", website=True):
+    save_parameters(parameters, path,website)
 
 
 def save_3davg_parameters(parameters, path="."):
-    save_parameters(parameters, path, param_file_name="3davg.config")
+    save_parameters(parameters, path, website=False, param_file_name="3davg.config")
 
 
 def save_relion_parameters(parameters, path="."):
-    save_parameters(parameters, path, param_file_name="relion.config")
+    save_parameters(parameters, path, website=False, param_file_name="relion.config")
 
 
 def parse_pyp_arguments():
