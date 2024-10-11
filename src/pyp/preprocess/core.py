@@ -575,7 +575,7 @@ def read_tilt_series(
             isfirst = True
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
             t.start()
-            logger.info(f"Processing movie frames using: {parameters['movie_ali']}")
+            logger.info(f"Processing movie frames using {parameters['movie_ali']}")
             import torch
             if torch.cuda.is_available() and 'motioncor' in parameters["movie_ali"]:
                 for tilt in sorted_tilts:

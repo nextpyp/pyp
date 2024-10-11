@@ -408,7 +408,7 @@ def merge_movie_files_in_job_arr(
             "merge_stack", text="Merging particle stack took: {}", logger=logger.info
         ):
             if len(movie_list) > 1:
-                logger.info("Merging movie files")
+                logger.info(f"Merging movie files into {output_basename}_stack.mrc")
                 mrc.merge_fast(movie_list,f"{output_basename}_stack.mrc",remove=True)
             else:
                 try:

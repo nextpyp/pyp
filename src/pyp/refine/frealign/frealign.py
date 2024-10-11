@@ -1845,7 +1845,7 @@ def local_merge_reconstruction(name=""):
     output_2 = "dumpfile_map2.mrc"
     dummy_name = "temp"
 
-    # intermediate reconsutructions should be named in sequence from 1 to N
+    # intermediate reconstructions should be named in sequence from 1 to N
     map_1 = "(\w+)_map1_n[0-9]+\.mrc$" if len(name) == 0 else f"(\w+){name}_map1_n[0-9]+\.mrc$"
     r_1 = re.compile(map_1)
     map_2 = "(\w+)_map2_n[0-9]+\.mrc$" if len(name) == 0 else f"(\w+){name}_map2_n[0-9]+\.mrc$"

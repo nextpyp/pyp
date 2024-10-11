@@ -661,7 +661,7 @@ def spr_merge(parameters, check_for_missing_files=True):
                     pass
             logger.info("All jobs finished successfully")
 
-    logger.info(f"Total number of micrographs = {len(input_all_list)}")
+    logger.info(f"Total number of micrograph(s) = {len(input_all_list):,}")
 
     inputlist = get_new_input_list(parameters, input_all_list)
 
@@ -1387,7 +1387,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
                     gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
                     if os.path.exists(gain_reference_file):
                         shutil.copy2(gain_reference_file, os.getcwd())
-                logger.info("Aligning frames using: " + parameters['movie_ali'])
+                logger.info("Aligning frames using " + parameters['movie_ali'])
                 aligned_average = align.align_movie_super(
                     parameters, name, extension
                 )
@@ -2365,7 +2365,7 @@ def csp_extract_frames(
                     )
                 else:
                     logger.info(
-                        f"Total number of 2D projections extracted = {totalboxes:,}"
+                        f"Total number of particle projections extracted = {totalboxes:,}"
                     )
             else:
                 logger.info("{}.films does not exist".format(parameters["data_set"]))
