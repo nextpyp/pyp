@@ -1442,6 +1442,9 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
         dumpfiles_count_class = [1 for _ in range(classes)]
         processed = 0
         succeed = False
+        
+        empty_file_number = 0
+        
         logger.info("Start live-merging intermediate reconstructions")
         while time.time() - start_time < TIMEOUT:
 
@@ -1457,7 +1460,7 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
                     decompression_queue.add(filename)
 
             # decompress them if we find enough files
-            if len(decompression_queue) >= decompression_threshold:
+            if len(decompression_queue) >= decompression_threshold - empty_file_number:
 
                 for filename in decompression_queue:
 
@@ -1504,10 +1507,7 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
             empty_files = glob.glob(os.path.join(input_dir,"*.empty"))
             empty_file_number = len(empty_files)
             # clear flags and revise total processed count
-            if empty_file_number > 0:
-                [ os.remove(f) for f in empty_files ]
-                processed += empty_file_number
-            if total_num_bz2 - processed == 0:
+            if total_num_bz2 - processed - empty_file_number == 0:
                 # check the number of dumpfiles is correct
                 if merge:
                     assert (dumpfiles_count_class[class_index-1] == num_bundle * num_dumpfiles_per_bundle), f"{dumpfiles_count_class[class_index-1]} dumpfiles in class {class_index} is not {num_bundle * num_dumpfiles_per_bundle}"
