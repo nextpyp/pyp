@@ -1485,12 +1485,34 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
     dataset_array_list = []
     tiltangle_dict = {}
     particle_dict = {}
+    
+    # use
+    cummulative_index = 1
+
     for par_binary in binary_list:
         # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
+
+        # read parameters from file
         all_parameters = Parameters.from_file(par_binary)
+
+        # figure out column numbers
         col_film = all_parameters.get_index_of_column(IMAGE_IS_ACTIVE)
+        col_score = all_parameters.get_index_of_column(SCORE)
+        col_index = all_parameters.get_index_of_column(POSITION_IN_STACK)
+
+        # get data as numpy array
         image_para_array = all_parameters.get_data()
+        
+        # set new film number
         image_para_array[:, col_film] = film_ind
+
+        # set new particle index number
+        image_para_array[:, col_index ] = np.arange(cummulative_index,cummulative_index+image_para_array.shape[0])
+
+        # increment index
+        cummulative_index += image_para_array.shape[0]
+        
+        # add modified data for merging later
         dataset_array_list.append(image_para_array)
         
         if read_extend:
