@@ -91,13 +91,13 @@ then vary by operating system:
 
   .. code-block:: bash
 
-    wget https://github.com/apptainer/apptainer/releases/download/v1.1.0-rc.2/apptainer_1.1.0-rc.2_amd64.deb
+    wget https://github.com/apptainer/apptainer/releases/download/v1.3.4/apptainer_1.3.4_amd64.deb
 
   Install Apptainer:
 
   .. code-block:: bash
 
-    sudo apt-get install -y ./apptainer_1.1.0-rc.2_amd64.deb
+    sudo dpkg -i apptainer_1.3.4_amd64.deb
 
 
 Step 3: Download and run the installation script
