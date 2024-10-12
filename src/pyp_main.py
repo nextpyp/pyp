@@ -333,7 +333,7 @@ def parse_arguments(block):
 
     # initialize if no images are present
     if len(glob.glob("raw/*")) == 0 and block != "export_session" and "pypgain" not in os.environ:
-        if parameters["data_parent"] != None and not parameters["data_parent"] == ".":
+        if parameters["data_parent"] != None and not parameters["data_parent"] == "." and '-preprocessing' not in parameters["micromon_block"]:
 
             # link all necessary metadata directories
             if (
@@ -4746,6 +4746,9 @@ if __name__ == "__main__":
                         # remove previously cached image
                         if os.path.exists("www/image.small.jpg"):
                             os.remove("www/image.small.jpg")
+                            
+                        project_params.save_parameters(parameters,website=False)
+                        
                 logger.info("nextPYP (pypgain) finished successfully")
             except:
                 trackback()
