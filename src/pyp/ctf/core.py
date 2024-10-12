@@ -1634,6 +1634,12 @@ EOF
                     with open(f"../{imagefile}_handedness.txt", "w") as f:
                         f.write(f"{estimated_tilt_angle} {estimated_tilt_axis}")
                     break
+            if estimated_tilt_angle is None and estimated_tilt_axis is None:
+                logger.error(f"Can't read metadata from {logfile}")
+                with open(logfile) as f:
+                    logger.error(f.read())
+                estimated_tilt_angle = tilt_angle
+                estimated_tilt_axis = tilt_axis
             assert estimated_tilt_angle is not None and estimated_tilt_axis is not None, "Ctffind_tilt logfile does not contain estimated tilt geometry. Please check. "
 
         if parameters["slurm_verbose"] and imagefile.endswith('_0000'):
@@ -1641,22 +1647,23 @@ EOF
                 logger.info(f.read())
             if len(error) > 0:
                 logger.error(error)
+        
+        output_metadata_file = output_spectra.replace(".mrc", ".txt")
+        if os.path.exists(output_metadata_file) and np.loadtxt(output_metadata_file, comments="#", dtype="f").size > 0:
+            df1, df2, angast, ccc, est_res = np.loadtxt(
+                output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
+            )[[1, 2, 3, 5, 6]]
+            if est_res < best_res:
+                best_ccc, best_res = ccc, est_res
+                best_df1, best_df2, best_angast = df1, df2, angast
 
-        df1, df2, angast, ccc, est_res = np.loadtxt(
-            output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
-        )[[1, 2, 3, 5, 6]]
+                shutil.move(output_spectra, best_output_spectra)
+                shutil.move(avrot, best_avrot)
+                shutil.move(output_spectra.replace(".mrc", ".txt"), best_txt)
 
-        if est_res < best_res:
-            best_ccc, best_res = ccc, est_res
-            best_df1, best_df2, best_angast = df1, df2, angast
-
-            shutil.move(output_spectra, best_output_spectra)
-            shutil.move(avrot, best_avrot)
-            shutil.move(output_spectra.replace(".mrc", ".txt"), best_txt)
-
-        else:
-            os.remove(output_spectra)
-            os.remove(avrot)
+            else:
+                os.remove(output_spectra)
+                os.remove(avrot)
 
     return [best_df1, best_df2, best_angast, best_ccc, best_res, best_angle, best_axis]
 
@@ -1715,61 +1722,63 @@ def run_ctffind_tilt(
     sns.set(style="darkgrid")
     f, axarr = plt.subplots(1, figsize=(6, 6))
 
-    ctfprof = np.loadtxt(image_file + "_ctffind4_avrot.txt", comments="#")
+    ctfprof_file = image_file + "_ctffind4_avrot.txt"
+    if os.path.exists(ctfprof_file):
+        ctfprof = np.loadtxt(ctfprof_file, comments="#")
+        if ctfprof.size > 0:
+            # determine index of ctf_min_res
+            min_res = np.argmin(np.fabs(ctfprof[0, :] - 1 / float(parameters["ctf_min_res"])))
 
-    # determine index of ctf_min_res
-    min_res = np.argmin(np.fabs(ctfprof[0, :] - 1 / float(parameters["ctf_min_res"])))
+            five_res = int(min_res + ctfprof[0, min_res:].size / 2)
 
-    five_res = int(min_res + ctfprof[0, min_res:].size / 2)
+            # 1D CTF FIT
+            if "ctffind5" in parameters["ctf_method"]:
+                df1, df2, angast, ccc, est_res, est_tilt_axis, est_tilt_angle, est_thickness = np.loadtxt(
+                    output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
+                )[[1, 2, 3, 5, 6, 7, 8, 9]]
+            else:
+                df1, df2, angast, ccc, est_res = np.loadtxt(
+                    output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
+                )[[1, 2, 3, 5, 6]]
 
-    # 1D CTF FIT
-    if "ctffind5" in parameters["ctf_method"]:
-        df1, df2, angast, ccc, est_res, est_tilt_axis, est_tilt_angle, est_thickness = np.loadtxt(
-            output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
-        )[[1, 2, 3, 5, 6, 7, 8, 9]]
-    else:
-        df1, df2, angast, ccc, est_res = np.loadtxt(
-            output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
-        )[[1, 2, 3, 5, 6]]
+                est_tilt_axis, est_tilt_angle, est_thickness = 0, 0, 0
 
-        est_tilt_axis, est_tilt_angle, est_thickness = 0, 0, 0
+            axarr.set_title(
+                image_file + " (CC=%0.2f, Res=%0.2f A)" % (ccc, est_res), fontsize=10
+            )
+            axarr.plot(
+                ctfprof[0, min_res:five_res],
+                ctfprof[3, min_res:five_res],
+                color="g",
+                linewidth=3,
+                label="DF1={0}, DF2={1}".format(df1, df2),
+            )
+            axarr.plot(
+                ctfprof[0, min_res:five_res],
+                ctfprof[2, min_res:five_res],
+                color="r",
+                linewidth=3,
+                label="Angast={0}".format(angast),
+            )
+            axarr.plot(
+                ctfprof[0, min_res:five_res],
+                ctfprof[4, min_res:five_res],
+                color="b",
+                linewidth=3,
+                label="Quality",
+            )
+            axarr.set_xlim(ctfprof[0, min_res], ctfprof[0, five_res])
+            axarr.set_ylim(0, 1.2)
+            axarr.set_xlabel("DF1=%.2d, DF2=%.2f, ANGAST=%.2f, \nTILT_AXIS=%.2f, TILT_ANGLE=%.2f, THICKNESS=%.2f" % (df1, df2, angast, est_tilt_axis, est_tilt_angle, est_thickness))
+            # axarr.legend()
+            axarr.set_xlim(
+                1.0 / float(parameters["ctf_min_res"]), 1.25 / float(parameters["ctf_max_res"])
+            )
+            plt.savefig("../" + image_file + "_ctftilt.png")
+            plt.close()
 
-    axarr.set_title(
-        image_file + " (CC=%0.2f, Res=%0.2f A)" % (ccc, est_res), fontsize=10
-    )
-    axarr.plot(
-        ctfprof[0, min_res:five_res],
-        ctfprof[3, min_res:five_res],
-        color="g",
-        linewidth=3,
-        label="DF1={0}, DF2={1}".format(df1, df2),
-    )
-    axarr.plot(
-        ctfprof[0, min_res:five_res],
-        ctfprof[2, min_res:five_res],
-        color="r",
-        linewidth=3,
-        label="Angast={0}".format(angast),
-    )
-    axarr.plot(
-        ctfprof[0, min_res:five_res],
-        ctfprof[4, min_res:five_res],
-        color="b",
-        linewidth=3,
-        label="Quality",
-    )
-    axarr.set_xlim(ctfprof[0, min_res], ctfprof[0, five_res])
-    axarr.set_ylim(0, 1.2)
-    axarr.set_xlabel("DF1=%.2d, DF2=%.2f, ANGAST=%.2f, \nTILT_AXIS=%.2f, TILT_ANGLE=%.2f, THICKNESS=%.2f" % (df1, df2, angast, est_tilt_axis, est_tilt_angle, est_thickness))
-    # axarr.legend()
-    axarr.set_xlim(
-        1.0 / float(parameters["ctf_min_res"]), 1.25 / float(parameters["ctf_max_res"])
-    )
-    plt.savefig("../" + image_file + "_ctftilt.png")
-    plt.close()
-
-    shutil.move(output_spectra, Path(os.getcwd()).parent)
-    shutil.move(image_file + "_ctffind4_avrot.txt", Path(os.getcwd()).parent)
+            shutil.move(output_spectra, Path(os.getcwd()).parent)
+            shutil.move(image_file + "_ctffind4_avrot.txt", Path(os.getcwd()).parent)
 
     try:
         if "ctffind5" in parameters["ctf_method"]:
@@ -1781,15 +1790,17 @@ def run_ctffind_tilt(
             data = np.loadtxt(
                 output_spectra.replace(".mrc", ".txt"), comments="#", dtype="f"
             )[[1, 2, 3, 5, 6]]
-
             
-            result = np.concatenate((data, np.array([0, 0, 0])), axis=0)
-            return result 
+            return np.concatenate((data, np.array([0, 0, 0])), axis=0)
         
     except Exception as error:
-        logger.exception("CTFFIND4 failed to run.")
+        logger.exception(f"CTFFIND failed to run on {image_file}")
         logger.info(error)
         pass
+
+    mean_df = ( mindefocus + maxdefocus ) / 2.0
+    # df1, df2, angast, cc, res, est_tilt_axis, est_tilt_angle, est_thickness
+    return mean_df, mean_df, 0, 0, 1000, tilt_angle, tilt_axis, 0
 
 def run_tomoctffind(name, parameters, dstep, ctf_max_res, min_defocus, max_defocus):
 
