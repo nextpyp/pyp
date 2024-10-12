@@ -455,7 +455,7 @@ def merge_movie_files_in_job_arr(
             tilts_dict[0 + film_start] = tind_angle_dict # film id start from 0
 
         else:
-            merged_pardata = merge_all_binary_with_filmid(new_par_list, read_extend=False)
+            merged_pardata = merge_all_binary_with_filmid(new_par_list, read_extend=False,unique_projection_index=True)
             merge_par_obj = Parameters()
             merge_par_obj.set_data(data=merged_pardata)
             merge_par_obj.to_binary(merged_par_file)

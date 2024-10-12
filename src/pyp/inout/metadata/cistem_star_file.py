@@ -1478,7 +1478,7 @@ def initialize_extended_parameters_binary():
     return 
 
 
-def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
+def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False, unique_projection_index=False):
 
     # merge all the projection binary to generate single array updating film id
     film_ind = 0
@@ -1507,7 +1507,8 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
         image_para_array[:, col_film] = film_ind
 
         # set new particle index number
-        image_para_array[:, col_index ] = np.arange(cummulative_index,cummulative_index+image_para_array.shape[0])
+        if unique_projection_index:
+            image_para_array[:, col_index ] = np.arange(cummulative_index,cummulative_index+image_para_array.shape[0])
 
         # increment index
         cummulative_index += image_para_array.shape[0]
