@@ -107,8 +107,7 @@ Step 3: Download and run the installation script
 
 .. tabbed:: I'm using a regular user account
 
-  First, create the folder where ``nextPYP`` will be installed. The location can be anywhere you have write access,
-  For example, ``~/nextPYP`` works well:
+  First, create the folder where ``nextPYP`` will be installed. The location can be anywhere you have write access, for example, ``~/nextPYP`` works well:
 
   .. code-block:: bash
     cd ~/
@@ -216,7 +215,7 @@ Step 3: Download and run the installation script
 
 
 The install script will download the rest of the needed software components and set them up.
-Total download sizes are in the tens of gibibytes, so on a fast internet connection,
+Total download sizes are in the tens of gigabytes, so on a fast internet connection,
 the installation script would need at least a few minutes to finish.
 
 
@@ -280,13 +279,13 @@ Step 4: Check installation results
                └─2895 java -Xmx2048M @bin/classpath.txt io.ktor.server.netty.EngineMain
 
 
-To test that the ``nextPYP`` website is running, can check directly from the shell:
+You can test that the ``nextPYP`` website is running directly from the shell:
 
 .. code-block:: bash
 
   wget http://localhost:8080 -O -
 
-Running the ``wget`` command above should return a response like the following.
+Executing this command should return a response like the following:
 
 .. code-block::
 
@@ -347,9 +346,9 @@ Configure how to access system resources by specifying the following parameters:
      But if you run out of space there, you can change this to a location with more space.
 
  * ``pyp.binds``
-     Since ``PYP`` runs inside of a Singularity/Apptainer container, by default, no files from outside
-     of the container will be visible to ``PYP``. To make files visible to ``PYP``, bind the directories
-     containing those files into the container. Make those directories are also readable by the service account.
+     Since ``nextPYP`` runs inside an Apptainer container, by default, no files from outside
+     of the container will be visible. To make them visible, you have to explicitly bind the directories
+     containing those files into the container. Make sure those directories are also readable by the service account.
 
 Here is an example of how to specify these options in the configuration file:
 
@@ -389,21 +388,21 @@ for the application, but you can enable other configurations using the linked in
 
   * :doc:`Enable remote access<./enable-remote-access>`
 
-  If you're not logged into the server locally (i.e., with a keyboard and monitor), then you'll need
-  to enable remote access to use the website from the network. Follow these instructions to configure
-  remote network access.
+    If you're not logged into the server locally (i.e., with a keyboard and monitor), then you'll need
+    to enable remote access to use the website from the network. Follow these instructions to configure
+    remote network access.
 
   * :doc:`Enable multiple users <./enable-login>`
 
-  If you need to allow multiple different people to use the application, but want them to have
-  separate projects and storage locations, follow these instructions to set up multi-user mode.
+    If you need to allow different people to use the application, but want them to have
+    separate projects and storage locations, follow these instructions to set up multi-user mode.
 
   * :doc:`Attach a SLURM cluster <./attach-slurm>`
 
-  For large processing jobs, using a compute cluster can speed up results significantly.
-  These instructions show how to attach a SLURM cluster to your installation.
-  If you installed ``nextPYP`` using the ``PYP_SHARED_DATA`` and ``PYP_SHARED_EXEC`` options,
-  you'll want to follow this step to connect ``nextPYP`` to your SLURM cluster.
+    For large processing jobs, using a compute cluster can speed up results significantly.
+    These instructions show how to attach a SLURM cluster to your installation.
+    If you installed ``nextPYP`` using the ``PYP_SHARED_DATA`` and ``PYP_SHARED_EXEC`` options,
+    you'll want to follow this step to connect ``nextPYP`` to your SLURM cluster.
 
 
 Upgrading to a new version
@@ -421,7 +420,7 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
     # stop nextPYP
     ./nextpyp stop
 
-    # download the new version's installer
+    # download the new installer and mark it executable
     sudo wget https://nextpyp.app/files/pyp/latest/install -O install
     sudo chmod u+x install
 
@@ -468,6 +467,4 @@ We've done our best to build an install process that's flexible enough to work i
 but sometimes things still might not work out perfectly.
 
 If you have questions, need clarification on any of the installation options, or are just looking for a little
-help getting through the installation, don't hesitate to reach out on our GitHub discussion board:
-
-https://github.com/orgs/nextpyp/discussions
+help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions>`_  board.

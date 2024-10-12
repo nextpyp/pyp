@@ -39,7 +39,7 @@ Step 1: Prerequisites
      you'll need to consult your organization's IT staff for SSH key installation instructions.
 
  * Remote access enabled:
-    To attach a SLURM cluster, you will first need to enabled remote access for your web server using the
+    To attach a SLURM cluster, you will first need to enable remote access for your web server using the
     :doc:`enable remote access <./enable-remote-access>` installation instructions.
 
 
@@ -53,8 +53,6 @@ In the ``config.toml`` file in your installation folder, add (or change) the ``w
 This setting configures how jobs running on compute nodes in the cluster should connect to the web server
 and should be set to the URL of ``nextPYP`` on the web server *from the point of view of the compute node*.
 
-Depending on how your network is configured, choose one of the following options.
-
 .. tip::
 
   The ``web.host`` and ``web.webhost`` settings are different, but it's easy to confuse them for one another.
@@ -62,6 +60,7 @@ Depending on how your network is configured, choose one of the following options
   controls what URL ``pyp`` should use to connect to the web server. With the full benefit of hindsight,
   the ``web.webhost`` setting might be better named ``web.url``, but alas, that would be a breaking change.
 
+Depending on how your network is configured, choose one of the following options:
 
 .. tabbed:: I configured remote access using a private network
 
@@ -161,8 +160,7 @@ To generate a new SSH key for the service account, run the following commands as
 .. note::
 
   * You may need to create the ``.ssh`` folder if it doesn't already exist.
-    Be sure to set the
-    `correct filesystem permissions for .ssh folders <https://itishermann.me/blog/correct-file-permission-for-ssh-keys-and-folders/>`_.
+    Be sure to set the `correct filesystem permissions for .ssh folders <https://itishermann.hashnode.dev/correct-file-permission-for-ssh-keys-and-folders>`.
 
   * RSA keys are known to work well with ``nextPYP``'s `SSH client <https://github.com/mwiede/jsch>`_.
     If your organization prefers the newer ECDSA key type, or the even newer Ed25519 key type,
@@ -182,7 +180,7 @@ After the website is restarted, go to the administration page. You can access th
 clicking on your username in the upper right corner and clicking the administration link there. Or you can
 just visit the administration page directly by changing the path (and hash) parts of the URL to ``/#/admin``.
 
-On the administration page, in the *PYP* tab, click the *PYP/WebRPC Ping* button.
+On the administration page, in the *PYP* tab, click the :badge:`PYP/WebRPC Ping,badge-primary` button.
 
 This button will launch a short simple job on the cluster and wait for the result.
 
@@ -208,6 +206,5 @@ We've done our best to build an install process that's flexible enough to work i
 but sometimes things still might not work out perfectly.
 
 If you have questions, need clarification on any of the installation options, or are just looking for a little
-help getting through the installation, don't hesitate to reach out on our GitHub discussion board:
-
-https://github.com/orgs/nextpyp/discussions
+help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions
+>`_ board.

@@ -71,6 +71,4 @@ We've done our best to build an install process that's flexible enough to work i
 but sometimes things still might not work out perfectly.
 
 If you have questions, need clarification on any of the installation options, or are just looking for a little
-help getting through the installation, don't hesitate to reach out on our GitHub discussion board:
-
-https://github.com/orgs/nextpyp/discussions
+help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions>`_ board.

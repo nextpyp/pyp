@@ -116,7 +116,7 @@ reverse proxy automatically. The daemon should be running now. Check it with:
 
   sudo systemctl status nextPYP-rprox
 
-If all went well, you should be greeted with a response similar to the following.
+If all went well, you should be greeted with a response similar to the following:
 
 .. code-block::
 
@@ -161,6 +161,4 @@ We've done our best to build an install process that's flexible enough to work i
 but sometimes things still might not work out perfectly.
 
 If you have questions, need clarification on any of the installation options, or are just looking for a little
-help getting through the installation, don't hesitate to reach out on our GitHub discussion board:
-
-https://github.com/orgs/nextpyp/discussions
+help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions>`_ board.
