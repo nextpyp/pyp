@@ -160,7 +160,7 @@ To generate a new SSH key for the service account, run the following commands as
 .. note::
 
   * You may need to create the ``.ssh`` folder if it doesn't already exist.
-    Be sure to set the `correct filesystem permissions for .ssh folders <https://itishermann.hashnode.dev/correct-file-permission-for-ssh-keys-and-folders>`.
+    Be sure to set the `correct filesystem permissions for .ssh folders <https://itishermann.hashnode.dev/correct-file-permission-for-ssh-keys-and-folders>`_.
 
   * RSA keys are known to work well with ``nextPYP``'s `SSH client <https://github.com/mwiede/jsch>`_.
     If your organization prefers the newer ECDSA key type, or the even newer Ed25519 key type,
@@ -206,5 +206,4 @@ We've done our best to build an install process that's flexible enough to work i
 but sometimes things still might not work out perfectly.
 
 If you have questions, need clarification on any of the installation options, or are just looking for a little
-help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions
->`_ board.
+help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions>`_ board.
