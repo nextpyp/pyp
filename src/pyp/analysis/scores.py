@@ -1023,6 +1023,7 @@ def particle_cleaning(parameters: dict):
     else:
         if os.path.exists(parameter_folder) and parameter_folder.endswith(".bz2"):
             ref = int(parameter_folder.split("_r")[-1].split("_")[0]) 
+            logger.info(f"Decompressing parameter files from {Path(parameter_folder).name}")
             frealign_parfile.Parameters.decompress_parameter_file_and_move(file=Path(parameter_folder), 
                                                                         new_file=parameter_folder_current, 
                                                                         micrograph_list=[f"{f}_r{ref:02d}" for f in films],
@@ -1086,6 +1087,7 @@ def particle_cleaning(parameters: dict):
 
             current_dir = Path().cwd()
             os.chdir(Path("frealign", "maps"))
+            logger.info("Compressing parameter file")
             frealign_parfile.Parameters.compress_parameter_file(os.path.basename(clean_output_folder), 
                                                                 os.path.basename(clean_output_folder) + ".bz2", 
                                                                 parameters["slurm_merge_tasks"])
@@ -1258,13 +1260,16 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
 
         # in case some images have no particle removed, update selection column only
         if len(unchanged_filmlist) > 0:
-            for film in unchanged_filmlist:
-                metadata = pyp_metadata.LocalMetadata(film + ".pkl", is_spr=is_spr)
-                boxx = metadata.data["box"].to_numpy()
-                boxx[:, 5] = classification_pass
-                df = pd.DataFrame(boxx, columns=box_header)
-                metadata.updateData({'box':df})    
-                metadata.write()
+            logger.info("Updating particle metadata")
+            with tqdm(desc="Progress", total=len(unchanged_filmlist), file=TQDMLogger()) as pbar:
+                for film in unchanged_filmlist:
+                    metadata = pyp_metadata.LocalMetadata(film + ".pkl", is_spr=is_spr)
+                    boxx = metadata.data["box"].to_numpy()
+                    boxx[:, 5] = classification_pass
+                    df = pd.DataFrame(boxx, columns=box_header)
+                    metadata.updateData({'box':df})    
+                    metadata.write()
+                    pbar.update(1)
 
         for id, film in enumerate(discard_filmlist):
             filmid = discard_filmid[id]
@@ -1536,33 +1541,32 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
 
     films = np.unique(pardata[:, FILM_COL].astype("int"))
 
-    cummulative_index = 0
-    for film in films:
-        micrograph = pardata[pardata[:, FILM_COL] == film]
-        # metadata = pyp_metadata.LocalMetadata("pkl/" + film_list[film] + ".pkl", is_spr=True)
-        # box = metadata.data["box"].to_numpy()
+    logger.info(f"Removing duplicates closer than {parameters['clean_dist']} pixels")
+    with tqdm(desc="Progress", total=len(films), file=TQDMLogger()) as pbar:
+        for film in films:
+            micrograph = pardata[pardata[:, FILM_COL] == film]
+            # metadata = pyp_metadata.LocalMetadata("pkl/" + film_list[film] + ".pkl", is_spr=True)
+            # box = metadata.data["box"].to_numpy()
 
-        cummulative_index += micrograph.shape[0]
+            # micrograph[:, -2:] = box[:, :2]
+            sort_pardata = micrograph[np.argsort(micrograph[:, field])][::-1]
 
-        # micrograph[:, -2:] = box[:, :2]
-        sort_pardata = micrograph[np.argsort(micrograph[:, field])][::-1]
+            valid_points = np.array(
+                [sort_pardata[0][x_coord] + (sort_pardata[0][shiftx]/pixel_size), sort_pardata[0][y_coord]] + (sort_pardata[0][shifty]/pixel_size), 
+                ndmin=2
+                )
 
-        valid_points = np.array(
-            [sort_pardata[0][x_coord] + (sort_pardata[0][shiftx]/pixel_size), sort_pardata[0][y_coord]] + (sort_pardata[0][shifty]/pixel_size), 
-            ndmin=2
-            )
+            for idx, line in enumerate(sort_pardata):
+                if idx == 0:
+                    continue
 
-        for idx, line in enumerate(sort_pardata):
-            if idx == 0:
-                continue
-
-            coordinate = np.array([line[x_coord] + (line[shiftx]/pixel_size), line[y_coord] + (line[shifty]/pixel_size)], ndmin=2)
-            dmin = scipy.spatial.distance.cdist(coordinate, valid_points).min()
-            if dmin <= parameters["clean_dist"]:
-                pardata[pardata[:, FILM_COL] == film][int(line[0]-1-cummulative_index), occ_field] = 0.0
-            else:
-                valid_points = np.vstack((valid_points, coordinate))
-
+                coordinate = np.array([line[x_coord] + (line[shiftx]/pixel_size), line[y_coord] + (line[shifty]/pixel_size)], ndmin=2)
+                dmin = scipy.spatial.distance.cdist(coordinate, valid_points).min()
+                if dmin <= parameters["clean_dist"]:
+                    pardata[pardata[:, FILM_COL] == film][int(line[0]-1), occ_field] = 0.0
+                else:
+                    valid_points = np.vstack((valid_points, coordinate))
+            pbar.update(1)
     return pardata
 
 
@@ -1616,18 +1620,23 @@ def generate_clean_spk(input_parameter_folder, binning=1, output_path="./frealig
                 pbar.update(1)
         spk_files = len(glob.glob(os.path.join(output_path, "*.spk")))
         if spk_files > 0:
-            logger.info(f"Clean particle coordinates in spk format exported to {os.path.abspath(output_path)}")
+            logger.info(f"Clean particle coordinates in .spk format exported to {os.path.abspath(output_path)}")
         else:
             logger.warning("Unable to export clean particle coordiantes")
     else:
         p_obj = cistem_star_file.Parameters()
         x = p_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
         y = p_obj.get_index_of_column(cistem_star_file.ORIGINAL_Y_POSITION)
-        for file in inputfiles:
-            parameter_obj = cistem_star_file.Parameters.from_file(file)
-            coords = parameter_obj.get_data()[:, [x, y]]     
-            outfile = os.path.join(output_path, os.path.basename(file).replace('.cistem', '.spk'))
-            np.savetxt(outfile.replace(".spk", ".box"), coords, fmt='%.1f')
-
-            command = f"{get_imod_path()}/bin/point2model -scat -circle 5 {outfile.replace('.spk', '.box')} {outfile}"
-            run_shell_command(command, verbose=False)
+        logger.info(f"Exporting clean particle coordinates for {len(inputfiles)} micrographs")
+        with tqdm(desc="Progress", total=len(inputfiles), file=TQDMLogger()) as pbar:
+            for file in inputfiles:
+                parameter_obj = cistem_star_file.Parameters.from_file(file)
+                coords = parameter_obj.get_data()[:, [x, y]]     
+                outfile = os.path.join(output_path, os.path.basename(file).replace('.cistem', '.spk'))
+                np.savetxt(outfile.replace(".spk", ".box"), coords, fmt='%.1f')
+                pbar.update(1)
+        box_files = len(glob.glob(os.path.join(output_path, "*.box")))
+        if box_files > 0:
+            logger.info(f"Clean particle coordinates in .box format exported to {os.path.abspath(output_path)}")
+        else:
+            logger.warning("Unable to export clean particle coordiantes")

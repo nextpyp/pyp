@@ -31,6 +31,7 @@ import json
 import pickle
 import re
 import toml
+from tqdm import tqdm
 from pathlib import Path
 from uuid import uuid4
 import numpy as np
@@ -78,6 +79,7 @@ from pyp.refine.frealign import frealign
 from pyp.refine.relion import relion
 from pyp.stream import pyp_daemon
 from pyp.streampyp.web import Web
+from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, mpi, project_params, set_up, slurm, user_comm
 from pyp.system.db_comm import (
     load_config_files,
@@ -363,9 +365,13 @@ def parse_arguments(block):
                     if folder == "csp":
                         exclude_file = ["micrograph_particle.index", "particle_tilt.index"]
                         files = [f for f in files if f not in exclude_file]
-                    for source in files:             
-                        destination = os.path.join(os.getcwd(), os.path.relpath(source,parameters["data_parent"]))
-                        symlink_relative(source, destination)
+                    if len(files) > 0:
+                        logger.info(f"Linking {len(files):,} files from {folder}/ folder in parent block")
+                        with tqdm(desc="Progress", total=len(files), file=TQDMLogger()) as pbar:
+                            for source in files:             
+                                destination = os.path.join(os.getcwd(), os.path.relpath(source,parameters["data_parent"]))
+                                symlink_relative(source, destination)
+                                pbar.update(1)
             else:
                 # create new folders and links to individual files
                 folders = ["raw", "mrc", "webp", "sva", "pkl"]
@@ -374,9 +380,13 @@ def parse_arguments(block):
                     files = glob.glob(
                         os.path.join(parameters["data_parent"], f, "*")
                     )
-                    for source in files:
-                        destination = os.path.relpath(source, parameters["data_parent"])
-                        symlink_relative(source, destination)
+                    if len(files) > 0:
+                        logger.info(f"Linking {len(files):,} files from {f}/ folder in parent block")
+                        with tqdm(desc="Progress", total=len(files), file=TQDMLogger()) as pbar:
+                            for source in files:
+                                destination = os.path.relpath(source, parameters["data_parent"])
+                                symlink_relative(source, destination)
+                                pbar.update(1)
 
             # link micrographs and films
             dataset = os.path.split(os.getcwd())[-1]
@@ -665,7 +675,7 @@ def spr_merge(parameters, check_for_missing_files=True):
 
     inputlist = get_new_input_list(parameters, input_all_list)
 
-    logger.info(f"Number of micrographs used = {len(inputlist)}")
+    logger.info(f"Number of micrographs used = {len(inputlist):,}")
 
     # save final micrograph list (excluding micrographs with no boxes)
     if len(inputlist) > 0:

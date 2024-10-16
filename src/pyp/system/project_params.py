@@ -10,6 +10,7 @@ import re
 import shutil
 import socket
 import sys
+from tqdm import tqdm
 from pathlib import Path, PosixPath
 
 import numpy as np
@@ -23,6 +24,7 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import clear_scratch
 from pyp.utils import get_relative_path, movie2regex
 from pyp.system.db_comm import save_parameters_to_website
+from pyp.streampyp.logging import TQDMLogger
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -150,31 +152,34 @@ def get_relevant_films(parameters, array_job_num):
     ]
 
 
-def get_missing_files(parameters, inputlist, verbose=True):
+def get_missing_files(parameters, inputlist, exhaustive=True, verbose=True):
     missing_files = []
-    for sname in inputlist:
-        try:
-            command = "cat swarm/pre_process.swarm | grep %s.log | awk '{print $NF}'" % sname
-            [output, error] = run_shell_command(command, verbose=False)
-            logfile = output.replace("../", "").strip()
-            if (
-                not os.path.exists(logfile)
-                or not "finished successfully" in open(logfile).read()
-            ):
-                if "csp_no_stacks" in parameters.keys() and parameters["csp_no_stacks"]:
-                    # find all movies that were part of the array job and add to missing files
-                    series = project_params.get_film_order(parameters, sname)
-                    array_job_num = slurm.get_array_job(parameters, series)
-                    all_files = project_params.get_relevant_films(parameters, array_job_num)
-                    [missing_files.append(f) for f in all_files if f not in missing_files]
-                else:
-                    missing_files.append(sname)
-        except:
-            logger.error("File swarm/pre_process.swarm not found")
-            pass
+    logger.info("Looking for failed jobs")
+    with tqdm(desc="Progress", total=len(inputlist), file=TQDMLogger()) as pbar:
+        for sname in inputlist:
+            try:
+                logfile = os.path.join("log",sname+".log")
+                if (
+                    not os.path.exists(logfile)
+                    or not "finished successfully" in open(logfile).read()
+                ):
+                    if "csp_no_stacks" in parameters.keys() and parameters["csp_no_stacks"]:
+                        # find all movies that were part of the array job and add to missing files
+                        series = project_params.get_film_order(parameters, sname)
+                        array_job_num = slurm.get_array_job(parameters, series)
+                        all_files = project_params.get_relevant_films(parameters, array_job_num)
+                        [missing_files.append(f) for f in all_files if f not in missing_files]
+                    else:
+                        missing_files.append(sname)
+                        if not exhaustive:
+                            pbar.update(n=len(inputlist))
+                            return missing_files
+            except:
+                pass
+            pbar.update(1)
 
     if len(missing_files) > 0:
-        logger.warning(f"{len(missing_files)} job(s) produced no output or failed to run")
+        logger.warning(f"{len(missing_files):,} job(s) produced no output or failed to run")
 
     return missing_files
 
@@ -806,7 +811,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             inputlist = [line.strip() for line in f]
 
         # initialize all _force parameters if previous run was successful
-        if len(get_missing_files(previous_parameters, inputlist, verbose=False)) == 0:
+        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False, verbose=False)) == 0:
             new_parameters["movie_force"] = False
             new_parameters["ctf_force"] = False
             new_parameters["detect_force"] = False

@@ -1,12 +1,18 @@
 import numpy as np
 import numpy.lib.recfunctions as rf
 import pandas as pd
+from tqdm import tqdm
 
 import sys, os
 from pathlib import Path
+
 from pyp.analysis.geometry import csp_euler_angles
+from pyp.streampyp.logging import TQDMLogger
 
-
+from pyp.system.logging import initialize_pyp_logger
+from pyp.utils import get_relative_path
+relative_path = str(get_relative_path(__file__))
+logger = initialize_pyp_logger(log_name=relative_path)
 """
 Constants goes here
 """
@@ -1486,50 +1492,43 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False, u
     tiltangle_dict = {}
     particle_dict = {}
     
-    # use
-    cummulative_index = 1
+    logger.info(f"Merging {len(binary_list)} parameter files")
+    with tqdm(desc="Progress", total=len(binary_list), file=TQDMLogger()) as pbar:
+        for par_binary in binary_list:
+            # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
 
-    for par_binary in binary_list:
-        # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
+            # read parameters from file
+            all_parameters = Parameters.from_file(par_binary)
 
-        # read parameters from file
-        all_parameters = Parameters.from_file(par_binary)
+            # figure out column numbers
+            col_film = all_parameters.get_index_of_column(IMAGE_IS_ACTIVE)
+            col_score = all_parameters.get_index_of_column(SCORE)
+            col_index = all_parameters.get_index_of_column(POSITION_IN_STACK)
 
-        # figure out column numbers
-        col_film = all_parameters.get_index_of_column(IMAGE_IS_ACTIVE)
-        col_score = all_parameters.get_index_of_column(SCORE)
-        col_index = all_parameters.get_index_of_column(POSITION_IN_STACK)
+            # get data as numpy array
+            image_para_array = all_parameters.get_data()
+            
+            # set new film number
+            image_para_array[:, col_film] = film_ind
 
-        # get data as numpy array
-        image_para_array = all_parameters.get_data()
-        
-        # set new film number
-        image_para_array[:, col_film] = film_ind
+            # add modified data for merging later
+            dataset_array_list.append(image_para_array)
+            
+            if read_extend:
+                image_name = Path(par_binary).name.split("_r0")[0]
+                ext_obj = all_parameters.get_extended_data()
+                if not intact:
+                    # only save unique tilt index id keys
+                    tilts_dict = ext_obj.get_tilts()
+                    tiltangle_dict.update(tilts_dict)
+                else:
+                    tiltangle_dict[image_name] = ext_obj.get_tilts()
 
-        # set new particle index number
-        if unique_projection_index:
-            image_para_array[:, col_index ] = np.arange(cummulative_index,cummulative_index+image_para_array.shape[0])
+                ptl_dict = ext_obj.get_particles()
+                particle_dict[image_name] = ptl_dict
 
-        # increment index
-        cummulative_index += image_para_array.shape[0]
-        
-        # add modified data for merging later
-        dataset_array_list.append(image_para_array)
-        
-        if read_extend:
-            image_name = Path(par_binary).name.split("_r0")[0]
-            ext_obj = all_parameters.get_extended_data()
-            if not intact:
-                # only save unique tilt index id keys
-                tilts_dict = ext_obj.get_tilts()
-                tiltangle_dict.update(tilts_dict)
-            else:
-                tiltangle_dict[image_name] = ext_obj.get_tilts()
-
-            ptl_dict = ext_obj.get_particles()
-            particle_dict[image_name] = ptl_dict
-
-        film_ind += 1
+            film_ind += 1
+            pbar.update(1)
 
     par_data = np.vstack(dataset_array_list)
 
