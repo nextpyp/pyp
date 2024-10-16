@@ -5348,7 +5348,7 @@ EOF
             shutil.copy(name + ".fid.txt", "IMOD/{0}_bin.fid.txt".format(name))
 
         # re-run tiltalign
-        com = "{0}/bin/tiltalign -param {1}_tiltalignScript.txt".format(
+        com = "{0}/bin/tiltalign -MagOption 0 -param {1}_tiltalignScript.txt".format(
             get_imod_path(), name
         )
         output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
