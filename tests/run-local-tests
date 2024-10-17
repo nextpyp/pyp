@@ -51,6 +51,7 @@ fi
 # choose the files to test here:
 testdir=/opt/pyp/tests
 test_args=( \
+	"$testdir/system/test_stream_shell_command.py" \
 )
 
 
