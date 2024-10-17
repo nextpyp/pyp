@@ -487,7 +487,7 @@ def merge_movie_files_in_job_arr(
         logger.info("Updating occupancies after local merge")
         # update occupancies using LogP values
         current_path = os.getcwd()
-        occupancy_extended(mp, output_basename, classes, parameter_file_folders=current_path, local=True)
+        occupancy_extended(mp, output_basename, classes, image_list=par_list, parameter_file_folders=current_path, local=True)
 
     for class_index in range(classes):
 
