@@ -754,6 +754,11 @@ def shape_phase_residuals(
     logger.info(f"Number of particles with zero occupancy = {number:,} out of {input.shape[0]:,} ({number/input.shape[0]*100:.2f}%)")
 
     cistem_par.set_data(input[:, :-1]) # not including the tilt angle column
+    
+    # set unique particle projection IDs if using for reconstruction
+    if outputparfile.endswith("_used.cistem"):
+        input[:,0] = np.arange(0,input.shape[0]) + 1
+    
     cistem_par.to_binary(outputparfile)
 
 @timer.Timer(

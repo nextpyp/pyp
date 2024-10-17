@@ -1484,7 +1484,7 @@ def initialize_extended_parameters_binary():
     return 
 
 
-def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False, unique_projection_index=False):
+def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
 
     # merge all the projection binary to generate single array updating film id
     film_ind = 0
