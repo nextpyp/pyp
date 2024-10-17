@@ -492,7 +492,7 @@ def merge_movie_files_in_job_arr(
     for class_index in range(classes):
 
         logger.info(
-            "### Reconstructing class {} of {} ###".format(class_index+1, classes)
+            "## Running reconstruction for class {} of {} ##".format(class_index+1, classes)
         )
 
         current_class = class_index + 1

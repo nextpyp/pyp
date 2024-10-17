@@ -1585,7 +1585,7 @@ def csp_refinement(
 
         current_class = class_index + 1
         logger.info(
-            "Running refinement for class {} of {}".format(current_class, classes)
+            "## Running refinement for class {} of {} ##".format(current_class, classes)
         )
 
         new_name = name + "_r%02d" % current_class
