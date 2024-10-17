@@ -1060,7 +1060,6 @@ def particle_cleaning(parameters: dict):
 
         if parameters["clean_discard"]:
             film_col = p_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
-            film_index = get_particles_tilt_index(new_pardata, ptl_col= film_col)
             film_ids = np.unique(new_pardata[:, film_col])
             clean_output_folder = str(parameter_folder_current) + "_clean"
             
@@ -1068,27 +1067,29 @@ def particle_cleaning(parameters: dict):
                 shutil.rmtree(clean_output_folder)
             
             os.makedirs(clean_output_folder)
-            
-            for film_id, image_name in enumerate(films):
-                # film_id += 1 # film index from 0
-                if film_id in film_ids:
-                    # get external data by reading the input binary files
-                    input_image_binary = os.path.join(str(parameter_folder_current), image_name + "_r01.cistem")
-                    output_binary = os.path.join(clean_output_folder, image_name + "_r01.cistem" )
-                    image_par_obj = cistem_star_file.Parameters.from_file(input_image_binary)
-                    image_array = new_pardata[film_index[film_id][0]:film_index[film_id][1]]
-                    # renumber the pid
-                    id = np.arange(1, image_array.shape[0] + 1 )
-                    image_array[:, 0] = id
-                    image_par_obj.set_data(image_array)
-                    image_par_obj.sync_particle_occ(ptl_to_prj=False)
-                    image_par_obj.sync_particle_ptlid()
-                    image_par_obj.to_binary(output_binary, extended_output=output_binary.replace(".cistem", "_extended.cistem"))
+            logger.info(f"Generating clean parameter file")
+            with tqdm(desc="Progress", total=len(films), file=TQDMLogger()) as pbar:
+                for film_id, image_name in enumerate(films):
+                    if film_id in film_ids:
+                        # get external data by reading the input binary files
+                        input_image_binary = os.path.join(str(parameter_folder_current), image_name + "_r01.cistem")
+                        output_binary = os.path.join(clean_output_folder, image_name + "_r01.cistem" )
+                        image_par_obj = cistem_star_file.Parameters.from_file(input_image_binary)
+                        image_array = new_pardata[new_pardata[:,film_col]==film_id]
+                        # renumber the pid
+                        id = np.arange(1, image_array.shape[0] + 1 )
+                        image_array[:, 0] = id
+                        image_par_obj.set_data(image_array)
+                        image_par_obj.sync_particle_occ(ptl_to_prj=False)
+                        image_par_obj.sync_particle_ptlid()
+                        image_par_obj.to_binary(output_binary, extended_output=output_binary.replace(".cistem", "_extended.cistem"))
+                    pbar.update(1)
 
             # update extract selection after cleaning
             parameters["extract_cls"] += 1
 
-            generate_clean_spk(parameter_folder_current, is_tomo=False)
+            if parameters.get("clean_export_clean"):
+                generate_clean_spk(parameter_folder_current, is_tomo=False)
 
             current_dir = Path().cwd()
             os.chdir(Path("frealign", "maps"))
@@ -1152,7 +1153,9 @@ def particle_cleaning(parameters: dict):
             
             binning = parameters["tomo_rec_binning"]
             thickness = parameters["tomo_rec_thickness"]
-            generate_clean_spk(clean_parameter_folder, binning=binning, thickness=thickness)
+            
+            if parameters.get("clean_export_clean"):
+                generate_clean_spk(clean_parameter_folder, binning=binning, thickness=thickness)
 
             current_dir = Path().cwd()
             os.chdir(Path("frealign", "maps"))
