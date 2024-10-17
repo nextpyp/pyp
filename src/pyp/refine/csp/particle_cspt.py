@@ -491,6 +491,10 @@ def merge_movie_files_in_job_arr(
 
     for class_index in range(classes):
 
+        logger.info(
+            "### Reconstructing class {} of {} ###".format(class_index+1, classes)
+        )
+
         current_class = class_index + 1
 
         par_binary = str(output_basename) + "_r%02d.cistem" % current_class
@@ -1624,7 +1628,7 @@ def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="orderi
     for file in glob.glob(os.path.join(input_dir, "../maps/*.txt")):
         shutil.copy2(file, os.path.join(local_frealign, "maps"))
 
-    # copy pyp metadata to scracth space
+    # copy pyp metadata to scratch space
     shutil.copy2(
         os.path.join(Path(input_dir).parents[1], fp["data_set"] + ".micrographs"),
         local_frealign_scratch,

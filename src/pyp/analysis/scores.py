@@ -1217,14 +1217,14 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
     # discard_mask = np.logical_or(pardata[:, field] < thresh, pardata[:, 11] < occ_thresh)
     discard_mask = np.ravel(np.logical_or(pardata[:, field] < thresh, pardata[:, 11] < occ_thresh))
     logger.info(f"Score range [{min(pardata[:, field]):.2f},{max(pardata[:, field]):.2f}], threshold = {thresh:.2f}")
-    logger.info(f"Occupancy range [{min(pardata[:, 11])},{max(pardata[:, 11])}], threshold {occ_thresh}")
+    logger.info(f"Occupancy range [{min(pardata[:, 11])},{max(pardata[:, 11])}], threshold = {occ_thresh}")
     discard = pardata[discard_mask]
     newinput_keep = pardata[np.logical_not(discard_mask)]
     global_indexes_to_remove = (discard[:, 0] - 1).astype("int").tolist()
     global_indexes_to_keep = (newinput_keep[:, 0] - 1).astype("int").tolist()
 
-    logger.info("Particles to remove = %i" % len(global_indexes_to_remove))
-    logger.info("Particles to keep = %i" % len(global_indexes_to_keep))
+    logger.info(f"Particles to remove = {len(global_indexes_to_remove):,}")
+    logger.info(f"Particles to keep = {len(global_indexes_to_keep):,}")
 
     thresh_ratio = len(global_indexes_to_keep) / pardata.shape[0]
 
@@ -1236,7 +1236,7 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
         else:
             if thresh_ratio >= 0.0001:
                 parameters["reconstruct_cutoff"] = "%.4f" % thresh_ratio
-                logger.info(f"Reconstruction cutoff is changed to {thresh_ratio:.4f}")
+                logger.info(f"Reconstruction cutoff changed to {thresh_ratio:.4f}")
                 return parameters, newinput_keep
             else:
                 Exception(f"Only {thresh_ratio * 100} percent of the particles will be used, which is too low, Abort.")

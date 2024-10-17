@@ -127,6 +127,7 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
         with open("project_dir.txt") as f:
             project_dir = f.readline().strip("\n")
 
+        logger.info(f"Retrieving occupancies from {nclasses} classes")
         with tqdm(desc="Progress", total=nclasses, file=TQDMLogger()) as pbar:
             for k in range(nclasses):
                 
@@ -170,7 +171,7 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
                     pbar.update(1)
 
     else:
-        logger.info("Not using tilt weighting to change OCC")
+        logger.info("Not using tilt weighting to change occupancies")
 
     # recalculate occ from logp
     all_frame, col_num = parx[0].shape
