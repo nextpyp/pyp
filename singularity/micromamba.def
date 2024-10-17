@@ -1,0 +1,57 @@
+Bootstrap: docker
+From: mambaorg/micromamba:2.0.2
+IncludeCmd: no
+
+
+%help
+	A minimal container for running generic Python code in the same environment that pyp uses.
+	Usage:
+		To get an interactive shell that is configured to use the Python environment, run:
+			apptainer run micromamba.sif
+		To run <cmd> using the python environment, run:
+			apptainer run micromamba.sif cmd
+	Note:
+		`appatainer shell` and `apptainer exec` commands will not have access to the
+		Python environment unless you replicate the effect of the runscript yourself
+
+%post
+
+	# set up a typical micromamba environment
+	# see: https://micromamba-docker.readthedocs.io/en/stable/quick_start.html
+
+	# write the micromamba config file
+	# NOTE: yaml files are whitespace-sensitive and need to use two spaces for indentation
+	mkdir -p /etc/micromamba
+	um_config=/etc/micromamba/config.yaml
+cat << EOF > "$um_config"
+
+name: base
+channels:
+  - conda-forge
+dependencies:
+  # pyp currently depends on Python v3.8
+  - python=3.8
+  # add your python dependencies here
+  - pytest=8.3.3
+  - jsonrpcclient=3.3.6
+  - requests
+  - pymongo
+  - toml
+EOF
+
+	# use micromamba to install a python environment
+	micromamba install -y -n base -f "$um_config"
+	micromamba clean --all --yes
+
+
+%runscript
+
+	rc=/usr/local/bin/_activate_current_env.sh
+
+	if [ -n "$*" ]; then
+		# have args, run them as a shell command
+		/bin/bash -c "source \"$rc\" && $*"
+	else
+		# start an interactive shell
+		/bin/bash --rcfile "$rc" -i
+	fi
