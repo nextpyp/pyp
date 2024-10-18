@@ -187,7 +187,10 @@ def submit_function_to_workers(function, arguments, verbose=False, silent=False)
     else:
         # execute all commands serially
         for function, arguments in zip(funcs, args):
-            for argument in arguments:
-                function(*argument)
+            logger.info(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
+            with tqdm(desc="Progress", total=num_processes, file=TQDMLogger()) as pbar:
+                for argument in arguments:
+                    function(*argument)
+                    pbar.update(1)
     # all done
     return
