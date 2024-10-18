@@ -5144,7 +5144,14 @@ def align_tilt_series(name, parameters, rotation=0):
                     if not parameters['slurm_verbose']:
                         logger.error(output)
                     logger.error('A GPU must be available for AreTomo2 to run')
-                raise Exception("AreTomo2 failed to run")
+                # write identity transformations
+                with open(f"{name}.xf", "w") as f:
+                    for i in range(tilt_series_size_z):
+                        f.write(
+                            """   1.0000000   0.0000000   0.0000000   1.0000000       0.000       0.000\n"""
+                        )
+                shutil.copy2(f"{name}.rawtlt", f"{name}.tlt")
+                logger.error("AreTomo2 failed to run")
             return
     else:
 
