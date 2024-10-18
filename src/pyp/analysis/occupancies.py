@@ -353,7 +353,7 @@ def classification_initialization( dataset, classes, iteration, decompressed_par
                 N += ptls
                 ptl_per_film.append(ptls)
             N = int(N)
-        logger.info("Total number of particles is " + str(N))
+        logger.info(f"Total number of particles is {N:,}")
        
         for k in range(classes):
             ref = k + 1

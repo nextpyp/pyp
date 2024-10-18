@@ -2048,6 +2048,9 @@ def csp_split(parameters, iteration):
         classes = int(project_params.param(parameters["class_num"], iteration))
 
     for ref in range(classes):
+        
+        logger.info(f"## Initializing class {ref+1} of {classes} ##")
+        
         name = f"{dataset}_r{ref+1:02d}"
 
         # Decompress parameter file if needed, and put them to the frealign/maps
@@ -2427,7 +2430,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
                 )
             except:
                 logger.warning(
-                    "Could not find frealign statistics file in maps folder"
+                    "Could not find frealign statistics file in maps/ folder"
                 )
                 pass
 

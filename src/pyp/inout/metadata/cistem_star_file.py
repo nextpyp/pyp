@@ -1492,10 +1492,10 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
     tiltangle_dict = {}
     particle_dict = {}
     
-    logger.info(f"Merging {len(binary_list):,} parameter files")
-    if len(binary_list) < 10:
+    if len(binary_list) < 100:
         disable = True
     else:
+        logger.info(f"Merging {len(binary_list):,} parameter files")
         disable = False
     with tqdm(desc="Progress", total=len(binary_list), file=TQDMLogger(), disable=disable) as pbar:
         for par_binary in binary_list:

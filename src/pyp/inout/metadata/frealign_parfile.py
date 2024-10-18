@@ -642,13 +642,13 @@ class Parameters:
                 assert ((Path(decompressed_file) / f"{micrograph}.cistem").exists()), f"{micrograph}.cistem is not in {file}."
                 assert ((Path(decompressed_file) / f"{micrograph}_extended.cistem").exists()), f"{micrograph}_extended.cistem is not in {file}."
 
-        logger.info(f"Copying metadata to project directory")
         os.makedirs(new_file, exist_ok=True)
         files_to_transfer = glob.glob(os.path.join(decompressed_file,"*"))
         arguments = []
         for file in files_to_transfer:
             arguments.append((file,os.path.join(new_file,Path(file).name)))
         if len(files_to_transfer) > 500:
+            logger.info(f"Copying metadata to project directory")
             silent = False
         else:
             silent = True
