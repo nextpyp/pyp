@@ -2115,8 +2115,6 @@ def csp_split(parameters, iteration):
                 
             elif decompressed_parameter_file_folder.exists():
                 pass
-            # else:
-            #     raise Exception(f"{decompressed_parameter_file_folder} is required to proceed. ")
             else:
                 old_parfile = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}.par.bz2"
                 if old_parfile.exists():
@@ -3522,91 +3520,93 @@ def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
     # detect all .next files in next/
     next_files = [Path(f).stem for f in glob.glob( os.path.join(project_path,"next", "*.next")) if Path(f).name != "virion_thresholds.next"]
 
-    for tilt_series_name in micrograph_list:
-        
-        # retrieve metadata from pkl file
-        pkl_file = os.path.join(project_path,"pkl", tilt_series_name + ".pkl")
-        metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
-        
-        # clear virion/spike coordinates, if any
-        metadata.data.pop("box", None)
-        metadata.data.pop("vir", None)
-
-        # remove original pkl file to allow saving of modified metadata
-        try:
-            os.remove(pkl_file)
-            [os.remove(f) for f in glob.glob(os.path.join("sva","*_vir????.txt"))]
-        except:
-            pass
-
-        # go to working directory
-        os.chdir(working_path)
-
-        # retrieve tilt-series name and add to list
-        if tilt_series_name in next_files:
-    
-            # read unbinned coordinates from website
-            next_file = os.path.join(project_path,"next",tilt_series_name+".next")
-            coordinates = np.loadtxt(next_file,ndmin=2)
-
-            if len(coordinates) > 0:
-                # add to list of used tilt-series
-                films_list.append(tilt_series_name)
-                
-                # convert to binned coordinates
-                coordinates /= parameters.get("tomo_rec_binning")
-                
-                # swap y and z                
-                coordinates = coordinates.copy()[:,[0,2,1,3]]
-
-                # add manual coordinates to metadata
-                header = metadata.files["box"]["header"]
-                import pandas as pd
-                df = pd.DataFrame(coordinates, columns=header)
-                metadata.updateData({'box':df})
-
-                # dump to local scratch                
-                metadata.meta2PYP(path=working_path, data_path=os.path.join(project_path, "raw/"))
-                            
-                # clean up
-                os.remove(next_file)
-
-            # Identify manually ignored views
-            excluded_views = []
-            if "exclude" in metadata.data:
-                [ excluded_views.append(f + 1) for f in metadata.data["exclude"].to_numpy()[:,-1] ]
-
-            # create link to tomogram in local scratch
-            reconstruction_file = os.path.join( project_path,"mrc", tilt_series_name + ".rec" )
-            if os.path.exists(reconstruction_file):
-                os.symlink( reconstruction_file, Path(reconstruction_file).name )
-
-            mrc_file = os.path.join( project_path,"mrc", tilt_series_name + ".mrc")
-            if os.path.exists(mrc_file):
-                x, y, _ = get_image_dimensions(mrc_file)
-            else:
-                raise Exception(f"Cannot find raw tilt-series {mrc_file} to extract dimentions")
-
-            # create txt files
-            detect_tomo.extract_spk_direct(
-                parameters=parameters, 
-                name=tilt_series_name, 
-                x=x,
-                y=y,
-                binning=parameters.get("tomo_rec_binning"), 
-                zfact="", 
-                tilt_angles=metadata.data["tlt"].to_numpy(),
-                tilt_options="-MODE 2 -OFFSET 0.00 -PERPENDICULAR -RADIAL {0},{1} -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {2}".format(
-    parameters["tomo_rec_lpradial_cutoff"], parameters["tomo_rec_lpradial_falloff"], excluded_views)
-            )
+    logger.warning(f"Updating metadata and reordering micrograph/tilt-series list")
+    with tqdm(desc="Progress", total=len(micrograph_list), file=TQDMLogger()) as pbar:
+        for tilt_series_name in micrograph_list:
             
-            # save txt files to sva/
-            txt_files = glob.glob("*_vir????.txt")
-            for txt_file in txt_files:
-                shutil.copy2( txt_file, os.path.join(project_path, "sva", txt_file))
+            # retrieve metadata from pkl file
+            pkl_file = os.path.join(project_path,"pkl", tilt_series_name + ".pkl")
+            metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+            
+            # clear virion/spike coordinates, if any
+            metadata.data.pop("box", None)
+            metadata.data.pop("vir", None)
 
-        # save metadata to pkl file
-        metadata.write()
+            # remove original pkl file to allow saving of modified metadata
+            try:
+                os.remove(pkl_file)
+                [os.remove(f) for f in glob.glob(os.path.join("sva","*_vir????.txt"))]
+            except:
+                pass
+
+            # go to working directory
+            os.chdir(working_path)
+
+            # retrieve tilt-series name and add to list
+            if tilt_series_name in next_files:
+        
+                # read unbinned coordinates from website
+                next_file = os.path.join(project_path,"next",tilt_series_name+".next")
+                coordinates = np.loadtxt(next_file,ndmin=2)
+
+                if len(coordinates) > 0:
+                    # add to list of used tilt-series
+                    films_list.append(tilt_series_name)
+                    
+                    # convert to binned coordinates
+                    coordinates /= parameters.get("tomo_rec_binning")
+                    
+                    # swap y and z                
+                    coordinates = coordinates.copy()[:,[0,2,1,3]]
+
+                    # add manual coordinates to metadata
+                    header = metadata.files["box"]["header"]
+                    import pandas as pd
+                    df = pd.DataFrame(coordinates, columns=header)
+                    metadata.updateData({'box':df})
+
+                    # dump to local scratch                
+                    metadata.meta2PYP(path=working_path, data_path=os.path.join(project_path, "raw/"))
+                                
+                    # clean up
+                    os.remove(next_file)
+
+                # Identify manually ignored views
+                excluded_views = []
+                if "exclude" in metadata.data:
+                    [ excluded_views.append(f + 1) for f in metadata.data["exclude"].to_numpy()[:,-1] ]
+
+                # create link to tomogram in local scratch
+                reconstruction_file = os.path.join( project_path,"mrc", tilt_series_name + ".rec" )
+                if os.path.exists(reconstruction_file):
+                    os.symlink( reconstruction_file, Path(reconstruction_file).name )
+
+                mrc_file = os.path.join( project_path,"mrc", tilt_series_name + ".mrc")
+                if os.path.exists(mrc_file):
+                    x, y, _ = get_image_dimensions(mrc_file)
+                else:
+                    raise Exception(f"Cannot find raw tilt-series {mrc_file} to extract dimentions")
+
+                # create txt files
+                detect_tomo.extract_spk_direct(
+                    parameters=parameters, 
+                    name=tilt_series_name, 
+                    x=x,
+                    y=y,
+                    binning=parameters.get("tomo_rec_binning"), 
+                    zfact="", 
+                    tilt_angles=metadata.data["tlt"].to_numpy(),
+                    tilt_options="-MODE 2 -OFFSET 0.00 -PERPENDICULAR -RADIAL {0},{1} -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {2}".format(parameters["tomo_rec_lpradial_cutoff"], parameters["tomo_rec_lpradial_falloff"], excluded_views)
+                )
+                
+                # save txt files to sva/
+                txt_files = glob.glob("*_vir????.txt")
+                for txt_file in txt_files:
+                    shutil.copy2( txt_file, os.path.join(project_path, "sva", txt_file))
+
+            # save metadata to pkl file
+            metadata.write()
+            pbar.update(1)
         
     # go back to project directory
     os.chdir(project_path)
@@ -4810,7 +4810,8 @@ if __name__ == "__main__":
                 parameters["refine_skip"] = True
                 if not parameters["clean_class_selection"]:
                     parameters["refine_parfile"] = project_params.resolve_path(parameters["clean_parfile"])
-
+                    parameters["refine_model"] = parameters["refine_parfile"].replace("*.bz2",".mrc")
+                
                 parameters["csp_refine_particles"] = False
                 parameters["csp_refine_micrographs"] = False
                 parameters["csp_refine_ctf"] = False
@@ -4818,7 +4819,6 @@ if __name__ == "__main__":
                 parameters["refine_iter"] = 2
                 parameters["refine_first_iter"] = 2
                 parameters["refine_maxiter"] = 2
-
                 parameters["class_num"] = 1
 
                 project_params.save_parameters(parameters)

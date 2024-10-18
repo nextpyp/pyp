@@ -27,6 +27,7 @@ TODO
 
 from inspect import Parameter
 import os
+import glob
 import shutil
 from pathlib import Path
 
@@ -641,7 +642,13 @@ class Parameters:
                 assert ((Path(decompressed_file) / f"{micrograph}.cistem").exists()), f"{micrograph}.cistem is not in {file}."
                 assert ((Path(decompressed_file) / f"{micrograph}_extended.cistem").exists()), f"{micrograph}_extended.cistem is not in {file}."
 
-        shutil.move(decompressed_file, new_file)
+        logger.info(f"Copying metadata to project directory")
+        os.makedirs(new_file, exist_ok=True)
+        files_to_transfer = glob.glob(os.path.join(decompressed_file,"*"))
+        arguments = []
+        for file in files_to_transfer:
+            arguments.append((file,os.path.join(new_file,Path(file).name)))
+        mpi.submit_function_to_workers(shutil.move,arguments=arguments,verbose=True)
 
     @staticmethod
     def write_parameter_file(output_fname, contents, parx=False, frealignx=False):
