@@ -464,10 +464,12 @@ EOF
             # df1, df2, angast, phaseshift (rad), CC, fit resolution (A), tilt axis, tilt angle, sample thickness (A) 
             return np.loadtxt("power.txt", comments="#", dtype="f")[[1, 2, 3, 5, 6, 7, 8, 9]]
     except:
-        logger.error("ctffind failed, aborting.")
-        logger.info(error)
-        logger.info(output)
-        sys.exit(0)
+        logger.error("CTF estimation failed. Using a different Max resolution value may fix the problem.")
+        if len(error) > 0:
+            logger.info(error)
+        if len(output) > 0:
+            logger.info(output)
+        return np.array([0, 0, 0, 0, 0, 0, 0, 0])
 
 
 # Run CTFFIND4 using power spectra
@@ -589,107 +591,110 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
     ccc = cc = ctf[3]
     cccc = ctf[4]
 
-    mrc2webp("power.mrc", name + "_ctffit.webp")
-    mrc2png("power.mrc", "ctffind3.png")
-    local_run.run_shell_command(
-        "{0}/convert ctffind3.png -gravity Center -crop 100%x+0+0 ctffind3.png".format(
-            os.environ["IMAGICDIR"]
-        ),
-        verbose=parameters["slurm_verbose"],
-    )
-    local_run.run_shell_command(
-        '{0}/convert ctffind3.png -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate +10+30 Defocus1={1} -pointsize 20 -fill white -weight 700 -undercolor "#0008" -annotate 0x0+10+65 Defocus2={2} -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate 0x0+10+100 Angast={3} -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate 0x0+10+135 CCC={4} ctffind3.png'.format(
-            os.environ["IMAGICDIR"],
-            "%.2f" % df1,
-            "%.2f" % df2,
-            "%.2f" % angast,
-            "%.4f" % ccc,
-        ),
-        verbose=parameters["slurm_verbose"],
-    )
+    try:
+        mrc2webp("power.mrc", name + "_ctffit.webp")
+        mrc2png("power.mrc", "ctffind3.png")
+        local_run.run_shell_command(
+            "{0}/convert ctffind3.png -gravity Center -crop 100%x+0+0 ctffind3.png".format(
+                os.environ["IMAGICDIR"]
+            ),
+            verbose=parameters["slurm_verbose"],
+        )
+        local_run.run_shell_command(
+            '{0}/convert ctffind3.png -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate +10+30 Defocus1={1} -pointsize 20 -fill white -weight 700 -undercolor "#0008" -annotate 0x0+10+65 Defocus2={2} -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate 0x0+10+100 Angast={3} -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate 0x0+10+135 CCC={4} ctffind3.png'.format(
+                os.environ["IMAGICDIR"],
+                "%.2f" % df1,
+                "%.2f" % df2,
+                "%.2f" % angast,
+                "%.4f" % ccc,
+            ),
+            verbose=parameters["slurm_verbose"],
+        )
 
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+        import matplotlib.pyplot as plt
+        import seaborn as sns
 
-    sns.set(style="darkgrid")
-    f, axarr = plt.subplots(2, figsize=(6, 6))
+        sns.set(style="darkgrid")
+        f, axarr = plt.subplots(2, figsize=(6, 6))
 
-    ctfprof = np.loadtxt("power_avrot.txt", comments="#")
-    os.rename("power_avrot.txt", name + "_avgrot.txt")
+        ctfprof = np.loadtxt("power_avrot.txt", comments="#")
+        os.rename("power_avrot.txt", name + "_avgrot.txt")
 
-    # determine index of ctf_min_res
-    min_res = np.argmin(np.fabs(ctfprof[0, :] - 1 / float(parameters["ctf_min_res"])))
+        # determine index of ctf_min_res
+        min_res = np.argmin(np.fabs(ctfprof[0, :] - 1 / float(parameters["ctf_min_res"])))
 
-    five_res = min_res + ctfprof[0, min_res:].size // 2
+        five_res = min_res + ctfprof[0, min_res:].size // 2
 
-    # 1D CTF FIT
-    axarr[0].set_title(name + "\n", fontsize=10)
-    axarr[0].plot(
-        ctfprof[0, min_res:five_res],
-        ctfprof[2, min_res:five_res],
-        color="r",
-        linewidth=1,
-        label="Radial",
-    )
-    axarr[0].plot(
-        ctfprof[0, min_res:five_res],
-        ctfprof[3, min_res:five_res],
-        color="g",
-        linewidth=1,
-        label="CTF",
-    )
-    axarr[0].plot(
-        ctfprof[0, min_res:five_res],
-        ctfprof[4, min_res:five_res],
-        color="b",
-        linewidth=1,
-        label="Quality",
-    )
-    axarr[0].set_xlim(ctfprof[0, min_res], ctfprof[0, five_res])
-    axarr[0].set_ylim(0, 1.2)
+        # 1D CTF FIT
+        axarr[0].set_title(name + "\n", fontsize=10)
+        axarr[0].plot(
+            ctfprof[0, min_res:five_res],
+            ctfprof[2, min_res:five_res],
+            color="r",
+            linewidth=1,
+            label="Radial",
+        )
+        axarr[0].plot(
+            ctfprof[0, min_res:five_res],
+            ctfprof[3, min_res:five_res],
+            color="g",
+            linewidth=1,
+            label="CTF",
+        )
+        axarr[0].plot(
+            ctfprof[0, min_res:five_res],
+            ctfprof[4, min_res:five_res],
+            color="b",
+            linewidth=1,
+            label="Quality",
+        )
+        axarr[0].set_xlim(ctfprof[0, min_res], ctfprof[0, five_res])
+        axarr[0].set_ylim(0, 1.2)
 
-    # 1D CTF FIT HIGH-RESOLUTION
-    axarr[1].plot(
-        ctfprof[0, five_res:],
-        ctfprof[2, five_res:],
-        color="r",
-        linewidth=1,
-        label="Radial average",
-    )
-    axarr[1].plot(
-        ctfprof[0, five_res:],
-        ctfprof[3, five_res:],
-        color="g",
-        linewidth=1,
-        label="CTF fit",
-    )
-    axarr[1].plot(
-        ctfprof[0, five_res:],
-        ctfprof[4, five_res:],
-        color="b",
-        linewidth=1,
-        label="Quality fit",
-    )
-    axarr[1].legend(
-        loc="upper right", frameon=True, facecolor="whitesmoke", framealpha=1
-    )
+        # 1D CTF FIT HIGH-RESOLUTION
+        axarr[1].plot(
+            ctfprof[0, five_res:],
+            ctfprof[2, five_res:],
+            color="r",
+            linewidth=1,
+            label="Radial average",
+        )
+        axarr[1].plot(
+            ctfprof[0, five_res:],
+            ctfprof[3, five_res:],
+            color="g",
+            linewidth=1,
+            label="CTF fit",
+        )
+        axarr[1].plot(
+            ctfprof[0, five_res:],
+            ctfprof[4, five_res:],
+            color="b",
+            linewidth=1,
+            label="Quality fit",
+        )
+        axarr[1].legend(
+            loc="upper right", frameon=True, facecolor="whitesmoke", framealpha=1
+        )
 
-    axarr[1].set_xlim(ctfprof[0, five_res], ctfprof[0, -1])
-    ulimit = min(
-        1.2,
-        max(
-            max(ctfprof[2, five_res:].max(), ctfprof[3, five_res:].max()),
-            ctfprof[2, five_res:].max(),
-        ),
-    )
-    axarr[1].set_ylim(0, ulimit)
+        axarr[1].set_xlim(ctfprof[0, five_res], ctfprof[0, -1])
+        ulimit = min(
+            1.2,
+            max(
+                max(ctfprof[2, five_res:].max(), ctfprof[3, five_res:].max()),
+                ctfprof[2, five_res:].max(),
+            ),
+        )
+        axarr[1].set_ylim(0, ulimit)
 
-    # draw 3A marker
-    if ctfprof[0, -1] > 1 / 3.0:
-        axarr[0].plot((1 / 3.0, 1 / 3.0), (0, 1.2), "k-.")
-        axarr[1].plot((1 / 3.0, 1 / 3.0), (0, ulimit), "k-.")
-    plt.savefig("{0}_CTFprof.png".format(name), bbox_inches="tight")
-    plt.close()
+        # draw 3A marker
+        if ctfprof[0, -1] > 1 / 3.0:
+            axarr[0].plot((1 / 3.0, 1 / 3.0), (0, 1.2), "k-.")
+            axarr[1].plot((1 / 3.0, 1 / 3.0), (0, ulimit), "k-.")
+        plt.savefig("{0}_CTFprof.png".format(name), bbox_inches="tight")
+        plt.close()
+    except:
+        pass
 
     ctf_params = np.array(
         [

@@ -47,33 +47,36 @@ def save_micrograph_to_website(name,verbose=False):
         try:
             # scan the CTF info
             ctf_path = "%s.ctf" % name
-            ctf = None
             if os.path.exists(ctf_path):
                 ctf = Web.CTF(*[float(x[0]) for x in csv.reader(open(ctf_path, "r"))])
             else:
+                ctf = []
                 logger.warning("Cannot find ctf information to submit to database")
+            if len(ctf) == 0:
+               ctf = None
 
             # scan the AVGROT info
             avgrot_path = "%s_avgrot.txt" % name
-            avgrot = None
             if os.path.exists(avgrot_path):
                 avgrot = [Web.AVGROT(*x) for x in np.loadtxt(avgrot_path, comments="#").T]
             else:
+                avgrot = []
                 logger.warning("Cannot find avgrot information to submit to database")
+            if len(avgrot) == 0:
+                avgrot = None
 
             # scan motion info
             xf_path = "%s.xf" % name
-            xf = None
             if os.path.exists(xf_path):
                 xf = [Web.XF(*x) for x in np.loadtxt(xf_path, ndmin=2)]
             else:
+                xf = []
                 logger.warning("Cannot find xf information to submit to database")
             if len(xf) == 0:
                 xf = None
-
+ 
             # scan particles info
             boxx_path = "%s.boxx" % name
-            boxx = None
             if os.path.exists(boxx_path):
                 boxx = [
                     Web.BOXX(x[0], x[1], x[2], x[3], int(x[4]), int(x[5]))
