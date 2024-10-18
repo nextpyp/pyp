@@ -174,21 +174,19 @@ def submit_function_to_workers(function, arguments, verbose=False, silent=False)
            func(*arg)
 
         current_directory = os.getcwd()
-        if silent:
-                parallel(delayed(wrapper)(func, *arg, current_directory=current_directory) for idx, func in enumerate(funcs) for arg in args[idx])
-        else:
+        if not silent:
             logger.info(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
-            with tqdm_joblib(tqdm(desc="Progress", total=num_processes, miniters=1, file=TQDMLogger())) as progress_bar:
-                parallel(delayed(wrapper)(func, *arg, current_directory=current_directory) for idx, func in enumerate(funcs) for arg in args[idx])
-
+        with tqdm_joblib(tqdm(desc="Progress", total=num_processes, miniters=1, file=TQDMLogger(), disable=silent)) as progress_bar:
+            parallel(delayed(wrapper)(func, *arg, current_directory=current_directory) for idx, func in enumerate(funcs) for arg in args[idx])
         if not silent:
             logger.info(f"{num_processes:,} functions(s) finished")
 
     else:
         # execute all commands serially
         for function, arguments in zip(funcs, args):
-            logger.info(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
-            with tqdm(desc="Progress", total=num_processes, file=TQDMLogger()) as pbar:
+            if not silent:
+                logger.info(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
+            with tqdm(desc="Progress", total=num_processes, file=TQDMLogger(), disable=silent) as pbar:
                 for argument in arguments:
                     function(*argument)
                     pbar.update(1)
