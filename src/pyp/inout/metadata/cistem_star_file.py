@@ -1493,7 +1493,11 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
     particle_dict = {}
     
     logger.info(f"Merging {len(binary_list):,} parameter files")
-    with tqdm(desc="Progress", total=len(binary_list), file=TQDMLogger()) as pbar:
+    if len(binary_list) < 10:
+        disable = True
+    else:
+        disable = False
+    with tqdm(desc="Progress", total=len(binary_list), file=TQDMLogger(), disable=disable) as pbar:
         for par_binary in binary_list:
             # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
 

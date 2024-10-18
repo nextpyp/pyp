@@ -648,7 +648,11 @@ class Parameters:
         arguments = []
         for file in files_to_transfer:
             arguments.append((file,os.path.join(new_file,Path(file).name)))
-        mpi.submit_function_to_workers(shutil.move,arguments=arguments,verbose=True)
+        if len(files_to_transfer) > 500:
+            silent = False
+        else:
+            silent = True
+        mpi.submit_function_to_workers(shutil.move,arguments=arguments,silent=silent)
 
     @staticmethod
     def write_parameter_file(output_fname, contents, parx=False, frealignx=False):
