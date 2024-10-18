@@ -366,8 +366,12 @@ def parse_arguments(block):
                         exclude_file = ["micrograph_particle.index", "particle_tilt.index"]
                         files = [f for f in files if f not in exclude_file]
                     if len(files) > 0:
-                        logger.info(f"Linking {len(files):,} files from {folder}/ folder in parent block")
-                        with tqdm(desc="Progress", total=len(files), file=TQDMLogger()) as pbar:
+                        if len(files) < 500:
+                            disable = True
+                        else:
+                            logger.info(f"Linking {len(files):,} files from {folder}/ folder in parent block")
+                            disable = False
+                        with tqdm(desc="Progress", total=len(files), file=TQDMLogger(), disable=disable) as pbar:
                             for source in files:             
                                 destination = os.path.join(os.getcwd(), os.path.relpath(source,parameters["data_parent"]))
                                 symlink_relative(source, destination)
@@ -381,8 +385,12 @@ def parse_arguments(block):
                         os.path.join(parameters["data_parent"], f, "*")
                     )
                     if len(files) > 0:
-                        logger.info(f"Linking {len(files):,} files from {f}/ folder in parent block")
-                        with tqdm(desc="Progress", total=len(files), file=TQDMLogger()) as pbar:
+                        if len(files) < 500:
+                            disable = True
+                        else:
+                            logger.info(f"Linking {len(files):,} files from {f}/ folder in parent block")
+                            disable = False
+                        with tqdm(desc="Progress", total=len(files), file=TQDMLogger(), disable=disable) as pbar:
                             for source in files:
                                 destination = os.path.relpath(source, parameters["data_parent"])
                                 symlink_relative(source, destination)
