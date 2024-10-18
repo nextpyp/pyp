@@ -3276,14 +3276,12 @@ name = "Max resolution (A)"
 description = "Maximum resolution used during refinement (per iteration, colon separated)"
 type = "str"
 default = "10"
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.fboost]
 name = "Use signed correlation"
 description = "May increase the chance of overfitting"
 type = "bool"
 default = false
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.fboostlim]
 name = "Resolution limit for signed correlation"
@@ -3291,7 +3289,6 @@ description = "Resolution limit to use for signed correlation coefficient (0=no 
 type = "float"
 default = 0.0
 condition = { arg="fboost", value="true" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.resume]
 name = "Resume refinement"
@@ -3299,7 +3296,6 @@ description = "Resume refinement from most recent iteration"
 type = "bool"
 default = true
 copyToNewBlock = false
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.first_iter]
 name = "First iteration"
@@ -3308,7 +3304,6 @@ type = "int"
 default = 2
 copyToNewBlock = false
 condition = { arg="resume", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.iter]
 name = "Starting iteration"
@@ -3324,7 +3319,6 @@ description = "Number of last refinement iteration"
 type = "int"
 default = 2
 copyToNewBlock = false
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.skip]
 name = "Skip refinement"
@@ -3332,7 +3326,6 @@ description = "Skip refinement step, only do reconstruction"
 type = "bool"
 default = true
 copyToNewBlock = false
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.metric]
 name = "Search metric"
@@ -3349,7 +3342,6 @@ description = "Use SSNR table during evaluation of refinement metric"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.global_stat]
 name = "Use global statistics"
@@ -3357,7 +3349,6 @@ description = "Use global statistics for refinement and reconstruction"
 type = "bool"
 default = false
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.mode]
 name = "Search mode"
@@ -3366,7 +3357,7 @@ type = "enum"
 enum = { 0="global", 1="local" }
 default = "0"
 condition = { arg="skip", value="false" }
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
 
 [tabs.refine.itmax]
 name = "Random search cycles"
@@ -3374,7 +3365,6 @@ description = "Number of cycles of randomised search used during global search"
 type = "int"
 default = 50
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.dang]
 name = "Angular sampling step (degrees)"
@@ -3382,7 +3372,6 @@ description = "There is a program default value calculated taking resolution int
 type = "str"
 default = "20.0"
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.priors]
 name = "Use alignment priors"
@@ -3390,7 +3379,6 @@ description = "Using priors during refinement may reduce the chance of overfitti
 type = "bool"
 default = false
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_angle_phi]
 name = "Refine Phi angle"
@@ -3398,7 +3386,6 @@ description = "Refine angle parameter Phi"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_angle_theta]
 name = "Refine Theta angle"
@@ -3406,7 +3393,6 @@ description = "Refine angle parameter Theta"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_angle_psi]
 name = "Refine Psi angle"
@@ -3414,7 +3400,6 @@ description = "Refine angle parameter Psi"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_shiftx]
 name = "Refine X shifts"
@@ -3422,7 +3407,6 @@ description = "Refine translation in the X dimension"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.refine_shifty]
 name = "Refine Y shifts"
@@ -3430,7 +3414,6 @@ description = "Refine translation in the Y dimension"
 type = "bool"
 default = true
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.searchx]
 name = "Search range in X (A)"
@@ -3438,7 +3421,6 @@ description = "Search range in the X-axis (0.0=mask radius)"
 type = "float"
 default = 0.0
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.searchy]
 name = "Search range in Y (A)"
@@ -3446,7 +3428,6 @@ description = "Search range in the Y-axis (0.0=mask radius)"
 type = "float"
 default = 0.0
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.score_weighting]
 name = "Score weighting"
@@ -3454,7 +3435,6 @@ description = "Use score weighting during refinement (higher score, stronger con
 type = "bool"
 default = false
 condition = { arg="skip", value="false" }
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.beamtilt]
 name = "Refine beam-tilt"
@@ -4074,42 +4054,42 @@ name = "First exposure for refinement"
 description = "First exposure index to use during refinement"
 type = "int"
 default = 0
-hidden = [ 'spr_coarse_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.UseImagesForRefinementMax]
 name = "Last exposure for refinement"
 description = "Last exposure index to use during refinement"
 type = "int"
 default = 20
-hidden = [ 'spr_coarse_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.Grid_spr]
 name = "Number of regions"
 description = "Number of regions in x, y (default is global refinement with x=1, y=1)"
 type = "str"
 default = "1,1"
-hidden = [ 'tomo_coarse_refine', 'tomo_flexible_refine' ]
+hidden = [ 'tomo_coarse_refine', 'tomo_flexible_refine', 'tomo_map_clean' ]
 
 [tabs.csp.Grid]
 name = "Number of regions"
 description = "Number of regions in x, y, z (default is global refinement with x=1, y=1, z=1)"
 type = "str"
 default = "1,1,1"
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.RefineProjectionCutoff]
 name = "Min number of projections for refinement"
 description = "Only refine particles that have at least this number of projections (0=all)"
 type = "int"
 default = 0
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.NumberOfRandomIterations]
 name = "Optimizer - Exhaustive search points"
 description = "Number of points to evalaute during reference-based exhaustive search"
 type = "int"
 default = 0
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'tomo_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'tomo_flexible_refine', 'spr_map_clean' ]
 copyToNewBlock = false
 
 [tabs.csp.OptimizerMaxIter]
@@ -4137,12 +4117,12 @@ type = "float"
 default = 0.0001
 
 [tabs.csp.abinitio]
-name = "Ab initio refinement"
-description = "Enable ab initio refinement"
+name = "Ab-initio refinement"
+description = "Enable ab-initio refinement"
 type = "bool"
 default = false
 copyToNewBlock = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "spr_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_coarse_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "spr_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_coarse_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.csp.InitialResolution]
 name = "Starting resolution limit"
@@ -4219,7 +4199,7 @@ name = "Refine tilt-geometry"
 description = "Optimize tilt-axis orientation and position for each tilt-image"
 type = "bool"
 default = false
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceMicrographShifts]
 name = "Translation range (A)"
@@ -4227,7 +4207,7 @@ description = "Tolerance to use for translations"
 type = "float"
 default = 100.0
 condition = { arg="refine_micrographs", value="true" }
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceMicrographTiltAngles]
 name = "Tilt-angle range (degrees)"
@@ -4235,7 +4215,7 @@ description = "Tolerance to use for micrograph tilt-angles"
 type = "float"
 default = 1.5
 condition = { arg="refine_micrographs", value="true" }
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceMicrographTiltAxisAngles]
 name = "Tilt-axis range (degrees)"
@@ -4243,7 +4223,7 @@ description = "Tolerance to use for micrograph tilt-axis angles"
 type = "float"
 default = 1.0
 condition = { arg="refine_micrographs", value="true" }
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.refine_particles]
 name = "Refine particle alignments"
@@ -4251,7 +4231,7 @@ description = "Optimize sub-tomogram orientations and translations in 3D"
 type = "bool"
 default = false
 copyToNewBlock = false
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesPhi]
 name = "Phi range (degrees)"
@@ -4259,7 +4239,7 @@ description = "Tolerance to use for particle Phi angle"
 type = "float"
 default = 30.0
 condition = { arg="refine_particles", value="true" }
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesPsi]
 name = "Psi range (degrees)"
@@ -4267,7 +4247,7 @@ description = "Tolerance to use for particle Psi angle"
 type = "float"
 default = 30.0
 condition = { arg="refine_particles", value="true" }
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesTheta]
 name = "Theta range (degrees)"
@@ -4275,7 +4255,7 @@ description = "Tolerance to use for particle Theta angle"
 type = "float"
 default = 30.0
 condition = { arg="refine_particles", value="true" }
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesShifts]
 name = "Translation range (A)"
@@ -4283,14 +4263,14 @@ description = "Tolerance to use for micrograph shifts"
 type = "float"
 default = 20.0
 condition = { arg="refine_particles", value="true" }
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.frame_refinement]
 name = "Movie frame refinement"
 description = "Optimize particle position across frames"
 type = "bool"
 default = false
-hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.transreg]
 name = "Regularize translations"
@@ -4298,7 +4278,7 @@ description = "Regularize translational parameters"
 type = "bool"
 default = false
 condition = { arg="frame_refinement", value="true" }
-hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.spatial_sigma]
 name = "Spatial sigma"
@@ -4306,7 +4286,7 @@ description = "Sigma to use for spatial regularization (pixels)"
 type = "float"
 default = 500.0
 condition = { arg="transreg", value="true" }
-hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.time_sigma]
 name = "Time sigma"
@@ -4314,7 +4294,7 @@ description = "Sigma to use for time regularization (number of frames)"
 type = "int"
 default = 21
 condition = { arg="transreg", value="true" }
-hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine' ]
+hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.transreg_method]
 name = "Translation regularization method"
@@ -4353,7 +4333,7 @@ name = "Invert CTF handedness"
 description = "Use reverse CTF handedness"
 type = "bool"
 default = false
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.refine_ctf]
 name = "Refine CTF per-particle"
@@ -6149,6 +6129,13 @@ copyToNewBlock = false
 [tabs.clean.check_reconstruction]
 name = "Generate reconstruction after filtering"
 description = "Calculate reconstruction using only clean particles"
+type = "bool"
+default = false
+copyToNewBlock = false
+
+[tabs.clean.export_clean]
+name = "Export clean particle coordinates"
+description = "Save clean particle coordinates to frealign/selected_particles/"
 type = "bool"
 default = false
 copyToNewBlock = false
