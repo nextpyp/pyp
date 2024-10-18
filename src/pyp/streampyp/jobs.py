@@ -34,6 +34,41 @@ def get_gres_option(use_gpu,gres):
         gpu_gres = "--gres=" + gpu_gres
     return gpu_gres
 
+def calculate_effective_bundle_size(parameters,processes):
+    """Calculate effective bundle size taking into account any specified resource limits
+
+    Args:
+        parameters (dict): pyp parameters
+        processes (int): total number of processes
+
+    Returns:
+        int: size of bundle
+    """    
+    all_cpu_nodes = int(parameters["slurm_max_cpus"])
+    threads = int(parameters["slurm_tasks"])
+    if all_cpu_nodes > 0:
+        simultaneous_tasks_by_cpus = math.floor(all_cpu_nodes / threads)
+    else:
+        simultaneous_tasks_by_cpus = processes
+
+    # enforce max amount of memory
+    all_memory_nodes = int(parameters["slurm_max_memory"])
+    memory = parameters["slurm_memory"]
+    if all_memory_nodes > 0:
+        simultaneous_tasks_by_memory = math.floor(all_memory_nodes / memory)
+    else:
+        simultaneous_tasks_by_memory = processes
+
+    # keep the most limiting of the two
+    simultaneous_taks = min( simultaneous_tasks_by_cpus, simultaneous_tasks_by_memory )
+    
+    bundle_size = math.ceil( processes / simultaneous_taks )
+
+    # nake sure we comply with user-specified bundle size, if any
+    bundle_size = max( bundle_size, parameters["slurm_bundle_size"])
+
+    return bundle_size    
+
 def submit_commands(
     submit_dir,
     command_file,
@@ -151,28 +186,20 @@ done
     else:
         raise Exception("can't find .pyp_config.toml")
 
-    # enforce max number of threads
-    all_cpu_nodes = int(project_params.load_parameters(par_dir)["slurm_max_cpus"])
-    bundle_size = all_cpu_nodes / threads
+    # calculate effective bundle size
+    parameters = project_params.load_parameters(par_dir)
+    tasks_per_arr = bundle_size = calculate_effective_bundle_size(parameters,processes)
 
-    # enforce max amount of memory
-    all_memory_nodes = int(project_params.load_parameters(par_dir)["slurm_max_memory"])
-    bundle_by_memory = all_memory_nodes / memory
-
-    # keep the most limiting of the two
-    bundle_size = min( bundle_size, bundle_by_memory )
-
-    net_processes = int(math.ceil(float(processes) / tasks_per_arr))
-    if bundle_size > 0 and net_processes < bundle_size:
-        if Web.exists:
-            bundle = None
-        else:
-            bundle = ""
-    else:
+    if bundle_size > 1 and processes > bundle_size:
         if Web.exists:
             bundle = int(bundle_size)
         else:
             bundle = "%" + str(int(bundle_size))
+    else:
+        if Web.exists:
+            bundle = None
+        else:
+            bundle = ""
 
     if Web.exists:
 
@@ -278,7 +305,7 @@ done
             "pyp_"+jobtype,
             memory,
             threads,
-            net_processes,
+            processes,
             bundle,
             walltime,
             get_gres_option(use_gpu,gres),
