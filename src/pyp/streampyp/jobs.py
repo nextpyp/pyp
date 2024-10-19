@@ -232,7 +232,6 @@ done
         if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:
             for batch in cmdgrid:
                 batch.append('/bin/bash -c "' + csp_local_merge_command + '"')
-        logger.warning(f"cmdgrid = {len(cmdgrid)}, rows = {len(cmdgrid[0])}")
 
         # add MPI settings if needed
         mpi = None
