@@ -435,7 +435,7 @@ def pyp_daemon(args):
                         if args["slurm_verbose"]:
                             logger.info("Adding {0} to queue".format(name))
                         tobesubmitted.append(name)
-                        if len(tobesubmitted) > 10:
+                        if len(tobesubmitted) >= parameters["slurm_bundle_size"]:
                             break
 
                         # generate rawtlt file for this tilt-series

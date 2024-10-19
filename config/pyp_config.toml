@@ -6454,7 +6454,7 @@ name = "Bundle size"
 description = "Number of micrographs/tilt-series to process sequentially in a batch"
 type = "int"
 default = 1
-hidden = [ "map_post_process", "stream_spr", "stream_tomo", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn", "spr_drgn" ]
+hidden = [ "map_post_process", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.queue]
 name = "CPU partition"
