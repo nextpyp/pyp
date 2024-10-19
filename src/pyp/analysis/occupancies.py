@@ -240,8 +240,12 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
                 image_name = image_name.replace("_r01.", "_r%02d." % (k + 1))
                 image_data = cistem_star_file.Parameters.from_file(image_name)
                 image_array = image_data.get_data()
-                image_array[:, occ_col] = occdata[np.where(parx_3d[k,:,newfilm_col]==film_id)]
-                image_array[:, sigma_col] = sigmadata[np.where(parx_3d[k,:,newfilm_col]==film_id)]
+                if image_array.shape[0] == parx_3d.shape[1]:
+                    image_array[:, occ_col] = occdata
+                    image_array[:, sigma_col] = sigmadata
+                else:
+                    image_array[:, occ_col] = occdata[np.where(parx_3d[k,:,newfilm_col]==film_id)]
+                    image_array[:, sigma_col] = sigmadata[np.where(parx_3d[k,:,newfilm_col]==film_id)]
                 image_data.set_data(image_array)
                 image_data.sync_particle_occ(ptl_to_prj=False)
                 image_data.to_binary(image_name, extended_output=image_name.replace(".cistem", "_extended.cistem"))
