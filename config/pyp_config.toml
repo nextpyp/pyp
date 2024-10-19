@@ -207,7 +207,7 @@ tabs = [ "tomo_denoise", "slurm", "micromon" ]
 [blocks.tomo_flexible_refine]
 name = "TOMO Frame Refinement"
 description = "Per-particle frame refinement (constrained)"
-tabs = [ "extract", "particle", "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
+tabs = [ "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
 
 [blocks.tomo_map_clean]
 name = "Particle Filtering"
