@@ -1298,7 +1298,15 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     # clean-up the previous parameter file folders if they exist
     refinement_path = Path().cwd() / "frealign" / "maps"
     parameter_file_folders = refinement_path.glob(f"{fp['data_set']}_r??_??")
-    [shutil.rmtree(folder) for folder in parameter_file_folders if Path(f"{folder}.bz2").exists()]
+    # [shutil.rmtree(folder) for folder in parameter_file_folders if Path(f"{folder}.bz2").exists()]
+    for folder in parameter_file_folders:
+        f = Path(f"{folder}.bz2")
+        class_one_file = f.parents[0] / f"{f.name[:-11]}_r01_02.bz2"
+        if Path(f).exists() or Path(folder).name.endswith("r01_01") or class_one_file.exists() and f"{folder.name[-2:]}" == "02":
+            try:
+                shutil.rmtree(folder)
+            except:
+                raise Exception("Failed to copy files?")
 
     # launch next iteration if needed
     if iteration < maxiter:
