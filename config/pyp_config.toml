@@ -73,7 +73,7 @@ tabs = [ "detect", "detect_nn2d", "detect_topaz2d", "slurm" ] # TODO
 [blocks.spr_map_clean]
 name = "Particle Filtering"
 description = "Filter particles based on scores or by class"
-tabs = [ "clean", "slurm" ]
+tabs = [ "clean", "refine", "slurm" ]
 forwarded_tabs = [ "particle", "extract", "csp", "reconstruct", "dose_weighting", "export" ]
 
 # Tomography 
@@ -212,7 +212,7 @@ tabs = [ "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
 [blocks.tomo_map_clean]
 name = "Particle Filtering"
 description = "Filter particles by score, distance, or class"
-tabs = [ "clean", "slurm" ]
+tabs = [ "clean", "refine", "slurm" ]
 forwarded_tabs = [ "particle", "extract", "csp", "reconstruct", "dose_weighting", "export" ]
 
 # common blocks
