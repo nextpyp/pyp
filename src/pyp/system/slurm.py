@@ -591,10 +591,6 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
 
     jobtype = "cspswarm"
     jobname = "Iteration %d (split)" % parameters["refine_iter"] if Web.exists else "cspswarm"
-
-    # calculate effective bundle size
-    bundle_size = jobs.calculate_effective_bundle_size(parameters,len(micrograph_list))
-    parameters["slurm_bundle_size"] = bundle_size
     
     # submit jobs to batch system
     if parameters["slurm_merge_only"]:

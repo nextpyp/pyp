@@ -44,12 +44,15 @@ def calculate_effective_bundle_size(parameters,processes):
     Returns:
         int: size of bundle
     """    
+    
+    net_processes = math.ceil( float(processes) / parameters["slurm_bundle_size"])
+    
     all_cpu_nodes = int(parameters["slurm_max_cpus"])
     threads = int(parameters["slurm_tasks"])
     if all_cpu_nodes > 0:
-        simultaneous_tasks_by_cpus = math.floor(all_cpu_nodes / threads)
+        simultaneous_tasks_by_cpus = math.floor(all_cpu_nodes / threads )
     else:
-        simultaneous_tasks_by_cpus = processes
+        simultaneous_tasks_by_cpus = net_processes
 
     # enforce max amount of memory
     all_memory_nodes = int(parameters["slurm_max_memory"])
@@ -57,17 +60,12 @@ def calculate_effective_bundle_size(parameters,processes):
     if all_memory_nodes > 0:
         simultaneous_tasks_by_memory = math.floor(all_memory_nodes / memory)
     else:
-        simultaneous_tasks_by_memory = processes
+        simultaneous_tasks_by_memory = net_processes
 
     # keep the most limiting of the two
-    simultaneous_taks = min( simultaneous_tasks_by_cpus, simultaneous_tasks_by_memory )
+    slurm_bundle_size = min( simultaneous_tasks_by_cpus, simultaneous_tasks_by_memory )
     
-    bundle_size = math.ceil( processes / simultaneous_taks )
-
-    # nake sure we comply with user-specified bundle size, if any
-    bundle_size = max( bundle_size, parameters["slurm_bundle_size"])
-
-    return bundle_size    
+    return slurm_bundle_size, net_processes    
 
 def submit_commands(
     submit_dir,
@@ -103,16 +101,25 @@ def submit_commands(
         logger.error(message)
         raise Exception(message)
 
-    if "sess_" in jobtype:
-        task_file = command_file
-    else:
-        task_file = os.path.join(os.getcwd(), submit_dir, command_file)
-
     with open(os.path.join(submit_dir, command_file)) as f:
         commands = [line.replace("\n", "") for line in f if len(line) > 0]
 
     # count the number of commands, assign to processes
     processes = len(commands)
+
+    # limit bundle size to number of nodes
+    if os.path.exists(".pyp_config.toml"):
+        par_dir = "."
+    elif os.path.exists("../.pyp_config.toml"):
+        par_dir = ".."
+    elif os.path.exists("../../.pyp_config.toml"):
+        par_dir = "../.."
+    else:
+        raise Exception("can't find .pyp_config.toml")
+
+    # calculate effective bundle size
+    parameters = project_params.load_parameters(par_dir)
+    slurm_bundle_size, net_processes = calculate_effective_bundle_size(parameters,processes)
 
     # only perform the following when tasks_per_arr > 1
     if "sess_" in jobtype:
@@ -176,25 +183,11 @@ done
                 ),
             )
 
-    # limit bundle size to number of nodes
-    if os.path.exists(".pyp_config.toml"):
-        par_dir = "."
-    elif os.path.exists("../.pyp_config.toml"):
-        par_dir = ".."
-    elif os.path.exists("../../.pyp_config.toml"):
-        par_dir = "../.."
-    else:
-        raise Exception("can't find .pyp_config.toml")
-
-    # calculate effective bundle size
-    parameters = project_params.load_parameters(par_dir)
-    tasks_per_arr = bundle_size = calculate_effective_bundle_size(parameters,processes)
-
-    if bundle_size > 1 and processes > bundle_size:
+    if slurm_bundle_size > 1 and net_processes > slurm_bundle_size:
         if Web.exists:
-            bundle = int(bundle_size)
+            bundle = int(slurm_bundle_size)
         else:
-            bundle = "%" + str(int(bundle_size))
+            bundle = "%" + str(int(slurm_bundle_size))
     else:
         if Web.exists:
             bundle = None
@@ -239,6 +232,7 @@ done
         if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:
             for batch in cmdgrid:
                 batch.append('/bin/bash -c "' + csp_local_merge_command + '"')
+        logger.warning(f"cmdgrid = {len(cmdgrid)}, rows = {len(cmdgrid[0])}")
 
         # add MPI settings if needed
         mpi = None
@@ -305,7 +299,7 @@ done
             "pyp_"+jobtype,
             memory,
             threads,
-            processes,
+            net_processes,
             bundle,
             walltime,
             get_gres_option(use_gpu,gres),
