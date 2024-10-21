@@ -1831,7 +1831,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     tilt_metadata["ctf_profiles"] = ctf_profiles
 
     # erase fiducials if needed
-    if parameters["tomo_ali_method"] == "imod_gold" and need_recalculation:
+    if need_recalculation:
 
         preprocess.erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y)
 
