@@ -1763,9 +1763,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     exclude_views = merge.do_exclude_views(name, tilt_angles)
 
     # Reconstruction options # -RADIAL 0.125,0.15, -RADIAL 0.25,0.15 (autoem2), 0.35,0.05 (less stringent)
-    tilt_options = "-MODE 2 -OFFSET 0.00 -PERPENDICULAR -RADIAL {0},{1} -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {2}".format(
-        parameters["tomo_rec_lpradial_cutoff"], parameters["tomo_rec_lpradial_falloff"], exclude_views
-    )
+    tilt_options = merge.get_tilt_options(parameters,exclude_views)
 
     # Run the following steps in parallel
     # 1. per-tilt CTF estimation

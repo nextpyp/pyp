@@ -245,6 +245,19 @@ def weight_average(input_stack, output_stack, weights):
         else:
             mrc.write(weighted_frame, output_stack)
 
+def get_tilt_options(parameters,exclude_views):
+    # Reconstruction options 
+    # -RADIAL 0.125,0.15, -RADIAL 0.25,0.15 (autoem2), 0.35,0.05 (less stringent)
+    tilt_options = "-MODE 2 -OFFSET 0.00 -PERPENDICULAR -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {0}".format(exclude_views)
+    
+    if parameters.get("tomo_rec_filter_form") == "fakesirt":
+        tilt_options += f" -FakeSIRTiterations {parameters.get('tomo_rec_fake_sirt_iterations')}"
+    if parameters.get("tomo_rec_filtering_method") == "gaussian":
+        tilt_options += f" -RADIAL {parameters['tomo_rec_lpradial_cutoff']},{parameters['tomo_rec_lpradial_falloff']}"
+    elif parameters.get("tomo_rec_filtering_method") == "hamming":
+        tilt_options += f" -HammingLikeFilter {parameters.get('tomo_rec_hamming')}"
+
+    return tilt_options
 
 def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=False):
     """Perform 3D reconstruction for tomoswarm."""

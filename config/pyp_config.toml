@@ -1885,21 +1885,47 @@ name = "Lowpass falloff (tilt-series filtering)"
 description = "Lowpass falloff to filter tilt-series prior to reconstruction"
 type = "float"
 default = 0.05
-condition = { arg="dose_weighting", value="false" }
+[tabs.tomo_rec.filter_form]
+name = "Radial filtering"
+description = "Form of radial filtering used during reconstruction"
+type = "enum"
+enum = { rampfunction="ramp function", fakesirt="fakeSIRT (mimic SIRT reconstruction)" }
+default = "rampfunction"
+
+[tabs.tomo_rec.fake_sirt_iterations]
+name = "Number of iterations"
+description = "Filter equivalent to this number of iterations"
+type = "int"
+default = 10
+condition = { arg="filter_form", value="fakesirt" }
+
+[tabs.tomo_rec.filtering_method]
+name = "High-frequency filtering"
+description = "Filtering method to use during reconstruction"
+type = "enum"
+enum = { gaussian="gaussian", hamming="hamming (as in tomo3d)" }
+default = "gaussian"
 
 [tabs.tomo_rec.lpradial_cutoff]
-name = "Lowpass cutoff (radial weighting)"
-description = "Lowpass filtering using IMOD radial weighting function (use 0.35 for less filtering)"
+name = "Frequency cutoff"
+description = "Lowpass cutoff for radial weighting function (use 0.35 for less filtering)"
 type = "float"
 default = 0.25
-condition = { arg="dose_weighting", value="false" }
+condition = { arg="filtering_method", value="gaussian" }
 
 [tabs.tomo_rec.lpradial_falloff]
-name = "Lowpass falloff (radial weighting)"
-description = "Lowpass filtering with IMOD radial weighting function (use 0.05 for less filtering)"
+name = "Frequency falloff"
+description = "Lowpass falloff (sigma) for radial weighting function (use 0.05 for less filtering)"
 type = "float"
 default = 0.15
-condition = { arg="dose_weighting", value="false" }
+condition = { arg="filtering_method", value="gaussian" }
+
+[tabs.tomo_rec.hamming]
+name = "Starting frequency"
+description = "Frequency at which to start multiplying by Hamming window"
+type = "float"
+default = 0.05
+condition = { arg="filtering_method", value="hamming" }
 
 [tabs.tomo_rec.erase_fiducials]
 name = "Erase fiducials"
