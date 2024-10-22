@@ -1867,24 +1867,27 @@ type = "bool"
 default = true
 hidden = true
 
-[tabs.tomo_rec.dose_weighting]
-name = "Apply dose weighting instead of bandpass filter"
-description = "Filter tilt-series prior to reconstruction according to dose settings"
-type = "bool"
-default = false
+[tabs.tomo_rec.2d_filtering_method]
+name = "2D filtering"
+description = "Filter to apply to tilt-series prior to reconstruction"
+type = "enum"
+enum = { lowpass="lowpass", doseweighting="dose weighting", none="none" }
+default = "lowpass"
 
 [tabs.tomo_rec.mtfilter_cutoff]
-name = "Lowpass cutoff (tilt-series filtering)"
-description = "Lowpass cutoff to filter tilt-series prior to reconstruction"
+name = "Frequency cutoff"
+description = "Cutoff frequency for lowpass filter"
 type = "float"
 default = 0.15
-condition = { arg="dose_weighting", value="false" }
+condition = { arg="2d_filtering_method", value="lowpass" }
 
 [tabs.tomo_rec.mtfilter_falloff]
-name = "Lowpass falloff (tilt-series filtering)"
-description = "Lowpass falloff to filter tilt-series prior to reconstruction"
+name = "Frequency falloff"
+description = "Falloff frequency (sigma) for lowpass filter"
 type = "float"
 default = 0.05
+condition = { arg="2d_filtering_method", value="lowpass" }
+
 [tabs.tomo_rec.filter_form]
 name = "Radial filtering"
 description = "Form of radial filtering used during reconstruction"

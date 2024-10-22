@@ -262,34 +262,35 @@ def get_tilt_options(parameters,exclude_views):
 def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=False):
     """Perform 3D reconstruction for tomoswarm."""
 
-    if "tomo_rec_dose_weighting" in parameters and parameters["tomo_rec_dose_weighting"] and os.path.exists("%s.order" % name):
+    if parameters.get("tomo_rec_2d_filtering_method") != "none":
+        if parameters.get("tomo_rec_2d_filtering_method") == "doseweighting" and os.path.exists("%s.order" % name):
 
-        dose_file = open("%s.dose" % name, "w")
-        with open("%s.order" % name, "r") as f:
-            for line in f.readlines():
-                prev_accumulative_dose = float(line.strip()) * float(
-                    parameters["scope_dose_rate"]
-                )
-                dose_per_tilt = float(parameters["scope_dose_rate"])
-                dose_file.write(
-                    "%f\t%f\n" % (prev_accumulative_dose, dose_per_tilt)
-                )
-        dose_file.close()
+            dose_file = open("%s.dose" % name, "w")
+            with open("%s.order" % name, "r") as f:
+                for line in f.readlines():
+                    prev_accumulative_dose = float(line.strip()) * float(
+                        parameters["scope_dose_rate"]
+                    )
+                    dose_per_tilt = float(parameters["scope_dose_rate"])
+                    dose_file.write(
+                        "%f\t%f\n" % (prev_accumulative_dose, dose_per_tilt)
+                    )
+            dose_file.close()
 
-        command = "{0}/bin/mtffilter -dtype 2 -dfile {1}.dose -volt {2} -verbose 1 -input {1}.ali -output {1}.mtf.ali".format(
-            get_imod_path(), name, int(float(parameters["scope_voltage"]))
-        )
-        # suppress long log
-        if ["slurm_verbose"]:
-            logger.info(command)
-        run_shell_command(command, verbose=False)
-    else:
-        command = "{0}/bin/mtffilter {1}.ali {1}.mtf.ali -lowpass {2},{3}".format(
-            get_imod_path(), name, parameters["tomo_rec_mtfilter_cutoff"], parameters["tomo_rec_mtfilter_falloff"]
-        )
-        run_shell_command(command, verbose=parameters["slurm_verbose"])
+            command = "{0}/bin/mtffilter -dtype 2 -dfile {1}.dose -volt {2} -verbose 1 -input {1}.ali -output {1}.mtf.ali".format(
+                get_imod_path(), name, int(float(parameters["scope_voltage"]))
+            )
+            # suppress long log
+            if ["slurm_verbose"]:
+                logger.info(command)
+            run_shell_command(command, verbose=False)
+        elif parameters.get("tomo_rec_2d_filtering_method") == "lowpass":
+            command = "{0}/bin/mtffilter {1}.ali {1}.mtf.ali -lowpass {2},{3}".format(
+                get_imod_path(), name, parameters["tomo_rec_mtfilter_cutoff"], parameters["tomo_rec_mtfilter_falloff"]
+            )
+            run_shell_command(command, verbose=parameters["slurm_verbose"])
 
-    shutil.move("{0}.mtf.ali".format(name), "{0}.ali".format(name))
+        shutil.move("{0}.mtf.ali".format(name), "{0}.ali".format(name))
 
     # create binned raw stack
     command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -bin {2}".format(
