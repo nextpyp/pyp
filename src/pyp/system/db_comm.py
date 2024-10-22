@@ -409,14 +409,14 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
             # also copy as .rawtlt
             shutil.copy2(external_tlt, os.path.join(working_path,raw_tlt_file))
         else:
-            logger.warning("No corresponding .tlt file from import path found for this tilt-series")
+            raise Exception(f"No .tlt file found for {name} in import directory")
 
         external_xf = os.path.join(project_params.resolve_path(parameters["tomo_ali_import"]), xf_file)
         if os.path.exists(external_xf):
             logger.info(f"Import tilt-series alignments from: {external_xf}")
             shutil.copy2(external_xf, working_path)
         else:
-            logger.warning("No corresponding .xf file from import path found for this tilt-series")
+            raise Exception(f"No .xf file found for {name} in import directory")
 
         # read metadata and save into pickle file
         data = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)

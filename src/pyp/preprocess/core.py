@@ -476,6 +476,11 @@ def read_tilt_series(
             labels.sort(key=lambda x: int(pattern.find(x)))
             detected_movies = [r.match(f) for f in sorted(os.listdir(".")) if r.match(f)]
 
+            if "SCANORD" not in pattern:
+                assert (len(detected_movies) == len(order_from_file)), f"{len(detected_movies)} tilts matching {parameters['movie_pattern']} != {len(order_from_file)} from .order"
+            if "ANGLE" not in pattern:
+                assert (len(detected_movies) == len(tilt_angles_from_file)), f"{len(detected_movies)} tilts matching {parameters['movie_pattern']} != {len(tilt_angles_from_file)} from .rawtlt"
+
             tilts = [[f, 0, 0] for f in [r.group(0) for r in detected_movies]]
             if not len(tilts) > 0:
                 raise Exception(
