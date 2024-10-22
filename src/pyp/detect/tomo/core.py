@@ -845,7 +845,6 @@ def get_global_spike_coordiantes( name, parameters, micrographsize_x, micrograph
         virion_boxsize = 0
 
     # tomogram binning factor with respect to raw micrographs
-    squred_image = parameters["tomo_ali_square"]
     binning = parameters["tomo_rec_binning"]
 
     recZ = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
