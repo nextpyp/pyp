@@ -948,10 +948,10 @@ def csp_run_refinement(
     patch_refinement = False
 
     if "spr" in parameters["data_mode"].lower():
-        grids = [int(number.strip()) for number in parameters["csp_Grid_spr"].split(",")]
+        grids = [int(eval(number.strip())) for number in parameters["csp_Grid_spr"].split(",")]
         assert (len(grids) == 2), f"Grids for single-particle region-based refinement should have two dimensions. (i.e, 4,4)"
     else:
-        grids = [int(number.strip()) for number in parameters["csp_Grid"].split(",")]
+        grids = [int(eval(number.strip())) for number in parameters["csp_Grid"].split(",")]
         assert (len(grids) == 3), f"Grids for tomography region-based refinement should have three dimensions (i.e., 8,8,2)."
 
     # we need -2 in ALL CASES to extract particles for later refinement or reconstruction
