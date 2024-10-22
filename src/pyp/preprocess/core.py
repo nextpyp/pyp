@@ -722,6 +722,9 @@ def read_tilt_series(
         float(tilt_axis),
     )
 
+    if not parameters.get("tomo_ali_square") and parameters.get("tomo_ali_swapsize"):
+        x, y = y, x
+
     return [x, y, z, pixel_size, voltage, mag, tilt_axis, drift_metadata]
 
 

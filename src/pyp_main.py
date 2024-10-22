@@ -1747,7 +1747,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
         t = timer.Timer(text="Apply alignment to tiltseries took: {}", logger=logger.info)
         t.start()
-        generate_aligned_tiltseries(name, parameters)
+        generate_aligned_tiltseries(name, parameters, x, y)
         t.stop()
 
     # Refined tilt angles

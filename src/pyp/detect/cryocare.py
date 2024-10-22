@@ -245,7 +245,8 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         headers = mrc.readHeaderFromFile(newname + ".mrc")
         x = int(headers["nx"])
         y = int(headers["ny"])
-        z = int(headers["nz"])
+        if not parameters.get("tomo_ali_square") and parameters.get("tomo_ali_swapsize"):
+            x, y = y, x
 
         # binned reconstruction
         binning = parameters["tomo_rec_binning"]
@@ -258,7 +259,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
             raise Exception("run tilt-series alignemnt with full movie frames first")
 
         # regenerate aligned tilt-series
-        generate_aligned_tiltseries(newname, parameters)
+        generate_aligned_tiltseries(newname, parameters, x, y)
 
         # Refined tilt angles
         tltfile = f"{newname}.tlt"

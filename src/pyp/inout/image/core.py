@@ -1461,7 +1461,7 @@ def get_tilt_axis_angle(name, parameters):
     return axis / counter
 
 
-def generate_aligned_tiltseries(name, parameters):
+def generate_aligned_tiltseries(name, parameters, x, y):
 
     # align unbinned data
     sec = 0 
@@ -1475,8 +1475,8 @@ def generate_aligned_tiltseries(name, parameters):
     commands = [] 
     aligned_images = []
     for tilt in range(sec):
-        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xf -linear -taper 1,1 && rm {1}_{2:04d}_square.mrc {1}_{2:04d}.xf".format(
-            get_imod_path(), name, tilt
+        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xf -linear -taper 1,1 -size {3},{4} && rm {1}_{2:04d}_square.mrc {1}_{2:04d}.xf".format(
+            get_imod_path(), name, tilt, x, y
         )
         commands.append(command)
         aligned_images.append("{0}_{1:04d}.ali".format(name, tilt))
