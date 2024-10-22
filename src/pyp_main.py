@@ -2154,8 +2154,8 @@ def csp_split(parameters, iteration):
                     merged_all_parameters = cistem_star_file.Parameters.merge(ref_files, input_extended_files=[])
                     par_data = merged_all_parameters.get_data()
                     compute_global_weights(par_data=par_data, weights_file=global_weight_file)
-                elif os.path.exists(parameters["refine_parfile"]) and ".par" in parameters["refine_parfile"]:
-                    compute_global_weights_from_par(parfile=parameters["refine_parfile"], weights_file=global_weight_file)
+                elif os.path.exists(project_params.resolve_path(parameters["refine_parfile"])) and ".par" in project_params.resolve_path(parameters["refine_parfile"]):
+                    compute_global_weights_from_par(parfile=project_params.resolve_path(parameters["refine_parfile"]), weights_file=global_weight_file)
 
                 parameters["dose_weighting_weights"] = global_weight_file
                 project_params.save_pyp_parameters(parameters=parameters, path=".")
