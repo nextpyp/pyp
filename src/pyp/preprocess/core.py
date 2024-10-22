@@ -581,7 +581,7 @@ def read_tilt_series(
             isfirst = True
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
             t.start()
-            logger.info(f"Processing movie frames using {parameters['movie_ali']}")
+            logger.info(f"Processing movie frames using: {parameters['movie_ali']}")
             import torch
             if torch.cuda.is_available() and 'motioncor' in parameters["movie_ali"]:
                 with tqdm(desc="Progress", total=len(sorted_tilts), file=TQDMLogger()) as pbar:
@@ -886,7 +886,7 @@ def regenerate_average_quick(
     # regenerate average in each tilt
     t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
     t.start()
-    logger.info(f"Processing movie frames using existing alignment")
+    logger.info(f"Processing movie frames using existing alignments")
     arguments = []
     for movie in frame_list:
         m_name = movie.replace(".mrc", "")
