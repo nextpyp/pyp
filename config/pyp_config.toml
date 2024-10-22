@@ -1934,12 +1934,26 @@ type = "bool"
 default = false
 
 [tabs.tomo_rec.erase_factor]
-name = "Fiducials radius factor"
+name = "Fiducial radius factor"
 description = "Multiple of fiducial radius used to erase gold"
 type = "float"
 default = 1.0
 condition = { arg="erase_fiducials", value="true" }
-advanced = true
+
+[tabs.tomo_rec.erase_order]
+name = "Pixel filling"
+description = "Strategy to substitute gold pixels with"
+type = "enum"
+enum = { noise="random noise", mean="mean of surrounding points", first="order 1 (plane)", second="order 2 (quadratic)", third="order 3 (cubic)" }
+default = "noise"
+condition = { arg="erase_fiducials", value="true" }
+
+[tabs.tomo_rec.erase_iterations]
+name = "Grow iterations"
+description = "Iterations to grow circular areas"
+type = "int"
+default = 5
+condition = { arg="erase_fiducials", value="true" }
 
 [tabs.tomo_rec.thickness]
 name = "Thickness of reconstruction (unbinned voxels)"

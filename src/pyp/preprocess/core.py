@@ -970,7 +970,19 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
 
         # erase gold on (unbinned) aligned tilt-series
         erase_factor = parameters["tomo_rec_erase_factor"]
-        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand 5 -order 0 -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
+        if parameters["tomo_rec_erase_order"] == "noise":
+            erase_order = -1
+        elif parameters["tomo_rec_erase_order"] == "mean":
+            erase_order = 0
+        elif parameters["tomo_rec_erase_order"] == "first":
+            erase_order = 1
+        elif parameters["tomo_rec_erase_order"] == "second":
+            erase_order = 2
+        elif parameters["tomo_rec_erase_order"] == "third":
+            erase_order = 3
+        erase_iterations = parameters['tomo_rec_erase_iterations']
+
+        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
         local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 
         try:
