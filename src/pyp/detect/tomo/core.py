@@ -63,7 +63,8 @@ def resize_template(mparameters, external_template, autopick_template):
         scaling < 0.99
         or scaling > 1.01
     ):
-        logger.warning(f"Rescaling template {external_template} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
+        if mparameters.get("slurm_verbose"):
+            logger.warning(f"Rescaling template {external_template} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
         command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
             get_imod_path(), output_box_size, autopick_template, scaling, external_template,
         )
@@ -263,11 +264,8 @@ def process_virion_multiprocessing(
                     str(parameters["tomo_vir_detect_thre"]),
                     autopick_template,
                 )
-                t = timer.Timer(text="Spike detection using Correlation3DNew took: {}", logger=logger.info)
-                t.start()
                 command = f"{get_tomo_path()}/Correlation3DNew {virion_name} {virion_name}_binned_nad_seg.mrc {threshold} {spk_pick_binning} {min(tilt_angles)} {max(tilt_angles)} 2 {lower_slice} {upper_slice} {size_x} {size_y} {size_z} {parameters['tomo_vir_detect_dist']} {parameters['tomo_vir_detect_thre']} {virion_name}_cut.txt {virion_name}_ccc.xml {virion_name}_spikes.xml"
                 local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
-                t.stop()
                 fresh_template_match = True
 
             # Using uniform coordinates from virion surface
