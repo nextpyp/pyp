@@ -8,6 +8,7 @@ from pyp import utils
 from pyp.analysis import plot
 from pyp.detect import joint, topaz
 from pyp.inout.image import mrc, writepng
+from pyp.inout.image.core import get_image_dimensions
 from pyp.inout.metadata import frealign_parfile
 from pyp.streampyp.web import Web
 from pyp.system import local_run, project_params
@@ -67,6 +68,12 @@ def detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options):
 
     thickness = parameters["tomo_rec_thickness"]
     # project gold beads into raw tilt-series
+    
+    # get tomogram dimensions directly from aligned tilt-series
+    x, y, _ = get_image_dimensions(f"{name}_bin.ali")
+    x *= binning
+    y *= binning
+        
     command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0  -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7} -ProjectModel {1}_gold3d.mod".format(
         get_imod_path(), name, thickness, binning, x, y, tilt_options, zfact,
     )

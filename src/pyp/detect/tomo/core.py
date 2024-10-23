@@ -928,6 +928,9 @@ def build_virion(virion, binning, virion_size, x, y, tilt_options, name, virion_
         rec_z / 2 - float(virion[2])
     ) * binning  # shifty = y / binning - float(virion[1]) * binning
 
+    # get tomogram dimensions directly from aligned tilt-series
+    x, y, _ = get_image_dimensions(f"{name}_virbin.ali")
+
     # reconstruct virion
     command = "{0}/bin/tilt -input {1}_virbin.ali -output {2}.rec -TILTFILE {1}.tlt -SHIFT {3},{4} -SLICE {5},{6} -THICKNESS {7} -WIDTH {7} -IMAGEBINNED 1 -FULLIMAGE {8},{9} {10}".format(
         get_imod_path(),
@@ -959,13 +962,12 @@ def build_virion(virion, binning, virion_size, x, y, tilt_options, name, virion_
 def build_virion_unbinned(
     virion, binning, virion_binning, virion_size, x, y, z_thickness, tilt_options, name, virion_name
 ):
-    # virion_size *= virion_binning
-    # x *= virion_binning
-    # y *= virion_binning
-    # binning *= virion_binning
-
+    # get tomogram dimensions directly from aligned tilt-series
+    x, y, _ = get_image_dimensions(f"{name}_bin_vir.ali")
+    x *= virion_binning
+    y *= virion_binning
+ 
     # The first slice is the centroid minus half of the boxsize
-    # fslice = float(virion[1]) * binning - ( virion_size / 2 )
     fslice = float(virion[1]) * binning - (virion_size / 2) - 1
 
     # The last slice is fslice + boxsize - 1
@@ -976,20 +978,19 @@ def build_virion_unbinned(
     ypad_up = ypad_dn = 0
 
     # Restrict upper Y and calculate padding (Y is actually Z in the reconstructed virion)
-    if lslice > x - 1:
-        ypad_up = lslice - x
-        lslice = x - 1
+    if lslice > y - 1:
+        ypad_up = lslice - y
+        lslice = y - 1
 
     # Restrict lower Y and calculate padding
     if fslice < 0:
         ypad_dn = fslice
         fslice = 0
 
-    shiftx = y / 2 - float(virion[0]) * binning # images rotated
+    shiftx = x / 2 - float(virion[0]) * binning # images rotated
     rec_z = z_thickness
 
     shiftz = (rec_z / 2 - float(virion[2])) * binning  
-    # shifty = y / binning - float(virion[1]) * binning
 
     # reconstruct virion
     command = "{0}/bin/tilt -input {1}_bin_vir.ali -output {2}_unbinned.rec -TILTFILE {1}.tlt -SHIFT {3},{4} -SLICE {5},{6} -THICKNESS {7} -WIDTH {7} -FULLIMAGE {8},{9} {10} -IMAGEBINNED {11}".format(
@@ -1064,6 +1065,9 @@ def extract_regions(parameters, name, x, y, binning, zfact, tilt_options):
         thickness = coord[4] * binning
         width = coord[3] * binning
 
+        # get tomogram dimensions directly from aligned tilt-series
+        x, y, _ = get_image_dimensions(f"{name}.ali")
+
         command = "{0}/bin/tilt -input {1}.ali -output {1}_region_{2}.rec -TILTFILE {1}.tlt -SHIFT {3},{4} -SLICE {5},{6} -THICKNESS {7} -WIDTH {8} -FULLIMAGE {9},{10} {11} {12}".format(
             get_imod_path(),
             name,
@@ -1121,6 +1125,9 @@ def spk_extract_and_process(
     pad_factor,
     parameters,
 ):
+
+    # get tomogram dimensions directly from aligned tilt-series
+    x, y, _ = get_image_dimensions(f"{name}.ali")
 
     # reconstruct virion
     command = "{0}/bin/tilt -input {1}.ali -output {2}.rec -TILTFILE {1}.tlt -SHIFT {3},{4} -SLICE {5},{6} -THICKNESS {7} -WIDTH {7} -IMAGEBINNED 1 -FULLIMAGE {8},{9} {10} {11}".format(

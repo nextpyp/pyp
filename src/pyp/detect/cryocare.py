@@ -245,8 +245,6 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         headers = mrc.readHeaderFromFile(newname + ".mrc")
         x = int(headers["nx"])
         y = int(headers["ny"])
-        if not parameters.get("tomo_ali_square") and parameters.get("tomo_ali_swapsize"):
-            x, y = y, x
 
         # binned reconstruction
         binning = parameters["tomo_rec_binning"]

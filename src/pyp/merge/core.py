@@ -310,6 +310,11 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     if 'imod' in parameters["tomo_rec_method"].lower():
 
+        # get tomogram dimensions directly from aligned tilt-series
+        x, y, _ = get_image_dimensions(f"{name}_bin.ali")
+        x *= binning
+        y *= binning
+
         command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7}".format(
             get_imod_path(), name, thickness, binning,  x, y, tilt_options, zfact,
         )
