@@ -1751,13 +1751,6 @@ description = "Tilt images will be reshaped into squares before processing"
 type = "bool"
 default = true
 
-[tabs.tomo_ali.swapsize]
-name = "Swap size (XY/YX)"
-description = "Resize aligned tilt-series by swapping the X and Y dimensions"
-type = "bool"
-default = false
-condition = { arg="square", value="false" }
-
 [tabs.tomo_ali.format]
 name = "Resize squares to closest multiple of 512"
 description = "Tilt images will be reshaped into squares using the closest multiple of 512 as size"
