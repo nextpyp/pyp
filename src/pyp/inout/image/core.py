@@ -1436,7 +1436,7 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
     os.rename("{0}_square.mrc".format(name), "{0}.mrc".format(name))
 
 
-def get_tilt_axis_angle(name, parameters):
+def get_tilt_axis_angle(name):
 
     # figure out tilt-axis angle and store in metadata
     [output, _] = run_shell_command(

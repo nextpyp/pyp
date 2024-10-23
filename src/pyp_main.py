@@ -1736,7 +1736,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # generate full-size aligned tiltseries only if we do not yet have binned tomogram OR 
     # we need .ali for either sub-volume or virion extraction
-    tilt_metadata["tilt_axis_angle"] = get_tilt_axis_angle(name, parameters)
+    tilt_metadata["tilt_axis_angle"] = get_tilt_axis_angle(name)
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
         parameters["tomo_vir_force"] or \
