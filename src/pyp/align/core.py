@@ -5240,7 +5240,7 @@ RotationAngle   %s
 IncludeList     %s
 TiltFile        ./IMOD/%s_bin.rawtlt
 AngleOffset     0.0
-RotOption       1
+RotOption       -1
 RotDefaultGrouping      5
 TiltOption      5
 TiltDefaultGrouping     5
@@ -5361,8 +5361,13 @@ EOF
             shutil.copy("%s.rawtlt" % name, "IMOD/%s_bin.rawtlt" % name)
             shutil.copy(name + ".fid.txt", "IMOD/{0}_bin.fid.txt".format(name))
 
+        # turn off magnification refinement and estimate single rotation
+        file = Path(f'{name}_tiltalignScript.txt')
+        file.write_text(file.read_text().replace('RotOption\t3', 'RotOption\t-1'))
+        file.write_text(file.read_text().replace('MagOption\t3', 'MagOption\t0'))
+
         # re-run tiltalign
-        com = "{0}/bin/tiltalign -MagOption 0 -param {1}_tiltalignScript.txt".format(
+        com = "{0}/bin/tiltalign -param {1}_tiltalignScript.txt".format(
             get_imod_path(), name
         )
         output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
@@ -5414,7 +5419,7 @@ OutputTransformFile     %s_bin.xf
 RotationAngle   %f
 TiltFile        %s.rawtlt
 AngleOffset     0.0
-RotOption       1
+RotOption       -1
 RotDefaultGrouping      5
 TiltOption      0
 TiltDefaultGrouping     5
