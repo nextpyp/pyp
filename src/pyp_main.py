@@ -1742,7 +1742,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # Resize aligned tilt-seres depending on tilt-axis orientation
     if tilt_metadata["tilt_axis_angle"] % 180 > 45 and tilt_metadata["tilt_axis_angle"] % 180 < 135 and not parameters.get("tomo_ali_square"):
         x, y = y, x
-        logger.ingo(f"Resizing aligned tilt-series to {x}x{y} to accomodate tilt-axis orientation")
+        logger.info(f"Resizing aligned tilt-series to {x}x{y} to accomodate tilt-axis orientation")
     
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
