@@ -1793,6 +1793,48 @@ type = "int"
 condition = { arg="method", value="imod_gold" }
 default = -1
 
+[tabs.tomo_ali.radius1]
+name = "Low-frequency cutoff"
+description = "Highpass filter frequency cutoff (FilterRadius1)"
+type = "float"
+condition = { arg="method", value="imod_gold" }
+default = 0.05
+
+[tabs.tomo_ali.sigma1]
+name = "Low-frequency rolloff"
+description = "Highpass filter frequency rolloff (FilterSigma1)"
+type = "float"
+condition = { arg="method", value="imod_gold" }
+default = 0.03
+
+[tabs.tomo_ali.radius2]
+name = "High-frequency cutoff"
+description = "Lowpass filter frequency cutoff (FilterRadius2)"
+type = "float"
+condition = { arg="method", value="imod_gold" }
+default = 0.1
+
+[tabs.tomo_ali.sigma2]
+name = "High-frequency rolloff"
+description = "Lowpass filter frequency rolloff (FilterSigma2)"
+type = "float"
+condition = { arg="method", value="imod_gold" }
+default = 0.03
+
+[tabs.tomo_ali.iterate]
+name = "Number of iterations"
+description = "Repeat alignment iteratively"
+type = "int"
+condition = { arg="method", value="imod_gold" }
+default = 5
+
+[tabs.tomo_ali.exclude]
+name = "Exclude central peak"
+description = "Useful when fixed pattern noise is present"
+type = "bool"
+condition = { arg="method", value="imod_gold" }
+default = false
+
 [tabs.tomo_ali.patches_x]
 name = "Number of patches in X"
 description = "Numer of patches in X to use for tilt-series alignment"

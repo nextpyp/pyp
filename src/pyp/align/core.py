@@ -4817,9 +4817,16 @@ def align_tilt_series(name, parameters, rotation=0):
             border_tapper = ""
             tapper_edge = ""
 
-        tiltxcorr_options = "-tiltfile {0}.rawtlt -binning {1} -rotation {2} -radius1 0.050000 -sigma1 0.030000 -radius2 0.100000 -sigma2 0.030000 -iterate 5 {3}".format(
-            name, int(parameters["movie_bin"]), rotation, border_tapper,
-        )
+        radius1 = parameters.get("tomo_ali_radius1")
+        sigma1 = parameters.get("tomo_ali_sigma1")
+        radius2 = parameters.get("tomo_ali_radius2")
+        sigma2 = parameters.get("tomo_ali_sigma2")
+        iterate = parameters.get("tomo_ali_iterate")
+
+        tiltxcorr_options = f"-tiltfile {name}.rawtlt -binning {parameters['movie_bin']} -rotation {rotation} -radius1 {radius1} -sigma1 {sigma1} -radius2 {radius2} -sigma2 {sigma2} -iterate {iterate} {border_tapper}"
+
+        if parameters.get("tomo_ali_exclude"):
+            tiltxcorr_options += " -ExcludeCentralPeak"
 
         command = "{0}/bin/tiltxcorr -input {1}_bin.st -output {1}_first.prexf {2}".format(
             get_imod_path(), name, tiltxcorr_options
