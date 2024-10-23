@@ -1457,7 +1457,6 @@ def get_tilt_axis_angle(name):
             axis_mean += axis
             counter += 1
 
-    logger.info("Detected TILT AXIS ANGLE = " + str(axis / counter))
     return axis / counter
 
 
