@@ -25,32 +25,44 @@ Changelog
 
    :fa:`star,text-success` Wrapper for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_.
 
-v0.7.0 (9/27/2024)
-******************
+v0.7.0 (10/26/2024)
+*******************
 
    :fa:`star,text-success` New blocks to run molecular pattern mining and particle localization (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
 
-   :fa:`star,text-success` New suite of blocks for particle picking to decouple particle detection from other pre-processing tasks.
+   :fa:`star,text-success` New block architecture with dedicated training and evaluation blocks for running neural network-based operations.
 
-   :fa:`star,text-success` Size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
+   :fa:`star,text-success` New dedicated suite of blocks for tomography particle picking (decoupled from other pre-processing operations).
 
-   :fa:`star,text-success` Allow selection of blocks using single click "Only" option in the Run jobs menu.
+   :fa:`star,text-success` 3D size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
 
-   :fa:`star,text-success` Add option for density auto-masking during 3D refinement.
+   :fa:`star,text-success` Import tilt-series alignments obtained with external programs in IMOD format (*.xf and *.tlt files).
 
-   :fa:`star,text-success` Add option to import existing tilt-series alignments from IMOD (*.xf and *.tlt).
+   :fa:`star,text-success` Export 3D particle coordinates in IMOD format to use in external programs (sva/*.spk files).
 
-   :fa:`star,text-success` Add option to export particle coordinates as IMOD models (sva/*.spk).
+   :fa:`star,text-success` New option to export particle stacks for use in external programs (plenty of storage required!).
 
-   :fa:`star,text-success` Add option to save particle stacks so they can be used by external programs.
+   :fa:`star,text-success` Store refinement metadata in cisTEM's new binary format for 2x faster refinement and classification.
 
-   :fa:`star,text-success` Save refinement metadata in cisTEM's new binary format (2x faster refinement and classification).
+   :fa:`star,text-success` Automatic density-based shape-masking during 3D refinement.
+
+   :fa:`star,text-success` Select individual blocks to run from the Jobs menu using a single click ("Only" option).
+
+   :fa:`plus-square,text-primary` More efficient and robust handling of large single-particle and tomography datasets.
+
+   :fa:`plus-square,text-primary` Finer control over tilt-series alignment and reconstruction options when using IMOD.
 
    :fa:`plus-square,text-primary` Checkbox to "Show advanced options" has global scope now.
 
    :fa:`plus-square,text-primary` Move options to reshape images into squares from Reconstruction to Tilt-series alignment tab.
 
-   :fa:`plus-square,text-primary` Allow user to specify how many times should nextPYP try to relaunch failed jobs.
+   :fa:`plus-square,text-primary` Allow users to specify how many times should nextPYP try to relaunch failed SLURM jobs.
+
+   :fa:`plus-square,text-primary` Improved handling of micrographs/tilt-series that have few or no particles after filtering.
+
+   :fa:`plus-square,text-primary` Report IMOD's fiducial model residual error during tilt-series alignment.
+
+   :fa:`plus-square,text-primary` Better handling of tilt-series from rectangular-shaped detectors.
 
    :fa:`bug,text-danger` Fix bug in navigation bar for refinement blocks when multiple classes were used.
 
