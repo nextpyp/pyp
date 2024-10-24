@@ -164,6 +164,11 @@ def spr_swarm_check_error(parameters, name):
     return False
 
 
+def create_links_to_files_spr(files,parameters):
+
+    [ symlink_relative(file, os.path.join("raw", os.path.basename(file))) for file in files ]
+
+
 def create_links_to_files(files,parameters):
 
     # check for duplicates
@@ -557,7 +562,10 @@ def parse_arguments(block):
             for chunk in chunks:
                 arguments.append(((chunk,parameters)))
             if len(arguments) > 0:
-                mpi.submit_function_to_workers(create_links_to_files,arguments=arguments,verbose=parameters["slurm_verbose"])
+                if parameters.get("data_mode") == "spr":
+                    mpi.submit_function_to_workers(create_links_to_files_spr,arguments=arguments,verbose=parameters["slurm_verbose"])
+                else:
+                    mpi.submit_function_to_workers(create_links_to_files,arguments=arguments,verbose=parameters["slurm_verbose"])
 
             ctffile = "ctf/" + os.path.splitext(os.path.basename(files[0]))[0] + ".ctf"
             if os.path.isfile(ctffile):

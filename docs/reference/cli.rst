@@ -20,7 +20,7 @@ Command line interface
    :body: bg-primary text-centered text-white
    :header: text-center
 
-   :fa:`wrench fa-2x text-white`
+   :fa:`download fa-2x text-white`
 
    +++
 
@@ -56,7 +56,7 @@ Command line interface
 
    .. link-button:: cli/classification
       :type: ref
-      :text: Classification tutorial (tomo)
+      :text: Classification tutorial (tomography)
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
@@ -67,7 +67,7 @@ Command line interface
 
    .. link-button:: cli/spa_import_export
       :type: ref
-      :text: Import/export single-particle
+      :text:  Single-particle import/export
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
@@ -78,5 +78,5 @@ Command line interface
 
    .. link-button:: cli/tomo_import_export
       :type: ref
-      :text: Import/export tomography
+      :text: Tomography import/export
       :classes: btn-outline-primary btn-block stretched-link

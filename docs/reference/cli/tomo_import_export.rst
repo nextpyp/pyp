@@ -1,6 +1,6 @@
-#############################
-Import/export tomography data
-#############################
+########################
+Tomography import/export
+########################
 
 1 Import tomography data in star format
 =======================================

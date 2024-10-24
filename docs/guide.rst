@@ -47,14 +47,14 @@ The following sections describe the main components and functionality available 
 
    +++
 
-   .. link-button:: guide/milopyp
+   .. link-button:: guide/picking2d
       :type: ref
-      :text: Pattern mining (MiLoPYP)
+      :text: 2D particle picking
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
 
-   :fa:`cubes fa-2x text-white`
+   :fa:`eye fa-2x text-white`
 
    +++
 
@@ -69,14 +69,14 @@ The following sections describe the main components and functionality available 
 
    +++
 
-   .. link-button:: guide/picking2d
+   .. link-button:: guide/milopyp
       :type: ref
-      :text: 2D particle picking
+      :text: Pattern mining (MiLoPYP)
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
 
-   :fa:`eye fa-2x text-white`
+   :fa:`cubes fa-2x text-white`
 
    +++
 

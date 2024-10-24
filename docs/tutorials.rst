@@ -14,7 +14,7 @@ Tutorials
    Classification (EMPIAR-10304) <tutorials/tomo_empiar_10304>
    Import/export data <tutorials/import_export>
 
-These step-by-step guides explain the main data processing protocols available in ``nextPYP``
+These step-by-step guides explain the main data processing protocols for single-particle cryo-EM/ET available in ``nextPYP``
 
 .. panels::
    :body: bg-primary text-centered text-white font-weight-bold
