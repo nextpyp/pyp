@@ -1223,9 +1223,10 @@ def clean_particle_sprbox(pardata, thresh, parameters, isfrealignx=False, metapa
     pardata = remove_duplicates(pardata, field, occ_field, parameters)
 
     # discard_mask = np.logical_or(pardata[:, field] < thresh, pardata[:, 11] < occ_thresh)
-    discard_mask = np.ravel(np.logical_or(pardata[:, field] < thresh, pardata[:, 11] < occ_thresh))
+    discard_mask = np.ravel(np.logical_or(pardata[:, field] < thresh, pardata[:, occ_field] < occ_thresh))
     logger.info(f"Score range [{min(pardata[:, field]):.2f},{max(pardata[:, field]):.2f}], threshold = {thresh:.2f}")
-    logger.info(f"Occupancy range [{min(pardata[:, 11])},{max(pardata[:, 11])}], threshold = {occ_thresh}")
+    logger.info(f"Occupancy range [{min(pardata[:, occ_field])},{max(pardata[:, occ_field])}], threshold = {occ_thresh}")
+
     discard = pardata[discard_mask]
     newinput_keep = pardata[np.logical_not(discard_mask)]
     global_indexes_to_remove = (discard[:, 0] - 1).astype("int").tolist()
@@ -1524,8 +1525,6 @@ def update_boxx_files(global_indexes_to_remove, parameters, classification_pass,
     return boxx_dbase
 
 
-
-
 def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameters: dict) -> np.ndarray:
     """remove_duplicates Remove particles in SPA that are too close to their neighbors after alignment by setting their score to -1
 
@@ -1548,8 +1547,9 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
     # film_list = np.loadtxt(filmlist_file, dtype='str')
 
     films = np.unique(pardata[:, FILM_COL].astype("int"))
-
-    logger.info(f"Removing duplicates closer than {parameters['clean_dist']} pixels")
+    
+    total_removed = 0
+    
     with tqdm(desc="Progress", total=len(films), file=TQDMLogger()) as pbar:
         for film in films:
             micrograph = pardata[pardata[:, FILM_COL] == film]
@@ -1564,6 +1564,8 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
                 ndmin=2
                 )
 
+            film_offset = np.where(pardata[:,FILM_COL]==film)[0][0]
+    
             for idx, line in enumerate(sort_pardata):
                 if idx == 0:
                     continue
@@ -1571,10 +1573,15 @@ def remove_duplicates(pardata: np.ndarray, field: int, occ_field: int, parameter
                 coordinate = np.array([line[x_coord] + (line[shiftx]/pixel_size), line[y_coord] + (line[shifty]/pixel_size)], ndmin=2)
                 dmin = scipy.spatial.distance.cdist(coordinate, valid_points).min()
                 if dmin <= parameters["clean_dist"]:
-                    pardata[pardata[:, FILM_COL] == film][int(line[0]-1), occ_field] = 0.0
+                    pardata[ film_offset + int(line[0]) - 1, occ_field] = 0.0
+                    total_removed += 1
                 else:
                     valid_points = np.vstack((valid_points, coordinate))
+            
             pbar.update(1)
+
+    logger.info(f"Removed {total_removed:,} duplicates closer than {parameters['clean_dist']} pixels")
+
     return pardata
 
 
