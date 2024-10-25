@@ -43,7 +43,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`search fa-2x text-white`
+   :fa:`crosshairs fa-2x text-white`
 
    +++
 
@@ -54,7 +54,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`eye fa-2x text-white`
+   :fa:`location-crosshairs fa-2x text-white`
 
    +++
 
@@ -65,7 +65,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`layer-group fa-2x text-white`
+   :fa:`fingerprint fa-2x text-white`
 
    +++
 
@@ -76,7 +76,7 @@ The following sections describe the main components and functionality available 
 
    ---
 
-   :fa:`cubes fa-2x text-white`
+   :fa:`map fa-2x text-white`
 
    +++
 

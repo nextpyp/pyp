@@ -125,7 +125,7 @@ The last step is to pick particles from the surface of virions:
 
 #. Click on :guilabel:`Segmentation (closed)` (output of the :badge:`Segmentation (closed surfaces),badge-secondary` block) and select :badge:`Particle-Picking (closed surfaces),badge-primary`
 
-#. Select the particle detection ``Method`` and corresponding parameters. "uniform" is used to select uniformly spaced positions on the surfaces, while "template search" is used to search for positions on the surface that have high-correlation with an external template (provided as an ``*.mrc`` file)
+#. Select the particle detection ``Method`` and corresponding parameters. "uniform" is used to select uniformly spaced positions on the surfaces, while "template search" is used to search for positions on the surface that have high-correlation with an external template (provided as an ``*.mrc`` file with the correct pixel size saved in the header)
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 

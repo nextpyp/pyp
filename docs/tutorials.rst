@@ -14,7 +14,7 @@ Tutorials
    Classification (EMPIAR-10304) <tutorials/tomo_empiar_10304>
    Import/export data <tutorials/import_export>
 
-These step-by-step guides explain the main data processing protocols for single-particle cryo-EM/ET available in ``nextPYP``
+This section contains step-by-step guides explaining the main cryo-EM/ET data processing protocols available in ``nextPYP``.
 
 .. panels::
    :body: bg-primary text-centered text-white font-weight-bold
@@ -26,7 +26,7 @@ These step-by-step guides explain the main data processing protocols for single-
 
    .. link-button:: tutorials/spa_empiar_10025
       :type: ref
-      :text: Single-particle tutorial
+      :text: Single-particle tutorial (EMPIAR-10025)
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
@@ -37,7 +37,29 @@ These step-by-step guides explain the main data processing protocols for single-
 
    .. link-button:: tutorials/tomo_empiar_10164
       :type: ref
-      :text: Tomography tutorial
+      :text: Tomography tutorial (EMPIAR-10164)
+      :classes: btn-outline-primary btn-block stretched-link
+
+   ---
+
+   :fa:`th-large fa-2x text-white`
+
+   +++
+
+   .. link-button:: tutorials/tomo_empiar_10304
+      :type: ref
+      :text: Classification tutorial (EMPIAR-10304)
+      :classes: btn-outline-primary btn-block stretched-link
+
+   ---
+
+   :fa:`file-import fa-2x text-white`
+
+   +++
+
+   .. link-button:: tutorials/import_export
+      :type: ref
+      :text: Import/export data
       :classes: btn-outline-primary btn-block stretched-link
 
    ---
@@ -60,28 +82,6 @@ These step-by-step guides explain the main data processing protocols for single-
    .. link-button:: tutorials/stream_tomo
       :type: ref
       :text: Tomography (on-the-fly)
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`th-large fa-2x text-white`
-
-   +++
-
-   .. link-button:: tutorials/tomo_empiar_10304
-      :type: ref
-      :text: Classification tutorial (tomography)
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`file-import fa-2x text-white`
-
-   +++
-
-   .. link-button:: tutorials/import_export
-      :type: ref
-      :text: Import/export data
       :classes: btn-outline-primary btn-block stretched-link
 
 .. seealso::
