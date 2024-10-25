@@ -6173,6 +6173,14 @@ type = "bool"
 default = false
 copyToNewBlock = false
 
+[tabs.clean.export_clean]
+name = "Export clean particle coordinates"
+description = "Save clean particle coordinates to frealign/selected_particles/"
+type = "bool"
+default = false
+copyToNewBlock = false
+condition = { arg="discard", value="true" }
+
 [tabs.clean.mintilt]
 name = "Lowest tilt-angle (degree)"
 description = "Only keep projections with tilt-angles above this limit"
@@ -6216,13 +6224,6 @@ copyToNewBlock = false
 [tabs.clean.check_reconstruction]
 name = "Generate reconstruction after filtering"
 description = "Calculate reconstruction using only clean particles"
-type = "bool"
-default = false
-copyToNewBlock = false
-
-[tabs.clean.export_clean]
-name = "Export clean particle coordinates"
-description = "Save clean particle coordinates to frealign/selected_particles/"
 type = "bool"
 default = false
 copyToNewBlock = false

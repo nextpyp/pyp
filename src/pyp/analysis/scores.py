@@ -1089,7 +1089,7 @@ def particle_cleaning(parameters: dict):
             parameters["extract_cls"] += 1
 
             if parameters.get("clean_export_clean"):
-                generate_clean_spk(parameter_folder_current, is_tomo=False)
+                generate_clean_spk(clean_output_folder, is_tomo=False)
 
             current_dir = Path().cwd()
             os.chdir(Path("frealign", "maps"))
@@ -1647,8 +1647,8 @@ def generate_clean_spk(input_parameter_folder, binning=1, output_path="./frealig
             for file in inputfiles:
                 parameter_obj = cistem_star_file.Parameters.from_file(file)
                 coords = parameter_obj.get_data()[:, [x, y]]     
-                outfile = os.path.join(output_path, os.path.basename(file).replace('.cistem', '.spk'))
-                np.savetxt(outfile.replace(".spk", ".box"), coords, fmt='%.1f')
+                outfile = os.path.join(output_path, os.path.basename(file).replace('_r01.cistem', '.box'))
+                np.savetxt(outfile, coords, fmt='%.1f')
                 pbar.update(1)
         box_files = len(glob.glob(os.path.join(output_path, "*.box")))
         if box_files > 0:
