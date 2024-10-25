@@ -1917,7 +1917,7 @@ _rlnRandomSubset #14
         if linkavg:
             relion_avgs = self.refinement[Relion.MICROGRAPH_NAME].values
             avgs_array = np.unique(relion_avgs)
-            logger.info(f"Generating symbolic links to raw data for {len(avgs_array)} micrographs")
+            logger.info(f"Generating symbolic links to raw data for {len(avgs_array):,} micrographs")
             with tqdm(desc="Progress", total=len(avgs_array), file=TQDMLogger()) as pbar:
                 for avg in avgs_array:
                     avg_src = os.path.join(rln_path, avg)
@@ -1938,7 +1938,7 @@ _rlnRandomSubset #14
 
         if from_motion:
 
-            logger.info(f"Importing CTF parameters and particle metadata from {len(imagelist)} movies")
+            logger.info(f"Importing CTF parameters and particle metadata from {len(imagelist):,} movies")
             with tqdm(desc="Progress", total=len(imagelist), file=TQDMLogger()) as pbar:
                 for image in imagelist:
                     imagekey = image.replace(".mrc", "")
@@ -1968,7 +1968,7 @@ _rlnRandomSubset #14
 
         else:
 
-            logger.info(f"Importing CTF parameters and particle metadata from {len(imagelist)} micrographs")
+            logger.info(f"Importing CTF parameters and particle metadata from {len(imagelist):,} micrographs")
             with tqdm(desc="Progress", total=len(imagelist), file=TQDMLogger()) as pbar:
                 for image in imagelist:
                     imagekey = image.replace(".mrc", "")
@@ -2024,8 +2024,7 @@ _rlnRandomSubset #14
         tomogram_star = parse_star_tables(tomostar)
         tomogram_star_keys = set(tomogram_star.keys()) - set("data_global")
         tomograms = {}
-
-        logger.info(f"Generating symbolic links to raw data for {tomogram_star['data_global'].size()} tilt-series")
+        logger.info(f"Generating symbolic links to raw data for {tomogram_star['data_global'].size():,} tilt-series")
         with tqdm(desc="Progress", total=tomogram_star["data_global"].size(), file=TQDMLogger()) as pbar:
 
             for index, row in tomogram_star["data_global"].iterrows():
@@ -2188,6 +2187,211 @@ _rlnRandomSubset #14
 
         return list(self.data.keys())
 
+
+    def TomoStar2metaV5(self, tomostar, refinestar, rln_path="relion/"):
+        """ Convert TOMO metadata from Relion to PYP 
+
+            Rquired inputs (Relion): 
+                - tomograms.star 
+                - refinement.star (any star file from Refine3D)
+                - *.tlt
+                - *.xf
+            Outputs (PYP):
+                - Metadata in pickle 
+                - refinement.txt (sub-volumne averaging) 
+
+                NOTE: You'll need to run the first iteration of csp to obtain initial parfile 
+                        csp -refine_iter 2 -refine_par=refinement.txt 
+
+        Args:
+            tomostar (Path): Path to tomograms.star
+            refinestar (Path): Path to run_iter???_data.star
+            rln_path (str, optional): Path to Relion project folder, used for searching all .tlt and .xf files. Defaults to "relion/".
+
+        Returns:
+            Dict: Metadata for all the tilt-series 
+        """
+
+        assert (os.path.exists(tomostar)), f"{tomostar} does not exist"
+        assert (os.path.exists(refinestar)), f"{refinestar} does not exist"
+
+        #################
+        # tomogram.star #
+        #################
+        tomogram_star = parse_star_tables(tomostar)
+        tomogram_star_keys = set(tomogram_star.keys()) - set("data_global")
+        tomograms = {}
+        logger.info(f"Generating symbolic links to raw data for {tomogram_star['data_global'].size:,} tilt-series")
+        with tqdm(desc="Progress", total=tomogram_star["data_global"].size, file=TQDMLogger()) as pbar:
+
+            for index, row in tomogram_star["data_global"].iterrows():
+                name = row[Relion.TOMONAME]
+                path = row[Relion.TILTSERIESPATHV5]
+                # numTilt = row[Relion.TILT]
+                x = row[Relion.TOMOX]
+                y = row[Relion.TOMOY]
+                z = row[Relion.TOMOZ]
+                # store relion tomogram size x, y, z for further coordinate conversion
+                tomograms[name] = [x, y, z, os.path.dirname(path)] 
+
+                if name not in self.data:
+                    self.data[name] = {} 
+
+                # assume pixel size, cs, voltage etc. are the same 
+                self.scope_data["voltage"] = row[Relion.VOLTAGE]
+                self.scope_data["AC"] = row[Relion.AC]
+                self.scope_data["CS"] = row[Relion.CS]
+                self.scope_data["pixel_size"] = row[Relion.TOMOPIXELSIZE]
+                self.scope_data["dose_rate"] = row[Relion.TOMODOSE] if "Relion.TOMODOSE" in row else 1
+                self.micrograph_global["ctf_hand"] = row[Relion.HAND]
+
+                tilt_series_star = parse_star_tables(Path(rln_path) / path)
+                path = tilt_series_star["data_"+name]["rlnMicrographMovieName"][0]
+                
+                if False:
+                    logger.warning(f"name = {path}")
+                    logger.warning(f"rlnpath = {rln_path}")
+                    file_path = os.path.join( "relion", Path(path).name)
+                    logger.warning(f"file path = {file_path}")
+                    # update image size - from .mrc images
+                    assert (os.path.exists(file_path), f"{file_path} does not exist")
+
+                    command = f"{get_imod_path()}/bin/header -size '{file_path}'"
+                    [output, error] = run_shell_command(command, verbose=True)
+                    x, y, z = list(map(int, output.split()))
+                x, y, z = 7420, 7676, 41
+                arr = np.array([[x, y, z]])
+                self.data[name]["image"] = pd.DataFrame(arr, columns=FILES_TOMO["image"]["header"])
+                #symlink_force(f"{Path(rln_path) / path}", f"{Path('mrc') / f'{name}.mrc'}")
+
+                pbar.update(1)
+
+        logger.info(f"Importing tomography metadata from {len(self.data)} tilt-series")
+        with tqdm(desc="Progress", total=len(self.data), file=TQDMLogger()) as pbar:
+            for tomo in self.data.keys():
+
+                tag = f"data_{tomo}"
+                assert (tag in tomogram_star_keys), f"{tomo} not in star file"
+
+                movie_dir = tomograms[tomo][3]
+
+                # tilt - from .tlt file
+                tlt_file = Path(rln_path) / movie_dir / f"{tomo}.tlt"
+                assert (os.path.exists(tlt_file)), f"{tomo}.tlt not found. Please put it in {Path(rln_path) / movie_dir}"
+                tlt = np.loadtxt(tlt_file, ndmin=1, comments=HEADERS, dtype=float)
+                df = pd.DataFrame(np.reshape(tlt, (tlt.shape[0], 1)), index=FILES_TOMO["tlt"]["index"], columns=FILES_TOMO["tlt"]["header"])
+                self.data[tomo]["tlt"] = df
+
+                # ali - from .xf file
+                xf_file = Path(rln_path) / movie_dir / f"{tomo}.xf"
+                assert (os.path.exists(xf_file)), f"{tomo}.xf not found. Please put it in {Path(rln_path) / movie_dir}"
+                ali = np.loadtxt(xf_file, ndmin=2, comments=HEADERS, dtype=float)
+                df = pd.DataFrame(ali, index=FILES_TOMO["ali"]["index"], columns=FILES_TOMO["ali"]["header"])
+                self.data[tomo]["ali"] = df
+
+                # get shift info from IMOD tilt.com script for tomogram reconstruction 
+                imod_tilt_file = Path(rln_path) / movie_dir / f"{tomo}.com"
+                if os.path.exists(imod_tilt_file):
+                    with open(imod_tilt_file) as f:
+                        try:
+                            tomogram_shifts = [line for line in f.read().split("\n") if "SHIFT" in line][0]
+                            shiftx, shiftz = tomogram_shifts.split()[1:]
+                            tomograms[tomo].append([float(shiftx), float(shiftz)]) 
+                        except:
+                            logger.warning(f"SHIFT not found in {tomo}.com. Assume no shifts applied to tomogram in RELION")
+                            tomograms[tomo].append([0.0, 0.0])
+                else:
+                    tomograms[tomo].append([0.0, 0.0]) 
+                    logger.warning(f"{tomo}.com not found. We'll assume you do NOT shift your tomogram in RELION")
+
+                # ctf - from tomograms.star
+                df1 = tomogram_star[tag][Relion.DEFOCUSU].to_numpy()
+                df2 = tomogram_star[tag][Relion.DEFOCUSV].to_numpy()
+                astang = tomogram_star[tag][Relion.DEFOCUSANGLE].to_numpy()
+                cc = np.copy(astang)
+                est_res = np.copy(astang)
+                cc.fill(0.1)       # make up some values
+                est_res.fill(5.0)  # make up some values
+
+                # order - derived from dose fraction in tomograms.star
+                exposures = tomogram_star[tag][Relion.MICROGRAPHPREEXPOSURE].to_numpy()
+                scanord = exposures / self.scope_data["dose_rate"].values[0]
+
+                # update dictionary using DataFrame
+                ctf = np.row_stack((tlt, df1, df2, astang, cc, est_res)).T
+                self.data[tomo]["ctf"] = pd.DataFrame(ctf, index=FILES_TOMO["ctf"]["index"], columns=FILES_TOMO["ctf"]["header"])
+                self.data[tomo]["order"] = pd.DataFrame(scanord, index=FILES_TOMO["order"]["index"], columns=FILES_TOMO["order"]["header"])
+
+                tomo_size = np.array([[512,512,256]]) # asign default values, change during pyp processing if needed
+                self.data[tomo]["tomo"] = pd.DataFrame(tomo_size, index=FILES_TOMO["tomo"]["index"], columns=FILES_TOMO["tomo"]["header"])
+                self.data[tomo]["box"] = []
+
+                pbar.update(1)
+
+        ##################
+        # particles.star #
+        ##################
+        particle_star = parse_star_tables(refinestar)
+
+        counter = 1
+        tomo_spike_counter = {}
+        refinement_header = """number  lwedge  uwedge  posX    posY    posZ    geomX   geomY   geomZ   normalX normalY normalZ matrix[0]       matrix[1]       matrix[2]        matrix[3]       matrix[4]       matrix[5]       matrix[6]       matrix[7]       matrix[8]       matrix[9]       matrix[10]       matrix[11]      matrix[12]      matrix[13]      matrix[14]      matrix[15]      magnification[0]       magnification[1]      magnification[2]        cutOffset       filename\n"""
+        refinement = ["" for _ in range(len(particle_star["data_particles"].index))]
+
+        logger.info(f"Importing particle metadata from {particle_star['data_particles'].size()} tilt-series")
+        with tqdm(desc="Progress", total=particle_star["data_particles"].size(), file=TQDMLogger()) as pbar:
+            for index, row in particle_star["data_particles"].iterrows():
+                name = row[Relion.TOMONAME]
+                x, y = self.data[name]["image"].at[0, "x"], self.data[name]["image"].at[0, "y"]
+                square, binning = getTomoBinFactor(x, y)
+
+                coord_x, coord_y, coord_z = row[Relion.COORDX], row[Relion.COORDY], row[Relion.COORDZ]
+                dx, dy, dz = row[Relion.ORIGINXANGST], row[Relion.ORIGINYANGST], row[Relion.ORIGINZANGST]
+                rot, tilt, psi = row[Relion.ANGLEROT], row[Relion.ANGLETILT], row[Relion.ANGLEPSI]
+
+                coord_x -= dx / self.scope_data["pixel_size"].values[0]
+                coord_y -= dy / self.scope_data["pixel_size"].values[0]
+                coord_z -= dz / self.scope_data["pixel_size"].values[0]
+
+                if name not in tomo_spike_counter:
+                    tomo_spike_counter[name] = 0
+
+                # convert relion coordinate to PYP (.spk)
+                coord_x, coord_y, coord_z = relion2Spk(coord_x, coord_y, coord_z, binning, tomograms[name][0], tomograms[name][1], tomograms[name][2], shiftx=tomograms[name][-1][0], shiftz=tomograms[name][-1][-1])
+                self.data[name]["box"].append([coord_x, coord_y, coord_z])
+
+                # translate right-handed ZYZ to left-handed ZXZ
+                # first compile left-handedness matrix 
+                mrot = vtk.rotation_matrix(np.radians(-rot), [0, 0, 1])
+                mtilt = vtk.rotation_matrix(np.radians(-tilt), [0, 1, 0])
+                mpsi = vtk.rotation_matrix(np.radians(-psi), [0, 0, 1])
+                zyz = np.dot(mpsi, np.dot(mtilt, mrot))
+                zxz = eulerZYZtoZXZ(zyz)
+
+                # compile refinement.txt
+                refinement[counter-1] = getTomoRefinement(name, zxz, self.data[name]["tlt"].values, tomo_spike_counter[name], counter)
+
+                # increment global counter and local spike counter
+                counter += 1
+                tomo_spike_counter[name] += 1
+
+                pbar.update(1)
+
+        # wrap box coordinate in DataFrame
+        logger.info(f"Converting particle metadata from {self.data.keys()} tilt-series")
+        with tqdm(desc="Progress", total=self.data.size(), file=TQDMLogger()) as pbar:
+            for tomo in self.data.keys():
+                arr = np.asarray(self.data[tomo]["box"])
+                self.data[tomo]["box"] = pd.DataFrame(arr, index=FILES_TOMO["box"]["index"], columns=FILES_TOMO["box"]["header"])
+
+                pbar.update(1)
+
+        with open("pyp_update_volumes.txt", "w") as f:
+            f.write(refinement_header)
+            f.write("\n".join(refinement))
+
+
+        return list(self.data.keys())
 
     def star2par(self, starfile, image_list, path="."):
         """
@@ -2690,6 +2894,7 @@ class Relion:
     # Tomo 
     TOMONAME = "rlnTomoName"
     TILTSERIESPATH = "rlnTomoTiltSeriesName"
+    TILTSERIESPATHV5 = "rlnTomoTiltSeriesStarFile"
     TILT = "rlnTomoFrameCount"
     TOMOX = "rlnTomoSizeX"
     TOMOY = "rlnTomoSizeY"
