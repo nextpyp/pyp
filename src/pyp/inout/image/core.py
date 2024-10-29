@@ -870,7 +870,7 @@ def get_image_dimensions(name):
     [output, error] = run_shell_command(command, verbose=False)
     if "ERROR" in output:
         logger.error(output)
-    return [int(num) for num in output.split()]
+    return list(map(int, output.split()))
 
 
 def get_image_mode(name):
