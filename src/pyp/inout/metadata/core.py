@@ -3038,7 +3038,8 @@ _rlnClassNumber #12"""
     for binary_file in image_list:
         this_image_data = cistem_star_file.Parameters.from_file(binary_file)
 
-        name = os.path.basename(binary_file).split("_r0")[0]
+        name = os.path.basename(binary_file).replace("_r%02d.cistem" % cls,"")
+
         # box_str = np.loadtxt(os.path.join("csp", name + "_boxes3d.txt" ), dtype="str", comments="  PTLIDX" )
         metafile = os.path.join(name, name + ".pkl")
         pkl_data = pyp_metadata.LocalMetadata(metafile, is_spr=False).data
