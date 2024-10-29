@@ -1171,7 +1171,7 @@ def csp_run_refinement(
                 try:
                     mrc.merge_fast(movie_list,merged_stack,remove=True)
                 except:
-                    raise Exception("Particle extraction fails. Perhaps your slurm_memory is not enough. (currently %d G)" % (parameters["slurm_memory"]))
+                    raise Exception(f"Particle extraction failed. If this is caused by not having enough memory, increasing the current value of {parameters['slurm_memory']} GB may help")
                 [
                     os.remove(f)
                     for f in glob.glob(
