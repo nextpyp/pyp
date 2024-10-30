@@ -289,7 +289,7 @@ def create_micrographs_list(parameters):
         f.close()
     else:
         f = open(micrographs, "r")
-        files = f.read().split("\n")
+        files = [ file for file in f.read().split("\n") if file ]
         f.close()
 
     if len(files) == 0:
