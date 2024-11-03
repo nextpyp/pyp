@@ -1672,7 +1672,8 @@ hidden = true
 name = "Image binning"
 description = "Binning used for particle extraction"
 type = "int"
-default = 1
+default = 0
+required = true
 
 [tabs.extract.gold]
 name = "Skip gold fiducials"
