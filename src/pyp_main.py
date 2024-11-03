@@ -3684,7 +3684,7 @@ if __name__ == "__main__":
             )
         else:
             logger.info(
-                f"nextPYP v{version} launching job {jobid} on {socket.gethostname()} using {mpi_tasks} task(s) {memory}"
+                f"Job {jobid} running nextPYP v{version} on {socket.gethostname()} using {mpi_tasks} task(s) {memory}"
             )
 
         config = get_pyp_configuration()
@@ -4001,11 +4001,11 @@ if __name__ == "__main__":
 
                         if "spr" in mode:
                             new_imagelist, parameters = globalmeta.SpaStar2meta(refine_star_file, motion_star_file, rln_path=rln_path, linkavg=True, parameters=parameters)
-                            else:
+                        else:
                             tomo_star_file = project_params.resolve_path(parameters["import_tomo_star"])
                             if parameters["import_tomo_star_version"] == "version4":
                                 new_imagelist, parameters = globalmeta.TomoStar2meta(tomo_star_file, refine_star_file, rln_path=rln_path, parameters=parameters)
-                        else:
+                            else:
                                 tilt_series_star_file = project_params.resolve_path(parameters["import_tilt_series_star"])
                                 new_imagelist, parameters = globalmeta.TomoStar2metaV5(
                                     tomo_star_file=tomo_star_file, 
@@ -4026,14 +4026,14 @@ if __name__ == "__main__":
                             # mag = parameters["scope_mag"]
                             globalmeta.star2par(refine_star_file, new_imagelist, path="frealign/")
 
-                            project_params.save_parameters(parameters)
+                        project_params.save_parameters(parameters)
 
                         globalmeta.WritePickle(path="./pkl")
 
                         # generate image for display
                         binning = 8
                         if len(glob.glob("mrc/*.*")) > 0:
-                        input_file = glob.glob("mrc/*.*")[0]
+                            input_file = glob.glob("mrc/*.*")[0]
                         elif len(glob.glob("raw/*.*")) > 0:
                             input_file = glob.glob("raw/*.*")[0]
                         else:
