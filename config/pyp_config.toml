@@ -1556,6 +1556,13 @@ type = "int"
 default = 36
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
 
+[tabs.detect_milo.translation_ratio]
+name = "Image translation range"
+description = "Translation range used for data augmentation (fraction of bounding box)"
+type = "float"
+default = 0.5
+hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+
 [tabs.detect_milo.lr]
 name = "Learning rate"
 description = "Smaller values for slower and stable training. Larger values for faster and potentially unstable training"

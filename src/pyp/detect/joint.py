@@ -537,11 +537,11 @@ def milotrain(args):
 
     logger.info(f"Training MiLoPYP's exploration module")
     if 'detect_milo_mode' in args and '2d' in args['detect_milo_mode']:
-        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
         output_path = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample")
     else:
-        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
         output_path = Path(os.getcwd() + "/exp/simsiam3d/test_sample")
 
@@ -642,12 +642,12 @@ def miloeval(args):
         input_model = project_params.resolve_path(args['detect_milo_model'])
 
         if '2d' in args['detect_milo_mode']:
-            command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
+            command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
 
         else:
-            command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
+            command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
