@@ -2025,8 +2025,8 @@ _rlnRandomSubset #14
         tomogram_star = parse_star_tables(tomostar)
         tomogram_star_keys = set(tomogram_star.keys()) - set("data_global")
         tomograms = {}
-        logger.info(f"Generating symbolic links to raw data for {tomogram_star['data_global'].size():,} tilt-series")
-        with tqdm(desc="Progress", total=tomogram_star["data_global"].size(), file=TQDMLogger()) as pbar:
+        logger.info(f"Generating symbolic links to raw data for {tomogram_star['data_global'].shape[0]:,} files")
+        with tqdm(desc="Progress", total=tomogram_star["data_global"].shape[0], file=TQDMLogger()) as pbar:
 
             for index, row in tomogram_star["data_global"].iterrows():
                 name = row[Relion.TOMONAME]
@@ -2061,8 +2061,8 @@ _rlnRandomSubset #14
 
                 pbar.update(1)
 
-        logger.info(f"Importing tomography metadata from {self.data.size()} tilt-series")
-        with tqdm(desc="Progress", total=self.data.size(), file=TQDMLogger()) as pbar:
+        logger.info(f"Importing tomography metadata from {len(self.data)} tilt-series")
+        with tqdm(desc="Progress", total=len(self.data), file=TQDMLogger()) as pbar:
             for tomo in self.data.keys():
 
                 tag = f"data_{tomo}"
@@ -2133,13 +2133,14 @@ _rlnRandomSubset #14
         refinement_header = """number  lwedge  uwedge  posX    posY    posZ    geomX   geomY   geomZ   normalX normalY normalZ matrix[0]       matrix[1]       matrix[2]        matrix[3]       matrix[4]       matrix[5]       matrix[6]       matrix[7]       matrix[8]       matrix[9]       matrix[10]       matrix[11]      matrix[12]      matrix[13]      matrix[14]      matrix[15]      magnification[0]       magnification[1]      magnification[2]        cutOffset       filename\n"""
         refinement = ["" for _ in range(len(particle_star["data_particles"].index))]
 
-        logger.info(f"Importing particle metadata from {particle_star['data_particles'].size()} tilt-series")
-        with tqdm(desc="Progress", total=particle_star["data_particles"].size(), file=TQDMLogger()) as pbar:
+        logger.info(f"Importing particle metadata from {particle_star['data_particles'].shape[0]:,} particle projections")
+        with tqdm(desc="Progress", total=particle_star["data_particles"].shape[0], file=TQDMLogger()) as pbar:
             for index, row in particle_star["data_particles"].iterrows():
                 name = row[Relion.TOMONAME]
                 x, y = self.data[name]["image"].at[0, "x"], self.data[name]["image"].at[0, "y"]
                 square, binning = getTomoBinFactor(x, y)
 
+                # unbinned particle coordinates
                 coord_x, coord_y, coord_z = row[Relion.COORDX], row[Relion.COORDY], row[Relion.COORDZ]
                 dx, dy, dz = row[Relion.ORIGINXANGST], row[Relion.ORIGINYANGST], row[Relion.ORIGINZANGST]
                 rot, tilt, psi = row[Relion.ANGLEROT], row[Relion.ANGLETILT], row[Relion.ANGLEPSI]
@@ -2173,17 +2174,23 @@ _rlnRandomSubset #14
                 pbar.update(1)
 
         # wrap box coordinate in DataFrame
-        logger.info(f"Converting particle metadata from {self.data.keys()} tilt-series")
-        with tqdm(desc="Progress", total=self.data.size(), file=TQDMLogger()) as pbar:
+        logger.info(f"Converting particle metadata from {len(self.data.keys())} tilt-series")
+        with tqdm(desc="Progress", total=len(self.data.keys()), file=TQDMLogger()) as pbar:
             for tomo in self.data.keys():
                 arr = np.asarray(self.data[tomo]["box"])
+                # add dummy radius column, if needed
+                if arr.shape[1] == 3:
+                    arr = np.hstack([arr, np.ones([arr.shape[0],1])])
                 self.data[tomo]["box"] = pd.DataFrame(arr, index=FILES_TOMO["box"]["index"], columns=FILES_TOMO["box"]["header"])
 
                 pbar.update(1)
 
-        with open("pyp_update_volumes.txt", "w") as f:
+        # save volumes file to frealign/ folder
+        volumes_file = os.path.join( os.getcwd(), 'frealign', parameters["data_set"] + '_from_star_volumes.txt' )
+        with open(volumes_file, "w") as f:
             f.write(refinement_header)
             f.write("\n".join(refinement))
+        logger.info(f"Saved particle alignments to {volumes_file}")
 
         return list(self.data.keys()), parameters
 
