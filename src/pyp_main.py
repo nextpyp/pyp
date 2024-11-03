@@ -3996,12 +3996,11 @@ if __name__ == "__main__":
                         rln_path = project_params.resolve_path(parameters["import_relion_path"])
 
                         if "spr" in mode:
-                            if "import_motion_star" in parameters and parameters["import_motion_star"] is not None:
-                                motionstar = project_params.resolve_path(parameters["import_motion_star"])
+                            new_imagelist, parameters = globalmeta.SpaStar2meta(refine_star_file, motion_star_file, rln_path=rln_path, linkavg=True, parameters=parameters)
                             else:
                                 motionstar = ""
                             new_imagelist = globalmeta.SpaStar2meta(starfile, motionstar, rln_path=rln_path, linkavg=True)
-
+                                new_imagelist, parameters = globalmeta.TomoStar2meta(tomo_star_file, refine_star_file, rln_path=rln_path, parameters=parameters)
                         else:
                             tomostar = project_params.resolve_path(parameters["import_tomo_star"])
                             new_imagelist = globalmeta.TomoStar2meta(tomostar, starfile, rln_path=rln_path)

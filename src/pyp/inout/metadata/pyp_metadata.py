@@ -1889,7 +1889,7 @@ _rlnRandomSubset #14
                 ###### end of coord.star #######
 
 
-    def SpaStar2meta(self, refinestar, motionstar, rln_path="relion", linkavg=True):
+    def SpaStar2meta(self, refinestar, motionstar, rln_path="relion", linkavg=True, parameters=None):
         """
         Extract metadata from RELION SPA star files
         """
@@ -1989,10 +1989,10 @@ _rlnRandomSubset #14
 
                     pbar.update(1)
 
-            return list(self.data.keys())
+            return list(self.data.keys()), parameters
 
 
-    def TomoStar2meta(self, tomostar, refinestar, rln_path="relion/"):
+    def TomoStar2meta(self, tomostar, refinestar, rln_path="relion/", parameters=None):
         """ Convert TOMO metadata from Relion to PYP 
 
             Rquired inputs (Relion): 
@@ -2185,6 +2185,7 @@ _rlnRandomSubset #14
             f.write(refinement_header)
             f.write("\n".join(refinement))
 
+        return list(self.data.keys()), parameters
 
         return list(self.data.keys())
 
