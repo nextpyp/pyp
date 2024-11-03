@@ -2546,7 +2546,8 @@ _rlnRandomSubset #14
                     logger.info(f"Image = {self.data[tomo]['image'].to_numpy()[0]}")
                     logger.info(f"Tomo = {self.data[tomo]['tomo'].to_numpy()[0]}")
                     logger.info(f"Binning = {tomogram_binning}")
-                    logger.info(f"Frames = {self.data[tomo]['frames']}")
+                    if "frames" in self.data[tomo]:
+                        logger.info(f"Frames = {self.data[tomo]['frames']}")
                 arr = np.asarray(self.data[tomo]["box"])
                 if arr.shape[1] == 3:
                     arr = np.hstack([arr, np.ones([arr.shape[0],1])])
