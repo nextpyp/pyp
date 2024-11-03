@@ -4190,6 +4190,7 @@ description = "Number of regions in x, y, z (default is global refinement with x
 type = "str"
 default = "1,1,1"
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
+copyToNewBlock = false
 
 [tabs.csp.RefineProjectionCutoff]
 name = "Min number of projections for refinement"
