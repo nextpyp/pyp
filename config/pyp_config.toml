@@ -96,7 +96,7 @@ tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
 [blocks.tomo_import_star]
 name = "TOMO Star Import"
 description = "Star data import for TOMO"
-tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "import", "data", "gain", "scope", "tomo_rec", "slurm" ]
 
 [blocks.tomo_session]
 name = "TOMO Session Import"
@@ -1922,6 +1922,7 @@ description = "Filter to apply to tilt-series prior to reconstruction"
 type = "enum"
 enum = { lowpass="lowpass", doseweighting="dose weighting", none="none" }
 default = "lowpass"
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.mtfilter_cutoff]
 name = "Frequency cutoff"
@@ -1929,6 +1930,7 @@ description = "Cutoff frequency for lowpass filter"
 type = "float"
 default = 0.15
 condition = { arg="2d_filtering_method", value="lowpass" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.mtfilter_falloff]
 name = "Frequency falloff"
@@ -1936,6 +1938,7 @@ description = "Falloff frequency (sigma) for lowpass filter"
 type = "float"
 default = 0.05
 condition = { arg="2d_filtering_method", value="lowpass" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.filter_form]
 name = "Radial filtering"
@@ -1943,6 +1946,7 @@ description = "Form of radial filtering used during reconstruction"
 type = "enum"
 enum = { rampfunction="ramp function", fakesirt="fakeSIRT (mimic SIRT reconstruction)" }
 default = "rampfunction"
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.fake_sirt_iterations]
 name = "Number of iterations"
@@ -1950,6 +1954,7 @@ description = "Filter equivalent to this number of iterations"
 type = "int"
 default = 10
 condition = { arg="filter_form", value="fakesirt" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.filtering_method]
 name = "High-frequency filtering"
@@ -1957,6 +1962,7 @@ description = "Filtering method to use during reconstruction"
 type = "enum"
 enum = { gaussian="gaussian", hamming="hamming (as in tomo3d)" }
 default = "gaussian"
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.lpradial_cutoff]
 name = "Frequency cutoff"
@@ -1964,6 +1970,7 @@ description = "Lowpass cutoff for radial weighting function (use 0.35 for less f
 type = "float"
 default = 0.25
 condition = { arg="filtering_method", value="gaussian" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.lpradial_falloff]
 name = "Frequency falloff"
@@ -1971,6 +1978,7 @@ description = "Lowpass falloff (sigma) for radial weighting function (use 0.05 f
 type = "float"
 default = 0.15
 condition = { arg="filtering_method", value="gaussian" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.hamming]
 name = "Starting frequency"
@@ -1978,12 +1986,14 @@ description = "Frequency at which to start multiplying by Hamming window"
 type = "float"
 default = 0.05
 condition = { arg="filtering_method", value="hamming" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.erase_fiducials]
 name = "Erase fiducials"
 description = "Erase fiducials from aligned tilt-series prior to reconstruction"
 type = "bool"
 default = false
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.erase_factor]
 name = "Fiducial radius factor"
@@ -1991,6 +2001,7 @@ description = "Multiple of fiducial radius used to erase gold"
 type = "float"
 default = 1.0
 condition = { arg="erase_fiducials", value="true" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.erase_order]
 name = "Pixel filling"
@@ -1999,6 +2010,7 @@ type = "enum"
 enum = { noise="random noise", mean="mean of surrounding points", first="order 1 (plane)", second="order 2 (quadratic)", third="order 3 (cubic)" }
 default = "noise"
 condition = { arg="erase_fiducials", value="true" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.erase_iterations]
 name = "Grow iterations"
@@ -2006,18 +2018,21 @@ description = "Iterations to grow circular areas"
 type = "int"
 default = 5
 condition = { arg="erase_fiducials", value="true" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.thickness]
 name = "Thickness of reconstruction (unbinned voxels)"
 description = "Height of tomograms (z-dimension) to use during tomographic reconstruction"
 type = "int"
 default = 2048
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.binning]
 name = "Binning factor for reconstruction"
 description = "Produce binned tomograms during tomographic reconstruction (applies to dimensions x, y and z)"
 type = "int"
 default = 8
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.method]
 name = "Method for tomogram reconstruction"
@@ -2025,6 +2040,7 @@ description = "Method used for tomogram reconstruction"
 type = "enum"
 enum = { imod="imod", aretomo="aretomo2 (GPU required)" }
 default = "imod"
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.aretomo_sart]
 name = "Use SART reconstruction"
@@ -2032,6 +2048,7 @@ description = "Use Simultaneous Algebraic Reconstruction Technique (SART) to rec
 type = "bool"
 default = false
 condition = { arg="method", value="aretomo" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.aretomo_sart_iter]
 name = "Number of iterations"
@@ -2039,6 +2056,7 @@ description = "Number of iterations for SART reconstruction, "
 type = "int"
 default = 20
 condition = { arg="aretomo_sart", value="true" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.aretomo_sart_num_projs]
 name = "Number of projections per subet"
@@ -2046,6 +2064,7 @@ description = "Number of projections per subet for SART reconstruction"
 type = "int"
 default = 5
 condition = { arg="aretomo_sart", value="true" }
+hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_denoise]
 _name = "Tomogram denoising"
@@ -6435,37 +6454,60 @@ type = "bool"
 default = false
 hidden = true
 
-[tabs.import.refine_star]
-name = "Relion refinement file (*.star)"
-description = "Star file from RELION refine3d job"
-type = "path"
-path = { type="files" }
-input = { type="starfile" }
-required = false
-
-[tabs.import.tomo_star]
-name = "Relion tomograms file (*.star)"
-description = "Star from RELION ImportTomo job"
-type = "path"
-path = { type="files" }
-input = { type="starfile" }
+[tabs.import.tomo_star_version]
+name = "Relion version"
+description = "Version of Relion to import from"
+type = "enum"
+enum = { version4="4", version5="5" }
+default = "version5"
 hidden = [ "spr_import_star" ]
-required = false
-
-[tabs.import.motion_star]
-name = "Relion motioncorr file (*.star)"
-description = "Star from RELION motion correction job, with image names and motion metadata names"
-type = "path"
-path = { type="files" }
-input = { type="starfile" }
-hidden = [ "tomo_import_star" ]
 required = false
 
 [tabs.import.relion_path]
 name = "Relion project path"
-description = "Path to the relion main project where all the jobs were running"
+description = "Path to the Relion project"
 type = "path"
 path = { type="folders" }
+condition = { arg="tomo_star_version", value=["version4","version5"] }
+required = false
+
+[tabs.import.motion_star]
+name = "Motion file (*.star)"
+description = "Star file from Relion MotionCorr job (e.g., corrected_tilt_series.star)"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
+hidden = [ "spr_import_star" ]
+condition = { arg="tomo_star_version", value="version5" }
+required = false
+
+[tabs.import.tilt_series_star]
+name = "Aligned tilt-series file (*.star)"
+description = "Star file from Relion AlignTiltSeries job (e.g., AlignTiltSeries/job005/aligned_tilt_series.star)"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
+hidden = [ "spr_import_star" ]
+condition = { arg="tomo_star_version", value="version5" }
+required = false
+
+[tabs.import.tomo_star]
+name = "Tomograms file (*.star)"
+description = "Star file from Relion Tomograms job (e.g., tomograms.star)"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
+hidden = [ "spr_import_star" ]
+condition = { arg="tomo_star_version", value=["version4","version5"] }
+required = false
+
+[tabs.import.refine_star]
+name = "3D refinement file (*.star)"
+description = "Star file from Relion Refine3D job (e.g., run_it012_data.star)"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
+condition = { arg="tomo_star_version", value=["version4","version5"] }
 required = false
 
 ##################

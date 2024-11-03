@@ -3991,19 +3991,29 @@ if __name__ == "__main__":
                         path="./pkl"
                         )
 
-                        starfile = project_params.resolve_path(parameters["import_refine_star"])
+                        refine_star_file = project_params.resolve_path(parameters["import_refine_star"])
+                        if "import_motion_star" in parameters and parameters["import_motion_star"] is not None:
+                            motion_star_file = project_params.resolve_path(parameters["import_motion_star"])
+                        else:
+                            motion_star_file = None
 
                         rln_path = project_params.resolve_path(parameters["import_relion_path"])
 
                         if "spr" in mode:
                             new_imagelist, parameters = globalmeta.SpaStar2meta(refine_star_file, motion_star_file, rln_path=rln_path, linkavg=True, parameters=parameters)
                             else:
-                                motionstar = ""
-                            new_imagelist = globalmeta.SpaStar2meta(starfile, motionstar, rln_path=rln_path, linkavg=True)
+                            tomo_star_file = project_params.resolve_path(parameters["import_tomo_star"])
+                            if parameters["import_tomo_star_version"] == "version4":
                                 new_imagelist, parameters = globalmeta.TomoStar2meta(tomo_star_file, refine_star_file, rln_path=rln_path, parameters=parameters)
                         else:
-                            tomostar = project_params.resolve_path(parameters["import_tomo_star"])
-                            new_imagelist = globalmeta.TomoStar2meta(tomostar, starfile, rln_path=rln_path)
+                                tilt_series_star_file = project_params.resolve_path(parameters["import_tilt_series_star"])
+                                new_imagelist, parameters = globalmeta.TomoStar2metaV5(
+                                    tomo_star_file=tomo_star_file, 
+                                    tilt_series_star_file=tilt_series_star_file, 
+                                    refine_star_file=refine_star_file,
+                                    motion_star_file=motion_star_file,
+                                    rln_path=rln_path,
+                                    parameters=parameters)
 
                         # write new film file to PYP
                         filmname = dataset + ".films"
@@ -4014,17 +4024,20 @@ if __name__ == "__main__":
 
                         if "spr" in mode:
                             # mag = parameters["scope_mag"]
-                            globalmeta.star2par(starfile, new_imagelist, path="frealign/")
-                        else:
-                            # update handedness
-                            parameters["csp_ctf_handedness"] = True if globalmeta.micrograph_global["ctf_hand"].values[0] == -1.0 else False
+                            globalmeta.star2par(refine_star_file, new_imagelist, path="frealign/")
+
                             project_params.save_parameters(parameters)
 
                         globalmeta.WritePickle(path="./pkl")
 
                         # generate image for display
                         binning = 8
+                        if len(glob.glob("mrc/*.*")) > 0:
                         input_file = glob.glob("mrc/*.*")[0]
+                        elif len(glob.glob("raw/*.*")) > 0:
+                            input_file = glob.glob("raw/*.*")[0]
+                        else:
+                            raise Exception("Cannot find images to create thumbnail")
                         output_file = os.path.join( os.environ["PYP_SCRATCH"], Path(input_file).name )
                         x, y, slices = get_image_dimensions(input_file)
                         if y > x:
