@@ -1085,7 +1085,8 @@ _rlnGroupNumber #15
 _rlnRandomSubset #16 
         """
             
-            saved_file = os.path.join(output_path, filename)
+            os.makedirs("relion", exist_ok=True)
+            saved_file = os.path.join(output_path, "relion", filename)
             if not frame_refinement:
                 ac = self.scope_data["AC"].values[0]
                 cs = self.scope_data["CS"].values[0]
@@ -1132,7 +1133,7 @@ _rlnRandomSubset #16
                         stack, ptl_pxl, ac, cs, voltage, parfile, saved_file
                     )
                     run_shell_command(comm, verbose=True)
-                logger.info(f"Alignments exported to {saved_file}")
+                logger.info(f"Alignments exported to {Path(saved_file).resolve()}")
             else:
                 # mostly using stack instead of exporting raw shifts
                 pass
