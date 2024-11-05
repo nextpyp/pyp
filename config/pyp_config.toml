@@ -1672,8 +1672,7 @@ hidden = true
 name = "Image binning"
 description = "Binning used for particle extraction"
 type = "int"
-default = 0
-required = true
+default = 1
 
 [tabs.extract.gold]
 name = "Skip gold fiducials"
@@ -4190,7 +4189,6 @@ description = "Number of regions in x, y, z (default is global refinement with x
 type = "str"
 default = "1,1,1"
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
-copyToNewBlock = false
 
 [tabs.csp.RefineProjectionCutoff]
 name = "Min number of projections for refinement"
