@@ -275,7 +275,7 @@ def get_target(file, path):
 
 def is_image(file):
 
-    return file.split(".")[-1] in ["tif", "mrc", "dm4"]
+    return Path(file).suffix in [".tif", ".tiff", ".mrc", ".dm4", ".eer"]
 
 
 def move_to_destination(file, server, path):
