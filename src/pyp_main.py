@@ -616,12 +616,12 @@ def spr_merge(parameters, check_for_missing_files=True):
         data_set = None
     micrographs = "{}.micrographs".format(data_set)
     with open(micrographs) as f:
-        input_all_list = [line.strip() for line in f]
+        input_all_list = [line.strip() for line in f if line.strip()]
 
     if os.path.exists(micrographs + "_missing"):
         micrographs += "_missing"
         with open(micrographs) as f:
-            inputlist = [line.strip() for line in f]
+            inputlist = [line.strip() for line in f if line.strip()]
     else:
         inputlist = input_all_list
 
@@ -929,12 +929,12 @@ def tomo_merge(parameters, check_for_missing_files=True):
         data_set = None
     micrographs = "{}.micrographs".format(data_set)
     with open(micrographs) as f:
-        input_all_list = [line.strip() for line in f]
+        input_all_list = [line.strip() for line in f if line.strip()]
 
     if os.path.exists(micrographs + "_missing"):
         micrographs += "_missing"
         with open(micrographs) as f:
-            inputlist = [line.strip() for line in f]
+            inputlist = [line.strip() for line in f if line.strip()]
     else:
         inputlist = input_all_list
 
@@ -3538,7 +3538,7 @@ def update_metadata_coordinates(parameters):
 def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
 
     micrographs_file = f"{os.path.join(project_path, parameters.get('data_set'))}.micrographs"
-    micrograph_list = [line.strip() for line in open(micrographs_file, "r")]
+    micrograph_list = [line.strip() for line in open(micrographs_file, "r") if line.strip()]
 
     # keep track of used tilt-series
     films_list = []
@@ -4080,7 +4080,7 @@ if __name__ == "__main__":
                     data_set = session_parameters["data_set"]
 
                     micrographs = "{}.micrographs".format(data_set)
-                    micrograph_list = [line.strip() for line in open(micrographs, "r")]
+                    micrograph_list = [line.strip() for line in open(micrographs, "r") if line.strip()]
 
                     os.chdir(session_path)
                     pickle_files = glob.glob(os.path.join("pkl", "*.pkl"))
