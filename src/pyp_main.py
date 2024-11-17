@@ -4996,32 +4996,32 @@ if __name__ == "__main__":
 
                 half2 = half1.replace('half1', 'half2')
 
-                if "sharpen_mask" in parameters and parameters["sharpen_mask"] != None and \
+                mask = automask = ""
+                if parameters.get("sharpen_masking_method") == "external" and parameters.get("sharpen_mask") != None and \
                     (project_params.resolve_path(parameters["sharpen_mask"]) == "auto" or os.path.isfile(project_params.resolve_path(parameters["sharpen_mask"]))):
                     mask_file = project_params.resolve_path(parameters["sharpen_mask"])
                     if mask_file == "auto":
                         os.chdir(current_path)
                         mask_file = project_params.get_mask_from_projects()
                         os.chdir(working_path)
-
                     mask = "--mask %s " % mask_file
-                    automask = ""
-                else:
-                    mask = ""
+                elif parameters.get("sharpen_masking_method") == "auto":
                     automask_lp = parameters["sharpen_automask_lp"]
 
-                    if parameters["sharpen_automask_threshold"] > 0:
+                    if parameters["sharpen_masking_threshold_method"] == "threshold":
                         automask_threshold = "--automask_threshold %.2f " % parameters["sharpen_automask_threshold"]
                         automask_fraction = ""
                         automask_sigma = ""
-                    elif parameters["sharpen_automask_fraction"] > 0:
+                    elif parameters["sharpen_masking_threshold_method"] == "fraction":
                         automask_threshold = ""
                         automask_fraction = "--automask_fraction %.2f " % parameters["sharpen_automask_fraction"]
                         automask_sigma = ""
-                    else:
+                    elif parameters["sharpen_masking_threshold_method"] == "sigma":
                         automask_threshold = ""
                         automask_fraction = ""
                         automask_sigma = "--automask_sigma %.1f " % parameters["sharpen_automask_sigma"]
+                    else:
+                        automask_threshold = automask_fraction = automask_sigma = ""
 
                     automask = f"--automask --automask_input 0 --automask_lp {automask_lp} " +  f"{automask_threshold}{automask_fraction}{automask_sigma}"
 
@@ -5044,19 +5044,20 @@ if __name__ == "__main__":
                     apply_fsc2 = ""
                 fsc = f"{skip_fsc_weighting} {apply_fsc2}"
 
-                if parameters["sharpen_adhoc_bfac"] is not None:
+                if parameters["sharpen_bfactor_method"] == "adhoc":
                     auto_bfac = ""
                     adhoc_bfac = "--adhoc_bfac %i " % parameters["sharpen_adhoc_bfac"]
-                else:
-                    auto_bfac = "--auto_bfac %s " %  parameters["sharpen_auto_bfac"]
+                elif parameters["sharpen_bfactor_method"] == "auto":
+                    auto_bfac = "--auto_bfac %s,%s " %  (parameters["sharpen_auto_bfac_low"],parameters["sharpen_auto_bfac_high"])
                     adhoc_bfac = ""
+                else:
+                    auto_bfac = adhoc_bfac = ""
                 bfac = f"{auto_bfac}{adhoc_bfac}"
 
-                if parameters["sharpen_randomize_below_fsc"] < 1:
+                randomize_below_fsc = randomize_beyond = ""
+                if parameters["sharpen_randomize_method"] == "fsc":
                     randomize_below_fsc = "--randomize_below_fsc %.2f " % parameters["sharpen_randomize_below_fsc"]
-                    randomize_beyond = ""
-                else:
-                    randomize_below_fsc = ""
+                elif parameters["sharpen_randomize_method"] == "resolution":
                     randomize_beyond = "--randomize_beyond %.2f " % parameters["sharpen_randomize_beyond"]
                 randomize_phase = f"{randomize_below_fsc}{randomize_beyond} " 
 

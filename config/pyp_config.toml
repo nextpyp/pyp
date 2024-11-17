@@ -5656,7 +5656,7 @@ _description = "Parameters for map sharpening"
 
 [tabs.sharpen.input_map]
 name = "First half map (*_half1.mrc)"
-description = "Input map"
+description = "Input half map"
 type = "path"
 path = { type="files" }
 input = { type="halfMap" }
@@ -5664,37 +5664,57 @@ required = true
 
 # Input mask file name [mask.mrc]                    :
 
+[tabs.sharpen.masking_method]
+name = "Masking method"
+description = "Method used for masking"
+type = "enum"
+enum = { auto="auto", external="from file" }
+default = "auto"
+
 [tabs.sharpen.mask]
-name = "Shape mask (*.mrc)"
-description = "Apply shape mask during post-processing"
+name = "Mask file (*.mrc)"
+description = "Apply mask from mrc file"
 type = "path"
 path = { type="files" }
 input = { type="initialModel" }
+condition = { arg="masking_method", value="external" }
 
 # Auto mask 
 [tabs.sharpen.automask_lp]
-name = "Automask lowpass filter (A)"
-description = "Low-pass filter for auto-masking purposes"
+name = "Lowpass filter (A)"
+description = "Lowpass filter for auto-masking purposes"
 type = "float"
 default = 14.0
+condition = { arg="masking_method", value="auto" }
+
+[tabs.sharpen.masking_threshold_method]
+name = "Thresholding strategy"
+description = "Strategy used for thresholding"
+type = "enum"
+enum = { intensity="intensity", volume="volume", sigma="std" }
+default = "intensity"
+condition = { arg="masking_method", value="auto" }
 
 [tabs.sharpen.automask_threshold]
-name = "Automask threshold"
-description = "Absolute threshold to generate the initial binary mask (this has precedence over automask fraction and sigma)"
+name = "Threshold value"
+description = "Absolute threshold to generate the initial binary mask"
 type = "float"
 default = 0.0
+condition = { arg="masking_threshold_method", value="intensity" }
 
 [tabs.sharpen.automask_fraction]
-name = "Automask fraction"
+name = "Volume fraction"
 description = "Use fraction of voxels with highest density to determine threshold for masking"
 type = "float"
 default = 0.0
+condition = { arg="masking_threshold_method", value="volume" }
 
 [tabs.sharpen.automask_sigma]
-name = "Automask sigma"
-description = "Use number of standard deviations above the mean density to determine threshold for masking"
+name = "STDs above mean"
+description = "Number of standard deviations above the mean density to determine threshold for masking"
 type = "float"
 default = 1.0
+condition = { arg="masking_threshold_method", value="sigma" }
 
 # filter final maps
 [tabs.sharpen.gaussian]
@@ -5705,15 +5725,17 @@ default = false
 
 [tabs.sharpen.lowpass]
 name = "Lowpass cutoff (A)"
-description = "Low-pass filter cutoff"
+description = "Lowpass frequency cutoff"
 type = "str"
 default = "auto"
+condition = { arg="gaussian", value="true" }
 
 [tabs.sharpen.highpass]
 name = "Highpass cutoff (A)"
-description = "High-pass filter cutoff"
-type = "str"
-default = "-1.0"
+description = "Highpass frequency cutoff (-1.0 = Nyquist)"
+type = "float"
+default = -1.0
+condition = { arg="gaussian", value="true" }
 
 # fsc filter
 [tabs.sharpen.skip_fsc_weighting]
@@ -5728,30 +5750,56 @@ description = "Apply the square of the FSC curve as a filter"
 type = "bool"
 default = false
 
+[tabs.sharpen.bfactor_method]
+name = "B-factor method"
+description = "Method used for B-factor sharpening"
+type = "enum"
+enum = { auto="auto", adhoc="adhoc" }
+default = "auto"
+
 # bfactor
-[tabs.sharpen.auto_bfac]
-name = "Auto B-factor resolution range (A)"
-description = "Estimate B-factor automatically using information in this resolution range (lowres,highres)"
-type = "str"
-default = "10.0,0.0"
+[tabs.sharpen.auto_bfac_low]
+name = "Low resolution limit (A)"
+description = "Estimate B-factor using information above this resolution"
+type = "float"
+default = 10.0
+condition = { arg="bfactor_method", value="auto" }
+
+# bfactor
+[tabs.sharpen.auto_bfac_high]
+name = "High resolution limit (A)"
+description = "Estimate B-factor using information below this resolution (0.0 = Nyquist)"
+type = "float"
+default = 0.0
+condition = { arg="bfactor_method", value="auto" }
 
 [tabs.sharpen.adhoc_bfac]
-name = "Adhoc B-factor (A^2)"
-description = "Apply an ad-hoc B-factor to the map (positive=smoothing, negative=sharpening)"
-type = "int"
-default = 0
+name = "Adhoc value (A^2)"
+description = "Apply ad-hoc B-factor (positive=smoothing, negative=sharpening)"
+type = "float"
+default = 0.0
+condition = { arg="bfactor_method", value="adhoc" }
+
+[tabs.sharpen.randomize_method]
+name = "Phase randomization method"
+description = "Method used for phase randomization"
+type = "enum"
+enum = { fsc="fsc", resolution="resolution" }
+default = "fsc"
 
 [tabs.sharpen.randomize_below_fsc]
-name = "Randomize phases (FSC threshold)"
+name = "FSC threshold"
 description = "Randomize phases beyond the point where the FSC drops below this value"
 type = "float"
 default = 1
+condition = { arg="randomize_method", value="fsc" }
 
 [tabs.sharpen.randomize_beyond]
-name = "Randomize phases (resolution limit, A)"
+name = "Resolution limit (A)"
 description = "Randomize phases beyond this resolution"
 type = "float"
-default = 10
+default = 10.0
+condition = { arg="randomize_method", value="resolution" }
 
 [tabs.sharpen.flip_x]
 name = "Invert handedness along x-axis"
