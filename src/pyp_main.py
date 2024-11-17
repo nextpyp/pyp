@@ -640,6 +640,7 @@ def spr_merge(parameters, check_for_missing_files=True):
 
         if len(missing_files) > 0:
             if retries > parameters.get("slurm_merge_retries"):
+                if Web.exists:
                 Web().failed()
                 if micrographs.endswith("_missing"):
                     # missing files remaining after retrying
@@ -952,6 +953,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
 
         if len(missing_files) > 0:
             if retries > parameters.get("slurm_merge_retries"):
+                if Web.exists:
                 Web().failed()
                 if micrographs.endswith("_missing"):
                     # missing files remaining after retrying
@@ -3909,6 +3911,7 @@ if __name__ == "__main__":
                 try:
                     tomo_merge(parameters)
                 except:
+                    if Web.exists:
                     Web().failed()
                     pass
                 # reset all flags for re-calculation
