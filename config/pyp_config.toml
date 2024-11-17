@@ -5785,7 +5785,7 @@ name = "Phase randomization method"
 description = "Method used for phase randomization"
 type = "enum"
 enum = { fsc="fsc", resolution="resolution" }
-default = "fsc"
+default = "resolution"
 
 [tabs.sharpen.randomize_below_fsc]
 name = "FSC threshold"
