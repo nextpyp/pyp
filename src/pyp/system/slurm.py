@@ -464,12 +464,6 @@ def submit_jobs(
     else:
         procs = 1
 
-    # format dependencies based on the environment/batch system
-    if len(dependencies) == 0:
-        depend = ""
-    else:
-        depend = " --dependency=afterany:{0}".format(dependencies)
-
     # call the corresponding submission function
     if is_list and ( procs > 1 or jobtype == "cspswarm"):
         id = jobs.submit_commands(
