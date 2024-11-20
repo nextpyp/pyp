@@ -1519,9 +1519,9 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, sav
 
         fig, axs =  plt.subplots(1, 1, tight_layout=True)
         axs.set_xlim([-0.5, max(max(scores)+1, threshold)])
-        if len(good_scores) > 0:
+        if len(good_scores) > 0 and good_bins > 0:
             axs.hist(good_scores, bins=good_bins, color="royalblue", alpha=1.0)
-        if len(bad_scores) > 0:
+        if len(bad_scores) > 0 and bad_bins > 0:
             axs.hist(bad_scores, bins=bad_bins, color="royalblue", alpha=0.5)
 
         axs.set_xlabel('Mean score', fontsize=12, labelpad=10)
