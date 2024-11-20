@@ -1128,7 +1128,7 @@ def particle_cleaning(parameters: dict):
                 all_particle_count += extended_parameters.get_num_particles()
 
             logger.warning(
-                "{:,} particles ({:.1f}%) from {} tilt-series will be used".format(
+                "{:,} particles ({:.1f}%) from {} tilt-series will be kept".format(
                     clean_particle_count,
                     (float(clean_particle_count) / all_particle_count * 100),
                     len(parameter_files),

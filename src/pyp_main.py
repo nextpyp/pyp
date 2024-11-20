@@ -2077,6 +2077,7 @@ def csp_split(parameters, iteration):
 
     for ref in range(classes):
         
+        if classes > 1:
         logger.info(f"## Initializing class {ref+1} of {classes} ##")
         
         name = f"{dataset}_r{ref+1:02d}"
