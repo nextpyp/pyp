@@ -666,7 +666,7 @@ def read_tilt_series(
         pixel_size /= upsample
 
     logger.info(
-        "Original dimensions: [ X ,Y, Z ] = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, axis = %f",
+        "Original dimensions = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, tilt axis = %f",
         x,
         y,
         z,
@@ -712,7 +712,7 @@ def read_tilt_series(
         preprocess.invert_contrast(name)
 
     logger.info(
-        "After resizing/binning: [ X ,Y, Z ] = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, axis = %f",
+        "Dimensions after resizing = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, tilt axis = %f",
         x,
         y,
         z,

@@ -4929,7 +4929,7 @@ def align_tilt_series(name, parameters, rotation=0):
     # check if fiducial/patch tracking coordinates exist
     if 'aretomo' in parameters["tomo_ali_method"]:
 
-            logger.info("Align tilt-series using AreTomo2")
+            logger.info("Align tilt-series using: aretomo")
  
             binning_tomo = parameters["tomo_rec_binning"]
             thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
@@ -5160,7 +5160,7 @@ def align_tilt_series(name, parameters, rotation=0):
                             """   1.0000000   0.0000000   0.0000000   1.0000000       0.000       0.000\n"""
                         )
                 shutil.copy2(f"{name}.rawtlt", f"{name}.tlt")
-                logger.error("AreTomo2 failed to run")
+                logger.error("aretomo failed to run")
             return
     else:
 
@@ -5168,7 +5168,7 @@ def align_tilt_series(name, parameters, rotation=0):
         if "tomo_ali_fiducial" in parameters and parameters["tomo_ali_fiducial"] > 0 and "tomo_ali_method" in parameters and parameters["tomo_ali_method"] == "imod_gold":
 
             # Alignment with RAPTOR
-            logger.info("Align tilt-series using gold fiducials (IMOD/RAPTOR)")
+            logger.info("Align tilt-series using: gold fiducials (IMOD/RAPTOR)")
 
             gold_diameter = int(round(parameters["tomo_ali_fiducial"] / actual_pixel))
 
@@ -5318,7 +5318,7 @@ EOF
             # Fiducial-less alignment
 
             logger.info(
-                "Align tilt-series using patch tracking (IMOD)"
+                "Align tilt-series using: patch tracking (IMOD)"
             )
 
             max_size_x = parameters.get("tomo_ali_patches_size_x")
