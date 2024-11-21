@@ -417,7 +417,7 @@ def pyp_daemon(args):
                             try:
                                 name = re.match(r, f).group(1)
                             except:
-                                raise Exception("Could not determine tilt-series name")
+                                raise Exception(f"Could not determine tilt-series name from {f} using pattern {args['movie_pattern']}")
                         else:
                             name = f
                         # check that all files are present
