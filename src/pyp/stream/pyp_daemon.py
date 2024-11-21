@@ -568,15 +568,16 @@ def pyp_daemon_process(args,):
                 )
         '''
 
-        # extract tilt-angles from dm4 header before compressing
+        # extract tilt-angles from dm4 header before compressing, if needed
         data_path = Path(project_params.resolve_path(parameters["data_path"]))
 
-        if data_path.suffix == ".dm4" and "tomo" in parameters["data_mode"].lower():
+        rawtlt_file = os.path.join( raw_dir, name + ".rawtlt" )
+        if data_path.suffix == ".dm4" and "tomo" in parameters["data_mode"].lower() and not os.path.exists(rawtlt_file):
             tilt_angles = []
             for i in sorted( glob.glob( os.path.join( raw_dir, name + "*" + data_path.suffix ) ) ):
                 dm = dm4.DigitalMicrographReader(i)
                 tilt_angles.append( float(dm.get_tilt_angles()) )
-            with open( os.path.join( raw_dir, name + ".rawtlt" ),'w' ) as f:
+            with open( rawtlt_file,'w' ) as f:
                 for item in tilt_angles:
                     f.write("%s\n" % item)
 
