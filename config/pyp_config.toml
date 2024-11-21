@@ -1774,7 +1774,7 @@ default = "imod_gold"
 
 [tabs.tomo_ali.import]
 name = "Import path"
-description = "Location of .xf and .tlt files to use for import"
+description = "Location of *.xf and *.tlt files to import alignments from"
 type = "path"
 condition = { arg="method", value="import" }
 path = { type="folders" }
@@ -1916,6 +1916,20 @@ type = "bool"
 default = true
 hidden = true
 
+[tabs.tomo_rec.thickness]
+name = "Tomogram thickness (unbinned voxels)"
+description = "Height of tomograms should be set to match ice thickness"
+type = "int"
+default = 2048
+hidden = [ "tomo_import_star" ]
+
+[tabs.tomo_rec.binning]
+name = "Binning factor"
+description = "Produce binned tomograms (applies to dimensions x, y and z)"
+type = "int"
+default = 8
+hidden = [ "tomo_import_star" ]
+
 [tabs.tomo_rec.2d_filtering_method]
 name = "2D filtering"
 description = "Filter to apply to tilt-series prior to reconstruction"
@@ -1938,54 +1952,6 @@ description = "Falloff frequency (sigma) for lowpass filter"
 type = "float"
 default = 0.05
 condition = { arg="2d_filtering_method", value="lowpass" }
-hidden = [ "tomo_import_star" ]
-
-[tabs.tomo_rec.filter_form]
-name = "Radial filtering"
-description = "Form of radial filtering used during reconstruction"
-type = "enum"
-enum = { rampfunction="ramp function", fakesirt="fakeSIRT (mimic SIRT reconstruction)" }
-default = "rampfunction"
-hidden = [ "tomo_import_star" ]
-
-[tabs.tomo_rec.fake_sirt_iterations]
-name = "Number of iterations"
-description = "Filter equivalent to this number of iterations"
-type = "int"
-default = 10
-condition = { arg="filter_form", value="fakesirt" }
-hidden = [ "tomo_import_star" ]
-
-[tabs.tomo_rec.filtering_method]
-name = "High-frequency filtering"
-description = "Filtering method to use during reconstruction"
-type = "enum"
-enum = { gaussian="gaussian", hamming="hamming (as in tomo3d)" }
-default = "gaussian"
-hidden = [ "tomo_import_star" ]
-
-[tabs.tomo_rec.lpradial_cutoff]
-name = "Frequency cutoff"
-description = "Lowpass cutoff for radial weighting function (use 0.35 for less filtering)"
-type = "float"
-default = 0.25
-condition = { arg="filtering_method", value="gaussian" }
-hidden = [ "tomo_import_star" ]
-
-[tabs.tomo_rec.lpradial_falloff]
-name = "Frequency falloff"
-description = "Lowpass falloff (sigma) for radial weighting function (use 0.05 for less filtering)"
-type = "float"
-default = 0.15
-condition = { arg="filtering_method", value="gaussian" }
-hidden = [ "tomo_import_star" ]
-
-[tabs.tomo_rec.hamming]
-name = "Starting frequency"
-description = "Frequency at which to start multiplying by Hamming window"
-type = "float"
-default = 0.05
-condition = { arg="filtering_method", value="hamming" }
 hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.erase_fiducials]
@@ -2020,22 +1986,8 @@ default = 5
 condition = { arg="erase_fiducials", value="true" }
 hidden = [ "tomo_import_star" ]
 
-[tabs.tomo_rec.thickness]
-name = "Thickness of reconstruction (unbinned voxels)"
-description = "Height of tomograms (z-dimension) to use during tomographic reconstruction"
-type = "int"
-default = 2048
-hidden = [ "tomo_import_star" ]
-
-[tabs.tomo_rec.binning]
-name = "Binning factor for reconstruction"
-description = "Produce binned tomograms during tomographic reconstruction (applies to dimensions x, y and z)"
-type = "int"
-default = 8
-hidden = [ "tomo_import_star" ]
-
 [tabs.tomo_rec.method]
-name = "Method for tomogram reconstruction"
+name = "Reconstruction method"
 description = "Method used for tomogram reconstruction"
 type = "enum"
 enum = { imod="imod", aretomo="aretomo2 (GPU required)" }
@@ -2044,7 +1996,7 @@ hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.aretomo_sart]
 name = "Use SART reconstruction"
-description = "Use Simultaneous Algebraic Reconstruction Technique (SART) to reconstruct tomograms"
+description = "Use Simultaneous Algebraic Reconstruction Technique (SART)"
 type = "bool"
 default = false
 condition = { arg="method", value="aretomo" }
@@ -2052,7 +2004,7 @@ hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.aretomo_sart_iter]
 name = "Number of iterations"
-description = "Number of iterations for SART reconstruction, "
+description = "Number of iterations"
 type = "int"
 default = 20
 condition = { arg="aretomo_sart", value="true" }
@@ -2060,10 +2012,60 @@ hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.aretomo_sart_num_projs]
 name = "Number of projections per subet"
-description = "Number of projections per subet for SART reconstruction"
+description = "Number of projections per subset"
 type = "int"
 default = 5
 condition = { arg="aretomo_sart", value="true" }
+hidden = [ "tomo_import_star" ]
+
+[tabs.tomo_rec.filter_form]
+name = "Radial filtering"
+description = "Form of radial filtering used during reconstruction"
+type = "enum"
+enum = { rampfunction="ramp function", fakesirt="fakeSIRT (mimic SIRT reconstruction)" }
+default = "rampfunction"
+hidden = [ "tomo_import_star" ]
+condition = { arg="method", value="imod" }
+
+[tabs.tomo_rec.fake_sirt_iterations]
+name = "Number of iterations"
+description = "Filter equivalent to this number of iterations"
+type = "int"
+default = 10
+condition = { arg="filter_form", value="fakesirt" }
+hidden = [ "tomo_import_star" ]
+
+[tabs.tomo_rec.filtering_method]
+name = "High-frequency filtering"
+description = "Filtering method to use during reconstruction"
+type = "enum"
+enum = { gaussian="gaussian", hamming="hamming (as in tomo3d)" }
+default = "gaussian"
+hidden = [ "tomo_import_star" ]
+condition = { arg="method", value="imod" }
+
+[tabs.tomo_rec.lpradial_cutoff]
+name = "Frequency cutoff"
+description = "Lowpass cutoff for radial weighting function (use 0.35 for less filtering)"
+type = "float"
+default = 0.25
+condition = { arg="filtering_method", value="gaussian" }
+hidden = [ "tomo_import_star" ]
+
+[tabs.tomo_rec.lpradial_falloff]
+name = "Frequency falloff"
+description = "Lowpass falloff (sigma) for radial weighting function (use 0.05 for less filtering)"
+type = "float"
+default = 0.15
+condition = { arg="filtering_method", value="gaussian" }
+hidden = [ "tomo_import_star" ]
+
+[tabs.tomo_rec.hamming]
+name = "Starting frequency"
+description = "Frequency at which to start multiplying by Hamming window"
+type = "float"
+default = 0.05
+condition = { arg="filtering_method", value="hamming" }
 hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_denoise]
@@ -2869,7 +2871,7 @@ condition = { arg="method", value="import" }
 path = { type="folders" }
 
 [tabs.tomo_spk.files_flip]
-name = "Flip Y-Z coordinates"
+name = "Flip Y-Z"
 description = "Flip IMOD model's Y-Z coordinates"
 type = "bool"
 condition = { arg="method", value="import" }
@@ -6382,7 +6384,7 @@ hidden = ["stream_spr"]
 
 [tabs.stream.tilt_order]
 name = "Tilt-order"
-description="Comma separated list of tilt-order"
+description="Comma separated list of acquistion order (base-0)"
 type = "str"
 default = ""
 hidden = ["stream_spr"]
