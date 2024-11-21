@@ -666,14 +666,10 @@ def read_tilt_series(
         pixel_size /= upsample
 
     logger.info(
-        "Original dimensions = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, tilt axis = %f",
+        "Unbinned tilt-series dimensions = [ %s, %s, %s ]",
         x,
         y,
-        z,
-        pixel_size,
-        voltage,
-        mag,
-        float(tilt_axis),
+        z
     )
 
     if parameters["tomo_ali_format"]:
@@ -712,14 +708,10 @@ def read_tilt_series(
         preprocess.invert_contrast(name)
 
     logger.info(
-        "Dimensions after resizing = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, tilt axis = %f",
+        "Unbinned tomogram dimensions = [ %s, %s, %s ]",
         x,
         y,
-        z,
-        pixel_size,
-        voltage,
-        mag,
-        float(tilt_axis),
+        z
     )
 
     return [x, y, z, pixel_size, voltage, mag, tilt_axis, drift_metadata]
