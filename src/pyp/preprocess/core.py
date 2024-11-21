@@ -955,6 +955,10 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
 
     if parameters["tomo_rec_erase_fiducials"]:
 
+        if not os.path.exists(gold_mod):
+            logger.error(f"Failed to erase gold becasue no fiducials were found in tomogram")
+            return
+
         # save projected gold coordinates as txt file
         com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
         local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
