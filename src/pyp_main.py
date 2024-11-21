@@ -347,7 +347,30 @@ def parse_arguments(block):
     if len(glob.glob("raw/*")) == 0 and block != "export_session" and "pypgain" not in os.environ:
         if parameters["data_parent"] != None and not parameters["data_parent"] == "." and '-preprocessing' not in parameters["micromon_block"]:
 
-            # link all necessary metadata directories
+            # always link the raw/ data folder
+            folders = ["raw"]
+            for f in folders:
+                source = os.path.join(parameters["data_parent"], f)
+                if os.path.exists(source):
+                    symlink_relative(source, f)
+
+            # always link indivdual files in the pkl/, csp/, and sva/ folders
+            for folder in ["pkl", "csp", "sva"]:
+                os.makedirs(folder)
+                files = glob.glob(os.path.join(parameters["data_parent"], folder, "*"))
+                if len(files) > 0:
+                    if len(files) < 500:
+                        disable = True
+                    else:
+                        logger.info(f"Linking {len(files):,} files from {folder}/ folder in parent block")
+                        disable = False
+                    with tqdm(desc="Progress", total=len(files), file=TQDMLogger(), disable=disable) as pbar:
+                        for source in files:             
+                            destination = os.path.join(os.getcwd(), os.path.relpath(source,parameters["data_parent"]))
+                            symlink_relative(source, destination)
+                            pbar.update(1)
+
+            # link mrc/ and webp/ folders for blocks that don't change files in these folders
             if (
                 not parameters["data_import"] 
                 and parameters["micromon_block"] != "tomo-denoising" 
@@ -357,9 +380,8 @@ def parse_arguments(block):
                 and parameters["micromon_block"] != "tomo-segmentation-closed"
                 and parameters["micromon_block"] != "tomo-particles-eval"
                 and parameters["micromon_block"] != "tomo-picking"
-                and parameters["micromon_block"] != "tomo-coarse-refinement"
             ):
-                folders = ["raw", "sva", "mrc", "webp"]
+                folders = ["mrc", "webp"]
                 for f in folders:
                     source = os.path.join(parameters["data_parent"], f)
                     if os.path.exists(source):
@@ -368,27 +390,9 @@ def parse_arguments(block):
                 # create empty log folder
                 os.makedirs("log")
 
-                # link individual files
-                for folder in ["pkl", "csp"]:
-                    os.makedirs(folder)
-                    files = glob.glob(os.path.join(parameters["data_parent"], folder, "*"))
-                    if folder == "csp":
-                        exclude_file = ["micrograph_particle.index", "particle_tilt.index"]
-                        files = [f for f in files if f not in exclude_file]
-                    if len(files) > 0:
-                        if len(files) < 500:
-                            disable = True
-                        else:
-                            logger.info(f"Linking {len(files):,} files from {folder}/ folder in parent block")
-                            disable = False
-                        with tqdm(desc="Progress", total=len(files), file=TQDMLogger(), disable=disable) as pbar:
-                            for source in files:             
-                                destination = os.path.join(os.getcwd(), os.path.relpath(source,parameters["data_parent"]))
-                                symlink_relative(source, destination)
-                                pbar.update(1)
             else:
                 # create new folders and links to individual files
-                folders = ["raw", "mrc", "webp", "sva", "pkl"]
+                folders = ["mrc", "webp"]
                 for f in folders:
                     os.makedirs(f)
                     files = glob.glob(
@@ -2078,7 +2082,7 @@ def csp_split(parameters, iteration):
     for ref in range(classes):
         
         if classes > 1:
-        logger.info(f"## Initializing class {ref+1} of {classes} ##")
+            logger.info(f"## Initializing class {ref+1} of {classes} ##")
         
         name = f"{dataset}_r{ref+1:02d}"
 
