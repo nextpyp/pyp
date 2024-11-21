@@ -435,10 +435,8 @@ def pyp_daemon(args):
                         if args["slurm_verbose"]:
                             logger.info("Adding {0} to queue".format(name))
                         tobesubmitted.append(name)
-                        if len(tobesubmitted) >= parameters["slurm_bundle_size"]:
-                            break
 
-                        # generate rawtlt file for this tilt-series
+                        # generate rawtlt or order files for this tilt-series
                         if "tomo" in args["data_mode"]:
                             tilts = args["stream_tilt_angles"].split(",") if "stream_tilt_angles" in args else 0
                             if len(tilts) > 1 and tilts != 0:
@@ -454,7 +452,7 @@ def pyp_daemon(args):
                                         order_file.write( order + "\n" )
 
                         # cap number of jobs submitted
-                        if args["slurm_bundle_size"] > 1 and len(tobesubmitted) == args["slurm_bundle_size"]:
+                        if len(tobesubmitted) >= args["slurm_bundle_size"]:
                             break
 
         # Submit jobs to swarm
