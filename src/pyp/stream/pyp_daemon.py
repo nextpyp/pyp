@@ -18,7 +18,7 @@ import pyp.streampyp.metadb_daemon
 from pyp.analysis import plot
 from pyp.inout.image import compress_and_delete
 from pyp.inout.image import digital_micrograph as dm4
-from pyp.system import project_params, slurm, user_comm, set_up
+from pyp.system import project_params, slurm, mpi, set_up
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
@@ -583,10 +583,10 @@ def pyp_daemon_process(args,):
                     f.write("%s\n" % item)
 
         if 'stream_compress' in args and args['stream_compress'] != "none":
+            arguments = []
             for i in glob.glob( os.path.join( raw_dir, name + "*" + data_path.suffix ) ):
-                compress_and_delete(
-                    Path(i).with_suffix(""), args['stream_compress'], data_path.suffix
-                )
+                arguments.append(((Path(i).with_suffix(""), args['stream_compress'], data_path.suffix)))
+            mpi.submit_function_to_workers(compress_and_delete,arguments=arguments,verbose=parameters["slurm_verbose"])
         else:
 
             # simply remove signal files
