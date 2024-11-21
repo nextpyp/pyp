@@ -317,9 +317,9 @@ def parse_arguments(block):
     if parameters["data_set"] == None or parent_parameters["data_parent"] is not None:
         parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
         # rename .micrographs and .films files, if project was copied
-        if os.path.exists( parent_dataset + ".micrographs"):
+        if parent_dataset and os.path.exists( parent_dataset + ".micrographs"):
             shutil.move( parent_dataset + ".micrographs", parameters["data_set"] + ".micrographs")
-        if os.path.exists( parent_dataset + ".films"):
+        if parent_dataset and os.path.exists( parent_dataset + ".films"):
             shutil.move( parent_dataset + ".films", parameters["data_set"] + ".films")
 
     # set slurm queues to default values if not provided
