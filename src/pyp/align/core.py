@@ -5363,6 +5363,7 @@ EOF
             shutil.copy("%s.rawtlt" % name, "IMOD/%s_bin.rawtlt" % name)
             shutil.copy(name + ".fid.txt", "IMOD/{0}_bin.fid.txt".format(name))
 
+        if Path(f'{name}_tiltalignScript.txt').exists():
         # turn off magnification refinement and estimate single rotation
         file = Path(f'{name}_tiltalignScript.txt')
         file.write_text(file.read_text().replace('RotOption\t3', 'RotOption\t-1'))
