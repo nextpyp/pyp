@@ -5364,20 +5364,20 @@ EOF
             shutil.copy(name + ".fid.txt", "IMOD/{0}_bin.fid.txt".format(name))
 
         if Path(f'{name}_tiltalignScript.txt').exists():
-        # turn off magnification refinement and estimate single rotation
-        file = Path(f'{name}_tiltalignScript.txt')
-        file.write_text(file.read_text().replace('RotOption\t3', 'RotOption\t-1'))
-        file.write_text(file.read_text().replace('MagOption\t3', 'MagOption\t0'))
+            # turn off magnification refinement and estimate single rotation
+            file = Path(f'{name}_tiltalignScript.txt')
+            file.write_text(file.read_text().replace('RotOption\t3', 'RotOption\t-1'))
+            file.write_text(file.read_text().replace('MagOption\t3', 'MagOption\t0'))
 
-        # re-run tiltalign
-        com = "{0}/bin/tiltalign -param {1}_tiltalignScript.txt".format(
-            get_imod_path(), name
-        )
-        output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
+            # re-run tiltalign
+            com = "{0}/bin/tiltalign -param {1}_tiltalignScript.txt".format(
+                get_imod_path(), name
+            )
+            output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
 
-        residuals = [line for line in output.split("\n") if "Residual error mean and sd" in line]
-        if len(residuals) > 0:
-            logger.info(residuals[0])
+            residuals = [line for line in output.split("\n") if "Residual error mean and sd" in line]
+            if len(residuals) > 0:
+                logger.info(residuals[0])
 
         # combine RAPTOR output with prealign step and unbinning
         if os.path.isfile("IMOD/%s_bin.xf" % name):
