@@ -78,6 +78,7 @@ from pyp.refine.eman import eman
 from pyp.refine.frealign import frealign
 from pyp.refine.relion import relion
 from pyp.stream import pyp_daemon
+from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
 from pyp.streampyp.web import Web
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, mpi, project_params, set_up, slurm, user_comm
@@ -234,82 +235,92 @@ def create_links_to_files(files,parameters):
 
 def parse_arguments(block):
 
-    # load existing parameters or from data_parent
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-data_parent", "--data_parent")
-    parser.add_argument("-data_mode", "--data_mode")
-    parser.add_argument("-data_import", "--data_import",action="store_true",default=False)
-    parser.add_argument("-csp_no_stacks", "--csp_no_stacks",action="store_true",default=False)
-    parser.add_argument("-micromon_block", "--micromon_block")
-    args, unknown = parser.parse_known_args()
-    parent_parameters = vars(args)
+    # read params from a params file instead of the CLI, if needed
+    params_file_path = get_params_file_path()
+    if params_file_path is not None:
 
-    # check if parent project is valid
-    valid_parent = "data_parent" in parent_parameters.keys() and parent_parameters["data_parent"] is not None and os.path.exists(project_params.resolve_path(parent_parameters["data_parent"]))
-    need_new_project = len(glob.glob("raw/*")) == 0 or project_params.load_parameters() == 0 or parent_parameters["data_import"] or "postproc" in os.environ
-    if valid_parent and need_new_project:
-        # copy parameter file from parent
-        parameters_existing = project_params.load_parameters(
-            project_params.resolve_path(parent_parameters["data_parent"])
-        )
-        # reset these parameters
-        if parameters_existing:
-
-            # read specification file
-            import toml
-            specifications = toml.load("/opt/pyp/config/pyp_config.toml")
-
-            # figure out which parameters need to be reset to their default values
-            for t in specifications["tabs"].keys():
-                if not t.startswith("_"):
-                    for p in specifications["tabs"][t].keys():
-                        if "copyToNewBlock" in specifications["tabs"][t][p] and not specifications["tabs"][t][p]["copyToNewBlock"]:
-                            if "default" in specifications["tabs"][t][p]:
-                                parameters_existing[f"{t}_{p}"] = specifications["tabs"][t][p]["default"]
-                            elif f"{t}_{p}" in parameters_existing:
-                                del parameters_existing[f"{t}_{p}"]
-
-            # detect errors
-            if parent_parameters["data_import"]:
-                if parent_parameters["micromon_block"] == "sp-import" and parameters_existing["data_mode"] != "spr":
-                    raise Exception(f"Cannot import tomography project as single-particle project")
-                elif parent_parameters["micromon_block"] == "tomo-import" and parameters_existing["data_mode"] != "tomo":
-                    raise Exception(f"Cannot import single-particle project as tomography project")
-
-            # if importing an spr session, reset all the "force" flags
-            if parent_parameters["micromon_block"] == "sp-session":
-                if parent_parameters["data_mode"] != "spr":
-                    raise Exception(f"Cannot import tomography session as single-particle session")
-                parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['detect_force'] = False
-
-            # if importing a tomo session, reset all the "force" flags
-            if parent_parameters["micromon_block"] == "tomo-session":
-                if parent_parameters["data_mode"] != "tomo":
-                    raise Exception(f"Cannot import single-particle session as tomography session")
-                parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['tomo_ali_force'] = parameters_existing['tomo_rec_force'] = parameters_existing['detect_force'] = parameters_existing['tomo_vir_force'] = False
+        parameters_existing = project_params.load_parameters()
+        config = ParamsConfig.from_file()
+        parameters = parse_params_from_file(config, params_file_path)
 
     else:
-        parameters_existing = project_params.load_parameters()
 
-    # parse parameters
-    try:
-        if parameters_existing != 0:
-            data_mode = parameters_existing["data_mode"]
-        elif parent_parameters != 0:
-            data_mode = parent_parameters["data_mode"]
-        if data_mode is None:
-            data_mode = "spr"
-        parameters = project_params.parse_parameters(parameters_existing, block, data_mode )
-    except:
-        type, value, traceback = sys.exc_info()
-        if type == SystemExit:
-            # argparse throws this error when user input is incorrect
-            # it's safe to ignore these errors
-            pass
+        # load existing parameters or from data_parent
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("-data_parent", "--data_parent")
+        parser.add_argument("-data_mode", "--data_mode")
+        parser.add_argument("-data_import", "--data_import",action="store_true",default=False)
+        parser.add_argument("-csp_no_stacks", "--csp_no_stacks",action="store_true",default=False)
+        parser.add_argument("-micromon_block", "--micromon_block")
+        args, unknown = parser.parse_known_args()
+        parent_parameters = vars(args)
+
+        # check if parent project is valid
+        valid_parent = "data_parent" in parent_parameters.keys() and parent_parameters["data_parent"] is not None and os.path.exists(project_params.resolve_path(parent_parameters["data_parent"]))
+        need_new_project = len(glob.glob("raw/*")) == 0 or project_params.load_parameters() == 0 or parent_parameters["data_import"] or "postproc" in os.environ
+        if valid_parent and need_new_project:
+            # copy parameter file from parent
+            parameters_existing = project_params.load_parameters(
+                project_params.resolve_path(parent_parameters["data_parent"])
+            )
+            # reset these parameters
+            if parameters_existing:
+
+                # read specification file
+                import toml
+                specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+
+                # figure out which parameters need to be reset to their default values
+                for t in specifications["tabs"].keys():
+                    if not t.startswith("_"):
+                        for p in specifications["tabs"][t].keys():
+                            if "copyToNewBlock" in specifications["tabs"][t][p] and not specifications["tabs"][t][p]["copyToNewBlock"]:
+                                if "default" in specifications["tabs"][t][p]:
+                                    parameters_existing[f"{t}_{p}"] = specifications["tabs"][t][p]["default"]
+                                elif f"{t}_{p}" in parameters_existing:
+                                    del parameters_existing[f"{t}_{p}"]
+
+                # detect errors
+                if parent_parameters["data_import"]:
+                    if parent_parameters["micromon_block"] == "sp-import" and parameters_existing["data_mode"] != "spr":
+                        raise Exception(f"Cannot import tomography project as single-particle project")
+                    elif parent_parameters["micromon_block"] == "tomo-import" and parameters_existing["data_mode"] != "tomo":
+                        raise Exception(f"Cannot import single-particle project as tomography project")
+
+                # if importing an spr session, reset all the "force" flags
+                if parent_parameters["micromon_block"] == "sp-session":
+                    if parent_parameters["data_mode"] != "spr":
+                        raise Exception(f"Cannot import tomography session as single-particle session")
+                    parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['detect_force'] = False
+
+                # if importing a tomo session, reset all the "force" flags
+                if parent_parameters["micromon_block"] == "tomo-session":
+                    if parent_parameters["data_mode"] != "tomo":
+                        raise Exception(f"Cannot import single-particle session as tomography session")
+                    parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['tomo_ali_force'] = parameters_existing['tomo_rec_force'] = parameters_existing['detect_force'] = parameters_existing['tomo_vir_force'] = False
+
         else:
-            # but show other kinds of exceptions, those are usually bugs
-            sys.__excepthook__(type, value, traceback)
-        return 0
+            parameters_existing = project_params.load_parameters()
+
+        # parse parameters
+        try:
+            if parameters_existing != 0:
+                data_mode = parameters_existing["data_mode"]
+            elif parent_parameters != 0:
+                data_mode = parent_parameters["data_mode"]
+            if data_mode is None:
+                data_mode = "spr"
+            parameters = project_params.parse_parameters(parameters_existing, block, data_mode )
+        except:
+            type, value, traceback = sys.exc_info()
+            if type == SystemExit:
+                # argparse throws this error when user input is incorrect
+                # it's safe to ignore these errors
+                pass
+            else:
+                # but show other kinds of exceptions, those are usually bugs
+                sys.__excepthook__(type, value, traceback)
+            return 0
 
     # default to current directory if not provided
     parent_dataset = parameters["data_set"]
