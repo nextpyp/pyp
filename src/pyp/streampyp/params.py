@@ -205,9 +205,7 @@ def get_params_file_path(args: Optional[List[str]] = None) -> Optional[str]:
     if args is None:
         args = sys.argv
 
-    if len(args) != 2:
-        return None
-    arg = args[1]
+    arg = args[-1]
 
     arg_name = 'params_file'
     if arg.startswith(f'-{arg_name}='):
