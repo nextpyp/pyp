@@ -233,6 +233,37 @@ def create_links_to_files(files,parameters):
                                 logger.info("Retrieving " + source)
                             shutil.copy2(source, destination)
 
+def check_and_update_parameters(parent_parameters, parameters_existing):
+    """Check consistency between current block and parent block parameters and reset force flags 
+
+    Args:
+        parent_parameters (_type_): current block parameters
+        parameters_existing (_type_): upstream block parameters
+
+    Returns:
+        _type_: _description_
+    """
+    # detect errors
+    if parent_parameters["data_import"]:
+        if parent_parameters["micromon_block"] == "sp-import" and parameters_existing["data_mode"] != "spr":
+            raise Exception(f"Cannot import tomography project as single-particle project")
+        elif parent_parameters["micromon_block"] == "tomo-import" and parameters_existing["data_mode"] != "tomo":
+            raise Exception(f"Cannot import single-particle project as tomography project")
+
+    # if importing an spr session, reset all the "force" flags
+    if parent_parameters["micromon_block"] == "sp-session":
+        if parent_parameters["data_mode"] != "spr":
+            raise Exception(f"Cannot import tomography session as single-particle session")
+        parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['detect_force'] = False
+
+    # if importing a tomo session, reset all the "force" flags
+    if parent_parameters["micromon_block"] == "tomo-session":
+        if parent_parameters["data_mode"] != "tomo":
+            raise Exception(f"Cannot import single-particle session as tomography session")
+        parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['tomo_ali_force'] = parameters_existing['tomo_rec_force'] = parameters_existing['detect_force'] = parameters_existing['tomo_vir_force'] = False
+
+    return parameters_existing
+
 def parse_arguments(block):
 
     # read params from a params file instead of the CLI, if needed
@@ -241,7 +272,37 @@ def parse_arguments(block):
 
         parameters_existing = project_params.load_parameters()
         config = ParamsConfig.from_file()
-        parameters = parse_params_from_file(config, params_file_path)
+        parameters = parent_parameters = parse_params_from_file(config, params_file_path)
+
+        # handle data import case separately
+        if parameters.get("data_parent"):
+            data_parent = project_params.resolve_path(parameters.get("data_parent"))
+            if os.path.exists(data_parent):
+                parameters_existing = project_params.load_parameters(data_parent)
+
+            if parameters.get("data_import"):
+                stream_compress = parameters_existing.get("stream_compress")
+                if stream_compress and stream_compress != "none" and parameters_existing.get("data_path"):
+                    data_path = Path(project_params.resolve_path(parameters_existing["data_path"]))
+                    if parameters_existing.get('movie_pattern'):
+                        parameters_existing['movie_pattern'] = parameters_existing['movie_pattern'].replace( data_path.suffix, '.' + stream_compress )
+                    parameters_existing['data_path'] = os.path.join( data_parent, "raw", '*.' + stream_compress )
+                parameters_existing = check_and_update_parameters(parameters, parameters_existing)
+                
+                parameters_existing["data_parent"] = data_parent
+                parameters_existing["data_import"] = parameters["data_import"]
+                parameters_existing["data_mode"] = parameters["data_mode"]
+                parameters_existing["micromon_block"] = parameters["micromon_block"]
+
+                parameters = project_params.parse_parameters(parameters_existing, block, parameters["data_mode"] ) 
+    
+            parent_dataset = parameters_existing.get("data_set")
+        else:
+            parent_dataset = parameters["data_set"]
+
+        # always set dataset and refinement name based on current folder name
+        parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
+        data_mode = parameters["data_mode"]
 
     else:
 
@@ -280,24 +341,7 @@ def parse_arguments(block):
                                 elif f"{t}_{p}" in parameters_existing:
                                     del parameters_existing[f"{t}_{p}"]
 
-                # detect errors
-                if parent_parameters["data_import"]:
-                    if parent_parameters["micromon_block"] == "sp-import" and parameters_existing["data_mode"] != "spr":
-                        raise Exception(f"Cannot import tomography project as single-particle project")
-                    elif parent_parameters["micromon_block"] == "tomo-import" and parameters_existing["data_mode"] != "tomo":
-                        raise Exception(f"Cannot import single-particle project as tomography project")
-
-                # if importing an spr session, reset all the "force" flags
-                if parent_parameters["micromon_block"] == "sp-session":
-                    if parent_parameters["data_mode"] != "spr":
-                        raise Exception(f"Cannot import tomography session as single-particle session")
-                    parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['detect_force'] = False
-
-                # if importing a tomo session, reset all the "force" flags
-                if parent_parameters["micromon_block"] == "tomo-session":
-                    if parent_parameters["data_mode"] != "tomo":
-                        raise Exception(f"Cannot import single-particle session as tomography session")
-                    parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['tomo_ali_force'] = parameters_existing['tomo_rec_force'] = parameters_existing['detect_force'] = parameters_existing['tomo_vir_force'] = False
+                parameters_existing = check_and_update_parameters(parent_parameters, parameters_existing)
 
         else:
             parameters_existing = project_params.load_parameters()
@@ -322,8 +366,8 @@ def parse_arguments(block):
                 sys.__excepthook__(type, value, traceback)
             return 0
 
-    # default to current directory if not provided
-    parent_dataset = parameters["data_set"]
+        # default to current directory if not provided
+        parent_dataset = parameters["data_set"]
 
     if parameters["data_set"] == None or parent_parameters["data_parent"] is not None:
         parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
@@ -4840,7 +4884,7 @@ if __name__ == "__main__":
                     parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.bz2")
                     parameters["clean_parfile"] = parfile_occ_zero if parfile_occ_zero.exists() else parameters["clean_parfile"]
 
-                assert (Path(parameters["clean_parfile"]).exists()), f"{parameters['clean_parfile']} does not exist"
+                assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
 
                 # copy reconstruction to current frealign/maps
                 filename_init = parameters["data_set"] + "_r01_01"
