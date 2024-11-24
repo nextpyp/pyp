@@ -531,6 +531,7 @@ def parse_parameters(my_parameters,block,mode):
 
     # create parser
     parser = parse_from_groups(tabs, my_parameters)
+    parser.add_argument("-params_file", "--params_file")
 
     # parse input
     if my_parameters != 0:
