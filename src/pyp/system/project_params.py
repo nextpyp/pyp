@@ -273,7 +273,7 @@ def create_micrographs_list(parameters):
                         for f in [f.replace("raw/", "") for f in glob.glob("raw/*" + movie_extension)]
                     ]
                     files = [m.group(1) for m in match_files if m != None]
-                    logger.info("Create micrograph list using movie patterns")
+                    logger.info(f"Create micrograph list using movie pattern {parameters['movie_pattern']}")
 
                 elif parameters["movie_mdoc"] and len(mdocs) > 0:
                     files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
@@ -531,6 +531,7 @@ def parse_parameters(my_parameters,block,mode):
 
     # create parser
     parser = parse_from_groups(tabs, my_parameters)
+    parser.add_argument("-params_file", "--params_file")
 
     # parse input
     if my_parameters != 0:
