@@ -52,6 +52,7 @@ fi
 testdir=/opt/pyp/tests
 test_args=( \
   "$testdir/streampyp/params.py" \
+	"$testdir/system/test_stream_shell_command.py" \
 )
 
 

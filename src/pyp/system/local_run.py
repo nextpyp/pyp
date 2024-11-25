@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import socket
 import subprocess
+import time
 from pathlib import Path
 
 from pyp.system.logging import initialize_pyp_logger
@@ -71,6 +72,116 @@ def run_shell_command(command, verbose=False):
     if len(error) > 0 and "BZIP2" not in error and "no version information available" not in error and "Format: lossy" not in error and "p_observed" not in error and "it/s" not in error and "sleeping and retrying" not in error and "TIFFReadDirectory: Warning" not in error and "Found device" not in error and "your model does not fully load the pre-trained weight" not in error and "We recommend you start setting" not in error:
         logger.error(error)
     return output, error
+
+
+def stream_shell_command(command, verbose=False, log=lambda line: logger.info(line), observer=lambda line: True):
+    """
+    Run a command in a sub-shell and stream the results into the logger.
+    Lines sent to argument functions (log, observer) will not include training newline characters.
+    This function will block until the command is complete, then return the Popen instance for the subprocess.
+
+    Example
+    -------
+    proc = stream_shell_command('ls')
+    if proc.returncode == 0:
+        print('success!')
+    elif proc.returncode < 0:
+        print(f'command was terminated by signal: {-proc.returncode}')
+    else
+        print(f'command failed: {proc.returncode}')
+
+    Parameters
+    ----------
+    command : str
+        The shell command
+        WARNING: This function will perform no sanitization of the command before sending it to the shell,
+                 so it is the responsibility of the caller to ensure the command is safe to run.
+                 See: https://docs.python.org/3/library/subprocess.html#security-considerations
+    verbose : bool
+        True to log the command before running it
+    log : (str): None
+        Logging function to use.
+        Optional, defaults to the usual logger.
+    observer : (str): Optional[bool]
+        A lambda function that is called on each line of output.
+        Return False to terminate the command, or True to allow it to continue.
+
+    Returns
+    -------
+    the subprocess : Popen
+
+    """
+
+    if verbose:
+        logger.info(command)
+
+    # start the shell subprocess
+    proc = subprocess.Popen(
+        command,
+        shell=True,
+        text=True,
+        bufsize=1, # make Popen buffer the pipes and do line segmentation for us
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    # turn on non-blocking mode for the process' output pipes,
+    # so we can handle the pipes from a single thread,
+    # otherwise we'll deadlock if the pipe buffer fills up
+    os.set_blocking(proc.stderr.fileno(), False)
+    os.set_blocking(proc.stdout.fileno(), False)
+
+    def read_pipe(pipe):
+
+        while not pipe.closed:
+
+            # read the next line from the pipe, if any
+            line = pipe.readline()
+            if len(line) <= 0:
+                break
+
+            # the line includes the trailing newline, so strip that off
+            line = line.rstrip('\n')
+
+            log(line)
+
+            # should we stop?
+            if observer(line) is False:
+                return False
+
+        # we read the lines (if any) successfully: keep reading
+        return True
+
+    # read loop: read the stdout,stderr from the process without causing any deadlocks
+    while True:
+
+        keep_reading = read_pipe(proc.stderr) and read_pipe(proc.stdout)
+
+        if proc.stderr.closed or proc.stdout.closed:
+            # both pipes closed: nothing left to read
+            # NOTE: subprocess.Popen() doesn't seem to close these pipes when the subprocess ends,
+            #       so this block may never actually run?
+            break
+        elif proc.poll() is not None:
+            # process exited: stop reading
+            # NOTE: we already read the buffers this iteration,
+            #       so breaking the loop now shouldn't drop any lines ... right?
+            break
+
+        if not keep_reading:
+            # decided to abort reading: terminate the process
+            proc.terminate()
+            # TODO: if that doesn't work, wait a bit and try kill() ?
+            break
+
+        # sleep a bit before trying again, so we don't spin-wait and tie up the CPU core
+        time.sleep(0.2)
+        # NOTE: Python may have some kind of select/await mechanism we could use here to get rid of the sleep,
+        #       but that's probably more complication than we need right now =)
+
+    # finally, wait on the process to grab the return code
+    proc.wait()
+    return proc
 
 
 def create_initial_multirun_file(
