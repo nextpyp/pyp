@@ -211,7 +211,7 @@ def check_parameter_consistency(parameters):
 
 
 def resolve_path(parameter):
-    if isinstance(parameter, PosixPath) or not "PosixPath" in parameter:
+    if isinstance(parameter, PosixPath) or not parameter or not "PosixPath" in parameter:
         return str(parameter)
     else:
         return str(eval(parameter))
