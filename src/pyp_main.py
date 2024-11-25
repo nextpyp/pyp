@@ -4847,7 +4847,7 @@ if __name__ == "__main__":
                         binning = int(math.floor(x / 768))
                         com = f"{get_imod_path()}/bin/newstack {output_file} {output_file} -bin {binning} -float 2"
                         local_run.run_shell_command(com)
-                        com = f"{get_imod_path()}/bin/mrc2tif -j {output_file} gain_corrected.jpg"
+                        com = f"{get_imod_path()}/bin/mrc2tif -j -q 100 {output_file} gain_corrected.jpg"
                         local_run.run_shell_command(com)
                         contrast_stretch("gain_corrected.jpg")
 
