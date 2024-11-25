@@ -6648,6 +6648,7 @@ description = "SLURM partition to submit CPU jobs"
 type = "str"
 input = { type="slurmQueue", group="cpu" }
 hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn", "spr_drgn" ]
+default = ""
 
 [tabs.slurm.queue_gpu]
 name = "GPU partition"
@@ -6655,6 +6656,7 @@ description = "SLURM partition to submit GPU jobs"
 type = "str"
 input = { type="slurmQueue", group="gpu" }
 hidden = [ "spr_import_raw", "spr_import", "spr_import_star", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
+default = ""
 
 [tabs.slurm.merge_tasks]
 name = "Threads (merge task)"
@@ -6700,6 +6702,7 @@ type = "str"
 input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
 hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn", "spr_drgn"]
+default = ""
 
 [tabs.slurm.merge_retries]
 name = "Retries (merge task)"
@@ -6753,6 +6756,7 @@ type = "str"
 input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
 hidden = ["spr_import_raw", "tomo_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+default = ""
 
 [tabs.slurm.class2d_tasks]
 name = "Threads per task (refinement daemon)"
@@ -6798,6 +6802,7 @@ type = "str"
 input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
 hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+default = ""
 
 [tabs.slurm.profile]
 name = "Save profiling information"
