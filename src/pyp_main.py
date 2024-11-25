@@ -274,6 +274,13 @@ def parse_arguments(block):
         config = ParamsConfig.from_file()
         parameters = parent_parameters = parse_params_from_file(config, params_file_path)
 
+        # parse -csp_no_stacks option separately since this one is hardcoded in the csp command
+        dummy_parser = argparse.ArgumentParser(add_help=False)
+        dummy_parser.add_argument("-csp_no_stacks", "--csp_no_stacks",action="store_true",default=False)
+        args, unknown = dummy_parser.parse_known_args()
+        dummy_parameters = vars(args)
+        parameters['csp_no_stacks'] = parent_parameters['csp_no_stacks'] = dummy_parameters['csp_no_stacks']
+
         # handle data import case separately
         if parameters.get("data_parent"):
             data_parent = project_params.resolve_path(parameters.get("data_parent"))
