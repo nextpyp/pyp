@@ -64,6 +64,8 @@ v0.7.0 (10/26/2024)
 
    :fa:`plus-square,text-primary` Better handling of tilt-series from rectangular-shaped detectors.
 
+   :fa:`plus-square,text-primary` Import Relion 5 tomography projects.
+
    :fa:`bug,text-danger` Fix bug in navigation bar for refinement blocks when multiple classes were used.
 
    :fa:`bug,text-danger` Fix bug when applying IMOD anisotropic diffusion denoising during refinement.
