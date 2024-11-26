@@ -466,7 +466,7 @@ def regularize_image(
 
         assert (
             box.shape[0] == particle_num
-        ), f"boxx file selected particles and par file number of particles don't match - {box.shape[0]} v.s. {particle_num}"
+        ), f"boxx file selected particles and par file number of particles don't match: {box.shape[0]} vs. {particle_num}"
 
     else:
 
@@ -486,7 +486,7 @@ def regularize_image(
 
         assert (
             box.shape[0] == particle_num
-        ), f"boxx file selected particles and par file number of particles don't match - {box.shape[0]} v.s. {particle_num}"
+        ), f"boxx file selected particles and par file number of particles don't match: {box.shape[0]} vs. {particle_num}"
 
 
     import scipy.spatial.distance
