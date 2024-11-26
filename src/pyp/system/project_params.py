@@ -919,6 +919,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
 
                 elif (
                     ( "tomo_vir_" in k 
+                     and "tomo_vir_rad" not in k 
                      and "tomo_srf_detect_" not in k 
                      and "tomo_vir_detect_" not in k 
                      and not ( new_parameters.get("micromon_block") == "tomo-picking" and new_parameters.get("tomo_pick_method") == "manual" )
