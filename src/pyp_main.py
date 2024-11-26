@@ -298,12 +298,25 @@ def parse_arguments(block):
                 
                 parameters_existing["data_parent"] = data_parent
                 parameters_existing["data_import"] = parameters["data_import"]
-                parameters_existing["data_mode"] = parameters["data_mode"]
                 parameters_existing["micromon_block"] = parameters["micromon_block"]
 
                 parameters = project_params.parse_parameters(parameters_existing, block, parameters["data_mode"] ) 
     
             parent_dataset = parameters_existing.get("data_set")
+            
+            # transfer hidden parameters
+
+            parameters["data_mode"] = parameters_existing["data_mode"]
+            parameters["extract_cls"] = parameters_existing["extract_cls"]
+            
+            parameters["movie_force"] = parameters_existing["movie_force"]
+            parameters["detect_force"] = parameters_existing["detect_force"]
+            parameters["ctf_force"] = parameters_existing["ctf_force"]
+            parameters["tomo_ali_force"] = parameters_existing["tomo_ali_force"]
+            parameters["tomo_rec_force"] = parameters_existing["tomo_rec_force"]
+            parameters["tomo_vir_force"] = parameters_existing["tomo_vir_force"]
+            parameters["tomo_srf_force"] = parameters_existing["tomo_srf_force"]
+            
         else:
             parent_dataset = parameters["data_set"]
 
@@ -818,7 +831,7 @@ def spr_merge(parameters, check_for_missing_files=True):
         clean_list = inputlist
 
     pool = multiprocessing.Pool()
-    if "detect_rad" in parameters and parameters["detect_rad"] > 0:
+    if "detect_rad" in parameters and parameters["detect_rad"] and parameters["detect_rad"] > 0:
 
         # update/compute global frame weights
         # pool.apply_async( generateGlobalFrameWeights, args=( parameters['data_set'] ) )
