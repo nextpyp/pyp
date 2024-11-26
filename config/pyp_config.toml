@@ -430,7 +430,6 @@ name = "data_mode"
 description = "Type of data"
 type = "enum"
 enum = { spr="Single-Particle", tomo="Tomography" }
-default = "spr"
 required = true
 hidden = true
 
