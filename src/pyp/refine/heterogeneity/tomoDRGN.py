@@ -174,7 +174,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
 
     command = f"{get_tomodrgn_path()} train_vae {particles_input} --datadir {input_dir} --zdim {parameters['heterogeneity_tomodrgn_train_zdim']} -o {output} {options} {training_parameters} {tomo} {workers}"
 
-    local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 def tomodrgn_analyze(input_dir, output, parameters):
     """tomodrgn analyze""" 
@@ -235,7 +235,7 @@ def tomodrgn_analyze(input_dir, output, parameters):
 
     command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['heterogeneity_tomodrgn_analysis_epoch']} -o {output} --pc {parameters['heterogeneity_tomodrgn_analysis_pc']} --ksample {parameters['heterogeneity_tomodrgn_analysis_ksample']} {options}"
 
-    local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 
 def run_tomodrgn(project_dir, parameters):
@@ -440,7 +440,7 @@ def train_nn(parameters, input_dir, name, output):
 
     command = f"{get_tomodrgn_path()} train_nn {particles_input} --datadir {input_dir} -o {output} {options} {training_parameters} {tomo} {workers}"
 
-    local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 
 def convergence_nn(parameters, input_dir):
@@ -460,7 +460,7 @@ def convergence_nn(parameters, input_dir):
 
     command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option}"
 
-    local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 
 def convergence_vae(parameters, input_dir, output):
@@ -498,4 +498,4 @@ def convergence_vae(parameters, input_dir, output):
 
     command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options} --plot-format svgz"
 
-    local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])

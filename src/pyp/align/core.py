@@ -43,7 +43,7 @@ from pyp.refine.csp.particle_cspt import (
 )
 from pyp.refine.frealign import frealign
 from pyp.system import mpi, project_params
-from pyp.system.local_run import create_csp_split_commands, run_shell_command
+from pyp.system.local_run import create_csp_split_commands, run_shell_command, stream_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.set_up import initialize_classification, prepare_frealign_dir
 from pyp.system.utils import (
@@ -5132,7 +5132,12 @@ def align_tilt_series(name, parameters, rotation=0):
 -TiltCor {tilt_offset_option} \
 -OutImod 2 {patches} \
 -Gpu {get_gpu_ids(parameters,separator=' ')}"
-            [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+
+            output = []
+            def obs(line):
+                output.append(line)
+
+            stream_shell_command(command, observer=obs, verbose=parameters["slurm_verbose"])
 
             if "Tilt offset" in output:
                 tilt_offset = float([s.split(",")[0].split("Tilt offset:")[1] for s in output.split("\n") if "Tilt offset" in s ][0])
