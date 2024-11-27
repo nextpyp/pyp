@@ -4705,7 +4705,7 @@ eot
                     project_params.param(fparameters["maskth"], 100),
                     local_model,
                 )
-            local_run.run_shell_command(command)
+            local_run.stream_shell_command(command)
 
 
 def setup_refinement_files(fp, iteration, dataset, frealign_paths, ref):
@@ -4782,7 +4782,7 @@ eot
                 apodization,
                 "%s_r%02d_%02d" % (dataset, ref + 1, iteration - 1),
             )
-        local_run.run_shell_command(command)
+        local_run.stream_shell_command(command)
         load_eman_cmd = eman_load_command()
         command = "{0}; e2proc3d.py {1}.mrc scratch/{2}.mrc --multfile {3}".format(
             load_eman_cmd,

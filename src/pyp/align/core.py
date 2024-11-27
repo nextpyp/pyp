@@ -847,7 +847,7 @@ eot
                 apodization,
                 target,
             )
-            run_shell_command(command, verbose=mp["slurm_verbose"])
+            stream_shell_command(command, verbose=mp["slurm_verbose"])
     
     elif not previous == target:
 

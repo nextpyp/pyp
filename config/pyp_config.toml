@@ -3651,14 +3651,14 @@ hidden = true
 
 [tabs.refine.srad]
 name = "Mask radius (A)"
-description = "Radius of spherical mask applied during global search"
+description = "Radius of spherical mask applied during refinement (0=1.5x particle radius)"
 type = "float"
 default =  0.0
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.maskth]
 name = "Shape mask (*.mrc)"
-description = "Shape mask to use during refinement"
+description = "Apply mask to reference before refinement (must be same size as current box size)"
 type = "path"
 path = { type="files" }
 input = { type="initialModel" }
