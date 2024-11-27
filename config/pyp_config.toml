@@ -3324,6 +3324,13 @@ type = "int"
 default = 2
 hidden = true
 
+[tabs.class.focusmask]
+name = "2D mask for focused classification (A)"
+description = "(X,Y,Z,R): spherical mask of radius R centered at (X,Y,Z)"
+type = "str"
+default = "0,0,0,0"
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
 # Search parameters
 
 [tabs.refine]
@@ -3634,13 +3641,6 @@ description = "Write out matching projections obtained after refinement (for dia
 type = "str"
 default = "false"
 hidden = true
-
-[tabs.refine.focusmask]
-name = "Mask for focused refinement (A)"
-description = "Four numbers describing a spherical mask (X, Y, Z for mask center and R for mask radius)"
-type = "str"
-default = "0,0,0,0"
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.fpart]
 name = "FPART"

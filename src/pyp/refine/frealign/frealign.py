@@ -3895,7 +3895,7 @@ def mrefine_version(
     else:
         use_priors = "no"
 
-    if project_params.param(mp["refine_focusmask"], i) == "0,0,0,0":
+    if project_params.param(mp["class_focusmask"], i) == "0,0,0,0":
         masking = "no"
     else:
         masking = "yes"
@@ -3933,7 +3933,7 @@ def mrefine_version(
         boost = str(mp["refine_fboostlim"])
 
     mask_2d_x, mask_2d_y, mask_2d_z, mask_2d_rad = project_params.param(
-        mp["refine_focusmask"], i
+        mp["class_focusmask"], i
     ).split(",")
     
     #classification using weighted averages when do frames.
@@ -4007,7 +4007,7 @@ def mrefine_version(
             + "\n"
             + str(project_params.param(mp["refine_searchy"], i))
             + "\n"
-            + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
+            + "\n".join(project_params.param(mp["class_focusmask"], i).split(","))
             + "\n"
             + "%s\n" % def_range # defocus_search_range
             + "50.0\n" # defocus_step
@@ -4429,7 +4429,7 @@ def refine_ctf(mp, fp, i, ref):
     else:
         stats = "no"
 
-    if project_params.param(fp["refine_focusmask"], i) == "0,0,0,0":
+    if project_params.param(fp["class_focusmask"], i) == "0,0,0,0":
         masking = "no"
     else:
         masking = "yes"
