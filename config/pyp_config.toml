@@ -3664,13 +3664,6 @@ path = { type="files" }
 input = { type="initialModel" }
 hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
-[tabs.refine.automask]
-name = "Auto masking"
-description = "Use auto masking during refinement"
-type = "bool"
-default = false
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
-
 [tabs.refine.merge_normalize]
 name = "Frame normalization"
 description = "Normalize the voxel and CTF in merge3d by the number of frames"
@@ -4289,6 +4282,14 @@ type = "bool"
 default = false
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
 copyToNewBlock = false
+condition = { arg="abinitio", value="true" }
+
+[tabs.csp.automask]
+name = "Auto masking"
+description = "Use auto masking during ab-initio refinement"
+type = "bool"
+default = false
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.AngleStep]

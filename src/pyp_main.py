@@ -3377,10 +3377,10 @@ def ab_initio(parameters):
         else:
             parameters["csp_InitialSkip"] = False
         
-        if parameters["refine_automask"] and iter > 3:
+        if parameters["csp_automask"] and iter > 3:
             classes = int(project_params.param(parameters["class_num"], iter))
             dataset = parameters["data_set"]
-            # Auto masking as cisTEM way 
+            # Auto masking the cisTEM way 
             for ref in range(classes):
                 current_ref = os.path.join(os.getcwd(), "frealign", "maps", "%s_r%02d_%02d.mrc" % (dataset, ref + 1, iter - 1) )
                 voxel_size = float(parameters["scope_pixel"] * parameters["data_bin"] * parameters["extract_bin"])
