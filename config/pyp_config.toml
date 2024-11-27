@@ -4226,15 +4226,15 @@ default = 0.0001
 
 [tabs.csp.abinitio]
 name = "Ab-initio refinement"
-description = "Enable ab-initio refinement"
+description = "De-novo 3D reconstruction"
 type = "bool"
 default = false
 copyToNewBlock = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "spr_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_coarse_refine", "spr_map_clean", "tomo_map_clean" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.csp.InitialResolution]
 name = "Starting resolution limit"
-description = "Initial resolution used for ab initio refinement"
+description = "Initial resolution used for ab-initio refinement"
 type = "float"
 default = 60.0
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
@@ -4242,7 +4242,7 @@ condition = { arg="abinitio", value="true" }
 
 [tabs.csp.ResolutionLimit]
 name = "Final resolution limit"
-description = "Highest resolution used for ab initio refinement"
+description = "Highest resolution used for ab-initio refinement"
 type = "float"
 default = 16.0
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
@@ -4250,7 +4250,7 @@ condition = { arg="abinitio", value="true" }
 
 [tabs.csp.InitialSkip]
 name = "Skip initialization"
-description = "Skip initialization during ab initio refinement"
+description = "Skip initialization during ab-initio refinement"
 type = "bool"
 default = false
 copyToNewBlock = false
@@ -4268,7 +4268,7 @@ condition = { arg="abinitio", value="true" }
 
 [tabs.csp.RandomParticles]
 name = "Particle batch size (per tilt-series)"
-description = "Particles per tilt-series in each batch to use for ab initio refinement"
+description = "Particles per tilt-series in each batch to use for ab-initio refinement"
 type = "int"
 default = 10
 copyToNewBlock = false
