@@ -57,7 +57,7 @@ def cryocare(working_path, project_path, name, parameters):
         json.dump(config, file, indent=4)
 
     command = command_base + f"cryoCARE_extract_train_data.py --conf {data_config}"
-    local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
 
     # train.json
     train_config = {
@@ -110,7 +110,7 @@ def cryocare(working_path, project_path, name, parameters):
             logger.warning(file.read())
 
     command = f"{command_base}cryoCARE_predict.py --conf {predict_config_file}"
-    output, error = local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])    
+    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])    
 
 def tomo_swarm_half( name, project_path, working_path, parameters):
     """

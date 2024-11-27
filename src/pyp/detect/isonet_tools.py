@@ -79,7 +79,7 @@ def isonet_ctf_deconvolve(tomo_star, output, snr_falloff, cs=2.7, voltage=300, h
     
     command = isonet_command + f"isonet.py deconv {tomo_star} --snrfalloff {snr_falloff} --deconv_folder {output} --cs {cs} --voltage {voltage} --highpassnyquist {hp_nyquist} --ncpu {ncpu}"
     
-    local_run.run_shell_command(command,verbose=verbose)
+    local_run.stream_shell_command(command,verbose=verbose)
 
 
 def isonet_generat_mask(tomo_star, output, d_percent, std_percent, patchsize=4, use_convol="True", z_crop=0.2, verbose=False):
@@ -102,7 +102,7 @@ def isonet_generat_mask(tomo_star, output, d_percent, std_percent, patchsize=4, 
 
     command = isonet_command + f"isonet.py make_mask {tomo_star}  --mask_folder {output} --density_percentage {d_percent} --std_percentage {std_percent} --patch_size {patchsize} --use_deconv_tomo {use_convol} --z_crop {z_crop}"
    
-    local_run.run_shell_command(command,verbose=verbose)
+    local_run.stream_shell_command(command,verbose=verbose)
 
 
 def isonet_extract(input_star, output_folder, output_star, cube_size, use_deconv="True", debug=False, verbose=False):
@@ -126,7 +126,7 @@ def isonet_extract(input_star, output_folder, output_star, cube_size, use_deconv
 
     command = isonet_command + f"isonet.py extract {input_star} --subtomo_folder {output_folder} --subtomo_star {output_star} --cube_size {cube_size} --use_deconv_tomo {use_deconv} --log_level {log_level}"
 
-    local_run.run_shell_command(command,verbose=verbose)
+    local_run.stream_shell_command(command,verbose=verbose)
 
 
 def isonet_refine(input_star, output, parameters):
@@ -250,8 +250,12 @@ def isonet_refine(input_star, output, parameters):
         isonet_parameters += f" --pool {pool}"
 
     command = isonet_command + f"""isonet.py refine {input_star} {isonet_parameters} --gpuID {get_gpu_ids(parameters)}"""
+
+    output = []
+    def obs(line):
+        output.append(line)
     
-    [ output, error ] = local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command,observer=obs,verbose=parameters["slurm_verbose"])
 
     # parse output
     loss = [ line.split("loss:")[1].split()[0] for line in output.split("\n") if "ETA:" in line]
@@ -302,7 +306,7 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
 --gpuID {get_gpu_ids(parameters)}
 """
     
-    local_run.run_shell_command(command,verbose=verbose)
+    local_run.stream_shell_command(command,verbose=verbose)
 
 def isonet_train(project_dir, output, parameters):
     

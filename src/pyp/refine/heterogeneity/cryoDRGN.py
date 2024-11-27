@@ -232,7 +232,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
 
     command = f"{get_cryodrgn_path()} train_vae {particles_input} --datadir {input_dir} --ctf {ctf_input} --poses {pose_input} --zdim {parameters['heterogeneity_cryodrgn_train_zdim']} --num-epochs {parameters['heterogeneity_cryodrgn_train_epochs']} -o {output} {options} {training_parameters} {tomo}"
 
-    local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 def cryodrgn_analyze(input_dir, output, parameters, downsampled):
     """cryodrgn analyze""" 
@@ -295,7 +295,7 @@ def cryodrgn_analyze(input_dir, output, parameters, downsampled):
 
     command = f"{get_cryodrgn_path()} analyze {input_dir} {parameters['heterogeneity_cryodrgn_analysis_epoch']} -o {output} --pc {parameters['heterogeneity_cryodrgn_analysis_pc']} --ksample {parameters['heterogeneity_cryodrgn_analysis_ksample']} --vol-start-index {parameters['heterogeneity_cryodrgn_analysis_istart']} {options} --Apix {output_pixel}"
 
-    local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 
 def run_cryodrgn(project_dir, parameters):

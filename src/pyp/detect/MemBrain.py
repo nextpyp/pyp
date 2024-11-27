@@ -32,7 +32,7 @@ def membrain_preprocessing(parameters, input):
     
         command = f"{get_membrane_path()}tomo_preprocessing {match_pixel} --input-tomogram {input} --output-path {output_rescale}"
 
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
         rescaled = True
         tomo_pixelsize = parameters['tomo_mem_pixel']
@@ -48,11 +48,11 @@ def membrain_preprocessing(parameters, input):
         
         command = f"{get_membrane_path()}tomo_preprocessing extract_spectrum --input-path {template} --output-path ./template_spectrum.mrc"
 
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
         command = f"{get_membrane_path()}tomo_preprocessing match_spectrum --input {output_rescale} --target ./template_spectrum.mrc --output {output_match_spectrum}"
 
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
     else:
         output_match_spectrum = output_rescale
@@ -61,7 +61,7 @@ def membrain_preprocessing(parameters, input):
 
         command = f"{get_membrane_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output} --pixel-size {tomo_pixelsize}"
 
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
     else:
         output = output_match_spectrum
 
@@ -104,7 +104,7 @@ def membrain_segmentation(parameters, input, local_output):
     
     command =f"{get_membrane_path()}membrain segment --tomogram-path {input} --ckpt-path {model} --out-folder {local_output} {rescale_patches} {store_p} {connected_map} {augment} --segmentation-threshold {parameters[tm + '_seg_thres']} --sliding-window-size {parameters[tm + '_sliding_wd']}"
 
-    local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
 
 def run_membrain(project_dir, name, parameters ):
@@ -139,7 +139,7 @@ def run_membrain(project_dir, name, parameters ):
         rescale_input = glob.glob(f"./{local_output}/*.mrc")[0]
         command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path {output}"
 
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
     else:
         target = glob.glob(f"./{local_output}/*.mrc")[0]
         shutil.move(target, output)
