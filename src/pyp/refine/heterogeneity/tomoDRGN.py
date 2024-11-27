@@ -172,7 +172,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
 
     # --ctf {ctf_input} --pose {pose_input}
 
-    command = f"{get_tomodrgn_path()} train_vae {particles_input} --datadir {input_dir} --zdim {parameters['heterogeneity_tomodrgn_train_zdim']} -o {output} {options} {training_parameters} {tomo} {workers}"
+    command = f"{get_tomodrgn_path()} train_vae {particles_input} --datadir {input_dir} --source-software nextpyp --zdim {parameters['heterogeneity_tomodrgn_train_zdim']} -o {output} {options} {training_parameters} {tomo} {workers}"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -438,7 +438,7 @@ def train_nn(parameters, input_dir, name, output):
 
     # --ctf {ctf_input} --pose {pose_input}
 
-    command = f"{get_tomodrgn_path()} train_nn {particles_input} --datadir {input_dir} -o {output} {options} {training_parameters} {tomo} {workers}"
+    command = f"{get_tomodrgn_path()} train_nn {particles_input} --datadir {input_dir} --source-software nextpyp -o {output} {options} {training_parameters} {tomo} {workers}"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -496,6 +496,6 @@ def convergence_vae(parameters, input_dir, output):
     if not "None" in parameters["heterogeneity_tomodrgn_gt"]:
         options += f" --ground-truth {parameters['heterogeneity_tomodrgn_gt']}"
 
-    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options} --plot-format svgz"
+    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --source-software nextpyp --epoch {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options} --plot-format svgz"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
