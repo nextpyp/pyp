@@ -4284,14 +4284,6 @@ hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_f
 copyToNewBlock = false
 condition = { arg="abinitio", value="true" }
 
-[tabs.csp.automask]
-name = "Auto masking"
-description = "Use auto masking during ab-initio refinement"
-type = "bool"
-default = false
-hidden = [ "spr_map_clean", "tomo_map_clean" ]
-condition = { arg="abinitio", value="true" }
-
 [tabs.csp.AngleStep]
 name = "Angle Step"
 description = "Angle step to use for global search (degrees)"
@@ -4309,6 +4301,14 @@ default = 6
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
 copyToNewBlock = false
 condition = { arg="GridSearch", value="true" }
+
+[tabs.csp.automask]
+name = "Auto masking"
+description = "Use auto masking during ab-initio refinement"
+type = "bool"
+default = false
+hidden = [ "spr_map_clean", "tomo_map_clean" ]
+condition = { arg="abinitio", value="true" }
 
 [tabs.csp.refine_micrographs]
 name = "Refine tilt-geometry"
