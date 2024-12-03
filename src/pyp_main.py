@@ -4831,13 +4831,13 @@ if __name__ == "__main__":
                     else:
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
 
-                    logger.info("nextPYP (Heterogeneity analysis) finished successfully")
+                    logger.info("nextPYP (heterogeneity analysis) finished successfully")
                 else:
                     raise Exception("Not any of the heterogeneity analysis methods selected.")
 
             except:
                 trackback()
-                logger.error("nextPYP (Heterogeneity analysis) failed")
+                logger.error("nextPYP (heterogeneity analysis) failed")
                 pass
 
         # check gain reference
