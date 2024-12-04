@@ -496,6 +496,6 @@ def convergence_vae(parameters, input_dir, output):
     if not "None" in parameters["heterogeneity_tomodrgn_gt"]:
         options += f" --ground-truth {parameters['heterogeneity_tomodrgn_gt']}"
 
-    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --source-software nextpyp --epoch {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options} --plot-format svgz"
+    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options} --plot-format svgz"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
