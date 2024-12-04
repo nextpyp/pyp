@@ -1344,6 +1344,10 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             if os.path.exists(name + ".next"):
                 os.remove( name + ".next")
 
+            # remove any previous virion coordinates since we are doing manual detection
+            if os.path.exists(name + ".vir"):
+                os.remove( name + ".vir")
+
     if virion_mode:
         
         # convert virion (unbinned) coordinates to pyp's .vir format, if needed
