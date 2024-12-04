@@ -1748,8 +1748,10 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                     logger.warning("Excluded tilts have changed, will re-calculate reconstrucion")
                     parameters["tomo_rec_force"] = True
             else:
-                logger.warning("Excluded tilts, will re-calculate reconstrucion")
+                logger.warning("Some tilts were excluded, tilt-series will be re-processed")
                 parameters["tomo_rec_force"] = True
+                parameters["tomo_ali_force"] = True
+                parameters["ctf_force"] = True
 
     else:
         logger.info("Ignoring existing results")

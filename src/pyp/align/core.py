@@ -4800,6 +4800,26 @@ def align_tilt_series(name, parameters, rotation=0):
     else:
         shutil.copy2( f"{name}.st", f"{name}_bin.st" )
 
+    # Remove excluded tilts, if needed
+
+    # save a copy of the original .rawtlt file
+    tltfile = f"{name}.rawtlt"
+    shutil.copy2( tltfile, tltfile+"_original")
+    tilt_angles = np.loadtxt(tltfile)
+    
+    excluded_views = merge.do_exclude_views(name, tilt_angles)
+    
+    if len(excluded_views) > 0:
+        command = "{0}/bin/newstack {1}.st {1}_bin.st -bin {2} -fromone {3}".format(
+            get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
+        )
+        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        
+        # remove excluded tilt-angles
+        indexes = np.fromstring( excluded_views.split(" ")[-1], dtype=int, sep=",") - 1
+        tilt_angles = np.delete( tilt_angles, indexes, axis=0)
+        np.savetxt( tltfile, tilt_angles, fmt='%.2f' )
+
     tilt_series_size_x, tilt_series_size_y, tilt_series_size_z = get_image_dimensions(
         name + "_bin.st"
     )
@@ -5490,6 +5510,47 @@ EOF
         get_imod_path(), name, binning
     )
     run_shell_command(command,verbose=parameters["slurm_verbose"])
+
+    # add back excluded views to final transformations and tilt-angle files, if needed
+    if len(excluded_views) > 0:
+        
+        excluded_tilts = excluded_views.replace("-EXCLUDELIST2 ","").split(",")
+        identity_line = """   1.0000000   0.0000000   0.0000000   1.0000000       0.000       0.000\n"""
+        
+        assert os.path.exists(f"{name}.xf"), f"File {name}.xf not found"
+        assert os.path.exists(f"{name}.tlt"), f"File {name}.tlt not found"
+         
+        # compose new transformations file
+        with open(f"{name}.xf", "r") as f:
+            alignments = f.read().split("\n")
+        sec = 0
+        with open(f"{name}.xf", "w") as newf:
+            tilts = int(mrc.readHeaderFromFile(name + ".st")["nz"])
+            for tilt in range(tilts):
+                if str(tilt + 1) in excluded_tilts:
+                    newf.write(identity_line)
+                else:
+                    newf.write(alignments[sec] + "\n")
+                    sec += 1
+ 
+        # restore copy of original .rawtlt file with all the tilts
+        raw_tlt_file = f"{name}.rawtlt"
+        original_rawtlt_file = raw_tlt_file + "_original"
+        if os.path.exists(original_rawtlt_file):
+            shutil.copy2( original_rawtlt_file, raw_tlt_file )
+            
+        # add excluded tilts back to final .tlt file
+        raw_tilt_angles = np.loadtxt(raw_tlt_file)
+
+        tlt_file = f"{name}.tlt"
+        tilt_angles = np.loadtxt(tlt_file)
+
+        sec = 0
+        for tilt in range(len(raw_tilt_angles)):
+            if str(tilt + 1) not in excluded_tilts:
+                raw_tilt_angles[tilt] = tilt_angles[sec]
+                sec += 1
+        np.savetxt( tlt_file, raw_tilt_angles, fmt='%.2f' )
 
     # create aligned fiducial model
     command = "{0}/bin/imodtrans -2 {1}_bin.xf {1}.fid.txt {1}_aligned.fid".format(
