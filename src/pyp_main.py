@@ -3743,6 +3743,46 @@ def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
             f.write("\n".join(inputlist))
             f.close()
 
+def sync_parameters(parameters):
+    
+    # read specification file to figure out default parameters
+    import toml
+    specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+
+    # copy tomo_pick_vir to tomo_vir and tomo_spk_vir
+    if parameters["micromon_block"] != "tomo-preprocessing" and parameters["micromon_block"] != "" and parameters["micromon_block"] != "tomo-pure-preprocessing":
+        new_parameters = parameters.copy()
+        for k in parameters.keys():
+            if k.startswith("tomo_pick_vir_"):
+                default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
+                if parameters[k] != default:
+                    logger.warning(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                    new_parameters[k.replace("tomo_pick_vir_","tomo_vir_")] = parameters[k]
+            # map particle picking methods
+            elif k == "tomo_pick_method":
+                if parameters[k] != "virions":
+                    new_parameters["tomo_spk_method"] = parameters[k]
+            # copy tomo_pick_ to tomo_spk
+            elif k.startswith("tomo_pick_"):
+                default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
+                if parameters[k] != default and not k.endswith('_method'):
+                    logger.warning(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
+                    new_parameters[k.replace("tomo_pick_","tomo_spk_")] = parameters[k]
+            # copy tomo_srf parameters to tomo_vir
+            if k.startswith("tomo_srf_"):
+                default = specifications.get("tabs").get("tomo_srf").get(k.replace("tomo_srf_","")).get("default")
+                if parameters[k] != default:
+                    logger.warning(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                    new_parameters[k.replace("tomo_srf_","tomo_vir_")] = parameters[k]
+            if k.startswith("tomo_sphere_"):
+                default = specifications.get("tabs").get("tomo_sphere").get(k.replace("tomo_sphere_","")).get("default")
+                if parameters[k] != default:
+                    logger.warning(f"Replacing {k.replace('tomo_sphere_','tomo_vir_seg_')} <- {k} with value {parameters[k]}")
+                    new_parameters[k.replace("tomo_sphere_","tomo_vir_seg_")] = parameters[k]
+
+        parameters = new_parameters.copy()
+    return parameters
+    
 if __name__ == "__main__":
 
     try:
@@ -4346,6 +4386,9 @@ if __name__ == "__main__":
                                 elif parameters["refine_parfile_tomo"] is not None:
                                     parameters["refine_parfile_tomo"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto" else parameters["refine_parfile_tomo"]
                             
+                        # ensure backwards compatibility
+                        parameters = sync_parameters(parameters=parameters)
+
                         project_params.save_parameters(parameters)
 
                         if (
@@ -5331,44 +5374,8 @@ EOF
                 if "extract_cls" not in parameters.keys():
                     parameters["extract_cls"] = 0
 
-                # ensure backwards compatibility
-                
-                # read specification file to figure out default parameters
-                import toml
-                specifications = toml.load("/opt/pyp/config/pyp_config.toml")
-
-                # copy tomo_pick_vir to tomo_vir and tomo_spk_vir
-                if parameters["micromon_block"] != "tomo-preprocessing" and parameters["micromon_block"] != "" and parameters["micromon_block"] != "tomo-pure-preprocessing":
-                    new_parameters = parameters.copy()
-                    for k in parameters.keys():
-                        if k.startswith("tomo_pick_vir_"):
-                            default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
-                            if parameters[k] != default:
-                                logger.warning(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
-                                new_parameters[k.replace("tomo_pick_vir_","tomo_vir_")] = parameters[k]
-                        # map particle picking methods
-                        elif k == "tomo_pick_method":
-                            if parameters[k] != "virions":
-                                new_parameters["tomo_spk_method"] = parameters[k]
-                        # copy tomo_pick_ to tomo_spk
-                        elif k.startswith("tomo_pick_"):
-                            default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
-                            if parameters[k] != default and not k.endswith('_method'):
-                                logger.warning(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
-                                new_parameters[k.replace("tomo_pick_","tomo_spk_")] = parameters[k]
-                        # copy tomo_srf parameters to tomo_vir
-                        if k.startswith("tomo_srf_"):
-                            default = specifications.get("tabs").get("tomo_srf").get(k.replace("tomo_srf_","")).get("default")
-                            if parameters[k] != default:
-                                logger.warning(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
-                                new_parameters[k.replace("tomo_srf_","tomo_vir_")] = parameters[k]
-                        if k.startswith("tomo_sphere_"):
-                            default = specifications.get("tabs").get("tomo_sphere").get(k.replace("tomo_sphere_","")).get("default")
-                            if parameters[k] != default:
-                                logger.warning(f"Replacing {k.replace('tomo_sphere_','tomo_vir_seg_')} <- {k} with value {parameters[k]}")
-                                new_parameters[k.replace("tomo_sphere_","tomo_vir_seg_")] = parameters[k]
-
-                    parameters = new_parameters.copy()
+                # ensure backwards compatibility                
+                parameters = sync_parameters(parameters=parameters)
 
                 # set particle radius based on bbox size                
                 if parameters.get("micromon_block") == "tomo-particles-eval":
