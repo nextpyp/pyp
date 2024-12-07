@@ -441,7 +441,7 @@ def read_tilt_series(
             logger.error("Cannot read %s", filename)
 
     elif len(parameters["movie_pattern"]) > 0 or len(mdocs) == 1:
-        # use either movie pattern OR mdoc file to fine corresponding tilted images 
+        # use either movie pattern OR mdoc file to find corresponding tilted images 
 
         pattern = parameters["movie_pattern"]
         metadata_from_mdoc = parameters["movie_mdoc"] 

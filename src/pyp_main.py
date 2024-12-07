@@ -1972,7 +1972,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_vir_rad"]
         elif parameters.get("tomo_pick_method") == "manual":
             parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
-    elif parameters.get("micromon_block") == "tomo-segmentation-closed" and ( parameters.get("tomo_pick_method") == "manual" or parameters.get("tomo_pick_method") == "import" ):
+    elif parameters.get("micromon_block") == "tomo-segmentation-closed" and ( parameters.get("tomo_pick_method") == "manual" or parameters.get("tomo_pick_method") == "import" ) or parameters.get("micromon_block") == "tomo-picking-closed":
         parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
 
     # particle detection and extraction
