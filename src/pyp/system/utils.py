@@ -34,6 +34,9 @@ def imod_load_command():
     load_imod_cmd = "export IMOD_DIR={0};".format(get_imod_path())
     return load_imod_cmd
 
+def legacy_imod_load_command():
+    load_imod_cmd = "export IMOD_DIR={0};".format(get_legacy_imod_path())
+    return load_imod_cmd
 
 def phenix_load_command():
     phenix = "  ; /programs/phenix-1.18.2-3874/phenix-1.18.2-3874/build/bin/"
@@ -46,6 +49,9 @@ def get_slurm_path():
 def get_imod_path():
     return "/opt/IMOD"
     # return "export LD_LIBRARY_PATH=/opt/IMOD/qtlib:/opt/IMOD/lib:$LD_LIBRARY_PATH /opt/IMOD"
+
+def get_legacy_imod_path():
+    return "/opt/IMOD_4.11.24"
 
 def cuda_path_prefix(command):
     config = get_pyp_configuration()
@@ -203,7 +209,6 @@ def get_unblur2_path():
 
 def get_tomoctf_path():
     return "{0}/external/tomoctf_src_June2014".format(os.environ["PYP_DIR"])
-
 
 def get_csp_path():
     return "{0}/external/CSP".format(os.environ["PYP_DIR"])

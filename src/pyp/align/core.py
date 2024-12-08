@@ -5200,13 +5200,7 @@ def align_tilt_series(name, parameters, rotation=0):
             shutil.copy2("%s.rawtlt" % name, "%s_bin.rawtlt" % name)
 
             # fiducial based alignment with RAPTOR ( -minNeigh 10 -maxDist 200 )
-            load_imod_cmd = imod_load_command()
-            # command = "{0}; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} -markers -1 -verb 1".format(
-            #     load_imod_cmd,
-            #     os.environ["PYP_DIR"] + "/TOMO/RAPTOR3.0/bin",
-            #     name,
-            #     gold_diameter,
-            # )
+            load_imod_cmd = legacy_imod_load_command()
 
             markers = parameters["tomo_ali_fiducial_number"]
             if markers > 0:
@@ -5221,12 +5215,6 @@ def align_tilt_series(name, parameters, rotation=0):
 
             # try to recover from failure by re-running RAPTOR using fixed number of fiducials
             if not os.path.exists("IMOD/{0}_bin.xf".format(name)):
-                # command = "{0}; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} -markers 20 -verb 1".format(
-                #     load_imod_cmd,
-                #     os.environ["PYP_DIR"] + "/TOMO/RAPTOR3.0/bin",
-                #     name,
-                #     gold_diameter,
-                # )
                 command = "{0} export PATH=$PATH:{1}; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} -markers 30 -verb 1".format(
                     load_imod_cmd, get_imod_path() + "/bin", name, gold_diameter
                 )
@@ -5307,7 +5295,7 @@ LocalSkewDefaultGrouping        11
 RobustFitting
 EOF
 """ % (
-                    get_imod_path(),
+                    get_legacy_imod_path(),
                     name,
                     name,
                     name,
@@ -5396,7 +5384,7 @@ EOF
 
             # re-run tiltalign
             com = "{0}/bin/tiltalign -param {1}_tiltalignScript.txt".format(
-                get_imod_path(), name
+                get_legacy_imod_path(), name
             )
             output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
 
@@ -5488,7 +5476,7 @@ RobustFitting
 WeightWholeTracks
 EOF
 """ % (
-            get_imod_path(),
+            get_legacy_imod_path(),
             name,
             name,
             name,
