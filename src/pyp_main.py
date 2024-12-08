@@ -4122,20 +4122,24 @@ if __name__ == "__main__":
                         )
 
                         refine_star_file = project_params.resolve_path(parameters["import_refine_star"])
-                        if "import_motion_star" in parameters and parameters["import_motion_star"] is not None:
-                            motion_star_file = project_params.resolve_path(parameters["import_motion_star"])
-                        else:
-                            motion_star_file = None
 
                         rln_path = project_params.resolve_path(parameters["import_relion_path"])
 
                         if "spr" in mode:
+                            if "import_motion_star" in parameters and parameters["import_motion_star"] is not None:
+                                motion_star_file = project_params.resolve_path(parameters["import_motion_star"])
+                            else:
+                                motion_star_file = None
                             new_imagelist, parameters = globalmeta.SpaStar2meta(refine_star_file, motion_star_file, rln_path=rln_path, linkavg=True, parameters=parameters)
                         else:
                             tomo_star_file = project_params.resolve_path(parameters["import_tomo_star"])
+                            if "import_tomo_motion_star" in parameters and parameters["import_tomo_motion_star"] is not None:
+                                motion_star_file = project_params.resolve_path(parameters["import_tomo_motion_star"])
+                            else:
+                                motion_star_file = None
                             if parameters["import_tomo_star_version"] == "version4":
                                 new_imagelist, parameters = globalmeta.TomoStar2meta(tomo_star_file, refine_star_file, rln_path=rln_path, parameters=parameters)
-                            else:
+                            elif parameters["import_tomo_star_version"] == "version5":
                                 tilt_series_star_file = project_params.resolve_path(parameters["import_tilt_series_star"])
                                 new_imagelist, parameters = globalmeta.TomoStar2metaV5(
                                     tomo_star_file=tomo_star_file, 
@@ -4144,6 +4148,8 @@ if __name__ == "__main__":
                                     motion_star_file=motion_star_file,
                                     rln_path=rln_path,
                                     parameters=parameters)
+                            else:
+                                raise Exception(f"Unknown version of relion: {parameters['import_tomo_star_version']}")
 
                         # write new film file to PYP
                         filmname = dataset + ".films"
@@ -4177,7 +4183,7 @@ if __name__ == "__main__":
                         slice = math.floor( slices / 2 )
                         com = f"{get_imod_path()}/bin/newstack {input_file} {output_file} -bin {binning} -float 2 -secs {slice} {rotate}"
                         local_run.run_shell_command(com)
-                        com = f"{get_imod_path()}/bin/mrc2tif -j {output_file} gain_corrected.jpg"
+                        com = f"{get_imod_path()}/bin/mrc2tif -j -q 100 {output_file} gain_corrected.jpg"
                         local_run.run_shell_command(com)
                         contrast_stretch("gain_corrected.jpg")
 

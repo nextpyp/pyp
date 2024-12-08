@@ -21,11 +21,11 @@ tabs = [ "data", "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
 [blocks.spr_import_star]
 name = "SPA Star Import"
 description = "Star data import for SPA"
-tabs = [ "import", "data", "gain", "scope", "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
+tabs = [ "import", "data", "gain", "scope", "slurm" ]
 
 [blocks.spr_session]
 name = "SPA Session Import"
-description = "Star data import for SPA"
+description = "Session import for SPA"
 tabs = [ "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
 
 [blocks.spr_pre_process]
@@ -6505,30 +6505,54 @@ type = "bool"
 default = false
 hidden = true
 
-[tabs.import.tomo_star_version]
-name = "Relion version"
-description = "Version of Relion to import from"
-type = "enum"
-enum = { version4="4", version5="5" }
-default = "version5"
-hidden = [ "spr_import_star" ]
-required = false
-
 [tabs.import.relion_path]
 name = "Relion project path"
 description = "Path to the Relion project"
 type = "path"
 path = { type="folders" }
-condition = { arg="tomo_star_version", value=["version4","version5"] }
 required = false
 
-[tabs.import.motion_star]
-name = "Motion file (*.star)"
-description = "Star file from Relion MotionCorr job (e.g., corrected_tilt_series.star)"
+[tabs.import.tomo_star]
+name = "Tomograms file (*.star)"
+description = "Star file from Relion Tomograms job (e.g., tomograms.star)"
 type = "path"
 path = { type="files" }
 input = { type="starfile" }
 hidden = [ "spr_import_star" ]
+required = false
+
+[tabs.import.refine_star]
+name = "3D refinement file (*.star)"
+description = "Star file from Relion Refine3D job (e.g., run_it012_data.star)"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
+required = false
+
+[tabs.import.motion_star]
+name = "Motion file (*.star)"
+description = "Star file from Relion MotionCor job (e.g., corrected_micrographs.star)"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
+required = false
+hidden = [ "tomo_import_star" ]
+
+[tabs.import.tomo_star_version]
+name = "Relion version"
+description = "Version of Relion to import from"
+type = "enum"
+enum = { version4="4", version5="5" }
+default = "version4"
+required = false
+hidden = [ "spr_import_star" ]
+
+[tabs.import.tomo_motion_star]
+name = "Motion file (*.star)"
+description = "Star file from Relion MotionCor job (e.g., corrected_tilt_series.star)"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
 condition = { arg="tomo_star_version", value="version5" }
 required = false
 
@@ -6540,25 +6564,6 @@ path = { type="files" }
 input = { type="starfile" }
 hidden = [ "spr_import_star" ]
 condition = { arg="tomo_star_version", value="version5" }
-required = false
-
-[tabs.import.tomo_star]
-name = "Tomograms file (*.star)"
-description = "Star file from Relion Tomograms job (e.g., tomograms.star)"
-type = "path"
-path = { type="files" }
-input = { type="starfile" }
-hidden = [ "spr_import_star" ]
-condition = { arg="tomo_star_version", value=["version4","version5"] }
-required = false
-
-[tabs.import.refine_star]
-name = "3D refinement file (*.star)"
-description = "Star file from Relion Refine3D job (e.g., run_it012_data.star)"
-type = "path"
-path = { type="files" }
-input = { type="starfile" }
-condition = { arg="tomo_star_version", value=["version4","version5"] }
 required = false
 
 ##################

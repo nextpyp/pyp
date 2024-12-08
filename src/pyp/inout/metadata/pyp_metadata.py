@@ -887,11 +887,11 @@ class GlobalMetadata:
                 pass
         elif not data.empty and fromstar:
             if "spr" in self.mode:
-                self.scope_data.at[0, 
-                    ["fames", "movie_Xsize", "movie_Ysize", "voltage", "dose_rate"]
-                    ] = data[
-                        [Relion.IMAGESIZEZ, Relion.IMAGESIZEX, Relion.IMAGESIZEY, Relion.VOLTAGE, Relion.MICROGRAPHDOSERATE]
-                        ].values
+                self.scope_data.at[0, "fames"] =  data[[Relion.IMAGESIZEZ]].values
+                self.scope_data.at[0, "movie_Xsize"] =  data[[Relion.IMAGESIZEX]].values
+                self.scope_data.at[0, "movie_Ysize"] =  data[[Relion.IMAGESIZEY]].values
+                self.scope_data.at[0, "voltage"] =  data[[Relion.VOLTAGE]].values
+                self.scope_data.at[0, "dose_rate"] =  data[[Relion.MICROGRAPHDOSERATE]].values
                 micrographsizeX = float(data[Relion.IMAGESIZEX].values[0]) * float(data[Relion.MICROGRAPHBIN].values[0])
                 micrographsizeY = float(data[Relion.IMAGESIZEY].values[0]) * float(data[Relion.MICROGRAPHBIN].values[0])
                 self.micrograph_global[["image_Xsize"]] = micrographsizeX
@@ -922,7 +922,7 @@ class GlobalMetadata:
             m02 = np.array([0] * frames).reshape(-1, 1)
             m03 = np.array([1] * frames).reshape(-1, 1)
 
-            drift = np.hstack((m00, m01, m02, m03, xyarray))
+            drift = np.hstack((m00, m01, m02, m03, xyarray)).astype(float)
             
             self.data[imagename]["drift"] = pd.DataFrame(drift, columns=drift_col)
 
@@ -1989,7 +1989,7 @@ _rlnRandomSubset #14
 
                     pbar.update(1)
 
-            return list(self.data.keys()), parameters
+        return list(self.data.keys()), parameters
 
 
     def TomoStar2meta(self, tomostar, refinestar, rln_path="relion/", parameters=None):
