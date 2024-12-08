@@ -4001,7 +4001,7 @@ EOF
         # output, error = avgstack(input_fname, output_fname, start_end_section)
 
     else:
-        logger.warning("Using program generated frame average\n")
+        logger.warning("Using program generated frame average")
 
     # average aligned stack and save
     aligned_average = mrc.read(name + ".avg")

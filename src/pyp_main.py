@@ -229,8 +229,6 @@ def create_links_to_files(files,parameters):
                     for source in sources:
                         destination = "raw/" + Path(source).name
                         if os.path.isfile(source) and not os.path.exists(destination):
-                            if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
-                                logger.info("Retrieving " + source)
                             shutil.copy2(source, destination)
 
 def check_and_update_parameters(parent_parameters, parameters_existing):
@@ -1414,6 +1412,13 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
     if not skip:
         load_spr_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
 
+        # convert frame average to 32-bits
+        if parameters.get("movie_depth") and os.path.exists(name+".mrc"):
+            command = "{0}/bin/newstack -mode 2 {1} {1} && rm {1}~".format(
+                get_imod_path(), name + ".mrc"
+            )
+            local_run.run_shell_command(command)
+
         # unpack pkl file
         metadata = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=True)
         # clean entries according to _force in parameters
@@ -1590,7 +1595,14 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
 
     # save average as mrc file
     if not os.path.exists(name + ".mrc") or not os.path.samefile(name + ".avg", name + ".mrc"):
-        shutil.copy2(name + ".avg", name + ".mrc")
+        if parameters.get("movie_depth"):
+            logger.warning("Converting average to 16-bits")
+            command = "{0}/bin/newstack -mode 12 {1}.avg {1}.mrc && rm {1}.mrc~".format(
+                get_imod_path(), name
+            )
+            local_run.run_shell_command(command)
+        else:
+            shutil.copy2(name + ".avg", name + ".mrc")
     else:
         logger.info("The average and the output are the same file, this is probably because the raw data has no frames")
 
@@ -1695,6 +1707,13 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     load_config_files(dataset, current_path, working_path)
     if not skip:
         load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
+
+        # convert tilt-series to 32-bits
+        if parameters.get("movie_depth") and os.path.exists(name + ".mrc"):
+            command = "{0}/bin/newstack -mode 2 {1} {1} && rm {1}~".format(
+                get_imod_path(), name + ".mrc"
+            )
+            local_run.run_shell_command(command)
 
         if parameters["tomo_vir_method"] != "none" and os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
             # virion exlusion input from website
@@ -2050,6 +2069,13 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.remove(f"{name}.mrc")
             os.remove(f"{name}.rec")
     
+        if "preprocessing" in parameters.get("micromon_block") and parameters.get("movie_depth"):
+            logger.warning("Converting tilt-series to 16-bits")
+            command = "{0}/bin/newstack -mode 12 {1} {1} && rm {1}~".format(
+                get_imod_path(), name + ".mrc"
+            )
+            local_run.run_shell_command(command)
+
         with open( f"{name}.pickle", 'wb') as f:
             pickle.dump(tilt_metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -2550,6 +2576,13 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
     t.start()
     if not skip:
         load_csp_results(filename, parameters, Path(current_path), Path(working_path), verbose=parameters["slurm_verbose"])
+
+        # convert data to 32-bits
+        if parameters.get("movie_depth") and os.path.exists(filename + ".mrc"):
+            command = "{0}/bin/newstack -mode 2 {1} {1} && rm {1}~".format(
+                get_imod_path(), filename + ".mrc"
+            )
+            local_run.run_shell_command(command)
 
     metafile = os.path.join(working_path, filename + ".pkl")
     frame_list = []

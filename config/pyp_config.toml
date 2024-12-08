@@ -521,6 +521,13 @@ default = false
 hidden = ["spr_pre_process", "spr_import_star", "spr_import", "stream_spr" ]
 condition = { arg="no_frames", value="false" }
 
+[tabs.movie.depth]
+name = "Save frame averages in 16-bits"
+description = "Files saved in this format will require 50% less storage space"
+type = "bool"
+default = true
+condition = { arg="no_frames", value="false" }
+
 [tabs.movie.force]
 name = "Force recalculation"
 description = "Force recalculation of movie frame alignment"
