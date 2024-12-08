@@ -49,6 +49,7 @@ from pyp.system.set_up import initialize_classification, prepare_frealign_dir
 from pyp.system.utils import (
     get_frealign_paths,
     get_imod_path,
+    get_legacy_imod_path,
     get_aretomo_path,
     get_summovie_path,
     get_unblur_path,
@@ -56,6 +57,7 @@ from pyp.system.utils import (
     get_motioncor3_path,
     get_gpu_ids,
     imod_load_command,
+    legacy_imod_load_command,
 )
 from pyp.system.wrapper_functions import avgstack
 from pyp.utils import get_relative_path, symlink_force, symlink_relative
@@ -5208,15 +5210,15 @@ def align_tilt_series(name, parameters, rotation=0):
             else:
                 fid_markers = ""
 
-            command = "{0} export PATH=$PATH:{1}; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} {4}-verb 1".format(
-                load_imod_cmd, get_imod_path() + "/bin", name, gold_diameter, fid_markers
+            command = "{0} export PATH={1}:$PATH; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} {4}-verb 1".format(
+                load_imod_cmd, get_legacy_imod_path() + "/bin", name, gold_diameter, fid_markers
             )
             run_shell_command(command,verbose=parameters["slurm_verbose"])
 
             # try to recover from failure by re-running RAPTOR using fixed number of fiducials
             if not os.path.exists("IMOD/{0}_bin.xf".format(name)):
-                command = "{0} export PATH=$PATH:{1}; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} -markers 30 -verb 1".format(
-                    load_imod_cmd, get_imod_path() + "/bin", name, gold_diameter
+                command = "{0} export PATH={1}:$PATH; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} -markers 30 -verb 1".format(
+                    load_imod_cmd, get_legacy_imod_path() + "/bin", name, gold_diameter
                 )
                 run_shell_command(command,verbose=parameters["slurm_verbose"])
 
@@ -5241,7 +5243,7 @@ def align_tilt_series(name, parameters, rotation=0):
 
                 # re-run tiltalign
                 command = """
-%s/bin/tiltalign -StandardInput << EOF
+%s export PATH=%s/bin:$PATH; %s/bin/tiltalign -StandardInput << EOF
 ModelFile       ./IMOD/%s_bin.fid.txt
 ImagesAreBinned 1
 OutputModelFile %s.3dmod
@@ -5295,6 +5297,8 @@ LocalSkewDefaultGrouping        11
 RobustFitting
 EOF
 """ % (
+                    legacy_imod_load_command(),
+                    get_legacy_imod_path(),
                     get_legacy_imod_path(),
                     name,
                     name,
@@ -5383,8 +5387,8 @@ EOF
             file.write_text(file.read_text().replace('MagOption\t3', 'MagOption\t0'))
 
             # re-run tiltalign
-            com = "{0}/bin/tiltalign -param {1}_tiltalignScript.txt".format(
-                get_legacy_imod_path(), name
+            com = "{0} export PATH={1}/bin:$PATH; {1}/bin/tiltalign -param {2}_tiltalignScript.txt".format(
+                legacy_imod_load_command(), get_legacy_imod_path(), name
             )
             output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
 
@@ -5422,7 +5426,7 @@ EOF
 
         # run tiltalign
         command = """
-%s/bin/tiltalign -StandardInput << EOF
+%s export PATH=%s/bin:$PATH; %s/bin/tiltalign -StandardInput << EOF
 ModelFile       %s.fid
 ImageFile       %s_bin.preali
 ImagesAreBinned 1
@@ -5476,6 +5480,8 @@ RobustFitting
 WeightWholeTracks
 EOF
 """ % (
+            legacy_imod_load_command(),
+            get_legacy_imod_path(),
             get_legacy_imod_path(),
             name,
             name,
