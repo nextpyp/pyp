@@ -22,7 +22,6 @@ from pyp.inout.image import (
     readTIFfileandsave,
 )
 from pyp.inout.metadata import cistem_star_file
-from pyp.preprocess import remove_xrays_from_movie_file
 from pyp.system import mpi
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
