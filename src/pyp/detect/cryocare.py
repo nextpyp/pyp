@@ -80,10 +80,36 @@ def cryocare_train(project_dir, output, parameters):
     with open(train_config_file, 'w') as file:
         json.dump(train_config, file, indent=4)
 
-    command = f"{get_cryocare_path()}cryoCARE_train.py --conf {train_config_file}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    output = []
+    def obs(line):
+        output.append(line)
 
-    # save trained model to project folder    
+    command = f"{get_cryocare_path()}cryoCARE_train.py --conf {train_config_file}"
+    local_run.stream_shell_command(command,observer=obs,verbose=parameters["slurm_verbose"])
+
+    # parse output
+    loss = [ line.split("loss:")[1].split()[0] for line in output if "ETA:" in line]
+    mse = [ line.split("mse:")[1].split()[0] for line in output if "ETA:" in line]
+    
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style("dark")
+
+    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6], sharex=True)
+
+    ax[0].set_title("cryoCARE training loss")
+    ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Loss")
+    ax[0].set_ylabel("Loss")
+    ax[0].legend()
+    ax[1].plot(np.array(mse).astype('f'),".-",color="red",label="Mean Squared Error")
+    ax[1].set_ylabel("MSE")
+    ax[1].set_xlabel("Step")
+    ax[1].legend()
+    plt.xlabel("Step")
+    plt.savefig(os.path.join(project_dir,"train","training_loss.svgz"))
+    plt.close()
+
+    # save trained model to project folder
     shutil.copy2("./train_model/cryocare_model.tar.gz",os.path.join(project_dir,"train"))
 
 def cryocare_predict(working_path, project_path, name, parameters):
