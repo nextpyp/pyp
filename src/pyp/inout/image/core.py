@@ -1467,14 +1467,14 @@ def generate_aligned_tiltseries(name, parameters, x, y):
     with open(f"{name}.xf", "r") as f:
         for line in f.readlines():
             if len(line) > 1:
-                with open(f"{name}_{sec:04d}.xf", "w") as newf:
+                with open(f"{name}_{sec:04d}.xfs", "w") as newf:
                     newf.write(line)
                 sec += 1
 
     commands = [] 
     aligned_images = []
     for tilt in range(sec):
-        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xf -linear -taper 1,1 -size {3},{4} && rm {1}_{2:04d}_square.mrc {1}_{2:04d}.xf".format(
+        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs -linear -taper 1,1 -size {3},{4} && rm {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
             get_imod_path(), name, tilt, x, y
         )
         commands.append(command)
