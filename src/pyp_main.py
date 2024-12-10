@@ -1155,7 +1155,7 @@ def split(parameters):
         topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising-eval"
 
         if cryocare_predict:
-            run_mode = "crypcare"
+            run_mode = "cryocare"
             job_type = "cryocareswarm"
         elif isonet_predict:
             run_mode = "isonet"
@@ -4926,6 +4926,10 @@ if __name__ == "__main__":
                         "frealign"
                     ]
                     null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
+
+                    if "heterogeneity_input_star" in parameters and parameters.get("heterogeneity_input_star") == "auto":
+                        input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
+                        parameters["heterogeneity_input_star"] = input_star
 
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"

@@ -118,14 +118,23 @@ def cryocare_predict(working_path, project_path, name, parameters):
     Will take all the *half1.rec from mrc folder as list to train and run denoise
     """
 
-    half1_list = [os.path.join(working_path, name + "_half1.rec")]
-    half2_list = [os.path.join(working_path, name + "_half2.rec")]
+    # use half tomograms from parent block
+    assert "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters.get("data_parent"))), "Cannot find parent folder with half tomograms"
+    
+    parent_train = os.path.join( project_params.resolve_path(parameters.get("data_parent")), "train" )
+
+    half1_list = [os.path.join(parent_train, name + "_half1.rec")]
+    half2_list = [os.path.join(parent_train, name + "_half2.rec")]
 
     # TODO: create a list to run prediction
 
+    if parameters.get("tomo_denoise_cryocare_model") == "auto":
+        model = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "train", "*.tar.gz" )))[-1]
+        parameters["tomo_denoise_cryocare_model"] = model
+
     # prediction.json
     predcit_config = {
-    "path": project_params.resolve_path(parameters["tomo_denoise_cryocare_overwrite"]),
+    "path": project_params.resolve_path(parameters["tomo_denoise_cryocare_model"]),
     "even": half1_list,
     "odd": half2_list,
     "n_tiles": [parameters["tomo_denoise_cryocare_tiles"]] * 3,
@@ -139,6 +148,7 @@ def cryocare_predict(working_path, project_path, name, parameters):
         predcit_config["overwrite"] = parameters["tomo_denoise_cryocare_overwrite"]
     
     predcit_config["output"] = output_path
+    os.makedirs(output_path, exist_ok=True)
     
     predict_config_file = "predict_config.json"
     with open(predict_config_file, 'w') as file:
@@ -412,7 +422,6 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
     cryocare("./", project_path, name, parameters)
     
     # figure out output file name
-    import glob
     output = glob.glob( "denoised/*.*" )[0]
     shutil.move( output, Path(output).name )
     output = Path(output).name

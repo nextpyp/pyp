@@ -1237,6 +1237,11 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         logger.info("Doing NN-based picking")
 
+        if "detect_nn3d_ref" in parameters and parameters.get("detect_nn3d_ref") == "auto":
+            training_folder = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "train/*/" )))[-1]
+            model = sorted(glob.glob( os.path.join(training_folder, "*.pth" )))[-1]
+            parameters["detect_nn3d_ref"] = model
+
         if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
             raise Exception(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
         else:

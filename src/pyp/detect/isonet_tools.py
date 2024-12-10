@@ -449,6 +449,10 @@ def isonet_predict( name, project_dir, parameters ):
     use_threshold = parameters["tomo_denoise_isonet_threshold"]
     batch_size = parameters["tomo_denoise_isonet_batchsize"]
 
+    if parameters.get("tomo_denoise_isonet_model") == "auto":
+        model = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "train", "isonet", "*.h5" )))[-1]
+        parameters["tomo_denoise_isonet_model"] = model
+
     if os.path.exists(project_params.resolve_path(parameters["tomo_denoise_isonet_model"])):
         model = project_params.resolve_path(parameters["tomo_denoise_isonet_model"])
     else:
