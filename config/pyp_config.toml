@@ -1839,10 +1839,10 @@ default = false
 
 [tabs.tomo_ali.patches_x]
 name = "Number of patches in X"
-description = "Numer of patches in X to use for tilt-series alignment"
+description = "Number of patches in X to use for tilt-series alignment"
 type = "int"
 condition = { arg="method", value=["imod_patch","aretomo"] }
-default = 10
+default = 1
 
 [tabs.tomo_ali.patches_size_x]
 name = "Patch size in X"
@@ -1853,10 +1853,10 @@ default = 0
 
 [tabs.tomo_ali.patches_y]
 name = "Number of patches in Y"
-description = "Numer of patches in Y to use for tilt-series alignment"
+description = "Number of patches in Y to use for tilt-series alignment"
 type = "int"
 condition = { arg="method", value=["imod_patch","aretomo"] }
-default = 10
+default = 1
 
 [tabs.tomo_ali.patches_size_y]
 name = "Patch size in Y"
