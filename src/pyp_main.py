@@ -446,7 +446,6 @@ def parse_arguments(block):
             # link mrc/ and webp/ folders for blocks that don't change files in these folders
             if (
                 not parameters["data_import"] 
-                and parameters["micromon_block"] != "tomo-denoising" 
                 and parameters["micromon_block"] != "tomo-denoising-eval" 
                 and parameters["micromon_block"] != "tomo-segmentation-open" 
                 and parameters["micromon_block"] != "tomo-picking-closed" 
@@ -1151,9 +1150,9 @@ def split(parameters):
     if not os.path.isfile("frealign/mpirun.mynodes"):
 
         cryocare_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-eval"
-        isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
+        isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
         membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain" and parameters["micromon_block"] == "tomo-segmentation-open"
-        topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising"
+        topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising-eval"
 
         if cryocare_predict:
             run_mode = "crypcare"
@@ -4898,7 +4897,7 @@ if __name__ == "__main__":
 --output {working_path} \
 2>&1 | tee {time_stamp}_topaz_denoise3d.log"
 
-                local_run.run_shell_command(command, verbose=parameters['slurm_verbose'])
+                local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
                 tomoswarm_epilogue( name + ".rec", name, project_path, working_path, parameters)
 
