@@ -258,8 +258,8 @@ def isonet_refine(input_star, output, parameters):
     local_run.stream_shell_command(command,observer=obs,verbose=parameters["slurm_verbose"])
 
     # parse output
-    loss = [ line.split("loss:")[1].split()[0] for line in output.split("\n") if "ETA:" in line]
-    mse = [ line.split("mse:")[1].split()[0] for line in output.split("\n") if "ETA:" in line]
+    loss = [ line.split("loss:")[1].split()[0] for line in output if "ETA:" in line]
+    mse = [ line.split("mse:")[1].split()[0] for line in output if "ETA:" in line]
     
     import matplotlib.pyplot as plt
     import seaborn as sns
