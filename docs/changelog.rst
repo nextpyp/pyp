@@ -46,6 +46,8 @@ v0.7.0 (10/26/2024)
 
    :fa:`star,text-success` Automatic density-based shape-masking during 3D refinement.
 
+   :fa:`star,text-success` Add option to save mrc files in 16-bit precision to enable 50% storage savings (activated by default).
+
    :fa:`star,text-success` Select individual blocks to run from the Jobs menu using a single click ("Only" option).
 
    :fa:`plus-square,text-primary` More efficient and robust handling of large single-particle and tomography datasets.
