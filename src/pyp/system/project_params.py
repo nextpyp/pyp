@@ -511,7 +511,7 @@ def parse_parameters(my_parameters,block,mode):
     extra_blocks = []
     if "tomo" in mode:
         if "pre_process" in block:
-            extra_blocks = ["tomo_denoise", "tomo_segment_open", "tomo_segment_close", "tomo_picking", "tomo_drgn", "tomo_segment", "tomo_milo", "tomo_par_open" ]
+            extra_blocks = ["tomo_denoise_eval", "tomo_segment_open", "tomo_segment_close", "tomo_picking", "tomo_drgn", "tomo_segment", "tomo_milo", "tomo_par_open" ]
     else:
         if "pre_process" in block:
             extra_blocks = [ "spr_denoise", "spr_picking", "spr_drgn" ]

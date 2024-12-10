@@ -189,19 +189,14 @@ name = "TOMO Mask Generation"
 description = "Generate shape masks"
 tabs = [ "mask", "slurm" ]
 
-[blocks.tomo_denoise]
-name = "TOMO Denoising"
-description = "Tomogram denoising (cryoCARE/Topaz)"
-tabs = [ "tomo_denoise", "slurm", "micromon" ]
-
 [blocks.tomo_denoise_train]
 name = "TOMO Denoising (training)"
-description = "Train ML model for denoising (IsoNet)"
+description = "Train ML model for denoising"
 tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
 [blocks.tomo_denoise_eval]
 name = "TOMO Denoising (eval)"
-description = "Evaluate ML model for denoising (IsoNet)"
+description = "Evaluate ML model for denoising"
 tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
 [blocks.tomo_flexible_refine]
@@ -2075,6 +2070,13 @@ default = 0.05
 condition = { arg="filtering_method", value="hamming" }
 hidden = [ "tomo_import_star" ]
 
+[tabs.tomo_rec.generate_halves]
+name = "Generate half-tomograms"
+description = "If frames are available, generate half tomograms for denosing training"
+type = "bool"
+default = false
+hidden = [ "tomo_import_star" ]
+
 [tabs.tomo_denoise]
 _name = "Tomogram denoising"
 _description = "Parameters for tomograms denoising"
@@ -2083,17 +2085,17 @@ _description = "Parameters for tomograms denoising"
 name = "Method"
 description = "Denoise tomograms with selected method"
 type = "enum"
-enum = {cryocare="cryocare", topaz="topaz"}
-default = "cryocare"
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+enum = {isonet="isonet", cryocare="cryocare", topaz="topaz"}
+default = "isonet"
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.method_train]
 name = "Method"
 description = "Denoise tomograms with selected method"
 type = "enum"
-enum = {isonet="isonet"}
+enum = {isonet="isonet", cryocare="cryocare"}
 default = "isonet"
-hidden = [ "tomo_denoise" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.topaz_model]
 name = "Pre-train model"
@@ -2102,7 +2104,7 @@ type = "enum"
 enum = { unet-3d-10a="unet-3d-10a", unet-3d="unet-3d", unet-3d-20a="unet-3d-20a" }
 default = "unet-3d-10a"
 condition = { arg="method", value="topaz" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.topaz_gaussian]
 name = "Gaussian filter"
@@ -2110,7 +2112,7 @@ description = "Standard deviation of Gaussian filter for post-processing (0 mean
 type = "float"
 default = 0.0
 condition = { arg="method", value="topaz" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.topaz_patch_size]
 name = "Patch size"
@@ -2118,7 +2120,7 @@ description = "Denoises volumes in patches of this size"
 type = "int"
 default = 96
 condition = { arg="method", value="topaz" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.topaz_patch_padding]
 name = "Patch padding size"
@@ -2126,125 +2128,134 @@ description = "Padding around each patch to remove edge artifacts"
 type = "int"
 default = 48
 condition = { arg="method", value="topaz" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.topaz_use_gpu]
 name = "Use GPU"
-description = "Request a GPU to run Topaz denoise"
+description = "Run Topaz denoise in a GPU"
 type = "bool"
 default = false
 condition = { arg="method", value="topaz" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.masksize]
 name = "Mask shape"
 description = "Mask shape in x,y,z covering the center of tomogram"
 type = "str"
 default = "0,0,0"
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_patch]
 name = "Patch shape"
 description = "Per dimension size of the sub-volumes used for training (cubic shape >= 64x64x64)"
 type = "int"
 default = 72
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_slices]
 name = "Number of slices"
 description = "Number of sub-volumes extracted per tomogram"
 type = "int"
 default = 500
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_split]
 name = "Split ratio"
 description = "Train/validation ratio"
 type = "float"
 default = 0.9
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_samples]
 name = "Sub-tomograms for statistics"
 description = "Number of sub-volumes per tomogram used to compute mean and standard deviation for normalization (<number of slices)"
 type = "int"
 default = 400
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_epochs]
-name = "Number of epochs (train)"
+name = "Number of epochs"
 description = "Number of epochs used to train the network"
 type = "int"
 default = 60
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_steps]
-name = "Gradient steps (train)"
+name = "Gradient steps"
 description = "Number of gradient steps performed per epoch"
 type = "int"
 default = 200
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_batchsize]
-name = "Batch size (train)"
+name = "Batch size"
 description = "Number of training samples to use before the model parameters are updated"
 type = "int"
 default = 16
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_kern]
-name = "Kernel size (train)"
+name = "Kernel size"
 description = "Convolution kernel size of the U-Net. Has to be an odd number"
 type = "int"
 default = 3
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_depth]
 name = "Unet depth (train)"
 description = "Depth of the U-Net"
 type = "int"
 default = 3
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_nfirst]
-name = "Initial feature channels (train)"
+name = "Initial feature channels"
 description = "Number of initial feature channels"
 type = "int"
 default = 16
-condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.cryocare_lr]
-name = "Learning rate (train)"
+name = "Learning rate"
 description = "Learning rate of the model training"
 type = "float"
 default = 0.0004
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.cryocare_model]
+name = "Trained model"
+description = "Trained model (.tar.gz)"
+type = "path"
+path = { type="files" }
+input = { type="cryocareTrainedModel" }
 condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.cryocare_tiles]
-name = "Initial tiles (eval)"
-description = "Initial tiles per dimension"
+name = "Initial tiles per dimension"
+description = "Increase if the tiles do not fit on the GPU"
 type = "int"
 default = 1
 condition = { arg="method", value="cryocare" }
-hidden = [ "tomo_denoise_train", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.cryocare_overwrite]
-name = "Overwrite tomograms (eval)"
+name = "Overwrite tomograms"
 description = "Allow previous tomograms to be overwritten"
 type = "bool"
-default = false
+default = true
 condition = { arg="method", value="cryocare" }
 hidden = true
 
@@ -2254,7 +2265,7 @@ description = "Do CTF deconvolution for tomograms"
 type = "bool"
 default = true
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_snrfalloff]
 name = "SNR falloff"
@@ -2262,7 +2273,7 @@ description = "SNR fall rate with the frequency. High values means losing more h
 type = "float"
 default = 1.0
 condition = { arg="isonet_CTFdeconvol", value="true" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_hp]
 name = "Highpass filter"
@@ -2270,7 +2281,7 @@ description = "Highpass filter for at very low frequency"
 type = "float"
 default = 0.02
 condition = { arg="isonet_CTFdeconvol", value="true" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_mask]
 name = "Use masking"
@@ -2278,7 +2289,7 @@ description = "Mask out background areas"
 type = "bool"
 default = true
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_densityPercent]
 name = "Density percentage"
@@ -2286,7 +2297,7 @@ description = "The approximate percentage of pixels to keep based on their local
 type = "int"
 default = 50
 condition = { arg="isonet_mask", value="true" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_stdPercent]
 name = "Standard deviation percentage"
@@ -2294,7 +2305,7 @@ description = "The approximate percentage of pixels to keep based on their local
 type = "int"
 default = 50
 condition = { arg="isonet_mask", value="true" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_patchsize]
 name = "Patch size for statistics"
@@ -2302,7 +2313,7 @@ description = "Size of box from which the max-filter and std-filter are calculat
 type = "int"
 default = 4
 condition = { arg="isonet_mask", value="true" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_zcrop]
 name = "Z-crop fraction"
@@ -2310,7 +2321,7 @@ description = "Exclude top and bottom regions of tomogram along Z (0.2 will mask
 type = "float"
 default = 0.2
 condition = { arg="isonet_mask", value="true" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_model]
 name = "Trained model"
@@ -2318,17 +2329,17 @@ description = "Trained model (.h5)"
 type = "path"
 path = { type="files" }
 input = { type="isonetTrainedModel" }
-condition = { arg="method_train", value=["isonet"] }
-hidden = [ "tomo_denoise", "tomo_denoise_train" ]
+condition = { arg="method", value=["isonet"] }
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.isonet_pretrained_model]
 name = "Pre-trained model"
-description = "A trained model to start training with"
+description = "A trained model to start training with (*.h5)"
 type = "path"
 path = { type="files" }
 input = { type="isonetTrainedModel" }
 condition = { arg="method_train", value=["isonet"] }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_json]
 name = "Continue from (.json)"
@@ -2345,7 +2356,7 @@ description = "Should be divisible by 8. Actual sizes are this value plus 16"
 type = "int"
 default = 64
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_iters]
 name = "Training iterations"
@@ -2353,7 +2364,7 @@ description = "Number of training iterations"
 type = "int"
 default = 30
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_epochs]
 name = "Training epochs"
@@ -2361,7 +2372,7 @@ description = "Number of epochs for each iteraction"
 type = "int"
 default = 10
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_batchsize]
 name = "Mini-batch size"
@@ -2369,7 +2380,7 @@ description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be div
 type = "int"
 default = 4
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_steps]
 name = "Steps per epoch"
@@ -2377,7 +2388,7 @@ description = "Steps per epoch. 0 corresponds to: min(num_of_subtomograms * 6 / 
 type = "int"
 default = 0
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_nl]
 name = "Noise level"
@@ -2385,7 +2396,7 @@ description = "Level of noise STD(added noise)/STD(data) after the iteration def
 type = "str"
 default = "0.05,0.1,0.15,0.2"
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_ns]
 name = "Noise start iteration"
@@ -2393,7 +2404,7 @@ description = "Iteration that start to add noise of corresponding noise level"
 type = "str"
 default = "11,16,21,26"
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_nm]
 name = "Noise mode"
@@ -2402,7 +2413,7 @@ type = "enum"
 enum = {ramp="ramp", hamming="hamming", noFilter="noFilter", none="none"}
 default = "none"
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_dropout]
 name = "Dropout rate"
@@ -2410,7 +2421,7 @@ description = "Dropout rate to reduce overfitting"
 type = "float"
 default = 0.3
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_lr]
 name = "Learning rate"
@@ -2418,7 +2429,7 @@ description = "learning rate for network training"
 type = "float"
 default = 0.0004
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_layers]
 name = "Convolution layers"
@@ -2426,7 +2437,7 @@ description = "Number of convolution layers for each depth"
 type = "int"
 default = 3
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_kernel]
 name = "Convolution kernel size"
@@ -2434,7 +2445,7 @@ description = "Kernel size for convolution"
 type = "str"
 default = "3,3,3"
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_depth]
 name = "U-Net depth"
@@ -2442,7 +2453,7 @@ description = "Depth of U-Net"
 type = "int"
 default = 3
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_base]
 name = "Filter base"
@@ -2450,7 +2461,7 @@ description = "The base number of channels after convolution"
 type = "int"
 default = 64
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_normalization]
 name = "Use batch normalization"
@@ -2458,7 +2469,7 @@ description = "Use batch normalization layer"
 type = "bool"
 default = true
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_pool]
 name = "Use pooling"
@@ -2466,15 +2477,15 @@ description = "Use pooling layer instead of stride convolution layer"
 type = "str"
 default = ""
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_threshold]
 name = "Use percent thresholding"
 description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively. Otherwise, normalize input to 0 mean and unit standard deviation"
 type = "bool"
 default = true
-condition = { arg="method", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_debug]
 name = "Debug"
@@ -2482,7 +2493,7 @@ description = "Save intermediate files to results directory"
 type = "bool"
 default = false
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise", "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_mem]
 _name = "Segmentation"
@@ -6726,21 +6737,21 @@ name = "Threads per task (pre-processing daemon)"
 description = "Number of CPUs used during pre-processing"
 type = "int"
 default = 1
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_denoise", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.daemon_memory]
 name = "Memory per task in GB (pre-processing daemon)"
 description = "Amount of memory used for pre-processing daemon"
 type = "int"
 default = 2
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.daemon_gres]
 name = "Gres (pre-processing daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 advanced = true
 
 [tabs.slurm.daemon_account]
@@ -6748,7 +6759,7 @@ name = "Slurm account (pre-processing daemon)"
 description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 advanced = true
 
 [tabs.slurm.daemon_walltime]
@@ -6756,7 +6767,7 @@ name = "Walltime per task (pre-processing daemon)"
 description = "Max running time for pre-processing task (dd-hh:mm:ss)"
 type = "str"
 default = "5-00:00:00"
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.daemon_queue]
 name = "CPU partition (pre-processing daemon)"
@@ -6764,28 +6775,28 @@ description = "SLURM partition to use for pre-processing jobs"
 type = "str"
 input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
-hidden = ["spr_import_raw", "tomo_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "tomo_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.class2d_tasks]
 name = "Threads per task (refinement daemon)"
 description = "Number of CPUs used during 2D/3D refinement"
 type = "int"
 default = 1
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.class2d_memory]
 name = "Memory per task in GB (refinement daemon)"
 description = "Amount of memory used for 2D/3D refinement daemon"
 type = "int"
 default = 4
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.class2d_gres]
 name = "Gres (refinement daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 advanced = true
 
 [tabs.slurm.class2d_account]
@@ -6793,7 +6804,7 @@ name = "Slurm account (refinement daemon)"
 description = "Charge resources used by this job to specified account"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 advanced = true
 
 [tabs.slurm.class2d_walltime]
@@ -6801,7 +6812,7 @@ name = "Walltime (refinement daemon)"
 description = "Max running time for 2D/3D refinement daemon (dd-hh:mm:ss)"
 type = "str"
 default = "5-00:00:00"
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.class2d_queue]
 name = "Partition (refinement daemon)"
@@ -6809,7 +6820,7 @@ description = "SLURM partition to use for 2D/3D refinement jobs"
 type = "str"
 input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.profile]
 name = "Save profiling information"

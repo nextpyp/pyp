@@ -110,8 +110,7 @@ def needs_gpu(parameters):
     
     gpu_for_denoising = "tomo-denoising" in parameters.get("micromon_block") and (
         ( parameters.get("tomo_denoise_method") == "topaz" and parameters.get("tomo_denoise_topaz_use_gpu") )
-        or parameters.get("tomo_denoise_method") == "cryocare"
-        or ( parameters.get("micromon_block") == "tomo-denoising-train" and parameters.get("tomo_denoise_method_train") == "isonet" )
+        or parameters.get("micromon_block") == "tomo-denoising-train"
     )
 
     gpu_for_segmentation = parameters.get("micromon_block") == "tomo-segmentation-open" and parameters.get("tomo_mem_use_gpu")

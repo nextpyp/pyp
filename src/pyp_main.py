@@ -1150,13 +1150,13 @@ def split(parameters):
     # launch pre-processing
     if not os.path.isfile("frealign/mpirun.mynodes"):
 
-        cryocare = parameters["data_mode"] == "tomo" and "cryocare" in parameters["tomo_denoise_method"] and parameters["micromon_block"] == "tomo-denoising"
+        cryocare_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-eval"
         isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
         membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain" and parameters["micromon_block"] == "tomo-segmentation-open"
         topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising"
 
-        if cryocare:
-            run_mode = "cryocare"
+        if cryocare_predict:
+            run_mode = "crypcare"
             job_type = "cryocareswarm"
         elif isonet_predict:
             run_mode = "isonet"
@@ -1189,6 +1189,7 @@ def split(parameters):
         milo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo-train"
         milo_eval = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo"
         isonet_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-train" 
+        cryocare_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-train" 
         heterogeneity = "drgn" in parameters.get("micromon_block")
 
         if gpu:
@@ -1200,7 +1201,7 @@ def split(parameters):
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
 
-        if ( tomo_train or spr_train or isonet_train or heterogeneity or milo_train ):
+        if ( tomo_train or spr_train or isonet_train or cryocare_train or heterogeneity or milo_train ):
 
             if not heterogeneity:
                 # operate on all files in the .micrographs list since this is now a standalone block
@@ -1217,6 +1218,9 @@ def split(parameters):
                     elif isonet_train:
                         train_type = "isonet"
                         train_jobtype = "isonettrain"
+                    elif cryocare_train:
+                        train_type = "cryocare"
+                        train_jobtype = "cryocaretrain"
                     else:
                         train_type = parameters["data_mode"]
                         train_jobtype = parameters["data_mode"] + "train"
@@ -1708,7 +1712,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if not skip:
         load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
 
-        # convert tilt-series to 32-bits
+        # convert tilt-series to 32-bits, if needed
         if parameters.get("movie_depth") and os.path.exists(name + ".mrc"):
             command = "{0}/bin/newstack -mode 2 {1} {1} && rm {1}~".format(
                 get_imod_path(), name + ".mrc"
@@ -4730,13 +4734,53 @@ if __name__ == "__main__":
                 logger.error("nextPYP (miloeval) failed")
                 pass
         
+        elif "cryocaretrain" in os.environ:
+            del os.environ["cryocaretrain"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                parameters = project_params.load_pyp_parameters()
+                project_path = Path.cwd()
+                output = os.path.join(project_path, "train")
+                
+                micrographs = "{}.micrographs".format(parameters.get("data_set"))
+                micrograph_list = [line.strip() for line in open(micrographs, "r") if line.strip()]
+
+                working_path = Path(os.environ["PYP_SCRATCH"])
+                shutil.rmtree(working_path, "True")
+                working_path.mkdir(parents=True, exist_ok=True)
+                os.chdir(working_path)
+
+                # generate half-tomograms and save to train/ folder, if needed
+                for name in micrograph_list:
+                    first_half = os.path.join(project_path,"train",name+"_half1.rec")
+                    second_half = first_half.replace("_half1.rec","_half2.rec")
+                    if not os.path.exists(first_half) or not os.path.exists(second_half):
+                        logger.info(f"## Generating half-tomograms for {name} ##")
+                        cryocare.tomo_swarm_halves( name, project_path, working_path, parameters)
+                
+                cryocare.cryocare_train(project_path, output=output, parameters=parameters)
+                logger.info("nextPYP (cryocare train) finished successfully")
+
+                # we are done, clear local scratch
+                if os.path.exists(os.environ["PYP_SCRATCH"]):
+                    shutil.rmtree(os.environ["PYP_SCRATCH"])
+
+            except:
+                trackback()
+                logger.error("nextPYP (cryocare train) failed")
+                pass
+
         elif "cryocareswarm" in os.environ:
             del os.environ["cryocareswarm"]
             try:
 
                 args, name, project_path, working_path, parameters = tomoswarm_prologue()
 
-                new_reconstruction = cryocare.tomo_swarm_half( name, project_path, working_path, parameters)
+                new_reconstruction = cryocare.cryocare_predict( working_path, project_path, name, parameters)
 
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
 
