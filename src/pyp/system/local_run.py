@@ -137,7 +137,7 @@ def stream_shell_command(command, verbose=False, log=lambda line: logger.info(li
 
             # read the next line from the pipe, if any
             line = pipe.readline()
-            if len(line) <= 0 or "your model does not fully load the pre-trained weight" in line or line.startswith("\x08"):
+            if len(line) <= 0 or "your model does not fully load the pre-trained weight" in line or line.startswith("\x08") or len(line.rstrip("\n")) <= 0:
                 break
 
             # the line includes the trailing newline, so strip that off
