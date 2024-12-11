@@ -4919,7 +4919,7 @@ if __name__ == "__main__":
 
                 time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
 
-                logger.info("Denoising tomogram using Topaz")
+                logger.info("Denoising tomogram using: Topaz")
                 command = f"{get_topaz_path()}/topaz denoise3d \
 {raw_rec_location / name}.rec \
 --model {parameters['tomo_denoise_topaz_model']} \

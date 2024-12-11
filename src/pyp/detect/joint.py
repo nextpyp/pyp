@@ -78,7 +78,7 @@ def sprtrain(args):
     # go to scratch directory
     os.chdir(scratch_train)
 
-    logger.info(f"Training pyp model")
+    logger.info(f"Training 2D particle picking model")
     command = f"{NN_INIT_COMMANDS_2D}; python {os.environ['PYP_DIR']}/external/spr_pick/spr_pick/__main__.py train start --algorithm {args['detect_nn2d_algorithm']} --noise_value {args['detect_nn2d_noise_value']} --noise_style {args['detect_nn2d_noise_style']} --tau {args['detect_nn2d_tau']} --runs_dir '{runs_dir}' --train_dataset '{train_images}' --train_label '{train_coords}' --iterations {args['detect_nn2d_iterations']} --alpha {args['detect_nn2d_alpha']} --train_batch_size {args['detect_nn2d_batch_size']} --nms {args['detect_dist']} --num {args['detect_nn2d_num']} --bb {args['detect_nn2d_bb']} --patch_size {args['detect_nn2d_patch_size']} --validation_dataset '{validation_images}' --validation_label '{validation_coords}' 2>&1 | tee {os.path.join(os.getcwd(), 'log', time_stamp + '_spr_pick_train.log')}"
     local_run.stream_shell_command(command, verbose=args['slurm_verbose'])
 
@@ -307,7 +307,7 @@ def tomotrain(args):
     # make sure all output stays under the train folder
     os.chdir(scratch_train)
 
-    logger.info(f"Training pyp model")
+    logger.info(f"Training 3D particle picking model")
 
     if args.get("detect_nn3d_debug"):
         debug = "--debug 4"

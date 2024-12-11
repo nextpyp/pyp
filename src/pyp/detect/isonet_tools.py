@@ -403,7 +403,7 @@ def isonet_train(project_dir, output, parameters):
 
     isonet_refine(extracted_star, output_dir, parameters)
     
-    assert len(glob.glob( os.path.join( output_dir, "*.h5") )) > 0, "No models produced by IsoNet?"
+    assert len(glob.glob( os.path.join( output_dir, "*.h5") )) > 0, "IsoNet failed to run"
     
     # copy resulting h5 models to project directory
     save_dir = os.path.join( project_dir, "train", "isonet" )
