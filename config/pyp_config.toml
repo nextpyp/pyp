@@ -518,7 +518,7 @@ condition = { arg="no_frames", value="false" }
 
 [tabs.movie.depth]
 name = "Save frame averages in 16-bits"
-description = "Files saved in this format will require 50% less storage space"
+description = "Files saved in this format will require 50% less storage"
 type = "bool"
 default = true
 condition = { arg="no_frames", value="false" }
@@ -2070,11 +2070,11 @@ default = 0.05
 condition = { arg="filtering_method", value="hamming" }
 hidden = [ "tomo_import_star" ]
 
-[tabs.tomo_rec.generate_halves]
-name = "Generate half-tomograms"
-description = "If frames are available, generate half tomograms for denosing training"
+[tabs.tomo_rec.depth]
+name = "Save tomograms in 16-bits"
+description = "Files saved in this format will require 50% less storage"
 type = "bool"
-default = false
+default = true
 hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_denoise]

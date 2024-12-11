@@ -1711,12 +1711,21 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if not skip:
         load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
 
-        # convert tilt-series to 32-bits, if needed
-        if parameters.get("movie_depth") and os.path.exists(name + ".mrc"):
-            command = "{0}/bin/newstack -mode 2 {1} {1} && rm {1}~".format(
-                get_imod_path(), name + ".mrc"
-            )
-            local_run.run_shell_command(command)
+        # convert tilt-series and tomogram to 32-bits, if needed
+        if parameters.get("movie_depth"):
+            if os.path.exists(name + ".mrc"):
+                logger.info("Converting tilt-series to 32-bits")
+                command = "{0}/bin/newstack -mode 2 {1} {1} && rm -f {1}~".format(
+                    get_imod_path(), name + ".mrc"
+                )
+                local_run.run_shell_command(command)
+        if parameters.get("tomo_rec_depth"):
+            if os.path.exists(name + ".rec"):
+                logger.info("Converting tomogram to 32-bits")
+                command = "{0}/bin/newstack -mode 2 {1} {1} && rm -f {1}~".format(
+                    get_imod_path(), name + ".rec"
+                )
+                local_run.run_shell_command(command)
 
         if parameters["tomo_vir_method"] != "none" and os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
             # virion exlusion input from website
@@ -2072,12 +2081,19 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.remove(f"{name}.mrc")
             os.remove(f"{name}.rec")
     
-        if "preprocessing" in parameters.get("micromon_block") and parameters.get("movie_depth"):
-            logger.warning("Converting tilt-series to 16-bits")
-            command = "{0}/bin/newstack -mode 12 {1} {1} && rm {1}~".format(
-                get_imod_path(), name + ".mrc"
-            )
-            local_run.run_shell_command(command)
+        if "preprocessing" in parameters.get("micromon_block"):
+            if parameters.get("movie_depth"):
+                logger.info("Converting tilt-series to 16-bits")
+                command = "{0}/bin/newstack -mode 12 {1} {1} && rm -f {1}~".format(
+                    get_imod_path(), name + ".mrc"
+                )
+                local_run.run_shell_command(command)
+            if parameters.get("tomo_rec_depth"):
+                logger.info("Converting tomogram to 16-bits")
+                command = "{0}/bin/newstack -mode 12 {1} {1} && rm -f {1}~".format(
+                    get_imod_path(), name + ".rec"
+                )
+                local_run.run_shell_command(command)
 
         with open( f"{name}.pickle", 'wb') as f:
             pickle.dump(tilt_metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -3550,8 +3566,19 @@ def tomoswarm_prologue():
     working_path = Path(os.environ["PYP_SCRATCH"]) / name
     os.makedirs( working_path, exist_ok=True)
 
-    # move to wroking directory    
+    # move to working directory
     os.chdir(working_path)
+    
+    rec = os.path.join(project_path, "mrc", name + ".rec")
+    if os.path.exists(rec):
+        if parameters.get("tomo_rec_depth"):
+            logger.info("Converting tomogram to 32-bits")
+            command = "{0}/bin/newstack -mode 2 {1} {2} && rm -f {1}~".format(
+                get_imod_path(), rec, name + ".rec"
+            )
+            local_run.run_shell_command(command)
+        else:
+            shutil.copy2(rec,working_path)
     
     return args, name, project_path, working_path, parameters
     
@@ -3578,7 +3605,13 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
     target = os.path.join( project_path, "mrc", name + ".rec" )
     if os.path.exists(target):
         os.remove(target)
-        shutil.copy2( new_reconstruction, target )
+
+        if parameters.get("tomo_rec_depth"):
+            logger.info("Converting tomogram to 16-bits")
+            command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
+            local_run.run_shell_command(command)
+        else:
+            shutil.copy2( new_reconstruction, target )
     for pattern in [ "_rec.webp", "_sides.webp", ".webp" ]:
         target = os.path.join( project_path, 'webp', name + pattern )
         if os.path.exists(target):

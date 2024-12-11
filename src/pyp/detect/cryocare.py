@@ -585,8 +585,16 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
         else:
             merge.reconstruct_tomo(parameters, newname, x, y, binning, zfact, tilt_options, force=True)
 
-        # save the half tomogram to the train/ folder 
-        shutil.move(newname + ".rec", os.path.join(project_path, "train", newname + ".rec"))
+        # save the half tomogram to the train/ folder
+        logger.info(f"Half-tomogram {newname}.rec saved to {os.path.join(project_path, 'train')}")
+        if parameters.get("tomo_rec_depth"):
+            logger.info("Converting tomogram to 16-bits")
+            command = "{0}/bin/newstack -mode 12 {1} {2}".format(
+                get_imod_path(), newname + ".rec", os.path.join(project_path, "train", newname + ".rec")
+            )
+            local_run.run_shell_command(command)
+        else:
+            shutil.move(newname + ".rec", os.path.join(project_path, "train", newname + ".rec"))
         
     # go up one level and cleanup
     os.chdir(current_dir)
