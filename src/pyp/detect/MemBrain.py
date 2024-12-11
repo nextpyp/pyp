@@ -116,13 +116,10 @@ def run_membrain(project_dir, name, parameters ):
         tomogram_source = project_dir
         logger.info("Using current project tomograms for isonet denoising")
 
-    input_tomo = os.path.join(tomogram_source, "mrc", name + ".rec")
     local_input = f"./{name}.rec"
 
     # copy the input tomogram to scratch space
-    assert os.path.exists(input_tomo), "Input tomogram dose not exist, run preprocessing first"
-
-    shutil.copy2(input_tomo, local_input)
+    assert os.path.exists(local_input), f"{local_input} dose not exist, please run preprocessing first"
 
     output = name + "_segmem.mrc"
 
