@@ -7,8 +7,8 @@ from pathlib import Path
 
 from pyp.analysis import plot
 from pyp.inout.metadata import pyp_metadata
-from pyp.system import local_run, project_params
-from pyp.system.utils import get_gpu_ids
+from pyp.system import local_run, project_params, mpi
+from pyp.system.utils import get_gpu_ids, get_imod_path
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
 from pyp.system.singularity import get_pyp_configuration
@@ -17,7 +17,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_isonet_path():
-    command_base = f"export PATH=/opt/conda/envs/isonet/bin:$PATH; export PYTHONPATH=/:/opt/conda/envs/isonet/lib/python3.12/site-packages:$PYTHONPATH; micromamba run -n isonet /IsoNet/bin/"
+    command_base = f"export PATH=/opt/conda/envs/isonet/bin:$PATH; export PYTHONPATH=/opt/pyp/external:/opt/conda/envs/isonet/lib/python3.12/site-packages:$PYTHONPATH; micromamba run -n isonet /opt/pyp/external/IsoNet/bin/"
     return command_base
 
 isonet_command = get_isonet_path()
@@ -42,7 +42,7 @@ _rlnNumberSubtomo  #5"""
     with open(outputname, 'w') as f:
         f.write(star_header)
         for i, name in enumerate(name_list):
-            tomo = os.path.join(project_dir, "mrc", name + ".rec")
+            tomo = os.path.join(os.getcwd(), name + ".rec")
             pixel_size = parameters["scope_pixel"] * parameters["data_bin"] * parameters["tomo_rec_binning"]
 
             pkl_file = f"{project_dir}/pkl/{name}.pkl"
@@ -308,6 +308,20 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
     
     local_run.stream_shell_command(command,verbose=verbose)
 
+def convert_and_transfer_tomograms(train_name,project_dir,parameters):
+    # transfer/convert tomograms to local scratch
+    commands = []
+    for rec in train_name:
+        if parameters.get("tomo_rec_depth"):
+            absolute_rec = os.path.join(project_dir, "mrc", rec + ".rec")
+            command = "{0}/bin/newstack -mode 2 {1} {2} && rm -f {1}~".format(
+                get_imod_path(), absolute_rec, rec + ".rec"
+            )
+        else:
+            command = f"cp {absolute_rec} ."
+        commands.append(command)
+    mpi.submit_jobs_to_workers(commands, os.getcwd())
+
 def isonet_train(project_dir, output, parameters):
     
     # always try to look for tomograms from parent project
@@ -315,7 +329,7 @@ def isonet_train(project_dir, output, parameters):
 
     # get the train list
     train_folder = os.path.join(tomogram_source, "train")
-    train_name = np.loadtxt( os.path.join( train_folder, "current_list.txt" ), dtype=str, skiprows=0, usecols=0, ndmin=2)
+    train_name = np.loadtxt( os.path.join( train_folder, "current_list.txt" ), dtype=str, skiprows=0, usecols=0, ndmin=2)[:, 0]
 
     # initialize path
     working_path = Path(os.environ["PYP_SCRATCH"]) / "isonet"
@@ -326,9 +340,12 @@ def isonet_train(project_dir, output, parameters):
 
     os.chdir(working_path)
 
+    # transfer/convert tomograms to local scratch
+    convert_and_transfer_tomograms(train_name,project_dir,parameters)
+
     # generate input tomo.star
     initial_star = "tomograms.star" 
-    isonet_generate_star(tomogram_source, initial_star, parameters, train_name[:, 0])
+    isonet_generate_star(tomogram_source, initial_star, parameters, train_name)
     
     # display star file if in verbose mode
     if parameters["slurm_verbose"]:
@@ -438,6 +455,9 @@ def isonet_predict( name, project_dir, parameters ):
     else:
         tomogram_source = project_dir
         logger.warning("Using current project tomograms for isonet denoising")
+
+    # transfer/convert tomogram to local scratch
+    convert_and_transfer_tomograms([name],project_dir,parameters)
 
     initial_star = f"{name}_tomograms.star"
     isonet_generate_star( tomogram_source, initial_star, parameters, name_list=[name])

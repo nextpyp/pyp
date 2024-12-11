@@ -2543,8 +2543,8 @@ default = false
 condition = { arg="preprocessing", value="true" }
 
 [tabs.tomo_mem.model]
-name = "Segmentation model (*.ckpt)"
-description = "Path to pre-trained model"
+name = "Pre-trained model (*.ckpt)"
+description = "Available from https://github.com/teamtomo/membrain-seg"
 type = "path"
 default = "None"
 path = { type="files" }
