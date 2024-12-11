@@ -18,7 +18,6 @@ IncludeCmd: no
 	external/ /opt/pyp
 	../AreTomo2/ /opt/pyp/external
 	../MotionCor3/ /opt/pyp/external
-	../tomoDRGN /opt/pyp/external
 
 %environment
 
@@ -41,6 +40,9 @@ IncludeCmd: no
 	# install packages required by ETTK
 	apt-get -y update
 	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file wget git
+
+	# trick IMOD into believing we have version 5 of libtiff
+	ln -s /usr/lib/x86_64-linux-gnu/libtiff.so.6 /usr/lib/x86_64-linux-gnu/libtiff.so.5
 
 	# increase ImageMagick resource limits
 	sed -i -E 's/name="disk" value=".+"/name="disk" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
@@ -86,9 +88,17 @@ IncludeCmd: no
 
 	apt-get -y install software-properties-common
 	
-	# install IMOD
+	# install IMOD (legacy version without 16-bit support)
 	IMOD_FILE=imod_4.11.24_RHEL7-64_CUDA8.0.sh
 	wget --no-check-certificate https://bio3d.colorado.edu/imod/AMD64-RHEL5/${IMOD_FILE}
+	# IMOD_FILE=imod_4.12.62_RHEL8-64_CUDA12.0.sh
+	# wget --no-check-certificate https://bio3d.colorado.edu/ftp/latestIMOD/RHEL8-64_CUDA12.0/${IMOD_FILE}
+	sh ${IMOD_FILE} -yes -skip -name IMOD -dir /opt -name IMOD_4.11.24
+	rm -rf ${IMOD_FILE}
+	
+	# Newer version of IMOD with 16-bit support
+	IMOD_FILE=imod_5.0.2_RHEL8-64_CUDA12.0.sh
+	wget --no-check-certificate https://bio3d.colorado.edu/ftp/latestIMOD/alpha/${IMOD_FILE}
 	sh ${IMOD_FILE} -yes -skip -name IMOD -dir /opt
 	rm -rf ${IMOD_FILE}
 
@@ -130,13 +140,13 @@ cat << EOF > /root/pyp.sh
 
 	# install the python packages we need
 
-	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image 
+	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr
 	micromamba install -c conda-forge matplotlib 
 	micromamba install -c conda-forge pandas
 	micromamba install -c conda-forge conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses
 	micromamba install -c conda-forge colored-traceback
 	micromamba update numpy
-	micromamba install -c conda-forge -c tbepler topaz
+	# micromamba install -c conda-forge -c tbepler topaz
 	
 	micromamba install -c conda-forge faiss-gpu
 	micromamba update libstdcxx-ng
@@ -163,6 +173,15 @@ EOF
 	micromamba run -n pyp /bin/bash -c "/root/pyp.sh > /proc/$$/fd/1 2>&1"
 	export PATH=/opt/conda/envs/pyp/bin:$PATH
 	
+	# Topaz
+	cd /opt/pyp/external
+        git clone https://github.com/tbepler/topaz.git
+        cd topaz
+        git checkout v0.2.5
+        pip install .
+        rm -rf .git/
+	cd -
+
 	# do all the pip installs (on the base environment?)
 	pip install torch==2.2.0 torchvision==0.17.0 tensorboard h5py imagesize tqdm
 	pip install torchio==0.18.92
@@ -193,8 +212,11 @@ cat << EOF > /root/tomodrgn.sh
 	# Clone source code and install
 	# git clone https://github.com/bpowell122/tomodrgn.git
 	# use custom version
-	cd /opt/pyp/external/tomoDRGN
-	pip install .	
+	cd /opt/pyp/external/
+	git clone https://github.com/bpowell122/tomodrgn.git
+	cd tomodrgn
+	pip install .
+	rm -rf .git/
 
 	micromamba clean --all -y
 	
@@ -204,7 +226,7 @@ cat << EOF > /root/tomodrgn.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	micromamba create --name tomodrgn "python>=3.7" -c conda-forge
+	micromamba create --name tomodrgn "python=3.10" -c conda-forge
 
 	# run the conda script in the new environment
 	chmod +x /root/tomodrgn.sh
@@ -289,6 +311,7 @@ cat << EOF > /root/isonet.sh
 
 	git clone https://github.com/IsoNet-cryoET/IsoNet.git
 	cd IsoNet
+	rm -rf .git/
 	pip install -r requirements.txt
 	pip install --upgrade numpy==1.23.4
 
@@ -306,6 +329,18 @@ EOF
 	chmod +x /root/isonet.sh
 	micromamba run -n isonet /bin/bash -c "/root/isonet.sh > /proc/$$/fd/1 2>&1"
 	rm -rf /root/isonet.sh
+
+
+	# Install WarpTools
+	#micromamba create --name warp warp=2.0.0 -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
+	#micromamba update warp -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
+	#micromamba clean --all -y
+	
+	#rm -rf /tmp/env.tar
+	#conda-pack -p /opt/conda/envs/warp -o /tmp/env.tar && \
+	#	mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+	#	rm /tmp/env.tar
+	#/venv/bin/conda-unpack
 
 %startscript
 
