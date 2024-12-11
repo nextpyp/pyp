@@ -330,18 +330,17 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 reconstruct_option = "-Wbp 1"
 
             # the new version of AreTomo2 apparently need the alignments
-            if not os.path.exists(f"{name}.aln"):
-                tilt_angles = np.loadtxt(f"{name}.tlt",ndmin=2)
-                tilt_order = np.loadtxt(f"{name}.order",ndmin=2)
-                x, y, z = get_image_dimensions(f"{name}.ali")
-                with open(f"{name}.aln",'w') as f:
-                    f.write("# AreTomo Alignment / Priims bprmMn)\n")
-                    f.write(f"# RawSize = {x} {y} {z}\n")
-                    f.write(f"# NumPatches = 0\n")
-                    f.write(f"# SEC     ROT         GMAG       TX          TY      SMEAN     SFIT    SCALE     BASE     TILT\n")
-                    for tilt, order in zip(tilt_angles, tilt_order):
-                        #    0    00.0000    1.00000   1493.353   -740.186     1.00     1.00     1.00     0.00    -60.00
-                        f.write("%5d%11.4f%11.5f%11.3f%11.3f%9.2f%9.2f%9.2f%9.2f%9.2f\n" % (order,0,1,0,0,1,1,1,0,tilt))
+            tilt_angles = np.loadtxt(f"{name}.tlt",ndmin=2)
+            tilt_order = np.loadtxt(f"{name}.order",ndmin=2)
+            x, y, z = get_image_dimensions(f"{name}.ali")
+            with open(f"{name}.aln",'w') as f:
+                f.write("# AreTomo Alignment / Priims bprmMn)\n")
+                f.write(f"# RawSize = {x} {y} {z}\n")
+                f.write(f"# NumPatches = 0\n")
+                f.write(f"# SEC     ROT         GMAG       TX          TY      SMEAN     SFIT    SCALE     BASE     TILT\n")
+                for tilt, order in zip(tilt_angles, tilt_order):
+                    #    0    00.0000    1.00000   1493.353   -740.186     1.00     1.00     1.00     0.00    -60.00
+                    f.write("%5d%11.4f%11.5f%11.3f%11.3f%9.2f%9.2f%9.2f%9.2f%9.2f\n" % (order,0,1,0,0,1,1,1,0,tilt))
 
             command = f"{get_aretomo_path()} \
 -InMrc {name}.ali \
