@@ -141,14 +141,8 @@ def cryocare_predict(working_path, project_path, name, parameters):
     "gpu_id": get_gpu_ids(parameters)
     }
 
-    output_path = os.path.join( working_path, "denoised" )
-    if os.path.exists(output_path):
-        predcit_config["overwrite"] = True
-    else:
-        predcit_config["overwrite"] = parameters["tomo_denoise_cryocare_overwrite"]
-    
-    predcit_config["output"] = output_path
-    os.makedirs(output_path, exist_ok=True)
+    predcit_config["output"] = str(working_path)
+    predcit_config["overwrite"] = True
     
     predict_config_file = "predict_config.json"
     with open(predict_config_file, 'w') as file:
@@ -159,7 +153,9 @@ def cryocare_predict(working_path, project_path, name, parameters):
             logger.warning(file.read())
 
     command = f"{get_cryocare_path()}cryoCARE_predict.py --conf {predict_config_file}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])    
+    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    
+    return name + "_half1.rec"
 
 def cryocare(working_path, project_path, name, parameters):
     """
