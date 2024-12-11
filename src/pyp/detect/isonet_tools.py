@@ -312,8 +312,8 @@ def convert_and_transfer_tomograms(train_name,project_dir,parameters):
     # transfer/convert tomograms to local scratch
     commands = []
     for rec in train_name:
+        absolute_rec = os.path.join(project_dir, "mrc", rec + ".rec")
         if parameters.get("tomo_rec_depth"):
-            absolute_rec = os.path.join(project_dir, "mrc", rec + ".rec")
             command = "{0}/bin/newstack -mode 2 {1} {2} && rm -f {1}~".format(
                 get_imod_path(), absolute_rec, rec + ".rec"
             )
