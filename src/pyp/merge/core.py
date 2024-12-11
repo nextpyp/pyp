@@ -306,7 +306,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     # create binned reconstruction
     # only reconstruct tomograms if we're not using aretomo2
-    thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
+    thickness = parameters["tomo_rec_thickness"]
 
     if 'imod' in parameters["tomo_rec_method"].lower():
 

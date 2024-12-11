@@ -4954,7 +4954,7 @@ def align_tilt_series(name, parameters, rotation=0):
             logger.info("Align tilt-series using: aretomo")
  
             binning_tomo = parameters["tomo_rec_binning"]
-            thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
+            thickness = parameters["tomo_rec_thickness"]
 
             specimen_thickness = parameters["tomo_ali_aretomo_zheight"]
             assert (specimen_thickness < thickness), f"Height of specimen ({specimen_thickness}) needs to be smaller than tomogram thickness ({thickness})"
