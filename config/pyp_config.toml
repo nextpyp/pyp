@@ -1904,7 +1904,7 @@ condition = { arg="method", value="aretomo" }
 name = "Threshold to remove dark images"
 description = "Threshold to remove dark images (lower values remove fewer images)"
 type = "float"
-default = 0.0
+default = 0.7
 condition = { arg="method", value="aretomo" }
 
 [tabs.tomo_rec]

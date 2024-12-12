@@ -4814,11 +4814,18 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=[]):
             get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
         )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
+
+        command = "{0}/bin/newstack {1}.mrc {1}_aretomo.mrc -fromone {3}".format(
+            get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
+        )
+        run_shell_command(command,verbose=parameters["slurm_verbose"])
         
         # remove excluded tilt-angles
         indexes = np.fromstring( excluded_views.split(" ")[-1], dtype=int, sep=",") - 1
         tilt_angles = np.delete( tilt_angles, indexes, axis=0)
         np.savetxt( tltfile, tilt_angles, fmt='%.2f' )
+    else:
+        os.symlink( name + ".mrc", name + "_aretomo.mrc")
 
     tilt_series_size_x, tilt_series_size_y, tilt_series_size_z = get_image_dimensions(
         name + "_bin.st"
@@ -5158,7 +5165,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=[]):
             """
 
             command = f"{get_aretomo_path()} \
--InMrc {name}.mrc \
+-InMrc {name}_aretomo.mrc \
 -OutMrc {name}_aretomo.rec \
 -AngFile {name}.rawtlt \
 -VolZ {thickness} \
@@ -5177,6 +5184,17 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=[]):
 
             stream_shell_command(command, observer=obs, verbose=parameters["slurm_verbose"])
 
+            # detect removed images and add them to excluded views
+            formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
+            for line in output:
+                if "Remove image at" in line:
+                    angle = line.split(" ")[3]
+                    index = int(np.where(formatted_tilt_angles==angle)[0][0]) + 1
+                    if len(excluded_views) > 0:
+                        excluded_views += f",{index}"
+                    else:
+                        excluded_views = f"-EXCLUDELIST2 {index}"
+                
             if "Tilt offset" in output:
                 tilt_offset = float([s.split(",")[0].split("Tilt offset:")[1] for s in output.split("\n") if "Tilt offset" in s ][0])
                 if tilt_offset > 0:
@@ -5188,9 +5206,12 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=[]):
 
             # save output
             try:
-                shutil.copy2(f"{name}_Imod/{name}_st.xf", f"{name}.xf")
-                shutil.copy2(f"{name}_Imod/{name}_st.tlt", f"{name}.tlt")
-                os.symlink(f"{name}_aretomo.rec", f"{name}.rec")
+                shutil.copy2(f"{name}_aretomo_Imod/{name}_aretomo_st.xf", f"{name}.xf")
+                shutil.copy2(f"{name}_aretomo_Imod/{name}_aretomo_st.tlt", f"{name}.tlt")
+                
+                if os.path.exists(f"{name}_aretomo.rec"):
+                    os.symlink(f"{name}_aretomo.rec", f"{name}.rec")
+
             except:
                 if 'Error: GPU' in output:
                     if not parameters['slurm_verbose']:
@@ -5204,7 +5225,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=[]):
                         )
                 shutil.copy2(f"{name}.rawtlt", f"{name}.tlt")
                 logger.error("aretomo failed to run")
-            return
+
     else:
 
         # alignment using gold fiducials
@@ -5345,6 +5366,30 @@ EOF
                     print com
                     print commands.getoutput(com)
                     """
+
+                # TODO: Update excluded views per RAPTOR alignment
+                # checks for existing tilt series alignment
+                if parameters["slurm_verbose"]:
+                    with open(f"{name}_RAPTOR.log") as f:
+                        logger.info(f.read())
+                if os.path.exists("{0}_RAPTOR.log".format(name)):
+                    excluded = []
+                    # supposedly produces clean tilt series by excluding unalignable tilts
+                    # but apparently not doing this rn
+                    if excluded:
+                        logger.warning(f"Failed to align views {excluded}")
+                        if len(exclude_views) == 0:
+                            exclude_views = "-EXCLUDELIST2 " + ",".join(excluded)
+                        else:
+                            # combine excluded views into unique sorted list
+                            excluded.extend(
+                                exclude_views.replace(" ", "").split("-EXCLUDELIST2")[1].split(",")
+                            )
+                            exclude_views = "-EXCLUDELIST2 " + ",".join(
+                                [str(i) for i in sorted([int(j) for j in list(set(excluded))])]
+                            )
+                        
+                        # update excluded_views
 
         # if not using fiducials, or if RAPTOR failed
         if parameters["tomo_ali_fiducial"] == 0 or parameters["tomo_ali_method"] == "imod_patch":
@@ -5516,10 +5561,11 @@ EOF
         shutil.copy2("%s.fid" % name, "%s.fid.txt" % name)
 
     # compose pre alignment with fiducial/patch based alignments
-    command = "{0}/bin/xfproduct {1}.prexg {1}_bin.xf {1}.xf -scale {2},{2}".format(
-        get_imod_path(), name, binning
-    )
-    run_shell_command(command,verbose=parameters["slurm_verbose"])
+    if not 'aretomo' in parameters["tomo_ali_method"].lower():
+        command = "{0}/bin/xfproduct {1}.prexg {1}_bin.xf {1}.xf -scale {2},{2}".format(
+            get_imod_path(), name, binning
+        )
+        run_shell_command(command,verbose=parameters["slurm_verbose"])
 
     # add back excluded views to final transformations and tilt-angle files, if needed
     if len(excluded_views) > 0:
@@ -5563,6 +5609,11 @@ EOF
         np.savetxt( tlt_file, raw_tilt_angles, fmt='%.2f' )
 
     # create aligned fiducial model
+    if not 'aretomo' in parameters["tomo_ali_method"].lower():
+        command = "{0}/bin/imodtrans -2 {1}_bin.xf {1}.fid.txt {1}_aligned.fid".format(
+            get_imod_path(), name
+        )
+        run_shell_command(command,verbose=parameters["slurm_verbose"])
         
     return excluded_views
 
@@ -5585,5 +5636,3 @@ def check_parfile_match_allboxes(par_file: str, allboxes_file: str):
     allboxes = np.loadtxt(allboxes_file, ndmin=2)
     # add more info about how to avoid this error
     assert (pardata.shape[0] == allboxes.shape[0]), f"Number of particles in parfile and metadata do not match: {pardata.shape[0]} != {allboxes.shape[0]}. You may have a different set of particles than that used during pre-processing or you may have cleaned (modified) your particles after refinement while still using old particle coordinates."
-
-

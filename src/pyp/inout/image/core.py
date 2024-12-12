@@ -1490,6 +1490,11 @@ def generate_aligned_tiltseries(name, parameters, x, y):
     run_shell_command(command, verbose=False)
     [os.remove(f) for f in aligned_images]
 
+    # generate binned version also
+    command = "{0}/bin/newstack {1}.ali {1}_bin.ali -bin {2}; rm -rf {1}_bin.ali~".format(
+        get_imod_path(), name, parameters["tomo_rec_binning"]
+    )
+    run_shell_command(command,verbose=parameters["slurm_verbose"])
 
 def cistem_mask_create(parameters: dict, model: str, output: str):
     """
