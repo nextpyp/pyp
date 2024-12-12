@@ -533,7 +533,7 @@ def read_tilt_series(
         pixel_size = parameters["scope_pixel"]
         voltage = parameters["scope_voltage"]
         mag = parameters["scope_mag"]
-        tilt_axis = parameters["scope_tilt_axis"] - 90.0
+        tilt_axis = parameters["scope_tilt_axis"]
 
         # sort the list based on tilt angle
         sorted_tilts = sorted(tilts, key=lambda x: x[1])

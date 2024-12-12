@@ -4845,6 +4845,24 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=[]):
         sigma2 = parameters.get("tomo_ali_sigma2")
         iterate = parameters.get("tomo_ali_iterate")
 
+        """ tilt-axis angle conventions
+        
+        tiltxcorr
+        =========
+        
+        -rotation (-ro) OR -RotationAngle   Floating point
+            Angle of rotation of the tilt axis in the images; specifically,
+            the angle from the vertical to the tilt axis (counterclockwise
+            positive).
+              
+        aretomo2
+        ========
+        
+            Note that the orientation of tilt axis is relative to the y-axis 
+            (vertical axis of tilt image) and rotates counter-clockwise.
+        
+        """
+        
         tiltxcorr_options = f"-tiltfile {name}.rawtlt -binning {parameters['movie_bin']} -rotation {rotation} -radius1 {radius1} -sigma1 {sigma1} -radius2 {radius2} -sigma2 {sigma2} -iterate {iterate} {border_tapper}"
 
         if parameters.get("tomo_ali_exclude"):
