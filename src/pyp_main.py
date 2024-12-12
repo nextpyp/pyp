@@ -307,13 +307,20 @@ def parse_arguments(block):
             parameters["data_mode"] = parameters_existing["data_mode"]
             parameters["extract_cls"] = parameters_existing["extract_cls"]
             
-            parameters["movie_force"] = parameters_existing["movie_force"]
-            parameters["detect_force"] = parameters_existing["detect_force"]
-            parameters["ctf_force"] = parameters_existing["ctf_force"]
-            parameters["tomo_ali_force"] = parameters_existing["tomo_ali_force"]
-            parameters["tomo_rec_force"] = parameters_existing["tomo_rec_force"]
-            parameters["tomo_vir_force"] = parameters_existing["tomo_vir_force"]
-            parameters["tomo_srf_force"] = parameters_existing["tomo_srf_force"]
+            if parameters_existing.get("movie_force"):
+                parameters["movie_force"] = parameters_existing.get("movie_force")
+            if parameters_existing.get("detect_force"):
+                parameters["detect_force"] = parameters_existing.get("detect_force")
+            if parameters_existing.get("ctf_force"):
+                parameters["ctf_force"] = parameters_existing.get("ctf_force")
+            if parameters_existing.get("tomo_ali_force"):
+                parameters["tomo_ali_force"] = parameters_existing.get("tomo_ali_force")
+            if parameters_existing.get("tomo_rec_force"):
+                parameters["tomo_rec_force"] = parameters_existing.get("tomo_rec_force") 
+            if parameters_existing.get("tomo_vir_force"):
+                parameters["tomo_vir_force"] = parameters_existing.get("tomo_vir_force")
+            if parameters_existing.get("tomo_srf_force"):
+                parameters["tomo_srf_force"] = parameters_existing.get("tomo_srf_force")
             
         else:
             parent_dataset = parameters["data_set"]
