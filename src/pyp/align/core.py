@@ -4765,7 +4765,7 @@ def generate_thumbnail(aligned_average, name, parameters):
 
 
 @Timer("align", text="Alignment took: {}", logger=logger.info)
-def align_tilt_series(name, parameters, rotation=0):
+def align_tilt_series(name, parameters, rotation=0, excluded_views=[]):
     """
         Tilt series alignment.
 
@@ -4808,8 +4808,6 @@ def align_tilt_series(name, parameters, rotation=0):
     tltfile = f"{name}.rawtlt"
     shutil.copy2( tltfile, tltfile+"_original")
     tilt_angles = np.loadtxt(tltfile)
-    
-    excluded_views = merge.do_exclude_views(name, tilt_angles)
     
     if len(excluded_views) > 0:
         command = "{0}/bin/newstack {1}.st {1}_bin.st -bin {2} -fromone {3}".format(
@@ -5547,11 +5545,8 @@ EOF
         np.savetxt( tlt_file, raw_tilt_angles, fmt='%.2f' )
 
     # create aligned fiducial model
-    command = "{0}/bin/imodtrans -2 {1}_bin.xf {1}.fid.txt {1}_aligned.fid".format(
-        get_imod_path(), name
-    )
-    run_shell_command(command,verbose=parameters["slurm_verbose"])
-
+        
+    return excluded_views
 
 def check_parfile_match_allboxes(par_file: str, allboxes_file: str):
     """check_parfile_match_allboxes 

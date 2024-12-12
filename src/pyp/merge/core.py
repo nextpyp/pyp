@@ -137,7 +137,7 @@ def do_exclude_virions(name):
     return exclude_virions
 
 
-def do_exclude_views(name, tilt_angles):
+def do_exclude_views(name):
     """Identify ignored views (exclude_views) from s_exclude_views.mod and _RAPTOR.log"""
     exclude_model = "%s_exclude_views.mod" % name
     if os.path.isfile(exclude_model):
@@ -151,50 +151,6 @@ def do_exclude_views(name, tilt_angles):
             exclude_views = ""
     else:
         exclude_views = ""
-    # exclude_views = "-EXCLUDELIST2 1,2,3,4,5,6,7,8,34,35,36,37,38,39,40,41"
-
-    # Update excluded views per RAPTOR alignment
-    # checks for existing tilt series alignment
-    if os.path.exists("{0}_RAPTOR.log".format(name)):
-        excluded = []
-        # supposedly produces clean tilt series by excluding unalignable tilts
-        # but apparently not doing this rn
-        if excluded:
-            logger.warning(f"Failed to align views {excluded}")
-            if exclude_views == "":
-                exclude_views = "-EXCLUDELIST2 " + ",".join(excluded)
-            else:
-                # combine excluded views into unique sorted list
-                excluded.extend(
-                    exclude_views.replace(" ", "").split("-EXCLUDELIST2")[1].split(",")
-                )
-                exclude_views = "-EXCLUDELIST2 " + ",".join(
-                    [str(i) for i in sorted([int(j) for j in list(set(excluded))])]
-                )
-
-            # create clean aligned tilt series and corresponding tilt-angle file
-            # Look at this
-            newstack_exclude_views = "-fromone -exclude " + ",".join(
-                [str(i) for i in sorted([int(j) for j in list(set(excluded))])]
-            )
-            command = "{0}/bin/newstack -input {1}.ali -output {1}_clean.ali {2}".format(
-                get_imod_path(), name, newstack_exclude_views
-            )
-            logger.info(command)
-            logger.info(
-                subprocess.check_output(
-                    command, stderr=subprocess.STDOUT, shell=True, text=True
-                )
-            )
-
-            tilt_angles_clean = []
-            for i in range(tilt_angles.size):
-                if str(i + 1) not in excluded:
-                    tilt_angles_clean.append(str(tilt_angles[i]))
-
-            f = open("{0}_clean.tlt".format(name), "w")
-            f.write("\n".join(str(elem) for elem in tilt_angles_clean))
-            f.close()
 
     return exclude_views
 

@@ -1852,13 +1852,16 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     else:
         zfact = ""
 
+    # determine excluded views from user input
+    exclude_views = merge.do_exclude_views(name)
+
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
         logger.info("Using existing tilt-series alignments")
     else:
         t = timer.Timer(text="Tilt-series alignment took: {}", logger=logger.info)
         t.start()
-        align.align_tilt_series(name,parameters,tilt_axis)
+        exclude_views = align.align_tilt_series(name,parameters=parameters,rotation=tilt_axis,excluded_views=exclude_views)
         t.stop()
 
     # generate full-size aligned tiltseries only if we do not yet have binned tomogram OR 
@@ -1894,7 +1897,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         [ os.remove(f) for f in glob.glob( os.path.join(current_path, name + "_vir????_cut.txt") ) ]
         logger.info("Excluded virions list from mod file:")
         logger.info(exclude_virions)
-    exclude_views = merge.do_exclude_views(name, tilt_angles)
 
     # Reconstruction options # -RADIAL 0.125,0.15, -RADIAL 0.25,0.15 (autoem2), 0.35,0.05 (less stringent)
     tilt_options = merge.get_tilt_options(parameters,exclude_views)
