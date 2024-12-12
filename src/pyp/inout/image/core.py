@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import shutil
 import subprocess
+from statistics import median
 import sys
 from pathlib import Path
 
@@ -1444,20 +1445,17 @@ def get_tilt_axis_angle(name):
         verbose=False,
     )
     xf_rot_mag = output.split("\n")
-    axis_mean = counter = 0
+    axes = []
     for line in xf_rot_mag:
         if (
             "rot=" in line
-            and line.split()[0] == "1:"
         ):
             axis, MAGNIFICATION = (
                 float(line.split()[2][:-1]),
                 float(line.split()[4][:-1]),
             )
-            axis_mean += axis
-            counter += 1
-
-    return axis / counter
+            axes.append(axis)
+    return median(axes)
 
 
 def generate_aligned_tiltseries(name, parameters, x, y):
