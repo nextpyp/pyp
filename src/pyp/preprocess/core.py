@@ -936,7 +936,7 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
     gold_mod = f"{name}_gold.mod"
 
     if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
-        # create binned aligned stack
+        # create binned aligned stack, if needed
         if not os.path.exists(f'{name}_bin.ali'):
             command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
                 get_imod_path(), name, binning
@@ -952,11 +952,13 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
             return
 
         # save projected gold coordinates as txt file
-        com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
+        com = f"{get_imod_path()}/bin/model2point {gold_mod} {name}_gold_ccderaser.txt"
         local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
+        
         # calculate unbinned tilt-series coordinates
-        gold_coordinates = np.loadtxt(name + "_gold_ccderaser.txt",ndmin=2)
+        with open(f"{name}_gold_ccderaser.txt") as f:
+            gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00" in line], dtype='f', ndmin=2)
+
         gold_coordinates[:,:2] *= binning
         np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
 
@@ -979,7 +981,9 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
         erase_iterations = parameters['tomo_rec_erase_iterations']
 
         com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+        [ output, _ ] = local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+        if "The largest circle radius is too big for the arrays" in output:
+            raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")
 
         try:
             os.remove(name + "_gold_ccderaser.txt")
