@@ -669,7 +669,7 @@ def detect_virions(parameters, virion_size, binning, name):
         min_radius = parameters["tomo_vir_rad"] * ( 1 - tolerance ) / 2.0
 
         command = f"{get_tomo_path()}/itkCLT-next VirusLocation --cannyLowerThreshold {parameters['tomo_vir_canny_low']} --cannyUpperThreshold {parameters['tomo_vir_canny_high']} --diffusionNumberOfIterations {parameters['tomo_vir_iterations']} --houghNumberOfVirus {parameters['tomo_vir_number']} --houghMinimumRadius {min_radius} --houghMaximumRadius {max_radius} --rejectionCriteria1 10 --rejectionCriteria2 100 {name}.{extension} -o {name}.vir"
-        [output, error] = local_run.run_shell_command(command,parameters["slurm_verbose"])
+        local_run.stream_shell_command(command,parameters["slurm_verbose"])
 
         # cleanup
         if parameters['tomo_vir_binn'] > 1:
