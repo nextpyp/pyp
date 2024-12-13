@@ -4765,7 +4765,7 @@ def generate_thumbnail(aligned_average, name, parameters):
 
 
 @Timer("align", text="Alignment took: {}", logger=logger.info)
-def align_tilt_series(name, parameters, rotation=0, excluded_views=[]):
+def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
     """
         Tilt series alignment.
 

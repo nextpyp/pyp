@@ -2277,7 +2277,7 @@ def tomo_extract_coordinates(
     # Identify manually ignored views
     excluded_views = []
     if "exclude" in metadata:
-        [ excluded_views.append(f + 1) for f in metadata["exclude"].to_numpy()[:,-1] ]
+        [ excluded_views.append(int(f) + 1) for f in metadata["exclude"].to_numpy()[:,-1] ]
 
     if len(excluded_views) > 0:
         logger.info(f"Views to exclude {excluded_views}")

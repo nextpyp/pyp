@@ -1868,12 +1868,34 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
         logger.info("Using existing tilt-series alignments")
+        additional_exclude_views = exclude_views
     else:
         t = timer.Timer(text="Tilt-series alignment took: {}", logger=logger.info)
         t.start()
-        exclude_views = align.align_tilt_series(name,parameters=parameters,rotation=tilt_axis,excluded_views=exclude_views)
+        additional_exclude_views = align.align_tilt_series(name,parameters=parameters,rotation=tilt_axis,excluded_views=exclude_views)
         t.stop()
 
+    # save newly excluded views to .mod file, if needed
+    if len(exclude_views) != len(additional_exclude_views):
+        
+        # get excluded indexes from string containing -EXCLUDELIST2 option
+        exclude_views_indexes = sorted(list(map(int,additional_exclude_views.split(" ")[1].split(','))))
+        
+        # re-format indexes into 2D matrix (same format as one used by the website)
+        exclude_views_coordinates = np.zeros((len(exclude_views_indexes),3),dtype=int)
+        
+        # indexes start at 0, so we substract 1
+        exclude_views_coordinates[:,-1] = np.array(exclude_views_indexes) - 1
+        
+        # save matrix into temporary file so we can convert indexes to .imod model
+        np.savetxt(name+"_exclude_views.next", exclude_views_coordinates)
+        com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
+        local_run.run_shell_command(com)
+        os.remove(name+"_exclude_views.next")
+        
+        # use new list of excluded views from now on
+        exclude_views = additional_exclude_views
+    
     # generate full-size aligned tiltseries only if we do not yet have binned tomogram OR 
     # we need .ali for either sub-volume or virion extraction
     tilt_metadata["tilt_axis_angle"] = get_tilt_axis_angle(name)
