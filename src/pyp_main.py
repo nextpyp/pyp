@@ -559,7 +559,7 @@ def parse_arguments(block):
                         reference_par_file = reference_par_file[-1]
                         reference_model_file = reference_par_file.replace(".bz2","") + ".mrc"
                     elif data_mode == "tomo":
-                        reference_par_file = sorted(glob.glob( os.path.join(parent_parameters["data_parent"],"frealign","tomo-*.txt") ))
+                        reference_par_file = sorted(glob.glob( os.path.join(parent_parameters["data_parent"],"frealign","tomo-*_volumes.txt") ))
                         if len(reference_par_file) > 0:
                             reference_par_file = reference_par_file[-1]
                         else:
