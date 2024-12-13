@@ -307,19 +307,19 @@ def parse_arguments(block):
             parameters["data_mode"] = parameters_existing["data_mode"]
             parameters["extract_cls"] = parameters_existing["extract_cls"]
             
-            if parameters_existing.get("movie_force"):
+            if "movie_force" in parameters_existing:
                 parameters["movie_force"] = parameters_existing.get("movie_force")
-            if parameters_existing.get("detect_force"):
+            if "detect_force" in parameters_existing:
                 parameters["detect_force"] = parameters_existing.get("detect_force")
-            if parameters_existing.get("ctf_force"):
+            if "ctf_force" in parameters_existing:
                 parameters["ctf_force"] = parameters_existing.get("ctf_force")
-            if parameters_existing.get("tomo_ali_force"):
+            if "tomo_ali_force" in parameters_existing:
                 parameters["tomo_ali_force"] = parameters_existing.get("tomo_ali_force")
-            if parameters_existing.get("tomo_rec_force"):
+            if "tomo_rec_force" in parameters_existing:
                 parameters["tomo_rec_force"] = parameters_existing.get("tomo_rec_force") 
-            if parameters_existing.get("tomo_vir_force"):
+            if "tomo_vir_force" in parameters_existing:
                 parameters["tomo_vir_force"] = parameters_existing.get("tomo_vir_force")
-            if parameters_existing.get("tomo_srf_force"):
+            if "tomo_srf_force" in parameters_existing:
                 parameters["tomo_srf_force"] = parameters_existing.get("tomo_srf_force")
             
         else:
