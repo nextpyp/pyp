@@ -5053,7 +5053,7 @@ if __name__ == "__main__":
 
                     if len(all_files) > 0:
                         image_file = all_files[np.random.randint(0,high=len(all_files))]
-                        logger.info("Selecting image for preview: " + image_file)
+                        logger.info("Previewing randomly selected file: " + image_file)
 
                         x, y, z = get_image_dimensions(image_file)
                         logger.info(f"Image dimensions are {x:,} x {y:,} ({z:,} frames/tilts)")
