@@ -559,7 +559,7 @@ def parse_arguments(block):
                         reference_par_file = reference_par_file[-1]
                         reference_model_file = reference_par_file.replace(".bz2","") + ".mrc"
                     elif data_mode == "tomo":
-                        reference_par_file = sorted(glob.glob( os.path.join(parent_parameters["data_parent"],"frealign","tomo-preprocessing-*.txt") ))
+                        reference_par_file = sorted(glob.glob( os.path.join(parent_parameters["data_parent"],"frealign","tomo-*.txt") ))
                         if len(reference_par_file) > 0:
                             reference_par_file = reference_par_file[-1]
                         else:
@@ -4241,7 +4241,7 @@ if __name__ == "__main__":
 
                         if "spr" in mode:
                             # mag = parameters["scope_mag"]
-                            globalmeta.star2par(refine_star_file, new_imagelist, path="frealign/")
+                            globalmeta.star2par(refine_star_file, new_imagelist, path="frealign/maps")
 
                         project_params.save_parameters(parameters)
 
