@@ -677,6 +677,9 @@ def parse_arguments(block):
     if "class_num" in parameters.keys() and parameters["class_num"] > 1 or "tomo" in parameters["data_mode"]:
         parameters["refine_metric"] = "new"
 
+    # ensure backwards compatibility                
+    parameters = sync_parameters(parameters=parameters)
+                
     # enable _force depending on parameter changes
     if parameters_existing != 0 and block == "pre_process":
         parameters = project_params.parameter_force_check(parameters_existing, parameters)
@@ -5503,9 +5506,6 @@ EOF
 
                 if "extract_cls" not in parameters.keys():
                     parameters["extract_cls"] = 0
-
-                # ensure backwards compatibility                
-                parameters = sync_parameters(parameters=parameters)
 
                 # set particle radius based on bbox size                
                 if parameters.get("micromon_block") == "tomo-particles-eval":
