@@ -27,9 +27,10 @@ import numpy as np
 from pyp.system import project_params, slurm
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.singularity import get_pyp_configuration, run_pyp, run_slurm, run_ssh
+from pyp.system.singularity import get_pyp_configuration, run_pyp
 from pyp.system.user_comm import notify
 from pyp.utils import get_relative_path, movie2regex, symlink_relative
+from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -495,14 +496,22 @@ def resolve_sources(args):
 
 if __name__ == "__main__":
 
-    # load existing parameters or from data_parent
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-data_mode", "--data_mode")
-    args, unknown = parser.parse_known_args()
-    parent_parameters = vars(args)
+    params_file_path = get_params_file_path()
+    if params_file_path is not None:
+        config = ParamsConfig.from_file()
+        parent_parameters = parse_params_from_file(config, params_file_path)
 
-    # parse arguments
-    args = project_params.parse_parameters(0,"stream",parent_parameters["data_mode"])
+        # parse arguments
+        args = project_params.parse_parameters(parent_parameters,"stream",parent_parameters["data_mode"])
+    else:
+        # load existing parameters or from data_parent
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("-data_mode", "--data_mode")
+        args, unknown = parser.parse_known_args()
+        parent_parameters = vars(args)
+
+        # parse arguments
+        args = project_params.parse_parameters(0,"stream",parent_parameters["data_mode"])
 
     if (
         not "stream_transfer_target" in args.keys()

@@ -153,7 +153,7 @@ def get_positions_and_new_particle_count_from_box_files(
                     pbar.update(1)
 
         if len(boxes_lists) and (len(boxes_lists)-len(old_boxes_lists)) > 0 and number_of_particles_changed:
-            logger.info(f"Cumulative number of new micrographs: {len(boxes_lists)-len(old_boxes_lists):,}; Cumulative number of new particles: {new_particles:,}")
+            logger.info(f"{len(boxes_lists)-len(old_boxes_lists):,} micrographs, {new_particles:,} particles detected so far")
 
         flag = detect_flags(existing_unique_name=prev_name, project_directory=project_directory, existing_boxes_lists=old_boxes_lists)
         if not "None" in flag.values():
@@ -462,7 +462,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Ab-initio      : iteration{cycle_number+1:3}/{resolution_cycle_count+ITER:2}, High Res Limit: {high_res_limit:5.2f}, Fraction of particles: {class_fraction:4.2}")
+            logger.info(f"Ab-initio mode : iteration{cycle_number+1:3}/{resolution_cycle_count+ITER:2}, High Res Limit: {high_res_limit:5.2f}, Fraction of particles: {class_fraction:4.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
