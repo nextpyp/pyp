@@ -399,7 +399,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         tltfile = f"{newname}.tlt"
         tilt_angles = np.loadtxt(tltfile) if os.path.exists(tltfile) else metadata["tlt"].to_numpy()
 
-        exclude_views = merge.do_exclude_views(newname, tilt_angles)
+        exclude_views = merge.do_exclude_views(newname)
 
         # Reconstruction options
         tilt_options = merge.get_tilt_options(parameters,exclude_views)
@@ -573,7 +573,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
         tltfile = f"{newname}.tlt"
         tilt_angles = np.loadtxt(tltfile) if os.path.exists(tltfile) else metadata["tlt"].to_numpy()
 
-        exclude_views = merge.do_exclude_views(newname, tilt_angles)
+        exclude_views = merge.do_exclude_views(newname)
 
         # Reconstruction options
         tilt_options = merge.get_tilt_options(parameters,exclude_views)
