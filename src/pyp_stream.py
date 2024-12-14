@@ -621,14 +621,15 @@ if __name__ == "__main__":
     if args["stream_transfer_restart"]:
         logger.warning("Restarting data transfer")
         for f in [transferred_filename, filelist_filename, transfer_filename]:
-            try:
-                if args["slurm_verbose"]:
-                    logger.info("Deleting " + Path(f).name)
-                os.remove(f)
-            except:
-                if args["slurm_verbose"]:
-                    logger.error("Cannot delete " + f)
-                pass
+            if Path(f).exists:
+                try:
+                    if args["slurm_verbose"]:
+                        logger.info("Deleting " + Path(f).name)
+                    os.remove(f)
+                except:
+                    if args["slurm_verbose"]:
+                        logger.error("Cannot delete " + f)
+                    pass
         remove_from_destination(
             file="%s_speed.txt" % args["stream_session_name"],
             server=server,
@@ -646,7 +647,7 @@ if __name__ == "__main__":
     # run loop until timeout
     daemon_start_time = time.time()
 
-    logger.info("Entering loop with timeout = %i day(s)" % args["stream_session_timeout"])
+    logger.info("Running nextPYP daemon with %i day(s) walltime" % args["stream_session_timeout"])
 
     while (
         time.time() - daemon_start_time

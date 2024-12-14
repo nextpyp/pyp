@@ -96,7 +96,8 @@ def submit_jobs_to_workers(commands, working_path=os.getcwd(), verbose=False, si
         first_command = commands[0].split('\n')[0]
         if "/opt/" in first_command:
             first_command = first_command.split("/opt/")[1]
-        logger.info(f"Running {len(commands):,} command(s) ({first_command})")
+        if not silent:
+            logger.info(f"Running {len(commands):,} command(s) ({first_command})")
 
         # NOTE: be aware of the current working directory for all the workers, as they might be initiated in a different place
         current_directory = os.getcwd()

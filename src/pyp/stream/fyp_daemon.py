@@ -117,7 +117,7 @@ def get_positions_and_new_particle_count_from_box_files(
         ]
 
         if len(pkl_files) > 0:
-            logger.info(f"Detected {len(pkl_files):,} new images with CTF resolution better than {parameters['class2d_ctf_min_res']} A. Generating metadata")
+            logger.info(f"Generating metadata for {len(pkl_files):,} new images with CTF resolution better than {parameters['class2d_ctf_min_res']} A")
 
             # generate allparx files from new micrographs
             with tqdm(desc="Progress", total=len(pkl_files), file=TQDMLogger()) as pbar:
@@ -377,13 +377,14 @@ def run_refinement(  # rename to daemon2D after testing
         start_iteration = classification_status["refinement"]
         max_capacity = parameters['class2d_max_refinement']
 
-    logger.info(f"Beginning {classification_type} classification job")
+    logger.info(f"Beginning {classification_type} classification")
 
     if classification_type == "ab initio":
         previous_name = None
-        logger.info(
-            "Forcing previous_name to be None since classification_type is 'ab initio'"
-        )
+        if parameters.get("slurm_verbose"):
+            logger.info(
+                "Forcing previous_name to be None since classification_type is 'ab initio'"
+            )
     else:
         assert previous_name is not None
 
@@ -461,7 +462,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Ab-initio: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of particles: {class_fraction:.2}")
+            logger.info(f"Ab-initio      : iteration{cycle_number+1:3}/{resolution_cycle_count+ITER:2}, High Res Limit: {high_res_limit:5.2f}, Fraction of particles: {class_fraction:4.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -519,8 +520,7 @@ def run_refinement(  # rename to daemon2D after testing
 
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
-
-            logger.info(f"Seeded startup: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of particles: {class_fraction:.2}")
+            logger.info(f"Seeded startup : iteration{cycle_number+1:3}/{resolution_cycle_count+ITER:2}, High Res Limit: {high_res_limit:5.2f}, Fraction of particles: {class_fraction:4.2}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -578,7 +578,7 @@ def run_refinement(  # rename to daemon2D after testing
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Refinement mode: iteration {cycle_number}/{refinement_cycle_count}, High Res Limit: {high_res_limit}, Fraction of particles: {class_fraction:.2}")
+            logger.info(f"Refinement mode: iteration{cycle_number:3}/{refinement_cycle_count:2}, High Res Limit: {high_res_limit:5.2f}, Fraction of particles: {class_fraction:4.2f}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")

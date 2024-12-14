@@ -62,7 +62,7 @@ if __name__ == "__main__":
     memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else ""
 
     logger.info(
-        "Job (v{}) launching on {} using {} task(s) {}".format(
+        "Running nextPYP v{} on {} using {} task(s) {}".format(
         version, socket.gethostname(), mpi_tasks, memory
         )
     )

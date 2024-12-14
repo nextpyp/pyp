@@ -3915,7 +3915,7 @@ if __name__ == "__main__":
 
         if jobid is None:
             logger.info(
-                "Job (v{}) launching on {} using {} task(s) {}".format(
+                "Running nextPYP v{} on {} using {} task(s) {}".format(
                 version, socket.gethostname(), mpi_tasks, memory
                 )
             )
