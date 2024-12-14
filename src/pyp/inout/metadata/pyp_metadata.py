@@ -689,26 +689,27 @@ class LocalMetadata:
                 del self.data["drift"]
                 meta_update = True
 
-        if "tomo_vir_force" in parameters and parameters["tomo_vir_force"]:
-            if "vir" in self.data:
-                logger.info(
-                    f"Virion parameters will be re-computed"
-                )
-                if not parameters.get("micromon_block") == "tomo-segmentation-closed":
-                    del self.data["vir"]
+        if parameters["data_mode"] == "tomo":
+            if "tomo_vir_force" in parameters and parameters["tomo_vir_force"]:
+                if "vir" in self.data:
+                    logger.info(
+                        f"Virion parameters will be re-computed"
+                    )
+                    if not parameters.get("micromon_block") == "tomo-segmentation-closed":
+                        del self.data["vir"]
+                        meta_update = True
+                # also remove tomo spk
+                if "box" in self.data:
+                    del self.data["box"]
                     meta_update = True
-            # also remove tomo spk
-            if "box" in self.data:
-                del self.data["box"]
-                meta_update = True
 
-        if "tomo_ali_force" in parameters and parameters["tomo_ali_force"] and parameters.get("tomo_ali_method") != "import":
-            logger.info(
-                f"Tilt-series alignments will be re-computed"
-            )
-            if "ali" in self.data:
-                del self.data["ali"]
-                meta_update = True
+            if "tomo_ali_force" in parameters and parameters["tomo_ali_force"] and parameters.get("tomo_ali_method") != "import":
+                logger.info(
+                    f"Tilt-series alignments will be re-computed"
+                )
+                if "ali" in self.data:
+                    del self.data["ali"]
+                    meta_update = True
 
         if "detect_force" in parameters and parameters["detect_force"] or update_virion:
             logger.info(

@@ -894,49 +894,50 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     clean_picking_files(project_dir)
 
                 # tomo reconstruction cascade
-                if "tomo_ali" in k or "scope_tilt_axis" in k:
-                    logger.info(
-                        f"Tilt-series will be re-aligned to reflect change in parameter {k}"
-                    )
-                    new_parameters["tomo_ali_force"] = True
-                    new_parameters["tomo_rec_force"] = True
-                    new_parameters["tomo_vir_force"] = True
-                    clean_tomo_vir_particles(project_dir)
-                    new_parameters["detect_force"] = True
-                    clean_picking_files(project_dir)
-                    new_parameters["ctf_force"] = True
-
-                elif "tomo_rec" in k:
-                    logger.info(
-                        f"Tomograms will be re-computed to reflect change in parameter {k}"
-                    )
-                    new_parameters["tomo_rec_force"] = True
-                    if not "tomo_rec_erase_fiducials" in k:
+                if "tomo" in previous_parameters["data_mode"]:
+                    if "tomo_ali" in k or "scope_tilt_axis" in k:
+                        logger.info(
+                            f"Tilt-series will be re-aligned to reflect change in parameter {k}"
+                        )
+                        new_parameters["tomo_ali_force"] = True
+                        new_parameters["tomo_rec_force"] = True
                         new_parameters["tomo_vir_force"] = True
                         clean_tomo_vir_particles(project_dir)
                         new_parameters["detect_force"] = True
                         clean_picking_files(project_dir)
+                        new_parameters["ctf_force"] = True
 
-                elif (
-                    ( "tomo_vir_" in k 
-                     and "tomo_vir_rad" not in k 
-                     and "tomo_srf_detect_" not in k 
-                     and "tomo_vir_detect_" not in k 
-                     and not ( new_parameters.get("micromon_block") == "tomo-picking" and new_parameters.get("tomo_pick_method") == "manual" )
-                    )
-                    or ("tomo_spk_" in k and new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") == "virions" )
-                    or "tomo_pick_" in k and ( new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") == "virions" or new_parameters["micromon_block"] == "tomo-segmentation-closed" )
-                    or new_parameters.get("tomo_vir_method") == "pyp-eval" and new_parameters["micromon_block"] == "tomo-preprocessing" and "detect_nn3d_" in k
-                ):
-                    logger.info(
-                        f"Virions will be re-computed to reflect change in parameter {k}"
-                    )
-                    new_parameters["tomo_vir_force"] = True
-                    clean_tomo_vir_particles(project_dir)
+                    elif "tomo_rec" in k:
+                        logger.info(
+                            f"Tomograms will be re-computed to reflect change in parameter {k}"
+                        )
+                        new_parameters["tomo_rec_force"] = True
+                        if not "tomo_rec_erase_fiducials" in k:
+                            new_parameters["tomo_vir_force"] = True
+                            clean_tomo_vir_particles(project_dir)
+                            new_parameters["detect_force"] = True
+                            clean_picking_files(project_dir)
 
-                    thresholds_file = os.path.join( project_dir, "next", "virion_thresholds.next")
-                    if os.path.exists(thresholds_file):
-                        os.remove(thresholds_file)
+                    elif (
+                        ( "tomo_vir_" in k 
+                        and "tomo_vir_rad" not in k 
+                        and "tomo_srf_detect_" not in k 
+                        and "tomo_vir_detect_" not in k 
+                        and not ( new_parameters.get("micromon_block") == "tomo-picking" and new_parameters.get("tomo_pick_method") == "manual" )
+                        )
+                        or ("tomo_spk_" in k and new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") == "virions" )
+                        or "tomo_pick_" in k and ( new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") == "virions" or new_parameters["micromon_block"] == "tomo-segmentation-closed" )
+                        or new_parameters.get("tomo_vir_method") == "pyp-eval" and new_parameters["micromon_block"] == "tomo-preprocessing" and "detect_nn3d_" in k
+                    ):
+                        logger.info(
+                            f"Virions will be re-computed to reflect change in parameter {k}"
+                        )
+                        new_parameters["tomo_vir_force"] = True
+                        clean_tomo_vir_particles(project_dir)
+
+                        thresholds_file = os.path.join( project_dir, "next", "virion_thresholds.next")
+                        if os.path.exists(thresholds_file):
+                            os.remove(thresholds_file)
 
     else:
         # rerun a failed job without changing parameters 
