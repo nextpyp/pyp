@@ -1614,8 +1614,8 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
     # save average as mrc file
     if not os.path.exists(name + ".mrc") or not os.path.samefile(name + ".avg", name + ".mrc"):
         if parameters.get("movie_depth"):
-            logger.warning("Converting average to 16-bits")
-            command = "{0}/bin/newstack -mode 12 {1}.avg {1}.mrc && rm {1}.mrc~".format(
+            logger.info("Converting average to 16-bits")
+            command = "{0}/bin/newstack -mode 12 {1}.avg {1}.mrc && rm -f {1}.mrc~".format(
                 get_imod_path(), name
             )
             local_run.run_shell_command(command)
@@ -2520,7 +2520,7 @@ def csp_extract_frames(
                     t = timer.Timer(text="Convert tif to mrc took: {}", logger=logger.info)
                     t.start()
 
-                    command = "{0}/bin/tif2mrc {1}.tif {1}.mrc; rm {1}.tif".format(
+                    command = "{0}/bin/tif2mrc {1}.tif {1}.mrc; rm -f {1}.tif".format(
                         get_imod_path(), filename
                     )
                     local_run.run_shell_command(command)
@@ -2637,7 +2637,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
 
         # convert data to 32-bits
         if parameters.get("movie_depth") and os.path.exists(filename + ".mrc"):
-            command = "{0}/bin/newstack -mode 2 {1} {1} && rm {1}~".format(
+            command = "{0}/bin/newstack -mode 2 {1} {1} && rm -f {1}~".format(
                 get_imod_path(), filename + ".mrc"
             )
             local_run.run_shell_command(command)
