@@ -649,7 +649,7 @@ class LocalMetadata:
             os.remove(tmp)
 
         # label yz-swap in the model file
-        command = f"{get_imod_path()}/bin/imodtrans -Y -T {path} {path} && rm {path}~"
+        command = f"{get_imod_path()}/bin/imodtrans -Y -T {path} {path} && rm -f {path}~"
         run_shell_command(command, verbose=False)
 
 

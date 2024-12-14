@@ -973,13 +973,13 @@ def readMoviefileandsave(filename, parameters, binning, gain_reference_file=None
                 os.remove(inputfile)
         """
         elif mode <= 1:
-            com = "{0}/bin/newstack {1} {2} -mode 2; rm {2}~".format(
+            com = "{0}/bin/newstack {1} {2} -mode 2; rm -f {2}~".format(
                 get_imod_path(), inputfile, outputfile,
             )
             run_shell_command(com)
             mode = 2
         elif inputfile != outputfile:
-            com = "{0}/bin/newstack {1} {2} -mode 2; rm {2}~".format(
+            com = "{0}/bin/newstack {1} {2} -mode 2; rm -f {2}~".format(
                 get_imod_path(), inputfile, outputfile,
             )
             run_shell_command(com)
@@ -1382,7 +1382,7 @@ def compress_images(input, output, cpus=1):
 
     os.environ["IMOD_FORCE_OMP_THREADS"] = str(cpus)
 
-    command = "{0}/bin/mrc2tif -O 1 -P -s -c 8 {1} {2} && rm {1}".format(
+    command = "{0}/bin/mrc2tif -O 1 -P -s -c 8 {1} {2} && rm -f {1}".format(
         get_imod_path(), input, output
     )
     run_shell_command(command, verbose=False)
@@ -1472,7 +1472,7 @@ def generate_aligned_tiltseries(name, parameters, x, y):
     commands = [] 
     aligned_images = []
     for tilt in range(sec):
-        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs -linear -taper 1,1 -size {3},{4} && rm {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
+        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs -linear -taper 1,1 -size {3},{4} && rm -f {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
             get_imod_path(), name, tilt, x, y
         )
         commands.append(command)

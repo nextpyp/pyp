@@ -2014,7 +2014,7 @@ def apply_alignments_and_average(input_name, name, parameters, method="imod"):
     threads = parameters["slurm_tasks"]
     env = "export OMP_NUM_THREADS={0}; export NCPUS={0}; IMOD_FORCE_OMP_THREADS={0}; ".format(threads)
     
-    command = env + "{0}/bin/newstack -mode 2 {1} {2}.mrc && rm {1}~".format(
+    command = env + "{0}/bin/newstack -mode 2 {1} {2}.mrc && rm -f {1}~".format(
         get_imod_path(), input_name, name
     )
     run_shell_command(command)

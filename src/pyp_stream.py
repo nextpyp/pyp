@@ -353,7 +353,7 @@ def remove_from_destination(file, server, path):
         if os.path.exists(target):
             os.remove(target)
     else:
-        com = "ssh {0} rm {1}".format(server, target)
+        com = "ssh {0} rm -f {1}".format(server, target)
         run_shell_command(com)
 
 

@@ -1148,18 +1148,18 @@ def spk_extract_and_process(
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
-        command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec -blank && rm {3}.rec~".format(
+        command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec -blank && rm -f {3}.rec~".format(
             get_imod_path(), int(ypad_dn), int(spike_size - 1 + ypad_dn), spike_name,
         )
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
 
     # rotate volume to align with Z-axis
-    command = "{0}/bin/clip rotx {1}.rec {1}.rec && rm {1}.rec~".format(get_imod_path(), spike_name)
+    command = "{0}/bin/clip rotx {1}.rec {1}.rec && rm -f {1}.rec~".format(get_imod_path(), spike_name)
     local_run.run_shell_command(command)
 
     # padding volume
     if pad_factor > 1:
-        command = "{0}/bin/clip resize -ox {2} -oy {2} -oz {2} {1}.rec {1}.rec && rm {1}.rec~".format(
+        command = "{0}/bin/clip resize -ox {2} -oy {2} -oz {2} {1}.rec {1}.rec && rm -f {1}.rec~".format(
             get_imod_path(), spike_name, spike_size / pad_factor
         )
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
@@ -1178,7 +1178,7 @@ def spk_extract_and_process(
 
     # apply spike binning factor
     if "tomo_ext_binn" in parameters and  parameters["tomo_ext_binn"] > 1:
-        command = "{0}/bin/binvol -input {1}.rec -output {1}.rec -binning {2} && rm {1}.rec~".format(
+        command = "{0}/bin/binvol -input {1}.rec -output {1}.rec -binning {2} && rm -f {1}.rec~".format(
             get_imod_path(), spike_name, str(parameters["tomo_ext_binn"])
         )
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
