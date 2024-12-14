@@ -792,7 +792,7 @@ def get_weight_from_projects(weight_folder: Path, parameters: dict) -> str:
 
 def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
 
-    all_differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and 'force' not in k}
+    all_differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and not k.endswith("_force")}
 
     differences = {d for d in all_differences if not ( ( isinstance(previous_parameters[d],PosixPath) or isinstance(previous_parameters[d],str) ) and project_params.resolve_path(previous_parameters[d]) == project_params.resolve_path(new_parameters[d]) ) }
 
