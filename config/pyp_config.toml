@@ -996,7 +996,7 @@ default = 0.2
 condition = { arg="method", value="auto" }
 
 [tabs.detect.ignore_contamination]
-name = "Ignore contamination"
+name = "Skip contamination detection"
 description = "Skip generation of binary contamination mask"
 type = "bool"
 default = false

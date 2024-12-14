@@ -389,7 +389,6 @@ class LocalMetadata:
                 elif key == "box":
                     boxx = self.data["box"].to_numpy()
                     if not os.path.exists(os.path.join(path, name + ".boxx")):
-                        logger.info("Writing boxx files from metadata")
                         np.savetxt(os.path.join(path, name + ".boxx"), boxx, fmt="%s", delimiter='\t')
                     if not os.path.exists(os.path.join(path, name + ".box")):
                         np.savetxt(os.path.join(path, name + ".box"), boxx[:,:4], fmt="%s", delimiter='\t')
