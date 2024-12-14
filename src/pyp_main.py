@@ -282,7 +282,7 @@ def parse_arguments(block):
         # handle data import case separately
         if parameters.get("data_parent"):
             data_parent = project_params.resolve_path(parameters.get("data_parent"))
-            if os.path.exists(data_parent):
+            if os.path.exists(data_parent) and parameters_existing == 0:
                 parameters_existing = project_params.load_parameters(data_parent)
 
             if parameters.get("data_import"):
