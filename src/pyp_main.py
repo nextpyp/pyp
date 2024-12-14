@@ -1431,9 +1431,9 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
         load_spr_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
 
         # convert frame average to 32-bits
-        if parameters.get("movie_depth") and os.path.exists(name+".mrc"):
-            command = "{0}/bin/newstack -mode 2 {1} {1} && rm {1}~".format(
-                get_imod_path(), name + ".mrc"
+        if parameters.get("movie_depth") and os.path.exists(name+".avg"):
+            command = "{0}/bin/newstack -mode 2 {1} {1} && rm -f {1}~".format(
+                get_imod_path(), name + ".avg"
             )
             local_run.run_shell_command(command)
 
