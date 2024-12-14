@@ -295,8 +295,10 @@ def parse_arguments(block):
                 parameters_existing = check_and_update_parameters(parameters, parameters_existing)
                 
                 parameters_existing["data_parent"] = data_parent
-                parameters_existing["data_import"] = parameters["data_import"]
-                parameters_existing["micromon_block"] = parameters["micromon_block"]
+                if "data_import" in parameters:
+                    parameters_existing["data_import"] = parameters["data_import"]
+                if "micromon_block" in parameters:
+                    parameters_existing["micromon_block"] = parameters["micromon_block"]
 
                 parameters = project_params.parse_parameters(parameters_existing, block, parameters["data_mode"] ) 
     
@@ -304,8 +306,10 @@ def parse_arguments(block):
             
             # transfer hidden parameters
 
-            parameters["data_mode"] = parameters_existing["data_mode"]
-            parameters["extract_cls"] = parameters_existing["extract_cls"]
+            if "data_mode" in parameters_existing:
+                parameters["data_mode"] = parameters_existing["data_mode"]
+            if "extract_cls" in parameters_existing:
+                parameters["extract_cls"] = parameters_existing["extract_cls"]
             
             if "movie_force" in parameters_existing:
                 parameters["movie_force"] = parameters_existing.get("movie_force")
@@ -323,11 +327,12 @@ def parse_arguments(block):
                 parameters["tomo_srf_force"] = parameters_existing.get("tomo_srf_force")
             
         else:
-            parent_dataset = parameters["data_set"]
+            
+            parent_dataset = parameters.get("data_set")
 
         # always set dataset and refinement name based on current folder name
         parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
-        data_mode = parameters["data_mode"]
+        data_mode = parameters.get("data_mode")
 
     else:
 
