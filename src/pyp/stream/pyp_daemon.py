@@ -129,6 +129,10 @@ def pyp_daemon(args):
         # load and set default PYP parameters
         parameters = project_params.load_pyp_parameters(session_dir)
 
+    for key in parameters:
+        if key.endswith("_force") and parameters[key]:
+            parameters[key] = False
+
     parameters["data_set"] = session
 
     # run only one job per node
@@ -231,6 +235,7 @@ def pyp_daemon(args):
 
             # read specification file
             specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+            
             # figure out which parameters need to be added and set as default values
             for t in specifications["tabs"].keys():
                 if not t.startswith("_"):
@@ -240,10 +245,17 @@ def pyp_daemon(args):
                             if "default" in specifications["tabs"][t][p]:
                                 new_parameters[f"{t}_{p}"] = specifications["tabs"][t][p]["default"]
 
+            for key in new_parameters:
+                if key.endswith("_force") and new_parameters[key]:
+                    new_parameters[key] = False
+
+            if "extract_bnd" in new_parameters.keys() and isinstance(args["extract_bnd"], dict) and "ref" in new_parameters["extract_bnd"].keys():
+                new_parameters["extract_bnd"] = new_parameters["extract_box"]
+
             parameters = project_params.parameter_force_check(previous_parameters, new_parameters, project_dir=session_dir)
 
             # update args
-            for key in { k for k in args.keys() & parameters.keys() if args[k] != parameters[k] }:
+            for key in { k for k in args.keys() & parameters.keys() if args[k] != parameters[k] and not k.endswith("_force") }:
                 args[key] = parameters[key]
 
             if (
@@ -254,19 +266,13 @@ def pyp_daemon(args):
                 parameters["tomo_vir_force"] or
                 parameters["tomo_ali_force"]
             ):
-                # there is no longer need to clean the metadata since we are relying on _force parameters now
-                # clean_pkl_items(parameters, namelist, session_dir)
-
                 # create a flag for fyp restart
                 Path(os.path.join(session_dir, "fypd.restart")).touch()
 
                 alreadysubmitted = []
 
-                # remove corresponding image files so refinement daemon can keep track of images that are ready to be processed
-                if "spr" in args["data_mode"]:
-                    [ os.remove(f) for f in glob.glob( os.path.join( session_dir, "mrc", "*.mrc" ) ) ]
-                else:
-                    [ os.remove(f) for f in glob.glob( os.path.join( session_dir, "mrc", "*.rec" ) ) ]
+                # edit metadata to force recalculations as needed
+                clean_pkl_items(parameters, namelist, session_dir)
 
                 restart_or_clean = True
             else:
@@ -316,6 +322,7 @@ def pyp_daemon(args):
             for key in different_values:
                 parameters[key] = new_parameters[key]
                 args[key] = new_parameters[key]
+            
             try:
                 filelist = glob.glob( os.path.join( session_dir, "ctf", "*.*" ) )
                 filelist += glob.glob( os.path.join( session_dir, "mrc", "*.*" ) )
@@ -337,6 +344,15 @@ def pyp_daemon(args):
 
         # turn off "_force" parameters after cleaning/restart so next time won't trigger unnecessary procedure
         if restart_or_clean:
+
+            if "extract_bnd" in args.keys() and isinstance(args["extract_bnd"], dict) and "ref" in args["extract_bnd"].keys():
+                args["extract_bnd"] = args["extract_box"]
+
+            # disable the _force parameters in the configure file
+            for key in args:
+                if key.endswith("_force") and args[key]:
+                    args[key] = False
+
             '''
             for key in args:
                 if "_force" in key and any(
@@ -643,6 +659,12 @@ def clean_pkl_items(parameters, namelist, current_path):
                         if "ctf" in metadata:
                             del metadata["ctf"]
                             meta_update = True
+                        if "global_ctf" in metadata:
+                            del metadata["global_ctf"]
+                        if "ctf_avrot" in metadata:
+                            del metadata["ctf_avrot"]
+                        if "ts_ctf_avgrot" in metadata:
+                            del metadata["ts_ctf_avgrot"]
 
                     if "tomo_ali_force" in parameters and parameters["tomo_ali_force"]:
                         if first:
