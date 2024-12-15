@@ -589,7 +589,7 @@ def run_refinement(  # rename to daemon2D after testing
                 # print table header
                 logger.info(f"Refinement mode\tIteration\tResolution limit (A)\tParticles used (percentage)")
             # print data for current iteration
-            logger.info(f"\t\t{cycle_number:11}/{refinement_cycle_count+ITER:2}\t\t\t{high_res_limit:4.1f}\t{round(100.0*class_fraction):20}")
+            logger.info(f"\t\t{cycle_number+ITER:11}/{refinement_cycle_count:2}\t\t\t{high_res_limit:4.1f}\t{round(100.0*class_fraction):20}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -827,12 +827,12 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     
                     force_preprocessing = False
                 else:
-                    force_preprocessing = any(["_force" in key and new_parameters[key]==True for key in new_parameters ])
+                    force_preprocessing = any([key.endswith("_force") and new_parameters[key]==True for key in new_parameters ])
                                     
                     # disable the _force parameters in the configure file
                     if force_preprocessing:
                         for key in new_parameters:
-                            if "_force" in key and new_parameters[key]==True and not "_force_integer" in key:
+                            if key.endswith("_force") and new_parameters[key]==True:
                                 new_parameters[key] = False
                             else:
                                 pass
@@ -942,7 +942,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
 
                     new_boxes_lists = get_new_boxes(boxes_lists_before, boxes_lists)
                     # only run refinement mode if we get additional particles
-                    logger.info(f"{new_particles} new particles detected, exceeds {incremental_threshold_2D} threshold")
+                    logger.info(f"{new_particles:,} new particles detected, exceeds {incremental_threshold_2D:,} threshold")
 
                     previous_name = new_name
                     new_name = generate_unique_name(mparameters)
