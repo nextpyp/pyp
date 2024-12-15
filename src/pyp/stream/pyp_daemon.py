@@ -11,10 +11,11 @@ import sys
 import time
 from pathlib import Path
 from traceback import FrameSummary
+from tqdm import tqdm
 
 import numpy as np
 from pyp.streampyp.web import Web
-import pyp.streampyp.metadb_daemon
+from pyp.streampyp.logging import TQDMLogger
 from pyp.analysis import plot
 from pyp.inout.image import compress_and_delete
 from pyp.inout.image import digital_micrograph as dm4
@@ -625,106 +626,111 @@ def clean_pkl_items(parameters, namelist, current_path):
 
     first = True
     if not is_spr:
-        for name in namelist:
-            # loading pkl file
-            pklname = os.path.join(current_path, "pkl", name + ".pkl")
-            if os.path.exists(pklname):
-                metadata_object = pyp_metadata.LocalMetadata(pklname, is_spr=is_spr)
-                metadata = metadata_object.data
-                meta_update = False
+        with tqdm(desc="Progress", total=len(namelist), file=TQDMLogger()) as pbar:
+            for name in namelist:
+                # loading pkl file
+                pklname = os.path.join(current_path, "pkl", name + ".pkl")
+                if os.path.exists(pklname):
+                    metadata_object = pyp_metadata.LocalMetadata(pklname, is_spr=is_spr)
+                    metadata = metadata_object.data
+                    meta_update = False
 
-                if "ctf_force" in parameters and parameters["ctf_force"]:
-                    if first:
-                        logger.info(
-                            f"CTF parameters will be re-computed"
-                        )
-                    if "ctf" in metadata:
-                        del metadata["ctf"]
-                        meta_update = True
-
-                if "tomo_ali_force" in parameters and parameters["tomo_ali_force"]:
-                    if first:
-                        logger.info(
-                            f"Movie alignments will be re-computed"
-                        )
-                    if "ali" in metadata:
-                        del metadata["ali"]
-                        meta_update = True
-                if "movie_force" in parameters and parameters["movie_force"] and not parameters["movie_no_frames"]:
-                    if first:
-                        logger.info(
-                            f"Movie drift parameters will be re-computed"
-                        )
-                    if "drift" in metadata:
-                        del metadata["drift"]
-                        meta_update = True
-                if "tomo_vir_force" in parameters and parameters["tomo_vir_force"] or parameters["tomo_vir_method"] == "none":
-                    if "vir" in metadata:
+                    if "ctf_force" in parameters and parameters["ctf_force"]:
                         if first:
                             logger.info(
-                                f"Virion parameters will be re-computed"
+                                f"CTF parameters will be re-computed"
                             )
-                        del metadata["vir"]
-                        meta_update = True
-                    [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mrc",name+"_vir????_binned_nad.*") ) ]
-                    [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
-                if "detect_force" in parameters and parameters["detect_force"] or parameters["tomo_spk_method"] != "none":
-                    if first:
-                        logger.info(
-                            f"Particle parameters will be re-computed"
-                        )
-                    if "box" in metadata:
-                        del metadata["box"]
-                        meta_update = True
-                    [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
-                    [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mod",name+".spk") ) ]
+                        if "ctf" in metadata:
+                            del metadata["ctf"]
+                            meta_update = True
 
-                # update current pkl file
-                if meta_update:
-                    metadata_object.write()
+                    if "tomo_ali_force" in parameters and parameters["tomo_ali_force"]:
+                        if first:
+                            logger.info(
+                                f"Tilt-series alignments will be re-computed"
+                            )
+                        if "ali" in metadata:
+                            del metadata["ali"]
+                            meta_update = True
+                    
+                    if "movie_force" in parameters and parameters["movie_force"] and not parameters["movie_no_frames"]:
+                        if first:
+                            logger.info(
+                                f"Movie drift parameters will be re-computed"
+                            )
+                        if "drift" in metadata:
+                            del metadata["drift"]
+                            meta_update = True
 
-                first = False
+                    if "tomo_vir_force" in parameters and parameters["tomo_vir_force"] or parameters["tomo_vir_method"] == "none":
+                        if "vir" in metadata:
+                            if first:
+                                logger.info(
+                                    f"Virion parameters will be re-computed"
+                                )
+                            del metadata["vir"]
+                            meta_update = True
+                        [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mrc",name+"_vir????_binned_nad.*") ) ]
+                        [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
+
+                    if "detect_force" in parameters and parameters["detect_force"] or parameters["tomo_spk_method"] != "none":
+                        if first:
+                            logger.info(
+                                f"Particle parameters will be re-computed"
+                            )
+                        if "box" in metadata:
+                            del metadata["box"]
+                            meta_update = True
+                        [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
+                        [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mod",name+".spk") ) ]
+
+                    # update current pkl file
+                    if meta_update:
+                        metadata_object.write()
+
+                    first = False
+                pbar.update(1)
 
     else:
-        for name in namelist:
-            # loading pkl file
-            pklname = os.path.join(current_path, "pkl", name + ".pkl")
-            if os.path.exists(pklname):
-                metadata_object = pyp_metadata.LocalMetadata(pklname, is_spr=is_spr)
-                metadata = metadata_object.data
-                meta_update = False
+        with tqdm(desc="Progress", total=len(namelist), file=TQDMLogger()) as pbar:
+            for name in namelist:
+                # loading pkl file
+                pklname = os.path.join(current_path, "pkl", name + ".pkl")
+                if os.path.exists(pklname):
+                    metadata_object = pyp_metadata.LocalMetadata(pklname, is_spr=is_spr)
+                    metadata = metadata_object.data
+                    meta_update = False
 
-                if "ctf_force" in parameters and parameters["ctf_force"]:
-                    if first:
-                        logger.info(
-                            f"CTF parameters will be re-computed"
-                        )
-                    if "ctf" in metadata:
-                        del metadata["ctf"]
-                        meta_update = True
+                    if "ctf_force" in parameters and parameters["ctf_force"]:
+                        if first:
+                            logger.info(
+                                f"CTF parameters will be re-computed"
+                            )
+                        if "ctf" in metadata:
+                            del metadata["ctf"]
+                            meta_update = True
 
-                if "movie_force" in parameters and parameters["movie_force"]:
-                    if first:
-                        logger.info(
-                            f"Movie drift parameters will be re-computed"
-                        )
-                    if "drift" in metadata:
-                        del metadata["drift"]
-                        meta_update = True
+                    if "movie_force" in parameters and parameters["movie_force"]:
+                        if first:
+                            logger.info(
+                                f"Movie drift parameters will be re-computed"
+                            )
+                        if "drift" in metadata:
+                            del metadata["drift"]
+                            meta_update = True
 
-                if "detect_force" in parameters and parameters["detect_force"]:
-                    if first:
-                        logger.info(
-                            f"Particle parameters will be re-computed"
-                        )
-                    if "box" in metadata:
-                        del metadata["box"]
-                        meta_update = True
+                    if "detect_force" in parameters and parameters["detect_force"]:
+                        if first:
+                            logger.info(
+                                f"Particle parameters will be re-computed"
+                            )
+                        if "box" in metadata:
+                            del metadata["box"]
+                            meta_update = True
 
-                # update current pkl file
-                if meta_update:
-                    metadata_object.write()
+                    # update current pkl file
+                    if meta_update:
+                        metadata_object.write()
 
-                first = False
-
-
+                    first = False
+                pbar.update(1)
