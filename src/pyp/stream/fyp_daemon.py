@@ -102,6 +102,7 @@ def get_positions_and_new_particle_count_from_box_files(
 
     project_directory = Path().cwd().parent
     mrc_dir = project_directory / "mrc"
+    os.makedirs( mrc_dir, exist_ok=True)
     flag = {}
     # Loop until we have enough particles
     while new_particles < parameters[threshold_type]:
@@ -457,7 +458,7 @@ def run_refinement(  # rename to daemon2D after testing
             if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
                 logger.info(f"Using fraction {class_fraction} from total particles number {particle_num:,} for ab initio")
 
-            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
+            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
             if cycle_number == 0:
@@ -520,7 +521,7 @@ def run_refinement(  # rename to daemon2D after testing
             if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
                 logger.info(f"Using fraction {class_fraction} from total particles number {particle_num:,} for seeded_startup")
 
-            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
+            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
             if cycle_number == 0:
@@ -582,7 +583,7 @@ def run_refinement(  # rename to daemon2D after testing
 
         for cycle_number in range(start_iteration, refinement_cycle_count):
 
-            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
+            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
             if cycle_number == 0:
