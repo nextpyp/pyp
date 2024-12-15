@@ -452,8 +452,8 @@ def pyp_daemon(args):
                                     for order in orders:
                                         order_file.write( order + "\n" )
 
-                        # cap number of jobs submitted
-                        if len(tobesubmitted) >= args["slurm_bundle_size"]:
+                        # cap number of jobs submitted, except when restart or clean flags were raised
+                        if len(tobesubmitted) >= args["slurm_bundle_size"] and not restart_or_clean:
                             break
 
         # Submit jobs to swarm
