@@ -269,7 +269,7 @@ def pyp_daemon(args):
 
                 restart_or_clean = True
             else:
-                logger.info("Nothing changed in parameters, history files won't change")
+                logger.info("No parameter changes detected, no need for updates")
 
             try:
                 os.remove(restart_flag)
