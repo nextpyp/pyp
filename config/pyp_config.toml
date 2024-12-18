@@ -150,8 +150,13 @@ name = "TOMO Coarse Refinement"
 description = "3D refinement and constrained classification"
 tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "dose_weighting", "denoise", "export", "slurm" ]
 
-[blocks.tomo_drgn]
-name = "Heterogeneity analysis"
+[blocks.tomo_drgn_train]
+name = "DRGN training"
+description = "tomoDRGN/cryoDRGN-ET"
+tabs = [ "heterogeneity", "slurm" ]
+
+[blocks.tomo_drgn_eval]
+name = "DRGN evaluation"
 description = "tomoDRGN/cryoDRGN-ET"
 tabs = [ "heterogeneity", "slurm" ]
 
