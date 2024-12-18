@@ -2623,9 +2623,10 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
                     os.path.join(local_frealign_folder, "scratch", "statistics_r%02d.txt" % (ref + 1)),
                 )
             except:
-                logger.warning(
-                    "Could not find frealign statistics file in maps/ folder"
-                )
+                if ref == 0:
+                    logger.warning(
+                        "Could not find frealign statistics file in maps/ folder"
+                    )
                 pass
 
     os.chdir(current_path)
