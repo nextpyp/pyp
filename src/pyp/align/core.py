@@ -5556,7 +5556,16 @@ EOF
             name,
             name,
         )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        output, error = run_shell_command(command,verbose=parameters["slurm_verbose"])
+        if "ERROR: TILTALIGN" in output:
+            logger.error(output)
+
+            rot = vtk.rotation_matrix(np.radians(rotation), [0, 0, 1])
+            rot2D = np.array(
+                [rot[0, 0], rot[0, 1], rot[1, 0], rot[1, 1], 0.0, 0.0], ndmin=2
+            )
+            np.savetxt("{0}_bin.xf".format(name), rot2D, fmt="%13.7f")
+            shutil.copy2("%s.rawtlt" % name, "%s.tlt" % name)
 
         shutil.copy2("%s.fid" % name, "%s.fid.txt" % name)
 
