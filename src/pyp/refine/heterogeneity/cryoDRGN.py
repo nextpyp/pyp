@@ -298,7 +298,8 @@ def cryodrgn_analyze(input_dir, output, parameters, downsampled):
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 
-def run_cryodrgn(project_dir, parameters):
+# TODO - only run training tasks
+def run_cryodrgn_train(project_dir, parameters):
 
     # scratch space
     working_path = Path(os.environ["PYP_SCRATCH"]) / "cryodrgn"
@@ -371,5 +372,77 @@ def run_cryodrgn(project_dir, parameters):
 
     shutil.copytree((working_path / "analyze_output"), Path(final_output), dirs_exist_ok=True)
 
+# TODO - only run evaluation tasks    
+def run_cryodrgn_eval(project_dir, parameters):
+
+    # scratch space
+    working_path = Path(os.environ["PYP_SCRATCH"]) / "cryodrgn"
+
+    logger.info(f"Working path: {working_path}")
+
+    working_path.mkdir(parents=True, exist_ok=True)
+    os.chdir(working_path)
+
+    input_path =os.path.join(
+        project_params.resolve_path(parameters["data_parent"]), "relion", "stacks",
+    )
+    name = parameters['data_set']
+    starfile = name + "_particles.star"
+
+    input_star = Path(project_params.resolve_path(parameters["heterogeneity_input_star"]))
+    assert input_star.exists(), "Can not find input star file, run the extract stacks first."
+
+    # this is the input star and partilces stacks folder
     
+    (working_path / "input_data").mkdir(parents=True, exist_ok=True)
+
+    shutil.copy2(input_star, working_path / "input_data" / starfile)
+
+    particles_stacks = glob.glob(os.path.join(input_path, "*_stack.mrcs"))
+
+    tasks = []
+    for stack in particles_stacks:
+        
+        command = f"cp {stack} {os.getcwd()}/input_data/"
+        tasks.append(command)
+
+    mpi.submit_jobs_to_workers(tasks, os.getcwd())
+    
+    particle_stack_list = [os.path.basename(p) for p in particles_stacks]
+
+    # do preprocessing in input_data folder
+    os.chdir("input_data")
+    
+    boxsize = parameters['extract_box']
+    downsample_size = parameters['heterogeneity_cryodrgn_downsample_size']
+
+    downsampled = cryodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size)
+
+    os.chdir("../")
+
+    (working_path / "train_output").mkdir(parents=True, exist_ok=True)
+
+    # train
+    cryodrgn_train(parameters, "input_data", name, "train_output", downsampled=downsampled)
+
+    if (working_path / "train_output" / "weights.pkl").exists() and (working_path / "train_output" / "z.pkl").exists():
+        saved_folder = os.path.join(project_dir, "train")
+        logger.info(f"Training finished successfully, saving results to {saved_folder}")
+
+        shutil.copytree((working_path / "train_output"), Path(saved_folder), dirs_exist_ok=True)
+    else:
+        raise Exception("Training did not finish successfully")
+
+    # analyze
+    logger.info("Running CryoDRGN analyze")
+    cryodrgn_analyze("train_output", "analyze_output", parameters, downsampled)
+
+    final_output = os.path.join(project_dir, "train", "heterogeneity_cryodrgn_analyze_" + str(parameters["heterogeneity_cryodrgn_analysis_epoch"]))
+    
+    if not os.path.exists(final_output):
+        Path(final_output).mkdir()
+
+    logger.info(f"Saving the final results to {final_output}")
+
+    shutil.copytree((working_path / "analyze_output"), Path(final_output), dirs_exist_ok=True)
 

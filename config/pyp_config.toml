@@ -4946,6 +4946,7 @@ enum = {train_vae="train_vae (learn heterogeneity landscape and volume decoder)"
 default = "train_vae"
 condition = { arg="method", value="tomoDRGN" }
 
+# convergence_nn
 [tabs.heterogeneity.tomodrgn_ref]
 name = "Reference volume"
 description = "volume against which to calculate FSC"
@@ -4953,6 +4954,7 @@ type = "path"
 path = { type="files" }
 input = { type="initialModel" }
 condition = {arg="tomodrgn_mode", value="convergence_nn"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_max_epoch]
 name = "Max epoch"
@@ -4983,6 +4985,7 @@ description = "Latest epoch number N to analyze convergence (0-based indexing, c
 type = "str"
 default = "latest"
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_epoch_interval]
 name = "Epoch interval"
@@ -4990,6 +4993,7 @@ description = "Interval of epochs between calculating most convergence heuristic
 type = "int"
 default = 5
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_force_umapcpu]
 name = "Force-umap-cpu"
@@ -4997,6 +5001,7 @@ description = "Override default UMAP GPU-bound implementation via cuML to use um
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_subset]
 name = "Subset"
@@ -5004,6 +5009,7 @@ description = "Max number of particles to be used for UMAP calculations. 'None' 
 type = "int"
 default = 50000
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_randomseed]
 name = "Random-seed"
@@ -5011,6 +5017,7 @@ description = "Manually specify the seed used for selection of subset particles 
 type = "int"
 default = 0
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_randomstate]
 name = "Random-state"
@@ -5018,6 +5025,7 @@ description = "Random state seed used by UMAP for reproducibility at slight cost
 type = "str"
 default = "42"
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_skip_umap]
 name = "Skip UMAP"
@@ -5025,6 +5033,7 @@ description = "Requires that UMAP be precomputed for downstream calcs. Useful fo
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_nbins]
 name = "N-bins"
@@ -5032,6 +5041,7 @@ description = "The number of bins along UMAP1 and UMAP2"
 type = "int"
 default = 30
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_smooth]
 name = "Smooth"
@@ -5039,6 +5049,7 @@ description = "Mooth the 2D histogram before identifying local maxima"
 type = "bool"
 default = true
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_smooth_width]
 name = "Smooth width"
@@ -5046,6 +5057,7 @@ description = "Width of gaussian kernel for smoothing 2D histogram expressed as 
 type = "float"
 default = 1.0
 condition = {arg="tomodrgn_smooth", value="true"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_pruned_maxima]
 name = "Pruned-maxima"
@@ -5053,6 +5065,7 @@ description = "Prune poorly-separated maxima until this many maxima remain"
 type = "int"
 default = 12
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_radius]
 name = "Radius"
@@ -5060,6 +5073,7 @@ description = "Distance at which two maxima are considered poorly-separated and 
 type = "float"
 default = 5.0
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_final_maxima]
 name = "Final-maxima"
@@ -5067,6 +5081,7 @@ description = "select this many local maxima, sorted by highest bin count after 
 type = "int"
 default = 10
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_skip_vgen]
 name = "Skip-volgen"
@@ -5074,6 +5089,7 @@ description = "Skip volume generation. Requires that volumes already exist for d
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_gt]
 name = "Ground-truth"
@@ -5081,6 +5097,7 @@ description = "Relative path containing wildcards to ground_truth_vols*.mrc for 
 type = "str"
 default = "None"
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_thresh]
 name = "Mask threshold"
@@ -5088,6 +5105,7 @@ description = "Float, isosurface at which to threshold mask; default 0 uses 50th
 type = "float"
 default = 0
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dist]
 name = "Mask soft edge"
@@ -5095,6 +5113,7 @@ description = "Number of voxels over which to apply a soft cosine falling edge f
 type = "int"
 default = 10
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dilate]
 name = "Mask dilate"
@@ -5102,9 +5121,11 @@ description = "Number of voxels to dilate thresholded isosurface outwards from m
 type = "int"
 default = 3
 condition = {arg="tomodrgn_mode", value="convergence_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 ##############
 ##############
+# train_vae, train_nn
 
 [tabs.heterogeneity.tomodrgn_use_firstn]
 name = "Use first N tilts"
@@ -5112,6 +5133,7 @@ description = "Number of tilts to sample from each particle per epoch. Default: 
 type = "int"
 default = 32
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_lazy]
 name = "Lazy loading"
@@ -5119,6 +5141,7 @@ description = "Lazy loading if full dataset is too large to fit in memory"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_windowing]
 name = "Real space windowing"
@@ -5126,6 +5149,7 @@ description = "Real space windowing of dataset"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_window_r]
 name = "Radius"
@@ -5133,6 +5157,7 @@ description = "Windowing radius"
 type = "float"
 default = 0.85
 condition = {arg="tomodrgn_data_windowing", value="true"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_window_r_outer]
 name = "Outer radius"
@@ -5140,6 +5165,7 @@ description = "Windowing outer radius"
 type = "float"
 default = 1.12
 condition = {arg="tomodrgn_data_windowing", value="true"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_tilt_weight]
 name = "Cosine weight by tilt"
@@ -5147,6 +5173,7 @@ description = "Weight reconstruction loss by cos(angle)"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dose_weight]
 name = "Weight by dose"
@@ -5154,6 +5181,7 @@ description = "Weight reconstruction loss per tilt per pixel by dose dependent a
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="train_nn"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dose]
 name = "Dose override"
@@ -5162,6 +5190,7 @@ type = "float"
 default = 0.0
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dose_mask]
 name = "Dose mask"
@@ -5170,6 +5199,7 @@ type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_layers]
 name = "Layers"
@@ -5178,6 +5208,7 @@ type = "int"
 default = 3
 condition = {arg="tomodrgn_mode", value="train_nn"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dim]
 name = "Number of nodes"
@@ -5186,6 +5217,7 @@ type = "int"
 default = 256
 condition = {arg="tomodrgn_mode", value="train_nn"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_enc_lya]
 name = "Enc-layers-A"
@@ -5194,6 +5226,7 @@ type = "int"
 default = 3
 condition = {arg="tomodrgn_mode", value="train_vae"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_enc_dima]
 name = "Enc-dim-A"
@@ -5202,6 +5235,7 @@ type = "int"
 default = 256
 condition = {arg="tomodrgn_mode", value="train_vae"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_out_dima]
 name = "Out-dim-A"
@@ -5210,6 +5244,7 @@ type = "int"
 default = 128
 condition = {arg="tomodrgn_mode", value="train_vae"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_enc_lyb]
 name = "Enc-layers-B"
@@ -5218,6 +5253,7 @@ type = "int"
 default = 3
 condition = {arg="tomodrgn_mode", value="train_vae"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_enc_dimb]
 name = "Enc-dim-B"
@@ -5226,6 +5262,7 @@ type = "int"
 default = 256
 condition = {arg="tomodrgn_mode", value="train_vae"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_pool]
 name = "Pooling-function"
@@ -5235,6 +5272,7 @@ enum = { concatenate="concatenate", max="max", mean="mean", median="median", set
 default = "concatenate"
 advanced = true
 condition = {arg="tomodrgn_mode", value="train_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_enc_mask]
 name = "Encoder mask"
@@ -5242,6 +5280,7 @@ description = "Circular mask of image for encoder (default: D/2; -1 for no mask)
 type = "float"
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_num_seeds]
 name = "Num-seeds"
@@ -5250,6 +5289,7 @@ type = "int"
 default = 1
 advanced = true
 condition = {arg="tomodrgn_mode", value="train_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_num_heads]
 name = "Num-heads"
@@ -5258,6 +5298,7 @@ type = "int"
 default = 4
 advanced = true
 condition = {arg="tomodrgn_mode", value="train_vae"}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_layer_norm]
 name = "Layer-norm"
@@ -5266,6 +5307,7 @@ type = "bool"
 default = false
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 # [tabs.heterogeneity.tomodrgn_use_real]
 # name = "Use real space"
@@ -5281,6 +5323,7 @@ type = "int"
 default = 3
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dec_dim]
 name = "Decoder nodes"
@@ -5289,6 +5332,7 @@ type = "int"
 default = 256
 condition = {arg="tomodrgn_mode", value="train_vae"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_l_ext]
 name = "L-extent"
@@ -5297,6 +5341,7 @@ type = "float"
 default = 0.5
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_pe_type]
 name = "Position encoding type"
@@ -5306,6 +5351,7 @@ enum = {geom_ft="geom_ft", geom_full="geom_full", geom_lowf="geom_lowf", geom_no
 default = "gaussian"
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_feat_sigma]
 name = "Gaussian features"
@@ -5314,6 +5360,7 @@ type = "float"
 default = 0.5
 condition = { arg="tomodrgn_pe_type", value="gaussian" }
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_pe_dim]
 name = "Positional frequencies"
@@ -5321,6 +5368,7 @@ description = "Num frequencies in positional encoding (default: image D/2)"
 type = "float"
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 # [tabs.heterogeneity.tomodrgn_dec_domain]
 # name = "Decoder representation"
@@ -5337,6 +5385,7 @@ enum = {relu="relu", leaky_relu="leaky_relu"}
 default = "relu"
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_num_workers]
 name = "Number of workers"
@@ -5345,6 +5394,7 @@ type = "int"
 default = 0
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_prefetch_factor]
 name = "Prefetch-factor"
@@ -5353,6 +5403,7 @@ type = "int"
 default = 2
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_pst_wkrs]
 name = "Persistent-workers"
@@ -5361,6 +5412,7 @@ type = "bool"
 default = false
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_pin_mem]
 name = "Pin-memory"
@@ -5369,6 +5421,9 @@ type = "bool"
 default = false
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
+
+# analysis
 
 [tabs.heterogeneity.tomodrgn_analysis_epoch]
 name = "Analysis epochs"
@@ -5376,6 +5431,7 @@ description = "Epoch number N to analyze (0-based indexing, corresponding to z.N
 type = "int"
 default = 49
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_analysis_skipv]
 name = "Skip volume generation"
@@ -5383,6 +5439,7 @@ description = "Skip generation of volumes"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_analysis_skipumap]
 name = "Skip UMAP"
@@ -5390,6 +5447,7 @@ description = "Skip running UMAP"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_analysis_flip]
 name = "Flip handedness"
@@ -5397,6 +5455,7 @@ description = "Flip handedness of output volumes"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_analysis_invert]
 name = "Invert contrast"
@@ -5404,12 +5463,14 @@ description = "Invert contrast of output volumes"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_analysis_downsample]
 name = "Downsample output"
 description = "Downsample volumes to this box size (pixels)"
 type = "int"
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_analysis_pc]
 name = "Principal components"
@@ -5417,6 +5478,7 @@ description = "Number of principal component traversals to generate"
 type = "int"
 default = 2
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_analysis_ksample]
 name = "K-means samples"
@@ -5424,6 +5486,7 @@ description = "Number of k-means samples to generate"
 type = "int"
 default = 20
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_analysis_pc_ondata]
 name = "PC-ondata"
@@ -5431,6 +5494,7 @@ description = "Find closest on-data latent point to each PC percentile"
 type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
 
 [tabs.heterogeneity.tomodrgn_train_zdim]
 name = "ZDIM"
@@ -5439,6 +5503,7 @@ type = "int"
 default = 128
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_weight]
 name = "Initial traning model"
@@ -5448,6 +5513,7 @@ path = { type="files" }
 required = false
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_checkpoint]
 name = "Checkpoint interval"
@@ -5456,6 +5522,7 @@ type = "int"
 default = 1
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_log_interval]
 name = "Log interval"
@@ -5464,6 +5531,7 @@ type = "int"
 default = 1000
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_seed]
 name = "Random seed"
@@ -5471,6 +5539,7 @@ description = "Random seed for training"
 type = "int"
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_ind]
 name = "Filter index"
@@ -5480,6 +5549,7 @@ path = { type="files" }
 required = false
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_invert]
 name = "Invert data sign"
@@ -5488,6 +5558,7 @@ type = "bool"
 default = true
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_dir]
 name = "Input data directory"
@@ -5497,6 +5568,7 @@ path = { type="folders" }
 required = false
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_use_ptl]
 name = "Sample particles"
@@ -5505,6 +5577,7 @@ type = "int"
 default = -1
 condition = {arg="tomodrgn_mode", value="train_vae"}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_sequential_order]
 name = "Sequential order"
@@ -5513,6 +5586,7 @@ type = "bool"
 default = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_epochs]
 name = "Number of epochs"
@@ -5520,6 +5594,7 @@ description = "Number of training epochs"
 type = "int"
 default = 20
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_batch]
 name = "Batch size"
@@ -5528,6 +5603,7 @@ type = "int"
 default = 1
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_wd]
 name = "Weight decay"
@@ -5536,6 +5612,7 @@ type = "int"
 default = 0
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_lr]
 name = "Learning rate"
@@ -5544,6 +5621,7 @@ type = "float"
 default = 0.0001
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_beta]
 name = "Beta schedule"
@@ -5551,6 +5629,7 @@ description = "Choice of beta schedule or a constant for KLD weight (default: 1/
 type = "float"
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_beta_control]
 name = "Beta control"
@@ -5558,6 +5637,7 @@ description = "KL-Controlled VAE gamma. Beta is KL target"
 type = "float"
 advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_norm]
 name = "Data normalization"
@@ -5566,6 +5646,7 @@ type = "str"
 default = "None"
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_amp]
 name = "Use mixed_precision"
@@ -5574,6 +5655,7 @@ type = "bool"
 default = false
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
+hidden = [ "tomo_drgn_eval" ]
 
 # [tabs.heterogeneity.tomodrgn_pose_sgd]
 # name = "Pose SGD"

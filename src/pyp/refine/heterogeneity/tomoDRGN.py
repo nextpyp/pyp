@@ -238,7 +238,83 @@ def tomodrgn_analyze(input_dir, output, parameters):
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 
-def run_tomodrgn(project_dir, parameters):
+# TODO - only run training tasks
+def run_tomodrgn_train(project_dir, parameters):
+
+    # scratch space
+    working_path = Path(os.environ["PYP_SCRATCH"]) / "tomodrgn"
+
+    logger.info(f"Working path: {working_path}")
+
+    working_path.mkdir(parents=True, exist_ok=True)
+    os.chdir(working_path)
+
+    input_path =os.path.join(
+        project_params.resolve_path(parameters["data_parent"]), "relion", "stacks",
+    )
+    name = parameters['data_set']
+    starfile = name + "_particles.star"
+
+    input_star = Path(project_params.resolve_path(parameters["heterogeneity_input_star"]))
+    assert input_star.exists(), "Can not find input star file, run the extract stacks first."
+
+    # this is the input star and partilces stacks folder
+    
+    (working_path / "input_data").mkdir(parents=True, exist_ok=True)
+
+    shutil.copy2(input_star, working_path / "input_data" / starfile)
+
+    particles_stacks = glob.glob(os.path.join(input_path, "*_stack.mrcs"))
+
+    tasks = []
+    for stack in particles_stacks:
+        
+        command = f"cp {stack} {os.getcwd()}/input_data/"
+        tasks.append(command)
+
+    logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
+    mpi.submit_jobs_to_workers(tasks, working_path=os.getcwd(), verbose=False)
+        
+    # particle_stack_list = [os.path.basename(p) for p in particles_stacks]
+
+    # do preprocessing in input_data folder
+    # os.chdir("input_data")
+    
+    # boxsize = parameters['extract_box']
+    # downsample_size = parameters['heterogeneity_tomodrgn_downsample_size']
+
+    # downsampled = tomodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size)
+
+    # os.chdir("../")
+
+    (working_path / "train_output").mkdir(parents=True, exist_ok=True)
+
+    # train
+    tomodrgn_train(parameters, "input_data", name, "train_output")
+
+    if (working_path / "train_output" / "weights.pkl").exists() and (working_path / "train_output" / "z.train.pkl").exists():
+        saved_folder = os.path.join(project_dir, "train")
+        logger.info(f"Training finished successfully, saving results to {saved_folder}")
+
+        shutil.copytree((working_path / "train_output"), Path(saved_folder), dirs_exist_ok=True)
+    else:
+        raise Exception("Training did not finish successfully")
+
+    # convergence
+    logger.info("Running tomoDRGN convergence_vae")
+    convergence_vae(parameters, "train_output", "analyze_output")
+
+    final_output = os.path.join(project_dir, "train", "heterogeneity_tomodrgn_analyze_" + str(parameters["heterogeneity_tomodrgn_analysis_epoch"]))
+    
+    if not os.path.exists(final_output):
+        Path(final_output).mkdir()
+
+    logger.info(f"Saving the final results to {final_output}")
+
+    shutil.copytree((working_path / "analyze_output"), Path(final_output), dirs_exist_ok=True)
+
+# TODO - only run evaluation tasks
+def run_tomodrgn_eval(project_dir, parameters):
 
     # scratch space
     working_path = Path(os.environ["PYP_SCRATCH"]) / "tomodrgn"
@@ -288,8 +364,8 @@ def run_tomodrgn(project_dir, parameters):
 
     (working_path / "train_output").mkdir(parents=True, exist_ok=True)
 
-    # train
-    tomodrgn_train(parameters, "input_data", name, "train_output")
+    # analyze
+    tomodrgn_analyze(parameters, "input_data", name, "train_output")
 
     if (working_path / "train_output" / "weights.pkl").exists() and (working_path / "train_output" / "z.train.pkl").exists():
         saved_folder = os.path.join(project_dir, "train")
@@ -299,9 +375,9 @@ def run_tomodrgn(project_dir, parameters):
     else:
         raise Exception("Training did not finish successfully")
 
-    # convergence
-    logger.info("Running tomoDRGN convergence_vae")
-    convergence_vae(parameters, "train_output", "analyze_output")
+    # eval_vol
+    logger.info("Running tomoDRGN eval_vol")
+    tomodrgn_eval_vol(parameters, "train_output", "analyze_output")
 
     final_output = os.path.join(project_dir, "train", "heterogeneity_tomodrgn_analyze_" + str(parameters["heterogeneity_tomodrgn_analysis_epoch"]))
     
@@ -497,5 +573,28 @@ def convergence_vae(parameters, input_dir, output):
         options += f" --ground-truth {parameters['heterogeneity_tomodrgn_gt']}"
 
     command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options} --plot-format svgz"
+
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    
+def tomodrgn_eval_vol(parameters, input_dir):
+    
+    """
+    Generate volumes from corresponding latent embeddings using a pretrained train_vae model (i.e. evaluating decoder module only)
+    
+    usage: eval_vol [-h] -w WEIGHTS -c CONFIG -o OUTDIR [--prefix PREFIX]
+                [--zfile ZFILE] [--flip] [--invert] [--downsample DOWNSAMPLE]
+                [--lowpass LOWPASS] [-b BATCH_SIZE] [--no-amp] [--multigpu]
+    """
+    
+    ref = parameters["heterogeneity_tomodrgn_ref"]
+
+    option = ""
+    if parameters["heterogeneity_tomodrgn_dc"]:
+        option += " --include-dc"
+    
+    if not "none" in parameters["heterogeneity_tomodrgn_fscmask"]:
+        option += f" --fsc-mask {parameters['heterogeneity_tomodrgn_fscmask']}"
+
+    command = f"{get_tomodrgn_path()} eval_vol {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option}"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])

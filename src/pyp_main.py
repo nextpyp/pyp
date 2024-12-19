@@ -5035,21 +5035,85 @@ if __name__ == "__main__":
                     project_dir = os.getcwd()
 
                     if parameters["heterogeneity_method"] == "cryoDRGN":
-                        cryoDRGN.run_cryodrgn(project_dir, parameters=parameters)
+                        cryoDRGN.run_cryodrgn_train(project_dir, parameters=parameters)
                     
                     elif parameters["heterogeneity_method"] == "tomoDRGN":
-                        tomoDRGN.run_tomodrgn(project_dir, parameters=parameters)
+                        tomoDRGN.run_tomodrgn_train(project_dir, parameters=parameters)
                     
                     else:
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
 
-                    logger.info("nextPYP (heterogeneity analysis) finished successfully")
+                    logger.info("nextPYP (DRGN train) finished successfully")
                 else:
-                    raise Exception("Not any of the heterogeneity analysis methods selected.")
+                    raise Exception("No heterogeneity analysis methods selected?")
 
             except:
                 trackback()
                 logger.error("nextPYP (heterogeneity analysis) failed")
+                pass
+
+        elif "heterogeneityeval" in os.environ:
+            del os.environ["heterogeneityeval"]
+            try:
+                parameters = parse_arguments("pre_process")
+
+                if "drgn" in parameters.get("micromon_block"):
+
+                    if parameters["data_mode"] == "spr":
+                        if parameters.get("heterogeneity_method") == "tomoDRGN":
+                            raise Exception("tomoDRGN only works for tomography")                            
+                        set_up.prepare_spr_dir()
+                    else:
+                        set_up.prepare_tomo_dir()
+
+                    # prepare directory structure
+                    folders = [
+                        "frealign"
+                    ]
+                    null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
+
+                    if "heterogeneity_input_star" in parameters and parameters.get("heterogeneity_input_star") == "auto":
+                        input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
+                        parameters["heterogeneity_input_star"] = input_star
+
+                    if "data_parent" in parameters and parameters["data_parent"] is not None: 
+                        input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
+                        input = Path(os.getcwd()) / "frealign" / "stacks" 
+                        if not input.exists() and input_source.exists():               
+                            os.symlink( input_source, input ) 
+                    elif parameters.get("heterogeneity_input_star") and os.path.exists( project_params.resolve_path(parameters["heterogeneity_input_star"]) ):
+                        input_source = Path(parameters['heterogeneity_input_star']).parent
+                        input = Path(os.getcwd()) / "frealign" / "stacks" 
+                        # check particle stacks
+                        assert len(glob.glob(str(input_source) + "/*.mrc")) > 0, "Can not find any particle stacks from input folder.\n \
+                            Please include particles stacks in the same path of the input star file. "
+                        if not input.exists():               
+                            os.symlink( input_source, input ) 
+                    else:
+                        logger.info("Taking current project stacks as input to cryoDRGN")
+
+                    # clear local scratch and report free space
+                    clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                    project_dir = os.getcwd()
+
+                    if parameters["heterogeneity_method"] == "cryoDRGN":
+                        cryoDRGN.run_cryodrgn_eval(project_dir, parameters=parameters)
+
+                    elif parameters["heterogeneity_method"] == "tomoDRGN":
+                        tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters)
+                    
+                    else:
+                        raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
+
+                    logger.info("nextPYP (DRGN eval) finished successfully")
+                else:
+                    raise Exception("No heterogeneity analysis methods selected?")
+
+            except:
+                trackback()
+                logger.error("nextPYP (DRGN eval) failed")
                 pass
 
         # check gain reference
