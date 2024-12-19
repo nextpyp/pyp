@@ -44,7 +44,7 @@ def coordinates_from_mod_file(filename):
                     coord.append(default_radius)
 
                 indexes.append(numpy.array(coord, dtype=float))
-    return numpy.absolute(numpy.array(indexes))
+    return numpy.absolute(numpy.array(indexes,ndmin=2))
 
 
 def coordinates_to_model_file(coordinates,filename,radius=50):
