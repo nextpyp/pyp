@@ -194,7 +194,10 @@ done
         else:
             bundle = ""
 
-    if Web.exists:
+    # retireve configuration
+    config = get_pyp_configuration()
+
+    if Web.exists or "slurm" not in config or "host" not in config["slurm"]:
 
         # convert dependencies into a list
         if dependencies == "":
@@ -238,27 +241,32 @@ done
         if threads > 1:
             mpi = {"oversubscribe": True, "cpus": threads}
 
-        # launch job via streampyp
-        if len(csp_local_merge_command) == 0:
-            return Web().slurm_sbatch(
-                web_name=jobname,
-                cluster_name="pyp_"+jobtype,
-                commands=Web.CommandsScript(cmdlist, processes, bundle),
-                dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
-                deps=dependencies,
-                mpi=mpi,
-            )
+        if Web.exists:
+            
+            # launch job via streampyp
+            if len(csp_local_merge_command) == 0:
+                return Web().slurm_sbatch(
+                    web_name=jobname,
+                    cluster_name="pyp_"+jobtype,
+                    commands=Web.CommandsScript(cmdlist, processes, bundle),
+                    dir=_absolutize_path(submit_dir),
+                    args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
+                    deps=dependencies,
+                    mpi=mpi,
+                )
+            else:
+                return Web().slurm_sbatch(
+                    web_name=jobname,
+                    cluster_name="pyp_"+jobtype,
+                    commands=Web.CommandsGrid(cmdgrid, bundle),
+                    dir=_absolutize_path(submit_dir),
+                    args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
+                    deps=dependencies,
+                    mpi=mpi,
+                )
         else:
-            return Web().slurm_sbatch(
-                web_name=jobname,
-                cluster_name="pyp_"+jobtype,
-                commands=Web.CommandsGrid(cmdgrid, bundle),
-                dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
-                deps=dependencies,
-                mpi=mpi,
-            )
+            # TODO - slumr-less job submission
+            pass
     else:
 
         if "sess_" in jobtype:
