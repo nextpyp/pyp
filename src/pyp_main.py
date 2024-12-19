@@ -330,6 +330,10 @@ def parse_arguments(block):
             
             parent_dataset = parameters.get("data_set")
 
+        # keep track of iteration number since website doesn't know about this parameter
+        if "refine_iter" in parameters_existing:
+            parameters["refine_iter"] = parameters_existing.get("refine_iter")
+            
         # always set dataset and refinement name based on current folder name
         parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
         data_mode = parameters.get("data_mode")
