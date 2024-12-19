@@ -3712,7 +3712,11 @@ def update_metadata_coordinates(parameters):
             next_file = os.path.join("next",tilt_series_name+".next")
             coordinates = np.loadtxt(next_file,ndmin=2)
 
-            if len(coordinates) > 0:                
+            if coordinates.size > 0:                
+
+                if parameters.get("slurm_verbose"):
+                    logger.info(f"Reading {coordinates.shape[0]:,} particle coordinates from {next_file}")
+
                 # convert to binned coordinates
                 coordinates /= parameters.get("tomo_rec_binning")
                 
