@@ -30,9 +30,8 @@ def tomo_subvolume_extract_is_required(parameters):
 
 def tomo_vir_is_required(parameters):
     """Whether to detect and extract virions."""
-    return ( "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" and parameters["tomo_vir_method"] != "pyp-train" and "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0
-            or parameters["micromon_block"] == "tomo-picking-closed" 
-            or parameters["micromon_block"] == "tomo-segmentation-closed" )
+    force = "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" and parameters["tomo_vir_method"] != "pyp-train" and "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0 and not ( "tomo_vir_force" in parameters and not parameters["tomo_vir_force"] )
+    return force or parameters["micromon_block"] == "tomo-picking-closed" or parameters["micromon_block"] == "tomo-segmentation-closed"
 
 
 def is_required(parameters,name):

@@ -1361,10 +1361,16 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             pyp_coordinates = coordinates[:,[0,2,1,3]] / binning
             pyp_coordinates[:,-1] /= parameters["tomo_vir_binn"]
             imod.coordinates_to_model_file( pyp_coordinates, f"{name}.vir", radius=binned_virion_radius )
-        # Performs virion detection and/or spike detection
-        process_virions(
-            name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
-        )
+        
+        if (
+            "tomo_vir_force" in parameters and parameters["tomo_vir_force"] or "tomo_srf_force" in parameters and parameters["tomo_srf_force"] or "detect_force" in parameters and parameters["detect_force"] 
+            or parameters["micromon_block"] == "tomo-picking-closed"
+            or parameters["micromon_block"] == "tomo-segmentation-closed"
+        ):
+            # Performs virion detection and/or spike detection
+            process_virions(
+                name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
+            )
 
         # read virion coordinates and convert to unbinned, if needed
         if coordinates.size == 0 and os.path.exists(f"{name}.vir"):
