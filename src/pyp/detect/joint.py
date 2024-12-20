@@ -200,11 +200,11 @@ def tomotrain(args):
             else:
 
                 # extract specific classes
-                command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {args.get('detect_nn3d_milo_classes').replace(' ','')}"
+                command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {args.get('detect_nn3d_milo_classes').replace(' ','')}"
                 [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
                 
                 # extract coordinates
-                command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/utils/generate_train_file.py --dir {scratch_folder} --out {os.path.join(scratch_folder,'test')}"
+                command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/utils/generate_train_file.py --dir {scratch_folder} --out {os.path.join(scratch_folder,'test')}"
                 [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
                 shutil.copy2( os.path.join( scratch_folder, "test_train_coords.txt"), train_coords)
@@ -228,7 +228,7 @@ def tomotrain(args):
             if not os.path.exists( project_params.resolve_path(args["detect_nn3d_milo_parquet"])):
                 raise Exception("Please specify the location of a .parquet file")
             else:
-                command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {project_params.resolve_path(args['detect_nn3d_milo_parquet'])} {if_double} --output {train_coords}"
+                command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/interactive_to_training_coords.py --input {project_params.resolve_path(args['detect_nn3d_milo_parquet'])} {if_double} --output {train_coords}"
                 [ output, error ] = local_run.run_shell_command(command, verbose=args['slurm_verbose'])
                 if os.path.exists(train_coords):
 
@@ -421,7 +421,7 @@ def tomoeval(args,name):
         else:
             compress = ""
 
-        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {fiber} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
+        command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --gpus -1 --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {fiber} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
         local_run.stream_shell_command(command, verbose=args['slurm_verbose'])
         results_folder = os.getcwd()
 
@@ -541,11 +541,11 @@ def milotrain(args):
 
     logger.info(f"Training MiLoPYP's exploration module")
     if 'detect_milo_mode' in args and '2d' in args['detect_milo_mode']:
-        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+        command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
         output_path = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample")
     else:
-        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+        command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
         output_path = Path(os.getcwd() + "/exp/simsiam3d/test_sample")
 
@@ -651,12 +651,12 @@ def miloeval(args):
         input_model = project_params.resolve_path(args['detect_milo_model'])
 
         if '2d' in args['detect_milo_mode']:
-            command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
+            command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
 
         else:
-            command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
+            command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} 2>&1 | tee {scratch_train + '_testing.log'}"
 
             output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
@@ -671,7 +671,7 @@ def miloeval(args):
         os.makedirs( output_folder )
         
         # generate 2D visualization plots
-        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {scratch_train +  '_plot2d.log'}"
+        command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {scratch_train +  '_plot2d.log'}"
 
         local_run.run_shell_command(command, verbose=args["slurm_verbose"])             
 
@@ -688,7 +688,7 @@ def miloeval(args):
 
         # TODO: generate 3D tomogram visualization plots
         color_file = os.path.join(output_folder,'all_colors.npy')
-        command = f"{NN_INIT_COMMANDS_3D}; python {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
+        command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
         import matplotlib.image
