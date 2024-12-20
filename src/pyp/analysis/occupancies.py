@@ -160,14 +160,14 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
             
             for k in range(0, nclasses):
                 for i in index:
-                    per_particle_scoreweight(parx_3d[k, :,:], newlogp_col, newscanord_col, scoreavg_tilt, i)
+                    parx_3d[k, :,:] = per_particle_scoreweight(parx_3d[k, :,:], newlogp_col, newscanord_col, scoreavg_tilt, i)
 
         else: # tilt gaussian weights
             logger.info("Weighting LogP with tilt distribution")
             with tqdm(desc="Progress", total=nclasses, file=TQDMLogger()) as pbar:
                 for k in range(0, nclasses):
                     for i in index:
-                        per_particle_tiltweight(parx_3d[k, :,:], all_extended_list[k], newlogp_col, i)
+                        parx_3d[k, :,:] = per_particle_tiltweight(parx_3d[k, :,:], all_extended_list[k], newlogp_col, i)
                     pbar.update(1)
 
     else:
@@ -462,6 +462,8 @@ def per_particle_tiltweight(target, tltang_dict, logp_col, index):
     # pardata[index[0]:index[1], occ_col] = ptl_occ
     target[index[0]:index[1], logp_col] = ptl_logp
     # pardata[index[0]:index[1], sigma_col] = ptl_sigma
+    
+    return target
 
 def per_particle_scoreweight(target, logp_col, scanord_col, scoreavg_tilt, index):
 
@@ -471,7 +473,4 @@ def per_particle_scoreweight(target, logp_col, scanord_col, scoreavg_tilt, index
     
     target[index[0]:index[1], logp_col] = ptl_logp
 
-
-
-
-
+    return target
