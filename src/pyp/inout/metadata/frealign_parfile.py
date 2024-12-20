@@ -639,8 +639,10 @@ class Parameters:
         # check if the folder contains all the parameter files
         if len(micrograph_list) > 0:
             for micrograph in micrograph_list:
-                assert ((Path(decompressed_file) / f"{micrograph}.cistem").exists()), f"{micrograph}.cistem is not in {file}."
-                assert ((Path(decompressed_file) / f"{micrograph}_extended.cistem").exists()), f"{micrograph}_extended.cistem is not in {file}."
+                if not (Path(decompressed_file) / f"{micrograph}.cistem").exists():
+                    logger.warning(f"No metadata for {micrograph} found in {file}")
+                else:
+                    assert ((Path(decompressed_file) / f"{micrograph}_extended.cistem").exists()), f"{micrograph}_extended.cistem is not in {file}."
 
         os.makedirs(new_file, exist_ok=True)
         files_to_transfer = glob.glob(os.path.join(decompressed_file,"*"))

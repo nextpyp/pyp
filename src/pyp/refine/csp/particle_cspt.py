@@ -1187,14 +1187,6 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
         os.path.join(Path(input_dir).parents[1], ".pyp_config.toml"), local_frealign_scratch
     )
 
-    micrographs = {}
-    all_micrographs_file = "../../" + mp["data_set"] + ".films"
-    with open(all_micrographs_file) as f:
-        index = 0
-        for line in f.readlines():
-            micrographs[line.strip()] = index
-            index += 1
-
     with timer.Timer(
         "plot fsc and clean par", text = "Plot FSC and producing clean par file took: {}", logger=logger.info
     ):
@@ -1523,7 +1515,7 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
             if total_num_bz2 - processed - empty_file_number == 0:
                 # check the number of dumpfiles is correct
                 if merge:
-                    assert (dumpfiles_count_class[class_index-1] == num_bundle * num_dumpfiles_per_bundle), f"{dumpfiles_count_class[class_index-1]} dumpfiles in class {class_index} is not {num_bundle * num_dumpfiles_per_bundle}"
+                    assert (dumpfiles_count_class[class_index-1] + empty_file_number == num_bundle * num_dumpfiles_per_bundle), f"{dumpfiles_count_class[class_index-1]} dumpfiles in class {class_index} is not {num_bundle * num_dumpfiles_per_bundle}"
                 succeed = True
                 break
 

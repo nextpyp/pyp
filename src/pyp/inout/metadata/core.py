@@ -2096,32 +2096,34 @@ def csp_extract_coordinates(
             # check if the corresponding cistem parameter files exist
             parameter_file = parameter_file_folder / f"{filename}_r{current_class+1:02d}.cistem"
             extended_parameter_file = parameter_file_folder / f"{filename}_r{current_class+1:02d}_extended.cistem"
-            assert (parameter_file.exists()), f"{parameter_file} does not exist, please check."
-            assert (extended_parameter_file.exists()), f"{extended_parameter_file} does not exist, please check."
 
             # simply add it to the list
-            alignment_parameters = Parameters.from_file(str(parameter_file))
+            if parameter_file.exists():
+                assert (extended_parameter_file.exists()), f"{extended_parameter_file} does not exist, please check."
+                alignment_parameters = Parameters.from_file(str(parameter_file))
 
-            # convert the array into the one with frames (FIND >= 0)
-            if use_frames and not alignment_parameters.has_frames():
-                
-                logger.info("Expanding data with frames")
+                # convert the array into the one with frames (FIND >= 0)
+                if use_frames and not alignment_parameters.has_frames():
+                    
+                    logger.info("Expanding data with frames")
 
-                # retrieve tiltseries alignment parameters from pkl file
-                pkl_file = f"pkl/{filename}.pkl"
-                assert Path(pkl_file).exists(), f"{pkl_file} does not exist."
-                metadata = pyp_metadata.LocalMetadata(pkl_file).data
-                if is_spr:
-                    image_alignments = [metadata["drift"].to_numpy()]
-                else:
-                    image_alignments = [metadata["drift"][image_idx].to_numpy() for image_idx in sorted(metadata["drift"].keys())]
+                    # retrieve tiltseries alignment parameters from pkl file
+                    pkl_file = f"pkl/{filename}.pkl"
+                    assert Path(pkl_file).exists(), f"{pkl_file} does not exist."
+                    metadata = pyp_metadata.LocalMetadata(pkl_file).data
+                    if is_spr:
+                        image_alignments = [metadata["drift"].to_numpy()]
+                    else:
+                        image_alignments = [metadata["drift"][image_idx].to_numpy() for image_idx in sorted(metadata["drift"].keys())]
 
-                # expand the data array with frames
-                alignment_parameters.convert_data_to_frames(image_alignment=image_alignments,
-                                                            parameters=parameters,
-                                                            is_spr=is_spr)
+                    # expand the data array with frames
+                    alignment_parameters.convert_data_to_frames(image_alignment=image_alignments,
+                                                                parameters=parameters,
+                                                                is_spr=is_spr)
 
-            allparxs.append(alignment_parameters)
+                allparxs.append(alignment_parameters)
+            else:
+                logger.warning(f"No valid particle projections in this micrograph/tilt-series")
 
     else:
 
