@@ -119,7 +119,7 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
                     
                     index = get_particles_tilt_index(select_data, ptl_col=newptlind_col)
 
-                    film_index = get_particles_tilt_index(select_data, ptl_col = newfilm_col)
+                film_index = get_particles_tilt_index(select_data, ptl_col = newfilm_col)
 
             parx_3d = np.array(parx)
 
@@ -221,8 +221,12 @@ def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter
                 class_binary = os.path.join(decompressed_parameter_file_folder, image_name + "_r%02d.cistem" % (k + 1))
                 image_data = cistem_star_file.Parameters.from_file(class_binary)
                 image_array = image_data.get_data()
-                image_array[:, occ_col] = occdata[film_index[film_id][0]:film_index[film_id][1]]
-                image_array[:, sigma_col] = sigmadata[film_index[film_id][0]:film_index[film_id][1]]
+                if image_array.shape[0] == parx_3d.shape[1]:
+                    image_array[:, occ_col] = occdata
+                    image_array[:, sigma_col] = sigmadata
+                else:
+                    image_array[:, occ_col] = occdata[film_index[film_id][0]:film_index[film_id][1]]
+                    image_array[:, sigma_col] = sigmadata[film_index[film_id][0]:film_index[film_id][1]]
                 image_data.set_data(image_array)
                 image_data.sync_particle_occ(ptl_to_prj=False)
                 image_data.to_binary(class_binary, extended_output=class_binary.replace(".cistem", "_extended.cistem"))
@@ -318,7 +322,7 @@ def random_seeding(seeding):
 
 
 @timer.Timer(
-    "occ_initialization", text="OCC initialization took: {}", logger=logger.info
+    "occ_initialization", text="Occupancies initialization took: {}", logger=logger.info
 )
 def classification_initialization( dataset, classes, iteration, decompressed_parameter_file_folder, image_list, use_frame = False, is_tomo = False, references_only = False, parameters_only = False):
 
