@@ -300,7 +300,7 @@ def parse_arguments(block):
                 if "micromon_block" in parameters:
                     parameters_existing["micromon_block"] = parameters["micromon_block"]
 
-                parameters = project_params.parse_parameters(parameters_existing, block, parameters["data_mode"] ) 
+                parameters = project_params.parse_parameters(parameters_existing, block, parameters_existing["data_mode"] ) 
     
             parent_dataset = parameters_existing.get("data_set")
             
@@ -331,7 +331,7 @@ def parse_arguments(block):
             parent_dataset = parameters.get("data_set")
 
         # keep track of iteration number since website doesn't know about this parameter
-        if "refine_iter" in parameters_existing:
+        if parameters_existing and "refine_iter" in parameters_existing:
             parameters["refine_iter"] = parameters_existing.get("refine_iter")
             
         # always set dataset and refinement name based on current folder name
