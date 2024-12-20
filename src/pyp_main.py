@@ -279,6 +279,10 @@ def parse_arguments(block):
         dummy_parameters = vars(args)
         parameters['csp_no_stacks'] = parent_parameters['csp_no_stacks'] = dummy_parameters['csp_no_stacks']
 
+        # keep track of iteration number since website doesn't know about this parameter
+        if parameters_existing and "refine_iter" in parameters_existing:
+            parameters["refine_iter"] = parameters_existing.get("refine_iter")
+            
         # handle data import case separately
         if parameters.get("data_parent"):
             data_parent = project_params.resolve_path(parameters.get("data_parent"))
@@ -330,10 +334,6 @@ def parse_arguments(block):
             
             parent_dataset = parameters.get("data_set")
 
-        # keep track of iteration number since website doesn't know about this parameter
-        if parameters_existing and "refine_iter" in parameters_existing:
-            parameters["refine_iter"] = parameters_existing.get("refine_iter")
-            
         # always set dataset and refinement name based on current folder name
         parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
         data_mode = parameters.get("data_mode")
