@@ -2050,7 +2050,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
 
     # particle detection and extraction
-    virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
+    virion_coordinates, spike_coordinates, virion_mode, spike_mode = detect_tomo.detect_and_extract_particles( 
         name,
         parameters,
         current_path,
@@ -2066,14 +2066,14 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         "tomo_vir_force" in parameters and parameters["tomo_vir_force"]
         or metadata is None or metadata is not None and "vir" not in metadata or parameters["data_import"] or parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed"
     ):
-        tilt_metadata["virion_coordinates"] = virion_coordinates
-        if len(virion_coordinates) > 0:
+        if virion_mode:
+            tilt_metadata["virion_coordinates"] = virion_coordinates
             logger.info(f"Total number of virions = {len(virion_coordinates):,}")
             if parameters.get("slurm_verbose"):
                 logger.info(f"Virion coordinates = \n{virion_coordinates}")
 
-    tilt_metadata["spike_coordinates"] = spike_coordinates
-    if len(spike_coordinates) > 0:
+    if spike_mode:
+        tilt_metadata["spike_coordinates"] = spike_coordinates
         logger.info(f"Total number of particles = {len(spike_coordinates):,}")
         if parameters.get("slurm_verbose"):
             logger.info(f"Particle coordinates = \n{spike_coordinates}")

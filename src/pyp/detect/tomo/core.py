@@ -1414,7 +1414,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         )
         t.stop()
 
-    return virion_coordinates, spike_coordinates
+    return virion_coordinates, spike_coordinates, virion_mode, spike_mode
 
 def extract_spk_direct(
     parameters, name, x, y, binning, zfact, tilt_angles, tilt_options
