@@ -305,7 +305,12 @@ def parse_arguments(block):
                     parameters_existing["micromon_block"] = parameters["micromon_block"]
 
                 parameters = project_params.parse_parameters(parameters_existing, block, parameters_existing["data_mode"] ) 
-    
+            
+            elif parameters_existing and parameters_existing['micromon_block'].endswith("-session"):
+
+                parameters = project_params.inherit_from_parent(parameters_existing, params_file_path )
+                parameters['csp_no_stacks'] = dummy_parameters['csp_no_stacks']
+
             parent_dataset = parameters_existing.get("data_set")
             
             # transfer hidden parameters

@@ -575,6 +575,20 @@ def sanitize_parameters(parameters):
                         clean_parameters[f"{t}_{p}"] = parameters[f"{t}_{p}"]
     return clean_parameters
 
+# copy entries that are not default
+def inherit_from_parent(parameters,parameter_file):
+
+    import toml
+
+    clean_parameters = parameters.copy()
+    
+    parameters_from_file = toml.load(parameter_file)
+
+    for k in parameters_from_file.keys():
+        clean_parameters[k] = parameters_from_file[k]
+
+    return clean_parameters
+
 def save_parameters(parameters, path=".", website=True, param_file_name=".pyp_config.toml"):
     # WARNING - toml.dump does not support saving entries that are None, so those will not be saved
     parameter_file = Path(path) / param_file_name
