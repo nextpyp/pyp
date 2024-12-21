@@ -1712,14 +1712,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if not skip:
         load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
 
-        # convert tilt-series and tomogram to 32-bits, if needed
-        if parameters.get("movie_depth"):
-            if os.path.exists(name + ".mrc"):
-                logger.info("Converting tilt-series to 32-bits")
-                command = "{0}/bin/newstack -mode 2 {1} {1} && rm -f {1}~".format(
-                    get_imod_path(), name + ".mrc"
-                )
-                local_run.run_shell_command(command)
         if parameters.get("tomo_rec_depth"):
             if os.path.exists(name + ".rec"):
                 logger.info("Converting tomogram to 32-bits")
