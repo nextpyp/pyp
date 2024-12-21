@@ -112,7 +112,7 @@ from pyp.system.wrapper_functions import (
     replace_sections,
     write_current_particle,
 )
-from pyp.utils import timer, movie2regex, symlink_relative
+from pyp.utils import timer, movie2regex, symlink_relative, symlink_relative_pattern
 
 __author__ = "Alberto Bartesaghi"
 __maintainer__ = "Alberto Bartesaghi"
@@ -450,19 +450,12 @@ def parse_arguments(block):
 
             # always link indivdual files in the pkl/, csp/, and sva/ folders
             for folder in ["pkl", "csp", "sva"]:
-                os.makedirs(folder)
-                files = glob.glob(os.path.join(parameters["data_parent"], folder, "*"))
-                if len(files) > 0:
-                    if len(files) < 500:
-                        disable = True
-                    else:
-                        logger.info(f"Linking {len(files):,} files from {folder}/ folder in parent block")
-                        disable = False
-                    with tqdm(desc="Progress", total=len(files), file=TQDMLogger(), disable=disable) as pbar:
-                        for source in files:             
-                            destination = os.path.join(os.getcwd(), os.path.relpath(source,parameters["data_parent"]))
-                            symlink_relative(source, destination)
-                            pbar.update(1)
+                os.makedirs(folder,exist_ok=True)
+                pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*")
+                number_of_files = len(glob.glob(pattern))
+                if number_of_files > 0:
+                    logger.info(f"Linking {number_of_files:,} files to {folder}/ folder")
+                    symlink_relative_pattern(pattern,os.path.join(os.getcwd(),folder))
 
             # link mrc/ and webp/ folders for blocks that don't change files in these folders
             if (
@@ -487,21 +480,12 @@ def parse_arguments(block):
                 # create new folders and links to individual files
                 folders = ["mrc", "webp"]
                 for f in folders:
-                    os.makedirs(f)
-                    files = glob.glob(
-                        os.path.join(parameters["data_parent"], f, "*")
-                    )
-                    if len(files) > 0:
-                        if len(files) < 500:
-                            disable = True
-                        else:
-                            logger.info(f"Linking {len(files):,} files from {f}/ folder in parent block")
-                            disable = False
-                        with tqdm(desc="Progress", total=len(files), file=TQDMLogger(), disable=disable) as pbar:
-                            for source in files:
-                                destination = os.path.relpath(source, parameters["data_parent"])
-                                symlink_relative(source, destination)
-                                pbar.update(1)
+                    os.makedirs(f,exist_ok=True)
+                    pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), f, "*")
+                    number_of_files = len(glob.glob(files))
+                    if number_of_files > 0:
+                        logger.info(f"Linking {number_of_files:,} files to {f}/ folder")
+                        symlink_relative_pattern(pattern,os.path.join(os.getcwd(),f))
 
             # link micrographs and films
             dataset = os.path.split(os.getcwd())[-1]
@@ -651,24 +635,17 @@ def parse_arguments(block):
 
             logger.info(f"{project_params.resolve_path(parameters['data_path'])} found {len(files):,} file(s) to link into raw/ folder")
 
-            # run in parallel since this can take a while for projects with many files
-            if 'SLURM_CPUS_PER_TASK' in os.environ:
-                threads = int(os.environ['SLURM_CPUS_PER_TASK'])
-            else:
-                threads = 1
-            chunk_size = min(int(math.ceil(len(files)/threads)),25)
-            chunks = []
-            for i in range(0, len(files), chunk_size):
-                chunks.append( files[i:i+chunk_size] )
-            arguments = []
-            for chunk in chunks:
-                arguments.append(((chunk,parameters)))
-            if len(arguments) > 0:
+            # create relative symlinks in raw/ folder
+            raw_path = Path(project_params.resolve_path(parameters['data_path']))
+            for ext in [ raw_path.name, raw_path.stem+'.order', raw_path.stem+'.rawtlt', raw_path.stem+'.xml' ]: 
+                path = os.path.join(raw_path.parent,ext)
+                number_of_files = len(glob.glob(path))
+                if number_of_files:
+                    logger.info(f"Linking {number_of_files:,} files to raw/ folder")
+                    symlink_relative_pattern(path,os.path.join(os.getcwd(),"raw"))                    
                 if parameters.get("data_mode") == "spr":
-                    mpi.submit_function_to_workers(create_links_to_files_spr,arguments=arguments,verbose=parameters["slurm_verbose"])
-                else:
-                    mpi.submit_function_to_workers(create_links_to_files,arguments=arguments,verbose=parameters["slurm_verbose"])
-
+                    break
+            
             ctffile = "ctf/" + os.path.splitext(os.path.basename(files[0]))[0] + ".ctf"
             if os.path.isfile(ctffile):
                 ctf = np.loadtxt(ctffile)
