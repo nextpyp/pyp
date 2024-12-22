@@ -326,11 +326,9 @@ done
 
 def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None, account = None):
     args = [
-        ("--partition=%s" % queue) if queue != '' else '',
         "--cpus-per-task=%d" % threads,
         "--time=%s" % walltime,
         "--mem=%sG" % memory,
-        "--job-name=%s" % jobname,
     ]
     if gres != "" and gres != None:
         args.append("--gres=%s" % gres)
