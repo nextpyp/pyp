@@ -482,7 +482,7 @@ def parse_arguments(block):
                 for f in folders:
                     os.makedirs(f,exist_ok=True)
                     pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), f, "*")
-                    number_of_files = len(glob.glob(files))
+                    number_of_files = len(glob.glob(pattern))
                     if number_of_files > 0:
                         logger.info(f"Linking {number_of_files:,} files to {f}/ folder")
                         symlink_relative_pattern(pattern,os.path.join(os.getcwd(),f))
