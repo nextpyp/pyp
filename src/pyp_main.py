@@ -1291,7 +1291,7 @@ def split(parameters):
                 csp_no_stacks=parameters["csp_no_stacks"],
                 use_gpu=gpu,
             ).strip()
-
+            
             # submit merge job dependent on swarm jobs
             slurm.submit_jobs(
                 "swarm",
@@ -3923,14 +3923,8 @@ if __name__ == "__main__":
         os.environ["OPENBLAS_NUM_THREADS"] = "1"
         os.environ["PBS_O_WORKDIR"] = os.getcwd()
 
-        if "SLURM_ARRAY_JOB_ID" in os.environ:
-            subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
-        elif "SLURM_JOB_ID" in os.environ:
-            subdir = os.environ["SLURM_JOB_ID"]
-        else:
-            subdir = ""
         os.environ["PYP_SCRATCH"] = str(
-            Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"] / subdir
+            Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"] / jobid
         )
         if not os.path.exists(os.environ["PYP_SCRATCH"]):
             try:
