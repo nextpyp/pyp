@@ -523,7 +523,7 @@ condition = { arg="no_frames", value="false" }
 
 [tabs.movie.depth]
 name = "Save frame averages in 16-bits"
-description = "Files saved in this format will require 50% less storage"
+description = "Files saved in this format will require 50 percent less storage"
 type = "bool"
 default = true
 condition = { arg="no_frames", value="false" }
@@ -2077,7 +2077,7 @@ hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.depth]
 name = "Save tomograms in 16-bits"
-description = "Files saved in this format will require 50% less storage"
+description = "Files saved in this format will require 50 percent less storage"
 type = "bool"
 default = true
 hidden = [ "tomo_import_star" ]
@@ -2322,7 +2322,7 @@ hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_denoise.isonet_zcrop]
 name = "Z-crop fraction"
-description = "Exclude top and bottom regions of tomogram along Z (0.2 will mask out the top/bottom 20%)"
+description = "Exclude top and bottom regions of tomogram along Z (0.2 will mask out the top/bottom 20 percent)"
 type = "float"
 default = 0.2
 condition = { arg="isonet_mask", value="true" }
