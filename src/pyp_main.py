@@ -102,6 +102,7 @@ from pyp.system.set_up import prepare_frealign_dir
 from pyp.system.singularity import (
     get_mpirun_command,
     get_pyp_configuration,
+    standalone_mode,
     run_pyp,
     run_slurm,
     run_ssh,
@@ -1180,7 +1181,8 @@ def split(parameters):
             try:
                 parameters["slurm_queue"] = config["slurm"]["queues"][0]
             except:
-                logger.warning("No CPU partitions configured for this instance?")
+                if not Web.exists and not standalone_mode():
+                    logger.warning("No CPU partitions configured for this instance?")
                 parameters["slurm_queue"] = ""
                 pass
 
