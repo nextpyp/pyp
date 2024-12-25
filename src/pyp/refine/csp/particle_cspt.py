@@ -4,10 +4,8 @@ import glob
 import json
 import math
 import os
-import re
 import copy
 import shutil
-import sys
 import time
 from ast import Or
 from pathlib import Path
@@ -18,7 +16,6 @@ from tqdm import tqdm
 import numpy as np
 import pickle
 
-from pyp import align, postprocess
 from pyp.analysis import plot, statistics
 from pyp.analysis.geometry import divide2regions, findSpecimenBounds, get_tomo_binning
 from pyp.analysis.geometry.pyp_convert_coord import read_3dbox
@@ -35,8 +32,7 @@ from pyp.system import local_run, mpi, project_params, slurm
 from pyp.system.db_comm import save_reconstruction_to_website, save_refinement_bundle_to_website
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.set_up import prepare_frealign_dir
-from pyp.system.singularity import run_pyp
-from pyp.system.utils import get_imod_path
+from pyp.system.singularity import standalone_mode
 from pyp.utils import get_relative_path, symlink_force, timer, symlink_relative
 from pyp_main import csp_split
 
@@ -365,11 +361,11 @@ def merge_movie_files_in_job_arr(
             par_list
         ), "movie files and par files must be of equal length"
         for movie, parfile in zip(movie_list, par_list):
-            not_found = "{} is not found"
+            not_found = "{} not found"
             if not os.path.exists(movie):
-                logger.info(not_found.format(movie))
+                logger.warning(not_found.format(movie))
             if not os.path.exists(parfile):
-                logger.info(not_found.format(parfile))
+                logger.warning(not_found.format(parfile))
 
         if fp["extract_stacks"]:
 
@@ -1303,8 +1299,11 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
     # launch next iteration if needed
     if iteration < maxiter:
-        logger.info("Now launching iteration " + str(iteration + 1))
-        csp_split(fp, iteration + 1)
+        if not standalone_mode():
+            logger.info("Now launching iteration " + str(iteration + 1))
+            csp_split(fp, iteration + 1)
+        else:
+            logger.warning(f"Standalone mode does not support running multiple iterations. Run csp manually again")
 
 
 def rename_csp_local_files(dataset_name, input_dir, ordering, pattern, metric):
@@ -1437,6 +1436,10 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
         num_bundle = math.ceil(len(micrographs.keys()) / parameters["slurm_bundle_size"])
         num_bz2_per_bundle = 1 # classes
         total_num_bz2 = num_bz2_per_bundle * num_bundle
+        
+        # there should only be one intermediate reconstruction when running in standalone mode
+        if standalone_mode():
+            total_num_bz2 = 1
 
         decompression_threshold = min(parameters["slurm_merge_tasks"] - 1, total_num_bz2) 
 
@@ -1680,7 +1683,7 @@ def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="orderi
                 symlink_relative(file, os.path.join(local_frealign_scratch, os.path.basename(file)))
 
     if "cc" not in metric and fp["refine_parfile_compress"]:
-        all_jobs = np.array(all_jobs)
+        all_jobs = np.atleast_2d(np.array(all_jobs))
     else:
         all_jobs = np.atleast_2d(np.array(
             [

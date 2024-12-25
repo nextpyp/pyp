@@ -3887,6 +3887,9 @@ if __name__ == "__main__":
             jobid = f"{os.environ['SLURM_ARRAY_JOB_ID']}_{os.environ['SLURM_ARRAY_TASK_ID']}"
         elif "SLURM_JOB_ID" in os.environ:
             jobid = os.environ["SLURM_JOB_ID"]
+        else:
+            jobid = f"{random.randint(100000000,999999999)}_1"
+            os.environ["SLURM_JOB_ID"] = jobid
 
         # initialize various parameters
         if not "PYP_DIR" in os.environ:
@@ -3894,7 +3897,7 @@ if __name__ == "__main__":
 
         # retrieve version number
         version = toml.load(os.path.join(os.environ['PYP_DIR'],"nextpyp.toml"))['version']
-        memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else ""
+        memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else "?"
 
         if jobid is None:
             logger.info(

@@ -499,7 +499,8 @@ def submit_jobs(
             use_gpu,
         )
 
-    logger.info(f"Submitting {procs:,} job(s) ({id.strip()})")
+    if id != "standalone":
+        logger.info(f"Submitting {procs:,} job(s) ({id.strip()})")
 
     return id if jobtype != "cspswarm" and jobtype != "classmerge" else (id, procs)
 

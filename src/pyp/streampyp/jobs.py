@@ -1,17 +1,15 @@
-import json
 import math
 import os
-import subprocess
+import multiprocessing
 from pathlib import Path
-
-from genericpath import exists
 
 from pyp.streampyp.web import Web
 from pyp.system import project_params, slurm
-from pyp.system.local_run import run_shell_command
+from pyp.system.local_run import run_shell_command, stream_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.singularity import get_pyp_configuration, run_pyp, run_slurm, run_ssh
-from pyp.utils import get_relative_path, symlink_force
+from pyp.system.singularity import get_pyp_configuration, standalone_mode, run_pyp, run_slurm, run_ssh
+from pyp.utils import get_relative_path
+from pyp.system.mpi import submit_jobs_to_workers
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -194,10 +192,7 @@ done
         else:
             bundle = ""
 
-    # retireve configuration
-    config = get_pyp_configuration()
-
-    if Web.exists or "slurm" not in config or "host" not in config["slurm"]:
+    if Web.exists or standalone_mode():
 
         # convert dependencies into a list
         if dependencies == "":
@@ -215,12 +210,24 @@ done
             else:
                 # echo In normal slurm mode
                 output_basename = "${SLURM_JOB_ID}_1"
+                
+            # handle the standalone case separately since we don't have SLURM env variables in this case
+            if standalone_mode():
+                output_basename = f"{os.environ['SLURM_JOB_ID']}"
 
             scratch = Path(os.environ["PYP_SCRATCH"])
             csp_local_merge_command = f"export OPENBLAS_NUM_THREADS=1; unset {jobtype}; export csp_local_merge=csp_local_merge; {run_pyp(command='pyp', script=True, cpus=threads)} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename {output_basename} --path '{scratch}/{output_basename}'"
 
         cmdgrid = [[]]
         job_counter = array_counter = array_job_counter = 0
+        
+        # manually manage resources when in standalone mode so we don't overload the server
+        if Web.exists:
+            cpus = ""
+        elif standalone_mode():
+            tasks_per_arr = max( parameters["slurm_bundle_size"], math.floor(processes*parameters["slurm_tasks"]/multiprocessing.cpu_count()) )
+            cpus = f"export SLURM_CPUS_PER_TASK={parameters['slurm_tasks']}; SLURM_NTASKS={parameters['slurm_tasks']}; export OMP_NUM_THREADS={parameters['slurm_tasks']}; export MKL_NUM_THREADS={parameters['slurm_tasks']}; "
+
         while job_counter < processes:
             if array_job_counter < tasks_per_arr:
                 array_job_counter += 1
@@ -228,11 +235,18 @@ done
                 array_job_counter = 1
                 array_counter += 1
                 cmdgrid.append([])
-            cmdgrid[array_counter].append(
-                '/bin/bash -c "' + commands[job_counter] + '"'
-            )
+            if Web.exists:
+                cmdgrid[array_counter].append(
+                    '/bin/bash -c "' + cpus + commands[job_counter] + '"'
+                )
+            elif standalone_mode():
+                cmdgrid[array_counter].append(
+                    '/bin/bash -c "' + cpus + commands[job_counter].replace('/opt/pyp/bin/run/pyp','python -u /opt/pyp/src/pyp_main.py') + '"'
+                )
             job_counter += 1
-        if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:
+
+        # do not run csp_local_merge as last command when in standalone mode since we only need to run one instance
+        if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0 and Web.exists:
             for batch in cmdgrid:
                 batch.append('/bin/bash -c "' + csp_local_merge_command + '"')
 
@@ -265,8 +279,16 @@ done
                     mpi=mpi,
                 )
         else:
-            # TODO - slumr-less job submission
-            pass
+            # standalone mode
+            commands = []
+            for batch in cmdgrid:
+                commands.append( "; ".join(batch) )
+            submit_jobs_to_workers(commands, working_path=submit_dir)
+            
+            # run only one instance of csp_local_merge once all cspswarm processes finish
+            if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:
+                stream_shell_command('/bin/bash -c "' + csp_local_merge_command.replace('/opt/pyp/bin/run/pyp','python -u /opt/pyp/src/pyp_main.py') + '"')
+            return "standalone"
     else:
 
         if "sess_" in jobtype:
@@ -376,30 +398,38 @@ def submit_script(
     if os.path.exists(cmd):
         cmd = "'%s'" % cmd
 
-    if Web.exists:
+    if Web.exists or standalone_mode():
 
         # add MPI settings if needed
         mpi = None
         if threads > 1:
             mpi = {"oversubscribe": True, "cpus": threads}
 
-        # convert dependencies into a list
-        if dependencies == "":
-            dependencies = []
-        else:
-            dependencies = dependencies.split(",")
+        if Web.exists:
+            # convert dependencies into a list
+            if dependencies == "":
+                dependencies = []
+            else:
+                dependencies = dependencies.split(",")
 
-        # launch job via streampyp
-        return Web().slurm_sbatch(
-            web_name=jobname,
-            cluster_name="pyp_"+jobtype,
-            commands=Web.CommandsScript([cmd]),
-            dir=_absolutize_path(submit_dir),
-            env=[(jobtype, jobtype)],
-            args=get_slurm_args( queue, threads, walltime, memory, jobname, get_gres_option(use_gpu,gres), account),
-            deps=dependencies,
-            mpi=mpi,
-        )
+            # launch job via streampyp
+            return Web().slurm_sbatch(
+                web_name=jobname,
+                cluster_name="pyp_"+jobtype,
+                commands=Web.CommandsScript([cmd]),
+                dir=_absolutize_path(submit_dir),
+                env=[(jobtype, jobtype)],
+                args=get_slurm_args( queue, threads, walltime, memory, jobname, get_gres_option(use_gpu,gres), account),
+                deps=dependencies,
+                mpi=mpi,
+            )
+            
+        elif standalone_mode():
+            cpus = f"export SLURM_CPUS_PER_TASK={threads}; SLURM_NTASKS={threads}; export OMP_NUM_THREADS={threads}; export MKL_NUM_THREADS={threads}; "
+            new_cmd = cmd.replace("'/opt/pyp/bin/run/pyp'","python -u /opt/pyp/src/pyp_main.py")
+            command = '/bin/bash -c "' + cpus + f"export {jobtype}={jobtype}; cd {submit_dir}; {new_cmd}" + '"'
+            stream_shell_command(command,verbose=True)
+            return "standalone"
 
     else:
 
