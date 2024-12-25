@@ -20,3 +20,5 @@ config/config.toml
 /.idea/
 .pyp_history
 external/
+dist/
+nextPYP.egg-info

@@ -1,3 +1,29 @@
+[project]
+name = "nextPYP"
+version = "0.7.0"
+authors = [
+  { name="Alberto Bartesaghu", email="alberto.bartesaghi@duke.edu" },
+]
+description = "nextPYP: A scalable platform for cryo-EM/ET image analysis. nextPYP is a web-based platform for single-particle cryo-EM/ET image analysis developed and maintained by the Bartesaghi Lab at Duke University"
+readme = "README.rst"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = {file = "LICENSE"}
+
+[project.urls]
+Homepage = "https://github.com/nextpyp/pyp"
+Issues = "https://github.com/nextpyp/pyp/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
 [tool.isort]
 profile = "black"
 # multi_line_output = 3
