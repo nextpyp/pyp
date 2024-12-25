@@ -4077,8 +4077,9 @@ if __name__ == "__main__":
                 pass
 
             # we are done, clear local scratch
-            if os.path.exists(os.environ["PYP_SCRATCH"]) and not args.keep:
-                shutil.rmtree(os.environ["PYP_SCRATCH"])
+            local_scratch = os.path.join(os.environ["PYP_SCRATCH"],os.path.basename(args.file))
+            if os.path.exists(local_scratch) and not args.keep:
+                shutil.rmtree(local_scratch)
 
         # swarm
         elif "tomoswarm" in os.environ:
@@ -4104,8 +4105,9 @@ if __name__ == "__main__":
                 pass
 
             # we are done, clear local scratch
-            if os.path.exists(os.environ["PYP_SCRATCH"]) and not args.keep:
-                shutil.rmtree(os.environ["PYP_SCRATCH"])
+            local_scratch = os.path.join(os.environ["PYP_SCRATCH"],os.path.basename(args.file))
+            if os.path.exists(local_scratch) and not args.keep:
+                shutil.rmtree(local_scratch)
 
         elif "tomomerge" in os.environ:
 
