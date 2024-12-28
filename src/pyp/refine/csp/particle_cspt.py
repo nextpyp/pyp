@@ -1303,7 +1303,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
             logger.info("Now launching iteration " + str(iteration + 1))
             csp_split(fp, iteration + 1)
         else:
-            logger.warning(f"Standalone mode does not support running multiple iterations. Run csp manually again")
+            logger.warning(f"Standalone mode does not support running multiple iterations. Please run csp manually again.")
 
 
 def rename_csp_local_files(dataset_name, input_dir, ordering, pattern, metric):
