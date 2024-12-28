@@ -4074,7 +4074,7 @@ def sum_gain_correct_frames(movie, average, parameters):
                 logger.info(f"{gain_reference_file} dimensions are {x} x {y}")
             raise Exception("Failed to apply gain reference")
 
-def align_movie_super(parameters, name, suffix, isfirst = False):
+def align_movie_frames(parameters, name, suffix, isfirst = False):
 
     tmp_directory = name
     os.mkdir(tmp_directory)

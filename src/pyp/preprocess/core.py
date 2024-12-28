@@ -587,7 +587,7 @@ def read_tilt_series(
                 with tqdm(desc="Progress", total=len(sorted_tilts), file=TQDMLogger()) as pbar:
                     for tilt in sorted_tilts:
                         frame_name = tilt[0].replace(file_format, "")
-                        align.align_movie_super( parameters, frame_name, file_format, isfirst)
+                        align.align_movie_frames( parameters, frame_name, file_format, isfirst)
                         pbar.update(1)
             else:
                 # submit jobs to workers
@@ -605,7 +605,7 @@ def read_tilt_series(
                     isfirst = False
 
                 mpi.submit_function_to_workers(
-                    align.align_movie_super, arguments, verbose=parameters["slurm_verbose"]
+                    align.align_movie_frames, arguments, verbose=parameters["slurm_verbose"]
                 )
             t.stop()
 

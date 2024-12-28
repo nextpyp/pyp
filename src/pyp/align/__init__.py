@@ -7,7 +7,7 @@ from .core import (
     align_stack,
     sum_gain_correct_frames,
     align_stack_super,
-    align_movie_super,
+    align_movie_frames,
     align_tilt_series,
     concatenate_par_files,
     csp_refinement,

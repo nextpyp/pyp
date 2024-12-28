@@ -1516,7 +1516,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
                     if os.path.exists(gain_reference_file):
                         shutil.copy2(gain_reference_file, os.getcwd())
                 logger.info("Aligning frames using: " + parameters['movie_ali'])
-                aligned_average = align.align_movie_super(
+                aligned_average = align.align_movie_frames(
                     parameters, name, extension
                 )
 
