@@ -1366,6 +1366,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             "tomo_vir_force" in parameters and parameters["tomo_vir_force"] or "tomo_srf_force" in parameters and parameters["tomo_srf_force"] or "detect_force" in parameters and parameters["detect_force"] 
             or parameters["micromon_block"] == "tomo-picking-closed"
             or parameters["micromon_block"] == "tomo-segmentation-closed"
+            or parameters["micromon_block"] == "tomo-preprocessing"
         ):
             # Performs virion detection and/or spike detection
             process_virions(
