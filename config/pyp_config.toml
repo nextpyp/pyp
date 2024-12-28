@@ -503,14 +503,14 @@ name = "Single-file tilt-series"
 description = "Select this option if all tilts are in a single file"
 type = "bool"
 default = false
-hidden = ["spr_pre_process", "spr_import_star", "spr_import", "stream_spr" ]
+hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
 
 [tabs.movie.pattern]
 name = "Frame pattern"
 description = "Pattern to describe frame data (tilt-series name, acquisition order, and tilt-angle)"
 type = "str"
 default = "TILTSERIES_SCANORD_ANGLE.tif"
-hidden = ["spr_pre_process", "spr_import_star", "spr_import", "stream_spr" ]
+hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
 condition = { arg="no_frames", value="false" }
 
 [tabs.movie.mdoc]
@@ -518,7 +518,7 @@ name = "Read metadata from mdoc files"
 description = "Extract parameters from mdoc files (tilt angles, tilt axis rotation angles and scan order) if available"
 type = "bool"
 default = false
-hidden = ["spr_pre_process", "spr_import_star", "spr_import", "stream_spr" ]
+hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
 condition = { arg="no_frames", value="false" }
 
 [tabs.movie.depth]
@@ -847,14 +847,14 @@ name = "Min tilt to detect tilt handedness"
 description = "Tilt angles with absolute values lower than this number will not be used for handedness estimation"
 type = "float"
 default = 10.0
-hidden = [ "stream_spr", "spr_pre_process" ]
+hidden = [ "stream_spr", "spr_pre_process", "spr_pure_preprocess" ]
 
 [tabs.ctf.handedness_maxtilt]
 name = "Max tilt to detect tilt handedness"
 description = "Tilt angles with absolute values higher than this number will not be used for handedness estimation"
 type = "float"
 default = 50.0
-hidden = [ "stream_spr", "spr_pre_process" ]
+hidden = [ "stream_spr", "spr_pre_process", "spr_pure_preprocess" ]
 
 [tabs.ctf.phase_shift]
 name = "Find phase shift"
@@ -984,7 +984,7 @@ description = "Path to 3D template"
 type = "path"
 path = { type="files" }
 input = { type="initialModel" }
-hidden = [ "stream_tomo", "stream_spr", "spr_pre_process" ]
+hidden = [ "stream_tomo", "stream_spr", "spr_pre_process", "spr_picking" ]
 
 [tabs.detect.dist]
 name = "Min distance (pixels)"
@@ -1012,14 +1012,14 @@ name = "Height offset for 3D picking (binned voxels)"
 description = "Offset particle positions above membrane by this amount. Useful when the segmentation is not located at the base of the particles"
 type = "int"
 default = 0
-hidden = [ "spr_pre_process", "stream_spr" ]
+hidden = [ "spr_pre_process", "spr_picking", "stream_spr" ]
 
 [tabs.detect.rand]
 name = "Randomize in-plane particle rotation"
 description = "Randomize particle orientations around surface normal to reduce missing wegde effects"
 type = "bool"
 default = true
-hidden = [ "spr_pre_process", "stream_spr" ]
+hidden = [ "spr_pre_process", "spr_picking", "stream_spr" ]
 
 [tabs.detect_nn2d]
 _name = "Training/Evaluation (pyp)"
@@ -1412,49 +1412,49 @@ name = "Threshold for soft/hard positives"
 description = "Higher values give fewer partiles, lower values give more particles"
 type = "float"
 default = 0.85
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_train"]
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_train"]
 
 [tabs.detect_nn3d.cr_weight]
 name = "Contrastive regularization"
 description = "Weight for contrastive regularization term"
 type = "float"
 default = 0.1
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" ]
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_eval" ]
 
 [tabs.detect_nn3d.max_objects]
 name = "Max number of particles"
 description = "Expected number of particles per tomogram"
 type = "int"
 default = 1200
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo" ]
+hidden = ["stream_spr", "stream_tomo" ]
 
 [tabs.detect_nn3d.lr]
 name = "Learning rate"
 description = "Smaller values for slower and stable training. Larger values for faster and potentially unstable training"
 type = "float"
 default = 0.0005
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.val_interval]
 name = "Validation interval (epochs)"
 description = "Run validation every this number of epochs"
 type = "int"
 default = 5
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.temp]
 name = "inforNCE temperature"
 description = "Tune the concentration of samples in feature space. Lower values create more uniform distributions"
 type = "float"
 default = 0.07
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.tau]
 name = "Class prior probability"
 description = "Proportion of positive to negative examples"
 type = "float"
 default = 0.01
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval"]
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_eval"]
 
 [tabs.detect_nn3d.fiber_mode]
 name = "Fiber mode"
@@ -1561,14 +1561,14 @@ name = "Bounding box (binned voxels)"
 description = "Bounding box for cropped patches, must be bigger than particle size"
 type = "int"
 default = 36
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["stream_spr", "stream_tomo"]
 
 [tabs.detect_milo.translation_ratio]
 name = "Image translation range"
 description = "Translation range used for data augmentation (fraction of bounding box)"
 type = "float"
 default = 0.5
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["stream_spr", "stream_tomo"]
 
 [tabs.detect_milo.lr]
 name = "Learning rate"
@@ -1602,7 +1602,7 @@ name = "DoG sizes"
 description = "Kernel sizes for Difference of Gaussians (DoG) pyramid, comma delimited"
 type = "str"
 default = "3,5"
-hidden = ["spr_pre_process", "stream_spr", "stream_tomo"]
+hidden = ["stream_spr", "stream_tomo"]
 
 [tabs.detect_milo.last_k]
 name = "Last kernel size"
@@ -6822,21 +6822,21 @@ name = "Threads per task (pre-processing daemon)"
 description = "Number of CPUs used during pre-processing"
 type = "int"
 default = 1
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.daemon_memory]
 name = "Memory per task in GB (pre-processing daemon)"
 description = "Amount of memory used for pre-processing daemon"
 type = "int"
 default = 2
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.daemon_gres]
 name = "Gres (pre-processing daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 advanced = true
 
 [tabs.slurm.daemon_account]
@@ -6851,7 +6851,7 @@ name = "Walltime per task (pre-processing daemon)"
 description = "Max running time for pre-processing task (dd-hh:mm:ss)"
 type = "str"
 default = "5-00:00:00"
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.daemon_queue]
 name = "CPU partition (pre-processing daemon)"
@@ -6866,21 +6866,21 @@ name = "Threads per task (refinement daemon)"
 description = "Number of CPUs used during 2D/3D refinement"
 type = "int"
 default = 1
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.class2d_memory]
 name = "Memory per task in GB (refinement daemon)"
 description = "Amount of memory used for 2D/3D refinement daemon"
 type = "int"
 default = 4
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.class2d_gres]
 name = "Gres (refinement daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 advanced = true
 
 [tabs.slurm.class2d_account]
@@ -6895,7 +6895,7 @@ name = "Walltime (refinement daemon)"
 description = "Max running time for 2D/3D refinement daemon (dd-hh:mm:ss)"
 type = "str"
 default = "5-00:00:00"
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn", "spr_drgn" ]
 
 [tabs.slurm.class2d_queue]
 name = "Partition (refinement daemon)"
