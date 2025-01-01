@@ -1275,6 +1275,7 @@ def split(parameters):
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
+                use_gpu=gpu,
             ).strip()
 
         else:
