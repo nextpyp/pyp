@@ -14,7 +14,7 @@ The first step is to locate a marker inside each virion or vescicle using tradit
 
 * Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle Picking,badge-primary`
 
-* Select the desired particle picking algorithm and corresponding parameters, see :doc:`Particle picking<picking>`
+* Select the desired particle picking algorithm and corresponding parameters, see :doc:`Particle picking<picking3d>`
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 

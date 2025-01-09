@@ -32,7 +32,7 @@ Step 1: Prerequisites for installation on a cluster
 .. _SLURM: https://slurm.schedmd.com/overview.html
 
 Step 2: (if needed) Install operating system packages
--------------------------------------------------
+-----------------------------------------------------
 
 The only packages needed are Apptainer_ (formerly Singularity) and ``wget``.
 

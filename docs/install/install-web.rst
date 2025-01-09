@@ -110,6 +110,7 @@ Step 3: Download and run the installation script
   First, create the folder where ``nextPYP`` will be installed. The location can be anywhere you have write access, for example, ``~/nextPYP`` works well:
 
   .. code-block:: bash
+
     cd ~/
     mkdir nextPYP
     cd nextPYP

@@ -155,7 +155,7 @@ is dedicated to configuring the container environment.
 |
 
 ``containerExec``
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 :Type: string or table
 :Required: no
@@ -284,7 +284,7 @@ This section is used to configure properties of the SLURM_ cluster.
 |
 
 ``queues``
-~~~~~~~~~
+~~~~~~~~~~
 
 :Type: list of strings
 :Required: no
@@ -441,7 +441,7 @@ Minimal example:
 	To make the application HTTP server reachable from an external private network, set ``host`` to ``0.0.0.0`` to bind
 	to all available network interfaces.
 
-	.. warn::
+	.. warning::
 		The application HTTP server is not designed to securely handle traffic from the public internet.
 		Exposing the application HTTP server directly to the public internet increases your risk of a security
 		compromise.
@@ -475,7 +475,7 @@ Minimal example:
 	service installed that uses that port. To avoid a port conflict, you can configure the application HTTP
 	server to use a different port, but be sure to use a non-privileged port at or above 1024.
 
-	.. warn::
+	.. warning::
 		Using a privileged port (below 1024) like 80 or 443 for the application server requires root privileges,
 		but the application HTTP server was not designed to run with root privileges. Doing so would be insecure,
 		and any security compromise that had access to elevated permissions would be much more severe.
@@ -504,7 +504,7 @@ Minimal example:
 |
 
 ``sharedDir``
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 :Type: string
 :Required: yes
@@ -577,7 +577,7 @@ Minimal example:
 	``$hostname`` is the host name of the server from the point of view of the compute node. Note this configuration
 	uses unencrypted HTTP rather than encrypted HTTPs.
 
-	.. warn::
+	.. warning::
 		In this private network configuration, if the web server has any public network interfaces,
 		be sure to configure the firewall to only allow connections to the port defined by ``web.port``
 		over the private network interface. Connections over the public network interface should be blocked
@@ -609,7 +609,7 @@ Minimal example:
 |
 
 ``heapMiB``
-~~~~~~~~~
+~~~~~~~~~~~
 
 :Type: integer
 :Required: no
@@ -623,7 +623,7 @@ Minimal example:
 |
 
 ``databaseGB``
-~~~~~~~~~
+~~~~~~~~~~~~~~
 
 :Type: float
 :Required: no
@@ -634,7 +634,7 @@ Minimal example:
 |
 
 ``jmx``
-~~~~~~~~~
+~~~~~~~
 
 :Type: boolean
 :Required: no
@@ -647,7 +647,7 @@ Minimal example:
 |
 
 ``oomdump``
-~~~~~~~~~
+~~~~~~~~~~~
 
 :Type: boolean
 :Required: no
@@ -662,7 +662,7 @@ Minimal example:
 |
 
 ``workflowDirs``
-~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 :Type: array of strings
 :Required: no

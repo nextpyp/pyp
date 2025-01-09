@@ -36,9 +36,9 @@ v0.7.0 (10/26/2024)
 
    :fa:`star,text-success` 3D size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
 
-   :fa:`star,text-success` Import tilt-series alignments obtained with external programs in IMOD format (*.xf and *.tlt files).
+   :fa:`star,text-success` Import tilt-series alignments obtained with external programs in IMOD format (\*.xf and \*.tlt files).
 
-   :fa:`star,text-success` Export 3D particle coordinates in IMOD format to use in external programs (sva/*.spk files).
+   :fa:`star,text-success` Export 3D particle coordinates in IMOD format to use in external programs (sva/\*.spk files).
 
    :fa:`star,text-success` New option to export particle stacks for use in external programs (plenty of storage required!).
 
@@ -116,7 +116,7 @@ v0.6.4 (3/24/2024)
 
    :fa:`plus-square,text-primary` Check that .order files have the same number of entries as images in the tilt-series.
 
-   :fa:`bug,text-danger` Fix bugs when reading metadata from *.mdoc files.
+   :fa:`bug,text-danger` Fix bugs when reading metadata from \*.mdoc files.
 
    :fa:`bug,text-danger` Prevent dragging of multiple connections from block outputs in project view.
 
@@ -215,7 +215,7 @@ v0.6.1 (1/30/2024)
 
    :fa:`plus-square,text-primary` Add support for .gain reference files and automatically resize corresponding .eer movies in data import blocks.
 
-   :fa:`bug,text-danger` Fix issue when handling *.tif files that have a *.tiff extension.
+   :fa:`bug,text-danger` Fix issue when handling \*.tif files that have a \*.tiff extension.
 
    :fa:`bug,text-danger` Fix issue with multiprocessing library when using NFS mounts as local scratch.
 

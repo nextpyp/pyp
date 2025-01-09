@@ -440,7 +440,7 @@ Step 9. Filter particles
     * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. You can see how many particles were left after filtering by looking at the job logs.
 
 Step 10 (optional): Permanently remove bad particles
----------------------------------------------------
+----------------------------------------------------
 
 .. dropdown:: Permanently remove bad particles to improve processing efficiency downstream (:fa:`stopwatch` 1 min)
     :container: + shadow

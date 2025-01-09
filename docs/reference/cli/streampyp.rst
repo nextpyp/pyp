@@ -39,7 +39,7 @@ The simplest way to run the program, is to provide: 1) the absolute path to the 
 
 .. note::
 
-* Raw and meta data produced during pre-processing are stored in the output directory specified using the parameter ``-stream_transfer_target``. Sub-folders with the group and session names will be automatically created under the output path, for example: ``${output_dir}/groupName/sessionName``.
+    * Raw and meta data produced during pre-processing are stored in the output directory specified using the parameter ``-stream_transfer_target``. Sub-folders with the group and session names will be automatically created under the output path, for example: ``${output_dir}/groupName/sessionName``.
 
 .. important::
 
@@ -107,9 +107,9 @@ The simplest way to run the program, is to provide: 1) the absolute path to the 
 
     .. note::
 
-    * The ``-session_name`` option should match exactly the name of the folder where the data is saved. For example, if raw data is saved to ``/cifs/Krios/K3/sessionName``, you need to use ``-session_name sessionName``.
+        * The ``-session_name`` option should match exactly the name of the folder where the data is saved. For example, if raw data is saved to ``/cifs/Krios/K3/sessionName``, you need to use ``-session_name sessionName``.
 
-    * The ``-session_group`` option determines the name of the folder where the data will be saved. This allows to keep all sessions from a specific user under the same folder.
+        * The ``-session_group`` option determines the name of the folder where the data will be saved. This allows to keep all sessions from a specific user under the same folder.
 
     .. important::
 

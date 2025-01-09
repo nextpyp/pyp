@@ -7,8 +7,9 @@ Setup and install
    :maxdepth: 2
    :caption: Menu
 
-   install/requirements
    install/install-web
+.. comment: this page doesn't exist
+   install/requirements
 
 This section describes computing requirements and procedures needed to download, configure and run ``nextPYP``.
 
@@ -19,10 +20,11 @@ This section describes computing requirements and procedures needed to download,
 
    +++
 
-   .. link-button:: install/requirements
-      :type: ref
-      :text: Requirements
-      :classes: btn-outline-primary btn-block stretched-link
+   .. comment: the target this button links to was commented out
+      .. link-button:: install/requirements
+         :type: ref
+         :text: Requirements
+         :classes: btn-outline-primary btn-block stretched-link
 
    ---
 

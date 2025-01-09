@@ -36,7 +36,7 @@ Known Issues
 #. General unexpected behavior
 
     - **Problem**: Website components are missing, pages don't load properly, etc.
-    - **Solution**: This is usually indicative of an underlying problem. Reloading the page may correct the issue temporarily, but if the problem persist, consult the :doc:`../install/troubleshooting<./troubleshooting>` section and report the problem using Github's `discussion board <https://github.com/orgs/nextpyp/discussions>`_.
+    - **Solution**: This is usually indicative of an underlying problem. Reloading the page may correct the issue temporarily, but if the problem persist, consult the :doc:`troubleshooting<../install/troubleshooting>` section and report the problem using Github's `discussion board <https://github.com/orgs/nextpyp/discussions>`_.
 
 For other problems, please consult the :doc:`troubleshooting<../install/troubleshooting>` section.
 

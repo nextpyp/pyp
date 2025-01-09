@@ -140,7 +140,7 @@ Step 3: Pre-processing
 
 
 Step 4: Particle picking
---------------------------
+------------------------
 
 .. dropdown:: Particle detection from tomograms (:fa:`stopwatch` 2 min)
     :container: + shadow
@@ -179,9 +179,9 @@ Step 4: Particle picking
 
 .. seealso::
 
-    * :doc:`2D particle picking<picking2d>`
-    * :doc:`3D particle picking<picking3d>`
-    * :doc:`Pattern mining<milopyp>`
+    * :doc:`2D particle picking<../guide/picking2d>`
+    * :doc:`3D particle picking<../guide/picking3d>`
+    * :doc:`Pattern mining<../guide/milopyp>`
 
 Step 5: Reference-based refinement
 ----------------------------------
@@ -262,8 +262,6 @@ Step 5: Reference-based refinement
     * :badge:`Save,badge-primary` your changes, click :badge:`Run,badge-primary` and :badge:`Start Run for 1 block,badge-primary`
 
     * One round of refinement and reconstruction will be executed. Click inside the block to see the results
-
-.. tip::
 
 
 Step 6. Filter particles
@@ -396,7 +394,7 @@ Step 8. Fully constrained refinement
     * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results
 
 Step 9: Create shape mask
---------------------------
+-------------------------
 
 .. dropdown:: Use most recent reconstruction to create a shape mask (:fa:`stopwatch` <1 min)
     :container: + shadow

@@ -16,7 +16,7 @@ Option 1: Access within a trusted private network only
 Choose this option if your server is not reachable from the internet,
 and you'd like to access it from the local private network.
 
-.. warn::
+.. warning::
 
     If you follow these instructions, but your server *is* reachable from the public
     internet, this configuration will leave your system in an insecure state and at higher

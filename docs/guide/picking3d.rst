@@ -60,7 +60,7 @@ This method described in `Jin et al., JSB (2024) <https://cryoem.cs.duke.edu/nod
 
 #. Select "size-based" as the ``Detection method``
 
-#. Set the ``Particle radius (A)`` and other parameters as needed (see the :doc:`classification tutorial<../tutorials/class_empiar_10304>` for an example)
+#. Set the ``Particle radius (A)`` and other parameters as needed (see the :doc:`classification tutorial<../tutorials/tomo_empiar_10304>` for an example)
 
 #. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
