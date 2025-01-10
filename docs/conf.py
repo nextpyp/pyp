@@ -13,6 +13,9 @@
 import os
 import sys
 
+import toml
+
+
 # add parent directory to $PATH
 MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, "src"))
 print("main project path is", MAIN_DIR)
@@ -95,10 +98,6 @@ html_css_files = [
     "versions.css"
 ]
 
-html_js_files = [
-    "version-info.js",
-    "versions.js"
-]
 
 # Resolve function for linkcode extension.
 # Thanks to https://github.com/materialsproject/pymatgen/blob/master/docs_rst/conf.py#L324
@@ -129,5 +128,21 @@ def linkcode_resolve(domain, info):
 
     return "https://gitlab.cs.duke.edu/bartesaghilab/pyp/-/blob/master/%s" % filename
 
+
 def setup(app):
+    # Sphinx API docs: https://www.sphinx-doc.org/en/master/extdev/index.html#dev-extensions
+
     app.add_css_file('my_theme.css')
+
+    # read the current version from the config file
+    version_path = os.path.abspath(os.path.join(app.srcdir, '../nextpyp.toml'))
+    print(f"Reading nextPYP version number from config {version_path} ...")
+    version = toml.load(version_path)['version']
+    print(f"nextPYP version: {version}")
+
+    # bake the version into the docs build
+    app.add_js_file(None, body=f"window.nextpypVersion = '{version}';")
+
+    # add the other version js files after the version js file, to get the right load order
+    app.add_js_file("version-info.js")
+    app.add_js_file("versions.js")
