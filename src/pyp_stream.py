@@ -387,12 +387,22 @@ def launch_preprocessing(args, autoprocess):
 
         time_stamp = time.strftime("%Y%m%d_%H%M%S")
 
-        swarm_file = os.path.join(
-            autoprocess,
-            "{0}_{1}_{2}_daemon.swarm".format(
-                time_stamp, args["stream_session_group"], args["stream_session_name"]
-            ),
-        )
+        if "stream_session_group" in args and "stream_session_name" in args:
+            swarm_file = os.path.join(
+                    autoprocess,
+                    "{0}_{1}_{2}_daemon.swarm".format(
+                        time_stamp, args["stream_session_group"], args["stream_session_name"]
+                    ),
+            )
+        elif "stream_transfer_target" in args:
+            swarm_file = os.path.join(
+                autoprocess,
+                "{0}_{1}_daemon.swarm".format(
+                    time_stamp, args["stream_transfer_target"]
+                ),
+            )
+        else:
+            raise Exception("Please specify a value for -stream_transfer_target")
 
         with open(swarm_file, "w") as f:
 
@@ -515,11 +525,9 @@ if __name__ == "__main__":
 
     if (
         not "stream_transfer_target" in args.keys()
-        or not "stream_session_name" in args.keys()
-        or not "stream_session_group" in args.keys()
     ):
         logger.error(
-            "You must specify non-empty values for -stream_transfer_target, -stream_session_name and -stream_session_group"
+            "You must specify a non-empty value for -stream_transfer_target"
         )
         sys.exit()
 
@@ -527,11 +535,15 @@ if __name__ == "__main__":
 
     # destination of raw data
     if args["stream_transfer_target"]:
-        target_path = os.path.join(
-            project_params.resolve_path(args["stream_transfer_target"]),
-            args["stream_session_group"],
-            args["stream_session_name"],
-        )
+        if "stream_session_group" in args.keys() and "stream_session_name" in args.keys():
+            target_path = os.path.join(
+                project_params.resolve_path(args["stream_transfer_target"]),
+                args["stream_session_group"],
+                args["stream_session_name"],
+            )
+        else:
+            target_path = project_params.resolve_path(args["stream_transfer_target"])
+            
     elif "target" in config["stream"].keys():
         target_path = os.path.join(
             config["stream"]["target"],
@@ -579,9 +591,9 @@ if __name__ == "__main__":
     # notify user if needed
     subject = (
         "Data on "
-        + args["stream_session_group"]
+        + args.get("stream_session_group")
         + "/"
-        + args["stream_session_name"]
+        + args.get("stream_session_name")
         + " ("
         + jobnumber
         + ")"
@@ -590,15 +602,15 @@ if __name__ == "__main__":
         "*** This is an automatically generated email ***\n\n"
         + "( export pypdaemon=pypdaemon && pyp_main.py "
         + " -group "
-        + args["stream_session_group"]
+        + args.get("stream_session_group")
         + " -session "
-        + args["stream_session_name"]
+        + args.get("stream_session_name")
         + " )\n\n"
         + "( export pypdaemon=pypdaemon && pyp_main.py "
         + " -group "
-        + args["stream_session_group"]
+        + args.get("stream_session_group")
         + " -session "
-        + args["stream_session_name"]
+        + args.get("stream_session_name")
         + " -particle_rad 75 -particle_sym D3 -particle_mw 300 -extract_box 384 -thresholds 1000,2500,7500,1000 -model /data/Livlab/autoprocess_d256/GDH/GDH_OG_20140612/frealign/20140826_011259_GDH_OG_20140612_01.mrc )\n"
     )
     body = body + "\n" + pyp_command + "\n\n" + message
