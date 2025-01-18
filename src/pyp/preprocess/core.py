@@ -416,15 +416,17 @@ def read_tilt_series(
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
-            commands = []
-            # separate tilted images for later per-tilt ctf estimation 
-            for idx in range(z):
-                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}.mrc".format(
-                    get_imod_path(), idx, name, 
-                )
-                commands.append(command)
+            # separate tilted images for later per-tilt ctf estimation. 
+            # UPDATE: only do this if we need to estimate the CTF
+            if ctf_mod.is_required_3d(parameters) and not ctf_mod.is_done(metadata,parameters, name=name, project_dir=current_path):
+                commands = []
+                for idx in range(z):
+                    command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}.mrc".format(
+                        get_imod_path(), idx, name, 
+                    )
+                    commands.append(command)
 
-            mpi.submit_jobs_to_workers(commands, os.getcwd())
+                mpi.submit_jobs_to_workers(commands, os.getcwd())
 
             docfile = filename + ".mrc.mdoc"
             if os.path.isfile(docfile):
