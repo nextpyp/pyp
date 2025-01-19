@@ -2408,8 +2408,11 @@ def csp_split(parameters, iteration):
 
     # ab initio 
     if "csp_abinitio" in parameters.keys() and parameters["csp_abinitio"]:
-        logger.info('Doing ab-initio refinement')
-        ab_initio(parameters)    
+        if parameters["refine_maxiter"] > parameters["refine_iter"]:
+            logger.info('Doing ab-initio refinement')
+            ab_initio(parameters)    
+        else:
+            raise Exception("Ab-initio refinement requires more than one iteration")
 
     os.makedirs("swarm", exist_ok=True)
     os.chdir("swarm")
