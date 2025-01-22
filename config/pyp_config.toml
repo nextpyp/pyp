@@ -5683,6 +5683,22 @@ type = "bool"
 default = false
 hidden = [ "tomo_drgn_train" ]
 
+[tabs.heterogeneity.tomodrgn_eval_vol_analyze]
+name = "Run volume space PCA and UMAP"
+description = "Run tomodrgn analyze_volumes"
+type = "bool"
+default = false
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_eval_vol_mask]
+name = "Mask type for volumes"
+description = "Type of real space mask to generate for each volume when calculating voxel-PCA"
+type = "enum"
+enum = { none="none", soft="soft", tight="tight", sphere="sphere" }
+default = "soft"
+condition = { arg="tomodrgn_eval_vol_analyze", value=true }
+hidden = [ "tomo_drgn_train" ]
+
 # [tabs.heterogeneity.tomodrgn_pose_sgd]
 # name = "Pose SGD"
 # description = "Refine poses with gradient descent"
