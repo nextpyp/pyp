@@ -637,7 +637,7 @@ def read_tilt_series(
 
         for idx, tilt in enumerate(sorted_tilts):
             frame_name = tilt[0].replace(file_format, "")
-            s = np.loadtxt(glob.glob(frame_name + "*.xf")[0], dtype=float)[:, -2:]
+            s = np.loadtxt(glob.glob(frame_name + "*.xf")[0], dtype=float, ndmin=2)[:, -2:]
             shifts[idx] = np.array( s[:, :2] )
             shiftsmag[idx] = np.hypot(s[:, 0], s[:, 1]).sum()
 

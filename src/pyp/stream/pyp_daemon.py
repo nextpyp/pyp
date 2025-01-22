@@ -602,7 +602,8 @@ def pyp_daemon_process(args,):
             arguments = []
             for i in glob.glob( os.path.join( raw_dir, name + "*" + data_path.suffix ) ):
                 arguments.append(((Path(i).with_suffix(""), args['stream_compress'], data_path.suffix)))
-            mpi.submit_function_to_workers(compress_and_delete,arguments=arguments,verbose=parameters["slurm_verbose"])
+            if len(arguments) > 0:
+                mpi.submit_function_to_workers(compress_and_delete,arguments=arguments,verbose=parameters["slurm_verbose"])
         else:
 
             # simply remove signal files
