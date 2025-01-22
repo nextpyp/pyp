@@ -340,7 +340,9 @@ def parse_arguments(block):
                     parameters["tomo_vir_force"] = parameters_existing.get("tomo_vir_force")
                 if "tomo_srf_force" in parameters_existing:
                     parameters["tomo_srf_force"] = parameters_existing.get("tomo_srf_force")
-            
+                if "csp_no_stacks" in parameters_existing:
+                    parameters["csp_no_stacks"] = parameters_existing.get("csp_no_stacks")
+
         else:
             
             parent_dataset = parameters.get("data_set")
