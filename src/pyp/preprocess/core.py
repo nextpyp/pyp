@@ -208,7 +208,10 @@ def read_tilt_series(
                 else:
                     raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
         else:
-            detected_movies = frames_from_pattern(filename=filename,name=name,pattern=parameters["movie_pattern"])
+            for pattern in [ parameters["movie_pattern"], parameters["movie_pattern"].replace(Path(parameters["movie_pattern"]).suffix,"."+parameters["stream_compress"])]:
+                detected_movies = frames_from_pattern(filename=filename,name=name,pattern=pattern)
+                if len(detected_movies) > 0:
+                    break
             for i in detected_movies:
                 arguments.append((os.path.join(Path(filename).parents[0], i),"."))
         if len(arguments) > 0:
@@ -463,20 +466,23 @@ def read_tilt_series(
                 except:
                     logger.warning(f"Cannot detect tilt angles from filename and .rawtlt")
 
-            root_pattern, file_format = os.path.splitext(pattern)
-            regex = movie2regex(pattern, name)
-            r = re.compile(regex)
-            r_mdoc = re.compile(regex.replace(file_format, ".mdoc"))
+            for pattern in [ parameters["movie_pattern"], parameters["movie_pattern"].replace(Path(parameters["movie_pattern"]).suffix,"."+parameters["stream_compress"])]:
+                root_pattern, file_format = os.path.splitext(pattern)
+                regex = movie2regex(pattern, name)
+                r = re.compile(regex)
+                r_mdoc = re.compile(regex.replace(file_format, ".mdoc"))
 
-            # raise flag for tif format
-            if parameters["movie_pattern"].endswith(".tif"):
-                open("istif", "a").close()
+                # raise flag for tif format
+                if parameters["movie_pattern"].endswith(".tif"):
+                    open("istif", "a").close()
 
-            # put all the tif files in a list and initialize their angles, scanord as zero
-            labels = ["TILTSERIES", "SCANORD", "ANGLE"]
-            labels = [l for l in labels if pattern.find(l) >= 0]
-            labels.sort(key=lambda x: int(pattern.find(x)))
-            detected_movies = [r.match(f) for f in sorted(os.listdir(".")) if r.match(f)]
+                # put all the tif files in a list and initialize their angles, scanord as zero
+                labels = ["TILTSERIES", "SCANORD", "ANGLE"]
+                labels = [l for l in labels if pattern.find(l) >= 0]
+                labels.sort(key=lambda x: int(pattern.find(x)))
+                detected_movies = [r.match(f) for f in sorted(os.listdir(".")) if r.match(f)]
+                if len(detected_movies) > 0:
+                    break
 
             if "SCANORD" not in pattern:
                 assert (len(detected_movies) == len(order_from_file)), f"{len(detected_movies)} tilts matching {parameters['movie_pattern']} != {len(order_from_file)} from .order"

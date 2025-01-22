@@ -382,6 +382,9 @@ def pyp_daemon(args):
                 all_files = [ Path(s).name for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path_mdoc"])).suffix ) ) ]
             else:
                 all_files = [ Path(s).stem for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path"])).suffix ) ) ]
+            if parameters["stream_compress"] != "none" and restart_or_clean:
+                all_files += [ Path(s).stem for s in glob.glob( os.path.join( session_dir, "raw", "*." + parameters["stream_compress"] ) ) ]
+
             for f in all_files:
                 if args["gain_reference"]:
                     isgain = f == Path(project_params.resolve_path(args["gain_reference"])).stem or "gain" in f.lower()
