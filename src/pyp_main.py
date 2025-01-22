@@ -1234,11 +1234,14 @@ def split(parameters):
                 else:
                     raise Exception("Please select a list of coordinates for training")
 
-            else:
+            elif "drgn-train" in parameters["micromon_block"]:
                 train_type = "heterogeneity"
                 train_jobtype = "heterogeneitytrain"
+            else:
+                train_type = "heterogeneity"
+                train_jobtype = "heterogeneityeval"
             
-            train_swarm_file = slurm.create_train_swarm_file(timestamp, train_type=train_type)
+            train_swarm_file = slurm.create_train_swarm_file(timestamp, train_type=train_type, train_jobtype=train_jobtype)
 
             # submit swarm jobs
             id_train = slurm.submit_jobs(

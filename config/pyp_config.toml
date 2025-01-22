@@ -4577,6 +4577,7 @@ type = "path"
 path = { type="files" }
 input = { type="starfile" }
 required = false
+hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.method]
 name = "Method"
@@ -4938,6 +4939,96 @@ condition = { arg="method", value="cryoDRGN" }
 # type = "float"
 # default = 128
 
+# analysis
+
+[tabs.heterogeneity.tomodrgn_mode_eval]
+name = "Operation"
+description = "tomoDRGN command to run"
+type = "enum"
+enum = {analysis="analysis (analyze distribution of latent embeddings)"}
+default = "analysis"
+condition = { arg="method", value="tomoDRGN" }
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_epoch]
+name = "Analysis epochs"
+description = "Epoch number N to analyze (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
+type = "int"
+default = -1
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_batch]
+name = "Batch size"
+description = "Minibatch size for analysis"
+type = "int"
+default = 1
+condition = {arg="tomodrgn_mode_eval", value="eval_vol"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_skipv]
+name = "Skip volume generation"
+description = "Skip generation of volumes"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_skipumap]
+name = "Skip UMAP"
+description = "Skip running UMAP"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_flip]
+name = "Flip handedness"
+description = "Flip handedness of output volumes"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_invert]
+name = "Invert contrast"
+description = "Invert contrast of output volumes"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_downsample]
+name = "Downsample output"
+description = "Downsample volumes to this box size (pixels)"
+type = "int"
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_pc]
+name = "Principal components"
+description = "Number of principal component traversals to generate"
+type = "int"
+default = 2
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_ksample]
+name = "K-means samples"
+description = "Number of k-means samples to generate"
+type = "int"
+default = 20
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
+[tabs.heterogeneity.tomodrgn_analysis_pc_ondata]
+name = "PC-ondata"
+description = "Find closest on-data latent point to each PC percentile"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode_eval", value="analysis"}
+hidden = [ "tomo_drgn_train" ]
+
 [tabs.heterogeneity.tomodrgn_mode]
 name = "Operation"
 description = "tomoDRGN command to run"
@@ -4945,6 +5036,7 @@ type = "enum"
 enum = {train_vae="train_vae (learn heterogeneity landscape and volume decoder)", convergence_vae="convergence_vae (assess convergence of VAE model)"}
 default = "train_vae"
 condition = { arg="method", value="tomoDRGN" }
+hidden = [ "tomo_drgn_eval" ]
 
 # convergence_nn
 [tabs.heterogeneity.tomodrgn_ref]
@@ -5423,79 +5515,6 @@ advanced = true
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 hidden = [ "tomo_drgn_eval" ]
 
-# analysis
-
-[tabs.heterogeneity.tomodrgn_analysis_epoch]
-name = "Analysis epochs"
-description = "Epoch number N to analyze (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
-type = "int"
-default = 49
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
-[tabs.heterogeneity.tomodrgn_analysis_skipv]
-name = "Skip volume generation"
-description = "Skip generation of volumes"
-type = "bool"
-default = false
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
-[tabs.heterogeneity.tomodrgn_analysis_skipumap]
-name = "Skip UMAP"
-description = "Skip running UMAP"
-type = "bool"
-default = false
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
-[tabs.heterogeneity.tomodrgn_analysis_flip]
-name = "Flip handedness"
-description = "Flip handedness of output volumes"
-type = "bool"
-default = false
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
-[tabs.heterogeneity.tomodrgn_analysis_invert]
-name = "Invert contrast"
-description = "Invert contrast of output volumes"
-type = "bool"
-default = false
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
-[tabs.heterogeneity.tomodrgn_analysis_downsample]
-name = "Downsample output"
-description = "Downsample volumes to this box size (pixels)"
-type = "int"
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
-[tabs.heterogeneity.tomodrgn_analysis_pc]
-name = "Principal components"
-description = "Number of principal component traversals to generate"
-type = "int"
-default = 2
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
-[tabs.heterogeneity.tomodrgn_analysis_ksample]
-name = "K-means samples"
-description = "Number of k-means samples to generate"
-type = "int"
-default = 20
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
-[tabs.heterogeneity.tomodrgn_analysis_pc_ondata]
-name = "PC-ondata"
-description = "Find closest on-data latent point to each PC percentile"
-type = "bool"
-default = false
-condition = {arg="tomodrgn_mode", value="analysis"}
-hidden = [ "tomo_drgn_train" ]
-
 [tabs.heterogeneity.tomodrgn_train_zdim]
 name = "ZDIM"
 description = "Dimension of latent variable"
@@ -5506,7 +5525,7 @@ advanced = true
 hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_weight]
-name = "Initial traning model"
+name = "Initial training model"
 description = "Initialize training from a checkpoint"
 type = "path"
 path = { type="files" }
@@ -5656,6 +5675,13 @@ default = false
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
 hidden = [ "tomo_drgn_eval" ]
+
+[tabs.heterogeneity.tomodrgn_eval_vol]
+name = "Generate large ensemble of volumes"
+description = "Run tomodrgn eval_vol"
+type = "bool"
+default = false
+hidden = [ "tomo_drgn_train" ]
 
 # [tabs.heterogeneity.tomodrgn_pose_sgd]
 # name = "Pose SGD"

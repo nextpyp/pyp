@@ -133,12 +133,12 @@ def create_pyp_swarm_file(parameters, files, timestamp, run_mode, swarm_file="pr
     return swarm_file, gpu
 
 
-def create_train_swarm_file(timestamp, train_type, swarm_file="train.swarm"):
+def create_train_swarm_file(timestamp, train_type, train_jobtype=None, swarm_file="train.swarm"):
     with open(os.path.join("swarm", swarm_file), "w") as f:
         f.write(
-            "cd '{2}'; export {1}train={1}train; {0} 2>&1 | tee log/{3}_{1}train.log".format(
+            "cd '{2}'; export {1}={1}; {0} 2>&1 | tee log/{3}_{1}train.log".format(
                 run_pyp(command="pyp", script=True, gpu=True),
-                train_type,
+                train_type+"train" if train_jobtype is None else train_jobtype,
                 os.getcwd(),
                 timestamp,
             )
