@@ -4506,6 +4506,11 @@ if __name__ == "__main__":
                                     parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
                                 elif "refine_parfile_tomo" in parameters and parameters["refine_parfile_tomo"] is not None:
                                     parameters["refine_parfile_tomo"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto" else parameters["refine_parfile_tomo"]
+                                    
+                        else:
+                                latest_parfile, latest_reference = project_params.get_latest_refinement_reference(os.getcwd(), parameters["refine_parfile_compress"])
+                                parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
+                                parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
                             
                         # ensure backwards compatibility
                         parameters = sync_parameters(parameters=parameters)
