@@ -1010,7 +1010,7 @@ def clean_tomo_vir_particles(project_dir):
     [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
 
 
-def get_latest_refinement_reference(parent_path: str):
+def get_latest_refinement_reference(parent_path: str, parfile_compress: bool = False):
     """get_latest_refinement_reference Get the latest parfile/reference from parent block
 
     _extended_summary_
@@ -1029,7 +1029,10 @@ def get_latest_refinement_reference(parent_path: str):
     # look for par files in frealign/maps/ first
     parent_refinement_path = Path(parent_path) / "frealign" / "maps"
     if parent_refinement_path.exists():
-        parfiles = sorted(list(parent_refinement_path.glob("*_r01_??.par*")), key=lambda x: str(x))
+        if parfile_compress:
+            parfiles = sorted(list(parent_refinement_path.glob("*_r01_??.bz2")), key=lambda x: str(x))
+        else:
+            parfiles = sorted(list(parent_refinement_path.glob("*_r01_??.par*")), key=lambda x: str(x))
         references = sorted(list(parent_refinement_path.glob("*_r01_??.mrc")), key=lambda x: str(x))
         latest_parfile = parfiles[-1] if len(parfiles) > 0 else None
         latest_reference = references[-1] if len(references) > 0 else None
