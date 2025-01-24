@@ -1423,6 +1423,8 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
         dataset = parameters["data_set"]
     elif "stream_session_name" in parameters:
         dataset = parameters["stream_session_name"]
+    elif os.path.exists(project_path):
+        dataset = os.path.split(project_path)[-1]
     else:
         raise Exception("Unknown dataset or session name")
     load_config_files(dataset, current_path, working_path)
@@ -1719,6 +1721,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         dataset = parameters["data_set"]
     elif "stream_session_name" in parameters:
         dataset = parameters["stream_session_name"]
+    elif os.path.exists(project_path):
+        dataset = os.path.split(project_path)[-1]
     else:
         raise Exception("Unknown dataset or session name")
     load_config_files(dataset, current_path, working_path)
@@ -4013,7 +4017,10 @@ if __name__ == "__main__":
                     data_dir = output_dir
                 else:
                     data_dir = config["stream"]["target"]
-                session_dir = os.path.join(data_dir, args["stream_session_group"], args["stream_session_name"])
+                if args.get("stream_session_group") != None and args.get("stream_session_name") != None:
+                    session_dir = os.path.join(data_dir, args["stream_session_group"], args["stream_session_name"])
+                else:
+                    session_dir = data_dir
                 data_path = Path(project_params.resolve_path(args["data_path"]))
                 args['movie_pattern'] = args['movie_pattern'].replace( data_path.suffix, '.' + args['stream_compress'] )
                 project_params.save_pyp_parameters(args,session_dir)

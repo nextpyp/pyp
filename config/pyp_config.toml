@@ -6479,6 +6479,7 @@ name = "Session timeout (days)"
 description="How long should the session run for"
 type = "int"
 default = 5
+hidden = true
 
 [tabs.stream.scope_profile]
 name = "Scope profile"

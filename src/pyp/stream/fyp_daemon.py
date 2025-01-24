@@ -741,10 +741,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
     # after it, every time it reach the threshold -> refinement
     # seeded_startup = True
 
-    daemon_start_time = time.time()
-    while time.time() - daemon_start_time < datetime.timedelta(
-        days=mparameters["stream_session_timeout"]
-    ).total_seconds() and not os.path.exists(stop_flag):
+    while not os.path.exists(stop_flag):
 
         if global_start:
             boxes_lists = dict() if existing_boxes_lists is None else existing_boxes_lists

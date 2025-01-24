@@ -20,11 +20,12 @@ import shutil
 import socket
 import sys
 import time
+import toml
 from pathlib import Path
 
 import numpy as np
 
-from pyp.system import project_params, slurm
+from pyp.system import project_params, slurm, mpi
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
@@ -437,8 +438,10 @@ def launch_preprocessing(args, autoprocess):
             jobname = (
                 args["stream_camera_profile"] + "_" + args["stream_session_name"][-4:]
             )
-        else:
+        elif args.get("stream_session_name"):
             jobname = args["stream_session_name"][-8:]
+        else:
+            jobname = os.path.split(autoprocess)[-1][-8:]
 
         if "slurm_daemon_queue" not in args or args["slurm_daemon_queue"] == "None":
             queue = ""
@@ -535,7 +538,7 @@ if __name__ == "__main__":
 
     # destination of raw data
     if args["stream_transfer_target"]:
-        if "stream_session_group" in args.keys() and "stream_session_name" in args.keys():
+        if args.get("stream_session_group") != None and args.get("stream_session_name") != None:
             target_path = os.path.join(
                 project_params.resolve_path(args["stream_transfer_target"]),
                 args["stream_session_group"],
@@ -591,9 +594,9 @@ if __name__ == "__main__":
     # notify user if needed
     subject = (
         "Data on "
-        + args.get("stream_session_group")
+        + ( args.get("stream_session_group") or "group" )
         + "/"
-        + args.get("stream_session_name")
+        + ( args.get("stream_session_name") or "session" )
         + " ("
         + jobnumber
         + ")"
@@ -602,15 +605,15 @@ if __name__ == "__main__":
         "*** This is an automatically generated email ***\n\n"
         + "( export pypdaemon=pypdaemon && pyp_main.py "
         + " -group "
-        + args.get("stream_session_group")
+        + ( args.get("stream_session_group") or "group" )
         + " -session "
-        + args.get("stream_session_name")
+        + ( args.get("stream_session_name") or "session" )
         + " )\n\n"
         + "( export pypdaemon=pypdaemon && pyp_main.py "
         + " -group "
-        + args.get("stream_session_group")
+        + ( args.get("stream_session_group") or "group" )
         + " -session "
-        + args.get("stream_session_name")
+        + ( args.get("stream_session_name") or "session" )
         + " -particle_rad 75 -particle_sym D3 -particle_mw 300 -extract_box 384 -thresholds 1000,2500,7500,1000 -model /data/Livlab/autoprocess_d256/GDH/GDH_OG_20140612/frealign/20140826_011259_GDH_OG_20140612_01.mrc )\n"
     )
     body = body + "\n" + pyp_command + "\n\n" + message
@@ -668,11 +671,19 @@ if __name__ == "__main__":
     # run loop until timeout
     daemon_start_time = time.time()
 
-    logger.info("Running nextPYP daemon with %i day(s) walltime" % args["stream_session_timeout"])
+    # retrieve version number
+    version = toml.load(os.path.join(os.environ['PYP_DIR'],"nextpyp.toml"))['version']
+    memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else "?"
+    mpi_tasks = mpi.initialize_worker_pool()
+
+    logger.info(
+        "Running nextPYP v{} on {} using {} task(s) {}".format(
+        version, socket.gethostname(), mpi_tasks, memory
+        )
+    )
 
     while (
-        time.time() - daemon_start_time
-        < datetime.timedelta(days=args["stream_session_timeout"]).total_seconds() and not os.path.exists(stop_flag)
+        not os.path.exists(stop_flag)
     ):
 
         # keep track of data transfer speed

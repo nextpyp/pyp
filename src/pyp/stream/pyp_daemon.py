@@ -39,7 +39,7 @@ def pyp_daemon(args):
         model = None
     camera = args["stream_camera_profile"]
     scope = args["stream_scope_profile"]
-    session = args["stream_session_name"]
+    session = args["stream_session_name"] or os.path.split(args["stream_transfer_target"])[-1]
     if "detect_rad" in args.keys():
         particle_rad = args["detect_rad"]
     else:
@@ -54,9 +54,12 @@ def pyp_daemon(args):
         data_dir = output_dir
     else:
         data_dir = config["stream"]["target"]
-    session_dir = os.path.join(
-        data_dir, args["stream_session_group"], args["stream_session_name"]
-    )
+    if args.get("stream_session_group") != None and args.get("stream_session_name") != None:
+        session_dir = os.path.join(
+            data_dir, args["stream_session_group"], args["stream_session_name"]
+        )
+    else:
+        session_dir = data_dir
     raw_dir = os.path.join(session_dir, "raw")
     swarm_dir = os.path.join(session_dir, "swarm")
 
@@ -203,14 +206,11 @@ def pyp_daemon(args):
     logger.info("Watching for new files in: %s", raw_dir)
     # Look for new and unprocesed data for a maximum of timeout days
 
-    daemon_start_time = time.time()
     current_count = 0
 
     import toml
 
-    while time.time() - daemon_start_time < datetime.timedelta(
-        days=args["stream_session_timeout"]
-    ).total_seconds() and not os.path.exists(stop_flag):
+    while not os.path.exists(stop_flag):
 
         restart_or_clean = False
 
@@ -554,9 +554,12 @@ def pyp_daemon_process(args,):
         data_dir = output_dir
     else:
         data_dir = config["stream"]["target"]
-    session_dir = os.path.join(
-        data_dir, args["stream_session_group"], args["stream_session_name"]
-    )
+    if args.get("stream_session_group") != None and args.get("stream_session_name") != None:
+        session_dir = os.path.join(
+            data_dir, args["stream_session_group"], args["stream_session_name"]
+        )
+    else:
+        session_dir = data_dir
     raw_dir = os.path.join(session_dir, "raw")
 
     # movies = frames > 1
