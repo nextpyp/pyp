@@ -649,7 +649,7 @@ def parse_arguments(block):
                 path = os.path.join(raw_path.parent,ext)
                 number_of_files = len(glob.glob(path))
                 if number_of_files:
-                    logger.info(f"Linking {number_of_files:,} files to raw/ folder")
+                    logger.info(f"Linking {number_of_files:,} files into raw/*{Path(ext).suffix}")
                     symlink_relative_pattern(path,os.path.join(os.getcwd(),"raw"))                    
                 if parameters.get("data_mode") == "spr":
                     break
