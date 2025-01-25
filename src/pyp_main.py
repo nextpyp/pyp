@@ -1776,23 +1776,29 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             metadata_object.meta2PYP(path=working_path,data_path=os.path.join(current_path,"raw/"))
 
         # convert nextpyp coordinates to imod model
-        if os.path.exists(f"{name}_exclude_views.next") and os.path.getsize(f"{name}_exclude_views.next") > 0:
-            # convert next file to imod model
-            com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
-            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-            # detect if there were changes in the excluded tilts
-            if metadata and 'exclude' in metadata:
+        new_angles = np.array([])
+        if os.path.exists(f"{name}_exclude_views.next"):
+            if os.path.getsize(f"{name}_exclude_views.next") > 0:
+                # convert next file to imod model
+                com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
+                local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
                 new_angles = np.sort(np.loadtxt(f'{name}_exclude_views.next',ndmin=2)).astype('int')[:,2]+1
-                angles = np.sort(metadata.get('exclude').to_numpy()[:,1].astype('int') + 1)
-                if not np.array_equal(angles, np.sort(new_angles)):
-                    logger.warning("Excluded tilts have changed, will re-calculate reconstrucion")
-                    parameters["tomo_rec_force"] = True
-            else:
-                logger.warning("Some tilts were excluded, tilt-series will be re-processed")
-                parameters["tomo_rec_force"] = True
-                parameters["tomo_ali_force"] = True
-                parameters["ctf_force"] = True
+            elif os.path.exists(f"{name}_exclude_views.mod"):
+                os.remove(f"{name}_exclude_views.mod")
+
+        # detect if there were changes in the excluded tilts
+        if metadata and 'exclude' in metadata:
+            angles = np.sort(metadata.get('exclude').to_numpy()[:,1].astype('int') + 1)
+        else:
+            angles = np.array([])
+            
+        if not np.array_equal(angles, np.sort(new_angles)):
+            logger.warning("Excluded tilts have changed, tilt-series will be re-processed")
+            parameters["tomo_rec_force"] = True
+            parameters["tomo_ali_force"] = True
+            parameters["ctf_force"] = True
+            del metadata["ali"]
+            del metadata["tlt"]
 
     else:
         logger.info("Ignoring existing results")
@@ -1861,6 +1867,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # determine excluded views from user input
     exclude_views = merge.do_exclude_views(name)
+    logger.warning(f"The following tilts will be excluded: {exclude_views}")
 
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
