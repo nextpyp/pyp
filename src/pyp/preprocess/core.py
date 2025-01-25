@@ -399,7 +399,7 @@ def read_tilt_series(
             pixel_size = parameters["scope_pixel"]
             voltage = parameters["scope_voltage"]
             mag = parameters["scope_mag"]
-            tilt_axis = parameters["scope_tilt_axis"] - 90.0
+            tilt_axis = parameters["scope_tilt_axis"]
 
             if "extract_fmt" in parameters.keys() and "frealign" not in parameters["extract_fmt"]:
                 command = "{0}/bin/newstack {1}.mrc {1}.mrc -mode 1 -multadd 1,32768".format(
