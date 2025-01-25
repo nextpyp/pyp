@@ -714,7 +714,7 @@ def read_tilt_series(
         preprocess.invert_contrast(name)
 
     logger.info(
-        "Unbinned tomogram dimensions = [ %s, %s, %s ]",
+        "Unbinned tilt-series dimensions = [ %s, %s, %s ]",
         x,
         y,
         z
