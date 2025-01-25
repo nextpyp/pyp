@@ -4486,7 +4486,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
 {dose_weighting_options} \
 {mag_correction_options} \
 -Gpu {get_gpu_ids(parameters,separator=' ')}"
-        [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+        [ output, error ] = stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
@@ -5420,7 +5420,7 @@ EOF
                 parameters["tomo_ali_patches_x"],
                 parameters["tomo_ali_patches_y"],
             )
-            run_shell_command(command, verbose=parameters["slurm_verbose"])
+            stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
             # Chop up contours
             command = "{0}/bin/imodchopconts -input {1}_patches.fid -output {1}.fid -overlap 4 -surfaces 1".format(
