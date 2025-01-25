@@ -5617,13 +5617,6 @@ EOF
                 sec += 1
         np.savetxt( tlt_file, raw_tilt_angles, fmt='%.2f' )
 
-    # create aligned fiducial model
-    if not 'aretomo' in parameters["tomo_ali_method"].lower():
-        command = "{0}/bin/imodtrans -2 {1}_bin.xf {1}.fid.txt {1}_aligned.fid".format(
-            get_imod_path(), name
-        )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
-        
     return excluded_views
 
 def check_parfile_match_allboxes(par_file: str, allboxes_file: str):
