@@ -1245,15 +1245,17 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
             raise Exception(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
         else:
-            coordinates = joint.tomoeval(parameters,name)[:,[0,2,1]]
-            # calculate unbinned coordinates
-            coordinates *= binning
-            # add radius (unbinned)
-            if virion_mode:
-                radius = unbinned_virion_radius
-            else:
-                radius = unbinned_spike_radius
-            coordinates = np.hstack( ( coordinates.copy(), radius * np.ones((coordinates.shape[0],1)) ) )
+            coordinates = joint.tomoeval(parameters,name)
+            if coordinates.size > 0:
+                coordinates = coordinates[:,[0,2,1]]
+                # calculate unbinned coordinates
+                coordinates *= binning
+                # add radius (unbinned)
+                if virion_mode:
+                    radius = unbinned_virion_radius
+                else:
+                    radius = unbinned_spike_radius
+                coordinates = np.hstack( ( coordinates.copy(), radius * np.ones((coordinates.shape[0],1)) ) )
 
     # 2. virions (new-only)
     elif parameters.get("tomo_pick_method") == "virions" and parameters.get("micromon_block") == "tomo-picking":
@@ -1304,8 +1306,11 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         # read and convert output to unbinned coordinates
         coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
-        coordinates *= binning
-        coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+        if coordinates.size > 0:
+            coordinates *= binning
+            coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+        else:
+            logger.warning("No particles were detected")
 
     # 4. import
     elif ( parameters.get("tomo_spk_method") == "import" or parameters.get("tomo_pick_method") == "import" ) and os.path.exists(f"{name}.spk"):
@@ -1314,17 +1319,20 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         # read and convert output to unbinned coordinates
         coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
-        coordinates *= binning
-        if coordinates.shape[1] == 5:
-            if parameters["tomo_spk_files_flip"]:
-                coordinates = coordinates.copy()[:,[0,2,1,4]]
+        if coordinates.size > 0:
+            coordinates *= binning
+            if coordinates.shape[1] == 5:
+                if parameters["tomo_spk_files_flip"]:
+                    coordinates = coordinates.copy()[:,[0,2,1,4]]
+                else:
+                    coordinates = coordinates.copy()[:,[0,1,2,4]]    
             else:
-                coordinates = coordinates.copy()[:,[0,1,2,4]]    
+                if parameters["tomo_spk_files_flip"]:
+                    coordinates = np.hstack( ( coordinates.copy()[:,[0,2,1]], unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+                else:
+                    coordinates = np.hstack( ( coordinates.copy()[:,[0,1,2]], unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
         else:
-            if parameters["tomo_spk_files_flip"]:
-                coordinates = np.hstack( ( coordinates.copy()[:,[0,2,1]], unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
-            else:
-                coordinates = np.hstack( ( coordinates.copy()[:,[0,1,2]], unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+            logger.warning("No particles were imported")
 
         try:
             os.remove(f"{name}.spk")
