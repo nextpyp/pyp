@@ -1842,10 +1842,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # remove x-rays
     if 'movie_no_frames' in parameters and parameters['movie_no_frames'] and "gain_remove_hot_pixels" in parameters and parameters["gain_remove_hot_pixels"]:
-        t = timer.Timer(text="Removing hot pixels took: {}", logger=logger.info)
-        t.start()
         preprocess.remove_xrays_from_file(name,parameters['slurm_verbose'])
-        t.stop()
     else:
         os.symlink(name + ".mrc", name + ".st")
 
@@ -1870,10 +1867,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         logger.info("Using existing tilt-series alignments")
         additional_exclude_views = exclude_views
     else:
-        t = timer.Timer(text="Tilt-series alignment took: {}", logger=logger.info)
-        t.start()
         additional_exclude_views = align.align_tilt_series(name,parameters=parameters,rotation=tilt_axis,excluded_views=exclude_views)
-        t.stop()
 
     # save newly excluded views to .mod file, if needed
     if len(exclude_views) != len(additional_exclude_views):

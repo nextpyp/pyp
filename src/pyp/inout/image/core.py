@@ -15,7 +15,7 @@ from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, get_frealign_paths
 from pyp.system.wrapper_functions import newstack
-from pyp.utils import get_relative_path
+from pyp.utils import get_relative_path, timer
 
 from .. import metadata
 from . import digital_micrograph as dm4
@@ -1387,7 +1387,7 @@ def compress_images(input, output, cpus=1):
     )
     run_shell_command(command, verbose=False)
 
-
+@timer.Timer("pre-processing", text="Tilt-series pre-processing took: {}", logger=logger.info)
 def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
 
     commands = []

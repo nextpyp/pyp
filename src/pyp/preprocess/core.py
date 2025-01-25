@@ -37,6 +37,7 @@ def invert_contrast(name):
     local_run.run_shell_command(command)
 
 
+@timer.Timer("remove_xrays", text="Removing hot pixels took: {}", logger=logger.info)
 def remove_xrays_from_file(name,verbose=False):
     logger.info("Removing xrays")
     # Hot-pixel removal using IMOD's ccderaser
@@ -701,10 +702,7 @@ def read_tilt_series(
         or tomo_vir_is_required(parameters)
         or not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path) ):
 
-        t = timer.Timer(text="Convert tilt-series into squares took: {}", logger=logger.info)
-        t.start()
         imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
-        t.stop()
 
     if parameters["tomo_ali_square"]:
         x, y, z = square, square, parameters["tomo_rec_thickness"]
@@ -926,10 +924,7 @@ def regenerate_average_quick(
 
     # squared tilt-series: 
     if True:
-        t = timer.Timer(text="Convert tilt-series into squares took: {}", logger=logger.info)
-        t.start()
         imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
-        t.stop()
  
     # invert contrast if needed
     if parameters["data_invert"]:
