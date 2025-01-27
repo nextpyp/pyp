@@ -1867,7 +1867,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # determine excluded views from user input
     exclude_views = merge.do_exclude_views(name)
-    logger.warning(f"The following tilts will be excluded: {exclude_views}")
+    if len(exclude_views) > 0:
+        logger.info(f"The following tilts will be excluded: {exclude_views}")
 
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
@@ -3870,7 +3871,8 @@ def sync_parameters(parameters):
             if k.startswith("tomo_pick_vir_"):
                 default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
                 if parameters[k] != default:
-                    logger.warning(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                    if parameters.get("slurm_verbose"):
+                        logger.warning(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
                     new_parameters[k.replace("tomo_pick_vir_","tomo_vir_")] = parameters[k]
             # map particle picking methods
             elif k == "tomo_pick_method":
@@ -3880,18 +3882,21 @@ def sync_parameters(parameters):
             elif k.startswith("tomo_pick_"):
                 default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
                 if parameters[k] != default and not k.endswith('_method'):
-                    logger.warning(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
+                    if parameters.get("slurm_verbose"):
+                        logger.warning(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
                     new_parameters[k.replace("tomo_pick_","tomo_spk_")] = parameters[k]
             # copy tomo_srf parameters to tomo_vir
             if k.startswith("tomo_srf_"):
                 default = specifications.get("tabs").get("tomo_srf").get(k.replace("tomo_srf_","")).get("default")
                 if parameters[k] != default:
-                    logger.warning(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                    if parameters.get("slurm_verbose"):
+                        logger.warning(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
                     new_parameters[k.replace("tomo_srf_","tomo_vir_")] = parameters[k]
             if k.startswith("tomo_sphere_"):
                 default = specifications.get("tabs").get("tomo_sphere").get(k.replace("tomo_sphere_","")).get("default")
                 if parameters[k] != default:
-                    logger.warning(f"Replacing {k.replace('tomo_sphere_','tomo_vir_seg_')} <- {k} with value {parameters[k]}")
+                    if parameters.get("slurm_verbose"):
+                        logger.warning(f"Replacing {k.replace('tomo_sphere_','tomo_vir_seg_')} <- {k} with value {parameters[k]}")
                     new_parameters[k.replace("tomo_sphere_","tomo_vir_seg_")] = parameters[k]
 
         parameters = new_parameters.copy()
