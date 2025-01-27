@@ -138,6 +138,7 @@ def needs_gpu(parameters):
 def get_gpu_queue(parameters):
     # try to get the gpu partition
     queue = ""
+    return queue
     config = get_pyp_configuration()
     if "slurm" in config:
         if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ):
