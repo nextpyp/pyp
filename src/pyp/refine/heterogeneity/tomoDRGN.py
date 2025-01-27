@@ -298,28 +298,49 @@ def run_tomodrgn_train(project_dir, parameters):
     train_folder.mkdir(parents=True, exist_ok=True)
 
     # train
-    tomodrgn_train(parameters, "input_data", name, train_folder)
+    if parameters['heterogeneity_tomodrgn_mode'] == "backproject_voxel":
 
-    if (train_folder / "weights.pkl").exists() and (train_folder / "z.train.pkl").exists():
-        logger.info(f"Training finished successfully, results saved to {train_folder}")
+        backproject_voxel(parameters, "input_data", name, train_folder / f"{name}.mrc")
+        
+    elif parameters['heterogeneity_tomodrgn_mode'] == "train_nn":
 
-        shutil.copytree(train_folder, (working_path / "train_output"), dirs_exist_ok=True)
+        train_nn(parameters, "input_data", name, train_folder)
+        
+        # convergence
+        logger.info("Running tomoDRGN convergence_nn")
+
+        convergence_folder = Path(project_dir) / "train" / f"convergence_{parameters['heterogeneity_tomodrgn_train_epochs']}"
+        convergence_folder.mkdir(parents=True, exist_ok=True)
+
+        local_convergence_folder = Path(working_path) / "convergence"
+        local_convergence_folder.mkdir(parents=True, exist_ok=True)
+        convergence_nn(parameters, train_folder)
+        logger.info(f"convergence_nn finished successfully, results saved to {convergence_folder}")
+
+        shutil.copytree(local_convergence_folder, convergence_folder, dirs_exist_ok=True)
+
     else:
-        raise Exception("Training did not finish successfully")
+        tomodrgn_train(parameters, "input_data", name, train_folder)
 
-    # convergence
-    logger.info("Running tomoDRGN convergence_vae")
+        if (train_folder / "weights.pkl").exists() and (train_folder / "z.train.pkl").exists():
+            logger.info(f"Training finished successfully, results saved to {train_folder}")
 
-    convergence_folder = Path(project_dir) / "train" / f"convergence_{parameters['heterogeneity_tomodrgn_train_epochs']}"
-    convergence_folder.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(train_folder, (working_path / "train_output"), dirs_exist_ok=True)
+        else:
+            raise Exception("Training did not finish successfully")
 
-    local_convergence_folder = Path(working_path) / "convergence"
-    local_convergence_folder.mkdir(parents=True, exist_ok=True)
-    convergence_vae(parameters, train_folder, local_convergence_folder)
-    logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
+        # convergence
+        logger.info("Running tomoDRGN convergence_vae")
 
-    shutil.copytree(local_convergence_folder, convergence_folder, dirs_exist_ok=True)
+        convergence_folder = Path(project_dir) / "train" / f"convergence_{parameters['heterogeneity_tomodrgn_train_epochs']}"
+        convergence_folder.mkdir(parents=True, exist_ok=True)
 
+        local_convergence_folder = Path(working_path) / "convergence"
+        local_convergence_folder.mkdir(parents=True, exist_ok=True)
+        convergence_vae(parameters, train_folder, local_convergence_folder)
+        logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
+
+        shutil.copytree(local_convergence_folder, convergence_folder, dirs_exist_ok=True)
 
 # TODO - only run evaluation tasks
 def run_tomodrgn_eval(project_dir, parameters):
@@ -410,15 +431,55 @@ def run_tomodrgn_eval(project_dir, parameters):
                 parent=os.path.join(project_params.resolve_path(parameters["data_parent"]),"train")
             )
 
+def backproject_voxel(parameters, input_dir, name, output):
+
+    """
+    usage: backproject_voxel [-h] --output OUTPUT [--plot-format {png,svgz}]
+                         [--source-software {auto,warp,cryosrpnt,nextpyp,cistem,warptools,relion}]
+                         [--ind-ptcls PKL] [--ind-imgs IND_IMGS]
+                         [--sort-ptcl-imgs {unsorted,dose_ascending,random}]
+                         [--use-first-ntilts USE_FIRST_NTILTS]
+                         [--use-first-nptcls USE_FIRST_NPTCLS]
+                         [--uninvert-data] [--datadir DATADIR] [--lazy]
+                         [--recon-tilt-weight] [--recon-dose-weight]
+                         [--lowpass LOWPASS] [--flip]
+                         particles
+    """
+    particles_input = os.path.join(input_dir, name + "_particles.star")
+
+    options = f"--use-first-nptcls {parameters['heterogeneity_tomodrgn_use_first_nptcls']} --sort-ptcl-imgs {parameters['heterogeneity_tomodrgn_sort_ptcl_imgs']}"
+
+    if parameters["heterogeneity_tomodrgn_lowpass"] > 0:
+        options += f" --lowpass {parameters['heterogeneity_tomodrgn_lowpass']}"
+
+    if parameters["heterogeneity_tomodrgn_data_lazy"]:
+        options += " --lazy"
+        
+    if parameters["heterogeneity_tomodrgn_flip"]:
+        options += " --flip"
+
+    tomo = ""
+    if parameters["heterogeneity_tomodrgn_tilt_weight"]:
+        tomo += " --recon-tilt-weight"
+    elif parameters["heterogeneity_tomodrgn_dose_weight"]:
+        tomo += " --recon-dose-weight"
+    else:
+        pass 
+
+    if parameters["heterogeneity_tomodrgn_use_firstn"] > 0:
+        tomo += f" --use-first-ntilts {parameters['heterogeneity_tomodrgn_use_firstn']}"
+
+    command = f"{get_tomodrgn_path()} backproject_voxel {particles_input} --datadir {input_dir} --source-software nextpyp --output {output} {options} {tomo}"
+
+    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+
 def train_nn(parameters, input_dir, name, output):
 
     """Train a decoder-only network to learn a homogeneous structure"""
 
     particles_input = os.path.join(input_dir, name + "_particles.star")
 
-    options = f"--checkpoint {parameters['heterogeneity_tomodrgn_train_checkpoint']} \
-        --log-interval {parameters['heterogeneity_tomodrgn_train_log_interval']} \
-        --num-workers 0"
+    options = f"--checkpoint {parameters['heterogeneity_tomodrgn_train_checkpoint']} --log-interval {parameters['heterogeneity_tomodrgn_train_log_interval']} --num-workers 0"
 
     if parameters.get("heterogeneity_tomodrgn_train_weight") and os.path.exists(parameters["heterogeneity_tomodrgn_train_weight"]):
         options += f" --load {parameters['heterogeneity_tomodrgn_train_weight']}"
@@ -449,7 +510,7 @@ def train_nn(parameters, input_dir, name, output):
             options += f" --shuffler-size {parameters['heterogeneity_tomodrgn_data_shufflersize']}"
 
     if parameters["slurm_verbose"]:
-        options += " -v"
+        options += " --verbose"
 
     if False:
         options += " --preprocessed"
@@ -463,9 +524,7 @@ def train_nn(parameters, input_dir, name, output):
     # --enc-layers-B {parameters['heterogeneity_tomodrgn_enc_lyb']} \
     # --enc-dim-B {parameters['heterogeneity_tomodrgn_enc_dimb']} \
 
-    training_parameters = f"-n {parameters['heterogeneity_tomodrgn_train_epochs']} -b {parameters['heterogeneity_tomodrgn_train_batch']} --wd {parameters['heterogeneity_tomodrgn_train_wd']} --lr {parameters['heterogeneity_tomodrgn_train_lr']} \
-        --layers {parameters['heterogeneity_tomodrgn_layers']} --dim {parameters['heterogeneity_tomodrgn_dim']} --pe-dim {parameters['heterogeneity_tomodrgn_pe_type']} --dec-layers {parameters['heterogeneity_tomodrgn_dec_hl']} \
-        --pe-type {parameters['heterogeneity_tomodrgn_pe_type']} --activation {parameters['heterogeneity_tomodrgn_activation']} --l-extent {parameters['heterogeneity_tomodrgn_l_ext']}"
+    training_parameters = f"-n {parameters['heterogeneity_tomodrgn_train_epochs']} -b {parameters['heterogeneity_tomodrgn_train_batch']} --wd {parameters['heterogeneity_tomodrgn_train_wd']} --lr {parameters['heterogeneity_tomodrgn_train_lr']} --layers {parameters['heterogeneity_tomodrgn_layers']} --dim {parameters['heterogeneity_tomodrgn_dim']} --pe-type {parameters['heterogeneity_tomodrgn_pe_type']} --activation {parameters['heterogeneity_tomodrgn_activation']} --l-extent {parameters['heterogeneity_tomodrgn_l_ext']}"
 
     if parameters["heterogeneity_tomodrgn_layer_norm"]:
         training_parameters += " --layer-norm"
@@ -507,9 +566,6 @@ def train_nn(parameters, input_dir, name, output):
     if parameters["heterogeneity_tomodrgn_dose"] > 0:
         tomo += f" --dose-override {parameters['heterogeneity_tomodrgn_dose']}"
 
-    if parameters["heterogeneity_tomodrgn_sample_tilt"] > 0:
-        tomo += f" --sample-ntilts {parameters['heterogeneity_tomodrgn_sample_tilt']}"
-    
     if parameters["heterogeneity_tomodrgn_sequential_order"]:
         tomo += " --sequential-tilt-sampling"
     
@@ -533,9 +589,31 @@ def train_nn(parameters, input_dir, name, output):
     if parameters["heterogeneity_tomodrgn_pin_mem"]:
         workers += " --pin-memory"
 
-    # --ctf {ctf_input} --pose {pose_input}
-
-    command = f"{get_tomodrgn_path()} train_nn {particles_input} --datadir {input_dir} --source-software nextpyp -o {output} {options} {training_parameters} {tomo} {workers}"
+    """
+    usage: train_nn [-h] --outdir OUTDIR [--load WEIGHTS.PKL]
+                    [--checkpoint CHECKPOINT] [--log-interval LOG_INTERVAL]
+                    [--verbose] [--seed SEED] [--plot-format {png,svgz}]
+                    [--source-software {auto,warp,cryosrpnt,nextpyp,cistem,warptools,relion}]
+                    [--ind-ptcls PKL] [--ind-imgs IND_IMGS]
+                    [--sort-ptcl-imgs {unsorted,dose_ascending,random}]
+                    [--use-first-ntilts USE_FIRST_NTILTS]
+                    [--use-first-nptcls USE_FIRST_NPTCLS] [--uninvert-data]
+                    [--no-window] [--window-r WINDOW_R]
+                    [--window-r-outer WINDOW_R_OUTER] [--datadir DATADIR] [--lazy]
+                    [--sequential-tilt-sampling] [--recon-tilt-weight]
+                    [--recon-dose-weight] [--l-dose-mask] [-n NUM_EPOCHS]
+                    [-b BATCH_SIZE] [--wd WD] [--lr LR] [--norm NORM NORM]
+                    [--no-amp] [--multigpu] [--layers LAYERS] [--dim DIM]
+                    [--l-extent L_EXTENT]
+                    [--pe-type {geom_ft,geom_full,geom_lowf,geom_nohighf,linear_lowf,gaussian,none}]
+                    [--pe-dim PE_DIM] [--activation {relu,leaky_relu}]
+                    [--feat-sigma FEAT_SIGMA] [--num-workers NUM_WORKERS]
+                    [--prefetch-factor PREFETCH_FACTOR] [--persistent-workers]
+                    [--pin-memory]
+                    particles
+    """
+    
+    command = f"{get_tomodrgn_path()} train_nn {particles_input} --datadir {input_dir} --source-software nextpyp --outdir {output} {options} {training_parameters} {tomo} {workers}"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -555,7 +633,14 @@ def convergence_nn(parameters, input_dir):
     if not "none" in parameters["heterogeneity_tomodrgn_fscmask"]:
         option += f" --fsc-mask {parameters['heterogeneity_tomodrgn_fscmask']}"
 
-    command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option}"
+    """
+    usage: convergence_nn [-h] [--max-epoch MAX_EPOCH] [--include-dc]
+                        [--fsc-mask {none,sphere,tight,soft}]
+                        [--plot-format {png,svgz}]
+                        training_directory reference_volume
+    """
+    
+    command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option} --plot-format svgz"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 

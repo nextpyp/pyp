@@ -5033,10 +5033,44 @@ hidden = [ "tomo_drgn_train" ]
 name = "Operation"
 description = "tomoDRGN command to run"
 type = "enum"
-enum = {train_vae="train_vae (learn heterogeneity landscape and volume decoder)", convergence_vae="convergence_vae (assess convergence of VAE model)"}
+enum = {backproject_voxel="backproject-voxel (homogeneous reconstruction)", train_nn="train-nn (homogeneous reconstruction with decoder-only network)", train_vae="train_vae (learn heterogeneity landscape and volume decoder)", convergence_vae="convergence_vae (assess convergence of VAE model)"}
 default = "train_vae"
 condition = { arg="method", value="tomoDRGN" }
 hidden = [ "tomo_drgn_eval" ]
+
+# backproject-voxel
+
+[tabs.heterogeneity.tomodrgn_use_first_nptcls]
+name = "Use first N particles"
+description = "Number of particles to use for reconstruction. Default: -1 (use all particles)"
+type = "int"
+default = -1
+condition = {arg="tomodrgn_mode", value="backproject_voxel"}
+hidden = [ "tomo_drgn_eval" ]
+
+[tabs.heterogeneity.tomodrgn_sort_ptcl_imgs]
+name = "Sort star file images"
+description = "Sort on a per-particle basis by the specified criteria"
+type = "enum"
+enum = {unsorted="unsorted", dose_ascending="dose_ascending", random="random"}
+default = "unsorted"
+condition = {arg="tomodrgn_mode", value="backproject_voxel"}
+hidden = [ "tomo_drgn_eval" ]
+
+[tabs.heterogeneity.tomodrgn_lowpass]
+name = "Lowpass (A)"
+description = "Lowpass filter reconstructed volume. Defaults to FSC=0.143 correlation between half-maps"
+type = "float"
+default = 0
+condition = {arg="tomodrgn_mode", value="backproject_voxel"}
+
+[tabs.heterogeneity.tomodrgn_flip]
+name = "Flip handedness"
+description = "Flip handedness of output volume"
+type = "bool"
+default = false
+condition = {arg="tomodrgn_mode", value="backproject_voxel"}
+hidden = [ "tomo_drgn_train" ]
 
 # convergence_nn
 [tabs.heterogeneity.tomodrgn_ref]
@@ -5224,7 +5258,7 @@ name = "Use first N tilts"
 description = "Number of tilts to sample from each particle per epoch. Default: min(ntilts) from dataset"
 type = "int"
 default = 32
-condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+condition = {arg="tomodrgn_mode", value=["backproject_voxel","train_vae","train_nn"]}
 hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_lazy]
@@ -5232,7 +5266,7 @@ name = "Lazy loading"
 description = "Lazy loading if full dataset is too large to fit in memory"
 type = "bool"
 default = false
-condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+condition = {arg="tomodrgn_mode", value=["backproject_voxel","train_vae","train_nn"]}
 hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_data_windowing]
@@ -5264,7 +5298,7 @@ name = "Cosine weight by tilt"
 description = "Weight reconstruction loss by cos(angle)"
 type = "bool"
 default = false
-condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+condition = {arg="tomodrgn_mode", value=["backproject_voxel","train_vae","train_nn"]}
 hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dose_weight]
@@ -5272,7 +5306,7 @@ name = "Weight by dose"
 description = "Weight reconstruction loss per tilt per pixel by dose dependent amplitude attenuation"
 type = "bool"
 default = false
-condition = {arg="tomodrgn_mode", value="train_nn"}
+condition = {arg="tomodrgn_mode", value=["backproject_voxel","train_nn"]}
 hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dose]
@@ -5408,14 +5442,14 @@ hidden = [ "tomo_drgn_eval" ]
 # default = false
 # condition = {arg="enc_mode", value="conv"}
 
-[tabs.heterogeneity.tomodrgn_dec_hl]
-name = "Decoder layers"
-description = "Number of decoder hidden layers"
-type = "int"
-default = 3
-advanced = true
-condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
-hidden = [ "tomo_drgn_eval" ]
+# [tabs.heterogeneity.tomodrgn_dec_hl]
+# name = "Decoder layers"
+# description = "Number of decoder hidden layers"
+# type = "int"
+# default = 3
+# advanced = true
+# condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
+# hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_dec_dim]
 name = "Decoder nodes"
@@ -5662,7 +5696,7 @@ hidden = [ "tomo_drgn_eval" ]
 name = "Data normalization"
 description = "Data normalization as shift, 1/scale (default: mean, std of dataset)"
 type = "str"
-default = "None"
+default = "none"
 condition = {arg="tomodrgn_mode", value=["train_vae","train_nn"]}
 advanced = true
 hidden = [ "tomo_drgn_eval" ]
