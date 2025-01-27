@@ -328,7 +328,7 @@ Step 7: Reference-based refinement
 
         - Check ``Refine particle alignments``
 
-        - Set ``Phi range (degrees)`` and ``Theta range (degrees)`` to 10
+        - Set ``Psi range (degrees)`` and ``Theta range (degrees)`` to 10
 
         - Set ``Translation range (voxels)`` to 50
 
