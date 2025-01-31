@@ -1790,7 +1790,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         else:
             angles = np.array([])
             
-        if not np.array_equal(angles, np.sort(new_angles)):
+        if not np.array_equal(angles, np.sort(new_angles)) and "preprocessing" in parameters.get("micromon_block"):
             logger.warning("Excluded tilts have changed, tilt-series will be re-processed")
             parameters["tomo_rec_force"] = True
             parameters["tomo_ali_force"] = True
