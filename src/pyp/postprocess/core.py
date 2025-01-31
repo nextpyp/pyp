@@ -172,6 +172,61 @@ def smooth_part_fsc(stats_file_name, plot_name):
         plt.title(os.path.basename(plot_name).split(".")[0])
         plt.savefig(plot_name)
 
+#  hyperbolic tangent (tanh) function
+def tanh_func(x, a, b, c, d):
+    return a * np.tanh(b * (x + c)) + d
+
+def fit_tanh(data_x,data_y):
+
+    from scipy.optimize import curve_fit
+
+    data_x /= data_x.max()
+    data_y /= data_y.max()
+
+    # Fit the data to the tanh function
+    # Set initial guess to apparent inflection point
+    initial_guess = [1.0, 1.0, 0.0, 0.0]
+    params, _ = curve_fit(tanh_func, data_x, data_y, p0=initial_guess)
+
+    # Extract the parameters
+    a, b, c, d = params
+
+    # Create a range of x values for the curve change value of "127" to max number or data points i didnt know how to get max size of the data sheet
+    x_fit = np.linspace(min(data_x), max(data_x), data_x.size)
+
+    # Calculate the y values for the fitted curve
+    y_fit = tanh_func(x_fit, a, b, c, d)
+    y_fit = ( y_fit - min(y_fit) ) / ( max(y_fit) - min(y_fit))
+
+    return x_fit, y_fit
+
+def tanh_part_fsc(stats_file_name, plot_name):
+    stats = np.loadtxt(stats_file_name, comments=["C"])
+    if len(stats) > 0:
+        import matplotlib.pyplot as plt
+
+        fig, ax = plt.subplots(1, 1, figsize=(16, 10))
+        plt.plot(1.0 / stats[:, 1], stats[:, 4], label="Raw")
+
+        for i in range(4, 5):
+            x = stats[:, i]
+            _, y_fit = fit_tanh(1.0/stats[:, 1],x)
+            stats[:, i] = y_fit
+        if not stats_file_name.endswith("_raw"):
+            shutil.copy2(stats_file_name, stats_file_name + "_raw")
+        else:
+            stats_file_name = stats_file_name.replace("_raw", "")
+        np.savetxt(
+            stats_file_name, stats, fmt="%14.5f%14.5f%14.5f%14.5f%14.5f%14.5f%14.5f"
+        )
+        plt.plot(1.0 / stats[:, 1], stats[:, 4], label="Smooth")
+        plt.plot(1.0 / stats[:, 1], np.zeros_like(stats[:, 4]), "--", c="k")
+        plt.legend(fontsize=20)
+        plt.xlim([0, 1.0 / stats[-1, 1]])
+        plt.ylim([-0.25, 1.05])
+        plt.title(os.path.basename(plot_name).split(".")[0])
+        plt.savefig(plot_name)
+        
 def cistem_postprocess(args,output):
     """
             **   Welcome to SharpenMap   **

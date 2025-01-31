@@ -2356,9 +2356,9 @@ def csp_split(parameters, iteration):
             plot_name = "frealign/maps/" + name + "_snr.png"
 
             if not os.path.exists(raw_stats_file) and os.path.exists(smooth_stats_file):
-                postprocess.smooth_part_fsc(smooth_stats_file, plot_name)
+                postprocess.tanh_part_fsc(smooth_stats_file, plot_name)
             elif os.path.exists(raw_stats_file):
-                postprocess.smooth_part_fsc(raw_stats_file, plot_name)
+                postprocess.tanh_part_fsc(raw_stats_file, plot_name)
 
     if classes > 1 and iteration > 2:
 

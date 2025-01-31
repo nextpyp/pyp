@@ -4834,7 +4834,7 @@ eot
 
         plot_name = "maps/" + current + "_snr.png"
 
-        postprocess.smooth_part_fsc(
+        postprocess.tanh_part_fsc(
             str(stats_file_name), plot_name
         )  # TODO: safe to pass Path here?
 
