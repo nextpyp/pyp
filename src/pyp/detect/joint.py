@@ -16,6 +16,7 @@ from pyp.utils import get_relative_path, symlink_relative
 from pyp.utils.timer import Timer
 from pyp.system import local_run, mpi
 from pyp.system.utils import get_imod_path
+from pyp.system.db_comm import save_tiltseries_to_website
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -586,9 +587,37 @@ def milotrain(args):
     plt.savefig( os.path.join( train_folder, "milo_training.svgz"))
     plt.close()
 
+def generate_3d_plots(rec_file, train_folder, args, project_dir ):
+
+    import pandas as pd
+    import matplotlib.image
+
+    name = Path(rec_file).stem.replace('_rec3d','')
+    
+    # get corresponding volume slice from pyp reconstruction
+    slice_rec = matplotlib.image.imread( os.path.join( Path(train_folder).parents[0] / 'webp', name + '.webp' ))
+
+    hm_file = glob.glob(f'exp/simsiam2d3d/test_sample/{name}_hm3d*.npy')[0]
+    hm = np.load(hm_file)
+    
+    # extract middle slice from colormap (considering binning)
+    med_slice_index = 4 if args.get("detect_milo_compress") else 2
+    slice_color = hm[int(hm.shape[0]/med_slice_index),:,:,:]
+
+    # produce weighted image
+    weight = args.get('detect_milo_blend_ratio')
+    slice = ( 1 - weight ) * slice_rec + weight * np.flip(slice_color,0)
+    
+    # save result as webp
+    matplotlib.image.imsave(os.path.join(train_folder,name + '_3d_visualization.webp'), slice.astype('uint8') )
+    
+    # TODO: send tilt-series to website (may not need to send the CTF data, try with and without)
+    tilt_metadata = pd.read_pickle(f"{os.path.join(project_dir,'pkl',name)}.pkl")
+    save_tiltseries_to_website(name, tilt_metadata['web'])
 
 def miloeval(args):
 
+    project_dir = os.getcwd()
     train_folder = os.path.join( os.getcwd(), "train" ) 
     rec_folder = os.path.join( os.getcwd(), "mrc" ) 
     imgs_file = os.path.join( project_params.resolve_path(args.get("data_parent")), "train",  "train_images.txt" )
@@ -691,32 +720,12 @@ def miloeval(args):
         command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
-        import matplotlib.image
-        first = True
         rec_files = glob.glob('exp/simsiam2d3d/test_sample/*_rec3d.npy')
 
+        arguments = []
         for rec_file in rec_files:
-            name = Path(rec_file).stem.replace('_rec3d','')
-            
-            # get corresponding volume slice from pyp reconstruction
-            slice_rec = matplotlib.image.imread( os.path.join( Path(train_folder).parents[0] / 'webp', name + '.webp' ))
-    
-            hm_file = glob.glob(f'exp/simsiam2d3d/test_sample/{name}_hm3d*.npy')[0]
-            hm = np.load(hm_file)
-            
-            # extract middle slice from colormap (considering binning)
-            med_slice_index = 4 if args.get("detect_milo_compress") else 2
-            slice_color = hm[int(hm.shape[0]/med_slice_index),:,:,:]
-
-            # produce weighted image
-            weight = args.get('detect_milo_blend_ratio')
-            slice = ( 1 - weight ) * slice_rec + weight * np.flip(slice_color,0)
-            
-            # save result as webp
-            if first:
-                matplotlib.image.imsave(os.path.join(train_folder,'3d_visualization_out.webp'), slice.astype('uint8') )
-                first = False
-            matplotlib.image.imsave(os.path.join(train_folder,name + '_3d_visualization.webp'), slice.astype('uint8') )
+            arguments.append((rec_file, train_folder, args, project_dir ))
+        mpi.submit_function_to_workers(generate_3d_plots, arguments)
 
     else:
         raise Exception("Model to run MiLoPYP inference is missing")
