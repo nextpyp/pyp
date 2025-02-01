@@ -2432,6 +2432,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
     same_ref = fp["refine_same_ref"]
 
     if fp["denoise_enable"]:
+        logger.info(f"Denoising map using {fp['denoise_method']}")
         try:
             # increase the contrast of virus volume
             volume = scratch + name

@@ -2846,7 +2846,7 @@ EOF
         if filename in micrograph_list:
             micrograph_index = micrograph_list.index(filename)
         else:
-            raise Exception("There is no alignmnet information for this image in the input reference")
+            raise Exception("There is no alignment information for this image in the input reference")
 
         index_file = os.path.join( input_csp_dir, "micrograph_particle.index" )
         if os.path.exists(index_file):
