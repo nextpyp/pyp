@@ -2181,7 +2181,7 @@ def tomo_extract_coordinates(
     
     if "refine_parfile_tomo" in parameters and ".txt" in project_params.resolve_path(parameters["refine_parfile_tomo"]):
         refinement = project_params.resolve_path(parameters["refine_parfile_tomo"])
-    elif "refine_parfile" in parameters and ".par" in project_params.resolve_path(parameters["refine_parfile"]):
+    elif "refine_parfile" in parameters and ( project_params.resolve_path(parameters["refine_parfile"]).endswith(".parx")  or project_params.resolve_path(parameters["refine_parfile"]).endswith(".bz2") ):
         refinement = project_params.resolve_path(parameters["refine_parfile"])
     else:
         raise Exception("Refinement input file is missing")
@@ -2835,7 +2835,7 @@ EOF
                                                                     score=0.0, 
                                                                     occ=100.0)
                 global_spike_counter += 1
-    else:
+    elif refinement.endswith(".parx"):
         # parx file format read
         logger.info(f"Reading alignment parameters from {os.path.basename(refinement)}")
         input_csp_dir = os.path.join(str(Path(refinement).parent), "../../csp" )
@@ -2870,7 +2870,16 @@ EOF
         cistem_parameters = cistem_obj.get_data()
         particle_parameters = cistem_obj.get_extended_data().get_particles()
         tilt_parameters = cistem_obj.get_extended_data().get_tilts()
-
+    elif refinement.endswith(".bz2"):
+        cistem_obj = Parameters()
+        parameter_file_folder = Path().cwd() / "frealign" / "maps" / f"{parameters['data_set']}_r01_{parameters['refine_iter']-1:02d}"
+        binary_file = parameter_file_folder/f"{filename}_r01.cistem"
+        extended_file = parameter_file_folder/f"{filename}_r01_extended.cistem"
+        cistem_obj.from_binary( input_binary=str(binary_file), extended_binary=str(extended_file))
+        cistem_parameters = cistem_obj.get_data()
+        particle_parameters = cistem_obj.get_extended_data().get_particles()
+        tilt_parameters = cistem_obj.get_extended_data().get_tilts()
+        
     if len(cistem_parameters) == 0:
         logger.warning("No valid particle projections in this micrograph/tilt-series")
         return np.array([])
