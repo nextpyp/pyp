@@ -2130,12 +2130,7 @@ eot
     )
     with open(reclogfile, "a") as f:
         f.write(command)
-    if mp["slurm_verbose"]:
-        logger.info(command)
-    subprocess.Popen(command, shell=True, text=True).wait()
-    
-    # cleanup
-    # os.remove( scratch + name + '.res' )
+    local_run.stream_shell_command(command, verbose=mp["slurm_verbose"])
     
     if mp["slurm_verbose"]:
         with open(reclogfile) as log:
