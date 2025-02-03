@@ -1795,8 +1795,10 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             parameters["tomo_rec_force"] = True
             parameters["tomo_ali_force"] = True
             parameters["ctf_force"] = True
-            del metadata["ali"]
-            del metadata["tlt"]
+            if "ali" in metadata.keys():
+                del metadata["ali"]
+            if "tlt" in metadata.keys():
+                del metadata["tlt"]
 
     else:
         logger.info("Ignoring existing results")
