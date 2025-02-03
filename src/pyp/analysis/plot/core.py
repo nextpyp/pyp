@@ -1553,7 +1553,10 @@ def get_scale_for_trajectory(local_trajectories, coordinates) -> float:
     dist = np.percentile(min_dists, 75)
 
     # 0.6 is meant to leave some space, so it won't look too crowded
-    return dist / mean_length * 0.6
+    if mean_length > 0:
+        return dist / mean_length * 0.6
+    else:
+        return 1
 
 
 def par2bild(parfile, output, parameters):
