@@ -6,7 +6,6 @@ from pathlib import Path
 from pyp.system import local_run, project_params, mpi
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
-from pyp.system.singularity import get_pyp_configuration
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -63,33 +62,33 @@ def tomodrgn_train(parameters, input_dir, name, output):
 
     # ctf_input = name + "_ctf.pkl"
 
-    options = f"--checkpoint {parameters['heterogeneity_tomodrgn_train_checkpoint']} --log-interval {parameters['heterogeneity_tomodrgn_train_log_interval']} --num-workers 0"
+    options = f"--checkpoint {parameters['tomodrgn_vae_train_checkpoint']} --log-interval {parameters['tomodrgn_vae_train_log_interval']} --num-workers 0"
     
         # --max-threads {parameters['slurm_tasks']}
 
-    if parameters.get("heterogeneity_tomodrgn_train_weight") and os.path.exists(parameters["heterogeneity_tomodrgn_train_weight"]):
-        options += f" --load {parameters['heterogeneity_tomodrgn_train_weight']}"
+    if parameters.get("tomodrgn_vae_train_weight") and os.path.exists(parameters["tomodrgn_vae_train_weight"]):
+        options += f" --load {parameters['tomodrgn_vae_train_weight']}"
 
-    if parameters.get("heterogeneity_tomodrgn_train_seed"):
-        options += f" --seed {parameters['heterogeneity_tomodrgn_train_seed']}"
+    if parameters.get("tomodrgn_vae_train_seed"):
+        options += f" --seed {parameters['tomodrgn_vae_train_seed']}"
     
-    if parameters.get("heterogeneity_tomodrgn_data_ind") and os.path.exists(parameters["heterogeneity_tomodrgn_data_ind"]):
-        options += f" --ind {parameters['heterogeneity_tomodrgn_data_ind']}"
+    if parameters.get("tomodrgn_vae_train_data_ind") and os.path.exists(parameters["tomodrgn_vae_train_data_ind"]):
+        options += f" --ind {parameters['tomodrgn_vae_train_data_ind']}"
 
-    if not parameters["heterogeneity_tomodrgn_data_invert"]:
+    if not parameters["tomodrgn_vae_train_data_invert"]:
         options += " --uninvert-data"
 
-    if not parameters["heterogeneity_tomodrgn_data_windowing"]:
+    if not parameters["tomodrgn_vae_train_data_windowing"]:
         options += " --no-window"
     else:
-        options += f" --window-r {parameters['heterogeneity_tomodrgn_data_window_r']} --window-r-outer {parameters['heterogeneity_tomodrgn_data_window_r_outer']}"
+        options += f" --window-r {parameters['tomodrgn_vae_train_data_window_r']} --window-r-outer {parameters['tomodrgn_vae_train_data_window_r_outer']}"
     
-    if parameters.get("heterogeneity_tomodrgn_data_dir"):
-        data_dir = project_params.resolve_path(parameters["heterogeneity_tomodrgn_data_dir"])
+    if parameters.get("tomodrgn_vae_train_data_dir"):
+        data_dir = project_params.resolve_path(parameters["tomodrgn_vae_train_data_dir"])
         assert os.path.isdir(data_dir), "The data input directory dose not exist"
         options += f" --datadir {data_dir}"
 
-    if parameters["heterogeneity_tomodrgn_data_lazy"]:
+    if parameters["tomodrgn_vae_train_data_lazy"]:
         options += " --lazy"
 
     if parameters["slurm_verbose"]:
@@ -102,77 +101,77 @@ def tomodrgn_train(parameters, input_dir, name, output):
     # --emb-type {parameters['heterogeneity_tomodrgn_emd_type']} \
     # --pose-lr {parameters['heterogeneity_tomodrgn_pose_lr']} \
 
-    training_parameters = f"-n {parameters['heterogeneity_tomodrgn_train_epochs']} -b {parameters['heterogeneity_tomodrgn_train_batch']} --wd {parameters['heterogeneity_tomodrgn_train_wd']} --lr {parameters['heterogeneity_tomodrgn_train_lr']} --enc-layers-A {parameters['heterogeneity_tomodrgn_enc_lya']} --enc-dim-A {parameters['heterogeneity_tomodrgn_enc_dima']} --out-dim-A {parameters['heterogeneity_tomodrgn_out_dima']} --enc-layers-B {parameters['heterogeneity_tomodrgn_enc_lyb']} --enc-dim-B {parameters['heterogeneity_tomodrgn_enc_dimb']} --dec-layers {parameters['heterogeneity_tomodrgn_dec_hl']} --dec-dim {parameters['heterogeneity_tomodrgn_dec_dim']} --pe-type {parameters['heterogeneity_tomodrgn_pe_type']} --pooling-function {parameters['heterogeneity_tomodrgn_pool']} --activation {parameters['heterogeneity_tomodrgn_activation']} --num-seeds {parameters['heterogeneity_tomodrgn_num_seeds']} --num-heads {parameters['heterogeneity_tomodrgn_num_heads']} --l-extent {parameters['heterogeneity_tomodrgn_l_ext']}"
+    training_parameters = f"-n {parameters['tomodrgn_vae_train_epochs']} -b {parameters['tomodrgn_vae_train_batch']} --wd {parameters['tomodrgn_vae_train_wd']} --lr {parameters['tomodrgn_vae_train_lr']} --enc-layers-A {parameters['tomodrgn_vae_train_enc_lya']} --enc-dim-A {parameters['tomodrgn_vae_train_enc_dima']} --out-dim-A {parameters['tomodrgn_vae_train_out_dima']} --enc-layers-B {parameters['tomodrgn_vae_train_enc_lyb']} --enc-dim-B {parameters['tomodrgn_vae_train_enc_dimb']} --dec-layers {parameters['tomodrgn_vae_train_dec_hl']} --dec-dim {parameters['tomodrgn_vae_train_dec_dim']} --pe-type {parameters['tomodrgn_vae_train_pe_type']} --pooling-function {parameters['tomodrgn_vae_train_pool']} --activation {parameters['tomodrgn_vae_train_activation']} --num-seeds {parameters['tomodrgn_vae_train_num_seeds']} --num-heads {parameters['tomodrgn_vae_train_num_heads']} --l-extent {parameters['tomodrgn_vae_train_l_ext']}"
 
-    if parameters["heterogeneity_tomodrgn_layer_norm"]:
+    if parameters["tomodrgn_vae_train_layer_norm"]:
         training_parameters += " --layer-norm"
 
-    if parameters.get('heterogeneity_tomodrgn_enc_mask'):
-        training_parameters += f" --enc-mask {parameters['heterogeneity_tomodrgn_enc_mask']}"
+    if parameters.get('tomodrgn_vae_train_enc_mask'):
+        training_parameters += f" --enc-mask {parameters['tomodrgn_vae_train_enc_mask']}"
     
-    if False and "gaussian" in parameters['heterogeneity_tomodrgn_pe_type']:
-        training_parameters += f" --feat_sigma {parameters['heterogeneity_tomodrgn_feat_sigma']}"
+    if False and "gaussian" in parameters['tomodrgn_vae_train_pe_type']:
+        training_parameters += f" --feat_sigma {parameters['tomodrgn_vae_train_feat_sigma']}"
 
-    if parameters.get('heterogeneity_tomodrgn_pe_dim'):
-        training_parameters += f" --pe-dim {parameters['heterogeneity_tomodrgn_pe_dim']}"
+    if parameters.get('tomodrgn_vae_train_pe_dim'):
+        training_parameters += f" --pe-dim {parameters['tomodrgn_vae_train_pe_dim']}"
 
-    if parameters.get('heterogeneity_tomodrgn_train_beta'):
-        training_parameters += f" --beta {parameters['heterogeneity_tomodrgn_train_beta']}"
-    if parameters.get('heterogeneity_tomodrgn_train_beta_control'):
-        training_parameters += f" --beta-control {parameters['heterogeneity_tomodrgn_train_beta_control']}"    
+    if parameters.get('tomodrgn_vae_train_beta'):
+        training_parameters += f" --beta {parameters['tomodrgn_vae_train_beta']}"
+    if parameters.get('tomodrgn_vae_train_beta_control'):
+        training_parameters += f" --beta-control {parameters['tomodrgn_vae_train_beta_control']}"    
 
-    if not "None" in parameters['heterogeneity_tomodrgn_data_norm']:
-        training_parameters += f" --norm {parameters['heterogeneity_tomodrgn_data_norm']}"
-    if not parameters['heterogeneity_tomodrgn_train_amp']:
+    if not "none" in parameters['tomodrgn_vae_train_data_norm']:
+        training_parameters += f" --norm {parameters['tomodrgn_vae_train_data_norm']}"
+    if not parameters['tomodrgn_vae_train_amp']:
         training_parameters += " --no-amp"
     
     # if parameters['heterogeneity_tomodrgn_pose_sgd']:
     #     training_parameters += " --do-pose-sgd"
     
     tomo = ""
-    if parameters["heterogeneity_tomodrgn_tilt_weight"]:
+    if parameters["tomodrgn_vae_train_tilt_weight"]:
         tomo += " --recon-tilt-weight"
-    elif parameters["heterogeneity_tomodrgn_dose_weight"]:
+    elif parameters["tomodrgn_vae_train_dose_weight"]:
         tomo += " --recon-dose-weight"
     else:
         pass 
     tomo += " --sort-ptcl-imgs dose_ascending"
 
-    if parameters["heterogeneity_tomodrgn_dose_mask"]:
+    if parameters["tomodrgn_vae_train_dose_mask"]:
         tomo += " --l-dose-mask"
 
-    if parameters["heterogeneity_tomodrgn_dose"] > 0:
-        tomo += f" --dose-override {parameters['heterogeneity_tomodrgn_dose']}"
+    if parameters["tomodrgn_vae_train_dose"] > 0:
+        tomo += f" --dose-override {parameters['tomodrgn_vae_train_dose']}"
 
-    if parameters["heterogeneity_tomodrgn_use_ptl"] > 0:
-        tomo += f" --use-first-nptcls {parameters['heterogeneity_tomodrgn_use_ptl']}"
+    if parameters["tomodrgn_vae_train_use_ptl"] > 0:
+        tomo += f" --use-first-nptcls {parameters['tomodrgn_vae_train_use_ptl']}"
     
-    if parameters["heterogeneity_tomodrgn_sequential_order"]:
+    if parameters["tomodrgn_vae_train_sequential_order"]:
         tomo += " --sequential-tilt-sampling"
     
-    if parameters["heterogeneity_tomodrgn_use_firstn"] > 0:
-        tomo += f" --use-first-ntilts {parameters['heterogeneity_tomodrgn_use_firstn']}"
+    if parameters["tomodrgn_vae_train_use_firstn"] > 0:
+        tomo += f" --use-first-ntilts {parameters['tomodrgn_vae_train_use_firstn']}"
 
     # TODO: multigpu option
     
     workers = ""
-    if parameters["heterogeneity_tomodrgn_num_workers"] > 0:
-        workers += f" --num-workers {parameters['heterogeneity_tomodrgn_num_workers']}"
+    if parameters["tomodrgn_vae_train_num_workers"] > 0:
+        workers += f" --num-workers {parameters['tomodrgn_vae_train_num_workers']}"
     else:
         workers += f" --num-workers {parameters['slurm_tasks']}"
 
-    if parameters["heterogeneity_tomodrgn_prefetch_factor"] > 0:
-        workers += f" --prefetch-factor {parameters['heterogeneity_tomodrgn_prefetch_factor']}"
+    if parameters["tomodrgn_vae_train_prefetch_factor"] > 0:
+        workers += f" --prefetch-factor {parameters['tomodrgn_vae_train_prefetch_factor']}"
 
-    if parameters["heterogeneity_tomodrgn_pst_wkrs"]:
+    if parameters["tomodrgn_vae_train_pst_wkrs"]:
         workers += " --persistent-workers"
     
-    if parameters["heterogeneity_tomodrgn_pin_mem"]:
+    if parameters["tomodrgn_vae_train_pin_mem"]:
         workers += " --pin-memory"
 
     # --ctf {ctf_input} --pose {pose_input}
 
-    command = f"{get_tomodrgn_path()} train_vae {particles_input} --datadir {input_dir} --source-software nextpyp --zdim {parameters['heterogeneity_tomodrgn_train_zdim']} -o {output} {options} {training_parameters} {tomo} {workers}"
+    command = f"{get_tomodrgn_path()} train_vae {particles_input} --datadir {input_dir} --source-software nextpyp --zdim {parameters['tomodrgn_vae_train_zdim']} -o {output} {options} {training_parameters} {tomo} {workers}"
 
     output = []
     def obs(line):
@@ -215,32 +214,31 @@ def tomodrgn_analyze(parameters,input_dir, output):
 
     options = ''
 
-    if parameters['heterogeneity_tomodrgn_analysis_skipv']:
+    if parameters['tomodrgn_analyze_skipv']:
         options += " --skip-vol"
-    if parameters['heterogeneity_tomodrgn_analysis_skipumap']:
+    if parameters['tomodrgn_analyze_skipumap']:
         options += " --skip-umap"
-    if parameters['heterogeneity_tomodrgn_analysis_flip']:
+    if parameters['tomodrgn_analyze_flip']:
         options += " --flip"
-    if parameters['heterogeneity_tomodrgn_analysis_invert']:
+    if parameters['tomodrgn_analyze_invert']:
         options += " --invert"
-    if parameters["heterogeneity_tomodrgn_analysis_pc_ondata"]:
+    if parameters["tomodrgn_analyze_pc_ondata"]:
         options += " --pc-ondata"
     
-    if parameters.get('heterogeneity_tomodrgn_analysis_downsample'):
-        options += f" --downsample {parameters['heterogeneity_tomodrgn_analysis_downsample']}"
+    if parameters.get('tomodrgn_analyze_downsample'):
+        options += f" --downsample {parameters['tomodrgn_analyze_downsample']}"
     
     original_pixelsize = parameters['scope_pixel'] * parameters["data_bin"] * parameters["extract_bin"]
 
-    if parameters.get('heterogeneity_tomodrgn_analysis_downsample'):
-        
-        output_pixel = original_pixelsize * (parameters["extract_box"] / parameters["heterogeneity_tomodrgn_analysis_downsample"])
+    if parameters.get('tomodrgn_analyze_downsample'):
+        output_pixel = original_pixelsize * (parameters["extract_box"] / parameters["tomodrgn_analyze_downsample"])
     else:
         output_pixel = original_pixelsize
 
-    if parameters['heterogeneity_tomodrgn_analysis_epoch'] == 0 or parameters['heterogeneity_tomodrgn_analysis_epoch'] >= parameters['heterogeneity_tomodrgn_train_epochs']:
-        parameters['heterogeneity_tomodrgn_analysis_epoch'] = parameters['heterogeneity_tomodrgn_train_epochs'] - 1
+    if parameters['tomodrgn_analyze_epoch'] == 0 or parameters['tomodrgn_analyze_epoch'] >= parameters['tomodrgn_vae_train_epochs']:
+        parameters['tomodrgn_analyze_epoch'] = parameters['tomodrgn_vae_train_epochs'] - 1
 
-    command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['heterogeneity_tomodrgn_analysis_epoch']} -o {output} --pc {parameters['heterogeneity_tomodrgn_analysis_pc']} --ksample {parameters['heterogeneity_tomodrgn_analysis_ksample']} {options} --plot-format svgz"
+    command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['tomodrgn_analyze_epoch']} -o {output} --pc {parameters['tomodrgn_analyze_pc']} --ksample {parameters['tomodrgn_analyze_ksample']} {options} --plot-format png"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -262,10 +260,10 @@ def run_tomodrgn_train(project_dir, parameters):
     name = parameters['data_set']
     starfile = name + "_particles.star"
 
-    input_star = Path(project_params.resolve_path(parameters["heterogeneity_input_star"]))
+    input_star = Path(project_params.resolve_path(parameters["tomodrgn_vae_train_input_star"]))
     assert input_star.exists(), "Can not find input star file, run the extract stacks first."
 
-    # this is the input star and partilces stacks folder
+    # this is the input star and particles stacks folder
     
     (working_path / "input_data").mkdir(parents=True, exist_ok=True)
 
@@ -298,28 +296,24 @@ def run_tomodrgn_train(project_dir, parameters):
     train_folder.mkdir(parents=True, exist_ok=True)
 
     # train
-    if parameters['heterogeneity_tomodrgn_mode'] == "backproject_voxel":
+    if parameters['micromon_block'] == "tomodrgn_rec":
 
-        backproject_voxel(parameters, "input_data", name, train_folder / f"{name}.mrc")
-        
-    elif parameters['heterogeneity_tomodrgn_mode'] == "train_nn":
+        if parameters['heterogeneity_tomodrgn_mode'] == "backproject_voxel":
 
-        train_nn(parameters, "input_data", name, train_folder)
-        
-        # convergence
-        logger.info("Running tomoDRGN convergence_nn")
+            backproject_voxel(parameters, "input_data", name, train_folder / f"{name}.mrc")
+            
+        elif parameters['heterogeneity_tomodrgn_mode'] == "train_nn":
 
-        convergence_folder = Path(project_dir) / "train" / f"convergence_{parameters['heterogeneity_tomodrgn_train_epochs']}"
-        convergence_folder.mkdir(parents=True, exist_ok=True)
+            train_nn(parameters, "input_data", name, train_folder)
+            
+            # convergence
+            logger.info("Running tomoDRGN convergence_nn")
 
-        local_convergence_folder = Path(working_path) / "convergence"
-        local_convergence_folder.mkdir(parents=True, exist_ok=True)
-        convergence_nn(parameters, train_folder)
-        logger.info(f"convergence_nn finished successfully, results saved to {convergence_folder}")
+            convergence_nn(parameters, train_folder)
+            logger.info(f"convergence_nn finished successfully, results saved to {train_folder}")
 
-        shutil.copytree(local_convergence_folder, convergence_folder, dirs_exist_ok=True)
+    elif parameters['micromon_block'] == "tomo-drgn-train":
 
-    else:
         tomodrgn_train(parameters, "input_data", name, train_folder)
 
         if (train_folder / "weights.pkl").exists() and (train_folder / "z.train.pkl").exists():
@@ -332,15 +326,11 @@ def run_tomodrgn_train(project_dir, parameters):
         # convergence
         logger.info("Running tomoDRGN convergence_vae")
 
-        convergence_folder = Path(project_dir) / "train" / f"convergence_{parameters['heterogeneity_tomodrgn_train_epochs']}"
+        convergence_folder = Path(project_dir) / "train" / "convergence"
         convergence_folder.mkdir(parents=True, exist_ok=True)
 
-        local_convergence_folder = Path(working_path) / "convergence"
-        local_convergence_folder.mkdir(parents=True, exist_ok=True)
-        convergence_vae(parameters, train_folder, local_convergence_folder)
+        convergence_vae(parameters, train_folder, convergence_folder)
         logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
-
-        shutil.copytree(local_convergence_folder, convergence_folder, dirs_exist_ok=True)
 
 # TODO - only run evaluation tasks
 def run_tomodrgn_eval(project_dir, parameters):
@@ -360,7 +350,7 @@ def run_tomodrgn_eval(project_dir, parameters):
     name = parameters['data_set']
     starfile = name + "_particles.star"
 
-    input_star = Path(project_params.resolve_path(parent_parameters["heterogeneity_input_star"]))
+    input_star = Path(project_params.resolve_path(parent_parameters["tomodrgn_vae_train_input_star"]))
     assert input_star.exists(), "Can not find input star file, run the extract stacks first."
 
     # this is the input star and particles stacks folder
@@ -410,26 +400,37 @@ def run_tomodrgn_eval(project_dir, parameters):
 
     # analyze
     saved_folder = Path(project_dir) / "train"
-    tomodrgn_analyze(parameters, drgn_path, saved_folder)
+    if not parameters["tomodrgn_analyze_skip"]:
+        tomodrgn_analyze(parameters, drgn_path, saved_folder)
 
-    if not saved_folder.exists():
-        raise Exception("tomodrgn analyze failed")
+        if not saved_folder.exists():
+            raise Exception("tomodrgn analyze failed")
 
     # eval_vol
-    if parameters["heterogeneity_tomodrgn_eval_vol"]:
-        logger.info("Running tomoDRGN eval_vol")
+    if not parameters["tomodrgn_eval_vol_use_local_scratch"]:
         final_output = os.path.join(project_dir, "train", "eval_vols")
-        Path(final_output).mkdir(parents=True, exist_ok=True)
+    else:
+        logger.warning(f"Generating volumes to local scratch, no output will be saved to project directory")
+        final_output = os.path.join(working_path, "all_vols")
+    Path(final_output).mkdir(parents=True, exist_ok=True)
+        
+    if parameters["tomodrgn_eval_vol_use_local_scratch"] and parameters["tomodrgn_analyze_volumes_skip"]:
+        logger.warning(f"Generating volumes to local scratch while skipping analyze_volumes will result in no output being generated")
+        
+    if not parameters["tomodrgn_eval_vol_skip"]:
+        logger.info("Running tomoDRGN eval_vol")
         tomodrgn_eval_vol(parameters, final_output, parent=os.path.join(project_params.resolve_path(parameters["data_parent"]), "train"))
         
-        if parameters["heterogeneity_tomodrgn_eval_vol_analyze"]:
-            final_output_analysis = os.path.join(project_dir, "train", "all_vols_analysis")
-            tomodrgn_analyze_volumes(
-                parameters=parameters, 
-                output_dir=final_output_analysis, 
-                vol_dir=final_output, 
-                parent=os.path.join(project_params.resolve_path(parameters["data_parent"]),"train")
-            )
+    if not parameters["tomodrgn_analyze_volumes_skip"]:
+        logger.info("Running tomoDRGN analyze_volumes")
+        final_output_analysis = os.path.join(project_dir, "train", "all_vols_analysis")
+        Path(final_output_analysis).mkdir(parents=True, exist_ok=True)
+        tomodrgn_analyze_volumes(
+            parameters=parameters, 
+            output_dir=final_output_analysis, 
+            vol_dir=final_output, 
+            parent=os.path.join(project_params.resolve_path(parameters["data_parent"]),"train")
+        )
 
 def backproject_voxel(parameters, input_dir, name, output):
 
@@ -614,7 +615,6 @@ def train_nn(parameters, input_dir, name, output):
     """
     
     command = f"{get_tomodrgn_path()} train_nn {particles_input} --datadir {input_dir} --source-software nextpyp --outdir {output} {options} {training_parameters} {tomo} {workers}"
-
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
 
@@ -640,7 +640,7 @@ def convergence_nn(parameters, input_dir):
                         training_directory reference_volume
     """
     
-    command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option} --plot-format svgz"
+    command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option} --plot-format png"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -652,33 +652,33 @@ def convergence_vae(parameters, input_dir, output):
     """
     pixelsize = parameters['scope_pixel'] * parameters["data_bin"] * parameters["extract_bin"]
 
-    options = f" --epoch-interval {parameters['heterogeneity_tomodrgn_epoch_interval']} --subset {parameters['heterogeneity_tomodrgn_subset']} --random-state {parameters['heterogeneity_tomodrgn_randomstate']} --n-bins {parameters['heterogeneity_tomodrgn_nbins']} --pruned-maxima {parameters['heterogeneity_tomodrgn_pruned_maxima']} --radius {parameters['heterogeneity_tomodrgn_radius']} --final-maxima {parameters['heterogeneity_tomodrgn_final_maxima']} --thresh {parameters['heterogeneity_tomodrgn_thresh']} --dilate {parameters['heterogeneity_tomodrgn_dilate']} --dist {parameters['heterogeneity_tomodrgn_dist']}"
+    options = f" --epoch-interval {parameters['tomodrgn_vae_convergence_epoch_interval']} --subset {parameters['tomodrgn_vae_convergence_subset']} --random-state {parameters['tomodrgn_vae_convergence_randomstate']} --n-bins {parameters['tomodrgn_vae_convergence_nbins']} --pruned-maxima {parameters['tomodrgn_vae_convergence_pruned_maxima']} --radius {parameters['tomodrgn_vae_convergence_radius']} --final-maxima {parameters['tomodrgn_vae_convergence_final_maxima']} --thresh {parameters['tomodrgn_vae_convergence_thresh']} --dilate {parameters['tomodrgn_vae_convergence_dilate']} --dist {parameters['tomodrgn_vae_convergence_dist']}"
     
-    options += f" --smooth {parameters['heterogeneity_tomodrgn_smooth']} --smooth-width {parameters['heterogeneity_tomodrgn_smooth_width']}"
+    options += f" --smooth {parameters['tomodrgn_vae_convergence_smooth']} --smooth-width {parameters['tomodrgn_vae_convergence_smooth_width']}"
 
-    if parameters["heterogeneity_tomodrgn_force_umapcpu"]:
+    if parameters["tomodrgn_vae_convergence_force_umapcpu"]:
         options += " --force-umap-cpu"
-    if parameters['heterogeneity_tomodrgn_randomseed'] > 0:
-        options += f" --random-seed {parameters['heterogeneity_tomodrgn_randomseed']}"  
+    if parameters['tomodrgn_vae_convergence_randomseed'] > 0:
+        options += f" --random-seed {parameters['tomodrgn_vae_convergence_randomseed']}"  
 
-    if parameters["heterogeneity_tomodrgn_skip_umap"]:
+    if parameters["tomodrgn_vae_convergence_skip_umap"]:
         options += " --skip-umap"
 
-    if parameters['heterogeneity_tomodrgn_analysis_flip']:
+    if parameters['tomodrgn_analyze_flip']:
         options += " --flip"
-    if parameters['heterogeneity_tomodrgn_analysis_invert']:
+    if parameters['tomodrgn_analyze_invert']:
         options += " --invert"
 
-    if parameters.get('heterogeneity_tomodrgn_analysis_downsample'):
-        options += f" -d {parameters['heterogeneity_tomodrgn_analysis_downsample']}"
+    if parameters.get('tomodrgn_analyze_downsample'):
+        options += f" -d {parameters['tomodrgn_analyze_downsample']}"
 
-    if parameters["heterogeneity_tomodrgn_skip_vgen"]:
+    if parameters["tomodrgn_vae_convergence_skip_vgen"]:
         options += " --skip-volgen"
     
-    if not "None" in parameters["heterogeneity_tomodrgn_gt"]:
-        options += f" --ground-truth {parameters['heterogeneity_tomodrgn_gt']}"
+    if not "None" in parameters["tomodrgn_vae_convergence_gt"]:
+        options += f" --ground-truth {parameters['tomodrgn_vae_convergence_gt']}"
 
-    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['heterogeneity_tomodrgn_epoch_index']} -o {output} {options} --plot-format svgz"
+    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['tomodrgn_vae_convergence_epoch_index']} -o {output} {options} --plot-format png"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
     
@@ -691,16 +691,16 @@ def tomodrgn_eval_vol(parameters, output_dir, parent):
                 [--zfile ZFILE] [--flip] [--invert] [--downsample DOWNSAMPLE]
                 [--lowpass LOWPASS] [-b BATCH_SIZE] [--no-amp] [--multigpu]
     """
-    batch_size = parameters['heterogeneity_tomodrgn_analysis_batch']
+    batch_size = parameters['tomodrgn_eval_vol_batch']
 
     options = ""
-    if parameters.get('heterogeneity_tomodrgn_analysis_downsample'):
-        options += f" --downsample {parameters['heterogeneity_tomodrgn_analysis_downsample']}"
+    if parameters.get('tomodrgn_analyze_downsample'):
+        options += f" --downsample {parameters['tomodrgn_analyze_downsample']}"
 
-    if parameters["heterogeneity_tomodrgn_analysis_epoch"] == -1:
-        epoch = parameters['heterogeneity_tomodrgn_train_epochs'] - 1
+    if parameters["tomodrgn_analyze_epoch"] == -1:
+        epoch = parameters['tomodrgn_vae_train_epochs'] - 1
     else:
-        epoch = parameters['heterogeneity_tomodrgn_analysis_epoch'] - 1
+        epoch = parameters['tomodrgn_analyze_epoch'] - 1
     
     command = f"{get_tomodrgn_path()} eval_vol -o {output_dir} --weights {parent}/weights.{epoch}.pkl --config {parent}/config.pkl -b {batch_size} {options} --zfile {parent}/z.{epoch}.train.pkl"
 
@@ -717,7 +717,7 @@ def tomodrgn_analyze_volumes(parameters, output_dir, vol_dir, parent):
                         [--mask {none,sphere,tight,soft}] [--thresh THRESH]
                         [--dilate DILATE] [--dist DIST]
     """
-    options = f"--ksample {parameters['heterogeneity_tomodrgn_analysis_ksample']} --mask {parameters['heterogeneity_tomodrgn_eval_vol_mask']}"
+    options = f"--ksample {parameters['tomodrgn_analyze_ksample']} --mask {parameters['tomodrgn_analyze_volumes_mask']}"
  
     """
     tomodrgn analyze_volumes \
