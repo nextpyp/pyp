@@ -1054,7 +1054,7 @@ def tomo_merge(parameters, check_for_missing_files=True):
                         os.remove(retry_flag)
                     except:
                         pass
-                raise Exception("Reached maximum number of retries. Please check for errors in the logs")
+                logger.error("Reached maximum number of retries. Not all tilt-series were processed successfully.")
             else:
                 logger.warning(
                     "{0} job(s) failed, attempt {1} of {2} to re-submit jobs".format(
