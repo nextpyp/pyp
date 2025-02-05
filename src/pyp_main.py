@@ -5376,11 +5376,11 @@ if __name__ == "__main__":
                 elif parameters.get("sharpen_masking_method") == "auto":
                     automask_lp = parameters["sharpen_automask_lp"]
 
-                    if parameters["sharpen_masking_threshold_method"] == "threshold":
+                    if parameters["sharpen_masking_threshold_method"] == "intensity":
                         automask_threshold = "--automask_threshold %.2f " % parameters["sharpen_automask_threshold"]
                         automask_fraction = ""
                         automask_sigma = ""
-                    elif parameters["sharpen_masking_threshold_method"] == "fraction":
+                    elif parameters["sharpen_masking_threshold_method"] == "volume":
                         automask_threshold = ""
                         automask_fraction = "--automask_fraction %.2f " % parameters["sharpen_automask_fraction"]
                         automask_sigma = ""
