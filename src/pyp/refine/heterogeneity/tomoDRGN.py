@@ -2,10 +2,14 @@
 import os
 import shutil
 import glob
+import random
+import string
 from pathlib import Path
 from pyp.system import local_run, project_params, mpi
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
+from pyp.refine.frealign import frealign
+from pyp.inout.image import img2webp
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -314,7 +318,8 @@ def run_tomodrgn_train(project_dir, parameters):
 
     elif parameters['micromon_block'] == "tomo-drgn-train":
 
-        tomodrgn_train(parameters, "input_data", name, train_folder)
+        if not parameters['tomodrgn_vae_train_skip']:
+            tomodrgn_train(parameters, "input_data", name, train_folder)
 
         if (train_folder / "weights.pkl").exists() and (train_folder / "z.train.pkl").exists():
             logger.info(f"Training finished successfully, results saved to {train_folder}")
@@ -324,13 +329,38 @@ def run_tomodrgn_train(project_dir, parameters):
             raise Exception("Training did not finish successfully")
 
         # convergence
-        logger.info("Running tomoDRGN convergence_vae")
 
         convergence_folder = Path(project_dir) / "train" / "convergence"
         convergence_folder.mkdir(parents=True, exist_ok=True)
 
-        convergence_vae(parameters, train_folder, convergence_folder)
+        if not parameters['tomodrgn_vae_convergence_skip']:
+            logger.info("Running tomoDRGN convergence_vae")
+            convergence_vae(parameters, train_folder, convergence_folder)
+        
+        # produce graphical outputs
+        arguments = []
+        
+        radius = (
+            float(parameters["particle_rad"])
+            / float(parameters["extract_bin"])
+            / float(parameters["data_bin"])
+            / float(parameters["scope_pixel"])
+        )
+
+        for folder in glob.glob(str(convergence_folder / "vols.*")):
+            for file in glob.glob(str(Path(folder) / "*.mrc")):
+                arguments.append((file, radius, os.path.join(folder, Path(file).stem + ".webp")))
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+        
         logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
+
+def generate_map_thumbnail( map, radius, output):
+    name = Path(map).stem + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + "_map.png"
+    output_png = os.path.join( os.environ['PYP_SCRATCH'], name )
+    frealign.build_map_montage( map, radius, output_png )
+    img2webp(output_png,output,"-resize 1024x")
+    os.remove(output_png)
+
 
 # TODO - only run evaluation tasks
 def run_tomodrgn_eval(project_dir, parameters):
