@@ -1498,7 +1498,7 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
         logger.info(f"Merging {len(binary_list):,} parameter files")
         disable = False
     with tqdm(desc="Progress", total=len(binary_list), file=TQDMLogger(), disable=disable) as pbar:
-        for par_binary in binary_list:
+        for par_binary in (x for x in binary_list if os.path.exists(x)):
             # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
 
             # read parameters from file
