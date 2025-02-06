@@ -1578,7 +1578,7 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
             merge_check_err_and_resubmit(parameters, input_dir, micrographs, int(parameters["refine_iter"]))
         return True
     else:
-        logger.info(f"Decompression of all micrographs/tilt-series is done, start merging reconstruction and parfiles")
+        logger.info(f"Decompression of all micrographs/tilt-series is done, start merging reconstruction and parameter files")
 
     return True
 
