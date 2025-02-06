@@ -1786,6 +1786,13 @@ type = "path"
 condition = { arg="method", value="import" }
 path = { type="folders" }
 
+[tabs.tomo_ali.tiltoff]
+name = "Add tilt offset"
+description = "Add tilt offset to the tilt angles before alignment"
+type = "float"
+default = 0.0
+condition = { arg="method", value=["imod_gold","imod_patch"] }
+
 [tabs.tomo_ali.fiducial]
 name = "Fiducial diameter (A)"
 description = "Diameter of gold fiducials"

@@ -4870,6 +4870,13 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         
         """
         
+        logger.info(f"Adding tilt-axis offset of {parameters['tomo_ali_tiltoff']} degrees")
+        # overwrite rawtlt files to reflect the angles offset changes
+        rawtlt_file = f"{name}.rawtlt"
+        tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
+        tiltangles += parameters["tomo_ali_tiltoff"]
+        np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
+
         tiltxcorr_options = f"-tiltfile {name}.rawtlt -binning {parameters['movie_bin']} -rotation {rotation} -radius1 {radius1} -sigma1 {sigma1} -radius2 {radius2} -sigma2 {sigma2} -iterate {iterate} {border_tapper}"
 
         if parameters.get("tomo_ali_exclude"):
