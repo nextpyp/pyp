@@ -10,6 +10,7 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
 from pyp.refine.frealign import frealign
 from pyp.inout.image import img2webp
+from pyp.system.db_comm import save_drgnmap_to_website
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -352,6 +353,14 @@ def run_tomodrgn_train(project_dir, parameters):
                 arguments.append((file, radius, os.path.join(folder, Path(file).stem + ".webp")))
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
         
+        metadata = {}        
+        for folder in glob.glob(str(convergence_folder / "vols.*")):
+            epoch = int(folder.split(".")[-1])
+            metadata["epoch"] = epoch
+            for file in glob.glob(str(Path(folder) / "*.mrc")):
+                metadata["path"] = str(os.path.join(folder, Path(file).stem + ".webp"))
+                metadata["class"] = epoch
+                save_drgnmap_to_website( str(Path(file).stem), metadata )
         logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
 
 def generate_map_thumbnail( map, radius, output):

@@ -202,6 +202,23 @@ def save_classes_to_website(name, metadata, verbose=False):
             logger.error("Failed to enter classes into database")
             raise
 
+def save_drgnmap_to_website(name, metadata, verbose=False):
+
+    # if there's no website, don't bother saving anything
+    if not Web.exists:
+        return
+    else:
+        try:
+            # actually send the reconstruction to the website
+            Web().write_drgnmap(name, metadata)
+
+            if verbose:
+                logger.info("Drgn map %s entered into database successfully" % name)
+        except:
+            logger.error("Failed to enter Drgn map into database")
+            raise
+
+
 def save_to_database_daemon(name, current_path, parameters):
 
     data_dir = "/hpc/group/cryoem/projects_mmc"

@@ -303,6 +303,16 @@ class Web:
             )
         )
 
+    def write_drgnmap(self, map_id, metadata):
+
+        self._request(
+            Request.write_drgn_map(
+                webid=self.webid,
+                map_id=map_id,
+                metadata=metadata
+            )
+        )
+
     def write_refinement_bundle(self, refinement_bundle_id, iteration):
 
         self._request(
