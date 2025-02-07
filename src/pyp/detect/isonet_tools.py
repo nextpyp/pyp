@@ -258,8 +258,15 @@ def isonet_refine(input_star, output, parameters):
     local_run.stream_shell_command(command,observer=obs,verbose=parameters["slurm_verbose"])
 
     # parse output
-    loss = [ line.split("loss:")[1].split()[0] for line in output if "ETA:" in line]
-    mse = [ line.split("mse:")[1].split()[0] for line in output if "ETA:" in line]
+    loss = np.array([ line.split("loss:")[1].split()[0] for line in output if "ETA:" in line]).astype('f')
+    mse = np.array([ line.split("mse:")[1].split()[0] for line in output if "ETA:" in line]).astype('f')
+
+    max_points = 500
+    binning_factor = loss.shape[0] // max_points
+    steps = np.arange(0, loss.shape[0], binning_factor)
+    if binning_factor > 1:
+        loss = loss[::binning_factor]
+        mse = mse[::binning_factor]
     
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -268,10 +275,10 @@ def isonet_refine(input_star, output, parameters):
     fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6], sharex=True)
 
     ax[0].set_title("IsoNet training loss (refine)")
-    ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Loss")
+    ax[0].plot(steps,loss,".-",color="blue",label="Loss")
     ax[0].set_ylabel("Loss")
     ax[0].legend()
-    ax[1].plot(np.array(mse).astype('f'),".-",color="red",label="Mean Squared Error")
+    ax[1].plot(steps,mse,".-",color="red",label="Mean Squared Error")
     ax[1].set_ylabel("MSE")
     ax[1].set_xlabel("Step")
     ax[1].legend()
