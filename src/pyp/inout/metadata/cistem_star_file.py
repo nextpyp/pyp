@@ -655,9 +655,9 @@ class Parameters:
         merged_parameters = Parameters()
 
         # Convert binary files into objects 
-        parameters = [Parameters.from_file(input_file=file) for file in input_files]
+        parameters = [Parameters.from_file(input_file=file) for file in input_files if os.path.exists(file)]
         params = [p.get_data() for p in parameters]
-        extended_parameters = [ExtendedParameters.from_file(input_file=file) for file in input_extended_files] if len(input_extended_files) > 0 else []
+        extended_parameters = [ExtendedParameters.from_file(input_file=file) for file in input_extended_files if os.path.exists(file)] if len(input_extended_files) > 0 else []
         params_particles = [p.get_particles() for p in extended_parameters]
         params_tilts = [p.get_tilts() for p in extended_parameters]
         
