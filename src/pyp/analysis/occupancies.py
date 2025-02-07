@@ -423,11 +423,12 @@ def classification_initialization( dataset, classes, iteration, decompressed_par
                 if os.path.exists(ext_binary):
                     ext_data = cistem_star_file.ExtendedParameters.from_file(ext_binary)
                     image_data = par_data[par_data[:, film_col] ==  f ]
-                    image_data[:, film_col] = 0 # reset film id as 0
-                    image_parameters = cistem_star_file.Parameters()
-                    image_parameters.set_data(data=image_data, extended_parameters=ext_data)
-                    image_parameters.sync_particle_occ(ptl_to_prj=False)
-                    image_parameters.to_binary(saved_binary, extended_output=ext_binary.replace("r01", "r%02d" % ref))
+                    if image_data.size > 0 and ext_data.size > 0:
+                        image_data[:, film_col] = 0 # reset film id as 0
+                        image_parameters = cistem_star_file.Parameters()
+                        image_parameters.set_data(data=image_data, extended_parameters=ext_data)
+                        image_parameters.sync_particle_occ(ptl_to_prj=False)
+                        image_parameters.to_binary(saved_binary, extended_output=ext_binary.replace("r01", "r%02d" % ref))
 
     if not parameters_only:
         for ref in range(1, classes):
