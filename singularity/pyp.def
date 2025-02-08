@@ -17,7 +17,7 @@ IncludeCmd: no
 	tests/ /opt/pyp
 	external/ /opt/pyp
 	../AreTomo2/ /opt/pyp/external
-	../AreTomo3/ /opt/pyp/external
+	# ../AreTomo3/ /opt/pyp/external
 	../MotionCor3/ /opt/pyp/external
 
 %environment
@@ -113,7 +113,10 @@ IncludeCmd: no
 	apt-get -y install libcudnn8
 	apt-get -y install libcu++-dev
 
-	# load AreTomo2 and MotionCor3
+	# add symlink to cuda library needed by MotionCor3 and AreTomo
+	ln -s /usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs/libcuda.so /usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs/libcuda.so.1
+
+	# load AreTomo2
 	cd /opt/pyp/external/AreTomo2
 	# git clone https://github.com/czimaginginstitute/AreTomo2.git --depth 1
 	# cd AreTomo2
@@ -121,12 +124,12 @@ IncludeCmd: no
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
 	cd -
 
-	cd /opt/pyp/external/AreTomo3
+	# cd /opt/pyp/external/AreTomo3
 	# git clone https://github.com/czimaginginstitute/AreTomo3.git --depth 1
 	# cd AreTomo3
-	rm -rf .git/
-	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
-	cd -
+	# rm -rf .git/
+	# make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	# cd -
 
 	# git clone https://github.com/czimaginginstitute/MotionCor3.git --depth 1
 	# cd MotionCor3
@@ -151,7 +154,7 @@ cat << EOF > /root/pyp.sh
 
 	# install the python packages we need
 
-	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr
+	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr htop
 	micromamba install -c conda-forge matplotlib 
 	micromamba install -c conda-forge pandas
 	micromamba install -c conda-forge conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses
