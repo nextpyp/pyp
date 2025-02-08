@@ -642,8 +642,8 @@ def get_new_input_list(parameters, inputlist):
                     and not ("none" in parameters["tomo_vir_detect_method"] or "none" in parameters["tomo_vir_method"] or "pyp-train" in parameters["tomo_vir_method"])
                     )
     tomo_spk_pick = (
-                    "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0
-                        and not ("none" in parameters["tomo_spk_method"] or "pyp-train" in parameters["tomo_spk_method"])
+                    "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 or "tomo_vir_detect_rad" in parameters and parameters["tomo_vir_detect_rad"] > 0
+                        and not ("none" in parameters["tomo_pick_method"] or "pyp-train" in parameters["tomo_spk_method"])
                     )
 
     if spr_pick or tomo_vir_pick or tomo_spk_pick:
@@ -2122,7 +2122,7 @@ def csp_extract_coordinates(
                                                                 is_spr=is_spr)
 
                 allparxs.append(alignment_parameters)
-            else:
+            elif current_class == 0:
                 logger.warning(f"No valid particle projections in this micrograph/tilt-series")
 
     else:

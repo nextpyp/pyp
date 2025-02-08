@@ -2025,7 +2025,7 @@ condition = { arg="aretomo_sart", value="true" }
 hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.aretomo_sart_num_projs]
-name = "Number of projections per subet"
+name = "Number of projections per subset"
 description = "Number of projections per subset"
 type = "int"
 default = 5

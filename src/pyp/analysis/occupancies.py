@@ -420,15 +420,13 @@ def classification_initialization( dataset, classes, iteration, decompressed_par
             for f, image in enumerate(image_list):
                 saved_binary = os.path.join(class_parameter_file_folder, image + "_r%02d.cistem" % ref )
                 ext_binary = os.path.join(decompressed_parameter_file_folder, image + "_r01_extended.cistem" )
-                if os.path.exists(ext_binary):
-                    ext_data = cistem_star_file.ExtendedParameters.from_file(ext_binary)
-                    image_data = par_data[par_data[:, film_col] ==  f ]
-                    if image_data.size > 0:
-                        image_data[:, film_col] = 0 # reset film id as 0
-                        image_parameters = cistem_star_file.Parameters()
-                        image_parameters.set_data(data=image_data, extended_parameters=ext_data)
-                        image_parameters.sync_particle_occ(ptl_to_prj=False)
-                        image_parameters.to_binary(saved_binary, extended_output=ext_binary.replace("r01", "r%02d" % ref))
+                ext_data = cistem_star_file.ExtendedParameters.from_file(ext_binary)
+                image_data = par_data[par_data[:, film_col] ==  f ]
+                image_data[:, film_col] = 0 # reset film id as 0
+                image_parameters = cistem_star_file.Parameters()
+                image_parameters.set_data(data=image_data, extended_parameters=ext_data)
+                image_parameters.sync_particle_occ(ptl_to_prj=False)
+                image_parameters.to_binary(saved_binary, extended_output=ext_binary.replace("r01", "r%02d" % ref))
 
     if not parameters_only:
         for ref in range(1, classes):

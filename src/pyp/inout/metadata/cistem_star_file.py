@@ -655,9 +655,9 @@ class Parameters:
         merged_parameters = Parameters()
 
         # Convert binary files into objects 
-        parameters = [Parameters.from_file(input_file=file) for file in input_files if os.path.exists(file)]
+        parameters = [Parameters.from_file(input_file=file) for file in input_files]
         params = [p.get_data() for p in parameters]
-        extended_parameters = [ExtendedParameters.from_file(input_file=file) for file in input_extended_files if os.path.exists(file)] if len(input_extended_files) > 0 else []
+        extended_parameters = [ExtendedParameters.from_file(input_file=file) for file in input_extended_files] if len(input_extended_files) > 0 else []
         params_particles = [p.get_particles() for p in extended_parameters]
         params_tilts = [p.get_tilts() for p in extended_parameters]
         
@@ -988,7 +988,8 @@ _rlnGroupName #21"""
             # update occ of projection with the ones from particle parameters
             def sync_projection_occ(row):
                 pind = row[self.get_index_of_column(PIND)]
-                row[self.get_index_of_column(OCCUPANCY)] = particle_parameters[pind].occ
+                if pind in particle_parameters:
+                    row[self.get_index_of_column(OCCUPANCY)] = particle_parameters[pind].occ
 
             [sync_projection_occ(row) for row in data]
 
@@ -1498,7 +1499,7 @@ def merge_all_binary_with_filmid(binary_list, read_extend=False, intact=False):
         logger.info(f"Merging {len(binary_list):,} parameter files")
         disable = False
     with tqdm(desc="Progress", total=len(binary_list), file=TQDMLogger(), disable=disable) as pbar:
-        for par_binary in (x for x in binary_list if os.path.exists(x)):
+        for par_binary in binary_list:
             # ext_binary = par_binary.replace(".cistem", "_extend.cistem")
 
             # read parameters from file
