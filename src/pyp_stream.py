@@ -591,12 +591,15 @@ if __name__ == "__main__":
     # launch processing daemon pypd
     pyp_command, jobnumber, message = launch_preprocessing(args, target_path)
 
+    session_name = args.get("stream_session_name") or Path(project_params.resolve_path(args["stream_transfer_target"])).name
+    group_name = args.get("stream_session_group") or "group"
+
     # notify user if needed
     subject = (
         "Data on "
-        + ( args.get("stream_session_group") or "group" )
+        + group_name
         + "/"
-        + ( args.get("stream_session_name") or "session" )
+        + session_name
         + " ("
         + jobnumber
         + ")"
@@ -605,15 +608,15 @@ if __name__ == "__main__":
         "*** This is an automatically generated email ***\n\n"
         + "( export pypdaemon=pypdaemon && pyp_main.py "
         + " -group "
-        + ( args.get("stream_session_group") or "group" )
+        + group_name
         + " -session "
-        + ( args.get("stream_session_name") or "session" )
+        + session_name
         + " )\n\n"
         + "( export pypdaemon=pypdaemon && pyp_main.py "
         + " -group "
-        + ( args.get("stream_session_group") or "group" )
+        + group_name
         + " -session "
-        + ( args.get("stream_session_name") or "session" )
+        + session_name
         + " -particle_rad 75 -particle_sym D3 -particle_mw 300 -extract_box 384 -thresholds 1000,2500,7500,1000 -model /data/Livlab/autoprocess_d256/GDH/GDH_OG_20140612/frealign/20140826_011259_GDH_OG_20140612_01.mrc )\n"
     )
     body = body + "\n" + pyp_command + "\n\n" + message
@@ -629,16 +632,16 @@ if __name__ == "__main__":
     scratch = os.path.join(target_path, "txt")
     Path(scratch).mkdir(parents=True, exist_ok=True)
     transferred_filename = os.path.join(
-        scratch, "{0}_filelist_transferred.txt".format(args["stream_session_name"])
+        scratch, "{0}_filelist_transferred.txt".format(session_name)
     )
     filelist_filename = os.path.join(
-        scratch, "{0}_filelist.txt".format(args["stream_session_name"])
+        scratch, "{0}_filelist.txt".format(session_name)
     )
     transfer_filename = os.path.join(
-        scratch, "{0}_filelist_transfer.txt".format(args["stream_session_name"])
+        scratch, "{0}_filelist_transfer.txt".format(session_name)
     )
     elapsed_time_file = os.path.join(
-        target_path, "%s_speed.txt" % args["stream_session_name"]
+        target_path, "%s_speed.txt" % session_name
     )
 
     # restart if needed
@@ -655,7 +658,7 @@ if __name__ == "__main__":
                         logger.error("Cannot delete " + f)
                     pass
         remove_from_destination(
-            file="%s_speed.txt" % args["stream_session_name"],
+            file="%s_speed.txt" % session_name,
             server=server,
             path=target_path,
         )
@@ -786,7 +789,7 @@ if __name__ == "__main__":
                     args["stream_transfer_operation"] == "move" and args["stream_transfer_all"],
                     f,
                     os.path.join(target_path, "raw"),
-                    args["stream_session_name"],
+                    session_name,
                     args["stream_camera_profile"],
                     server,
                     results,
