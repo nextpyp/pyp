@@ -213,6 +213,28 @@ EOF
 	pip install bm4d
 	pip install filelock
 
+	# Install pytom-match-pick
+cat << EOF > /root/pytom.sh
+
+	# install the python packages we need
+
+	python -m pip install pytom-match-pick
+
+	micromamba clean --all -y
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/pytom -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name pytom "python=3" -c conda-forge cupy cuda-version=11.8
+
+	# run the conda script in the new environment
+	chmod +x /root/pytom.sh
+	micromamba run -n pytom /bin/bash -c "/root/pytom.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/pytom.sh
+
 	# Install tomoDRGN
 cat << EOF > /root/tomodrgn.sh
 
