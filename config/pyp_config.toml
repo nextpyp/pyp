@@ -2999,7 +2999,7 @@ _description = "Sub-tomogram detection parameters"
 name = "Detection method"
 description = "Strategy to use for particle detection"
 type = "enum"
-enum = { none="none", auto="size-based", import="import", manual="manual", virions="virions" }
+enum = { none="none", auto="size-based", import="import", manual="manual", virions="virions", pytom="template-search (pytom)" }
 default = "none"
 
 [tabs.tomo_pick.rad]
@@ -3007,7 +3007,7 @@ name = "Particle radius (A)"
 description = "Size to use for particle detection"
 type = "float"
 default = 0
-condition = { arg="method", value=[ "none", "auto", "import", "manual" ] }
+condition = { arg="method", value=[ "none", "auto", "import", "manual", "pytom" ] }
 
 [tabs.tomo_pick.files]
 name = "Import particle coordinates (*.spk)"
@@ -3157,6 +3157,166 @@ type = "int"
 default = 2
 condition = { arg="method", value="virions" }
 
+# template matching
+[tabs.tomo_pick.pytom_template]
+name = "Template"
+description = "Should match the contrast of the tomogram (if tomogram has black ribosomes, reference should be black)"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_template_invert]
+name = "Invert"
+description = "Reverse template contrast"
+type = "bool"
+default = false
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_mask_sigma]
+name = "Sigma (pixels)"
+description = "Sigma of gaussian drop-off around the mask edges"
+type = "float"
+default = 1.0
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_non_spherical]
+name = "Non-spherical mask"
+description = "Set when mask is not spherical (roughly doubles computation time)"
+type = "bool"
+default = false
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_angular_search]
+name = "Angular search"
+description = "Override angular search calculation from the particle diameter. Angle will be used as the maximum for the linear search and for the mean angle difference from healpix"
+type = "float"
+default = 0
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_low_pass]
+name = "Low pass (A)"
+description = "Apply a low-pass filter to the tomogram and template"
+type = "float"
+default = 30.0
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_high_pass]
+name = "High pass (A)"
+description = "Apply a high-pass filter to the tomogram and template"
+type = "float"
+default = 500.0
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_spectral_whitening]
+name = "Spectral whitening"
+description = "Apply whitening filtering to put more weight on high resolution features and sharpen correlation peaks"
+type = "bool"
+default = false
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_random_phase_correction]
+name = "Random phase correction"
+description = "Run template matching simultaneously with a phase randomized version of the template"
+type = "bool"
+default = true
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_volume_split]
+name = "Defocus handedness"
+description = "Split volume for the search (useful if volume does not fit into GPU memory. Format is x y z, e.g. 1 2 1"
+type = "str"
+default = ""
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_defocus_handedness]
+name = "Defocus handedness"
+description = "Apply whitening filtering to put more weight on high resolution features and sharpen correlation peaks"
+type = "enum"
+enum = { -1="inverted (-1)", 0="no correction (0)", 1="not inverted (1)" }
+default = "0"
+condition = { arg="pytom_volume_split", value="true" }
+
+[tabs.tomo_pick.pytom_rng_seed]
+name = "Random seed"
+description = "Seed for the random number generator used for phase randomization"
+type = "int"
+default = 0
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_search_x]
+name = "Search X (binned voxels)"
+description = "Start and end limits of search along the x-axis, e.g. 10 490"
+type = "str"
+default = ""
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_search_y]
+name = "Search Y (binned voxels)"
+description = "Start and end limits of search along the y-axis, e.g. 10 490"
+type = "str"
+default = ""
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_search_z]
+name = "Search Z (binned voxels)"
+description = "Start and end limits of search along the z-axis, e.g. 10 490"
+type = "str"
+default = ""
+condition = { arg="method", value="pytom" }
+
+# detection
+
+[tabs.tomo_pick.pytom_estimate_cutoff]
+name = "Estimate extraction cutoff"
+description = "Automated estimation of cutoff for extraction"
+type = "bool"
+default = true
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_cutoff]
+name = "Extraction cutoff (0-1)"
+description = "Override automated estimation cutoff (0 will extract number-of-particles)"
+type = "float"
+default = 0
+condition = { arg="pytom_estimate_cutoff", value="false" }
+
+[tabs.tomo_pick.pytom_number_of_particles]
+name = "Maximum particles"
+description = "Maximum number of particles to extract per tomogram"
+type = "int"
+default = 300
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_number_of_false_positives]
+name = "Number of false positives"
+description = "Higher values increase the particle recall at the expense of more false positives. Value can also be set between 0 and 1 to make the cut-off more restrictive"
+type = "float"
+default = 1
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_tophat]
+name = "Apply tophat filter"
+description = "Attempt to filter only sharp correlation peaks with a tophat transform"
+type = "bool"
+default = true
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_tophat_connectivity]
+name = "Tophat connectivity"
+description = "Set kernel connectivity for tophat transform (1 most restrictive, 3 least restrictive)"
+type = "enum"
+enum = { 1="1", 2="2", 3="3" }
+default = "1"
+condition = { arg="pytom_tophat", value="true" }
+
+[tabs.tomo_pick.pytom_half_precision]
+name = "Half-precision"
+description = "Save all outputs in float16"
+type = "bool"
+default = false
+condition = { arg="method", value="pytom" }
+ 
 [tabs.tomo_ext]
 _name = "Particle extraction"
 _description = "Sub-tomogram extraction parameters"

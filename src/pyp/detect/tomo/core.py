@@ -14,6 +14,7 @@ from pyp.analysis.geometry import transformations as vtk
 from pyp.analysis.image import normalize_volume
 from pyp.inout.image import mrc, img2webp
 from pyp.inout.image.core import get_image_dimensions
+from pyp.inout.metadata import pyp_metadata
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.utils import timer
 from pyp.system import local_run, mpi, project_params
@@ -21,7 +22,9 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import (
     get_tomo_path,
     get_imod_path,
+    get_pytom_path,
     check_env,
+    get_gpu_ids,
 )
 from pyp.utils import get_relative_path
 
@@ -42,7 +45,10 @@ def resize_template(mparameters, external_template, autopick_template):
         external_template (str): External template file (mrc format)
         autopick_template (str): Resized template file (mrc format)
     """
-    virion_binning, _ = get_vir_binning_boxsize(mparameters["tomo_vir_rad"], mparameters["scope_pixel"])
+    if mparameters.get("tomo_pick_method") != "pytom":
+        virion_binning, _ = get_vir_binning_boxsize(mparameters["tomo_vir_rad"], mparameters["scope_pixel"])
+    else:
+        virion_binning = mparameters["tomo_rec_binning"]
     
     actual_pixel = (
         float(mparameters["scope_pixel"])
@@ -70,8 +76,14 @@ def resize_template(mparameters, external_template, autopick_template):
         )
         local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
 
+    if mparameters.get("tomo_pick_method") == "pytom" and mparameters['tomo_pick_pytom_template_invert']:
+        logger.info(f"Inverting template density")
+        A = mrc.read(autopick_template)
+        mrc.write(A*-1,autopick_template)
+
     elif not external_template == autopick_template:
         shutil.copy2(external_template, autopick_template)
+    return output_box_size
 
 def process_virion_multiprocessing(
     name,
@@ -1312,6 +1324,408 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         else:
             logger.warning("No particles were detected")
 
+    elif parameters.get("tomo_pick_method") == "pytom":
+
+        external_template = parameters['tomo_pick_pytom_template']
+        assert os.path.exists(external_template), f"Cannot find {external_template}"
+        template = "pytom_template.mrc"
+        template_size = resize_template(
+            parameters, external_template, template
+        ) 
+
+        radius_in_binned_pixels = int(parameters["tomo_pick_rad"] / parameters["scope_pixel"] / parameters['data_bin'] / parameters['tomo_rec_binning'])
+
+        """
+        usage: pytom_create_mask.py [-h] -b BOX_SIZE [-o OUTPUT_FILE]
+                                    [--voxel-size VOXEL_SIZE] -r RADIUS
+                                    [--radius-minor1 RADIUS_MINOR1]
+                                    [--radius-minor2 RADIUS_MINOR2] [-s SIGMA]
+
+        Create a mask for template matching. -- Marten Chaillet (@McHaillet)
+
+        options:
+        -h, --help            show this help message and exit
+        -b BOX_SIZE, --box-size BOX_SIZE
+                                Shape of square box for the mask.
+        -o OUTPUT_FILE, --output-file OUTPUT_FILE
+                                Provide path to write output, needs to end in .mrc .If
+                                not provided file is written to current directory in
+                                the following format:
+                                ./mask_b[box_size]px_r[radius]px.mrc
+        --voxel-size VOXEL_SIZE
+                                Provide a voxel size to annotate the MRC (currently
+                                not used for any mask calculation).
+        -r RADIUS, --radius RADIUS
+                                Radius of the spherical mask in number of pixels. In
+                                case minor1 and minor2 are provided, this will be the
+                                radius of the ellipsoidal mask along the x-axis.
+        --radius-minor1 RADIUS_MINOR1
+                                Radius of the ellipsoidal mask along the y-axis in
+                                number of pixels.
+        --radius-minor2 RADIUS_MINOR2
+                                Radius of the ellipsoidal mask along the z-axis in
+                                number of pixels.
+        -s SIGMA, --sigma SIGMA
+                                Sigma of gaussian drop-off around the mask edges in
+                                number of pixels. Values in the range from 0.5-1.0 are
+                                usually sufficient for tomograms with 20A-10A voxel
+                                sizes.
+        """
+        
+        # build template mask
+        template_mask = "template_mask.mrc"
+        command = f"{get_pytom_path()} pytom_create_mask.py --box-size {template_size} --output-file {template_mask} --radius {radius_in_binned_pixels} --sigma {parameters['tomo_pick_pytom_mask_sigma']}"
+        local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+        
+        """
+        usage: pytom_match_template.py [-h] -t TEMPLATE -v TOMOGRAM [-d DESTINATION]
+                                    -m MASK
+                                    [--non-spherical-mask NON_SPHERICAL_MASK]
+                                    [--particle-diameter PARTICLE_DIAMETER]
+                                    [--angular-search ANGULAR_SEARCH]
+                                    [--z-axis-rotational-symmetry Z_AXIS_ROTATIONAL_SYMMETRY]
+                                    [-s VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT]
+                                    [--search-x SEARCH_X SEARCH_X]
+                                    [--search-y SEARCH_Y SEARCH_Y]
+                                    [--search-z SEARCH_Z SEARCH_Z]
+                                    [--tomogram-mask TOMOGRAM_MASK]
+                                    [-a TILT_ANGLES [TILT_ANGLES ...]]
+                                    [--per-tilt-weighting PER_TILT_WEIGHTING]
+                                    [--voxel-size-angstrom VOXEL_SIZE_ANGSTROM]
+                                    [--low-pass LOW_PASS] [--high-pass HIGH_PASS]
+                                    [--dose-accumulation DOSE_ACCUMULATION]
+                                    [--defocus DEFOCUS]
+                                    [--amplitude-contrast AMPLITUDE_CONTRAST]
+                                    [--spherical-aberration SPHERICAL_ABERRATION]
+                                    [--voltage VOLTAGE] [--phase-shift PHASE_SHIFT]
+                                    [--tomogram-ctf-model {phase-flip}]
+                                    [--defocus-handedness {-1,0,1}]
+                                    [--spectral-whitening SPECTRAL_WHITENING]
+                                    [-r RANDOM_PHASE_CORRECTION]
+                                    [--half-precision HALF_PRECISION]
+                                    [--rng-seed RNG_SEED]
+                                    [--relion5-tomograms-star RELION5_TOMOGRAMS_STAR]
+                                    -g GPU_IDS [GPU_IDS ...] [--log LOG]
+
+        Run template matching. -- Marten Chaillet (@McHaillet)
+
+        options:
+        -h, --help            show this help message and exit
+
+        Template, search volume, and output:
+        -t TEMPLATE, --template TEMPLATE
+                                Template; MRC file. Object should match the contrast
+                                of the tomogram: if the tomogram has black ribosomes,
+                                the reference should be black.
+                                (pytom_create_template.py has an option to invert
+                                contrast)
+        -v TOMOGRAM, --tomogram TOMOGRAM
+                                Tomographic volume; MRC file.
+        -d DESTINATION, --destination DESTINATION
+                                Folder to store the files produced by template
+                                matching.
+
+        Mask:
+        -m MASK, --mask MASK  Mask with same box size as template; MRC file.
+        --non-spherical-mask NON_SPHERICAL_MASK
+                                Flag to set when the mask is not spherical. It adds
+                                the required computations for non-spherical masks and
+                                roughly doubles computation time.
+
+        Angular search:
+        --particle-diameter PARTICLE_DIAMETER
+                                Provide a particle diameter (in Angstrom) to
+                                automatically determine the angular sampling using the
+                                Crowther criterion. For the max resolution, (2 * pixel
+                                size) is used unless a low-pass filter is specified,
+                                in which case the low-pass resolution is used. For
+                                non-globular macromolecules choose the diameter along
+                                the longest axis.
+        --angular-search ANGULAR_SEARCH
+                                This option overrides the angular search calculation
+                                from the particle diameter. If given a float it will
+                                generate an angle list with healpix for Z1 and X1 and
+                                linear search for Z2. The provided angle will be used
+                                as the maximum for the linear search and for the mean
+                                angle difference from healpix.Alternatively, a .txt
+                                file can be provided with three Euler angles (in
+                                radians) per line that define the angular search.
+                                Angle format is ZXZ anti-clockwise (see: https://www.c
+                                cpem.ac.uk/user_help/rotation_conventions.php).
+        --z-axis-rotational-symmetry Z_AXIS_ROTATIONAL_SYMMETRY
+                                Integer value indicating the rotational symmetry of
+                                the template around the z-axis. The length of the
+                                rotation search will be shortened through division by
+                                this value. Only works for template symmetry around
+                                the z-axis.
+
+        Volume control:
+        -s VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT, --volume-split VOLUME_SPLIT VOLUME_SPLIT VOLUME_SPLIT
+                                Split the volume into smaller parts for the search,
+                                can be relevant if the volume does not fit into GPU
+                                memory. Format is x y z, e.g. --volume-split 1 2 1
+        --search-x SEARCH_X SEARCH_X
+                                Start and end indices of the search along the x-axis,
+                                e.g. --search-x 10 490
+        --search-y SEARCH_Y SEARCH_Y
+                                Start and end indices of the search along the y-axis,
+                                e.g. --search-x 10 490
+        --search-z SEARCH_Z SEARCH_Z
+                                Start and end indices of the search along the z-axis,
+                                e.g. --search-x 30 230
+        --tomogram-mask TOMOGRAM_MASK
+                                Here you can provide a mask for matching with
+                                dimensions (in pixels) equal to the tomogram. If a
+                                subvolume only has values <= 0 for this mask it will
+                                be skipped.
+
+        Filter control:
+        -a TILT_ANGLES [TILT_ANGLES ...], --tilt-angles TILT_ANGLES [TILT_ANGLES ...]
+                                Tilt angles of the tilt-series, either the minimum and
+                                maximum values of the tilts (e.g. --tilt-angles -59.1
+                                60.1) or a .rawtlt/.tlt file with all the angles (e.g.
+                                --tilt-angles tomo101.rawtlt). In case all the tilt
+                                angles are provided a more elaborate Fourier space
+                                constraint can be used
+        --per-tilt-weighting PER_TILT_WEIGHTING
+                                Flag to activate per-tilt-weighting, only makes sense
+                                if a file with all tilt angles have been provided. In
+                                case not set, while a tilt angle file is provided, the
+                                minimum and maximum tilt angle are used to create a
+                                binary wedge. The base functionality creates a fanned
+                                wedge where each tilt is weighted by cos(tilt_angle).
+                                If dose accumulation and CTF parameters are provided
+                                these will all be incorporated in the tilt-weighting.
+        --voxel-size-angstrom VOXEL_SIZE_ANGSTROM
+                                Voxel spacing of tomogram/template in angstrom, if not
+                                provided will try to read from the MRC files. Argument
+                                is important for band-pass filtering!
+        --low-pass LOW_PASS   Apply a low-pass filter to the tomogram and template.
+                                Generally desired if the template was already filtered
+                                to a certain resolution. Value is the resolution in A.
+        --high-pass HIGH_PASS
+                                Apply a high-pass filter to the tomogram and template
+                                to reduce correlation with large low frequency
+                                variations. Value is a resolution in A, e.g. 500 could
+                                be appropriate as the CTF is often incorrectly
+                                modelled up to 50nm.
+        --dose-accumulation DOSE_ACCUMULATION
+                                Here you can provide a file that contains the
+                                accumulated dose at each tilt angle, assuming the same
+                                ordering of tilts as the tilt angle file. Format
+                                should be a .txt file with on each line a dose value
+                                in e-/A2.
+        --defocus DEFOCUS     Here you can provide an IMOD defocus (.defocus) file
+                                (version 2 or 3) , a text (.txt) file with a single
+                                defocus value per line (in μm), or a single defocus
+                                value (in μm). The value(s), together with the other
+                                ctf parameters (amplitude contrast, voltage, spherical
+                                abberation), will be used to create a 3D CTF weighting
+                                function. IMPORTANT: if you provide this, the input
+                                template should not be modulated with a CTF
+                                beforehand. If it is a reconstruction it should
+                                ideally be Wiener filtered.
+        --amplitude-contrast AMPLITUDE_CONTRAST
+                                Amplitude contrast fraction for CTF.
+        --spherical-aberration SPHERICAL_ABERRATION
+                                Spherical aberration for CTF in mm.
+        --voltage VOLTAGE     Voltage for CTF in keV.
+        --phase-shift PHASE_SHIFT
+                                Phase shift (in degrees) for the CTF to model phase
+                                plates.
+        --tomogram-ctf-model {phase-flip}
+                                Optionally, you can specify if and how the CTF was
+                                corrected during reconstruction of the input tomogram.
+                                This allows match-pick to match the weighting of the
+                                template to the tomogram. Not using this option is
+                                appropriate if the CTF was left uncorrected in the
+                                tomogram. Option 'phase-flip' : appropriate for IMOD's
+                                strip-based phase flipping or reconstructions
+                                generated with novaCTF/3dctf.
+        --defocus-handedness {-1,0,1}
+                                Specify the defocus handedness for defocus gradient
+                                correction of the CTF in each subvolumes. The more
+                                subvolumes in x and z, the finer the defocus gradient
+                                will be corrected, at the cost of increased computing
+                                time. It will only have effect for very clean and
+                                high-resolution data, such as isolated macromolecules.
+                                IMPORTANT: only works in combination with --volume-
+                                split ! A value of 0 means no defocus gradient
+                                correction (default), 1 means correction assuming
+                                correct handedness (as specified in Pyle and Zianetti
+                                (2021)), -1 means the handedness will be inverted. If
+                                uncertain better to leave off as an inverted
+                                correction might hamper results.
+        --spectral-whitening SPECTRAL_WHITENING
+                                Calculate a whitening filtering from the power
+                                spectrum of the tomogram; apply it to the tomogram
+                                patch and template. Effectively puts more weight on
+                                high resolution features and sharpens the correlation
+                                peaks.
+
+        Additional options:
+        -r RANDOM_PHASE_CORRECTION, --random-phase-correction RANDOM_PHASE_CORRECTION
+                                Run template matching simultaneously with a phase
+                                randomized version of the template, and subtract this
+                                'noise' map from the final score map. For this method
+                                please see STOPGAP as a reference:
+                                https://doi.org/10.1107/S205979832400295X .
+        --half-precision HALF_PRECISION
+                                Return and save all output in float16 instead of the
+                                default float32
+        --rng-seed RNG_SEED   Specify a seed for the random number generator used
+                                for phase randomization for consistent results!
+        --relion5-tomograms-star RELION5_TOMOGRAMS_STAR
+                                Here, you can provide a path to a RELION5
+                                tomograms.star file (for example from a tomogram
+                                reconstruction job). pytom-match-pick will fetch all
+                                the tilt-series metadata from this file and overwrite
+                                all other metadata options.
+
+        Device control:
+        -g GPU_IDS [GPU_IDS ...], --gpu-ids GPU_IDS [GPU_IDS ...]
+                                GPU indices to run the program on.
+
+        Logging/debugging:
+        --log LOG             Can be set to `info` or `debug`
+        """
+
+        if parameters['slurm_verbose']:
+            options = " --log debug"
+        else:
+            options = " --log info"
+            
+        if parameters["tomo_pick_pytom_spectral_whitening"]:
+            options += " --spectral-whitening"
+            
+        if parameters["tomo_pick_pytom_random_phase_correction"]:
+            options += " --random-phase-correction"
+            
+        if len(parameters["tomo_pick_pytom_volume_split"]):
+            options += f" --volume-split {parameters['tomo_pick_pytom_volume_split']} --defocus-handedness {parameters['tomo_pick_pytom_defocus_handedness']}"
+            
+        if parameters["tomo_pick_pytom_rng_seed"] != 0:
+            options += f" --rng-seed {parameters['tomo_pick_pytom_rng_seed']}"
+        
+        if len(parameters["tomo_pick_pytom_search_x"]):
+            options += f" --search-x {parameters['tomo_pick_pytom_search_x']}"
+
+        if len(parameters["tomo_pick_pytom_search_y"]):
+            options += f" --search-x {parameters['tomo_pick_pytom_search_y']}"
+
+        if len(parameters["tomo_pick_pytom_search_z"]):
+            options += f" --search-x {parameters['tomo_pick_pytom_search_z']}"
+                        
+        if parameters["tomo_pick_pytom_half_precision"]:
+            options += " --half-precision"
+
+        defocus_in_nm = 3.5
+        voxel_size = parameters["scope_pixel"] * parameters["data_bin"] * parameters["tomo_rec_binning"]
+
+        os.makedirs("pytom", exist_ok=True)
+        command = f"{get_pytom_path()} pytom_match_template.py -t {template} --mask {template_mask} -v {name}.rec -d pytom/ --particle-diameter {2*parameters.get('tomo_pick_rad')} --voxel-size-angstrom {voxel_size} -a {name}.rawtlt --low-pass {parameters['tomo_pick_pytom_low_pass']} --high-pass {parameters['tomo_pick_pytom_high_pass']} --defocus {defocus_in_nm} --amplitude {parameters['scope_wgh']} --spherical {parameters['scope_cs']} --voltage {parameters['scope_voltage']} --tomogram-ctf-model phase-flip -g {get_gpu_ids(parameters)} {options}"
+        local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+
+        debug_folder = os.path.join( current_path, "pytom" )
+        os.makedirs( debug_folder, exist_ok=True )
+        logger.info(f"Saving intermediate results to {debug_folder}")
+        from pathlib import Path
+        for path in (Path(os.getcwd())/"pytom").rglob('*.*'):
+            shutil.copy2( path, debug_folder )
+        shutil.copy2(template, debug_folder)
+        shutil.copy2(template_mask, debug_folder)
+
+        """
+        usage: pytom_extract_candidates.py [-h] -j JOB_FILE
+                                        [--tomogram-mask TOMOGRAM_MASK]
+                                        [--ignore_tomogram_mask IGNORE_TOMOGRAM_MASK]
+                                        -n NUMBER_OF_PARTICLES
+                                        [--number-of-false-positives NUMBER_OF_FALSE_POSITIVES]
+                                        -r RADIUS_PX [-c CUT_OFF]
+                                        [--tophat-filter TOPHAT_FILTER]
+                                        [--tophat-connectivity TOPHAT_CONNECTIVITY]
+                                        [--relion5-compat RELION5_COMPAT]
+                                        [--log LOG] [--tophat-bins TOPHAT_BINS]
+                                        [--plot-bins PLOT_BINS]
+
+        Run candidate extraction. -- Marten Chaillet (@McHaillet)
+
+        options:
+        -h, --help            show this help message and exit
+        -j JOB_FILE, --job-file JOB_FILE
+                                JSON file that contain all data on the template
+                                matching job, written out by pytom_match_template.py
+                                in the destination path.
+        --tomogram-mask TOMOGRAM_MASK
+                                Here you can provide a mask for the extraction with
+                                dimensions (in pixels) equal to the tomogram. All
+                                values in the mask that are smaller or equal to 0 will
+                                be removed, all values larger than 0 are considered
+                                regions of interest. It can be used to extract
+                                annotations only within a specific cellular region. If
+                                the job was run with a tomogram mask, this file will
+                                be used instead of the job mask
+        --ignore_tomogram_mask IGNORE_TOMOGRAM_MASK
+                                Flag to ignore the input and TM job tomogram mask.
+                                Useful if the scores mrc looks reasonable, but this
+                                finds 0 particles to extract
+        -n NUMBER_OF_PARTICLES, --number-of-particles NUMBER_OF_PARTICLES
+                                Maximum number of particles to extract from tomogram.
+        --number-of-false-positives NUMBER_OF_FALSE_POSITIVES
+                                Number of false positives to determine the false alarm
+                                rate. Here one can increase the recall of the particle
+                                of interest at the expense of more false positives.
+                                The default value of 1 is recommended for particles
+                                that can be distinguished well from the background
+                                (high specificity). The value can also be set between
+                                0 and 1 to make the cut-off more restrictive.
+        -r RADIUS_PX, --radius-px RADIUS_PX
+                                Particle radius in pixels in the tomogram. It is used
+                                during extraction to remove areas around peaks
+                                preventing double extraction.
+        -c CUT_OFF, --cut-off CUT_OFF
+                                Override automated extraction cutoff estimation and
+                                instead extract the number-of-particles down to this
+                                LCCmax value. Setting to 0 will keep extracting until
+                                number-of-particles, or until there are no positive
+                                values left in the score map. Values larger than 1
+                                make no sense as the correlation cannot be higher than
+                                1.
+        --tophat-filter TOPHAT_FILTER
+                                Attempt to filter only sharp correlation peaks with a
+                                tophat transform
+        --tophat-connectivity TOPHAT_CONNECTIVITY
+                                Set kernel connectivity for ndimage binary structure
+                                used for the tophat transform. Integer value in range
+                                1-3. 1 is the most restrictive, 3 the least
+                                restrictive. Generally recommended to leave at 1.
+        --relion5-compat RELION5_COMPAT
+                                Write out centered coordinates in Angstrom for
+                                RELION5.
+        --log LOG             Can be set to `info` or `debug`
+        --tophat-bins TOPHAT_BINS
+                                Number of bins to use in the histogram of occurences
+                                in the tophat transform code (for both the estimation
+                                and the plotting).
+        --plot-bins PLOT_BINS
+                                Number of bins to use for the occurences vs LCC_max
+                                plot.
+        """
+        
+        options = ""        
+        if not parameters['tomo_pick_pytom_estimate_cutoff']:
+            options += f" --cut-off {parameters['tomo_pick_pytom_cutoff']}"
+        
+        command = f"{get_pytom_path()} pytom_extract_candidates.py --job-file pytom/{name}_job.json --number-of-particles {parameters['tomo_pick_pytom_number_of_particles']} --number-of-false-positives {parameters['tomo_pick_pytom_number_of_false_positives']} --radius-px {int(radius_in_binned_pixels)} {options}"
+        local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+        
+        # parse output from star file
+        results_file = os.path.join( "pytom", f"{name}_particles.star" )
+        results = pyp_metadata.parse_star(results_file)
+        coordinates = results[['rlnCoordinateX','rlnCoordinateY','rlnCoordinateZ']].to_numpy(dtype='float')
+        radius_in_pixels = parameters['tomo_pick_rad'] / parameters['scope_pixel']
+        coordinates = np.hstack( ( coordinates.copy()[:,[0,2,1]] * binning, radius_in_pixels * np.ones((coordinates.shape[0],1)) ) )
+
     # 4. import
     elif ( parameters.get("tomo_spk_method") == "import" or parameters.get("tomo_pick_method") == "import" ) and os.path.exists(f"{name}.spk"):
 
@@ -1375,6 +1789,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             or parameters["micromon_block"] == "tomo-picking-closed"
             or parameters["micromon_block"] == "tomo-segmentation-closed"
             or parameters["micromon_block"] == "tomo-preprocessing"
+            or os.path.exists(project_params.resolve_path(parameters["stream_transfer_target"]))
         ):
             # Performs virion detection and/or spike detection
             process_virions(

@@ -61,6 +61,10 @@ def cuda_path_prefix(command):
         command = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/pkgs/cudatoolkit-11.0.3-h7761cd4_13/lib/:/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs:/opt/imod_4.11.24/qtlib; " + command
     return command
 
+def get_pytom_path():
+    command_base = f"micromamba run -n pytom"
+    return command_base
+
 def get_aretomo_path():
     config = get_pyp_configuration()
     if 'areTomo2' in config["pyp"]:
@@ -120,7 +124,9 @@ def needs_gpu(parameters):
     gpu_for_picking = ( parameters.get("micromon_block") == "tomo-particles-train" 
                        or parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
                        or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_vir_method"] 
-                       or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_spk_method"] and parameters["tomo_vir_method"] == "none" )
+                       or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_spk_method"] and parameters["tomo_vir_method"] == "none"
+                       or parameters["data_mode"] == "tomo" and "pytom" in parameters["tomo_pick_method"] and parameters["tomo_vir_method"] == "none"
+                       )
     
     gpu_for_heterogeneity = "drgn" in parameters.get("micromon_block")
 
