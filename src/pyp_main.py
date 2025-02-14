@@ -2117,19 +2117,21 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.remove(f"{name}.mrc")
             os.remove(f"{name}.rec")
     
+        commands = []
         if "preprocessing" in parameters.get("micromon_block"):
             if parameters.get("movie_depth"):
                 logger.info("Converting tilt-series to 16-bits")
-                command = "{0}/bin/newstack -mode 12 {1} {1} && rm -f {1}~".format(
+                command = "{0}/bin/newstack -mode 12 {1} {1}".format(
                     get_imod_path(), name + ".mrc"
                 )
-                local_run.run_shell_command(command)
+                commands.append(command)
             if parameters.get("tomo_rec_depth"):
                 logger.info("Converting tomogram to 16-bits")
                 command = "{0}/bin/newstack -mode 12 {1} {1} && rm -f {1}~".format(
                     get_imod_path(), name + ".rec"
                 )
-                local_run.run_shell_command(command)
+                commands.append(command)
+            mpi.submit_jobs_to_workers(commands,os.getcwd())
 
         with open( f"{name}.pickle", 'wb') as f:
             pickle.dump(tilt_metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
