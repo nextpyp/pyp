@@ -1868,7 +1868,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # determine excluded views from user input
     exclude_views = merge.do_exclude_views(name)
     if len(exclude_views) > 0:
-        logger.info(f"The following tilts will be excluded: {exclude_views}")
+        logger.warning(f"The following tilts will be excluded: {exclude_views.split(' ')[-1]}")
 
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
