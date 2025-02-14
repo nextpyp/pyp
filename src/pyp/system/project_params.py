@@ -275,6 +275,14 @@ def create_micrographs_list(parameters):
                     files = [m.group(1) for m in match_files if m != None]
                     logger.info(f"Create micrograph list using movie pattern {parameters['movie_pattern']}")
 
+                    # Now that we've determined the list of tilt-series, we can create symlinks to the metadata into the raw/ folder (if needed)
+                    raw_path = Path(project_params.resolve_path(parameters['data_path']))
+                    for file in sorted(list(set(files))):
+                        for ext in [ '.order', '.rawtlt', '.xml' ]: 
+                            current_file = os.path.join(raw_path.parent,file+ext)
+                            if os.path.exists(current_file):
+                                utils.symlink_relative_pattern(current_file,os.path.join(os.getcwd(),"raw"))                    
+
                 elif parameters["movie_mdoc"] and len(mdocs) > 0:
                     files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
                     logger.info("Create micrograph list using mdocs files")

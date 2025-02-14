@@ -776,11 +776,22 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         or scaling > 1.01
         or int(mparameters["extract_box"]) != model_box_size
     ):
-        logger.warning(f"Rescaling reference {initial_model} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
+        new_nyquist_frequency = 2.0*model_pixel_size/scaling
+        logger.info(f"Lowpass filtering {initial_model} to {new_nyquist_frequency:.2f} A before resampling")
+        command = f"{get_imod_path()}/bin/mtffilter -3dfilter -units 4 -lowpass {new_nyquist_frequency},100 '{initial_model}' {frealign_initial_model}"
+        local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
+
+        logger.info(f"Rescaling reference {frealign_initial_model} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
         command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
-            get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, initial_model,
+            get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, frealign_initial_model,
         )
         local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
+        
+        # remove IMOD backup file
+        try:
+            os.remove(frealign_initial_model + "~")
+        except:
+            pass
 
     elif not initial_model == frealign_initial_model:
         shutil.copy2(initial_model, frealign_initial_model)
