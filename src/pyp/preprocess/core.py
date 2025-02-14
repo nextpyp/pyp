@@ -675,7 +675,7 @@ def read_tilt_series(
         pixel_size /= upsample
 
     logger.info(
-        "Unbinned tilt-series dimensions = [ %s, %s, %s ]",
+        "Original tilt-series dimensions = [ %s, %s, %s ]",
         x,
         y,
         z
@@ -707,18 +707,18 @@ def read_tilt_series(
     if parameters["tomo_ali_square"]:
         x, y, z = square, square, parameters["tomo_rec_thickness"]
 
+        logger.info(
+            "Transformed tilt-series dimensions = [ %s, %s, %s ]",
+            x,
+            y,
+            z
+        )
+
     pixel_size *= binning
 
     # invert contrast if needed
     if parameters["data_invert"]:
         preprocess.invert_contrast(name)
-
-    logger.info(
-        "Unbinned tilt-series dimensions = [ %s, %s, %s ]",
-        x,
-        y,
-        z
-    )
 
     return [x, y, z, pixel_size, voltage, mag, tilt_axis, drift_metadata]
 
