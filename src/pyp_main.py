@@ -3983,6 +3983,7 @@ if __name__ == "__main__":
         else:
             os.environ["PYTHONPATH"] = os.environ["PYTHONDIR"]
 
+        os.environ["IMOD_NO_IMAGE_BACKUP"] = "1"
 
         current_directory = os.getcwd()
         job_name = None
