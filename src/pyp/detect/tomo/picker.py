@@ -25,7 +25,7 @@ def extract(image,boxes,boxsize):
 class Picker():
 
     @timer.Timer(
-        "init", text="Total time elapsed (picker init): {}", logger=logger.info
+        "init", text="\tTotal time elapsed (picker init): {}", logger=logger.info
     )
     def __init__(self,name,radius=100,pixelsize=2.1,auto_binning = 12,show=False):
         self.radius=radius
@@ -57,7 +57,7 @@ class Picker():
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y bp.mrc")
 
     @timer.Timer(
-        "getcont", text="Total time elapsed (picker getcont): {}", logger=logger.info
+        "getcont", text="\tTotal time elapsed (picker getcont): {}", logger=logger.info
     )
     def getcont(self,contract_times=1,gaussian=True,sigma=15,stdtimes=3.5,min_size=125,dilation=100,show=False):
         G = self.rec.reshape(int(self.rec.shape[0]/contract_times),contract_times,int(self.rec.shape[1]/contract_times),contract_times,int(self.rec.shape[2]/contract_times),contract_times).mean(1).mean(2).mean(3)
@@ -82,7 +82,7 @@ class Picker():
         return area
 
     @timer.Timer(
-        "detect", text="Total time elapsed (picker detect): {}", logger=logger.info
+        "detect", text="\tTotal time elapsed (picker detect): {}", logger=logger.info
     )
     def detect(self,area,contract_times=1,radius_times=4,inhibit=False,detection_width=128,show=False):
         points=self.minima_extract(radius_times=radius_times,inhibit=inhibit)
@@ -106,7 +106,7 @@ class Picker():
             if clean and inside:
                 boxes.append([z,y,x])
 
-        logger.info(f"{len(boxes):,} initial positions found")
+        logger.info(f"\t{len(boxes):,} initial positions found")
 
         if show:
             f = open('boxes.txt', 'w')
@@ -120,7 +120,7 @@ class Picker():
         return boxes,raw_particles
 
     @timer.Timer(
-        "prefilt", text="Total time elapsed (picker prefilt): {}", logger=logger.info
+        "prefilt", text="\tTotal time elapsed (picker prefilt): {}", logger=logger.info
     )
     def prefilt(self,raw_particles,stdtimes=1):
         x, y= np.mgrid[0:self.tilesize, 0:self.tilesize] - self.tilesize / 2 + 0.5
@@ -135,13 +135,13 @@ class Picker():
             particles_metrics[p,0] =foreground.std()
             particles_metrics[p,1] =background.std()
         stdmean,stdstd=particles_metrics[:,0].mean(),particles_metrics[:,0].std()
-        logger.info(f"Pre-filtering image statistics: mean = {stdmean:.2f}, std = {stdstd:.2f}")
+        logger.info(f"\tPre-filtering image statistics: mean = {stdmean:.2f}, std = {stdstd:.2f}")
 
         stdthreshold=stdmean+stdstd*stdtimes
         return particles_metrics,stdthreshold
 
     @timer.Timer(
-        "filt", text="Total time elapsed (picker filt): {}", logger=logger.info
+        "filt", text="\tTotal time elapsed (picker filt): {}", logger=logger.info
     )
     def filt(self,boxes,particles_metrics,stdthreshold,remove_edge,show=False):
         boxs = []
@@ -163,14 +163,14 @@ class Picker():
         # Saving coordinates in spk format and swapping Y-Z
         run_shell_command(get_imod_path()+'/bin/point2model boxs.txt '+self.name+'.mod -sphere %s' % circle,  verbose=False)
         run_shell_command(get_imod_path()+'/bin/imodtrans -Y -T ' +self.name+ '.mod ' + self.name + ".spk", verbose=False )
-        logger.info(f"{len(boxs):,} particles detected")
+        logger.info(f"\t{len(boxs):,} particles detected")
 
         if show:
             run_shell_command(get_imod_path()+"/bin/imod -xyz -Y bp.mrc "+self.name+".spk")
             self.show_particles(boxs,times=3)
 
     @timer.Timer(
-        "minima_extract", text="Total time elapsed (picker minima_extract): {}", logger=logger.info
+        "minima_extract", text="\tTotal time elapsed (picker minima_extract): {}", logger=logger.info
     )
     def minima_extract(self,radius_times=4,inhibit=False):
         locality = int(radius_times*self.radius / self.pixelsize / self.auto_binning)
