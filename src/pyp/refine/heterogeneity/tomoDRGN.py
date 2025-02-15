@@ -176,11 +176,11 @@ def tomodrgn_train(parameters, input_dir, name, output):
 
     # --ctf {ctf_input} --pose {pose_input}
 
-    command = f"{get_tomodrgn_path()} train_vae {particles_input} --datadir {input_dir} --source-software nextpyp --zdim {parameters['tomodrgn_vae_train_zdim']} -o {output} {options} {training_parameters} {tomo} {workers}"
+    command = f"{get_tomodrgn_path()} train_vae {particles_input} --datadir {input_dir} --source-software nextpyp --zdim {parameters['tomodrgn_vae_train_zdim']} -o {output} {options} {training_parameters} {tomo} {workers} --plot-format svgz"
 
-    output = []
+    stream_output = []
     def obs(line):
-        output.append(line)
+        stream_output.append(line)
         if '# =====> Epoch:' in line:
             epoch = int(line.split('# =====> Epoch:')[-1].split('Average gen loss')[0])
             # TODO: do something useful here one day
@@ -243,7 +243,7 @@ def tomodrgn_analyze(parameters,input_dir, output):
     if parameters['tomodrgn_analyze_epoch'] == 0 or parameters['tomodrgn_analyze_epoch'] >= parameters['tomodrgn_vae_train_epochs']:
         parameters['tomodrgn_analyze_epoch'] = parameters['tomodrgn_vae_train_epochs'] - 1
 
-    command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['tomodrgn_analyze_epoch']} -o {output} --pc {parameters['tomodrgn_analyze_pc']} --ksample {parameters['tomodrgn_analyze_ksample']} {options} --plot-format png"
+    command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['tomodrgn_analyze_epoch']} -o {output} --pc {parameters['tomodrgn_analyze_pc']} --ksample {parameters['tomodrgn_analyze_ksample']} {options} --plot-format svgz"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -353,14 +353,9 @@ def run_tomodrgn_train(project_dir, parameters):
                 arguments.append((file, radius, os.path.join(folder, Path(file).stem + ".webp")))
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
         
-        metadata = {}        
         for folder in glob.glob(str(convergence_folder / "vols.*")):
             epoch = int(folder.split(".")[-1])
-            metadata["epoch"] = epoch
-            for file in glob.glob(str(Path(folder) / "*.mrc")):
-                metadata["path"] = str(os.path.join(folder, Path(file).stem + ".webp"))
-                metadata["class"] = epoch
-                save_drgnmap_to_website( str(Path(file).stem), metadata )
+            save_drgnmap_to_website( iteration=epoch )
         logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
 
 def generate_map_thumbnail( map, radius, output):
@@ -679,7 +674,7 @@ def convergence_nn(parameters, input_dir):
                         training_directory reference_volume
     """
     
-    command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option} --plot-format png"
+    command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option} --plot-format svgz"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -717,7 +712,7 @@ def convergence_vae(parameters, input_dir, output):
     if not "None" in parameters["tomodrgn_vae_convergence_gt"]:
         options += f" --ground-truth {parameters['tomodrgn_vae_convergence_gt']}"
 
-    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['tomodrgn_vae_convergence_epoch_index']} -o {output} {options} --plot-format png"
+    command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['tomodrgn_vae_convergence_epoch_index']} -o {output} {options} --plot-format svgz"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
     

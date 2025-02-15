@@ -303,13 +303,12 @@ class Web:
             )
         )
 
-    def write_drgnmap(self, map_id, metadata):
+    def write_tomo_drgn_convergence(self, iteration):
 
         self._request(
-            Request.write_drgn_map(
+            Request.write_tomo_drgn_convergence(
                 webid=self.webid,
-                map_id=map_id,
-                metadata=metadata
+                iteration=iteration
             )
         )
 
