@@ -5019,17 +5019,17 @@ if __name__ == "__main__":
                     ]
                     null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
 
-                    if "heterogeneity_input_star" in parameters and parameters.get("heterogeneity_input_star") == "auto":
+                    if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
                         input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
-                        parameters["heterogeneity_input_star"] = input_star
+                        parameters["tomodrgn_vae_train_input_star"] = input_star
 
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
                         if not input.exists() and input_source.exists():               
                             os.symlink( input_source, input ) 
-                    elif parameters.get("heterogeneity_input_star") and os.path.exists( project_params.resolve_path(parameters["heterogeneity_input_star"]) ):
-                        input_source = Path(parameters['heterogeneity_input_star']).parent
+                    elif parameters.get("tomodrgn_vae_train_input_star") and os.path.exists( project_params.resolve_path(parameters["tomodrgn_vae_train_input_star"]) ):
+                        input_source = Path(parameters['tomodrgn_vae_train_input_star']).parent
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
                         # check particle stacks
                         assert len(glob.glob(str(input_source) + "/*.mrc")) > 0, "Can not find any particle stacks from input folder.\n \
@@ -5083,17 +5083,17 @@ if __name__ == "__main__":
                     ]
                     null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
 
-                    if "heterogeneity_input_star" in parameters and parameters.get("heterogeneity_input_star") == "auto":
+                    if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
                         input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
-                        parameters["heterogeneity_input_star"] = input_star
+                        parameters["tomodrgn_vae_train_input_star"] = input_star
 
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
                         if not input.exists() and input_source.exists():               
                             os.symlink( input_source, input ) 
-                    elif parameters.get("heterogeneity_input_star") and os.path.exists( project_params.resolve_path(parameters["heterogeneity_input_star"]) ):
-                        input_source = Path(parameters['heterogeneity_input_star']).parent
+                    elif parameters.get("tomodrgn_vae_train_input_star") and os.path.exists( project_params.resolve_path(parameters["tomodrgn_vae_train_input_star"]) ):
+                        input_source = Path(parameters['tomodrgn_vae_train_input_star']).parent
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
                         # check particle stacks
                         assert len(glob.glob(str(input_source) + "/*.mrc")) > 0, "Can not find any particle stacks from input folder.\n \
