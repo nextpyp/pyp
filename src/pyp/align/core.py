@@ -2014,9 +2014,14 @@ def apply_alignments_and_average(input_name, name, parameters, method="imod"):
     threads = parameters["slurm_tasks"]
     env = "export OMP_NUM_THREADS={0}; export NCPUS={0}; IMOD_FORCE_OMP_THREADS={0}; ".format(threads)
     
-    command = env + "{0}/bin/newstack -mode 2 {1} {2}.mrc && rm -f {1}~".format(
-        get_imod_path(), input_name, name
-    )
+    if input_name == name + ".mrc":
+        command = env + "{0}/bin/newstack -mode 2 {1} {2}.mrc~ && mv {2}.mrc~ {2}.mrc".format(
+            get_imod_path(), input_name, name
+        )
+    else:
+        command = env + "{0}/bin/newstack -mode 2 {1} {2}.mrc && rm -f {1}~".format(
+            get_imod_path(), input_name, name
+        )
     run_shell_command(command)
 
     if method == "imod" and not parameters["movie_weights"]:
@@ -2027,7 +2032,7 @@ def apply_alignments_and_average(input_name, name, parameters, method="imod"):
         run_shell_command(command)
 
         if parameters["data_bin"] > 1:
-            command = env + "{0}/bin/newstack -ftreduce {3} {2}.ali {2}.ali; rm -f {2}.ali~".format(
+            command = env + "{0}/bin/newstack -ftreduce {3} {2}.ali {2}.ali~ && mv {2}.ali~ {2}.ali".format(
                 get_imod_path(), input_name, name, parameters["data_bin"]
             )
             run_shell_command(command)
@@ -4056,12 +4061,12 @@ def sum_gain_correct_frames(movie, average, parameters):
             gain_x, gain_y, gain_z = get_image_dimensions(gain_reference_file)
             binning = int(x / gain_x)
         if binning > 1:
-            com = f"{get_imod_path()}/bin/newstack {average} {average} -bin {binning}"
+            com = f"{get_imod_path()}/bin/newstack {average} {average}~ -bin {binning} && mv {average}~ {average}"
             run_shell_command(com)
 
     # apply gain reference if we are using one
     if gain_reference_file != None:
-        com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}"; rm -f {average}~'
+        com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}~" && mv {average}~ {average}'
         output, error = run_shell_command(com)
 
         if "error" in output.lower():

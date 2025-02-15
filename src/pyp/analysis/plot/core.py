@@ -1420,7 +1420,7 @@ def plot_trajectories(
 
         zero_tilt_index = np.argmin(abs(tilts))
 
-        com = "{0}/bin/newstack -secs {1} {2}.avg {2}.avg".format(
+        com = "{0}/bin/newstack -secs {1} {2}.avg {2}.avg~ && mv {2}.avg~ {2}.avg".format(
                 get_imod_path(), zero_tilt_index, scratch_name
         )
         run_shell_command(com)

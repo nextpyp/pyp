@@ -172,11 +172,11 @@ def process_virion_multiprocessing(
 
     # flipy if raw data is dm4
     if os.path.exists("isdm4"):
-        command = "{0}/bin/clip flipx {1}.rec {1}.rec".format(
+        command = "{0}/bin/clip flipx {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(
             get_imod_path(), virion_name
         )
         local_run.run_shell_command(command,parameters["slurm_verbose"])
-        command = "{0}/bin/clip flipx {1}_binned_nad_seg.mrc {1}_binned_nad_seg.mrc".format(
+        command = "{0}/bin/clip flipx {1}_binned_nad_seg.mrc {1}_binned_nad_seg.mrc~ && mv {1}_binned_nad_seg.mrc~ {1}_binned_nad_seg.mrc".format(
             get_imod_path(), virion_name
         )
         local_run.run_shell_command(command,parameters["slurm_verbose"])
@@ -357,7 +357,7 @@ def process_virion_multiprocessing(
 
         # revert flipy to ensure compatibility
         if os.path.exists("isdm4"):
-            command = "{0}/bin/clip flipx {1}_binned_nad_seg.mrc {1}_binned_nad_seg.mrc".format(
+            command = "{0}/bin/clip flipx {1}_binned_nad_seg.mrc {1}_binned_nad_seg.mrc~ && mv {1}_binned_nad_seg.mrc~ {1}_binned_nad_seg.mrc".format(
                 get_imod_path(), virion_name
             )
             local_run.run_shell_command(command)
@@ -394,7 +394,7 @@ def process_virion_multiprocessing(
             """
             # resample
             if spike_binning != 1:
-                command = "{0}/bin/binvol -binning {1} {2}.rec {2}.rec".format(
+                command = "{0}/bin/binvol -binning {1} {2}.rec {2}.rec~ && mv {2}.rec~ {2}.rec".format(
                     get_imod_path(), spike_binning, virion_name
                 )
                 local_run.run_shell_command(command)
@@ -689,7 +689,7 @@ def detect_virions(parameters, virion_size, binning, name):
             
         rec_x, rec_z, rec_y = get_image_dimensions(f"{name}.rec")
 
-        command = f"{get_imod_path()}/bin/imodtrans -Y -n {rec_x},{rec_y},{rec_z} -sx {parameters['tomo_vir_binn']} -sy {parameters['tomo_vir_binn']} -sz {parameters['tomo_vir_binn']} {name}.vir {name}.vir"
+        command = f"{get_imod_path()}/bin/imodtrans -Y -n {rec_x},{rec_y},{rec_z} -sx {parameters['tomo_vir_binn']} -sy {parameters['tomo_vir_binn']} -sz {parameters['tomo_vir_binn']} {name}.vir {name}.vir~ && mv {name}.vir~ {name}.vir"
         [output, error] = local_run.run_shell_command(command,False)
 
 def process_virions(
@@ -961,13 +961,13 @@ def build_virion(virion, binning, virion_size, x, y, tilt_options, name, virion_
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
-        command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec -blank".format(
+        command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec~ -blank && mv {3}.rec~ {3}.rec".format(
             get_imod_path(), int(ypad_dn), int(virion_size - 1 + ypad_dn), virion_name,
         )
         local_run.run_shell_command(command)
 
     # rotate volume to align with Z-axis
-    command = "{0}/bin/clip rotx {1}.rec {1}.rec".format(get_imod_path(), virion_name)
+    command = "{0}/bin/clip rotx {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(get_imod_path(), virion_name)
     local_run.run_shell_command(command)
 
 
@@ -1023,13 +1023,13 @@ def build_virion_unbinned(
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
-        command = "{0}/bin/newstack -secs {1}-{2} -input {3}_unbinned.rec -output {3}_unbinned.rec -blank".format(
+        command = "{0}/bin/newstack -secs {1}-{2} -input {3}_unbinned.rec -output {3}_unbinned.rec~ -blank && mv {3}_unbinned.rec~ {3}_unbinned.rec".format(
             get_imod_path(), int(ypad_dn)/virion_binning, int(virion_size - 1 + ypad_dn)/virion_binning, virion_name,
         )
         local_run.run_shell_command(command)
 
     # rotate volume to align with Z-axis
-    command = "{0}/bin/clip rotx {1}_unbinned.rec {1}_unbinned.rec".format(
+    command = "{0}/bin/clip rotx {1}_unbinned.rec {1}_unbinned.rec~ && mv {1}_unbinned.rec~ {1}_unbinned.rec".format(
         get_imod_path(), virion_name
     )
     local_run.run_shell_command(command)
@@ -1099,20 +1099,20 @@ def extract_regions(parameters, name, x, y, binning, zfact, tilt_options):
 
         # apply binning factor
         if "extract_bin" in parameters and parameters["extract_bin"] > 1:
-            command = "{0}/bin/binvol -input {1}_region_{2}.rec -output {1}_region_{2}.rec -binning {3}".format(
+            command = "{0}/bin/binvol -input {1}_region_{2}.rec -output {1}_region_{2}.rec~ -binning {3} && mv {1}_region_{2}.rec~ {1}_region_{2}.rec".format(
                 get_imod_path(), name, region, parameters["extract_bin"]
             )
             local_run.run_shell_command(command)
 
         # rotate volume to align with Z-axis
-        command = "{0}/bin/clip rotx {1}_region_{2}.rec {1}_region_{2}.rec".format(
+        command = "{0}/bin/clip rotx {1}_region_{2}.rec {1}_region_{2}.rec~ && mv {1}_region_{2}.rec~ {1}_region_{2}.rec".format(
             get_imod_path(), name, region
         )
         local_run.run_shell_command(command)
 
         # flipy if dm4 format
         if os.path.exists("isdm4"):
-            command = "{0}/bin/clip flipx {1}_region_{2}.rec {1}_region_{2}.rec".format(
+            command = "{0}/bin/clip flipx {1}_region_{2}.rec {1}_region_{2}.rec~ && mv {1}_region_{2}.rec~ {1}_region_{2}.rec".format(
                 get_imod_path(), name, region
             )
             local_run.run_shell_command(command)
@@ -1160,18 +1160,18 @@ def spk_extract_and_process(
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
-        command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec -blank && rm -f {3}.rec~".format(
+        command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec~ -blank && mv {3}.rec~ {3}.rec".format(
             get_imod_path(), int(ypad_dn), int(spike_size - 1 + ypad_dn), spike_name,
         )
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
 
     # rotate volume to align with Z-axis
-    command = "{0}/bin/clip rotx {1}.rec {1}.rec && rm -f {1}.rec~".format(get_imod_path(), spike_name)
+    command = "{0}/bin/clip rotx {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(get_imod_path(), spike_name)
     local_run.run_shell_command(command)
 
     # padding volume
     if pad_factor > 1:
-        command = "{0}/bin/clip resize -ox {2} -oy {2} -oz {2} {1}.rec {1}.rec && rm -f {1}.rec~".format(
+        command = "{0}/bin/clip resize -ox {2} -oy {2} -oz {2} {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(
             get_imod_path(), spike_name, spike_size / pad_factor
         )
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
@@ -1190,7 +1190,7 @@ def spk_extract_and_process(
 
     # apply spike binning factor
     if "tomo_ext_binn" in parameters and  parameters["tomo_ext_binn"] > 1:
-        command = "{0}/bin/binvol -input {1}.rec -output {1}.rec -binning {2} && rm -f {1}.rec~".format(
+        command = "{0}/bin/binvol -input {1}.rec -output {1}.rec~ -binning {2} && mv {1}.rec~ {1}.rec".format(
             get_imod_path(), spike_name, str(parameters["tomo_ext_binn"])
         )
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
@@ -1910,7 +1910,7 @@ EOF
 
         # invert volume contrast for eman particles
         if not parameters["data_invert"] and parameters["tomo_ext_fmt"].lower() == "eman":
-            command = "{0}/bin/newstack {1}.ali {1}.ali -multadd -1,0".format(
+            command = "{0}/bin/newstack {1}.ali {1}.ali~ -multadd -1,0 && mv {1}.ali~ {1}.ali".format(
                 get_imod_path(), name
             )
             local_run.run_shell_command(command)
@@ -2152,7 +2152,7 @@ def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth):
         virion_volume = "{0}_binned_nad_seg.mrc".format(virion_name)
 
         if mrc.readHeaderFromFile(virion_volume)['mode'] != 2:
-            command = "{0}/bin/newstack {1} {1} -mode 2".format(
+            command = "{0}/bin/newstack {1} {1}~ -mode 2 && mv {1}~ {1}".format(
                 get_imod_path(), virion_volume
             )
             local_run.run_shell_command(command)

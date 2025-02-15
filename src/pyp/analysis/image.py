@@ -473,7 +473,7 @@ def dose_weight(args, parameters, imagefile, working_path, current_path):
 
     # find out what index is the 0-tilt
     zero_tilt = np.argmin(np.loadtxt(current_path + "/" + imagefile + ".order"))
-    command = "{0}/bin/mtffilter -volt {1} -verbose 1 -dfixed {2} -bidir {3} {4}/{5}.mrc {4}/{5}.mrc".format(
+    command = "{0}/bin/mtffilter -volt {1} -verbose 1 -dfixed {2} -bidir {3} {4}/{5}.mrc {4}/{5}.mrc~ && mv {4}/{5}.mrc~ {4}/{5}.mrc".format(
         get_imod_path(),
         "%d" % float(parameters["scope_voltage"]),
         parameters["scope_dose_rate"],

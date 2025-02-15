@@ -1431,7 +1431,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
 
         # convert frame average to 32-bits
         if parameters.get("movie_depth") and os.path.exists(name+".avg"):
-            command = "{0}/bin/newstack -mode 2 {1} {1} && rm -f {1}~".format(
+            command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
                 get_imod_path(), name + ".avg"
             )
             local_run.run_shell_command(command)
@@ -1730,7 +1730,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if parameters.get("tomo_rec_depth"):
             if os.path.exists(name + ".rec"):
                 logger.info("Converting tomogram to 32-bits")
-                command = "{0}/bin/newstack -mode 2 {1} {1} && rm -f {1}~".format(
+                command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), name + ".rec"
                 )
                 local_run.run_shell_command(command)
@@ -2121,13 +2121,13 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if "preprocessing" in parameters.get("micromon_block"):
             if parameters.get("movie_depth"):
                 logger.info("Converting tilt-series to 16-bits")
-                command = "{0}/bin/newstack -mode 12 {1} {1}".format(
+                command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), name + ".mrc"
                 )
                 commands.append(command)
             if parameters.get("tomo_rec_depth"):
                 logger.info("Converting tomogram to 16-bits")
-                command = "{0}/bin/newstack -mode 12 {1} {1} && rm -f {1}~".format(
+                command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), name + ".rec"
                 )
                 commands.append(command)
@@ -2640,7 +2640,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
 
         # convert data to 32-bits
         if parameters.get("movie_depth") and os.path.exists(filename + ".mrc"):
-            command = "{0}/bin/newstack -mode 2 {1} {1} && rm -f {1}~".format(
+            command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
                 get_imod_path(), filename + ".mrc"
             )
             local_run.run_shell_command(command)
@@ -3983,6 +3983,7 @@ if __name__ == "__main__":
         else:
             os.environ["PYTHONPATH"] = os.environ["PYTHONDIR"]
 
+        # configure IMOD not to save backup files
         os.environ["IMOD_NO_IMAGE_BACKUP"] = "1"
 
         current_directory = os.getcwd()
@@ -5151,7 +5152,7 @@ if __name__ == "__main__":
 
                         x, y, z = get_image_dimensions(output_file)
                         binning = int(math.floor(x / 768))
-                        com = f"{get_imod_path()}/bin/newstack {output_file} {output_file} -bin {binning} -float 2"
+                        com = f"{get_imod_path()}/bin/newstack {output_file} {output_file}~ -bin {binning} -float 2 && mv {output_file}~ {output_file}"
                         local_run.run_shell_command(com)
                         com = f"{get_imod_path()}/bin/mrc2tif -j -q 100 {output_file} gain_corrected.jpg"
                         local_run.run_shell_command(com)

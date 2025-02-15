@@ -31,7 +31,7 @@ logger = initialize_pyp_logger(log_name=relative_path)
 
 
 def invert_contrast(name):
-    command = "{0}/bin/newstack {1}.mrc {1}.mrc -multadd -1,0".format(
+    command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -multadd -1,0 && mv {1}.mrc~ {1}.mrc".format(
         get_imod_path(), name
     )
     local_run.run_shell_command(command)
@@ -69,7 +69,7 @@ def remove_xrays_from_movie_file(name, inplace=False):
         output, error = avgstack(input_fname, output_fname, start_end_section)
 
         # Hot-pixel detection using IMOD's ccderaser
-        command = "{0}/bin/ccderaser -input {1}_hpr.avg -output {1}_hpr.avg -find -points {2} -scan 4.50 -xyscan 128 -edge 64".format(
+        command = "{0}/bin/ccderaser -input {1}_hpr.avg -output {1}_hpr.avg~ -find -points {2} -scan 4.50 -xyscan 128 -edge 64 && mv {1}_hpr.avg~ {1}_hpr.avg".format(
             get_imod_path(), name, model
         )
         local_run.run_shell_command(command)
@@ -83,7 +83,7 @@ def remove_xrays_from_movie_file(name, inplace=False):
         logger.info(output)
         logger.info("No hot pixels found.")
     else:
-        command = "{0}/bin/ccderaser -input {1}.tif -output {1}.tif -model {2} -allsec /".format(
+        command = "{0}/bin/ccderaser -input {1}.tif -output {1}.tif~ -model {2} -allsec / && mv {1}.tif~ {1}.tif".format(
             get_imod_path(), name, model
         )
         local_run.run_shell_command(command)
@@ -402,14 +402,14 @@ def read_tilt_series(
             tilt_axis = parameters["scope_tilt_axis"]
 
             if "extract_fmt" in parameters.keys() and "frealign" not in parameters["extract_fmt"]:
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc -mode 1 -multadd 1,32768".format(
+                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 1 -multadd 1,32768 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc -scale 0,32767 -mode 1".format(
+                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -scale 0,32767 -mode 1 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
             else:
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc -mode 2".format(
+                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 2 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
             local_run.run_shell_command(command)
@@ -780,9 +780,9 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         if scaling < 1:
             new_nyquist_frequency = 2.0*model_pixel_size/scaling
             logger.info(f"Lowpass filtering {initial_model} to {new_nyquist_frequency:.2f} A before resampling")
-            command = f"{get_imod_path()}/bin/mtffilter -3dfilter -units 4 -lowpass {new_nyquist_frequency},100 '{initial_model}' {frealign_initial_model}"
+            command = f"{get_imod_path()}/bin/mtffilter -3dfilter -units 4 -lowpass {new_nyquist_frequency},100 '{initial_model}' {frealign_initial_model}~"
             local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
-            source = frealign_initial_model
+            source = f"{frealign_initial_model}~"
         else:
             source = initial_model
 
@@ -884,7 +884,7 @@ def regenerate_average_quick(
         commands = []
 
         for movie in frame_list:
-            com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}; rm -f {1}~'.format(
+            com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}~; mv {1}~ {1}'.format(
                 get_imod_path(), movie, gain_reference_file,
             )
             commands.append(com)
@@ -993,7 +993,7 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
             erase_order = 3
         erase_iterations = parameters['tomo_rec_erase_iterations']
 
-        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
+        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
         [ output, _ ] = local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
         if "The largest circle radius is too big for the arrays" in output:
             raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")

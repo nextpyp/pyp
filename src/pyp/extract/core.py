@@ -636,7 +636,7 @@ def extract_particles_mpi(
             commands = []
 
             for movie in input:
-                com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}; rm -f {1}~'.format(
+                com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}~; mv {1}~ {1}'.format(
                     get_imod_path(), movie, gain_reference_file,
                 )
                 commands.append(com)
