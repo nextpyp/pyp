@@ -31,5 +31,6 @@ docs:
     # only run this CI pipeline on master
     refs:
       - master
+      - immaterial-docs
     #changes:
     #  - docs/**/*
