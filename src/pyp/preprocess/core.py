@@ -209,7 +209,10 @@ def read_tilt_series(
                 else:
                     raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
         else:
-            for pattern in [ parameters["movie_pattern"], parameters["movie_pattern"].replace(Path(parameters["movie_pattern"]).suffix,"."+parameters["stream_compress"])]:
+            options = [parameters["movie_pattern"]]
+            if parameters.get("stream_compress"):
+                options.append(parameters["movie_pattern"].replace(Path(parameters["movie_pattern"]).suffix,"."+parameters["stream_compress"]))
+            for pattern in options:
                 detected_movies = frames_from_pattern(filename=filename,name=name,pattern=pattern)
                 if len(detected_movies) > 0:
                     break
@@ -467,7 +470,10 @@ def read_tilt_series(
                 except:
                     logger.warning(f"Cannot detect tilt angles from filename and .rawtlt")
 
-            for pattern in [ parameters["movie_pattern"], parameters["movie_pattern"].replace(Path(parameters["movie_pattern"]).suffix,"."+parameters["stream_compress"])]:
+            options = [parameters["movie_pattern"]]
+            if parameters.get("stream_compress"):
+                options.append(parameters["movie_pattern"].replace(Path(parameters["movie_pattern"]).suffix,"."+parameters["stream_compress"]))           
+            for pattern in options:
                 root_pattern, file_format = os.path.splitext(pattern)
                 regex = movie2regex(pattern, name)
                 r = re.compile(regex)

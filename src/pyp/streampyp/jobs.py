@@ -393,7 +393,7 @@ def submit_script(
 
     # make sure the script path starts with a / or ./
     cmd = command_file
-    if not cmd.startswith("/"):
+    if not cmd.startswith("/") and not cmd.startswith('mkdir'):
         cmd = "./%s" % cmd
     if os.path.exists(cmd):
         cmd = "'%s'" % cmd
