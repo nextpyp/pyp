@@ -26,5 +26,5 @@ sphinx-press-theme==0.8.0
 sphinx-book-theme==0.2.0
 sphinx-panels==0.6.0
 sphinx-copybutton==0.5.0
-sphinx-immaterial==0.12.5
+sphinx-immaterial==0.12.4
 toml==0.10.2
