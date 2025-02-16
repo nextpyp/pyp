@@ -262,7 +262,7 @@ def isonet_refine(input_star, output, parameters):
     mse = np.array([ line.split("mse:")[1].split()[0] for line in output if "ETA:" in line]).astype('f')
 
     max_points = 500
-    binning_factor = loss.shape[0] // max_points
+    binning_factor = max(loss.shape[0] // max_points,1)
     steps = np.arange(0, loss.shape[0], binning_factor)
     if binning_factor > 1:
         loss = loss[::binning_factor]
