@@ -5082,11 +5082,10 @@ if __name__ == "__main__":
                         "frealign"
                     ]
                     null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
-
                     if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
-                        input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
+                        parent_parameters = project_params.load_pyp_parameters(os.path.join( project_params.resolve_path(parameters.get("data_parent"))))
+                        input_star = sorted(glob.glob( os.path.join( parent_parameters.get("data_parent"), "relion", "stacks", "*_particles.star" )))[-1]
                         parameters["tomodrgn_vae_train_input_star"] = input_star
-
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 

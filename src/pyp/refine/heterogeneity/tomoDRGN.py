@@ -384,8 +384,8 @@ def run_tomodrgn_eval(project_dir, parameters):
     name = parameters['data_set']
     starfile = name + "_particles.star"
 
-    input_star = Path(project_params.resolve_path(parent_parameters["tomodrgn_vae_train_input_star"]))
-    assert input_star.exists(), "Can not find input star file, run the extract stacks first."
+    input_star = Path(project_params.resolve_path(parameters["tomodrgn_vae_train_input_star"]))
+    assert input_star.exists(), f"Can not find input star file {input_star}"
 
     # this is the input star and particles stacks folder
     
@@ -440,21 +440,26 @@ def run_tomodrgn_eval(project_dir, parameters):
         if not saved_folder.exists():
             raise Exception("tomodrgn analyze failed")
 
-    # eval_vol
     if not parameters["tomodrgn_eval_vol_use_local_scratch"]:
         final_output = os.path.join(project_dir, "train", "eval_vols")
     else:
-        logger.warning(f"Generating volumes to local scratch, no output will be saved to project directory")
         final_output = os.path.join(working_path, "all_vols")
+    
     Path(final_output).mkdir(parents=True, exist_ok=True)
         
-    if parameters["tomodrgn_eval_vol_use_local_scratch"] and parameters["tomodrgn_analyze_volumes_skip"]:
-        logger.warning(f"Generating volumes to local scratch while skipping analyze_volumes will result in no output being generated")
+    if parameters["tomodrgn_eval_vol_use_local_scratch"] and not parameters["tomodrgn_analyze_volumes_skip"] and parameters["tomodrgn_eval_vol_skip"]:
+        raise Exception("Cannot analyze volumes from local scratch while skipping eval_vol")
         
+    # eval_vol
     if not parameters["tomodrgn_eval_vol_skip"]:
         logger.info("Running tomoDRGN eval_vol")
+
+        if parameters["tomodrgn_eval_vol_use_local_scratch"]:
+            logger.warning(f"Generating volumes to local scratch, no output will be saved to project directory")
+
         tomodrgn_eval_vol(parameters, final_output, parent=os.path.join(project_params.resolve_path(parameters["data_parent"]), "train"))
         
+    # analyze_volumes
     if not parameters["tomodrgn_analyze_volumes_skip"]:
         logger.info("Running tomoDRGN analyze_volumes")
         final_output_analysis = os.path.join(project_dir, "train", "all_vols_analysis")
