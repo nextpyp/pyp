@@ -1432,8 +1432,11 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
     else:
         classes = int(project_params.param(parameters["class_num"], iteration))
     if compressed:
-        num_dumpfiles_per_bundle = 1 
-        num_bundle = math.ceil(len(micrographs.keys()) / parameters["slurm_bundle_size"])
+        num_dumpfiles_per_bundle = 1
+        if standalone_mode():
+            num_bundle = 1
+        else:
+            num_bundle = math.ceil(len(micrographs.keys()) / parameters["slurm_bundle_size"])
         num_bz2_per_bundle = 1 # classes
         total_num_bz2 = num_bz2_per_bundle * num_bundle
         
