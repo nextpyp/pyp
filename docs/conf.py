@@ -43,12 +43,8 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx.ext.linkcode",
-#    "sphinx_tabs.tabs",
-    #"sphinx_panels",
     "sphinx_design",
-    #"sphinx_fontawesome",
     "sphinx_copybutton",
-    "myst_parser",
     "sphinx_immaterial",
     "myst_parser",
 ]
