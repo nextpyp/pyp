@@ -197,7 +197,6 @@ sphinx_immaterial_custom_admonitions = [
     {
         "name": "nextpyp-noicon",
         "color": (0, 123, 255),
-        "icon": None,
     },
 ]
 
