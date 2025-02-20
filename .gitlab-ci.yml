@@ -16,6 +16,7 @@ image: python:3.8.8
 
 docs:
   script:
+    - python3 -m pip install --upgrade build
     - pip install -r docs/requirements_docs.txt
     - sphinx-apidoc src/ -f -o docs/
     - cd docs/
