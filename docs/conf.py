@@ -194,10 +194,6 @@ sphinx_immaterial_custom_admonitions = [
         "color": (0, 123, 255),
         "icon": "fontawesome/regular/note-sticky",
     },
-    {
-        "name": "nextpyp-noicon",
-        "color": (0, 123, 255),
-    },
 ]
 
 # Resolve function for linkcode extension.
