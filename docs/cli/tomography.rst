@@ -247,9 +247,9 @@ Next, we refine the raw movie frames against the most recent 3D reconstruction:
         -refine_iter 2                                                          \
         -refine_maxiter 2                                                       \
         -refine_rhref "3.2"                                                     \
-        -refine_spatial_sigma 200.0                                             \
-        -refine_transreg                                                        \
+        -csp_transreg                                                           \
         -no-csp_refine_ctf                                                      \
+        -csp_spatial_sigma 200.0                                                \
         -csp_frame_refinement                                                   \
         -csp_UseImagesForRefinementMax 4
 

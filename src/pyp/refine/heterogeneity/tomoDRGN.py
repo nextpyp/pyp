@@ -463,6 +463,7 @@ def run_tomodrgn_eval(project_dir, parameters):
     if not parameters["tomodrgn_analyze_volumes_skip"]:
         logger.info("Running tomoDRGN analyze_volumes")
         final_output_analysis = os.path.join(project_dir, "train", "all_vols_analysis")
+        shutil.rmtree(final_output_analysis)
         Path(final_output_analysis).mkdir(parents=True, exist_ok=True)
         tomodrgn_analyze_volumes(
             parameters=parameters, 
@@ -769,3 +770,42 @@ def tomodrgn_analyze_volumes(parameters, output_dir, vol_dir, parent):
     command = f"{get_tomodrgn_path()} analyze_volumes --outdir {output_dir} --config {parent}/config.pkl --voldir {vol_dir} {options}"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    
+def filtering_with_indexes(args):
+    """Select k-means classes of interest
+    """
+    import numpy as np
+    from tomodrgn import utils
+    kmeans_labels = utils.load_pkl('analyze.49/kmeans100/labels.pkl')  # or use the volume space k-means labels at e.g. analyze.49/all_vols_analysis/kmeans100/voxel_kmeans100_labels.pkl
+    #ckmeans_labels_to_keep = np.array([0, 4, 5, 6, 50, 51, 52])
+    kmeans_labels_to_keep = np.array([args.get('detect_nn3d_milo_classes').replace(' ','')])
+    # define your own labels here
+    indices_to_keep = np.array([i for i, label in enumerate(kmeans_labels) if label in kmeans_labels_to_keep])
+    utils.save_pkl(indices_to_keep, f'analyze.49/kmeans100/indices_kept_{len(indices_to_keep)}-particles.pkl')
+"""
+    tomodrgn filter_star \
+        imageseries.star \
+        --starfile-type imageseries \
+        --tomo-id-col _rlnImageName \  # useful when filtering the output star file for a particular tomogram's particles
+        --ind path/to/indices.pkl \
+        -o path/to/imageseries_filtered.star
+
+    tomodrgn filter_star \
+        volumeseries.star \
+        --starfile-type volumeseries \
+        --tomo-id-col _rlnImageName \
+        --ind path/to/indices.pkl \
+        -o path/to/imageseries_filtered.star
+"""
+    
+def filtering_with_labels():
+    return
+"""
+    tomodrgn filter_star \
+        path/to/imageseries.star \
+        --starfile-type imageseries \
+        --tomo-id-col _rlnImageName \
+        --labels 03_heterogeneity-1_train_vae/analyze.49/kmeans100/labels.pkl \
+        --labels-sel 0 1 2 3 \
+        -o path/to/imageseries_filtered.star
+"""

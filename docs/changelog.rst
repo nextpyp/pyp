@@ -30,7 +30,7 @@
 v0.7.0
 ------
 
-.. nextpyp:: Released 10/26/2024
+.. nextpyp:: Released 2/26/2025
    :collapsible: open
    
    :fa:`star` New blocks to run molecular pattern mining and particle localization (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.

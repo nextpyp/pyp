@@ -6612,6 +6612,26 @@ enum = { none="none", soft="soft", tight="tight", sphere="sphere" }
 default = "soft"
 condition = { arg="skip", value="false" }
 
+# isolate particle subsets
+
+[tabs.tomodrgn_filter_star]
+_name = "tomoDRGN (filter_star)"
+_description = "tomoDRGN filter_star"
+
+[tabs.tomodrgn_filter_star.skip]
+name = "Skip"
+description = "Do not run tomodrgn analyze_volumes"
+type = "bool"
+default = true
+
+[tabs.tomodrgn_filter_star.mask]
+name = "Mask type for volumes"
+description = "Type of real space mask to generate for each volume when calculating voxel-PCA"
+type = "enum"
+enum = { none="none", soft="soft", tight="tight", sphere="sphere" }
+default = "soft"
+condition = { arg="skip", value="false" }
+
 # TODO: backproject-voxel, train-nn
 
 [tabs.tomodrgn_rec]

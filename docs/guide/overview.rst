@@ -41,49 +41,49 @@ Single-particle projects and tomography projects will have slightly differing bl
 
   .. md-tab-item:: Single-particle
 
-    .. nextpyp:: :fa:`layer-group` Data import
+    .. nextpyp-noicon:: :fa:`layer-group` Data import
       :collapsible: open
 
       :Description: Import movie frames or micrographs in multiple formats (MRC, DM4, TIF, and EER).
       :Input: None
       :Output: ``Movies``
 
-    .. nextpyp:: :fa:`chart-bar` Pre-processing
+    .. nextpyp-noicon:: :fa:`chart-bar` Pre-processing
       :collapsible: open
   
       :Description: Movie frame alignment, CTF estimation, and particle picking.
       :Input: ``Movies``
       :Output: ``Particles``
 
-    .. nextpyp:: :fa:`dot-circle` Particle refinement
+    .. nextpyp-noicon:: :fa:`dot-circle` Particle refinement
       :collapsible: open
 
       :Description: Particle alignment, classification and per-particle CTF refinement.
       :Input: ``Particles``
       :Output: ``Particles``
 
-    .. nextpyp:: :fa:`filter` Particle filtering
+    .. nextpyp-noicon:: :fa:`filter` Particle filtering
       :collapsible: open
 
       :Description: Removal of bad particles from downstream analysis.
       :Input: ``Particles``
       :Output: ``Particles``
 
-    .. nextpyp:: :fa:`film` Movie refinement
+    .. nextpyp-noicon:: :fa:`film` Movie refinement
       :collapsible: open
 
       :Description: Per-particle movie frame alignment and dose weighting.
       :Input: ``Particles`` or ``Frames``
       :Output: ``Frames``
 
-    .. nextpyp:: :fa:`crop` Create mask
+    .. nextpyp-noicon:: :fa:`crop` Create mask
       :collapsible: open
 
       :Description: Creation of shape masks.
       :Input: ``Particles`` or ``Frames``
       :Output: ``None``
 
-    .. nextpyp:: :fa:`star` Post-processing
+    .. nextpyp-noicon:: :fa:`star` Post-processing
       :collapsible: open
 
       :Description: Masking, map sharpening, and Fourier Shell Correlation (FSC) plots.
@@ -92,91 +92,91 @@ Single-particle projects and tomography projects will have slightly differing bl
 
   .. md-tab-item:: Tomography
 
-    .. nextpyp::  :fa:`layer-group` Data import
+    .. nextpyp-noicon::  :fa:`layer-group` Data import
       :collapsible: open
 
       :Decription: Import raw tilt-series data (with or without frames) in MRC or TIF format.
       :Input: None
       :Output: ``Tilt-series``
 
-    .. nextpyp:: :fa:`chart-bar` Pre-processing (legacy)
+    .. nextpyp-noicon:: :fa:`chart-bar` Pre-processing (legacy)
       :collapsible: open
 
       :Description: Frame and tilt-series alignment, tomogram reconstruction, CTF estimation, and particle picking.
       :Input: ``Tilt-series``
       :Output: ``Particles``
 
-    .. nextpyp:: :fa:`chart-bar` Pre-processing
+    .. nextpyp-noicon:: :fa:`chart-bar` Pre-processing
       :collapsible: open
 
       :Description: Frame and tilt-series alignment, tomogram reconstruction, and CTF estimation.
       :Input: ``Tilt-series``
       :Output: ``Tomograms``
 
-    .. nextpyp:: :fa:`crosshairs` Particle-Picking
+    .. nextpyp-noicon:: :fa:`crosshairs` Particle-Picking
       :collapsible: open
 
       :Description: Import, manual and size-based particle picking.
       :Input: ``Tomograms``
       :Output: ``Particles``
 
-    .. nextpyp:: :fa:`search` MiLoPYP (train)
+    .. nextpyp-noicon:: :fa:`search` MiLoPYP (train)
       :collapsible: open
 
       :Description: Train neural network for pattern mining.
       :Input: ``Tomograms``
       :Output: ``MiLoPYP Model``
 
-    .. nextpyp:: :fa:`search` MiLoPYP (eval)
+    .. nextpyp-noicon:: :fa:`search` MiLoPYP (eval)
       :collapsible: open
 
       :Description: Evaluate neural network model for pattern mining.
       :Input: ``MiLoPYP Model``
       :Output: ``MiLoPYP Particles``
 
-    .. nextpyp:: :fa:`crosshairs` Particle-Picking (train)
+    .. nextpyp-noicon:: :fa:`crosshairs` Particle-Picking (train)
       :collapsible: open
 
       :Description: Train neural network for particle picking.
       :Input: ``Particles``, ``MiLoPYP Particles``
       :Output: ``Particles Model``
 
-    .. nextpyp:: :fa:`crosshairs` Particle-Picking (eval)
+    .. nextpyp-noicon:: :fa:`crosshairs` Particle-Picking (eval)
       :collapsible: open
 
       :Description: Evaluate neural network model for particle picking.
       :Input: ``Tomograms``
       :Output: ``Particles``
 
-    .. nextpyp:: :fa:`dot-circle` Particle refinement
+    .. nextpyp-noicon:: :fa:`dot-circle` Particle refinement
       :collapsible: open
 
       :Description: Constrained particle alignment and classification, region-based refinement, and per-particle CTF refinement
       :Input: ``Particles``
       :Output: ``Particles``
 
-    .. nextpyp:: :fa:`filter` Particle filtering
+    .. nextpyp-noicon:: :fa:`filter` Particle filtering
       :collapsible: open
 
       :Description: Removal of bad particles from downstream analysis.
       :Input: ``Particles``
       :Output: ``Particles``
 
-    .. nextpyp:: :fa:`film` Movie refinement
+    .. nextpyp-noicon:: :fa:`film` Movie refinement
       :collapsible: open
 
       :Description: Per-particle tilt movie refinement and reconstruction, data-driven dose-weighting.
       :Input: ``Particles`` or ``Frames``
       :Output: ``Frames``
 
-    .. nextpyp:: :fa:`crop` Create mask
+    .. nextpyp-noicon:: :fa:`crop` Create mask
       :collapsible: open
 
       :Description: Creation of shape mask.
       :Input: ``Particles`` or ``Frames``
       :Output: ``None``
 
-    .. nextpyp:: :fa:`star` Post-processing
+    .. nextpyp-noicon:: :fa:`star` Post-processing
       :collapsible: open
 
       :Description: Masking, map sharpening and Fourier Shell Correlation (FSC) plots.

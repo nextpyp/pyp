@@ -227,12 +227,12 @@ This step refines shifts for movie frames of each particle using the most recent
         -refine_iter 2                                                          \
         -refine_maxiter 3                                                       \
         -refine_skip                                                            \
+        -refine_parfile=`pwd`/frealign/maps_fine/T20S_clean_r01_09.bz2          \
+        -refine_model=`pwd`/frealign/maps_fine/T20S_clean_r01_09.mrc            \
         -csp_frame_refinement                                                   \
         -csp_UseImagesForRefinementMax 60                                       \
         -csp_transreg                                                           \
         -csp_spatial_sigma 15.0                                                 \
-        -refine_parfile=`pwd`/frealign/maps_fine/T20S_clean_r01_09.bz2          \
-        -refine_model=`pwd`/frealign/maps_fine/T20S_clean_r01_09.mrc            \
         -no-csp_refine_ctf
 
 .. note::
