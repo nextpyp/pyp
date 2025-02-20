@@ -1,5 +1,5 @@
 =====================
-Enable multiple users
+Enable Multiple Users
 =====================
 
 The :doc:`base installation instructions <./install-web>` install a complete working application for
@@ -22,19 +22,21 @@ change the ``web.auth`` setting from ``none`` to ``login``.
 
 After making changes to your configuration file, restart the application:
 
-.. tabbed:: I'm using a regular user account
+.. md-tab-set::
 
-  .. code-block:: bash
+  .. md-tab-item:: I'm using a regular user account
 
-    ./nextpyp stop
-    ./nextpyp start
+    .. code-block:: bash
+
+      ./nextpyp stop
+      ./nextpyp start
 
 
-.. tabbed:: I'm using an administrator account
+  .. md-tab-item::  I'm using an administrator account
 
-  .. code-block:: bash
+    .. code-block:: bash
 
-    sudo systemctl restart nextPYP
+      sudo systemctl restart nextPYP
 
 
 Step 2: Setup
@@ -53,7 +55,7 @@ Once on the page, you will be greeted with a page like the following.
 
 .. figure:: ../images/first_time_setup.webp
 
-Fill out the form, click :badge:`Create Administrator,badge-primary`, and you'll make the first administrator account.
+Fill out the form, click :bdg-primary:`Create Administrator`, and you'll make the first administrator account.
 
 .. tip::
 

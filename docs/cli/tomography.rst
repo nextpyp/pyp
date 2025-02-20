@@ -1,5 +1,5 @@
 ===================
-Tomography tutorial
+Tomography Tutorial
 ===================
 
 This tutorial shows how to process tilt-series from the `HIV-1 Gag (EMPIAR-10164) <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset.
@@ -286,8 +286,3 @@ The final step is to sharpen the map and produce FSC plots:
     psp -sharpen_input_map=`pwd`/frealign/maps/EMPIAR-10164_r01_half1.mrc   \
         -sharpen_automask_threshold 0.35                                    \
         -sharpen_adhoc_bfac -50
-
-.. seealso::
-
-    * :doc:`Single-particle tutorial<single_particle>`
-    * :doc:`Classification tutorial<classification>`

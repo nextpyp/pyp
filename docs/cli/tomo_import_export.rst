@@ -1,9 +1,9 @@
 ########################
-Tomography import/export
+Tomography Import/Export
 ########################
 
-1 Import tomography data in star format
-=======================================
+Import data in star format
+==========================
 
 
 .. attention::
@@ -62,8 +62,8 @@ We suggest you to run an iteration of ``csp`` to make sure they are correctly co
         -refine_maxiter 2
 
 
-2 Export tomography data in star format
-=======================================
+Export data in star format
+==========================
 
 Requirements
 ------------

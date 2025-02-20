@@ -19,12 +19,13 @@ scikit-learn~=0.24
 scikit-image==0.18.1
 scipy==1.5.3
 seaborn==0.11.1
-sphinx>=4.5
+sphinx
 sphinx-rtd-theme==0.5.2
 sphinx-tabs==3.2.0
 sphinx-press-theme==0.8.0
 sphinx-book-theme==0.2.0
 sphinx-panels==0.6.0
 sphinx-copybutton==0.5.0
-sphinx-immaterial
+sphinx-immaterial==0.11.14
+sphinx_fontawesome
 toml==0.10.2

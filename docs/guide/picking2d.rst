@@ -1,17 +1,17 @@
 ===================
-2D particle picking
+2D Particle Picking
 ===================
 
-``nextPYP`` implements four types of methods for particle picking within the :badge:`Pre-processing,badge-secondary` block
+``nextPYP`` implements four types of methods for particle picking within the :bdg-secondary:`Pre-processing` block
 
 Particle positions are stored as "lists", and multiple lists can be saved for a given dataset
 
-Method 1: Import coordinates
-============================
+Import Coordinates
+==================
 
 External coordinates can be imported as EMAN box files (``*.box``) or IMOD model files (``*.spk``):
 
-#. Open the settings of the :badge:`Pre-processing,badge-secondary` block and go to the **Particle detection** tab
+#. Open the settings of the :bdg-secondary:`Pre-processing` block and go to the **Particle detection** tab
 
 #. Select "import" as the particle picking ``Method``
   
@@ -19,24 +19,24 @@ External coordinates can be imported as EMAN box files (``*.box``) or IMOD model
 
 #. Select the location to ``Import particle coordinates (*.box, *.spk)`` (the folder should contain separate ``.box`` or ``.spk`` files for each micrograph)
 
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to update the block
+#. Click :bdg-primary:`Save,`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to update the block
 
-#. Navigate to the :badge:`Pre-processing,badge-secondary` block and go to the **Micrographs** tab to confirm that the particles were imported correctly
+#. Navigate to the :bdg-secondary:`Pre-processing` block and go to the **Micrographs** tab to confirm that the particles were imported correctly
 
-Method 2: Manual picking
-========================
+Manual Picking
+==============
 
 ``nextPYP`` provides a convenient UI to pick particles manually:
 
-#. Navigate to the :badge:`Pre-processing,badge-secondary` block and go to the **Micrographs** tab
+#. Navigate to the :bdg-secondary:`Pre-processing` block and go to the **Micrographs** tab
 
-#. Create a new list of particles by entering a name and clicking :badge:`New,badge-primary`
+#. Create a new list of particles by entering a name and clicking :bdg-primary:`New`
 
 #. Select particles in the current micrograph by clicking on them
 
 #. Navigate to other micrographs in the dataset using the navigation bar and select more particles as needed
 
-#. Open the settings of the :badge:`Pre-processing,badge-secondary` block and go to the **Particle detection** tab
+#. Open the settings of the :bdg-secondary:`Pre-processing` block and go to the **Particle detection** tab
  
 #. Select "manual" as the particle picking ``Method``
   
@@ -44,39 +44,39 @@ Method 2: Manual picking
 
 #. Choose the list of manually selected positions from the ``Select list for training`` dropdown menu
 
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to update the block
+#. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to update the block
 
 .. tip::
 
     - Particles can be deleted by right-clicking on the markers
     - Particle positions are saved automatically every time a particle is added or deleted
     - The total number of particles in a dataset is displayed on the top of the page
-    - It is possible to :badge:`Copy,badge-primary`, :badge:`Delete,badge-primary`, and :badge:`Load,badge-primary` lists
+    - It is possible to :bdg-primary:`Copy`, :bdg-primary:`Delete`, and :bdg-primary:`Load` lists
 
-Method 3: Size-based picking
-============================
+Size-Based Picking
+==================
 
 This method selects particle positions based on a target particle size:
 
-#. Open the settings of the :badge:`Pre-processing,badge-secondary` block and go to the **Particle detection** tab
+#. Open the settings of the :bdg-secondary:`Pre-processing` block and go to the **Particle detection** tab
 
 #. Select "auto" or "all" as the particle picking ``Method`` ("auto" is more conservative, "all" tends to overpick)
 
 #. Specify the particle radius in A and other parameters as needed
 
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to update the block
+#. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to update the block
 
-#. Navigate to the :badge:`Pre-processing,badge-secondary` block and go to the **Micrographs** tab to inspect the results
+#. Navigate to the :bdg-secondary:`Pre-processing` block and go to the **Micrographs** tab to inspect the results
 
-Method 4: Neural-network picking
-================================
+Neural-Network Picking
+======================
 
 Neural-network based methods require an existing list of particles for training a neural network. To pick particles, the trained model is then evaluated on the entire dataset. ``nextPYP`` uses a self-supervised approach that only needs sparsely annotated data. A wrapper for `Topaz <https://github.com/tbepler/topaz>`_ picking is also included. 
 
 Training
 ^^^^^^^^
 
-#. Open the settings of the :badge:`Pre-processing,badge-secondary` block and go to the **Particle detection** tab
+#. Open the settings of the :bdg-secondary:`Pre-processing` block and go to the **Particle detection** tab
  
 #. Select "pyp-train" or "topaz-train" as the particle picking ``Method``
 
@@ -84,7 +84,7 @@ Training
 
 #. Choose a list of positions from the ``Select list for training`` dropdown menu
 
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to train the model
+#. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to train the model
 
 .. tip::
     
@@ -95,20 +95,12 @@ Training
 Evaluation
 ^^^^^^^^^^
 
-#. Open the settings of the :badge:`Pre-processing,badge-secondary` block and go to the **Particle detection** tab
+#. Open the settings of the :bdg-secondary:`Pre-processing` block and go to the **Particle detection** tab
  
 #. Select "pyp-eval" or "topaz-eval" as the particle picking ``Method`` (depending on which method was used for training)
 
 #. Go to the corresponding **Training/Evaluation** tab and specify the location of the trained model (``*.training``)
 
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to pick particles on all micrographs
+#. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to pick particles on all micrographs
 
-#. Navigate to the :badge:`Pre-processing,badge-secondary` block and go to the **Micrographs** tab to inspect the results
-
-.. seealso::
-
-    * :doc:`3D particle picking<picking3d>`
-    * :doc:`Pattern mining (MiLoPYP)<milopyp>`
-    * :doc:`Filter micrographs/tilt-series<filters>`
-    * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
-    * :doc:`Overview<overview>`
+#. Navigate to the :bdg-secondary:`Pre-processing` block and go to the **Micrographs** tab to inspect the results

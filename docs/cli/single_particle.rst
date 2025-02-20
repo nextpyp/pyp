@@ -1,5 +1,5 @@
 ========================
-Single-particle tutorial
+Single-Particle Tutorial
 ========================
 
 This tutorial shows how to process single-particle raw movies from `T20S proteasome (EMPIAR-10025) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a high-resolution 3D structure.
@@ -289,8 +289,3 @@ The final step does masking, sharpening, and produces FSC resolution plots:
 .. note::
 
     Output maps and FSC plots will be saved in the ``frealign/maps`` folder.
-
-.. seealso::
-
-    * :doc:`Tomography tutorial<tomography>`
-    * :doc:`Classification tutorial<classification>`

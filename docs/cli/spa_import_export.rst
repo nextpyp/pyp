@@ -1,6 +1,6 @@
 
 =============================
-Single-particle import/export
+Single-Particle Import/Export
 =============================
 
 Requirements
@@ -20,10 +20,6 @@ A single command is needed to convert the project to the ``pyp`` format:
     rlp -import_read_star -import_refine_star "path_to_refinement_star_file" -import_relion_path "RELION_project_path" -import_motion_star "path_to_corrected_micrographs.star" -scope_pixel pixel_size -scope_voltage voltage -data_path path_to_raw_movies -data_mode "spr" -import_mode "SPA_STAR"
 
 After running this command, everything necessary to continue refinement in ``pyp`` will be created.
-
-==========================================
-Export single-particle data in star format
-==========================================
 
 Export data from ``pyp``
 ------------------------

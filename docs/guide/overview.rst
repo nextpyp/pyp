@@ -2,8 +2,6 @@
 Overview
 ========
 
-``nextPYP``'s graphical user interface (GUI) has the following components:
-
 Dashboard and projects
 ======================
 
@@ -39,204 +37,166 @@ Block types
 
 Single-particle projects and tomography projects will have slightly differing block types. A list of block types and their corresponding inputs and outputs is given below:
 
-.. tabbed:: Single-particle
+.. md-tab-set::
 
-  .. dropdown:: :fa:`layer-group fa-2x` Data import
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+  .. md-tab-item:: Single-particle
 
-    :Description: Import movie frames or micrographs in multiple formats (MRC, DM4, TIF, and EER).
-    :Input: None
-    :Output: ``Movies``
+    .. nextpyp:: :fa:`layer-group` Data import
+      :collapsible: open
 
-  .. dropdown:: :fa:`chart-bar fa-2x` Pre-processing
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
- 
-    :Description: Movie frame alignment, CTF estimation, and particle picking.
-    :Input: ``Movies``
-    :Output: ``Particles``
+      :Description: Import movie frames or micrographs in multiple formats (MRC, DM4, TIF, and EER).
+      :Input: None
+      :Output: ``Movies``
 
-  .. dropdown:: :fa:`dot-circle fa-2x` Particle refinement
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+    .. nextpyp:: :fa:`chart-bar` Pre-processing
+      :collapsible: open
+  
+      :Description: Movie frame alignment, CTF estimation, and particle picking.
+      :Input: ``Movies``
+      :Output: ``Particles``
 
-    :Description: Particle alignment, classification and per-particle CTF refinement.
-    :Input: ``Particles``
-    :Output: ``Particles``
+    .. nextpyp:: :fa:`dot-circle` Particle refinement
+      :collapsible: open
 
-  .. dropdown:: :fa:`filter fa-2x` Particle filtering
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Particle alignment, classification and per-particle CTF refinement.
+      :Input: ``Particles``
+      :Output: ``Particles``
 
-    :Description: Removal of bad particles from downstream analysis.
-    :Input: ``Particles``
-    :Output: ``Particles``
+    .. nextpyp:: :fa:`filter` Particle filtering
+      :collapsible: open
 
-  .. dropdown:: :fa:`film fa-2x` Movie refinement
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Removal of bad particles from downstream analysis.
+      :Input: ``Particles``
+      :Output: ``Particles``
 
-    :Description: Per-particle movie frame alignment and dose weighting.
-    :Input: ``Particles`` or ``Frames``
-    :Output: ``Frames``
+    .. nextpyp:: :fa:`film` Movie refinement
+      :collapsible: open
 
-  .. dropdown:: :fa:`crop fa-2x` Create mask
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Per-particle movie frame alignment and dose weighting.
+      :Input: ``Particles`` or ``Frames``
+      :Output: ``Frames``
 
-    :Description: Creation of shape masks.
-    :Input: ``Particles`` or ``Frames``
-    :Output: ``None``
+    .. nextpyp:: :fa:`crop` Create mask
+      :collapsible: open
 
-  .. dropdown:: :fa:`star fa-2x` Post-processing
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Creation of shape masks.
+      :Input: ``Particles`` or ``Frames``
+      :Output: ``None``
 
-    :Description: Masking, map sharpening, and Fourier Shell Correlation (FSC) plots.
-    :Input: ``Particles`` or ``Frames``
-    :Output: ``None``
+    .. nextpyp:: :fa:`star` Post-processing
+      :collapsible: open
 
-.. tabbed:: Tomography
+      :Description: Masking, map sharpening, and Fourier Shell Correlation (FSC) plots.
+      :Input: ``Particles`` or ``Frames``
+      :Output: ``None``
 
-  .. dropdown::  :fa:`layer-group fa-2x` Data import
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+  .. md-tab-item:: Tomography
 
-    :Decription: Import raw tilt-series data (with or without frames) in MRC or TIF format.
-    :Input: None
-    :Output: ``Tilt-series``
+    .. nextpyp::  :fa:`layer-group` Data import
+      :collapsible: open
 
-  .. dropdown:: :fa:`chart-bar fa-2x` Pre-processing (legacy)
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Decription: Import raw tilt-series data (with or without frames) in MRC or TIF format.
+      :Input: None
+      :Output: ``Tilt-series``
 
-    :Description: Frame and tilt-series alignment, tomogram reconstruction, CTF estimation, and particle picking.
-    :Input: ``Tilt-series``
-    :Output: ``Particles``
+    .. nextpyp:: :fa:`chart-bar` Pre-processing (legacy)
+      :collapsible: open
 
-  .. dropdown:: :fa:`chart-bar fa-2x` Pre-processing
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Frame and tilt-series alignment, tomogram reconstruction, CTF estimation, and particle picking.
+      :Input: ``Tilt-series``
+      :Output: ``Particles``
 
-    :Description: Frame and tilt-series alignment, tomogram reconstruction, and CTF estimation.
-    :Input: ``Tilt-series``
-    :Output: ``Tomograms``
+    .. nextpyp:: :fa:`chart-bar` Pre-processing
+      :collapsible: open
 
-  .. dropdown:: :fa:`crosshairs fa-2x` Particle-Picking
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Frame and tilt-series alignment, tomogram reconstruction, and CTF estimation.
+      :Input: ``Tilt-series``
+      :Output: ``Tomograms``
 
-    :Description: Import, manual and size-based particle picking.
-    :Input: ``Tomograms``
-    :Output: ``Particles``
+    .. nextpyp:: :fa:`crosshairs` Particle-Picking
+      :collapsible: open
 
-  .. dropdown:: :fa:`search fa-2x` MiLoPYP (train)
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Import, manual and size-based particle picking.
+      :Input: ``Tomograms``
+      :Output: ``Particles``
 
-    :Description: Train neural network for pattern mining.
-    :Input: ``Tomograms``
-    :Output: ``MiLoPYP Model``
+    .. nextpyp:: :fa:`search` MiLoPYP (train)
+      :collapsible: open
 
-  .. dropdown:: :fa:`search fa-2x` MiLoPYP (eval)
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Train neural network for pattern mining.
+      :Input: ``Tomograms``
+      :Output: ``MiLoPYP Model``
 
-    :Description: Evaluate neural network model for pattern mining.
-    :Input: ``MiLoPYP Model``
-    :Output: ``MiLoPYP Particles``
+    .. nextpyp:: :fa:`search` MiLoPYP (eval)
+      :collapsible: open
 
-  .. dropdown:: :fa:`crosshairs fa-2x` Particle-Picking (train)
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Evaluate neural network model for pattern mining.
+      :Input: ``MiLoPYP Model``
+      :Output: ``MiLoPYP Particles``
 
-    :Description: Train neural network for particle picking.
-    :Input: ``Particles``, ``MiLoPYP Particles``
-    :Output: ``Particles Model``
+    .. nextpyp:: :fa:`crosshairs` Particle-Picking (train)
+      :collapsible: open
 
-  .. dropdown:: :fa:`crosshairs fa-2x` Particle-Picking (eval)
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Train neural network for particle picking.
+      :Input: ``Particles``, ``MiLoPYP Particles``
+      :Output: ``Particles Model``
 
-    :Description: Evaluate neural network model for particle picking.
-    :Input: ``Tomograms``
-    :Output: ``Particles``
+    .. nextpyp:: :fa:`crosshairs` Particle-Picking (eval)
+      :collapsible: open
 
-  .. dropdown:: :fa:`dot-circle fa-2x` Particle refinement
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Evaluate neural network model for particle picking.
+      :Input: ``Tomograms``
+      :Output: ``Particles``
 
-    :Description: Constrained particle alignment and classification, region-based refinement, and per-particle CTF refinement
-    :Input: ``Particles``
-    :Output: ``Particles``
+    .. nextpyp:: :fa:`dot-circle` Particle refinement
+      :collapsible: open
 
-  .. dropdown:: :fa:`filter fa-2x` Particle filtering
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Constrained particle alignment and classification, region-based refinement, and per-particle CTF refinement
+      :Input: ``Particles``
+      :Output: ``Particles``
 
-    :Description: Removal of bad particles from downstream analysis.
-    :Input: ``Particles``
-    :Output: ``Particles``
+    .. nextpyp:: :fa:`filter` Particle filtering
+      :collapsible: open
 
-  .. dropdown:: :fa:`film fa-2x fa-2x fa-2x` Movie refinement
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Removal of bad particles from downstream analysis.
+      :Input: ``Particles``
+      :Output: ``Particles``
 
-    :Description: Per-particle tilt movie refinement and reconstruction, data-driven dose-weighting.
-    :Input: ``Particles`` or ``Frames``
-    :Output: ``Frames``
+    .. nextpyp:: :fa:`film` Movie refinement
+      :collapsible: open
 
-  .. dropdown:: :fa:`crop fa-2x` Create mask
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Per-particle tilt movie refinement and reconstruction, data-driven dose-weighting.
+      :Input: ``Particles`` or ``Frames``
+      :Output: ``Frames``
 
-    :Description: Creation of shape mask.
-    :Input: ``Particles`` or ``Frames``
-    :Output: ``None``
+    .. nextpyp:: :fa:`crop` Create mask
+      :collapsible: open
 
-  .. dropdown:: :fa:`star fa-2x` Post-processing
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+      :Description: Creation of shape mask.
+      :Input: ``Particles`` or ``Frames``
+      :Output: ``None``
 
-    :Description: Masking, map sharpening and Fourier Shell Correlation (FSC) plots.
-    :Input: ``Particles`` or ``Frames``
-    :Output: ``None``
+    .. nextpyp:: :fa:`star` Post-processing
+      :collapsible: open
+
+      :Description: Masking, map sharpening and Fourier Shell Correlation (FSC) plots.
+      :Input: ``Particles`` or ``Frames``
+      :Output: ``None``
 
 
 Block operations
 ----------------
 
-Users can access block-level operations using the menu icon :fa:`bars,text-primary` located at the top-right corner of each block. The following operations are supported:
+Users can access block-level operations using the menu icon :fa:`bars` located at the top-right corner of each block. The following operations are supported:
 
-* :fa:`tag text-primary` Rename block.
-* :fa:`copy text-primary` Create a new block with the same input connection and parameter settings as the current block.
-* :fa:`edit text-primary` Open a dialog to Edit/Read block parameters. Click :badge:`Save, badge-primary`, :badge:`Reset, badge-primary` or close the dialog by clicking the icon :fa:`window-close` to discard your changes.
-* :fa:`external-link-alt text-primary` Reveal the location of the latest set of logs for the block in the **Jobs** panel.
-* :fa:`location-arrow text-primary` Reveal location of files in the filesystem for the block.
-* :fa:`recycle text-primary` Reset state to allow re-running the block.
-* :fa:`eraser text-primary` Delete all files associated with the block.
-* :fa:`trash text-primary` Delete block. This operation cannot be undone. If a block has connections downstream, all connected blocks will be deleted (user is required to confirm this operation).
+* :fa:`tag` Rename block.
+* :fa:`copy` Create a new block with the same input connection and parameter settings as the current block.
+* :fa:`edit` Open a dialog to Edit/Read block parameters. Click :bdg-primary:`Save`, :bdg-primary:`Reset` or close the dialog by clicking the icon :fa:`window-close` to discard your changes.
+* :fa:`external-link-alt` Reveal the location of the latest set of logs for the block in the **Jobs** panel.
+* :fa:`location-arrow` Reveal location of files in the filesystem for the block.
+* :fa:`recycle` Reset state to allow re-running the block.
+* :fa:`eraser` Delete all files associated with the block.
+* :fa:`trash` Delete block. This operation cannot be undone. If a block has connections downstream, all connected blocks will be deleted (user is required to confirm this operation).
 
 Block status
 ------------
@@ -244,13 +204,13 @@ Block status
 Blocks can be in one of three states (indicated by icons displayed on the top bar of each block):
 
 * Block is up-to-date (no graphical indication)
-* :fa:`recycle text-primary` Modified (parameters were modified and the block needs to be updated)
-* :fa:`cog fa-pulse text-primary` Running (the block is currently running)
+* :fa:`recycle` Modified (parameters were modified and the block needs to be updated)
+* :fa:`cog fa-pulse` Running (the block is currently running)
 
 Block parameters
 ----------------
 
-Block parameters are specified using dialog forms. These are shown every time a new block is created or copied, or when clicking the icon :fa:`bars,text-primary` and selecting the :fa:`edit,text-primary` Edit option.
+Block parameters are specified using dialog forms. These are shown every time a new block is created or copied, or when clicking the icon :fa:`bars` and selecting the :fa:`edit` Edit option.
 
 Jobs panel
 ==========
@@ -276,8 +236,8 @@ The three job phases *Launch*, *Split* and *Merge* within each run are organized
 .. tip::
     - A summary of currently running jobs from all projects in ``nextPYP`` can be found in the **Dashboard** :fa:`tachometer-alt` page
     - Running jobs can be cancelled by clicking on the icon :fa:`ban,text-danger`
-    - Job logs can be accessed by clicking the icon :fa:`file,text-primary` to the right of the job name
-    - The log window can be docked/undocked by clicking the icon :fa:`thumbtack,text-primary`
+    - Job logs can be accessed by clicking the icon :fa:`file` to the right of the job name
+    - The log window can be docked/undocked by clicking the icon :fa:`thumbtack`
 
 Navigation
 ==========
@@ -286,11 +246,3 @@ Use the breadcrumb menu at the top of the page to navigate to the **Dashboard** 
 
 .. figure:: ../images/tutorial_tomo_pre_process_page.webp
   :alt: Breadcrums
-
-.. seealso::
-
-    * :doc:`2D particle picking<picking2d>`
-    * :doc:`3D particle picking<picking3d>`
-    * :doc:`Pattern mining (MiLoPYP)<milopyp>`
-    * :doc:`Filter micrographs/tilt-series<filters>`
-    * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`

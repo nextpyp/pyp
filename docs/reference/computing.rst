@@ -1,5 +1,5 @@
 =================
-Compute resources
+Compute Resources
 =================
 
 ``nextPYP`` can be run in standalone mode or in an HPC environment using the `SLURM <https://slurm.schedmd.com/>`_ workload manager. Standalone mode is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, an instance with access to a SLURM cluster will enable significantly faster processing.

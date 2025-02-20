@@ -9,80 +9,33 @@ Tutorials
 
    Single-particle (EMPIAR-10025) <tutorials/spa_empiar_10025>
    Tomography (EMPIAR-10164) <tutorials/tomo_empiar_10164>
+   Classification (EMPIAR-10304) <tutorials/tomo_empiar_10304>
    Single-particle (on-the-fly)<tutorials/stream_spr>
    Tomography (on-the-fly)<tutorials/stream_tomo>
-   Classification (EMPIAR-10304) <tutorials/tomo_empiar_10304>
    Import/export data <tutorials/import_export>
 
 This section contains step-by-step guides explaining the main cryo-EM/ET data processing protocols available in ``nextPYP``.
 
-.. panels::
-   :body: bg-primary text-centered text-white font-weight-bold
-   :header: text-center
+:fa:`layer-group` Single-particle 
+---------------------------------
 
-   :fa:`layer-group fa-2x text-white`
+* :doc:`T20S (EMPIAR-10025)<tutorials/spa_empiar_10025>`
 
-   +++
+* :doc:`On-the-fly sessions<tutorials/stream_spr>`
 
-   .. link-button:: tutorials/spa_empiar_10025
-      :type: ref
-      :text: Single-particle tutorial (EMPIAR-10025)
-      :classes: btn-outline-primary btn-block stretched-link
+:fa:`cubes` Tomography
+----------------------
 
-   ---
+* :doc:`HIV-1 Gag (EMPIAR-10164)<tutorials/tomo_empiar_10164>`
 
-   :fa:`cubes fa-2x text-white`
+* :doc:`70S Ribosome (EMPIAR-10304)<tutorials/tomo_empiar_10304>`
 
-   +++
+* :doc:`On-the-fly sessions<tutorials/stream_tomo>`
 
-   .. link-button:: tutorials/tomo_empiar_10164
-      :type: ref
-      :text: Tomography tutorial (EMPIAR-10164)
-      :classes: btn-outline-primary btn-block stretched-link
+:fa:`file-import` Import/Export
+-------------------------------
 
-   ---
-
-   :fa:`th-large fa-2x text-white`
-
-   +++
-
-   .. link-button:: tutorials/tomo_empiar_10304
-      :type: ref
-      :text: Classification tutorial (EMPIAR-10304)
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`file-import fa-2x text-white`
-
-   +++
-
-   .. link-button:: tutorials/import_export
-      :type: ref
-      :text: Import/export data
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`play fa-2x text-white`
-
-   +++
-
-   .. link-button:: tutorials/stream_spr
-      :type: ref
-      :text: Single-particle (on-the-fly)
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`forward fa-2x text-white`
-
-   +++
-
-   .. link-button:: tutorials/stream_tomo
-      :type: ref
-      :text: Tomography (on-the-fly)
-      :classes: btn-outline-primary btn-block stretched-link
+* :doc:`Import/export data<tutorials/import_export>`
 
 .. seealso::
 

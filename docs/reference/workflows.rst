@@ -6,21 +6,21 @@ Workflows
 
 The program comes with workflows for the :doc:`Single-particle tutorial<../tutorials/spa_empiar_10025>`, the :doc:`Tomography tutorial<../tutorials/tomo_empiar_10164>` and the :doc:`Classification tutorial<../tutorials/tomo_empiar_10304>`.
 
-1. Import a workflow
---------------------
+Import a workflow
+-----------------
 
-- Go the **Dashboard**, create a new or open an existing project, then click on :fa:`project-diagram, text-primary` :badge:`Import Workflow,badge-primary`
+- Go the **Dashboard**, create a new or open an existing project, then click on :fa:`project-diagram` :bdg-primary:`Import Workflow`
 
-- Choose a workflow from the list and click :badge:`Import,badge-primary`
+- Choose a workflow from the list and click :bdg-primary:`Import`
 
 - A form will appear asking for any required parameters. This typically includes the location of the raw data (and associated files) and the :doc:`Computing resources<computing>` to use
 
-- Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for N blocks,badge-primary` (where N is the number of blocks in the workflow)
+- Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for N blocks` (where N is the number of blocks in the workflow)
 
 You can inspect the results of the **Workflow** by navigating into each block.
 
-2. Defining custom workflows
-----------------------------
+Defining workflows
+------------------
 
 **Workflows** are defined using  ``.toml`` files. Here is an example:
 
@@ -61,9 +61,3 @@ The location of the ``.toml`` files must be specified in ``nextPYP``'s configura
 .. code-block:: toml
 
     workflowDirs = ["/path/to/workflows"] 
-
-.. seealso::
-
-    * :doc:`Single-particle tutorial<../tutorials/spa_empiar_10025>`
-    * :doc:`Tomography tutorial<../tutorials/tomo_empiar_10164>`
-    * :doc:`Classification tutorial<../tutorials/tomo_empiar_10304>`

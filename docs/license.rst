@@ -1,15 +1,9 @@
-=======
-License
-=======
-
-``nextPYP`` is distributed under the open-source BSD 3-Clause license.
-
 BSD 3-Clause License
 --------------------
 
 .. code-block:: bash
 
-   Copyright (c) 2023, Alberto Bartesaghi
+   Copyright (c) 2025, Alberto Bartesaghi
 
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions are met:
@@ -40,15 +34,15 @@ BSD 3-Clause License
 Dependencies
 ------------
 
-``nextPYP`` uses functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_, `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_, `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_, and `Topaz <https://github.com/tbepler/topaz>`_
+``nextPYP`` relies on functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_, `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_, `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_, `Topaz <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_, and `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_.
 
 ..
   ``nextPYP`` uses functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_, `CTFFIND5 <https://github.com/GrigorieffLab/cisTEM/tree/ctffind5>`_, `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_, `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_, `Topaz <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_, `cryoDRGN <https://github.com/ml-struct-bio/cryodrgn>`_, and `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_.
 
 The corresponding licenses are reproduced below.
 
-cisTEM, CTFFIND4 and CTFFIND5 license
-=====================================
+cisTEM and CTFFIND4
+===================
 
 .. code-block:: bash
 
@@ -77,8 +71,8 @@ cisTEM, CTFFIND4 and CTFFIND5 license
    OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
    OF THE POSSIBILITY OF SUCH DAMAGE.
 
-IMOD license
-============
+IMOD
+====
 
 .. code-block:: bash
 
@@ -206,8 +200,8 @@ IMOD license
       www:  http://bio3d.colorado.edu/imod/index.html
       University of Colorado, Dept. of MCD Biology, 347 UCB, Boulder, CO 80309
 
-AreTomo2 and MotioCor3 license
-==============================
+AreTomo2 and MotioCor3
+======================
 
 .. code-block:: bash
 
@@ -237,18 +231,17 @@ AreTomo2 and MotioCor3 license
    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
    DAMAGE.
 
-Topaz license
-=============
+Topaz
+=====
 
 Topaz is distributed under the `GNU General Public License v3.0 <https://github.com/tbepler/topaz/blob/master/LICENSE>`_.
 
 
-..
-  IsoNet license
-  ==============
-..
-  .. code-block:: bash
-..
+IsoNet
+======
+
+.. code-block:: bash
+
     MIT License
 
     Copyright (c) 2021 Yun-Tao Liu, Heng Zhang, Hui Wang
@@ -271,11 +264,11 @@ Topaz is distributed under the `GNU General Public License v3.0 <https://github.
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
-  cryoCARE license
-  ================
-..
-  .. code-block:: bash
-..
+cryoCARE
+========
+
+.. code-block:: bash
+
     BSD 3-Clause License
 
     Copyright (c) 2020, juglab
@@ -306,11 +299,11 @@ Topaz is distributed under the `GNU General Public License v3.0 <https://github.
     OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-  MemBrain-Seg license
-  ====================
-..
-  .. code-block:: bash
-..
+MemBrain-Seg
+============
+
+.. code-block:: bash
+  
     BSD License
 
     Copyright (c) 2023, Lorenz Lamm
@@ -341,6 +334,7 @@ Topaz is distributed under the `GNU General Public License v3.0 <https://github.
     OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+..
   cryoDRGN license
   ================
 ..
@@ -1021,11 +1015,11 @@ Topaz is distributed under the `GNU General Public License v3.0 <https://github.
     Public License instead of this License.  But first, please read
     <https://www.gnu.org/licenses/why-not-lgpl.html>.
 
-  tomoDRGN license
-  ================
-..
-  .. code-block:: bash
-..
+tomoDRGN
+========
+
+.. code-block:: bash
+
     GNU GENERAL PUBLIC LICENSE
                           Version 3, 29 June 2007
 

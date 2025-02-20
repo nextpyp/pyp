@@ -1,6 +1,6 @@
 
 ====================
-Enable remote access
+Enable Remote Access
 ====================
 
 The :doc:`base installation instructions <./install-web>` install a complete working application for people using
@@ -37,19 +37,21 @@ This configuration tells the application HTTP server to bind to all available ne
 
 After making changes to your configuration file, restart the application:
 
-.. tabbed:: I'm using a regular user account
+.. md-tab-set::
 
-  .. code-block:: bash
+  .. md-tab-item:: I'm using a regular user account
 
-    ./nextpyp stop
-    ./nextpyp start
+    .. code-block:: bash
+
+        ./nextpyp stop
+        ./nextpyp start
 
 
-.. tabbed:: I'm using an administrator account
+  .. md-tab-item:: I'm using an administrator account
 
-  .. code-block:: bash
+    .. code-block:: bash
 
-    sudo systemctl restart nextPYP
+        sudo systemctl restart nextPYP
 
 To visit the website for your installation, open http://hostname:8080 in your web browser, where
 ``hostname`` is the network name of your server machine. The raw IP address will work here too,

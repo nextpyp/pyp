@@ -11,29 +11,31 @@ This tutorial shows how to import and export single-particle and tomography proj
 
 * Go to the **Import parameters** tab:
 
-  .. tabbed:: Import parameters
+  .. md-tab-set::
 
-    - Set the location of the ``Relion refinement star file`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+    .. md-tab-item:: Import parameters
 
-    - Set the location of the ``Relion motioncorr star file`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+      - Set the location of the ``Relion refinement star file`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-    - Set the location of the ``Relion project path`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+      - Set the location of the ``Relion motioncorr star file`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-    * Go to the **Raw data** tab:
+      - Set the location of the ``Relion project path`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-  .. tabbed:: Raw data
+      * Go to the **Raw data** tab:
 
-    - Set the ``Location`` of the raw data by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+    .. md-tab-item:: Raw data
 
-    - Click on the **Microscope parameters** tab
+      - Set the ``Location`` of the raw data by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-  .. tabbed:: Microscope parameters
+      - Click on the **Microscope parameters** tab
 
-    - Set ``Pixel size (A)``
+    .. md-tab-item:: Microscope parameters
 
-    - Set ``Acceleration voltage (kV)``
+      - Set ``Pixel size (A)``
 
-    * (optional) Set parameters in other tabs
+      - Set ``Acceleration voltage (kV)``
+
+      * (optional) Set parameters in other tabs
 
 * Click :badge:`Save,badge-primary` and the new block will appear on the project page
 
@@ -49,31 +51,33 @@ This tutorial shows how to import and export single-particle and tomography proj
 
 * Go to the **Import parameters** tab:
 
-  .. tabbed:: Import parameters
+  .. md-tab-set::
 
-    - Set the location of the ``Relion refinement star file`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+    .. md-tab-item:: Import parameters
 
-    - Set the location of the ``Relion tomogram star file`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+      - Set the location of the ``Relion refinement star file`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-    - Set the location of the ``Relion project path`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+      - Set the location of the ``Relion tomogram star file`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-    * Go to the **Raw data** tab:
+      - Set the location of the ``Relion project path`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-  .. tabbed:: Raw data
+      * Go to the **Raw data** tab:
 
-    - Set the ``Location`` of the raw data by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+    .. md-tab-item:: Raw data
 
-    - Click on the **Microscope parameters** tab
+      - Set the ``Location`` of the raw data by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-  .. tabbed:: Microscope parameters
+      - Click on the **Microscope parameters** tab
 
-    - Set ``Pixel size (A)``
+    .. md-tab-item:: Microscope parameters
 
-    - Set ``Acceleration voltage (kV)``
+      - Set ``Pixel size (A)``
 
-    - Set ``Tilt-axis angle (degrees)``
+      - Set ``Acceleration voltage (kV)``
 
-    * (optional) Set parameters in other tabs
+      - Set ``Tilt-axis angle (degrees)``
+
+      * (optional) Set parameters in other tabs
 
 * Click :badge:`Save,badge-primary` and the new block will appear on the project page
 
@@ -91,7 +95,7 @@ This tutorial shows how to import and export single-particle and tomography proj
 
   - Check ``Export metadata``
 
-  - Set the location of the ``Input parfile`` you want to export by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+  - Set the location of the ``Input parfile`` you want to export by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
 * Click :badge:`Save,badge-primary`
 
@@ -101,5 +105,5 @@ Once the job ends, the results will appear in the specified folder and will be r
 
 .. seealso::
 
-    * :doc:`CLI single-particle import/export<../reference/cli/spa_import_export>`
-    * :doc:`CLI tomography import/export<../reference/cli/tomo_import_export>`
+    * :doc:`CLI single-particle import/export<../cli/spa_import_export>`
+    * :doc:`CLI tomography import/export<../cli/tomo_import_export>`

@@ -53,13 +53,3 @@ Open surfaces (membrain-seg)
 .. note::
 
     As of now, open surfaces are only used for visual inspection or for processing outside of ``nextPYP``
-
-.. seealso::
-
-    * :doc:`Denoising<denoising>`
-    * :doc:`2D particle picking<picking2d>`
-    * :doc:`3D particle picking<picking3d>`
-    * :doc:`Pattern mining (MiLoPYP)<milopyp>`
-    * :doc:`Filter micrographs/tilt-series<filters>`
-    * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
-    * :doc:`Overview<overview>`

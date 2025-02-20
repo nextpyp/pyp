@@ -1,11 +1,11 @@
 =======================
-ChimeraX/ArtiaX display
+ChimeraX/ArtiaX Display
 =======================
 
 ``nextPYP`` produces all the necessary files to visualize a refined map in the original tomogram positions using ChimeraX/ArtiaX.
 
-Step 1: Download the necessary files
-------------------------------------
+Download necessary files
+------------------------
 
 You will need to download the following files to your local computer:
 
@@ -19,8 +19,8 @@ You can get these files as follows:
 - Go to the Particle refinement block, select the **Reconstruction** tab and select the ``Cropped Map`` option from the dropdown menu
 - In the same Particle refinement block, go the **Metadata** tab, type the name of the tilt-series and click ``Search``. Download the ``.star`` file by clicking on the gray/green badge
 
-Step 2: Load data into ChimeraX/ArtiaX
---------------------------------------
+Display in ChimeraX/ArtiaX
+--------------------------
 
 - Open ChimeraX (we assume the ArtiaX plugin is already installed)
 - Open the tomogram file ``tilt_series_name.rec``
@@ -44,11 +44,3 @@ If everything went well, you should obtain a result similar to this:
 .. tip::
 
     Depending on the dimensions of the refined map and the number of particles in the tomogram, you may need to downsample the map to make ChimeraX more responsive
-
-.. seealso::
-
-    * :doc:`Filter micrographs/tilt-series<filters>`
-    * :doc:`2D particle picking<picking2d>`
-    * :doc:`3D particle picking<picking3d>`
-    * :doc:`Pattern mining (MiLoPYP)<milopyp>`
-    * :doc:`Overview<overview>`
