@@ -18,11 +18,9 @@ docs:
   script:
     - python3 -m pip install --upgrade build
     - pip install -r docs/requirements_docs.txt
-    - sphinx-apidoc src/ -f -o docs/
+    # - sphinx-apidoc src/ -f -o docs/
     - cd docs/
     - sphinx-build -d _build/doctrees . _build/html
-    - rm _build/html/index.html
-    - cp _build/html/introduction.html _build/html/index.html
     - cd ..
     - mv docs/_build/html public
   artifacts:
