@@ -355,7 +355,7 @@ def run_tomodrgn_train(project_dir, parameters):
         
         for folder in glob.glob(str(convergence_folder / "vols.*")):
             epoch = int(folder.split(".")[-1])
-            save_drgnmap_to_website( iteration=epoch )
+            save_drgnmap_to_website(epoch)
         logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
 
 def generate_map_thumbnail( map, radius, output):

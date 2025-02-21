@@ -303,12 +303,12 @@ class Web:
             )
         )
 
-    def write_tomo_drgn_convergence(self, iteration):
+    def write_tomo_drgn_convergence(self, epoch):
 
         self._request(
             Request.write_tomo_drgn_convergence(
                 webid=self.webid,
-                iteration=iteration
+                epoch=epoch
             )
         )
 

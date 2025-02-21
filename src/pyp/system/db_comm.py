@@ -202,7 +202,7 @@ def save_classes_to_website(name, metadata, verbose=False):
             logger.error("Failed to enter classes into database")
             raise
 
-def save_drgnmap_to_website(iteration, verbose=False):
+def save_drgnmap_to_website(epoch, verbose=False):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
@@ -210,7 +210,7 @@ def save_drgnmap_to_website(iteration, verbose=False):
     else:
         try:
             # actually send the reconstruction to the website
-            Web().write_tomo_drgn_convergence(iteration)
+            Web().write_tomo_drgn_convergence(epoch)
 
             if verbose:
                 logger.info("Drgn map %s entered into database successfully" % name)
