@@ -1906,7 +1906,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # Resize aligned tilt-seres depending on tilt-axis orientation
     if tilt_metadata["tilt_axis_angle"] % 180 > 45 and tilt_metadata["tilt_axis_angle"] % 180 < 135 and not parameters.get("tomo_ali_square"):
         x, y = y, x
-        logger.info(f"Resizing aligned tilt-series to {x}x{y} to accomodate tilt-axis orientation")
+        logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
     
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
@@ -1988,6 +1988,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # package CTF metadata into dictionary
     ctf_profiles = {}
     ctf_values = {}
+    all_defocus = []
     for index in range(len(tilt_angles)):
         profile_file = "%s_%04d_ctffind4_avrot.txt" % ( name, index )
         if os.path.exists(profile_file):
@@ -1995,6 +1996,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         values_file = "%s_%04d.txt" % ( name, index )
         if os.path.exists(values_file):
             ctf_values[index] = np.loadtxt( values_file, comments="#")
+            all_defocus.append(ctf_values[index][1])
+            all_defocus.append(ctf_values[index][2])
+    median_defocus = str(np.median(np.array(all_defocus)))
+    with open(name+"_mean_defocus.txt",'w') as outf:
+        outf.write(median_defocus)
     tilt_metadata["ctf_values"] = ctf_values
     tilt_metadata["ctf_profiles"] = ctf_profiles
 
