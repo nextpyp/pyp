@@ -2,9 +2,9 @@
 Administration
 ==============
 
-The admin page can be accessed through the url: ``https://nextpyp.myorganization.org/#/admin``.
+The admin page can be accessed through the url: ``https://nextpyp.myorganization.org/#/admin``
 
-.. nextpyp:: Create, edit or delete `Groups` and `Users` and set permissions
+.. nextpyp:: Use this page to create, edit, or delete `Groups` and `Users`
     :collapsible: open
 
     .. figure:: ../images/reference_admin.webp
@@ -13,7 +13,7 @@ The admin page can be accessed through the url: ``https://nextpyp.myorganization
 Create a new Group
 ------------------
 
-.. nextpyp:: Add new group
+.. nextpyp:: To add new group
     :collapsible: open
 
     - Go to the :fa:`layer-group` `Groups` tab and click :bdg-primary:`+ Add Group`
@@ -28,7 +28,7 @@ Create a new Group
 Create a new User
 -----------------
 
-.. nextpyp:: Add new user
+.. nextpyp:: To add new user
     :collapsible: open
 
     - Go to the :fa:`users` `Users` tab and click :bdg-primary:`+ Add User`

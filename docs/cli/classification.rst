@@ -1,5 +1,5 @@
 =======================
-Classification Tutorial
+Classification tutorial
 =======================
 
 This tutorial shows how to convert raw tilt-series from `EMPIAR-10304 (E. coli. ribosomes) <https://www.ebi.ac.uk/empiar/EMPIAR-10304/>`_ into a ~4.9A resolution structure and resolve 8 different conformations.

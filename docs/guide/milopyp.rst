@@ -6,8 +6,8 @@ Pattern Mining (MiLoPYP)
 
 The ``MiLoPYP`` workflow in ``nextPYP`` consists of two steps and is implemented using four blocks:
 
-#. **Pattern minning** uses the :bdg-primary:`MiLoPYP (train)` and :bdg-primary:`MiLoPYP (eval)` blocks 
-#. **Position refinement** uses the :bdg-primary:`Particle-Picking (train)` and :bdg-primary:`Particle-Picking (eval)` blocks
+#. **Pattern minning** uses the :bdg-secondary:`MiLoPYP (train)` and :bdg-secondary:`MiLoPYP (eval)` blocks 
+#. **Position refinement** uses the :bdg-secondary:`Particle-Picking (train)` and :bdg-secondary:`Particle-Picking (eval)` blocks
 
 Here is an example of how the workflow looks in the project view (relevant blocks are highlighted in blue):
 
@@ -38,7 +38,7 @@ For a local installation on macOS, for example, follow these steps:
 Data pre-processing
 ^^^^^^^^^^^^^^^^^^^
 
-Since ``MiLoPYP`` operates on reconstructed tomograms, you first need to pre-process your tilt-series using the :bdg-primary:`Pre-processing` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
+Since ``MiLoPYP`` operates on reconstructed tomograms, you first need to pre-process your tilt-series using the :bdg-secondary:`Pre-processing` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
 
 Pattern mining (training)
 -------------------------
@@ -53,7 +53,7 @@ To train the mining/exploration module:
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-#. Once the run completes, navigate to the :bdg-primary:`MiLoPYP (train)` block to monitor the training metrics
+#. Once the run completes, navigate to the :bdg-secondary:`MiLoPYP (train)` block to monitor the training metrics
 
 Pattern mining (evaluation)
 ---------------------------
@@ -66,7 +66,7 @@ The trained model can now be evaluated to visualize the results:
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-#. Once the run completes, navigate to the :bdg-primary:`MiLoPYP (eval)` block to visualize the embedding and the cluster labels
+#. Once the run completes, navigate to the :bdg-secondary:`MiLoPYP (eval)` block to visualize the embedding and the cluster labels
 
 .. figure:: ../images/milopyp_eval.webp
     :alt: MiLoPYP evaluation
@@ -79,16 +79,16 @@ There are two ways to select target positions to train the refinement module:
 Option A: Manual cluster selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This option only requires specifying a list of cluster numbers as displayed in the **Class Labels** panel, and can be done within ``nextPYP`` without running any external tools (see Step 4 below)
+This option only requires specifying a list of cluster numbers as displayed in the **Class Labels** panel, and can be done within ``nextPYP`` without running any external tools
 
 Option B: Interactive target selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This option requires running the program `Phoenix-Arize <https://docs.arize.com/phoenix>`_ to interactively select locations of interest:
 
-* Navigate to the :bdg-primary:`MiLoPYP (eval)` block and download the file ***_milo.tbz**
+* Navigate to the :bdg-secondary:`MiLoPYP (eval)` block and download the file ``*_milo.tbz``
 
-* Open a terminal in your local machine, decompress the ***_milo.tbz** file, and run Phoenix:
+* Open a terminal in your local machine, decompress the ``*_milo.tbz`` file, and run Phoenix:
 
 .. code-block:: bash
 
@@ -134,7 +134,7 @@ With Phoenix now running:
 
     By default, Phoenix's web server runs on port 7000. If that port is not available on your computer, you can specify a custom one using ``phoenix_visualization.py``'s ``--port`` option, for example, ``phoenix_visualization.py --input interactive_info_parquet.gzip --port 8000``. In this case, you will need to specify the same port number when running the http.server, for example, ``python -m http.server 8000``.
 
-* Go back to ``nextPYP`` and navigate to the :bdg-primary:`MiLoPYP (eval)` block
+* Go back to ``nextPYP`` and navigate to the :bdg-secondary:`MiLoPYP (eval)` block
 
 * Click on the **Upload** button :fa:`upload`, browse to the location of the ``.parquet`` file you exported from Phoenix, and upload the file
 
@@ -147,7 +147,7 @@ Particle refinement (training)
 
 Now that we have identified our targets of interest, we will use them to train the refinement module:
 
-* Click on :guilabel:`MiLoPYP Particles` (output of the :babdg-secondarydge:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle-Picking (train)`
+* Click on :guilabel:`MiLoPYP Particles` (output of the :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle-Picking (train)`
 
 * **Option A**: From the ``Coordinates for training`` menu select "class labels from MiLoPYP" and specify a comma separated list of classes using the class IDs displayed in the **Class Labels** panel
 
@@ -172,7 +172,7 @@ The last step is to evaluate the model and obtain the final particle positions o
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-#. Once the run completes, navigate to the :bdg-primary:`Particle-Picking (eval)` block to inspect the particle picking results
+#. Once the run completes, navigate to the :bdg-secondary:`Particle-Picking (eval)` block to inspect the particle picking results
 
 The resulting set of particles can be used for 3D refinement using the :bdg-secondary:`Particle refinement` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
 

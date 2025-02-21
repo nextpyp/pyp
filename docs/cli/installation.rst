@@ -5,7 +5,7 @@ Installation
 Supported operating systems
 ---------------------------
 
-``PYP`` has been tested and works on the following operating systems:
+``PYP`` is the command line interface (CLI) of ``nextPYP`` and has been tested and works on the following operating systems:
 
 * `Rocky Linux 8.6 <https://docs.rockylinux.org/release_notes/8_6>`_
 * `CentOS 7 <https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2009>`_

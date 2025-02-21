@@ -4,7 +4,7 @@ Workflows
 
 ``nextPYP`` supports the use of pre-defined sequences of blocks, called **Workflows**. 
 
-The program comes with workflows for the :doc:`Single-particle tutorial<../tutorials/spa_empiar_10025>`, the :doc:`Tomography tutorial<../tutorials/tomo_empiar_10164>` and the :doc:`Classification tutorial<../tutorials/tomo_empiar_10304>`.
+The program comes with pre-loaded workflows for the :doc:`Single-particle tutorial<../tutorials/spa_empiar_10025>`, the :doc:`Tomography tutorial<../tutorials/tomo_empiar_10164>` and the :doc:`Classification tutorial<../tutorials/tomo_empiar_10304>`.
 
 Import a workflow
 -----------------

@@ -4,8 +4,8 @@ Filter micrographs/tilt-series
 
 ``nextPYP`` allows users to select a subset of micrographs or tilt-series for further processing through the use of **Filters**.
 
-Step 1: Create a filter
------------------------
+Create a filter
+---------------
 
 - Click inside the :bdg-secondary:`Pre-processing` block and go to the **Table** view.
 
@@ -27,10 +27,10 @@ Step 1: Create a filter
 .. tip::
     - You can create additional filters by providing a different name and clicking :bdg-primary:`Save`.
     - Saved filters can be retrieved by clicking :bdg-primary:`Load` and selecting the name of the filter from the list.
-    - Once a filter is loaded, it can be edited or deleted by clicking :bdg-primary:`Delete` (this operation cannot be undone).
+    - Once a filter is loaded, it can be edited, or deleted by clicking :bdg-primary:`Delete` (this operation cannot be undone).
 
-Step 2: Apply the filter
-------------------------
+Apply the filter
+----------------
 
 - Create a new refinement block downstream from the :bdg-secondary:`Pre-processing` block. Select the name of the desired filter from the **Filter micrographs** or **Filter tilt-series** dropdown menu, and click :bdg-primary:`Save`. When you execute the :bdg-secondary:`Particle refinement` block, only the micrographs (or tilt-series) selected by the filter will be used for the processing downstream.
 
