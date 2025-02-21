@@ -147,7 +147,7 @@ forwarded_tabs = [ "data", "scope", "movie" ]
 
 [blocks.tomo_coarse_refine]
 name = "TOMO Coarse Refinement"
-description = "3D refinement and constrained classification"
+description = "3D refinement and classification"
 tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "dose_weighting", "denoise", "export", "slurm" ]
 
 [blocks.tomo_drgn_vae]
@@ -2888,7 +2888,7 @@ default = "none"
 
 [tabs.tomo_spk.rad]
 name = "Particle radius (A)"
-description = "Size to use for particle detection"
+description = "Particle size to use for detection"
 type = "float"
 default = 0
 condition = { arg="method", value=[ "none", "auto", "import", "manual", "pyp-eval" ] }
@@ -3160,10 +3160,17 @@ condition = { arg="method", value="virions" }
 # template matching
 [tabs.tomo_pick.pytom_template]
 name = "Template"
-description = "Should match the contrast of the tomogram (if tomogram has black ribosomes, reference should be black)"
+description = "Should match the contrast of the particles in the tomograms"
 type = "path"
 path = { type="files" }
 input = { type="initialModel" }
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_template_size]
+name = "Box size (binned voxels)"
+description = "Reshape template into this size"
+type = "int"
+default = 0
 condition = { arg="method", value="pytom" }
 
 [tabs.tomo_pick.pytom_template_invert]
@@ -3171,6 +3178,14 @@ name = "Invert"
 description = "Reverse template contrast"
 type = "bool"
 default = false
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_tomogram_ctf_model]
+name = "Tomogram CTF correction"
+description = "Method used to correct CTF during tomogran reconstruction"
+type = "enum"
+enum = { none="none", phase-flip="phase-flip" }
+default = "none"
 condition = { arg="method", value="pytom" }
 
 [tabs.tomo_pick.pytom_mask_sigma]
@@ -3189,7 +3204,7 @@ condition = { arg="method", value="pytom" }
 
 [tabs.tomo_pick.pytom_angular_search]
 name = "Angular search"
-description = "Override angular search calculation from the particle diameter. Angle will be used as the maximum for the linear search and for the mean angle difference from healpix"
+description = "Override angular search calculation from the particle diameter"
 type = "float"
 default = 0
 condition = { arg="method", value="pytom" }
@@ -3219,11 +3234,11 @@ condition = { arg="method", value="pytom" }
 name = "Random phase correction"
 description = "Run template matching simultaneously with a phase randomized version of the template"
 type = "bool"
-default = true
+default = false
 condition = { arg="method", value="pytom" }
 
 [tabs.tomo_pick.pytom_volume_split]
-name = "Defocus handedness"
+name = "Split volume (x y z)"
 description = "Split volume for the search (useful if volume does not fit into GPU memory. Format is x y z, e.g. 1 2 1"
 type = "str"
 default = ""
@@ -3260,7 +3275,7 @@ condition = { arg="method", value="pytom" }
 
 [tabs.tomo_pick.pytom_search_z]
 name = "Search Z (binned voxels)"
-description = "Start and end limits of search along the z-axis, e.g. 10 490"
+description = "Start and end limits of search along the z-axis, e.g. 10 215"
 type = "str"
 default = ""
 condition = { arg="method", value="pytom" }
@@ -3290,7 +3305,7 @@ condition = { arg="method", value="pytom" }
 
 [tabs.tomo_pick.pytom_number_of_false_positives]
 name = "Number of false positives"
-description = "Higher values increase the particle recall at the expense of more false positives. Value can also be set between 0 and 1 to make the cut-off more restrictive"
+description = "Higher values increase particle recall at the expense of more false positives. Values between 0 and 1 make the cutoff more restrictive"
 type = "float"
 default = 1
 condition = { arg="method", value="pytom" }
@@ -3317,6 +3332,27 @@ type = "bool"
 default = false
 condition = { arg="method", value="pytom" }
  
+[tabs.tomo_pick.pytom_save_scores]
+name = "Save scores"
+description = "Save score volumes to pytom/ directory (allows re-adjusting cutoff without recalculating scores)"
+type = "bool"
+default = true
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_use_existing_scores]
+name = "Use existing scores, if available"
+description = "This allows tweaking the cutoff without recalculating the scores"
+type = "bool"
+default = true
+condition = { arg="method", value="pytom" }
+
+[tabs.tomo_pick.pytom_debug]
+name = "Save intermediate files"
+description = "Save json file and angles volume to pytom/ folder for debugging"
+type = "bool"
+default = false
+condition = { arg="method", value="pytom" }
+
 [tabs.tomo_ext]
 _name = "Particle extraction"
 _description = "Sub-tomogram extraction parameters"
@@ -4509,7 +4545,7 @@ hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceMicrographShifts]
 name = "Translation range (A)"
-description = "Tolerance to use for translations"
+description = "Tolerance to use for micrograph shifts"
 type = "float"
 default = 100.0
 condition = { arg="refine_micrographs", value="true" }
@@ -4541,7 +4577,7 @@ hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesPhi]
 name = "Phi range (degrees)"
-description = "Tolerance to use for particle Phi angle"
+description = "Tolerance to use for particle Phi angle (in-plane rotation)"
 type = "float"
 default = 30.0
 condition = { arg="refine_particles", value="true" }
@@ -4565,7 +4601,7 @@ hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesShifts]
 name = "Translation range (A)"
-description = "Tolerance to use for micrograph shifts"
+description = "Tolerance to use for particle translations"
 type = "float"
 default = 20.0
 condition = { arg="refine_particles", value="true" }
