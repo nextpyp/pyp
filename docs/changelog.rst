@@ -10,6 +10,31 @@ Changelog
      - :fa:`plus-square` Improvement
      - :fa:`bug` Bug fix
 
+v0.7.1
+------
+
+.. nextpyp:: Released 2/26/2025
+   :collapsible: open
+   
+   :fa:`star` New features
+
+     - New blocks to run :doc:`molecular pattern mining and particle localization<guide/milopyp>` (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
+
+     - New block architecture with dedicated training and evaluation blocks facilitates the execution of neural network-based operations.
+
+     - New dedicated suite of blocks for tomography particle picking that is more intuitive and decoupled from other pre-processing operations.
+
+    :fa:`plus-square` Improvements
+
+       - New block architecture with dedicated training and evaluation blocks facilitates the execution of neural network-based operations.
+
+       - New dedicated suite of blocks for tomography particle picking that is more intuitive and decoupled from other pre-processing operations.
+
+   :fa:`star` Bug fixes
+
+      - New block architecture with dedicated training and evaluation blocks facilitates the execution of neural network-based operations.
+
+      - New dedicated suite of blocks for tomography particle picking that is more intuitive and decoupled from other pre-processing operations.
 
 v0.7.0
 ------
@@ -17,49 +42,50 @@ v0.7.0
 .. nextpyp:: Released 2/26/2025
    :collapsible: open
    
+   :fa:`star` New features
    :fa:`star` New blocks to run :doc:`molecular pattern mining and particle localization<guide/milopyp>` (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
 
    :fa:`star` New block architecture with dedicated training and evaluation blocks facilitates the execution of neural network-based operations.
 
    :fa:`star` New dedicated suite of blocks for tomography particle picking that is more intuitive and decoupled from other pre-processing operations.
 
-   :fa:`star` 3D template-search particle picking using `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_.
+   :fa:`star` 3D particle picking using template-search as implemented in `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_.
 
    :fa:`star` 3D size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
 
-   :fa:`star` 3D segmentation of tomograms using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_.
+   :fa:`star` 3D segmentation of tomograms using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_(evaluation only).
 
-   :fa:`star` Tomogram denosing using `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ (training and evaluation)).
+   :fa:`star` Tomogram denosing using `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ (training and evaluation).
 
    :fa:`star` Tomogram denosing using `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ (training and evaluation).
 
-   :fa:`star` 3D continuous heterogneity analysis using `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_.
+   :fa:`star` New blocks to run continuous heterogeneity analysis using `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_.
 
-   :fa:`star` New ab-initio refinement strategy using constrained single-particle tomography to determine structures de novo.
+   :fa:`star` New ab-initio refinement strategy using constrained single-particle tomography to determine structures *de novo*.
 
    :fa:`star` Beam-tilt refinement and correction for single-particle and tomography pipelines.
 
-   :fa:`star` Use multiple GPUs to run computationally intensive jobs.
+   :fa:`star` Add support for multiple GPUs to run computationally intensive jobs.
 
-   :fa:`star` Standalone mode now also supported in command line interface (CLI) pipeline.
+   :fa:`star` Standalone mode is now also supported in the :doc:`command line interface (CLI)<cli/installation>` pipeline.
 
-   :fa:`star` nextPYP can now submit slurm jobs using individual OS user accounts! This allows users in the same instance of the web server to run jobs using their own linux accounts.
+   :fa:`star` nextPYP can now submit slurm jobs using individual OS user accounts. This allows users in the same instance of the web server to run jobs using their own linux accounts and permissions.
 
-   :fa:`star` New system of *cluster templates* provides more flexibility when submitting jobs to a SLURM cluster.
+   :fa:`star` New system of :doc:`cluster templates<reference/templates>` provides more flexibility when submitting jobs to a SLURM cluster.
 
    :fa:`star` Import tilt-series alignments obtained with external programs in IMOD format (\*.xf and \*.tlt files).
 
    :fa:`star` Export 3D particle coordinates in IMOD format to use in external programs (sva/\*.spk files).
 
-   :fa:`star` New option to export particle stacks for use in external programs (plenty of storage required!).
+   :fa:`star` New option to export particle stacks for use in external programs (using this option sacrifices storage savings).
 
    :fa:`star` Store refinement metadata in cisTEM's new binary format for 2x faster refinement and classification.
 
    :fa:`star` Automatic density-based shape-masking during 3D refinement.
 
-   :fa:`star` Add option to save mrc files in 16-bit precision to enable 50% storage savings (activated by default).
+   :fa:`star` Add option to save `*.mrc` files in 16-bit precision to enable 50% storage savings (enabled by default).
 
-   :fa:`star` Select individual blocks to run from the Jobs menu using a single click ("Only" option).
+   :fa:`star` Select individual blocks to run from the **Jobs** menu using a single click ("Only" option).
 
    :fa:`star` New theme for documentation with expanded tutorials, user and configuration guides.
 
