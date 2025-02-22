@@ -4951,7 +4951,7 @@ default = "None"
 condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_amp]
-name = "Use mixed_precision"
+name = "Use mixed precision"
 description = "Use mixed-precision training"
 type = "bool"
 default = false
@@ -5913,7 +5913,7 @@ advanced = true
 hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.tomodrgn_train_amp]
-name = "Use mixed_precision"
+name = "Use mixed precision"
 description = "Use mixed-precision training"
 type = "bool"
 default = false
@@ -6370,18 +6370,11 @@ advanced = true
 condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.amp]
-name = "Use mixed_precision"
+name = "Use mixed precision"
 description = "Use mixed-precision training"
 type = "bool"
 default = false
 advanced = true
-condition = {arg="skip", value="false"}
-
-[tabs.tomodrgn_vae_train.eval_vol]
-name = "Generate large ensemble of volumes"
-description = "Run tomodrgn eval_vol"
-type = "bool"
-default = false
 condition = {arg="skip", value="false"}
 
 # convergence_vae
