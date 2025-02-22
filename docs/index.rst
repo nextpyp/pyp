@@ -43,16 +43,17 @@
    guide/denoising
    guide/segmentation
    guide/chimerax_artiax
+   guide/workflows
 
 .. toctree::
-   :caption: Reference
+   :caption: Setup
    :hidden:
    :maxdepth: 2
 
    reference/admin
    reference/computing
    reference/config
-   reference/workflows
+   reference/templates
 
 .. toctree::
    :caption: CLI

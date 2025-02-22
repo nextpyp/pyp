@@ -10,26 +10,6 @@ Changelog
      - :fa:`plus-square` Improvement
      - :fa:`bug` Bug fix
 
-..
-   :fa:`star` Add support for multiple GPUs (currently only used by MotionCor, AreTomo, IsoNet and cryoCARE).
-
-   :fa:`star` Add wrappers for running `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_ for continuous variability analysis.
-
-   :fa:`star` Add wrapper for running `cryoDRGN <https://github.com/ml-struct-bio/cryodrgn>`_ and `cryoDRGN-ET <https://github.com/ml-struct-bio/cryodrgn>`_ for continuous variability analysis.
-
-   :fa:`star` Add wrappers for running `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ for segmenting tomograms.
-
-   :fa:`star` Add wrappers for running `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ for denoising tomograms.
-
-   :fa:`star` Add wrappers for running `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ for denoising tomograms.
-
-   :fa:`star` nextPYP can now submit slurm jobs using individual OS user accounts.
-
-   :fa:`star` Implement ab-initio refinement strategy for tomography pipeline.
-
-   :fa:`star` Add support for beam-tilt refinement and correction.
-
-   :fa:`star` Wrapper for running `CTFFIND5 <https://github.com/GrigorieffLab/ctffind5_manuscript>`_.
 
 v0.7.0
 ------
@@ -37,13 +17,35 @@ v0.7.0
 .. nextpyp:: Released 2/26/2025
    :collapsible: open
    
-   :fa:`star` New blocks to run molecular pattern mining and particle localization (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
+   :fa:`star` New blocks to run :doc:`molecular pattern mining and particle localization<guide/milopyp>` (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
 
-   :fa:`star` New block architecture with dedicated training and evaluation blocks for running neural network-based operations.
+   :fa:`star` New block architecture with dedicated training and evaluation blocks facilitates the execution of neural network-based operations.
 
-   :fa:`star` New dedicated suite of blocks for tomography particle picking (decoupled from other pre-processing operations).
+   :fa:`star` New dedicated suite of blocks for tomography particle picking that is more intuitive and decoupled from other pre-processing operations.
+
+   :fa:`star` 3D template-search particle picking using `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_.
 
    :fa:`star` 3D size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
+
+   :fa:`star` 3D segmentation of tomograms using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_.
+
+   :fa:`star` Tomogram denosing using `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ (training and evaluation)).
+
+   :fa:`star` Tomogram denosing using `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ (training and evaluation).
+
+   :fa:`star` 3D continuous heterogneity analysis using `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_.
+
+   :fa:`star` New ab-initio refinement strategy using constrained single-particle tomography to determine structures de novo.
+
+   :fa:`star` Beam-tilt refinement and correction for single-particle and tomography pipelines.
+
+   :fa:`star` Use multiple GPUs to run computationally intensive jobs.
+
+   :fa:`star` Standalone mode now also supported in command line interface (CLI) pipeline.
+
+   :fa:`star` nextPYP can now submit slurm jobs using individual OS user accounts! This allows users in the same instance of the web server to run jobs using their own linux accounts.
+
+   :fa:`star` New system of *cluster templates* provides more flexibility when submitting jobs to a SLURM cluster.
 
    :fa:`star` Import tilt-series alignments obtained with external programs in IMOD format (\*.xf and \*.tlt files).
 
@@ -58,6 +60,8 @@ v0.7.0
    :fa:`star` Add option to save mrc files in 16-bit precision to enable 50% storage savings (activated by default).
 
    :fa:`star` Select individual blocks to run from the Jobs menu using a single click ("Only" option).
+
+   :fa:`star` New theme for documentation with expanded tutorials, user and configuration guides.
 
    :fa:`plus-square` More efficient and robust handling of large single-particle and tomography datasets.
 
