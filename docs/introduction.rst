@@ -9,11 +9,11 @@ Main features
 -------------
 - **Ease-of-use**: user-friendly, fully-featured web-based GUI with an intuitive block-based interface
 - **All-in-one**: convert raw cryo-EM/ET data into high-resolution structures using a single application
-- **State-of-the-art results**: advanced refinement and classification methods achieve higher-resolution
-- **Particle picking suites**: cellular content mining and accurate particle localization in 2D and 3D
+- **Particle picking suite**: cellular content mining and accurate particle localization in 2D and 3D
+- **High-resolution**: advanced refinement and classification methods achieve state-of-the-art results
 - **Scalability**: small storage footprint and distributed computing allows analysis of large datasets
 - **On-the-fly processing**: real-time analysis of micrographs and tilt-series during data acquisition
-- **Portability**: use of containers to ensure reproducibility, simplify installation and administration
+- **Portability**: use of containers ensures reproducibility, simplifies installation and administration
 - **Interoperability**: import/export metadata in multiple formats to interface with external programs
 
 See the :doc:`Changelog<changelog>` for the **latest features**.

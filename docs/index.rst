@@ -28,7 +28,7 @@
    Classification<tutorials/tomo_empiar_10304>
    Single-particle session<tutorials/stream_spr>
    Tomography session<tutorials/stream_tomo>
-   Import/Export<tutorials/import_export>
+   Import/export<tutorials/import_export>
 
 .. toctree::
    :caption: User Guide
@@ -52,7 +52,6 @@
    reference/admin
    reference/computing
    reference/config
-   reference/known-issues
    reference/workflows
 
 .. toctree::
@@ -68,22 +67,11 @@
    cli/tomo_import_export
 
 .. toctree::
-   :caption: Changelog
-   :hidden:
-   :maxdepth: 2
-
-   changelog
- 
-.. toctree::
-   :caption: License
-   :hidden:
-   :maxdepth: 2
-
-   license
-   
-.. toctree::
-   :caption: About
+   :caption: Help
    :hidden:
    :maxdepth: 2
 
    about
+   known-issues
+   license
+   changelog

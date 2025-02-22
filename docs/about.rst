@@ -1,3 +1,13 @@
+=====
+About
+=====
+
+Getting help
+------------
+
+Visit GitHub's `discussion board <https://github.com/orgs/nextpyp/discussions>`_ to post questions and follow discussions
+
+
 Developers
 ----------
 
