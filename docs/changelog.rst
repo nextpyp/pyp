@@ -2,14 +2,6 @@
 Changelog
 =========
 
-.. list-table:: **Key**
-   :header-rows: 0
-   :align: left
-
-   * - :fa:`star` New feature
-     - :fa:`plus-square` Improvement
-     - :fa:`bug` Bug fix
-
 v0.7.0
 ------
 
