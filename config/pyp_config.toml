@@ -3105,8 +3105,7 @@ name = "Randomize particle rotations"
 description = "Randomize particle orientations during extraction to reduce mising wegde effects"
 type = "bool"
 default = true
-condition = { arg="method", value=["auto","import","manual","pyp-eval"] }
-hidden = [ "tomo_picking" ]
+condition = { arg="method", value=["auto","import","manual","pytom"] }
 
 [tabs.tomo_pick.vir_rad]
 name = "Virion radius (A)"

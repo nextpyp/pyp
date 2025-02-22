@@ -2206,7 +2206,7 @@ EOF
                     result = np.dot(normX_m, np.dot(normZ_m, vector))
                     # result should be ( 0,0,1 )
                     logger.info("Vector after normZ & normX rotation is ", result)
-            elif parameters['tomo_spk_rand']:
+            elif parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"] or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]:
                 # random normx normz, normy will be changed during merge
                 normX = 360 * (random.random() - 0.5)
                 normZ = 360 * (random.random() - 0.5)

@@ -971,7 +971,11 @@ def generate_list_of_all_subvolumes(parameters):
                 # print vector
                 vector[0] = str(count)
                 # randomize phi angle in +/- 180
-                if parameters["tomo_vir_detect_rand"] or parameters["tomo_spk_rand"]:
+                if  ( 
+                     parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
+                     or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
+                     or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]
+                ):
                     vector[10] = "%.4f" % (360 * (random.random() - 0.5))
                 vector[-1] = os.getcwd() + "/sva/" + vector[-1]
                 f.write("\t".join([v for v in vector]) + "\n")
