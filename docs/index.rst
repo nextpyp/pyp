@@ -41,6 +41,7 @@
    guide/picking3d
    guide/milopyp
    guide/denoising
+   guide/segmentation
    guide/chimerax_artiax
 
 .. toctree::

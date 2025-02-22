@@ -1,5 +1,5 @@
 ===================
-3D Particle picking
+3D particle picking
 ===================
 
 ``nextPYP`` provides a suite of methods for 3D particle picking that includes size-based, geometry-based, template-search, and neural network-based methods. It also features an interactive interface to pick particles manually and import coordinates from external programs.

@@ -44,124 +44,164 @@ Single-particle projects and tomography projects have similar block types. A lis
     .. nextpyp:: :fa:`layer-group` Import
 
       **Description**: Import movie frames or micrographs in MRC, DM4, TIF, or EER format.
+      
       **Input**: None
+      
       **Output**: ``Movies``
 
     .. nextpyp:: :fa:`chart-bar` Pre-processing
   
       **Description**: Movie frame alignment, CTF estimation, and particle picking.
+      
       **Input**: ``Movies``
+      
       **Output**: ``Particles``
 
     .. nextpyp:: :fa:`dot-circle` Particle refinement
 
       **Description**: Particle alignment, classification and per-particle CTF refinement.
+      
       **Input**: ``Particles``
+      
       **Output**: ``Particles``
 
     .. nextpyp:: :fa:`filter` Particle filtering
 
       **Description**: Removal of bad particles from downstream analysis.
+      
       **Input**: ``Particles``
+      
       **Output**: ``Particles``
 
     .. nextpyp:: :fa:`film` Movie refinement
 
       **Description**: Per-particle movie frame alignment and dose weighting.
+      
       **Input**: ``Particles`` or ``Frames``
+      
       **Output**: ``Frames``
 
     .. nextpyp:: :fa:`crop` Create mask
 
       **Description**: Creation of shape masks.
+      
       **Input**: ``Particles`` or ``Frames``
+      
       **Output**: ``None``
 
     .. nextpyp:: :fa:`star` Post-processing
 
       **Description**: Masking, map sharpening, and Fourier Shell Correlation (FSC) plots.
+      
       **Input**: ``Particles`` or ``Frames``
+      
       **Output**: ``None``
 
   .. md-tab-item:: Tomography
 
     .. nextpyp::  :fa:`cubes` Data import
 
-      :Decription: Import raw tilt-series data (with or without frames) in MRC, DM4, TIF, or EER format.
-      :Input: None
-      :Output: ``Tilt-series``
+      **Decription**: Import raw tilt-series data (with or without frames) in MRC, DM4, TIF, or EER format.
+      
+      **Input**: None
+      
+      **Output**: ``Tilt-series``
 
     .. nextpyp:: :fa:`chart-bar` Pre-processing (legacy)
 
-      :Description: Frame and tilt-series alignment, tomogram reconstruction, CTF estimation, and particle picking.
-      :Input: ``Tilt-series``
-      :Output: ``Particles``
+      **Description**: Frame and tilt-series alignment, tomogram reconstruction, CTF estimation, and particle picking.
+      
+      **Input**: ``Tilt-series``
+      
+      **Output**: ``Particles``
 
     .. nextpyp:: :fa:`chart-bar` Pre-processing
 
-      :Description: Frame and tilt-series alignment, tomogram reconstruction, and CTF estimation.
-      :Input: ``Tilt-series``
-      :Output: ``Tomograms``
+      **Description**: Frame and tilt-series alignment, tomogram reconstruction, and CTF estimation.
+      
+      **Input**: ``Tilt-series``
+      
+      **Output**: ``Tomograms``
 
     .. nextpyp:: :fa:`crosshairs` Particle-Picking
 
-      :Description: Import, manual, size-based, virions, or template-search particle picking.
-      :Input: ``Tomograms``
-      :Output: ``Particles``
+      **Description**: Import, manual, size-based, virions, or template-search particle picking.
+      
+      **Input**: ``Tomograms``
+      
+      **Output**: ``Particles``
 
     .. nextpyp:: :fa:`search` MiLoPYP (train)
 
-      :Description: Train neural network for pattern mining.
-      :Input: ``Tomograms``
-      :Output: ``MiLoPYP Model``
+      **Description**: Train neural network for pattern mining.
+      
+      **Input**: ``Tomograms``
+      
+      **Output**: ``MiLoPYP Model``
 
     .. nextpyp:: :fa:`search` MiLoPYP (eval)
 
-      :Description: Evaluate neural network model for pattern mining.
-      :Input: ``MiLoPYP Model``
-      :Output: ``MiLoPYP Particles``
+      **Description**: Evaluate neural network model for pattern mining.
+      
+      **Input**: ``MiLoPYP Model``
+      
+      **Output**: ``MiLoPYP Particles``
 
     .. nextpyp:: :fa:`crosshairs` Particle-Picking (train)
 
-      :Description: Train neural network for particle picking.
-      :Input: ``Particles``, ``MiLoPYP Particles``
-      :Output: ``Particles Model``
+      **Description**: Train neural network for particle picking.
+      
+      **Input**: ``Particles``, ``MiLoPYP Particles``
+      
+      **Output**: ``Particles Model``
 
     .. nextpyp:: :fa:`crosshairs` Particle-Picking (eval)
 
-      :Description: Evaluate neural network model for particle picking.
-      :Input: ``Tomograms``
-      :Output: ``Particles``
+      **Description**: Evaluate neural network model for particle picking.
+      
+      **Input**: ``Tomograms``
+      
+      **Output**: ``Particles``
 
     .. nextpyp:: :fa:`dot-circle` Particle refinement
 
-      :Description: Constrained particle alignment and classification, region-based refinement, and per-particle CTF refinement
-      :Input: ``Particles``
-      :Output: ``Particles``
+      **Description**: Constrained particle alignment and classification, region-based refinement, and per-particle CTF refinement
+      
+      **Input**: ``Particles``
+      
+      **Output**: ``Particles``
 
     .. nextpyp:: :fa:`filter` Particle filtering
 
-      :Description: Removal of bad particles from downstream analysis.
-      :Input: ``Particles``
-      :Output: ``Particles``
+      **Description**: Removal of bad particles from downstream analysis.
+      
+      **Input**: ``Particles``
+      
+      **Output**: ``Particles``
 
     .. nextpyp:: :fa:`film` Movie refinement
 
-      :Description: Per-particle tilt movie refinement and reconstruction, data-driven dose-weighting.
-      :Input: ``Particles`` or ``Frames``
-      :Output: ``Frames``
+      **Description**: Per-particle tilt movie refinement and reconstruction, data-driven dose-weighting.
+      
+      **Input**: ``Particles`` or ``Frames``
+      
+      **Output**: ``Frames``
 
     .. nextpyp:: :fa:`crop` Create mask
 
-      :Description: Creation of shape mask.
-      :Input: ``Particles`` or ``Frames``
-      :Output: ``None``
+      **Description**: Creation of shape mask.
+      
+      **Input**: ``Particles`` or ``Frames``
+      
+      **Output**: ``None``
 
     .. nextpyp:: :fa:`star` Post-processing
 
-      :Description: Masking, map sharpening and Fourier Shell Correlation (FSC) plots.
-      :Input: ``Particles`` or ``Frames``
-      :Output: ``None``
+      **Description**: Masking, map sharpening and Fourier Shell Correlation (FSC) plots.
+      
+      **Input**: ``Particles`` or ``Frames``
+      
+      **Output**: ``None``
 
 
 Operations

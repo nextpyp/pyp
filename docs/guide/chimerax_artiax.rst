@@ -1,23 +1,23 @@
-===============
-ChimeraX/ArtiaX
-===============
+==========================
+Map particles to tomograms
+==========================
 
-``nextPYP`` produces all the necessary files to visualize a refined map in the original tomogram positions using ChimeraX/ArtiaX.
+``nextPYP`` produces all the necessary files to visualize a refined map back into the original tomograms using the `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_ plugin for `ChimeraX <https://www.cgl.ucsf.edu/chimerax/>`_
 
 Download files
 --------------
 
-You will need to download the following files to your local computer:
+First, you will need to download the following files to your local computer:
 
 - Tomogram reconstruction (``*.rec``)
 - Refined map (``*.mrc``)
 - Corresponding particle orientations (``*.star``)
 
-You can get these files as follows:
+You can get these files from ``nextPYP`` as follows:
 
-- Go to the Pre-processing block, click on the **Tilt-series** tab, select a tilt-series and go to the **Reconstruction** tab. Download the ``.rec`` file by clicking on the gray/green badge
-- Go to the Particle refinement block, select the **Reconstruction** tab and select the ``Cropped Map`` option from the dropdown menu
-- In the same Particle refinement block, go the **Metadata** tab, type the name of the tilt-series and click ``Search``. Download the ``.star`` file by clicking on the gray/green badge
+- Go to the :bdg-secondary:`Pre-processing`` block, click on the **Tilt-series** tab, select a tilt-series and go to the **Reconstruction** tab. Download the ``.rec`` file by clicking on the gray/green badge
+- Go to the :bdg-secondary:`Particle refinement` block, select the **Reconstruction** tab and select the ``Cropped Map`` option from the dropdown menu
+- In the same :bdg-secondary:`Particle refinement` block, go the **Metadata** tab, type the name of the tilt-series in the box and click :bdg-primary:`Search`. Download the corresponding ``.star`` file by clicking on the gray/green badge
 
 Display in ChimeraX/ArtiaX
 --------------------------
@@ -26,7 +26,7 @@ Display in ChimeraX/ArtiaX
 - Open the tomogram file ``tilt_series_name.rec``
 - Run the following commands in the ChimeraX shell:
    - ``volume permuteAxes #1 xzy``
-   - ``volume flip #2 axis z`` (this step is only necessary when the dataset has virions)
+   - ``volume flip #2 axis z`` (this step is not always neccessary)
 - Go to the ArtiaX tab and ``Launch`` the plugin
 - In the **Tomograms** section (main ArtiaX panel on the left), select model #3 (permuted z flip) from the ``Add Model`` dropdown menu and click ``Add!``
 - Go to to the ArtiaX options panel on the right, and set the ``Pixel Size`` for the **Current Tomogram** to the binned pixel size (10.8 for the EMPIAR-10164 tutorial) and click ``Apply``
@@ -41,6 +41,9 @@ If everything went well, you should obtain a result similar to this:
 .. figure:: ../images/guide_artiax_10164.webp
     :alt: ArtiaX visualization of HIV1-Gag
 
+    3D view of a tomogram from immature HIV-1 virions from EMPIAR-10164 showing with a high-resolution model of Gag mapped back into the tomogram.
+
 .. tip::
 
-    Depending on the dimensions of the refined map and the number of particles in the tomogram, you may need to downsample the map to make ChimeraX more responsive
+    - Repeat this process for other tilt-series in the dataset
+    - Depending on the dimensions of the refined map and the number of particles in the tomogram, you may need to downsample the map to make ChimeraX more responsive

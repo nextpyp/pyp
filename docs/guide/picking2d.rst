@@ -1,5 +1,5 @@
 ===================
-2D Particle picking
+2D particle picking
 ===================
 
 ``nextPYP`` implements four methods for particle picking within the :bdg-secondary:`Pre-processing` block

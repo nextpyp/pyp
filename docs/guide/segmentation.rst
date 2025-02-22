@@ -5,25 +5,25 @@ Tomogram segmentation
 Closed surfaces
 ---------------
 
-``nextPYP`` segments closed surfaces (such as virions or spherical vescicles) using an energy-based algorithm. Segmentation proceeds in two steps:
+``nextPYP`` can segment *closed* surfaces (such as virions or spherical vescicles) using an energy-based algorithm described in `Bartesaghi et al. (2005) <https://cryoem.cs.duke.edu/node/energy-based-segmentation-of-cryo-em-tomograms/>`_. Segmentation proceeds in two steps:
 
-1. Find centers
-~~~~~~~~~~~~~~~
+Find centers
+~~~~~~~~~~~~
 
-The first step is to locate a marker inside each virion or vescicle using traditional particle picking.
+The first step is to locate a marker inside each virion or vescicle, which can be done using any of the particle picking methods implemented in ``nextPYP``:
 
 * Click on ``Tomograms`` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle Picking,badge-primary`
 
-* Select the desired particle picking algorithm and corresponding parameters, see :doc:`Particle picking<picking3d>`
+* Select the desired particle picking algorithm and corresponding parameters, see :doc:`Particle picking<picking3d>`. The "virion" picking method is especially designed to find the center of spherical virions and estimate their radius (which will be useful later)
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
-* Navigate to the :badge:`Reconstruction,badge-primary` tab to inspect the results of the detection
+* Navigate to the :badge:`Particles,badge-primary` tab to inspect the results of the detection
 
-2. Segment surfaces
-~~~~~~~~~~~~~~~~~~~
+Segment surfaces
+~~~~~~~~~~~~~~~~
 
-Once the location of each virion or vescicle center has been determined, the segmentation can be calculated.
+Once the location of each virion or vescicle center has been determined, the segmentation can be calculated:
 
 * Click on ``Particles`` (output of the :badge:`Particle-Picking,badge-secondary` block) and select :badge:`Segmentation (closed surfaces),badge-primary`
 
@@ -40,11 +40,11 @@ Once the location of each virion or vescicle center has been determined, the seg
 Open surfaces (membrain-seg)
 ----------------------------
 
-``nextPYP`` segments open surfaces using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_:
+``nextPYP`` can also segment *open* surfaces using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_:
 
 * Click on ``Tomograms`` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Segmentation (open surfaces),badge-primary`
 
-* Select the desired parameters for MemBrain-Seg including the location of a pre-trained model
+* Select the desired parameters for MemBrain-Seg, including the location of a pre-trained model (``*.ckpt``) downloadable from `github <https://github.com/teamtomo/membrain-seg>`_
 
 * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
 
@@ -52,4 +52,4 @@ Open surfaces (membrain-seg)
 
 .. note::
 
-    As of now, open surfaces are only used for visual inspection or for processing outside of ``nextPYP``
+    The segmented ``*.mrc`` volumes will be saved in the project directory under the folder ``mrc/`` 
