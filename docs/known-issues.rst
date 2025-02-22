@@ -1,6 +1,14 @@
-============
+Support
+=======
+
+Getting help
+------------
+
+Visit GitHub's `discussion board <https://github.com/orgs/nextpyp/discussions>`_ to post questions and follow discussions
+
+
 Known Issues
-============
+------------
 
 .. nextpyp:: Bad Request error or website doesn't load
     :collapsible: open

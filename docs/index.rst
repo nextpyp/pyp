@@ -71,7 +71,7 @@
    :hidden:
    :maxdepth: 2
 
-   about
    known-issues
-   license
+   about
    changelog
+   license
