@@ -1,8 +1,8 @@
 =======================
-Pattern Mining (MiLoPYP)
+Pattern mining (MiLoPYP)
 =======================
 
-`MiLoPYP <https://nextpyp.app/milopyp/>`_ can be used to map the contents of a set of tomograms, with the goal of identifying targets of interest for sub-tomogram averaging as described in `Huang et al. <https://cryoem.cs.duke.edu/node/milopyp-self-supervised-molecular-pattern-mining-and-particle-localization-in-situ/>`_.
+`MiLoPYP <https://nextpyp.app/milopyp/>`_ can be used to map the contents of a set of tomograms, with the goal of identifying targets of interest for sub-tomogram averaging as described in `Huang et al. (2024) <https://cryoem.cs.duke.edu/node/milopyp-self-supervised-molecular-pattern-mining-and-particle-localization-in-situ/>`_.
 
 The ``MiLoPYP`` workflow in ``nextPYP`` consists of two steps and is implemented using four blocks:
 
@@ -45,7 +45,7 @@ Pattern mining (training)
 
 To train the mining/exploration module:
 
-#. Click on :guilabel:`Tomograms` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`MiLoPYP (train)`
+#. Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`MiLoPYP (train)`
 
 #. Set the training parameters as needed
 
@@ -60,7 +60,7 @@ Pattern mining (evaluation)
 
 The trained model can now be evaluated to visualize the results:
 
-#. Click on :guilabel:`MiLoPYP model` (output of the :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
+#. Click on ``MiLoPYP model`` (output of the :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
 
 #. Select the trained model from the block upstream (``*.pth``), for example, ``model_last_contrastive.pth``. The models will be saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
 
@@ -147,7 +147,7 @@ Particle refinement (training)
 
 Now that we have identified our targets of interest, we will use them to train the refinement module:
 
-* Click on :guilabel:`MiLoPYP Particles` (output of the :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle-Picking (train)`
+* Click on ``MiLoPYP Particles`` (output of the :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle-Picking (train)`
 
 * **Option A**: From the ``Coordinates for training`` menu select "class labels from MiLoPYP" and specify a comma separated list of classes using the class IDs displayed in the **Class Labels** panel
 
@@ -164,7 +164,7 @@ Particle refinement (evaluation)
 
 The last step is to evaluate the model and obtain the final particle positions on all tomograms in the dataset:
 
-#. Click on :guilabel:`Particles Model` (output of the :bdg-secondary:`Particle-Picking (train)` block) and select :bdg-primary:`Particle-Picking (eval)`
+#. Click on ``Particles Model`` (output of the :bdg-secondary:`Particle-Picking (train)` block) and select :bdg-primary:`Particle-Picking (eval)`
 
 #. Select the location of the ``Trained model (*.pth)`` using the file browser. The models will be saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
 

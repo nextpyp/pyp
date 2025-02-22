@@ -1,12 +1,12 @@
 ===================
-2D Particle Picking
+2D Particle picking
 ===================
 
-``nextPYP`` implements four types of methods for particle picking within the :bdg-secondary:`Pre-processing` block
+``nextPYP`` implements four methods for particle picking within the :bdg-secondary:`Pre-processing` block
 
-Particle positions are stored as "lists", and multiple lists can be saved for a given dataset
+Particle positions are stored as "lists". Multiple lists can be saved for each :bdg-secondary:`Pre-processing` block
 
-Import Coordinates
+Import coordinates
 ==================
 
 External coordinates can be imported as EMAN box files (``*.box``) or IMOD model files (``*.spk``):
@@ -23,7 +23,7 @@ External coordinates can be imported as EMAN box files (``*.box``) or IMOD model
 
 #. Navigate to the :bdg-secondary:`Pre-processing` block and go to the **Micrographs** tab to confirm that the particles were imported correctly
 
-Manual Picking
+Manual picking
 ==============
 
 ``nextPYP`` provides a convenient UI to pick particles manually:
@@ -32,7 +32,7 @@ Manual Picking
 
 #. Create a new list of particles by entering a name and clicking :bdg-primary:`New`
 
-#. Select particles in the current micrograph by clicking on them
+#. Select particles in the current micrograph by simply clicking on them
 
 #. Navigate to other micrographs in the dataset using the navigation bar and select more particles as needed
 
@@ -48,15 +48,15 @@ Manual Picking
 
 .. tip::
 
-    - Particles can be deleted by right-clicking on the markers
+    - Particles can be deleted by right-clicking on the green markers
     - Particle positions are saved automatically every time a particle is added or deleted
-    - The total number of particles in a dataset is displayed on the top of the page
+    - The total number of particles in a dataset is displayed at the top of the page
     - It is possible to :bdg-primary:`Copy`, :bdg-primary:`Delete`, and :bdg-primary:`Load` lists
 
-Size-Based Picking
+Size-based picking
 ==================
 
-This method selects particle positions based on a target particle size:
+This method selects particles based on their size:
 
 #. Open the settings of the :bdg-secondary:`Pre-processing` block and go to the **Particle detection** tab
 
@@ -68,10 +68,10 @@ This method selects particle positions based on a target particle size:
 
 #. Navigate to the :bdg-secondary:`Pre-processing` block and go to the **Micrographs** tab to inspect the results
 
-Neural-Network Picking
+Neural-network picking
 ======================
 
-Neural-network based methods require an existing list of particles for training a neural network. To pick particles, the trained model is then evaluated on the entire dataset. ``nextPYP`` uses a self-supervised approach that only needs sparsely annotated data. A wrapper for `Topaz <https://github.com/tbepler/topaz>`_ picking is also included. 
+Neural-network based methods require an existing list of particles for training a model. To pick particles, the trained model is then evaluated on the entire dataset. ``nextPYP`` uses a self-supervised approach that only needs sparsely annotated data. A wrapper for `Topaz <https://github.com/tbepler/topaz>`_ picking is also included. 
 
 Training
 ^^^^^^^^
@@ -88,8 +88,8 @@ Training
 
 .. tip::
     
-    - Since training requires a GPU, a GPU partition must be configured in the instance
-    - The trained model(s) are saved in: ``train/YYYYMMDD_HHMMSS/*.training``
+    - Since training runs on the GPU, a standalone GPU-server is required (or GPU partitions must be properly configured in SLURM)
+    - The trained model(s) are saved in the project directory under: ``train/YYYYMMDD_HHMMSS/*.training``
     - Challenging datasets may require the use of more particles for training
 
 Evaluation
@@ -99,7 +99,7 @@ Evaluation
  
 #. Select "pyp-eval" or "topaz-eval" as the particle picking ``Method`` (depending on which method was used for training)
 
-#. Go to the corresponding **Training/Evaluation** tab and specify the location of the trained model (``*.training``)
+#. Go to the corresponding **Training/Evaluation** tab and specify the location of the trained model (``*.training`` file)
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to pick particles on all micrographs
 

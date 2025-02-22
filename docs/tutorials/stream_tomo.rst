@@ -1,6 +1,6 @@
-#####################
-Tomography on-the-fly
-#####################
+##################
+Tomography session
+##################
 
 This tutorial shows how to process tilt-series on-the-fly during data collection. 
 
@@ -14,7 +14,7 @@ This tutorial shows how to process tilt-series on-the-fly during data collection
 
 * **Data pre-processing** consisting of frame alignment, tilt-series alignment, CTF estimation, tomogram reconstruction and particle picking
 
-Each track is displayed in a separate row and has its own **Status** indicator and **Controls** to :bdg-primary:`Start`, :bdg-primary:`Restart`, :bdg-primary:`Clear`, or :bdg-primary:`Stop` the session and to display the **Logs**.
+Each track is displayed in a separate row and has its own **Status** indicator and **Controls** to :bdg-primary:`Start`, :bdg-primary:`Restart`, :bdg-primary:`Clear`, or :bdg-primary:`Stop` the session and display the **Logs**.
 
 Step 1: Create a new session
 ----------------------------
@@ -26,49 +26,53 @@ Step 1: Create a new session
 
   * Start a Tomography session using :bdg-primary:`+ Start Tomography`
 
-  * Give the session a `Name` and assign a `Group` from the dropdown menu (see :doc:`Administration<../reference/admin>` to create and assign users to groups)
+  * Give the session a `Name` and assign a `Group` from the dropdown menu (see :doc:`Administration<../reference/admin>` to create and assign users to groups). *Optional*: change the default folder where the data for the session will be saved
 
   * Go the **Raw data** tab:
 
-    .. tabbed:: Raw data
+    .. md-tab-set::
 
-      * Select the ``Location`` of the raw data by clicking on the icon :fa:`search` and navigating to the folder where the tilts are saved
+      .. md-tab-item:: Raw data
 
-      * Click on the **Gain reference** tab
+        * Select the ``Location`` of the raw data by clicking on the icon :fa:`search` and navigating to the folder where the tilt-series are saved
 
-    .. tabbed:: Gain reference
+        * Click on the **Gain reference** tab
 
-      * Specify the path and parameters for the gain reference
+      .. md-tab-item:: Gain reference
 
-      * Click on the **Microscope parameters** tab
+        * Specify the path and parameters for the gain reference
 
-    .. tabbed:: Microscope parameters
+        * Click on the **Microscope parameters** tab
 
-      * Specify ``Pixel size (A)``, ``Acceleration voltage (kV)``, and the approximate ``Tilt-axis angle (degrees)``
+      .. md-tab-item:: Microscope parameters
 
-      * Click on the **Session settings** tab
+        * Specify ``Pixel size (A)``, ``Acceleration voltage (kV)``, and the approximate ``Tilt-axis angle (degrees)``
 
-    .. tabbed:: Session settings
+        * Click on the **Session settings** tab
 
-      * Set ``Number of tilts`` to the number of tilts in each tilt-series. This parameter tells ``nextPYP`` when a tilt-series is complete and ready to be processed
+      .. md-tab-item:: Session settings
 
-      * Click on the **Frame alignment** tab
+        * Set ``Number of tilts`` to the number of tilts in each tilt-series. This parameter tells ``nextPYP`` when a tilt-series is complete and ready to be processed
 
-    .. tabbed:: Frame alignment
+        * Select a ``Raw data transfer`` method between "move", "copy", or "link". **Warning**: "move" will copy the raw data to the session folder and delete it from the original location!
 
-      * Select ``Single-file tilt-series`` if acquiring tilt-series as a single file. Otherwise, provide the ``Frame pattern`` to let ``nextPYP`` know what files to look for
+        * Click on the **Frame alignment** tab
 
-      * Click on the **Resources** tab
+      .. md-tab-item:: Frame alignment
 
-    .. tabbed:: Resources
+        * Select ``Single-file tilt-series`` if acquiring tilt-series as a single file. Otherwise, provide the ``Frame pattern`` to let ``nextPYP`` know what files to look for
 
-      * Select the number of ``Threads per task``, ``Memory per task``, and other relevant parameters (see :doc:`Computing resources<../reference/computing>`)
+        * Click on the **Resources** tab
+
+      .. md-tab-item:: Resources
+
+        * Select the number of ``Threads per task``, ``Memory per task``, and other relevant parameters (see :doc:`Computing resources<../reference/computing>`)
 
   * Click :bdg-primary:`Save` to save your settings
 
 
-Step 2: Launch the streaming session
-------------------------------------
+Step 2: Launch the session
+--------------------------
 
 .. nextpyp:: Start data pre-processing
   :collapsible: open
@@ -77,17 +81,19 @@ Step 2: Launch the streaming session
 
   * You may stop the daemon at any time using the :bdg-primary:`Cancel` button
 
+  * Monitor storage utilization, data transfer progress, and speed in the **Operation** tab
+
   * To inspect the streaming results, navigate to the **Plots**, **Table**, **Gallery** and **Tilt Series** tabs
 
-Step 3 (optional): Adjust data processing parameters
-----------------------------------------------------
+Step 3 (optional): Change processing parameters
+-----------------------------------------------
 
 .. nextpyp:: Change data processing parameters during a session
   :collapsible: open
 
-  * You can change the data processing settings during a session by going to the **Settings** tab and saving your changes
+  * You can change the data processing settings during a session by going to the **Settings** tab, adjusting parameters as needed, and saving your changes
 
-  * Restart the corresponding daemon tracks for the changes to take effect
+  * Restart the ``Data pre-processing`` daemon track for the changes to take effect
 
 Step 4: Copy or delete a session
 --------------------------------
@@ -95,16 +101,16 @@ Step 4: Copy or delete a session
 .. nextpyp:: Delete or Start a session using settings from an existing session
   :collapsible: open
 
-  * You can delete a session by clicking on the icon :fa:`trash`. This will delete the session and all files produced during pre-processing
+  * You can delete a session by clicking on the icon :fa:`trash`. This will delete the session and all files produced during pre-processing. Running seesions need to be canceled before they can be deleted
 
   * You can create a new session with the same settings as an existing session using the icon :fa:`copy`
 
-Step 5 (optional): Filter tilt-series and export metadata
----------------------------------------------------------
+Step 5 (optional): Filter and export tilt-series
+------------------------------------------------
 
-.. nextpyp:: Filter tilt-series and export to external programs in star format
+.. nextpyp:: Filter tilt-series and export in star format
   :collapsible: open
 
-  * You can filter tilt-series according to different criteria in the **Table** tab. Type a filter name and click :bdg-primary:`Save`. Add and apply filters as needed and click :bdg-primary:`Save` when you are done
+  * Filter tilt-series according to different criteria in the **Table** tab. Type a filter name and click :bdg-primary:`Save`. Add and apply filters as needed and click :bdg-primary:`Save` when you are done
 
-  * Click :bdg-primary:`Export` to export the data in star format. A dialog will appear where you can specify the resources to run the export job. After clicking :bdg-primary:`Export`, a new job will appear in the **Operation** tab and you will be able to check its status and see the location of the exported data by clicking on the icon :fa:`eye`.
+  * Click :bdg-primary:`Export` to export the data in star format. A dialog will appear where you can specify the resource parameters to run the export job. After clicking :bdg-primary:`Export`, a new job will appear in the **Operation** tab and you will be able to check its status and see the location of the exported data by clicking on the icon :fa:`eye`.

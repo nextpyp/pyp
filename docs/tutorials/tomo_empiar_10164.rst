@@ -117,7 +117,7 @@ Step 3: Pre-processing
 .. nextpyp:: Movie frame alignment, and CTF estimation (:fa:`stopwatch` 5 min)
   :collapsible: open
 
-  * Click on :guilabel:`Tilt-series` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
+  * Click on ``Tilt-series`` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
 
     .. figure:: ../images/tutorial_tomo_pre_process_dialog.webp
       :alt: File browser
@@ -212,7 +212,7 @@ Step 4: Virion selection
 .. nextpyp:: Selection of virion centers (:fa:`stopwatch` 1 min)
   :collapsible: open
 
-  * Click on :guilabel:`Tomograms` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
+  * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
   * Go to the **Particle detection** tab:
 
@@ -232,7 +232,7 @@ Step 5: Virion segmentation
 .. nextpyp:: Segment virions using minimal surfaces (:fa:`stopwatch` 1 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
@@ -257,7 +257,7 @@ Step 6: Particle picking
 .. nextpyp:: Select particles from the surface of virions (:fa:`stopwatch` 3 min)
   :collapsible: open
 
-  * Click on :guilabel:`Segmentation (closed)` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
+  * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
 
   * Go to the **Particle detection** tab:
 
@@ -286,7 +286,7 @@ Step 7: Reference-based refinement
 .. nextpyp:: Constrained reference-based particle alignment (:fa:`stopwatch` 8 hr)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of the :bdg-secondary:`Particle-Picking (closed surfaces)` block) and select :bdg-primary:`Particle refinement`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking (closed surfaces)` block) and select :bdg-primary:`Particle refinement`
 
   * Go to the **Sample** tab:
 
@@ -413,7 +413,7 @@ Step 9. Filter particles
 .. nextpyp:: Identify duplicates and particles with low alignment scores (:fa:`stopwatch` 4 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Filter particles`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Filter particles`
 
   * Go to the **Particle filtering** tab:
 
@@ -468,7 +468,7 @@ Step 11. Region-based local refinement (before masking)
 .. nextpyp:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 1 hr)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :bdg-secondary:`Filter particles` block) and select :bdg-primary:`Particle refinement`
+  * Click on ``Particles`` (output of :bdg-secondary:`Filter particles` block) and select :bdg-primary:`Particle refinement`
 
   * Go to the **Sample** tab:
 
@@ -522,7 +522,7 @@ Step 12: Create shape mask
 .. nextpyp:: Use most recent reconstruction to create a shape mask (:fa:`stopwatch` <1 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
+  * Click on ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
 
   * Go to the **Masking** tab:
 
@@ -618,7 +618,7 @@ Step 15: Movie frame refinement
 .. nextpyp:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 3 hr)
   :collapsible: open
 
-  * Click :guilabel:`Particles` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
+  * Click ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
 
   * Go to the **Sample** tab:
 
@@ -712,7 +712,7 @@ Step 17: Map sharpening
 .. nextpyp:: Apply B-factor weighting in frequency space (:fa:`stopwatch` <1 min)
   :collapsible: open
 
-  * Click :guilabel:`Movies` (output of :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
+  * Click ``Movies`` (output of :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
 
   * Go to the **Post-processing** tab:
 

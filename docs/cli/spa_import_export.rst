@@ -1,6 +1,6 @@
 
 =============================
-Single-Particle import/export
+Single-particle import/export
 =============================
 
 Requirements

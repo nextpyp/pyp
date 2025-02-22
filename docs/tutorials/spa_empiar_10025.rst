@@ -122,7 +122,7 @@ Step 3: Pre-processing
 .. nextpyp:: Movie frame alignment, CTF estimation and particle picking (:fa:`stopwatch` 2 min)
   :collapsible: open
 
-  * Click on :guilabel:`Movies` (output of :bdg-secondary:`Single Particle (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
+  * Click on ``Movies`` (output of :bdg-secondary:`Single Particle (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
 
     .. figure:: ../images/tutorial_spa_pre_process_dialog.webp
       :alt: File browser
@@ -190,7 +190,7 @@ Step 4: Reference-based refinement
 .. nextpyp:: Reference-based particle alignment (:fa:`stopwatch` 3 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle refinement`
+  * Click on ``Particles`` (output of :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle refinement`
 
     .. figure:: ../images/tutorial_spa_coarse_dialog.webp
       :alt: File browser
@@ -268,7 +268,7 @@ Step 5: Filter bad particles
 .. nextpyp:: Identify particles with low alignment scores (:fa:`stopwatch` 1 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Particle filtering`
+  * Click on ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Particle filtering`
 
     .. figure:: ../images/tutorial_spa_fine_dialog.webp
       :alt: File browser
@@ -325,7 +325,7 @@ Step 7: Particle refinement
 .. nextpyp:: Reconstruction and additional refinement using 2x binned particles (:fa:`stopwatch` 9 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :bdg-secondary:`Filter particles` block) and select :bdg-primary:`Particle refinement`
+  * Click on ``Particles`` (output of :bdg-secondary:`Filter particles` block) and select :bdg-primary:`Particle refinement`
 
     .. figure:: ../images/tutorial_spa_fine_dialog.webp
       :alt: File browser
@@ -373,7 +373,7 @@ Step 8: Create shape mask
 .. nextpyp:: Use most recent reconstruction to build a shape mask (:fa:`stopwatch` <1 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
+  * Click on ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
 
   * Enter parameter values for the **Masking** tab:
 
@@ -451,7 +451,7 @@ Step 11: Movie frame refinement
 .. nextpyp:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 8 min)
   :collapsible: open
 
-  * Click :guilabel:`Particle set` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
+  * Click ``Particle set`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
 
   * Go to the **Refinement** tab:
 
@@ -531,7 +531,7 @@ Step 13: Map sharpening
 .. nextpyp:: Apply B-bactor weighting in frequency space (:fa:`stopwatch` <1 min)
   :collapsible: open
 
-  * Click :guilabel:`Frames` (output of :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
+  * Click ``Frames`` (output of :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
 
   * Go to the **Post-processing** tab:
 

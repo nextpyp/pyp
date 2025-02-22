@@ -9,7 +9,7 @@ Denoising is done in two phases using the :bdg-secondary:`Denosing (training)` a
 Training
 ~~~~~~~~
 
-* Click on :guilabel:`Tomograms` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Denoising (train)`
+* Click on ```Tomograms` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Denoising (train)`
 
 * Select the desired method and corresponding parameters
 
@@ -26,7 +26,7 @@ Training
 Evaluation
 ~~~~~~~~~~
 
-* Click on :guilabel:`Denoising model` (output of the :bdg-secondary:`Denoising (traiing)` block) and select :bdg-primary:`Denoising (eval)`
+* Click on ``Denoising model`` (output of the :bdg-secondary:`Denoising (traiing)` block) and select :bdg-primary:`Denoising (eval)`
 
 * Select the desired algorithm and corresponding trained model from the block upstream (cryoCARE and IsoNet) or list of pre-trained models (Topaz)
 

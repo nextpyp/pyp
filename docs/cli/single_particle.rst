@@ -1,5 +1,5 @@
 ========================
-Single-Particle tutorial
+Single-particle tutorial
 ========================
 
 This tutorial shows how to process single-particle raw movies from `T20S proteasome (EMPIAR-10025) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a ~3A resolution structure.

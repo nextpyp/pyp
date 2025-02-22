@@ -24,182 +24,162 @@ Each **Block** represents a unit of processing (data import, pre-processing, ref
   :alt: Project view
 
 .. tip::
-  - Blocks can be moved around or organized within the canvas
-  - Multiple blocks can be selected and moved as a set.
+  - Blocks can be moved around and organized within the canvas
+  - Multiple blocks can be selected and moved as a set
 
 Block connectivity
 ------------------
 
 Each block in ``nextPYP`` has inputs and outputs of specific types. Two blocks can be connected only if their input/outputs types are compatible. The program does not allow for incompatible block connections.
 
-Block types
------------
+Types
+-----
 
-Single-particle projects and tomography projects will have slightly differing block types. A list of block types and their corresponding inputs and outputs is given below:
+Single-particle projects and tomography projects have similar block types. A list of block types and corresponding inputs and outputs is given below:
 
 .. md-tab-set::
 
   .. md-tab-item:: Single-particle
 
-    .. nextpyp:: 
-      :collapsible: open
+    .. nextpyp:: :fa:`layer-group` Import
 
-      :Description: Import movie frames or micrographs in multiple formats (MRC, DM4, TIF, and EER).
-      :Input: None
-      :Output: ``Movies``
+      **Description**: Import movie frames or micrographs in MRC, DM4, TIF, or EER format.
+      **Input**: None
+      **Output**: ``Movies``
 
     .. nextpyp:: :fa:`chart-bar` Pre-processing
-      :collapsible: open
   
-      :Description: Movie frame alignment, CTF estimation, and particle picking.
-      :Input: ``Movies``
-      :Output: ``Particles``
+      **Description**: Movie frame alignment, CTF estimation, and particle picking.
+      **Input**: ``Movies``
+      **Output**: ``Particles``
 
     .. nextpyp:: :fa:`dot-circle` Particle refinement
-      :collapsible: open
 
-      :Description: Particle alignment, classification and per-particle CTF refinement.
-      :Input: ``Particles``
-      :Output: ``Particles``
+      **Description**: Particle alignment, classification and per-particle CTF refinement.
+      **Input**: ``Particles``
+      **Output**: ``Particles``
 
     .. nextpyp:: :fa:`filter` Particle filtering
-      :collapsible: open
 
-      :Description: Removal of bad particles from downstream analysis.
-      :Input: ``Particles``
-      :Output: ``Particles``
+      **Description**: Removal of bad particles from downstream analysis.
+      **Input**: ``Particles``
+      **Output**: ``Particles``
 
     .. nextpyp:: :fa:`film` Movie refinement
-      :collapsible: open
 
-      :Description: Per-particle movie frame alignment and dose weighting.
-      :Input: ``Particles`` or ``Frames``
-      :Output: ``Frames``
+      **Description**: Per-particle movie frame alignment and dose weighting.
+      **Input**: ``Particles`` or ``Frames``
+      **Output**: ``Frames``
 
     .. nextpyp:: :fa:`crop` Create mask
-      :collapsible: open
 
-      :Description: Creation of shape masks.
-      :Input: ``Particles`` or ``Frames``
-      :Output: ``None``
+      **Description**: Creation of shape masks.
+      **Input**: ``Particles`` or ``Frames``
+      **Output**: ``None``
 
     .. nextpyp:: :fa:`star` Post-processing
-      :collapsible: open
 
-      :Description: Masking, map sharpening, and Fourier Shell Correlation (FSC) plots.
-      :Input: ``Particles`` or ``Frames``
-      :Output: ``None``
+      **Description**: Masking, map sharpening, and Fourier Shell Correlation (FSC) plots.
+      **Input**: ``Particles`` or ``Frames``
+      **Output**: ``None``
 
   .. md-tab-item:: Tomography
 
-    .. nextpyp::  :fa:`layer-group` Data import
-      :collapsible: open
+    .. nextpyp::  :fa:`cubes` Data import
 
-      :Decription: Import raw tilt-series data (with or without frames) in MRC or TIF format.
+      :Decription: Import raw tilt-series data (with or without frames) in MRC, DM4, TIF, or EER format.
       :Input: None
       :Output: ``Tilt-series``
 
     .. nextpyp:: :fa:`chart-bar` Pre-processing (legacy)
-      :collapsible: open
 
       :Description: Frame and tilt-series alignment, tomogram reconstruction, CTF estimation, and particle picking.
       :Input: ``Tilt-series``
       :Output: ``Particles``
 
     .. nextpyp:: :fa:`chart-bar` Pre-processing
-      :collapsible: open
 
       :Description: Frame and tilt-series alignment, tomogram reconstruction, and CTF estimation.
       :Input: ``Tilt-series``
       :Output: ``Tomograms``
 
     .. nextpyp:: :fa:`crosshairs` Particle-Picking
-      :collapsible: open
 
-      :Description: Import, manual and size-based particle picking.
+      :Description: Import, manual, size-based, virions, or template-search particle picking.
       :Input: ``Tomograms``
       :Output: ``Particles``
 
     .. nextpyp:: :fa:`search` MiLoPYP (train)
-      :collapsible: open
 
       :Description: Train neural network for pattern mining.
       :Input: ``Tomograms``
       :Output: ``MiLoPYP Model``
 
     .. nextpyp:: :fa:`search` MiLoPYP (eval)
-      :collapsible: open
 
       :Description: Evaluate neural network model for pattern mining.
       :Input: ``MiLoPYP Model``
       :Output: ``MiLoPYP Particles``
 
     .. nextpyp:: :fa:`crosshairs` Particle-Picking (train)
-      :collapsible: open
 
       :Description: Train neural network for particle picking.
       :Input: ``Particles``, ``MiLoPYP Particles``
       :Output: ``Particles Model``
 
     .. nextpyp:: :fa:`crosshairs` Particle-Picking (eval)
-      :collapsible: open
 
       :Description: Evaluate neural network model for particle picking.
       :Input: ``Tomograms``
       :Output: ``Particles``
 
     .. nextpyp:: :fa:`dot-circle` Particle refinement
-      :collapsible: open
 
       :Description: Constrained particle alignment and classification, region-based refinement, and per-particle CTF refinement
       :Input: ``Particles``
       :Output: ``Particles``
 
     .. nextpyp:: :fa:`filter` Particle filtering
-      :collapsible: open
 
       :Description: Removal of bad particles from downstream analysis.
       :Input: ``Particles``
       :Output: ``Particles``
 
     .. nextpyp:: :fa:`film` Movie refinement
-      :collapsible: open
 
       :Description: Per-particle tilt movie refinement and reconstruction, data-driven dose-weighting.
       :Input: ``Particles`` or ``Frames``
       :Output: ``Frames``
 
     .. nextpyp:: :fa:`crop` Create mask
-      :collapsible: open
 
       :Description: Creation of shape mask.
       :Input: ``Particles`` or ``Frames``
       :Output: ``None``
 
     .. nextpyp:: :fa:`star` Post-processing
-      :collapsible: open
 
       :Description: Masking, map sharpening and Fourier Shell Correlation (FSC) plots.
       :Input: ``Particles`` or ``Frames``
       :Output: ``None``
 
 
-Block operations
-----------------
+Operations
+----------
 
 Users can access block-level operations using the menu icon :fa:`bars` located at the top-right corner of each block. The following operations are supported:
 
 * :fa:`tag` Rename block.
-* :fa:`copy` Create a new block with the same input connection and parameter settings as the current block.
-* :fa:`edit` Open a dialog to Edit/Read block parameters. Click :bdg-primary:`Save`, :bdg-primary:`Reset` or close the dialog by clicking the icon :fa:`window-close` to discard your changes.
-* :fa:`external-link-alt` Reveal the location of the latest set of logs for the block in the **Jobs** panel.
-* :fa:`location-arrow` Reveal location of files in the filesystem for the block.
-* :fa:`recycle` Reset state to allow re-running the block.
-* :fa:`eraser` Delete all files associated with the block.
-* :fa:`trash` Delete block. This operation cannot be undone. If a block has connections downstream, all connected blocks will be deleted (user is required to confirm this operation).
+* :fa:`copy` Create a new block with the same input connection and parameter settings as the current block
+* :fa:`edit` Open a dialog to Edit/Read block parameters. Click :bdg-primary:`Save`, :bdg-primary:`Reset` or :fa:`window-close` (to discard your changes)
+* :fa:`external-link-alt` Reveal the location of the latest set of logs in the **Jobs** panel
+* :fa:`location-arrow` Reveal location of files in the filesystem for the block
+* :fa:`recycle` Reset state to allow re-running the block
+* :fa:`eraser` Delete all files associated with the block
+* :fa:`trash` Delete block. This operation cannot be undone. If a block has connections downstream, all connected blocks will be deleted (user will be prompted to confirm this operation)
 
-Block status
-------------
+Status
+------
 
 Blocks can be in one of three states (indicated by icons displayed on the top bar of each block):
 
@@ -207,15 +187,15 @@ Blocks can be in one of three states (indicated by icons displayed on the top ba
 * :fa:`recycle` Modified (parameters were modified and the block needs to be updated)
 * :fa:`cog fa-pulse` Running (the block is currently running)
 
-Block parameters
-----------------
+Parameters
+----------
 
 Block parameters are specified using dialog forms. These are shown every time a new block is created or copied, or when clicking the icon :fa:`bars` and selecting the :fa:`edit` Edit option.
 
 Jobs panel
 ==========
 
-The **Jobs** panel is used to monitor the status of all SLURM jobs launched by ``nextPYP``
+The **Jobs** panel is used to monitor the status of all jobs launched by ``nextPYP``
 
 Jobs can be in one of four states:
 
@@ -225,24 +205,24 @@ Jobs can be in one of four states:
 * :fa:`ban` Canceled
 * :fa:`exclamation-triangle` Failed
 
-Jobs are arranged hierarchically according to their dependencies, and the number of jobs in each state is updated continuously.
+Jobs are arranged hierarchically according to their dependencies, and the number of jobs in each state is continuously updated
 
-For simplicity, jobs are grouped chronologically into ``Today``, ``This Week`` and ``Older``.
+For simplicity, jobs are grouped chronologically into ``Today``, ``This Week`` and ``Older``
 
-The arrows :fa:`angle-right` and :fa:`angle-down` are used to expand or collapse each group.
+The arrows :fa:`angle-right` and :fa:`angle-down` are used to expand or collapse groups of jobs
 
-The three job phases *Launch*, *Split* and *Merge* within each run are organized according to their dependencies.
+Most jobs in ``nextPYP`` have three phases: *Launch*, *Split* and *Merge*
 
 .. tip::
-    - A summary of currently running jobs from all projects in ``nextPYP`` can be found in the **Dashboard** :fa:`tachometer-alt` page
-    - Running jobs can be cancelled by clicking on the icon :fa:`ban,text-danger`
-    - Job logs can be accessed by clicking the icon :fa:`file` to the right of the job name
+    - A summary of currently running jobs from all projects can be found in the **Dashboard** :fa:`tachometer-alt` page
+    - Running jobs can be cancelled by clicking on the icon :fa:`ban`
+    - Job logs can be accessed by clicking the icon :fa:`file` next to the job name
     - The log window can be docked/undocked by clicking the icon :fa:`thumbtack`
 
 Navigation
 ==========
 
-Use the breadcrumb menu at the top of the page to navigate to the **Dashboard** or the current **Project**
+Use the breadcrumb menu at the top of the page to navigate to the **Dashboard** or the current **Project**:
 
 .. figure:: ../images/tutorial_tomo_pre_process_page.webp
   :alt: Breadcrums

@@ -96,7 +96,7 @@ Step 3: Pre-processing
 .. nextpyp:: :fa:`stopwatch` 4 min - Movie frame alignment, CTF estimation and tomogram reconstruction
   :collapsible: open
 
-  * Click on :guilabel:`Tilt-series` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
+  * Click on ``Tilt-series`` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
 
   * Go to the **Frame alignment** tab:
 
@@ -142,7 +142,7 @@ Step 4: Particle picking
 .. nextpyp:: Particle detection from tomograms (:fa:`stopwatch` 2 min)
   :collapsible: open
 
-  * Click on :guilabel:`Tomograms` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
+  * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
   * Go to the **Particle detection** tab:
 
@@ -180,7 +180,7 @@ Step 5: Reference-based refinement
 .. nextpyp:: Reference-based particle alignment (:fa:`stopwatch` 14 hr)
     :collapsible: open
 
-    * Click on :guilabel:`Particles` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Particle refinement`
+    * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Particle refinement`
 
     * Go to the **Sample** tab:
 
@@ -261,7 +261,7 @@ Step 6. Filter particles
 .. nextpyp:: Identify duplicates and particles with low alignment scores (:fa:`stopwatch` 3 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Filter particles`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Filter particles`
 
   * Go to the **Particle filtering** tab:
 
@@ -319,7 +319,7 @@ Step 8. Fully constrained refinement
 .. nextpyp:: Tilt-geometry parameters and particle poses are refined in this step (:fa:`stopwatch` 10 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of the :bdg-secondary:`Particle filtering` block) and select :bdg-primary:`Particle refinement`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle filtering` block) and select :bdg-primary:`Particle refinement`
 
   .. md-tab-set::
 
@@ -389,7 +389,7 @@ Step 9: Create shape mask
 .. nextpyp:: Use most recent reconstruction to create a shape mask (:fa:`stopwatch` <1 min)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
+  * Click on ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
 
   * Go to the **Masking** tab:
 
@@ -542,7 +542,7 @@ Step 13: 3D classification
 .. nextpyp:: Constrained classification (:fa:`stopwatch` 3 hr)
   :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Particle refinement` to create a new block
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Particle refinement` to create a new block
 
   * Go to the **Refinement** tab:
 

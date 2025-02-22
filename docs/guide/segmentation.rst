@@ -12,7 +12,7 @@ Closed surfaces
 
 The first step is to locate a marker inside each virion or vescicle using traditional particle picking.
 
-* Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle Picking,badge-primary`
+* Click on ``Tomograms`` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle Picking,badge-primary`
 
 * Select the desired particle picking algorithm and corresponding parameters, see :doc:`Particle picking<picking3d>`
 
@@ -25,7 +25,7 @@ The first step is to locate a marker inside each virion or vescicle using tradit
 
 Once the location of each virion or vescicle center has been determined, the segmentation can be calculated.
 
-* Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking,badge-secondary` block) and select :badge:`Segmentation (closed surfaces),badge-primary`
+* Click on ``Particles`` (output of the :badge:`Particle-Picking,badge-secondary` block) and select :badge:`Segmentation (closed surfaces),badge-primary`
 
 * Set the desired `Segmentation radius tolerance`
 
@@ -42,7 +42,7 @@ Open surfaces (membrain-seg)
 
 ``nextPYP`` segments open surfaces using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_:
 
-* Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Segmentation (open surfaces),badge-primary`
+* Click on ``Tomograms`` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Segmentation (open surfaces),badge-primary`
 
 * Select the desired parameters for MemBrain-Seg including the location of a pre-trained model
 

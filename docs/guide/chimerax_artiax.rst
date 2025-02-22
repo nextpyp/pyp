@@ -1,6 +1,6 @@
-=======================
-ChimeraX/ArtiaX Display
-=======================
+===============
+ChimeraX/ArtiaX
+===============
 
 ``nextPYP`` produces all the necessary files to visualize a refined map in the original tomogram positions using ChimeraX/ArtiaX.
 

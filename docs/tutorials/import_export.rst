@@ -2,12 +2,12 @@
 Import/export projects
 ######################
 
-This tutorial shows how to import and export single-particle and tomography projects. ``nextPYP`` supports importing **Sessions**, **CLI projects**, `Relion 4.0 <https://relion.readthedocs.io/en/release-4.0/>`_. and `Relion 5.0 <https://relion.readthedocs.io/en/release-5.0/>`_  projects. We will demonstrate how to import/export data to and from Relion (the other options work similarly).
+This tutorial shows how to import and export single-particle and tomography projects. ``nextPYP`` supports importing projects from existing **Sessions**, **Projects**, `Relion 4.0 <https://relion.readthedocs.io/en/release-4.0/>`_, or `Relion 5.0 <https://relion.readthedocs.io/en/release-5.0/>`_ projects. We will demonstrate how to import/export data to and from Relion (the other options work similarly).
 
-Single-particle projects
-========================
+Import single-particle
+======================
 
-.. nextpyp:: Import single-particle project from star files
+.. nextpyp:: Import single-particle project from *.star files
   :collapsible: open  
 
   * Create or navigate to an existing single-particle project, click :bdg-primary:`Import Data` and select :bdg-primary:`Single-particle (from Star)`
@@ -38,19 +38,19 @@ Single-particle projects
 
         - Set ``Acceleration voltage (kV)``
 
-        * (optional) Set parameters in other tabs
+        * (optional) Set parameters in other tabs as needed
 
-  * Click :bdg-primary:`Save` and the new block will appear on the project page
+  * Click :bdg-primary:`Save` and a new :bdg-secondary:`Single Particle (from star)` block will appear on the project page
 
   * Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the import process
 
-  * Click inside the block to inspect the results
+  * Click inside the :bdg-secondary:`Single Particle (from star)` block to inspect the results
 
 
-Tomography projects
-===================
+Import tomography
+=================
 
-.. nextpyp:: Import tomography project from star files
+.. nextpyp:: Import tomography project from *.star files
   :collapsible: open  
 
   * Create or navigate to an existing tomography project, click :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Star)`
@@ -83,35 +83,35 @@ Tomography projects
 
         - Set ``Tilt-axis angle (degrees)``
 
-        * (optional) Set parameters in other tabs
+        * (optional) Set parameters in other tabs as needed
 
-  * Click :bdg-primary:`Save` and the new block will appear on the project page
+  * Click :bdg-primary:`Save` and the new :bdg-secondary:`Tomography (from star)` block will appear on the project page
 
   * Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the import process
 
-  * Click inside the block to inspect the results
+  * Click inside the :bdg-secondary:`Tomography (from star)` block to inspect the results
 
 
-Exporting projects
+Export refinements
 ==================
 
-.. nextpyp:: Export refinement to star format
+.. nextpyp:: Export 3D refinements in *.star format
   :collapsible: open
 
-  * Choose an existing :bdg-primary:`Particle refinement` block, click on the menu icon :fa:`bars` and select the :fa:`edit` Edit option
+  * Choose an existing :bdg-primary:`Particle refinement` block, click on the menu icon :fa:`bars`, and select the :fa:`edit` Edit option
 
   * Go to the **Export** tab:
 
     .. md-tab-set::
 
-      .. md-tab-item:: 
+      .. md-tab-item:: Export
   
         - Check ``Export metadata``
 
-        - Set the location of the ``Input parfile`` you want to export by clicking on the icon :fa:`search` and browsing to the corresponding directory
+        - Set the location of the ``Input parfile`` to export by clicking on the icon :fa:`search` and browsing to the desired directory
 
   * Click :bdg-primary:`Save`
 
   * Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the export process
 
-  Once the job ends, the results will appear in the specified folder and will be ready to import into other packages. For a tomography project example, you can use `Relion's Import Coordinates <https://relion.readthedocs.io/en/release-4.0/STA_tutorial/ImportCoords.html>`_ procedure
+  Once the job ends, the results will appear in the specified folder and will be ready to import into other packages. For a tomography project, for example, you can use `Relion's Import Coordinates <https://relion.readthedocs.io/en/release-4.0/STA_tutorial/ImportCoords.html>`_ procedure to import the data
