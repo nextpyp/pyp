@@ -67,7 +67,7 @@
    cli/tomo_import_export
 
 .. toctree::
-   :caption: Help
+   :caption: About
    :hidden:
    :maxdepth: 2
 

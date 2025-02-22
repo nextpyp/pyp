@@ -1,3 +1,7 @@
+=========
+Changelog
+=========
+
 .. list-table:: **Key**
    :header-rows: 0
    :align: left
