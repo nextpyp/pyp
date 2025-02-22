@@ -73,5 +73,6 @@
 
    known-issues
    about
+   references
    changelog
    license
