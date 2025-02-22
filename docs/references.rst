@@ -3,14 +3,14 @@ References
 ==========
 
 
-Main reference
---------------
+Primary
+-------
 
 - Liu, HF., Zhou, Y., Huang, Q., Piland, J., Jin, W., Mandel, J., Du, X., Martin, J., Bartesaghi, A. (2023), `nextPYP: a comprehensive and scalable platform for characterizing protein variability in-situ using single-particle cryo-electron tomography <https://www.nature.com/articles/s41592-023-02045-0>`_, Nature Methods, 20:1909–1919.
 
 
-Method-specific references
---------------------------
+Method-specific
+---------------
 
 - Huang, Q., Zhou, Y., Bartesaghi, A. (2024), `MiLoPYP: self-supervised molecular pattern mining and particle localization in situ <https://www.nature.com/articles/s41592-024-02403-6>`_, Nature Methods, 21:1863–1872.
 

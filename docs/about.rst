@@ -94,4 +94,9 @@ Developers
 Funding
 -------
 
-Development of ``nextPYP`` is supported by grants from NIGMS (R01-GM141223), NIAID (U54-AI170752), the Chan Zuckerberg Initiative (2021-234602), and Duke University.
+Development of ``nextPYP`` is supported by grants from:
+
+- NIH/NIGMS (R01-GM141223)
+- NIH/NIAID (U54-AI170752)
+- Chan Zuckerberg Initiative (2021-234602)
+- Duke University
