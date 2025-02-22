@@ -16,7 +16,7 @@ v0.7.0
 .. nextpyp:: Released 2/26/2025
    :collapsible: open
    
-   :fa:`star` New features
+   :fa:`star` **New features**
    
    - New blocks to run :doc:`molecular pattern mining and particle localization<guide/milopyp>` (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_.
 
@@ -28,7 +28,7 @@ v0.7.0
 
    - 3D size-based particle picking as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_.
 
-   - 3D segmentation of tomograms using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_(evaluation only).
+   - 3D segmentation of tomograms using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ (evaluation only).
 
    - Tomogram denosing using `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ (training and evaluation).
 
@@ -40,7 +40,7 @@ v0.7.0
 
    - Beam-tilt refinement and correction for single-particle and tomography pipelines.
 
-   - Add support for multiple GPUs to run computationally intensive jobs.
+   - Add support for multiple GPUs to speed up some computationally intensive jobs (IsoNet, cryoCARE, etc.).
 
    - Standalone mode is now also supported in the :doc:`command line interface (CLI)<cli/installation>` pipeline.
 
@@ -62,15 +62,17 @@ v0.7.0
 
    - Select individual blocks to run from the **Jobs** menu using a single click ("Only" option).
 
-   - New theme for documentation with expanded tutorials, user and configuration guides.
+   - Add support to import Relion 5 tomography projects.
 
-   :fa:`plus-square` Improvements
+   - New theme for documentation with expanded tutorials, user guides, and setup instructions.
+
+   :fa:`plus-square` **Improvements**
 
    - More efficient and robust handling of large single-particle and tomography datasets.
 
    - Finer control over tilt-series alignment and reconstruction options when using IMOD.
 
-   - Checkbox to "Show advanced options" has global scope now.
+   - Checkbox to ``Show advanced options`` has global scope now.
 
    - Move options to reshape images into squares from Reconstruction to Tilt-series alignment tab.
 
@@ -82,9 +84,7 @@ v0.7.0
 
    - Better handling of tilt-series from rectangular-shaped detectors.
 
-   - Import Relion 5 tomography projects.
-
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
    
    - Fix bug in navigation bar for refinement blocks when multiple classes were used.
 
@@ -105,13 +105,13 @@ v0.6.5
 .. nextpyp:: Released 4/6/2024
    :collapsible: open
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Update format of logger messages to more clearly show the nextPYP version and resources assigned to each job.
 
    - Use same tilt-axis angle convention for aligning tilt-series using IMOD and AreTomo2.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Prevent error during tilt-series alignment with AreTomo2 when number of patches = 1.
 
@@ -130,7 +130,7 @@ v0.6.4
 .. nextpyp:: Released 3/24/2024
    :collapsible: open
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Implement mechanism to isolate logs from failed jobs in the Logs tab.
 
@@ -144,7 +144,7 @@ v0.6.4
 
    - Check that .order files have the same number of entries as images in the tilt-series.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Fix bugs when reading metadata from \*.mdoc files.
 
@@ -165,7 +165,7 @@ v0.6.3
 .. nextpyp:: Released 3/01/2024
    :collapsible: open
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Allow import of clean particles obtained after 3D classification into pre-processing block.
 
@@ -187,7 +187,7 @@ v0.6.3
 
    - Allow use of environment variables when specifying the local scratch directory.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Hide the export tab from particle filtering blocks for tomography projects.
 
@@ -222,7 +222,7 @@ v0.6.2
 .. nextpyp:: Released 2/01/2024
    :collapsible: open
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Expose additional parameters for frame alignment when using MotionCor3.
 
@@ -232,7 +232,7 @@ v0.6.2
 
    - Allow users to specify resources for the launch task on the Sessions side.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Fix bugs in parameter definitions when running movie frame alignment.
 
@@ -245,7 +245,7 @@ v0.6.1
 .. nextpyp:: Released 1/30/2024
    :collapsible: open
 
-   :fa:`star` New features
+   :fa:`star` **New features**
 
    - Produce metadata for 3D visualization using `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_ for all refinement blocks. See the :doc:`user guide<guide/chimerax_artiax>` for details.
 
@@ -253,7 +253,7 @@ v0.6.1
 
    - Allow specification of SLURM account for all job types to improve portability.
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Expose full set of options when using MotionCor3 for frame alignment.
 
@@ -263,7 +263,7 @@ v0.6.1
 
    - Add support for .gain reference files and automatically resize corresponding .eer movies in data import blocks.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Fix issue when handling \*.tif files that have a \*.tiff extension.
 
@@ -280,7 +280,7 @@ v0.6.0
 .. nextpyp:: Released 1/21/2024
    :collapsible: open
 
-   :fa:`star` New features
+   :fa:`star` **New features**
 
    - Allow use of `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ for movie frame alignment (GPU required).
 
@@ -292,7 +292,7 @@ v0.6.0
 
    - Automatic determination of CTF handedness during pre-processing of tilt-series.
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Allow mix-and-match of IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
 
@@ -310,7 +310,7 @@ v0.6.0
 
    - Allow use of slurm's GRES (generic resource scheduling) when submitting jobs to a cluster.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Fix OOM error when running constrained refinement using a single thread.
 
@@ -331,17 +331,17 @@ v0.5.3
 .. nextpyp:: Released 11/25/2023
    :collapsible: open
 
-   :fa:`star` New features
+   :fa:`star` **New features**
 
    - Implement interactive measuring tool for micrographs and tomograms.
 
    - Allow multiple sessions when user login mode is enabled.
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Sort classes in increasing order in Class View panel.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Fix issues when limiting total number of tasks in slurm scheduler.
 
@@ -350,11 +350,11 @@ v0.5.2
 .. nextpyp:: Released 11/18/2023
    :collapsible: open
 
-   :fa:`star` New features
+   :fa:`star` **New features**
 
    - Add support for PACEtomo tilt-series in streaming Sessions.
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Parallelize reconstruction step during 3D classification for faster speeds.
 
@@ -362,7 +362,7 @@ v0.5.2
 
    - Simplify installation instructions and setup process.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Fix issue with location of executables for neural network-based particle picking.
 
@@ -377,17 +377,17 @@ v0.5.1
 .. nextpyp:: Released 11/04/2023
    :collapsible: open
 
-   :fa:`star` New features
+   :fa:`star` **New features**
 
    - Import frame tilt-series data using mdoc files produced by PACEtomo.
 
-   :fa:`plus-square` Improvements
+   :fa:`plus-square` **Improvements**
 
    - Allow typing iteration number in navigation bar for refinement blocks.
 
    - Show refinement/bundle IDs in ``Per-particle Score`` and ``Exposure Weights`` tabs for refinement blocks.
 
-   :fa:`bug` Bug fixes
+   :fa:`bug` **Bug fixes**
 
    - Fix issue with display of tomograms with arbitrary thickness.
 
