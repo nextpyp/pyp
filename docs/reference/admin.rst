@@ -43,7 +43,7 @@ Create a new User
         :alt: Project dashboard
         :width: 350
 
-.. tip:: Tips
+.. admonition:: Tips
 
     - You can also edit or delete details for `Groups` or `Users` using the :fa:`trash` and :fa:`edit` buttons
     - If you are using ``nextPYP``'s reverse-proxy for authentication, you can also create a one-time login link for new users using the :fa:`sign-in-alt` button

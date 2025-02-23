@@ -46,7 +46,7 @@ Manual picking
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to update the block
 
-.. tip:: Tips
+.. admonition:: Tips
 
     - Particles can be deleted by right-clicking on the green markers
     - Particle positions are saved automatically every time a particle is added or deleted
@@ -86,7 +86,7 @@ Training
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to train the model
 
-.. tip:: Tips
+.. admonition:: Tips
 
     - Since training runs on the GPU, a standalone GPU-server is required (or GPU partitions must be properly configured in SLURM)
     - The trained model(s) are saved in the project directory under: ``train/YYYYMMDD_HHMMSS/*.training``
