@@ -170,8 +170,8 @@ The first step is to obtain a set of particles using any of the methods implemen
 
 #. Once the run completes, navigate to the :bdg-secondary:`Particle-Picking (train)` block to inspect the training loss
 
-.. note::
-    :title:: Notes
+.. note:: Notes
+
     * 40-50 particles from 2-3 tomograms are usually sufficient to successfully train a model
     * Trained models for each run will be saved in the project folder under ``train/YYYYMMDD_HHMMSS/*.pth``
 
@@ -188,7 +188,7 @@ Once the model has been trained, evaluation should be run on the entire dataset:
 
 #. Once the run completes, navigate to the :bdg-secondary:`Particle-Picking (eval)` block to inspect the particle picking results
 
-.. tip::
-    :title:: Tips
+.. tip:: Tips
+
     * To improve accuracy, the model can be re-trainined using more labels
     * To detect particles distributed along fibers or tubules, select ``Fiber mode``. This will group neighboring particles, fit a smooth trajectory to them, and re-sample positions along the fitted curve
