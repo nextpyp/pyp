@@ -46,7 +46,7 @@
    guide/workflows
 
 .. toctree::
-   :caption: Setup
+   :caption: Configuration
    :hidden:
    :maxdepth: 2
 

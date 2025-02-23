@@ -1,8 +1,8 @@
 :tocdepth: 3
 
-=============
-Configuration
-=============
+==================
+Configuration file
+==================
 
 ``nextPYP`` uses a single configuration file to provide all environmental information needed to run.
 

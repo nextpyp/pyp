@@ -19,6 +19,7 @@ Requirements
 - Corresponding tilt-series parameter files (``*.xf``, ``*.tlt`` and ``*.com``) in the same folder with tilt-series files
 
 .. note::
+    :title:: Notes
     * ``*.xf, *.tlt`` are alignment parameters, which are required for each tilt-series.
     * ``*.com`` is optional. If they are not present, we would assume **NO** x or z shift applied to the tomograms. This might affect the outcome of particle coordinate conversion.
 

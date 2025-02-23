@@ -36,6 +36,6 @@ Evaluation
 
 
 .. note::
-
+    :title:: Notes
     * Evaluation is always done on the entire set of tomograms from the pre-processing block
     * cryoCARE and IsoNet need a GPU to run, while Topaz can also run on CPUs (default)

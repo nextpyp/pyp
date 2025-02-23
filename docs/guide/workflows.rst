@@ -4,7 +4,7 @@ Workflows
 
 ``nextPYP`` supports the use of pre-defined sequences of blocks, called **Workflows**. 
 
-The program comes with pre-loaded workflows for the :doc:`Single-particle tutorial<../tutorials/spa_empiar_10025>`, the :doc:`Tomography tutorial<../tutorials/tomo_empiar_10164>` and the :doc:`Classification tutorial<../tutorials/tomo_empiar_10304>`.
+The program comes with pre-loaded workflows to execute the :doc:`Single-particle<../tutorials/spa_empiar_10025>`, :doc:`Tomography<../tutorials/tomo_empiar_10164>` and :doc:`Classification<../tutorials/tomo_empiar_10304>` tutorials.
 
 Import a workflow
 -----------------
@@ -13,7 +13,7 @@ Import a workflow
 
 - Choose a workflow from the list and click :bdg-primary:`Import`
 
-- A form will appear asking for any required parameters. This typically includes the location of the raw data (and associated files) and the :doc:`Computing resources<computing>` to use
+- A form will appear asking for any required parameters. This typically includes the location of the raw data (and associated files) and the compute :doc:`Resources<computing>` to use
 
 - Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for N blocks` (where N is the number of blocks in the workflow)
 
