@@ -156,9 +156,19 @@ description = "tomoDRGN (train-vae)"
 tabs = [ "tomodrgn_vae_train", "tomodrgn_vae_convergence", "slurm" ]
 
 [blocks.tomo_drgn_analyze]
-name = "tomoDRGN analysis"
+name = "tomoDRGN analyze"
 description = "tomoDRGN (analyze)"
-tabs = [ "tomodrgn_analyze", "tomodrgn_eval_vol", "tomodrgn_analyze_volumes", "slurm" ]
+tabs = [ "tomodrgn_analyze", "slurm" ]
+
+[blocks.tomo_drgn_analyze_vols]
+name = "tomoDRGN analyze volumes"
+description = "tomoDRGN (analyze volumes)"
+tabs = [ "tomodrgn_eval_vol", "tomodrgn_analyze_volumes", "slurm" ]
+
+[blocks.tomo_drgn_filter]
+name = "tomoDRGN filtering"
+description = "tomoDRGN (filter_star)"
+tabs = [ "tomodrgn_filter_star", "refine", "slurm" ]
 
 [blocks.tomo_milo_train]
 name = "MiLoPYP training"
@@ -5976,40 +5986,39 @@ hidden = [ "tomo_drgn_train" ]
 _name = "tomoDRGN (train-vae)"
 _description = "tomoDRGN VAE training"
 
-[tabs.tomodrgn_vae_train.skip]
-name = "Skip"
-description = "Do not run tomodrgn train_vae"
-type = "bool"
-default = false
-
 [tabs.tomodrgn_vae_train.input_star]
-name = "Input file"
+name = "Input file (*.star)"
 description = "Star file with particle alignments and metadata"
 type = "path"
 path = { type="files" }
 input = { type="starfile" }
-condition = {arg="skip", value="false"}
+
+[tabs.tomodrgn_vae_train.sort_ptcl_imgs]
+name = "Sort star file images"
+description = "Sort on a per-particle basis by the specified criteria"
+type = "enum"
+enum = {unsorted="unsorted", dose_ascending="dose_ascending", random="random"}
+default = "unsorted"
 
 [tabs.tomodrgn_vae_train.use_firstn]
 name = "Use first N tilts"
 description = "Number of tilts to sample from each particle per epoch. Default: min(ntilts) from dataset"
 type = "int"
 default = 32
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.data_lazy]
 name = "Lazy loading"
 description = "Lazy loading if full dataset is too large to fit in memory"
 type = "bool"
 default = true
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_train.data_windowing]
 name = "Real space windowing"
 description = "Real space windowing of dataset"
 type = "bool"
 default = false
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_train.data_window_r]
 name = "Radius"
@@ -6030,15 +6039,13 @@ hidden = [ "tomo_drgn_eval" ]
 name = "Cosine weight by tilt"
 description = "Weight reconstruction loss by cos(angle)"
 type = "bool"
-default = false
-condition = {arg="skip", value="false"}
+default = true
 
 [tabs.tomodrgn_vae_train.dose_weight]
 name = "Weight by dose"
 description = "Weight reconstruction loss per tilt per pixel by dose dependent amplitude attenuation"
 type = "bool"
-default = false
-condition = {arg="skip", value="false"}
+default = true
 
 [tabs.tomodrgn_vae_train.dose]
 name = "Dose override"
@@ -6046,15 +6053,13 @@ description = "Manually specify dose in e- / A2 / tilt"
 type = "float"
 default = 0.0
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.dose_mask]
 name = "Dose mask"
 description = "Do not train on frequencies exposed to > 2.5x critical dose. Training lattice is intersection of this with --l-extent"
 type = "bool"
-default = false
+default = true
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.layers]
 name = "Layers"
@@ -6062,7 +6067,6 @@ description = "Number of hidden layers"
 type = "int"
 default = 3
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.enc_lya]
 name = "Enc-layers-A"
@@ -6070,7 +6074,6 @@ description = "Number of hidden layers for each tilt"
 type = "int"
 default = 3
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.enc_dima]
 name = "Enc-dim-A"
@@ -6078,7 +6081,6 @@ description = "Number of nodes in hidden layers for each tilt"
 type = "int"
 default = 256
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.out_dima]
 name = "Out-dim-A"
@@ -6086,7 +6088,6 @@ description = "Number of nodes in output layer of encA == ntilts * number of nod
 type = "int"
 default = 128
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.enc_lyb]
 name = "Enc-layers-B"
@@ -6094,7 +6095,6 @@ description = "Number of hidden layers encoding merged tilts"
 type = "int"
 default = 3
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.enc_dimb]
 name = "Enc-dim-B"
@@ -6102,7 +6102,6 @@ description = "Number of nodes in hidden layers encoding merged tilts"
 type = "int"
 default = 256
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.pool]
 name = "Pooling-function"
@@ -6111,14 +6110,12 @@ type = "enum"
 enum = { concatenate="concatenate", max="max", mean="mean", median="median", set_encoder="set_encoder" }
 default = "concatenate"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.enc_mask]
 name = "Encoder mask"
 description = "Circular mask of image for encoder (default: D/2; -1 for no mask)"
 type = "float"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.num_seeds]
 name = "Num-seeds"
@@ -6126,7 +6123,6 @@ description = "Transformer number of seeds for PMA"
 type = "int"
 default = 1
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.num_heads]
 name = "Num-heads"
@@ -6134,7 +6130,6 @@ description = "number of heads for multi head attention blocks"
 type = "int"
 default = 4
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.layer_norm]
 name = "Layer-norm"
@@ -6142,7 +6137,6 @@ description = "whether to apply layer normalization in the set transformer block
 type = "bool"
 default = false
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.dec_hl]
 name = "Decoder layers"
@@ -6150,7 +6144,6 @@ description = "Number of decoder hidden layers"
 type = "int"
 default = 3
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.dec_dim]
 name = "Decoder nodes"
@@ -6158,7 +6151,6 @@ description = "Number of nodes in decoder hidden layers"
 type = "int"
 default = 256
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.l_ext]
 name = "L-extent"
@@ -6166,7 +6158,6 @@ description = "Coordinate lattice size (if not using positional encoding)"
 type = "float"
 default = 0.5
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.pe_type]
 name = "Position encoding type"
@@ -6175,7 +6166,6 @@ type = "enum"
 enum = {geom_ft="geom_ft", geom_full="geom_full", geom_lowf="geom_lowf", geom_nohighf="geom_nohighf", linear_lowf="linear_lowf", gaussian="gaussian", none="none"}
 default = "gaussian"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.feat_sigma]
 name = "Gaussian features"
@@ -6190,7 +6180,6 @@ name = "Positional frequencies"
 description = "Num frequencies in positional encoding (default: image D/2)"
 type = "float"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.activation]
 name = "Activation"
@@ -6199,7 +6188,6 @@ type = "enum"
 enum = {relu="relu", leaky_relu="leaky_relu"}
 default = "relu"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.num_workers]
 name = "Number of workers"
@@ -6207,7 +6195,6 @@ description = "Number of workers to use when batching particles for training. Ha
 type = "int"
 default = 0
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.prefetch_factor]
 name = "Prefetch-factor"
@@ -6215,7 +6202,6 @@ description = "Number of particles to prefetch per worker for training. Has mode
 type = "int"
 default = 2
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.pst_wkrs]
 name = "Persistent-workers"
@@ -6223,7 +6209,6 @@ description = "Whether to persist workers after dataset has been fully consumed.
 type = "bool"
 default = false
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.pin_mem]
 name = "Pin-memory"
@@ -6231,15 +6216,12 @@ description = "Whether to use pinned memory for dataloader. Has large impact on 
 type = "bool"
 default = false
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.zdim]
-name = "ZDIM"
+name = "Z dim"
 description = "Dimension of latent variable"
 type = "int"
 default = 128
-advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.weight]
 name = "Initial training model"
@@ -6248,7 +6230,6 @@ type = "path"
 path = { type="files" }
 default = "latest"
 required = false
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.checkpoint]
 name = "Checkpoint interval"
@@ -6256,7 +6237,6 @@ description = "Checkpointing interval in N_EPOCHS"
 type = "int"
 default = 1
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.log_interval]
 name = "Log interval"
@@ -6264,14 +6244,12 @@ description = "Logging interval in N_IMGS"
 type = "int"
 default = 1000
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.seed]
 name = "Random seed"
 description = "Random seed for training"
 type = "int"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.data_ind]
 name = "Filter index"
@@ -6280,7 +6258,6 @@ type = "path"
 path = { type="files" }
 required = false
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.data_invert]
 name = "Invert data sign"
@@ -6288,7 +6265,6 @@ description = "Invert data sign or not"
 type = "bool"
 default = true
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.data_dir]
 name = "Input data directory"
@@ -6297,7 +6273,6 @@ type = "path"
 path = { type="folders" }
 required = false
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.use_ptl]
 name = "Sample particles"
@@ -6305,7 +6280,6 @@ description = "Keep the first N particles in the sorted star file. Default -1 me
 type = "int"
 default = -1
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.sequential_order]
 name = "Sequential order"
@@ -6313,22 +6287,18 @@ description = "Supply particle images of one particle to encoder in starfile ord
 type = "bool"
 default = true
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.epochs]
 name = "Number of epochs"
 description = "Number of training epochs"
 type = "int"
 default = 20
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.batch]
 name = "Batch size"
 description = "Minibatch size"
 type = "int"
 default = 1
-advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.wd]
 name = "Weight decay"
@@ -6336,7 +6306,6 @@ description = "Weight decay in Adam optimizer"
 type = "int"
 default = 0
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.lr]
 name = "Learning rate"
@@ -6344,21 +6313,18 @@ description = "Learning rate in Adam optimizer"
 type = "float"
 default = 0.0001
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.beta]
 name = "Beta schedule"
 description = "Choice of beta schedule or a constant for KLD weight (default: 1/zdim)"
 type = "float"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.beta_control]
 name = "Beta control"
 description = "KL-Controlled VAE gamma. Beta is KL target"
 type = "float"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.data_norm]
 name = "Data normalization"
@@ -6366,7 +6332,6 @@ description = "Data normalization as shift, 1/scale (default: mean, std of datas
 type = "str"
 default = "none"
 advanced = true
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_train.amp]
 name = "Use mixed precision"
@@ -6374,7 +6339,6 @@ description = "Use mixed-precision training"
 type = "bool"
 default = false
 advanced = true
-condition = {arg="skip", value="false"}
 
 # convergence_vae
 
@@ -6382,80 +6346,74 @@ condition = {arg="skip", value="false"}
 _name = "tomoDRGN (convergence-vae)"
 _description = "tomoDRGN (convergence-vae)"
 
-[tabs.tomodrgn_vae_convergence.skip]
-name = "Skip"
-description = "Do not run tomodrgn convergence_vae"
-type = "bool"
-default = false
-
 [tabs.tomodrgn_vae_convergence.epoch_index]
 name = "Epoch index"
 description = "Latest epoch number N to analyze convergence (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
 type = "str"
 default = "latest"
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_vae_convergence.epoch_interval]
 name = "Epoch interval"
 description = "Interval of epochs between calculating most convergence heuristics"
 type = "int"
 default = 5
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.force_umapcpu]
 name = "Force-umap-cpu"
 description = "Override default UMAP GPU-bound implementation via cuML to use umap-learn library instead"
 type = "bool"
 default = false
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.subset]
 name = "Subset"
 description = "Max number of particles to be used for UMAP calculations. 'None' means use all ptcls"
 type = "int"
 default = 50000
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.randomseed]
 name = "Random-seed"
 description = "Manually specify the seed used for selection of subset particles (default: None)"
 type = "int"
 default = 0
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.randomstate]
 name = "Random-state"
 description = "Random state seed used by UMAP for reproducibility at slight cost of performance"
 type = "str"
 default = "42"
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.skip_umap]
 name = "Skip UMAP"
 description = "Requires that UMAP be precomputed for downstream calcs. Useful for tweaking volume generation settings"
 type = "bool"
 default = false
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.nbins]
 name = "N-bins"
 description = "The number of bins along UMAP1 and UMAP2"
 type = "int"
 default = 30
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.smooth]
 name = "Smooth"
 description = "Smooth the 2D histogram before identifying local maxima"
 type = "bool"
 default = true
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.smooth_width]
 name = "Smooth width"
 description = "Width of gaussian kernel for smoothing 2D histogram expressed as multiple of one bin's width"
 type = "float"
 default = 1.0
+advanced = true
 condition = {arg="smooth", value="true"}
 
 [tabs.tomodrgn_vae_convergence.pruned_maxima]
@@ -6463,27 +6421,59 @@ name = "Pruned-maxima"
 description = "Prune poorly-separated maxima until this many maxima remain"
 type = "int"
 default = 12
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.radius]
 name = "Radius"
 description = "Distance at which two maxima are considered poorly-separated and are candidates for pruning (Euclidean distance in bin-space)"
 type = "float"
 default = 5.0
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.skip_vgen]
 name = "Skip-volgen"
 description = "Skip volume generation. Requires that volumes already exist for downstream CC + FSC calcs"
 type = "bool"
 default = false
-condition = {arg="skip", value="false"}
+advanced = true
+
+[tabs.tomodrgn_vae_convergence.downsample]
+name = "Downsample output"
+description = "Downsample volumes to this box size (pixels)"
+type = "int"
+advanced = true
+condition = {arg="skip_vgen", value="false"}
+
+[tabs.tomodrgn_vae_convergence.lowpass]
+name = "Lowpass (A)"
+description = "Lowpass filter reconstructed volume. Defaults to FSC=0.143 correlation between half-maps"
+type = "float"
+default = 0
+advanced = true
+condition = {arg="skip_vgen", value="false"}
+
+[tabs.tomodrgn_vae_convergence.flip]
+name = "Flip handedness"
+description = "Flip handedness of output volumes"
+type = "bool"
+default = false
+advanced = true
+condition = {arg="skip_vgen", value="false"}
+
+[tabs.tomodrgn_vae_convergence.invert]
+name = "Invert contrast"
+description = "Invert contrast of output volumes"
+type = "bool"
+default = false
+advanced = true
+condition = {arg="skip_vgen", value="false"}
 
 [tabs.tomodrgn_vae_convergence.final_maxima]
 name = "Number of volumes to generate"
 description = "Select this many local maxima, sorted by highest bin count after pruning, for which to generate volumes"
 type = "int"
 default = 10
+advanced = true
 condition = {arg="skip_vgen", value="false"}
 
 [tabs.tomodrgn_vae_convergence.gt]
@@ -6491,28 +6481,28 @@ name = "Ground-truth"
 description = "Relative path containing wildcards to ground_truth_vols*.mrc for map-map CC calcs"
 type = "str"
 default = "None"
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.thresh]
 name = "Mask threshold"
 description = "Float, isosurface at which to threshold mask; default 0 uses 50th percentile"
 type = "float"
 default = 0
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.dist]
 name = "Mask soft edge"
 description = "Number of voxels over which to apply a soft cosine falling edge from dilated mask boundary"
 type = "int"
 default = 10
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_vae_convergence.dilate]
 name = "Mask dilate"
 description = "Number of voxels to dilate thresholded isosurface outwards from mask boundary"
 type = "int"
 default = 3
-condition = {arg="skip", value="false"}
+advanced = true
 
 # analyze
 
@@ -6520,92 +6510,77 @@ condition = {arg="skip", value="false"}
 _name = "tomoDRGN (analyze)"
 _description = "tomoDRGN analysis"
 
-[tabs.tomodrgn_analyze.skip]
-name = "Skip"
-description = "Do not run tomodrgn analyze"
-type = "bool"
-default = false
-
 [tabs.tomodrgn_analyze.epoch]
 name = "Analysis epochs"
 description = "Epoch number N to analyze (0-based indexing, corresponding to z.N.pkl, weights.N.pkl)"
 type = "int"
 default = -1
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_analyze.skipv]
 name = "Skip volume generation"
 description = "Skip generation of volumes"
 type = "bool"
 default = false
-condition = {arg="skip", value="false"}
-
-[tabs.tomodrgn_analyze.skipumap]
-name = "Skip UMAP"
-description = "Skip running UMAP"
-type = "bool"
-default = false
-condition = {arg="skip", value="false"}
-
-[tabs.tomodrgn_analyze.flip]
-name = "Flip handedness"
-description = "Flip handedness of output volumes"
-type = "bool"
-default = false
-condition = {arg="skip", value="false"}
-
-[tabs.tomodrgn_analyze.invert]
-name = "Invert contrast"
-description = "Invert contrast of output volumes"
-type = "bool"
-default = false
-condition = {arg="skip", value="false"}
-
-[tabs.tomodrgn_analyze.batch]
-name = "Batch size"
-description = "Minibatch size for analysis"
-type = "int"
-default = 1
-condition = {arg="skip", value="false"}
-
-[tabs.tomodrgn_analyze.downsample]
-name = "Downsample output"
-description = "Downsample volumes to this box size (pixels)"
-type = "int"
-condition = {arg="skip", value="false"}
+advanced = true
 
 [tabs.tomodrgn_analyze.pc]
 name = "Principal components"
 description = "Number of principal component traversals to generate"
 type = "int"
 default = 2
-condition = {arg="skip", value="false"}
-
-[tabs.tomodrgn_analyze.ksample]
-name = "K-means samples"
-description = "Number of k-means samples to generate"
-type = "int"
-default = 20
-condition = {arg="skip", value="false"}
 
 [tabs.tomodrgn_analyze.pc_ondata]
 name = "PC-ondata"
 description = "Find closest on-data latent point to each PC percentile"
 type = "bool"
 default = false
-condition = {arg="skip", value="false"}
+advanced = true
+
+[tabs.tomodrgn_analyze.ksample]
+name = "K-means samples"
+description = "Number of k-means samples to generate"
+type = "int"
+default = 100
+
+[tabs.tomodrgn_analyze.skipumap]
+name = "Skip UMAP"
+description = "Skip running UMAP"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.tomodrgn_analyze.flip]
+name = "Flip handedness"
+description = "Flip handedness of output volumes"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.tomodrgn_analyze.invert]
+name = "Invert contrast"
+description = "Invert contrast of output volumes"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.tomodrgn_analyze.downsample]
+name = "Downsample output"
+description = "Downsample volumes to this box size (pixels)"
+type = "int"
+advanced = true
+
+[tabs.tomodrgn_analyze.lowpass]
+name = "Lowpass (A)"
+description = "Lowpass filter reconstructed volume. Defaults to FSC=0.143 correlation between half-maps"
+type = "float"
+default = 0
+advanced = true
 
 # eval_vol
 
 [tabs.tomodrgn_eval_vol]
 _name = "tomoDRGN (eval_vol)"
 _description = "tomoDRGN eval_vol"
-
-[tabs.tomodrgn_eval_vol.skip]
-name = "Skip"
-description = "Do not run tomodrgn eval_vol"
-type = "bool"
-default = true
 
 [tabs.tomodrgn_eval_vol.use_local_scratch]
 name = "Save volumes to local scratch"
@@ -6618,7 +6593,35 @@ name = "Batch size"
 description = "Minibatch size for analysis"
 type = "int"
 default = 1
-condition = {arg="skip", value="false"}
+
+[tabs.tomodrgn_eval_vol.lowpass]
+name = "Lowpass (A)"
+description = "Lowpass filter reconstructed volume. Defaults to FSC=0.143 correlation between half-maps"
+type = "float"
+default = 0
+
+[tabs.tomodrgn_eval_vol.flip]
+name = "Flip handedness"
+description = "Flip handedness of output volumes"
+type = "bool"
+default = false
+
+[tabs.tomodrgn_eval_vol.invert]
+name = "Invert contrast"
+description = "Invert contrast of output volumes"
+type = "bool"
+default = false
+
+[tabs.tomodrgn_eval_vol.downsample]
+name = "Downsample output"
+description = "Downsample volumes to this box size (pixels)"
+type = "int"
+
+[tabs.tomodrgn_eval_vol.amp]
+name = "Use mixed precision"
+description = "Use mixed-precision training"
+type = "bool"
+default = true
 
 # analyze_volumes
 
@@ -6626,19 +6629,53 @@ condition = {arg="skip", value="false"}
 _name = "tomoDRGN (analyze_volumes)"
 _description = "tomoDRGN analyze_volumes"
 
-[tabs.tomodrgn_analyze_volumes.skip]
-name = "Skip"
-description = "Do not run tomodrgn analyze_volumes"
-type = "bool"
-default = true
+[tabs.tomodrgn_analyze_volumes.num_pcs]
+name = "Number of PCs"
+description = "Keep this many PCs when saving PCA and running UMAP"
+type = "int"
+default = 128
+
+[tabs.tomodrgn_analyze_volumes.ksample]
+name = "K-means samples"
+description = "Number of k-means samples to generate"
+type = "int"
+default = 100
 
 [tabs.tomodrgn_analyze_volumes.mask]
 name = "Mask type for volumes"
 description = "Type of real space mask to generate for each volume when calculating voxel-PCA"
 type = "enum"
-enum = { none="none", soft="soft", tight="tight", sphere="sphere" }
+enum = { none="none", soft="soft", tight="tight", sphere="sphere", file="file" }
 default = "soft"
-condition = { arg="skip", value="false" }
+
+[tabs.tomodrgn_analyze_volumes.mask_path]
+name = "Shape mask (*.mrc)"
+description = "Read shape mask from mrc file"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+condition = { arg="mask", value="file" }
+
+[tabs.tomodrgn_analyze_volumes.thresh]
+name = "Mask threshold (percentile)"
+description = "Isosurface percentile at which to threshold volume"
+type = "float"
+default = 0.99
+condition = {arg="mask", value=["soft","tight"]}
+
+[tabs.tomodrgn_analyze_volumes.dilate]
+name = "Mask dilation (voxels)"
+description = "Number of voxels to dilate thresholded isosurface outwards from mask boundary (0=1/30th of box size)"
+type = "int"
+default = 0
+condition = {arg="mask", value="soft"}
+
+[tabs.tomodrgn_analyze_volumes.dist]
+name = "Cosine falloff edge (voxels)"
+description = "Number of voxels over which to apply a soft cosine falling edge from dilated mask boundary (0=1/30th of box size)"
+type = "int"
+default = 0
+condition = {arg="mask", value="soft"}
 
 # isolate particle subsets
 
@@ -6646,19 +6683,23 @@ condition = { arg="skip", value="false" }
 _name = "tomoDRGN (filter_star)"
 _description = "tomoDRGN filter_star"
 
-[tabs.tomodrgn_filter_star.skip]
-name = "Skip"
-description = "Do not run tomodrgn analyze_volumes"
-type = "bool"
-default = true
+[tabs.tomodrgn_filter_star.classes]
+name = "Class IDs to keep"
+description = "Comma separated list of selected classes"
+type = "str"
+default = ""
 
-[tabs.tomodrgn_filter_star.mask]
-name = "Mask type for volumes"
-description = "Type of real space mask to generate for each volume when calculating voxel-PCA"
-type = "enum"
-enum = { none="none", soft="soft", tight="tight", sphere="sphere" }
-default = "soft"
-condition = { arg="skip", value="false" }
+[tabs.tomodrgn_filter_star.check_reconstruction]
+name = "Generate reconstruction after filtering"
+description = "Calculate reconstruction using only clean particles"
+type = "bool"
+default = false
+
+[tabs.tomodrgn_filter_star.discard]
+name = "Permanently remove particles"
+description = "Permanently remove particles (WARNING: this cannot be undone!)"
+type = "bool"
+default = false
 
 # TODO: backproject-voxel, train-nn
 

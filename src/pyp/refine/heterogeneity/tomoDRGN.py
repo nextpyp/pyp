@@ -140,7 +140,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
         tomo += " --recon-dose-weight"
     else:
         pass 
-    tomo += " --sort-ptcl-imgs dose_ascending"
+    tomo += f" --sort-ptcl-imgs {parameters['tomodrgn_vae_train_sort_ptcl_imgs']}"
 
     if parameters["tomodrgn_vae_train_dose_mask"]:
         tomo += " --l-dose-mask"
@@ -222,14 +222,21 @@ def tomodrgn_analyze(parameters,input_dir, output):
     if parameters['tomodrgn_analyze_skipv']:
         options += " --skip-vol"
     if parameters['tomodrgn_analyze_skipumap']:
-        options += " --skip-umap"
+        options += f" --skip-umap"
+    
+    options += f" --ksample {parameters['tomodrgn_analyze_ksample']}"
+    
     if parameters['tomodrgn_analyze_flip']:
         options += " --flip"
     if parameters['tomodrgn_analyze_invert']:
         options += " --invert"
+    if parameters['tomodrgn_analyze_lowpass']:
+        options += f" --lowpass {parameters['tomodrgn_analyze_lowpass']}"
+    
+    options += f" --pc {parameters['tomodrgn_analyze_pc']}"
     if parameters["tomodrgn_analyze_pc_ondata"]:
         options += " --pc-ondata"
-    
+
     if parameters.get('tomodrgn_analyze_downsample'):
         options += f" --downsample {parameters['tomodrgn_analyze_downsample']}"
     
@@ -243,9 +250,27 @@ def tomodrgn_analyze(parameters,input_dir, output):
     if parameters['tomodrgn_analyze_epoch'] == 0 or parameters['tomodrgn_analyze_epoch'] >= parameters['tomodrgn_vae_train_epochs']:
         parameters['tomodrgn_analyze_epoch'] = parameters['tomodrgn_vae_train_epochs'] - 1
 
-    command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['tomodrgn_analyze_epoch']} -o {output} --pc {parameters['tomodrgn_analyze_pc']} --ksample {parameters['tomodrgn_analyze_ksample']} {options} --plot-format svgz"
+    command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['tomodrgn_analyze_epoch']} -o {output} --pc {parameters['tomodrgn_analyze_pc']} {options} --plot-format svgz"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+
+    # generate webp thumbnails
+    arguments = []
+
+    radius = (
+                float(parameters["particle_rad"])
+                / float(parameters["extract_bin"])
+                / float(parameters["data_bin"])
+                / float(parameters["scope_pixel"])
+            )
+
+    for pc in range(parameters['tomodrgn_analyze_pc']):
+      for file in glob.glob(os.path.join(output,f"pc{pc+1}", "*.mrc")):
+        arguments.append((file, radius, file.replace(Path(file).suffix,".webp")))
+    
+    for file in glob.glob( os.path.join(output,f"kmeans{parameters['tomodrgn_analyze_ksample']}","*.mrc")):
+        arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
+    mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
 
 
 # TODO - only run training tasks
@@ -283,7 +308,7 @@ def run_tomodrgn_train(project_dir, parameters):
         tasks.append(command)
 
     logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
-    mpi.submit_jobs_to_workers(tasks, working_path=os.getcwd(), verbose=False)
+    mpi.submit_jobs_to_workers(tasks, working_path=os.getcwd(), verbose=True)
         
     # particle_stack_list = [os.path.basename(p) for p in particles_stacks]
 
@@ -319,8 +344,7 @@ def run_tomodrgn_train(project_dir, parameters):
 
     elif parameters['micromon_block'] == "tomo-drgn-train":
 
-        if not parameters['tomodrgn_vae_train_skip']:
-            tomodrgn_train(parameters, "input_data", name, train_folder)
+        tomodrgn_train(parameters, "input_data", name, train_folder)
 
         if (train_folder / "weights.pkl").exists() and (train_folder / "z.train.pkl").exists():
             logger.info(f"Training finished successfully, results saved to {train_folder}")
@@ -334,9 +358,8 @@ def run_tomodrgn_train(project_dir, parameters):
         convergence_folder = Path(project_dir) / "train" / "convergence"
         convergence_folder.mkdir(parents=True, exist_ok=True)
 
-        if not parameters['tomodrgn_vae_convergence_skip']:
-            logger.info("Running tomoDRGN convergence_vae")
-            convergence_vae(parameters, train_folder, convergence_folder)
+        logger.info("Running tomoDRGN convergence_vae")
+        convergence_vae(parameters, train_folder, convergence_folder)
         
         # produce graphical outputs
         arguments = []
@@ -367,7 +390,7 @@ def generate_map_thumbnail( map, radius, output):
 
 
 # TODO - only run evaluation tasks
-def run_tomodrgn_eval(project_dir, parameters):
+def run_tomodrgn_eval(project_dir, parameters,analyze_volumes=False):
 
     # scratch space
     working_path = Path(os.environ["PYP_SCRATCH"]) / "tomodrgn"
@@ -398,7 +421,7 @@ def run_tomodrgn_eval(project_dir, parameters):
     tasks = []
     for stack in particles_stacks:
         
-        command = f"cp {stack} {os.getcwd()}/input_data/"
+        command = f"cp {stack} {os.getcwd()}/input_data/; ln -s {os.getcwd()}/input_data/{Path(stack).name} {os.getcwd()}"
         tasks.append(command)
 
     logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
@@ -434,36 +457,32 @@ def run_tomodrgn_eval(project_dir, parameters):
 
     # analyze
     saved_folder = Path(project_dir) / "train"
-    if not parameters["tomodrgn_analyze_skip"]:
+    if not analyze_volumes:
         tomodrgn_analyze(parameters, drgn_path, saved_folder)
 
         if not saved_folder.exists():
             raise Exception("tomodrgn analyze failed")
-
-    if not parameters["tomodrgn_eval_vol_use_local_scratch"]:
-        final_output = os.path.join(project_dir, "train", "eval_vols")
     else:
-        final_output = os.path.join(working_path, "all_vols")
-    
-    Path(final_output).mkdir(parents=True, exist_ok=True)
+
+        if not parameters["tomodrgn_eval_vol_use_local_scratch"]:
+            final_output = os.path.join(project_dir, "train", "eval_vols")
+        else:
+            final_output = os.path.join(working_path, "all_vols")
         
-    if parameters["tomodrgn_eval_vol_use_local_scratch"] and not parameters["tomodrgn_analyze_volumes_skip"] and parameters["tomodrgn_eval_vol_skip"]:
-        raise Exception("Cannot analyze volumes from local scratch while skipping eval_vol")
-        
-    # eval_vol
-    if not parameters["tomodrgn_eval_vol_skip"]:
+        Path(final_output).mkdir(parents=True, exist_ok=True)
+            
+        # eval_vol
         logger.info("Running tomoDRGN eval_vol")
 
         if parameters["tomodrgn_eval_vol_use_local_scratch"]:
-            logger.warning(f"Generating volumes to local scratch, no output will be saved to project directory")
+            logger.warning(f"Generating volumes in local scratch, no volumes will be saved to project directory")
 
         tomodrgn_eval_vol(parameters, final_output, parent=os.path.join(project_params.resolve_path(parameters["data_parent"]), "train"))
-        
-    # analyze_volumes
-    if not parameters["tomodrgn_analyze_volumes_skip"]:
+            
+        # analyze_volumes
         logger.info("Running tomoDRGN analyze_volumes")
-        final_output_analysis = os.path.join(project_dir, "train", "all_vols_analysis")
-        shutil.rmtree(final_output_analysis)
+        final_output_analysis = os.path.join(project_dir, "train")
+        shutil.rmtree(final_output_analysis,ignore_errors=True)
         Path(final_output_analysis).mkdir(parents=True, exist_ok=True)
         tomodrgn_analyze_volumes(
             parameters=parameters, 
@@ -471,6 +490,23 @@ def run_tomodrgn_eval(project_dir, parameters):
             vol_dir=final_output, 
             parent=os.path.join(project_params.resolve_path(parameters["data_parent"]),"train")
         )
+        
+        # generate webp thumbnails
+        arguments = []
+
+        radius = (
+                    float(parameters["particle_rad"])
+                    / float(parameters["extract_bin"])
+                    / float(parameters["data_bin"])
+                    / float(parameters["scope_pixel"])
+                )
+
+        for pc in range(parameters['tomodrgn_analyze_volumes_num_pcs']):
+            for file in glob.glob(os.path.join(final_output_analysis,f"pc{pc+1}", "*.mrc")):
+                arguments.append((file, radius, file.replace(Path(file).suffix,".webp")))
+        for file in glob.glob( os.path.join(final_output_analysis,f"kmeans{parameters['tomodrgn_analyze_volumes_ksample']}","*.mrc")):
+            arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
 
 def backproject_voxel(parameters, input_dir, name, output):
 
@@ -703,18 +739,19 @@ def convergence_vae(parameters, input_dir, output):
 
     if parameters["tomodrgn_vae_convergence_skip_umap"]:
         options += " --skip-umap"
-
-    if parameters['tomodrgn_analyze_flip']:
-        options += " --flip"
-    if parameters['tomodrgn_analyze_invert']:
-        options += " --invert"
-
-    if parameters.get('tomodrgn_analyze_downsample'):
-        options += f" -d {parameters['tomodrgn_analyze_downsample']}"
-
+    
     if parameters["tomodrgn_vae_convergence_skip_vgen"]:
         options += " --skip-volgen"
-    
+    else:
+        if parameters['tomodrgn_vae_convergence_flip']:
+            options += " --flip"
+        if parameters['tomodrgn_vae_convergence_invert']:
+            options += " --invert"
+        if parameters.get('tomodrgn_vae_convergence_downsample'):
+            options += f" --downsample {parameters['tomodrgn_vae_convergence_downsample']}"
+        if parameters.get('tomodrgn_vae_convergence_lowpass'):
+            options += f" --lowpass {parameters['tomodrgn_vae_convergence_lowpass']}"        
+
     if not "None" in parameters["tomodrgn_vae_convergence_gt"]:
         options += f" --ground-truth {parameters['tomodrgn_vae_convergence_gt']}"
 
@@ -734,8 +771,20 @@ def tomodrgn_eval_vol(parameters, output_dir, parent):
     batch_size = parameters['tomodrgn_eval_vol_batch']
 
     options = ""
-    if parameters.get('tomodrgn_analyze_downsample'):
-        options += f" --downsample {parameters['tomodrgn_analyze_downsample']}"
+    if parameters.get('tomodrgn_eval_vol_downsample'):
+        options += f" --downsample {parameters['tomodrgn_eval_vol_downsample']}"
+
+    if parameters.get('tomodrgn_eval_vol_lowpass') > 0:
+        options += f" --lowpass {parameters['tomodrgn_eval_vol_lowpass']}"
+
+    if parameters.get('tomodrgn_eval_vol_flip'):
+        options += f" --flip"
+
+    if parameters.get('tomodrgn_eval_vol_invert'):
+        options += f" --invert"
+
+    if not parameters.get('tomodrgn_eval_vol_amp'):
+        options += f" --no-amp"
 
     if parameters["tomodrgn_analyze_epoch"] == -1:
         epoch = parameters['tomodrgn_vae_train_epochs'] - 1
@@ -757,55 +806,86 @@ def tomodrgn_analyze_volumes(parameters, output_dir, vol_dir, parent):
                         [--mask {none,sphere,tight,soft}] [--thresh THRESH]
                         [--dilate DILATE] [--dist DIST]
     """
-    options = f"--ksample {parameters['tomodrgn_analyze_ksample']} --mask {parameters['tomodrgn_analyze_volumes_mask']}"
+    options = f"--ksample {parameters['tomodrgn_analyze_volumes_ksample']} --plot-format svgz"
  
-    """
-    tomodrgn analyze_volumes \
-    --voldir 03_heterogeneity-1_train_vae/all_vols \
-    --config 03_heterogeneity-1_train_vae/config.pkl \
-    --outdir 03_heterogeneity-1_train_vae/all_vols_analysis \
-    --ksample 100 \
-    --mask soft
-    """
+    options += f" --num-pcs {parameters['tomodrgn_analyze_volumes_num_pcs']}"
+    
+    if parameters.get('tomodrgn_analyze_volumes_mask') == "file":
+        options += f" --mask-path {parameters.get('tomodrgn_analyze_volumes_mask_path')}"
+    else:
+        options += f" --mask {parameters['tomodrgn_analyze_volumes_mask']}"
+        if parameters.get('tomodrgn_analyze_volumes_mask') == "soft" or parameters.get('tomodrgn_analyze_volumes_mask') == "tight":
+            options += f" --thresh {parameters.get('tomodrgn_analyze_volumes_thresh')}"
+        if parameters.get('tomodrgn_analyze_volumes_mask') == "soft":
+            if parameters.get('tomodrgn_analyze_volumes_dilate') > 0:
+                options += f" --dilate {parameters.get('tomodrgn_analyze_volumes_dilate')}"
+            if parameters.get('tomodrgn_analyze_volumes_dist') > 0:
+                options += f" --dist {parameters.get('tomodrgn_analyze_volumes_dist')}"
+
+    logger.warning(f"CURRENT DIRECTORY = {os.getcwd()}")
+    logger.warning(f"CURRENT DIRECTORY FILES = {glob.glob('*_stack.mrcs')}")
     command = f"{get_tomodrgn_path()} analyze_volumes --outdir {output_dir} --config {parent}/config.pkl --voldir {vol_dir} {options}"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
     
-def filtering_with_indexes(args):
+def filtering_with_labels(args,input_star,filtered_star_file,project_dir):
     """Select k-means classes of interest
-    """
-    import numpy as np
-    from tomodrgn import utils
-    kmeans_labels = utils.load_pkl('analyze.49/kmeans100/labels.pkl')  # or use the volume space k-means labels at e.g. analyze.49/all_vols_analysis/kmeans100/voxel_kmeans100_labels.pkl
-    #ckmeans_labels_to_keep = np.array([0, 4, 5, 6, 50, 51, 52])
-    kmeans_labels_to_keep = np.array([args.get('detect_nn3d_milo_classes').replace(' ','')])
-    # define your own labels here
-    indices_to_keep = np.array([i for i, label in enumerate(kmeans_labels) if label in kmeans_labels_to_keep])
-    utils.save_pkl(indices_to_keep, f'analyze.49/kmeans100/indices_kept_{len(indices_to_keep)}-particles.pkl')
-"""
-    tomodrgn filter_star \
-        imageseries.star \
-        --starfile-type imageseries \
-        --tomo-id-col _rlnImageName \  # useful when filtering the output star file for a particular tomogram's particles
-        --ind path/to/indices.pkl \
-        -o path/to/imageseries_filtered.star
 
     tomodrgn filter_star \
-        volumeseries.star \
-        --starfile-type volumeseries \
-        --tomo-id-col _rlnImageName \
-        --ind path/to/indices.pkl \
-        -o path/to/imageseries_filtered.star
-"""
+    starfile.star \
+    --labels train_vae_dir / analyze.EPOCH / kmeans N / labels.pkl \
+    --labels-sel 0 15 19
+    -o starfile_filtered.star
+
+    usage: tomodrgn filter_star [-h] [--starfile-type {imageseries,volumeseries,optimisation_set}] [--action {keep,drop}] [--tomogram TOMOGRAM] [--tomo-id-col TOMO_ID_COL] -o O [--ind IND]
+                                [--ind-type {particle,image}] [--labels LABELS] [--labels-sel LABELS_SEL [LABELS_SEL ...]]
+                                input
+
+    positional arguments:
+    input                 Input .star file
+
+    options:
+    -h, --help            show this help message and exit
+
+    Core arguments:
+    --starfile-type {imageseries,volumeseries,optimisation_set}
+                            Type of star file to filter. Select imageseries if rows correspond to particle images. Select volumeseries if rows correspond to particle volumes. Select optimisation_set
+                            if passing in an optimisation set star file.
+    --action {keep,drop}  keep or remove particles associated with ind.pkl
+    --tomogram TOMOGRAM   optionally select by individual tomogram name (if `all` then writes individual star files per tomogram
+    --tomo-id-col TOMO_ID_COL
+                            Name of column in input starfile with unique values per tomogram
+    -o O                  Output .star file (treated as output base name suffixed by tomogram name if specifying `--tomogram`).The output star file name must contain the string `_optimisation_set`
+                            if the input star file is of --starfile-type optimisation_set
+
+    Index-based filtering arguments:
+    --ind IND             selected indices array (.pkl)
+    --ind-type {particle,image}
+                            use indices to filter by particle (multiple images) or by image (individual images). Only relevant for imageseries star files filtered using ``--ind``
+
+    Class-label-based filtering arguments:
+    --labels LABELS       path to labels array (.pkl). The labels.pkl must contain a 1-D numpy array of integer class labels with length matching the number of particles referenced in the star file
+                            to be filtered.
+    --labels-sel LABELS_SEL [LABELS_SEL ...]
+                            space-separated list of integer class labels to be selected (to be kept or dropped in accordance with ``--action``)
+    """
+
+    if args.get('tomodrgn_filter_star_classes') and len(args.get('tomodrgn_filter_star_classes').split(',')) > 0:
+        kmeans_labels_to_keep = ' '.join(args.get('tomodrgn_filter_star_classes').split(','))
+    else:
+        logger.warning("No classes selected for filtering")
+        return
     
-def filtering_with_labels():
-    return
-"""
-    tomodrgn filter_star \
-        path/to/imageseries.star \
-        --starfile-type imageseries \
-        --tomo-id-col _rlnImageName \
-        --labels 03_heterogeneity-1_train_vae/analyze.49/kmeans100/labels.pkl \
-        --labels-sel 0 1 2 3 \
-        -o path/to/imageseries_filtered.star
-"""
+    if args.get('tomodrgn_filter_star_volumes') == "analyze":
+        label_directory = os.path.join( project_dir, "train", f"kmeans{args.get('tomodrgn_analyze_ksample')}" )
+        assert os.path.exists(label_directory), f"Cannot find output of tomodrgn analize in {label_directory}"
+    else:
+        label_directory = os.path.join( project_dir, "train", f"kmeans{args.get('tomodrgn_analyze_volumes_ksample')}" )
+        assert os.path.exists(label_directory), f"Cannot find output of tomodrgn analize_volumes in {label_directory}"
+    
+    command = f"{get_tomodrgn_path()} filter_star {input_star} -o {filtered_star_file} --labels {label_directory}/labels.pkl --labels-sel {kmeans_labels_to_keep}"
+
+    local_run.stream_shell_command(command, verbose=args['slurm_verbose'])
+
+    if os.path.exists(filtered_star_file):
+        logger.info(f"Filtered star file succesfully saved to {filtered_star_file}")

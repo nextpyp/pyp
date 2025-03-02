@@ -5122,7 +5122,12 @@ if __name__ == "__main__":
                         cryoDRGN.run_cryodrgn_eval(project_dir, parameters=parameters)
 
                     elif parameters["heterogeneity_method"] == "tomoDRGN":
-                        tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters)
+                        if parameters.get("micromon_block") == "tomo-drgn-filter":
+                            # run filter_star
+                            filtered_star_file = os.path.join(project_dir, "train", "filered_star_file.star")
+                            tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, project_dir=project_dir)
+                        else:
+                            tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
                     
                     else:
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
@@ -5213,17 +5218,20 @@ if __name__ == "__main__":
                     parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.bz2")
                     parameters["clean_parfile"] = parfile_occ_zero if parfile_occ_zero.exists() else parameters["clean_parfile"]
 
-                assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
+                if parameters.get("micromon_block") != "tomo-drgn-filter":
+                    assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
 
-                # copy reconstruction to current frealign/maps
-                filename_init = parameters["data_set"] + "_r01_01"
-                parfile = project_params.resolve_path(parameters["clean_parfile"])
-                reference = parfile.replace(".bz2", "") + ".mrc"
-                if os.path.exists(reference):
-                    shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
+                    # copy reconstruction to current frealign/maps
+                    filename_init = parameters["data_set"] + "_r01_01"
+                    parfile = project_params.resolve_path(parameters["clean_parfile"])
+                    reference = parfile.replace(".bz2", "") + ".mrc"
+                    if os.path.exists(reference):
+                        shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
 
-                # do the actual cleaning
-                parameters = particle_cleaning(parameters)
+                    # do the actual cleaning
+                    parameters = particle_cleaning(parameters)
+                else:
+                    logger.warning("Not implemented!")
 
                 # automatically run reconstruction using clean particles without any refinement 
                 # use clean_parfile as refine_parfile
