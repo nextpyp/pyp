@@ -6237,6 +6237,7 @@ description = "Checkpointing interval in N_EPOCHS"
 type = "int"
 default = 1
 advanced = true
+hidden = true
 
 [tabs.tomodrgn_vae_train.log_interval]
 name = "Log interval"
