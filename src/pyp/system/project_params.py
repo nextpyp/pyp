@@ -519,12 +519,12 @@ def parse_parameters(my_parameters,block,mode):
     extra_blocks = []
     if "tomo" in mode:
         if "pre_process" in block:
-            extra_blocks = ["tomo_denoise_eval", "tomo_segment_open", "tomo_segment_close", "tomo_picking", "tomo_drgn", "tomo_segment", "tomo_milo", "tomo_par_open" ]
+            extra_blocks = ["tomo_denoise_eval", "tomo_segment_open", "tomo_segment_close", "tomo_picking", "tomo_segment", "tomo_milo", "tomo_par_open" ]
     else:
         if "pre_process" in block:
             extra_blocks = [ "spr_denoise", "spr_picking", "spr_drgn" ]
 
-    if len(extra_blocks) > 0:    
+    if len(extra_blocks) > 0:
         for extra_block in extra_blocks:
             blocks.extend([specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and extra_block in b ])
 

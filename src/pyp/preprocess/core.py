@@ -672,8 +672,10 @@ def read_tilt_series(
         elif metadata.get("web") and metadata.get("web").get("drift"):
             for i in metadata.get("web")["drift"]:
                 drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
-    else:
+    elif not parameters["movie_no_frames"]:
         drift_metadata["drift"] = shifts
+    else:
+        drift_metadata["drift"] = {}
 
     if "eer" in parameters["data_path"] and parameters["movie_eer_reduce"] > 1:
         upsample = parameters["movie_eer_reduce"]
