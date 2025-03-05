@@ -220,7 +220,7 @@ Step 4: Virion selection
 
       .. md-tab-item:: Particle detection
 
-        - Set ``Detection method`` to spherical
+        - Set ``Detection method`` to virions
 
         - Set ``Virion radius (A)`` to 500
 
@@ -243,7 +243,7 @@ Step 5: Virion segmentation
     .. figure:: ../images/tutorial_tomo_pre_process_virions.webp
       :alt: Virion segmentation
 
-  * Select a virion from the table to show its 3D segmentation (8 different thresholds are shown as yellow contours in columns 1-8). The column number highlighted in blue represents the selected threshold value (default is 1, click on a different column to select a better threshold). If none of the columns look reasonable (or if you want to ignore the current virion virion), select the last column ("-")
+  * Select a virion from the table to show its 3D segmentation (8 different thresholds are shown as yellow contours in columns 1-8). The column number highlighted in blue represents the selected threshold value (default is 1, click on a different column to select a better threshold). The best threshold is the one that more closely follows the outermost membrane layer. If none of the columns look reasonable (or if you want to ignore the current virion), select the last column ("-")
 
   * Repeat this process for all virions in the table and all tilt-series in the dataset
 
@@ -314,7 +314,7 @@ Step 7: Reference-based refinement
 
         - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search`, navigating to the folder where you downloaded the data for the tutorial, and selecting the file `EMPIAR-10164_init_ref.mrc`
 
-        - Click :fa:`search` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-preprocessing-*_original_volumes.txt`` from :bdg-secondary:`Pre-processing`
+        - Click :fa:`search` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-picking-closed-*_original_volumes.txt`` from :bdg-secondary:`Pre-processing`
 
         - Set ``Max resolution (A)`` to 8.0
 

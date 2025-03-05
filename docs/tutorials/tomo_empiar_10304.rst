@@ -206,7 +206,7 @@ Step 5: Reference-based refinement
 
           - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search`, navigating to the folder where you downloaded the data for the tutorial, and selecting the file `EMPIAR-10304_init_ref.mrc`
 
-          - Click :fa:`search` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-preprocessing-*_original_volumes.txt`` from :bdg-secondary:`Pre-processing`
+          - Click :fa:`search` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-picking-*_original_volumes.txt`` from :bdg-secondary:`Pre-processing`
 
           - Set ``Max resolution (A)`` to 22.0
 
