@@ -1693,48 +1693,30 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
 
             """
-            usage: pytom_estimate_roc.py [-h] -j JOB_FILE -n NUMBER_OF_PARTICLES
-                             -r RADIUS_PX [--bins BINS]
-                             [--gaussian-peak GAUSSIAN_PEAK]
-                             [--force-peak FORCE_PEAK] [--crop-plot CROP_PLOT]
-                             [--show-plot SHOW_PLOT] [--log LOG]
-                             [--ignore_tomogram_mask IGNORE_TOMOGRAM_MASK]
+            usage: pytom_estimate_roc.py [-h] -j JOB_FILE -n NUMBER_OF_PARTICLES [--particle-diameter PARTICLE_DIAMETER] [--bins BINS] [--gaussian-peak GAUSSIAN_PEAK] [--force-peak] [--crop-plot] [--show-plot] [--log LOG] [--ignore_tomogram_mask]
 
             Estimate ROC curve from TMJob file. -- Marten Chaillet (@McHaillet)
 
             options:
             -h, --help            show this help message and exit
             -j, --job-file JOB_FILE
-                                    JSON file that contain all data on the template
-                                    matching job, written out by pytom_match_template.py
-                                    in the destination path.
+                                    JSON file that contain all data on the template matching job, written out by pytom_match_template.py in the destination path.
             -n, --number-of-particles NUMBER_OF_PARTICLES
-                                    The number of particles to extract and estimate the
-                                    ROC on, recommended is to multiply the expected number
-                                    of particles by 3.
-            -r, --radius-px RADIUS_PX
-                                    Particle radius in pixels in the tomogram. It is used
-                                    during extraction to remove areas around peaks
-                                    preventing double extraction.
+                                    The number of particles to extract and estimate the ROC on, recommended is to multiply the expected number of particles by 3.
+            --particle-diameter PARTICLE_DIAMETER
+                                    Particle diameter of the template in Angstrom. It is used during extraction to remove areas around peaks to prevent double extraction. If not previously specified, this option is required. If specified in pytom_match_template, this is optional and can be used
+                                    to overwrite it, which might be relevant for strongly elongated particles--where the angular sampling should be determined using its long axis but the extraction mask should use its short axis.
             --bins BINS           Number of bins for the histogram to fit Gaussians on.
             --gaussian-peak GAUSSIAN_PEAK
-                                    Expected index of the histogram peak of the Gaussian
-                                    fitted to the particle population.
-            --force-peak FORCE_PEAK
-                                    Force the particle peak to the provided peak index.
-            --crop-plot CROP_PLOT
-                                    Flag to crop the plot relative to the height of the
-                                    particle population.
-            --show-plot SHOW_PLOT
-                                    Flag to use a pop-up window for the plot instead of
-                                    writing it to the location of the job file.
+                                    Expected index of the histogram peak of the Gaussian fitted to the particle population.
+            --force-peak          Force the particle peak to the provided peak index.
+            --crop-plot           Flag to crop the plot relative to the height of the particle population.
+            --show-plot           Flag to use a pop-up window for the plot instead of writing it to the location of the job file.
             --log LOG             Can be set to `info` or `debug`
-            --ignore_tomogram_mask IGNORE_TOMOGRAM_MASK
-                                    Flag to ignore the TM job tomogram mask. Useful if the
-                                    scores mrc looks reasonable, but this finds 0
-                                    particles
+            --ignore_tomogram_mask
+                                    Flag to ignore the TM job tomogram mask. Useful if the scores mrc looks reasonable, but this finds 0 particles
             """
-            command = f"{get_pytom_path()} pytom_estimate_roc.py --job-file pytom/{name}_job.json --radius-px {int(radius_in_binned_pixels)} --number-of-particles {3*parameters['tomo_pick_pytom_number_of_particles']} --bins 16 --crop-plot"
+            command = f"{get_pytom_path()} pytom_estimate_roc.py --job-file pytom/{name}_job.json --number-of-particles {3*parameters['tomo_pick_pytom_number_of_particles']} --bins 16 --crop-plot"
             local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
 
             # save scores by default
@@ -1748,89 +1730,57 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_angles.mrc"), debug_folder )                
 
         """
-        usage: pytom_extract_candidates.py [-h] -j JOB_FILE
-                                        [--tomogram-mask TOMOGRAM_MASK]
-                                        [--ignore_tomogram_mask IGNORE_TOMOGRAM_MASK]
-                                        -n NUMBER_OF_PARTICLES
-                                        [--number-of-false-positives NUMBER_OF_FALSE_POSITIVES]
-                                        -r RADIUS_PX [-c CUT_OFF]
-                                        [--tophat-filter TOPHAT_FILTER]
-                                        [--tophat-connectivity TOPHAT_CONNECTIVITY]
-                                        [--relion5-compat RELION5_COMPAT]
-                                        [--log LOG] [--tophat-bins TOPHAT_BINS]
-                                        [--plot-bins PLOT_BINS]
+        usage: pytom_extract_candidates.py [-h] -j JOB_FILE [--tomogram-mask TOMOGRAM_MASK] [--ignore_tomogram_mask] -n NUMBER_OF_PARTICLES [--number-of-false-positives NUMBER_OF_FALSE_POSITIVES] [--particle-diameter PARTICLE_DIAMETER] [-c CUT_OFF] [--tophat-filter]
+                                        [--tophat-connectivity TOPHAT_CONNECTIVITY] [--relion5-compat] [--log LOG] [--tophat-bins TOPHAT_BINS] [--plot-bins PLOT_BINS]
 
         Run candidate extraction. -- Marten Chaillet (@McHaillet)
 
         options:
         -h, --help            show this help message and exit
-        -j JOB_FILE, --job-file JOB_FILE
-                                JSON file that contain all data on the template
-                                matching job, written out by pytom_match_template.py
-                                in the destination path.
+        -j, --job-file JOB_FILE
+                                JSON file that contain all data on the template matching job, written out by pytom_match_template.py in the destination path.
         --tomogram-mask TOMOGRAM_MASK
-                                Here you can provide a mask for the extraction with
-                                dimensions (in pixels) equal to the tomogram. All
-                                values in the mask that are smaller or equal to 0 will
-                                be removed, all values larger than 0 are considered
-                                regions of interest. It can be used to extract
-                                annotations only within a specific cellular region. If
-                                the job was run with a tomogram mask, this file will
-                                be used instead of the job mask
-        --ignore_tomogram_mask IGNORE_TOMOGRAM_MASK
-                                Flag to ignore the input and TM job tomogram mask.
-                                Useful if the scores mrc looks reasonable, but this
-                                finds 0 particles to extract
-        -n NUMBER_OF_PARTICLES, --number-of-particles NUMBER_OF_PARTICLES
+                                Here you can provide a mask for the extraction with dimensions (in pixels) equal to the tomogram. All values in the mask that are smaller or equal to 0 will be removed, all values larger than 0 are considered regions of interest. It can be used to extract
+                                annotations only within a specific cellular region. If the job was run with a tomogram mask, this file will be used instead of the job mask
+        --ignore_tomogram_mask
+                                Flag to ignore the input and TM job tomogram mask. Useful if the scores mrc looks reasonable, but this finds 0 particles to extract
+        -n, --number-of-particles NUMBER_OF_PARTICLES
                                 Maximum number of particles to extract from tomogram.
         --number-of-false-positives NUMBER_OF_FALSE_POSITIVES
-                                Number of false positives to determine the false alarm
-                                rate. Here one can increase the recall of the particle
-                                of interest at the expense of more false positives.
-                                The default value of 1 is recommended for particles
-                                that can be distinguished well from the background
-                                (high specificity). The value can also be set between
-                                0 and 1 to make the cut-off more restrictive.
-        -r RADIUS_PX, --radius-px RADIUS_PX
-                                Particle radius in pixels in the tomogram. It is used
-                                during extraction to remove areas around peaks
-                                preventing double extraction.
-        -c CUT_OFF, --cut-off CUT_OFF
-                                Override automated extraction cutoff estimation and
-                                instead extract the number-of-particles down to this
-                                LCCmax value. Setting to 0 will keep extracting until
-                                number-of-particles, or until there are no positive
-                                values left in the score map. Values larger than 1
-                                make no sense as the correlation cannot be higher than
-                                1.
-        --tophat-filter TOPHAT_FILTER
-                                Attempt to filter only sharp correlation peaks with a
-                                tophat transform
+                                Number of false positives to determine the false alarm rate. Here one can increase the recall of the particle of interest at the expense of more false positives. The default value of 1 is recommended for particles that can be distinguished well from the
+                                background (high specificity). The value can also be set between 0 and 1 to make the cut-off more restrictive.
+        --particle-diameter PARTICLE_DIAMETER
+                                Particle diameter of the template in Angstrom. It is used during extraction to remove areas around peaks to prevent double extraction. If not previously specified, this option is required. If specified in pytom_match_template, this is optional and can be used
+                                to overwrite it, which might be relevant for strongly elongated particles--where the angular sampling should be determined using its long axis but the extraction mask should use its short axis.
+        -c, --cut-off CUT_OFF
+                                Override automated extraction cutoff estimation and instead extract the number-of-particles down to this LCCmax value. Setting to 0 will keep extracting until number-of-particles, or until there are no positive values left in the score map. Values larger than
+                                1 make no sense as the correlation cannot be higher than 1.
+        --tophat-filter       Attempt to filter only sharp correlation peaks with a tophat transform
         --tophat-connectivity TOPHAT_CONNECTIVITY
-                                Set kernel connectivity for ndimage binary structure
-                                used for the tophat transform. Integer value in range
-                                1-3. 1 is the most restrictive, 3 the least
-                                restrictive. Generally recommended to leave at 1.
-        --relion5-compat RELION5_COMPAT
-                                Write out centered coordinates in Angstrom for
-                                RELION5.
+                                Set kernel connectivity for ndimage binary structure used for the tophat transform. Integer value in range 1-3. 1 is the most restrictive, 3 the least restrictive. Generally recommended to leave at 1.
+        --relion5-compat      Write out centered coordinates in Angstrom for RELION5.
         --log LOG             Can be set to `info` or `debug`
         --tophat-bins TOPHAT_BINS
-                                Number of bins to use in the histogram of occurences
-                                in the tophat transform code (for both the estimation
-                                and the plotting).
+                                Number of bins to use in the histogram of occurences in the tophat transform code (for both the estimation and the plotting).
         --plot-bins PLOT_BINS
-                                Number of bins to use for the occurences vs LCC_max
-                                plot.
+                                Number of bins to use for the occurences vs LCC_max plot.      
         """
         
         options = ""        
         if not parameters['tomo_pick_pytom_estimate_cutoff']:
             options += f" --cut-off {parameters['tomo_pick_pytom_cutoff']}"
         
-        command = f"{get_pytom_path()} pytom_extract_candidates.py --job-file pytom/{name}_job.json --number-of-particles {parameters['tomo_pick_pytom_number_of_particles']} --number-of-false-positives {parameters['tomo_pick_pytom_number_of_false_positives']} --radius-px {int(radius_in_binned_pixels)} {options}"
+        command = f"{get_pytom_path()} pytom_extract_candidates.py --job-file pytom/{name}_job.json --number-of-particles {parameters['tomo_pick_pytom_number_of_particles']} --number-of-false-positives {parameters['tomo_pick_pytom_number_of_false_positives']} {options}"
         local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
         
+        # save scores by default
+        if parameters.get("tomo_pick_pytom_save_scores") and os.path.exists(os.path.join( os.getcwd(), "pytom", name + "_extraction_graph.svg")):
+            shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_extraction_graph.svg"), debug_folder )
+
+        if parameters.get("tomo_pick_pytom_debug") and os.path.exists(os.path.join( os.getcwd(), "pytom", name + "_particles.star")):
+            logger.info(f"Saving intermediate results to {debug_folder}")
+            shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_particles.star"), debug_folder )                
+
         # parse output from star file
         results_file = os.path.join( "pytom", f"{name}_particles.star" )
         results = pyp_metadata.parse_star(results_file)
