@@ -1136,6 +1136,7 @@ def spk_extract_and_process(
     ypad_up,
     pad_factor,
     parameters,
+    verbose=False
 ):
 
     # get tomogram dimensions directly from aligned tilt-series
@@ -1156,14 +1157,14 @@ def spk_extract_and_process(
         tilt_options,
         zfact,
     )
-    local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+    local_run.run_shell_command(command, verbose=verbose)
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
         command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec~ -blank && mv {3}.rec~ {3}.rec".format(
             get_imod_path(), int(ypad_dn), int(spike_size - 1 + ypad_dn), spike_name,
         )
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command(command, verbose=verbose)
 
     # rotate volume to align with Z-axis
     command = "{0}/bin/clip rotx {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(get_imod_path(), spike_name)
@@ -1174,7 +1175,7 @@ def spk_extract_and_process(
         command = "{0}/bin/clip resize -ox {2} -oy {2} -oz {2} {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(
             get_imod_path(), spike_name, spike_size / pad_factor
         )
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command(command, verbose=verbose)
 
     # TODO: remove eman2 dependency
     # HF Liu: normalize the spikes
@@ -1193,7 +1194,7 @@ def spk_extract_and_process(
         command = "{0}/bin/binvol -input {1}.rec -output {1}.rec~ -binning {2} && mv {1}.rec~ {1}.rec".format(
             get_imod_path(), spike_name, str(parameters["tomo_ext_binn"])
         )
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command(command, verbose=verbose)
 
     # flipy if dm4 format
     if os.path.exists("isdm4"):
@@ -2027,6 +2028,7 @@ EOF
             local_run.run_shell_command(command)
 
         arguments = []
+        first_element = True
 
         for spk in range(spikes.shape[0]):
 
@@ -2152,6 +2154,11 @@ EOF
             ) * binning  # shifty = y / binning - float(virion[1]) * binning
 
             # compile arguments for parallel processing
+            if first_element:
+                verbose = parameters["slurm_verbose"]
+                first_element = False
+            else:
+                verbose = False
             arguments.append(
                 (
                     name,
@@ -2169,6 +2176,7 @@ EOF
                     ypad_up,
                     pad_factor,
                     parameters,
+                    verbose
                 )
             )
 
