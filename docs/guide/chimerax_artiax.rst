@@ -15,7 +15,7 @@ First, you will need to download the following files to your local computer:
 
 You can get these files from ``nextPYP`` as follows:
 
-- Go to the :bdg-secondary:`Pre-processing`` block, click on the **Tilt-series** tab, select a tilt-series and go to the **Reconstruction** tab. Download the ``.rec`` file by clicking on the gray/green badge
+- Go to the :bdg-secondary:`Pre-processing`` block, click on the **Tilt-series** tab, select a tilt-series and go to the **Tomogram** section. Download the ``.rec`` file by clicking on the gray/green badge
 - Go to the :bdg-secondary:`Particle refinement` block, select the **Reconstruction** tab and select the ``Cropped Map`` option from the dropdown menu
 - In the same :bdg-secondary:`Particle refinement` block, go the **Metadata** tab, type the name of the tilt-series in the box and click :bdg-primary:`Search`. Download the corresponding ``.star`` file by clicking on the gray/green badge
 
