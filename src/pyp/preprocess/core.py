@@ -672,7 +672,7 @@ def read_tilt_series(
         elif metadata.get("web") and metadata.get("web").get("drift"):
             for i in metadata.get("web")["drift"]:
                 drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
-    elif not parameters["movie_no_frames"]:
+    elif 'shifts' in locals():
         drift_metadata["drift"] = shifts
     else:
         drift_metadata["drift"] = {}
