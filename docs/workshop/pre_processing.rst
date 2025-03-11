@@ -7,7 +7,7 @@ This tutorial shows how to import and export single-particle and tomography proj
 1. Import single-particle projects
 ==================================
 
-* Create or navigate to an existing single-particle project, click :badge:`Import Data,badge-primary` and select :badge:`Single-particle (from Star),badge-primary`
+* Create or navigate to an existing single-particle project, click :bdg-primary:`Import Data` and select :bdg-primary:`Single-particle (from Star)`
 
 * Go to the **Import parameters** tab:
 
@@ -37,9 +37,9 @@ This tutorial shows how to import and export single-particle and tomography proj
 
       * (optional) Set parameters in other tabs
 
-* Click :badge:`Save,badge-primary` and the new block will appear on the project page
+* Click :bdg-primary:`Save` and the new block will appear on the project page
 
-* Click :badge:`Run,badge-primary` followed by :badge:`Start Run for 1 block,badge-primary` to launch the import process
+* Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the import process
 
 * Click inside the block to inspect the results
 
@@ -47,7 +47,7 @@ This tutorial shows how to import and export single-particle and tomography proj
 2. Import tomography projects
 =============================
 
-* Create or navigate to an existing tomography project, click :badge:`Import Data,badge-primary` and select :badge:`Tomography (from Star),badge-primary`
+* Create or navigate to an existing tomography project, click :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Star)`
 
 * Go to the **Import parameters** tab:
 
@@ -79,9 +79,9 @@ This tutorial shows how to import and export single-particle and tomography proj
 
       * (optional) Set parameters in other tabs
 
-* Click :badge:`Save,badge-primary` and the new block will appear on the project page
+* Click :bdg-primary:`Save` and the new block will appear on the project page
 
-* Click :badge:`Run,badge-primary` followed by :badge:`Start Run for 1 block,badge-primary` to launch the import process
+* Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the import process
 
 * Click inside the block to inspect the results
 
@@ -89,7 +89,7 @@ This tutorial shows how to import and export single-particle and tomography proj
 3. Export single-particle/tomography projects
 =============================================
 
-* Choose an existing :badge:`Particle refinement,badge-primary` block, click on the menu icon :fa:`bars, text-primary` and select the :fa:`edit, text-primary` Edit option
+* Choose an existing :bdg-primary:`Particle refinement` block, click on the menu icon :fa:`bars, text-primary` and select the :fa:`edit, text-primary` Edit option
 
 * Go to the **Export** tab:
 
@@ -97,9 +97,9 @@ This tutorial shows how to import and export single-particle and tomography proj
 
   - Set the location of the ``Input parfile`` you want to export by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-* Click :badge:`Save,badge-primary`
+* Click :bdg-primary:`Save`
 
-* Click :badge:`Run,badge-primary` followed by :badge:`Start Run for 1 block,badge-primary` to launch the export process
+* Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the export process
 
 Once the job ends, the results will appear in the specified folder and will be ready to import into other packages. For a tomography project example, you can use `Relion's Import Coordinates <https://relion.readthedocs.io/en/release-4.0/STA_tutorial/ImportCoords.html>`_ procedure
 

@@ -42,6 +42,7 @@
    guide/milopyp
    guide/denoising
    guide/segmentation
+   guide/tomodrgn
    guide/chimerax_artiax
    guide/workflows
 
