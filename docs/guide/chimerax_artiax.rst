@@ -1,6 +1,6 @@
-===============================
-Map particles back to tomograms
-===============================
+==========================
+Mapping particles (ArtiaX)
+==========================
 
 ``nextPYP`` produces all the necessary files to visualize a refined map back into the original tomograms using the `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_ plugin for `ChimeraX <https://www.cgl.ucsf.edu/chimerax/>`_.
 

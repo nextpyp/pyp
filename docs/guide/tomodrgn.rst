@@ -1,6 +1,6 @@
-=================================
-Continuous variability (tomoDRGN)
-=================================
+========================
+Heterogeneity (tomoDRGN)
+========================
 
 ``nextPYP`` supports running `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_ on existing tomography projects
 
@@ -13,7 +13,7 @@ Requirements
 tomoDRGN workflow
 -----------------
 
-``nextPYP`` follows the general protocol described in the `tomoDRGN documentation <https://bpowell122.github.io/tomodrgn/index.html>_`
+``nextPYP`` follows the general protocol described in the `tomoDRGN documentation <https://bpowell122.github.io/tomodrgn/index.html>`_
 
 Preparation
 ~~~~~~~~~~~~
@@ -26,7 +26,7 @@ Learn structural heterogeneity
 
 #. Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`tomoDRGN (train-vae)`
 #. Select the ``Input file (*.star)`` by navigating to the ``stacks`` directory in the default location and selecting the file ``*_particles.star``
-#. Adjust any tomoDRGN parameters as needed, please see `Command Usage <https://bpowell122.github.io/tomodrgn/command_usage/index.html>_` for details
+#. Adjust any tomoDRGN parameters as needed, please see `Command Usage <https://bpowell122.github.io/tomodrgn/command_usage/index.html>`_ for details
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. This will run tomoDRGN's ``train-vae`` and ``convergence-vae`` commands
 #. Check the results by navigating to the :bdg-primary:`tomoDRGN (train-vae)` block
 
@@ -34,7 +34,7 @@ Analyze structural heterogeneity (analyze)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Click on ``DRGN Model`` (output of the :bdg-secondary:`tomoDRGN (train-vae)` block) and select :bdg-primary:`tomoDRGN (analyze)`
-#. Adjust any tomoDRGN parameters as needed, please see `Command Usage <https://bpowell122.github.io/tomodrgn/command_usage/index.html>_` for details
+#. Adjust any tomoDRGN parameters as needed, please see `Command Usage <https://bpowell122.github.io/tomodrgn/command_usage/index.html>`_ for details
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. This will run tomoDRGN's ``analyze`` command
 #. Check the results by navigating to the :bdg-primary:`tomoDRGN (analyze)` block
 
@@ -42,7 +42,7 @@ Analyze structural heterogeneity (analyze-volumes)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Click on ``DRGN Model`` (output of the :bdg-secondary:`tomoDRGN (train-vae)` block) and select :bdg-primary:`tomoDRGN (analyze-volumes)`
-#. Adjust any tomoDRGN parameters as needed, please see `Command Usage <https://bpowell122.github.io/tomodrgn/command_usage/index.html>_` for details
+#. Adjust any tomoDRGN parameters as needed, please see `Command Usage <https://bpowell122.github.io/tomodrgn/command_usage/index.html>`_ for details
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. This will run tomoDRGN's ``analyze-volumes`` command
 #. Check the results by navigating to the :bdg-primary:`tomoDRGN (analyze-volumes)` block
 
@@ -61,5 +61,7 @@ Further refine selected particles
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 #. Check the results by navigating to the :bdg-primary:`Particle refinement` block
 
-.. figure:: ../images/tomodrgn_workflow.webp
+.. figure:: ../images/tomoDRGN_workflow.webp
     :alt: tomoDRGN workflow
+
+    Blocks required to run tomoDRGN workflow
