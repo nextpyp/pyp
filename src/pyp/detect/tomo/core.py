@@ -1792,6 +1792,9 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         radius_in_pixels = parameters['tomo_pick_rad'] / parameters['scope_pixel']
         coordinates = np.hstack( ( coordinates.copy()[:,[0,2,1]] * binning, radius_in_pixels * np.ones((coordinates.shape[0],1)) ) )
 
+        normals = results[['rlnAngleRot','rlnAngleTilt','rlnAnglePsi']].to_numpy(dtype='float')
+        np.savetxt( f"{name}_normals.txt", normals)
+
     # 4. import
     elif ( parameters.get("tomo_spk_method") == "import" or parameters.get("tomo_pick_method") == "import" ) and os.path.exists(f"{name}.spk"):
 
@@ -1972,6 +1975,9 @@ EOF
     micrograph_x, micrograph_y = x, y
     rec_X, z_thickness, rec_Y = get_image_dimensions(name +".rec")
 
+    # identity matrix to store volume transformations
+    m = np.identity(3)
+
     with open("%s_vir0000.txt" % name, "w") as f:
 
         # invert volume contrast for eman particles
@@ -1984,6 +1990,10 @@ EOF
         arguments = []
         first_element = True
 
+        normals_file = f"{name}_normals.txt"
+        if os.path.exists(normals_file):
+            normals = np.loadtxt(normals_file,ndmin=2)
+        
         for spk in range(spikes.shape[0]):
 
             spike = spikes[spk]
@@ -2168,6 +2178,30 @@ EOF
                     result = np.dot(normX_m, np.dot(normZ_m, vector))
                     # result should be ( 0,0,1 )
                     logger.info("Vector after normZ & normX rotation is ", result)
+            elif 'normals' in locals():
+                
+                # pytom convention
+                # -----------------
+                # The first rotation is called rlnAngleRot and is around the Z-axis.
+                # The second rotation is called rlnAngleTilt and is around the new Y-axis.
+                # The third rotation is called rlnAnglePsi and is around the new Z axis
+
+                # read normals from template search
+                rot = normals[spk,0]
+                tilt = normals[spk,1]
+                psi = normals[spk,2]
+
+                # convert to pyp coordinates (note that Y aand Z axis are swapped wrt to pytom)                
+                from pyp.analysis.geometry import transformations as vtk
+                mrot = vtk.rotation_matrix(np.radians(-rot), [0, 1, 0])
+                mtilt = vtk.rotation_matrix(np.radians(-tilt), [0, 0, 1])
+                mpsi = vtk.rotation_matrix(np.radians(-psi), [0, 1, 0])
+                
+                # rotate 90 degrees around X axis to align normal with Z axis
+                rotate = vtk.rotation_matrix(np.radians(90.0), [1, 0, 0])
+                m = np.dot(np.dot(mpsi, np.dot(mtilt, mrot)),rotate)
+                normZ = normY = normX = 0
+                
             elif parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"] or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]:
                 # random normx normz, normy will be changed during merge
                 normX = 360 * (random.random() - 0.5)
@@ -2176,7 +2210,7 @@ EOF
             # Write txt for 3DAVG
             # number  lwedge  uwedge  posX    posY    posZ    geomX   geomY   geomZ   normalX normalY normalZ matrix[0]       matrix[1]       matrix[2]        matrix[3]       matrix[4]       matrix[5]       matrix[6]       matrix[7]       matrix[8]       matrix[9]       matrix[10]       matrix[11]      matrix[12]      matrix[13]      matrix[14]      matrix[15]      magnification[0]       magnification[1]      magnification[2]        cutOffset       filename
             f.write(
-                """%d\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%f\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n"""
+                """%d\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\t%d\t%d\t%s\n"""
                 % (
                     spk + 1,
                     tilt_angles.min(),
@@ -2190,17 +2224,17 @@ EOF
                     normX,
                     normY,
                     normZ,
-                    1,
+                    m[0, 0],
+                    m[0, 1],
+                    m[0, 2],
                     0,
+                    m[1, 0],
+                    m[1, 1],
+                    m[1, 2],
                     0,
-                    0,
-                    0,
-                    1,
-                    0,
-                    0,
-                    0,
-                    0,
-                    1,
+                    m[2, 0],
+                    m[2, 1],
+                    m[2, 2],
                     0,
                     0,
                     0,

@@ -975,7 +975,7 @@ def generate_list_of_all_subvolumes(parameters):
                      parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
                      or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
                      or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]
-                ):
+                ) and not parameters.get("tomo_pick_method") == "pytom":
                     vector[10] = "%.4f" % (360 * (random.random() - 0.5))
                 vector[-1] = os.getcwd() + "/sva/" + vector[-1]
                 f.write("\t".join([v for v in vector]) + "\n")
