@@ -1335,6 +1335,10 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         if parameters.get("tomo_pick_pytom_template_invert"):
             invert = "--invert "
 
+        mirror = ""
+        if parameters.get("tomo_pick_pytom_template_mirror"):
+            invert = "--mirror "
+
         binned_pixel_size = (
             float(parameters["scope_pixel"])
             * float(parameters["data_bin"])
@@ -1380,7 +1384,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         # build template mask
         template_mask = "template_mask.mrc"
-        command = f"{get_pytom_path()} pytom_create_template.py --box-size {template_size} --input-map {external_template} --output-file {template} --input-voxel-size-angstrom {model_pixel_size} --output-voxel-size-angstrom {binned_pixel_size} --center {invert}"
+        command = f"{get_pytom_path()} pytom_create_template.py --box-size {template_size} --input-map {external_template} --output-file {template} --input-voxel-size-angstrom {model_pixel_size} --output-voxel-size-angstrom {binned_pixel_size} --center {invert} {mirror}"
         local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
 
         """

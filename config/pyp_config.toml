@@ -3189,6 +3189,13 @@ type = "bool"
 default = false
 condition = { arg="method", value="pytom" }
 
+[tabs.tomo_pick.pytom_template_mirror]
+name = "Mirror"
+description = "Produce a mirrored version of the template"
+type = "bool"
+default = false
+condition = { arg="method", value="pytom" }
+
 [tabs.tomo_pick.pytom_tomogram_ctf_model]
 name = "Tomogram CTF correction"
 description = "Method used to correct CTF during tomogran reconstruction"
