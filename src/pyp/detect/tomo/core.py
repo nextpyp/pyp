@@ -75,14 +75,14 @@ def resize_template(mparameters, external_template, autopick_template):
             get_imod_path(), output_box_size, autopick_template, scaling, external_template,
         )
         local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
+    elif not external_template == autopick_template:
+        shutil.copy2(external_template, autopick_template)
 
     if mparameters.get("tomo_pick_method") == "pytom" and mparameters['tomo_pick_pytom_template_invert']:
         logger.info(f"Inverting template density")
         A = mrc.read(autopick_template)
         mrc.write(A*-1,autopick_template)
 
-    elif not external_template == autopick_template:
-        shutil.copy2(external_template, autopick_template)
     return output_box_size
 
 def process_virion_multiprocessing(
