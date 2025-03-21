@@ -5252,7 +5252,7 @@ if __name__ == "__main__":
                 project_params.save_parameters(parameters)
 
                 # run csp only if user wants to
-                if parameters["clean_check_reconstruction"] and not parameters["clean_discard"]:
+                if parameters["clean_check_reconstruction"]:
                     csp_split(parameters, parameters["refine_iter"])
                 else:
                     with open("{}.films".format(parameters["data_set"])) as f:
