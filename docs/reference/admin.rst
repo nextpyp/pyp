@@ -13,7 +13,7 @@ The admin page can be accessed through the url: ``https://nextpyp.myorganization
 Create a new Group
 ------------------
 
-.. nextpyp:: To add new group
+.. nextpyp:: To add a new group
     :collapsible: open
 
     - Go to the :fa:`layer-group` `Groups` tab and click :bdg-primary:`+ Add Group`
@@ -28,7 +28,7 @@ Create a new Group
 Create a new User
 -----------------
 
-.. nextpyp:: To add new user
+.. nextpyp:: To add a new user
     :collapsible: open
 
     - Go to the :fa:`users` `Users` tab and click :bdg-primary:`+ Add User`

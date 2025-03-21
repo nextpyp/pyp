@@ -31,16 +31,16 @@ Once the location of each virion or vescicle center has been determined, the seg
 
 * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-* Navigate to the :bdg-primary:`Segmentation (closed surfaces)` block and select the **Segmentation** tab to inspect the segmentation results
+* Navigate to the :bdg-secondary:`Segmentation (closed surfaces)` block and select the **Segmentation** tab to inspect the results
 
-``nextPYP`` calculates implicit representations of surfaces and uses a single threshold to determine the segmentation result
+``nextPYP`` calculates implicit representations of surfaces and uses a single threshold to determine the location of the membranes
 
-* (optional) In many cases, the default value for the threshold gives reasonable results, but users can also select a different threshold by selecting a virion from the table to show its 3D slices and the segmentation thresholds (8 different thresholds are shown as yellow contours in columns 1-8). The highlighted column number represents the current threshold selection (default is 1, click on a different column to select a better threshold). If none of the columns look reasonable (or if you want to ignore the current virion), select the last column labeled as "-". Repeat this process for all virions in the tilt-series and all tilt-series in the dataset
+* (optional) In cases where the default value for the threshold gives innacurate results, users can select a different threshold by selecting a virion from the table to show its 3D slices and the segmentation thresholds (8 different thresholds are shown as yellow contours in columns 1-8). The highlighted column number represents the current threshold selection (default is 1, click on a different column to select a better threshold). If none of the columns look reasonable (or if you want to ignore the current virion), select the last column labeled as "-". Repeat this process for all virions in the tilt-series and all tilt-series in the dataset
 
 Open surfaces
 -------------
 
-``nextPYP`` can also segment *open* surfaces using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ following these steps:
+``nextPYP`` can also segment *open* surfaces using the package `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_:
 
 * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Segmentation (open surfaces)`
 
@@ -52,4 +52,4 @@ Open surfaces
 
 .. note::
 
-    The segmented ``*.rec`` volumes will be saved in the project directory under the folder ``mrc/`` 
+    The segmented ``*.rec`` volumes are saved in the project directory under the folder ``mrc/`` 

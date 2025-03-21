@@ -2,7 +2,7 @@
 3D particle picking
 ===================
 
-``nextPYP`` provides a suite of methods for 3D particle picking that includes size-based, geometry-based, template-search, and neural network-based methods. It also features an interactive interface to pick particles manually and import coordinates from external programs.
+``nextPYP`` provides a suite of methods for 3D particle picking that includes size-based, geometry-based, template-search, and neural network-based methods. It also features an interactive interface to pick particles manually and import or export coordinates to use with external programs.
 
 
 Main particle picking block
@@ -25,7 +25,7 @@ Import coordinates
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-#. Once the run completes, navigate to the :bdg-secondary:`Particle-Picking` block and confirm that the coordinates were imported correctly
+#. Once the run completes, navigate to the :bdg-secondary:`Particle-Picking` block and confirm that the coordinates were imported correctly by checking the position of the green markers
 
 .. tip::
 
@@ -49,7 +49,7 @@ Manual picking
 .. tip::
 
     - You can remove particles by right-clicking on them
-    - Coordinates are saved automatically every time you add or delete a particle
+    - Coordinates are automatically saved every time you add or delete a particle
 
 Size-based picking
 ------------------
@@ -68,12 +68,12 @@ This method, described in `Jin et al. (2024) <https://cryoem.cs.duke.edu/node/ac
 
 .. tip::
 
-    You can manually edit the results of this or any particle picking method by creating a copy of the :bdg-secondary:`Particle-Picking` block using the "Copy" function, selecting ``Copy files and data`` and ``Make automatically-picked particles editable``, and then clicking :bdg-primary:`Next`. Once the copy is done, you can navigate to the new block and manually add/delete particles
+    You can manually edit the results of this or any other particle picking method by creating a copy of the :bdg-secondary:`Particle-Picking` block using the "Copy" function, selecting ``Copy files and data`` and ``Make automatically-picked particles editable``, and clicking :bdg-primary:`Next`. Once the copy is done (this may take a while depending on the size of your dataset and the numnber of particles), you can navigate to the new block and manually add or delete particles
 
 Template search
 ---------------
 
-This method uses `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_ to detect particles using template search running on the GPU:
+This method uses the package `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_ to detect particles using template search (GPU required):
 
 #.  Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
@@ -87,13 +87,13 @@ This method uses `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pi
 
 .. tip::
 
-    For templates downloaded from the EMDB that have white protein density over dark background, select the ``Invert`` option to match the constrast in the tomograms
+    For templates downloaded from the EMDB that have white protein density over dark background, select the ``Invert`` option to match the contrast in the tomograms
 
 
 Geometry-based picking blocks
 =============================
 
-``nextPYP``'s geometry-based picking is used detect membrane proteins attached to the surface of virions or vesicles, as described in `Liu et al. (2023) <https://cryoem.cs.duke.edu/node/nextpyp-a-comprehensive-and-scalable-platform-for-characterizing-protein-variability-in-situ-using-single-particle-cryo-electron-tomography/>`_ . The method has three stages:
+``nextPYP``'s geometry-based picking is used to detect membrane proteins attached to the surface of virions or vesicles, as described in `Liu et al. (2023) <https://cryoem.cs.duke.edu/node/nextpyp-a-comprehensive-and-scalable-platform-for-characterizing-protein-variability-in-situ-using-single-particle-cryo-electron-tomography/>`_. The method is composed of three stages:
 
 Detection of virion centers
 ---------------------------
@@ -112,7 +112,7 @@ The first step is to estimate the position and the approximate radius of each vi
 
 .. tip::
 
-    Virion centers can be obtained using any method for particle picking available in ``nextPYP`` (manual, size-based, neural network-based, etc). Since the virion radius is not estimated in this case, the constant  ``Virion radius (A)`` value will be assigned to all virions
+    Virion centers may be obtained using any method for particle picking available in ``nextPYP`` (manual, size-based, neural network-based, etc). Since the virion radius will not estimated in these cases, the constant  ``Virion radius (A)`` value will be assigned to all virions
 
 Virion segmentation
 -------------------
@@ -145,7 +145,7 @@ The last step is to pick particles from the surface of virions:
 
 #. Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
 
-#. Select the particle detection ``Method`` and corresponding parameters. "uniform" is used to select uniformly spaced positions on the virion surfaces, while "template search" is used to search for positions on the surface that have high-correlation with an external template (provided as an ``*.mrc`` file with the correct pixel size saved in the header)
+#. Select a particle detection ``Method`` and corresponding parameters: "uniform" can be used to select uniformly spaced positions on the virion surfaces, while "template search" is used to search for positions on the surface that have high-correlation with an external template (provided as an ``*.mrc`` file with the correct pixel size saved in the header)
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -155,7 +155,7 @@ The last step is to pick particles from the surface of virions:
 Neural-network picking blocks
 =============================
 
-``nextPYP`` uses two blocks to implement neural netowrk-based particle picking, as described in `Huang et al. (2024) <https://cryoem.cs.duke.edu/node/accurate-detection-of-proteins-in-cryo-electron-tomograms-from-sparse-labels/>`_. This method uses consistency regularization to minimize the number of annotations and speedup training:
+``nextPYP`` uses two blocks to implement neural network-based particle picking, as described in `Huang et al. (2024) <https://cryoem.cs.duke.edu/node/accurate-detection-of-proteins-in-cryo-electron-tomograms-from-sparse-labels/>`_. This method uses consistency regularization to minimize the number of annotations and speedup training:
 
 Model training
 --------------
@@ -178,11 +178,11 @@ The first step is to obtain a set of particles using any of the methods implemen
 Model evaluation
 ----------------
 
-Once the model has been trained, evaluation should be run on the entire dataset:
+Once the model has been trained, evaluation can be run on the entire dataset:
 
 #. Click on ``Particles Model`` (output of the :bdg-secondary:`Particle-Picking (train)` block) and select :bdg-primary:`Particle-Picking (eval)`
 
-#. Select the location of the ``Trained model (*.pth)`` using the file browser and adjust the evaluation parameters as needed (the file browser's default location will be the ``train/`` folder from the parent block)
+#. Select the location of the ``Trained model (*.pth)`` using the file browser, and adjust the evaluation parameters as needed (the file browser's default location will be the ``train/`` folder from the parent block)
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -191,4 +191,4 @@ Once the model has been trained, evaluation should be run on the entire dataset:
 .. admonition:: Tips
 
     * To improve accuracy, the model can be re-trainined using more labels
-    * To detect particles distributed along fibers or tubules, select ``Fiber mode``. This will group neighboring particles, fit a smooth trajectory to them, and re-sample positions along the fitted curve
+    * To detect particles distributed along fibers or tubules, select the option ``Fiber mode``. This will group together neighboring particles, fit a smooth trajectory to them, and re-sample positions along the fitted curve

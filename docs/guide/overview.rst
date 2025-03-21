@@ -1,6 +1,6 @@
-========
-Overview
-========
+==============
+Overview of UI
+==============
 
 Dashboard and projects
 ======================
@@ -123,6 +123,30 @@ Single-particle projects and tomography projects have similar block types. A lis
       
       **Output**: ``Tomograms``
 
+    .. nextpyp:: :fa:`crosshairs` Denoising (train)
+
+      **Description**: Train a neural network for tomogram denoising.
+      
+      **Input**: ``Tomograms``
+      
+      **Output**: ``Tomograms``
+
+    .. nextpyp:: :fa:`crosshairs` Denoising (eval)
+
+      **Description**: Evaluate a neural network for tomogram denoising.
+      
+      **Input**: ``Tomograms``
+      
+      **Output**: ``Tomograms``
+
+    .. nextpyp:: :fa:`crosshairs` Segmentation (open surfaces)
+
+      **Description**: 3D segmentation using pre-trained model.
+      
+      **Input**: ``Tomograms``
+      
+      **Output**: ``None``
+
     .. nextpyp:: :fa:`crosshairs` Particle-Picking
 
       **Description**: Import, manual, size-based, virions, or template-search particle picking.
@@ -157,7 +181,7 @@ Single-particle projects and tomography projects have similar block types. A lis
 
     .. nextpyp:: :fa:`crosshairs` Particle-Picking (eval)
 
-      **Description**: Evaluate neural network model for particle picking.
+      **Description**: Evaluate neural network for particle picking.
       
       **Input**: ``Tomograms``
       
@@ -176,6 +200,38 @@ Single-particle projects and tomography projects have similar block types. A lis
       **Description**: Removal of bad particles from downstream analysis.
       
       **Input**: ``Particles``
+      
+      **Output**: ``Particles``
+
+    .. nextpyp:: :fa:`crosshairs` tomoDRGN (train-vae)
+
+      **Description**: Train tomoDRGN model to learn structural heterogeneity.
+      
+      **Input**: ``Tomograms``
+      
+      **Output**: ``DRGN Model``
+
+    .. nextpyp:: :fa:`crosshairs` tomoDRGN (analyze)
+
+      **Description**: Analyze structural heterogeneity from tomoDRGN model.
+      
+      **Input**: ``DRGN Model``
+      
+      **Output**: ``DRGN Particles``
+
+    .. nextpyp:: :fa:`crosshairs` tomoDRGN (analyze-volumes)
+
+      **Description**: Volume space heterogeneity analysis from tomoDRGN model.
+      
+      **Input**: ``DRGN Model``
+      
+      **Output**: ``DRGN Particles``
+
+    .. nextpyp:: :fa:`crosshairs` tomoDRGN (filter-star)
+
+      **Description**: Select particle subsets from tomoDRGN clusters.
+      
+      **Input**: ``DRGN Particles``
       
       **Output**: ``Particles``
 
@@ -221,10 +277,11 @@ Users can access block-level operations using the menu icon :fa:`bars` located a
 Status
 ------
 
-Blocks can be in one of three states (indicated by icons displayed on the top bar of each block):
+Blocks can be in one of four states (indicated by icons displayed on the top bar of each block):
 
 * Block is up-to-date (no graphical indication)
-* :fa:`recycle` Modified (parameters were modified and the block needs to be updated)
+* :fa:`star` Newly created (block was created and is ready to be executed)
+* :fa:`recycle` Modified (block parameters were modified and the block needs to be updated)
 * :fa:`cog fa-pulse` Running (the block is currently running)
 
 Parameters
@@ -247,22 +304,22 @@ Jobs can be in one of four states:
 
 Jobs are arranged hierarchically according to their dependencies, and the number of jobs in each state is continuously updated
 
-For simplicity, jobs are grouped chronologically into ``Today``, ``This Week`` and ``Older``
+To facilitate navigation, jobs are grouped chronologically into ``Today``, ``This Week`` and ``Older``
 
 The arrows :fa:`angle-right` and :fa:`angle-down` are used to expand or collapse groups of jobs
 
-Most jobs in ``nextPYP`` have three phases: *Launch*, *Split* and *Merge*
+Most jobs in ``nextPYP`` have three phases: *Launch*, *Split* and *Merge*. See `Compute resources <../reference/computing.html#compute-resources>`_ for more details.
 
 .. tip::
-    - A summary of currently running jobs from all projects can be found in the **Dashboard** :fa:`tachometer-alt` page
-    - Running jobs can be cancelled by clicking on the icon :fa:`ban`
-    - Job logs can be accessed by clicking the icon :fa:`file` next to the job name
-    - The log window can be docked/undocked by clicking the icon :fa:`thumbtack`
+    - A summary of currently running jobs from all projects can be found at the bottom of the **Dashboard** :fa:`tachometer-alt` page
+    - Running jobs can be cancelled by clicking on the icon :fa:`ban` in the **Jobs** panel
+    - Job logs can be accessed by clicking the icon :fa:`file` next to the job name in the **Jobs** panel
+    - Log windows can be docked/undocked by clicking the icon :fa:`thumbtack`
 
 Navigation
 ==========
 
-Use the breadcrumb menu at the top of the page to navigate to the **Dashboard** or the current **Project**:
+Use the breadcrumb menu at the top of the page to quickly navigate to the **Dashboard** or the current **Project** page:
 
 .. figure:: ../images/tutorial_tomo_pre_process_page.webp
   :alt: Breadcrums

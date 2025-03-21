@@ -9,7 +9,7 @@ The ``MiLoPYP`` workflow in ``nextPYP`` consists of two steps and is implemented
 #. **Pattern minning** uses the :bdg-secondary:`MiLoPYP (train)` and :bdg-secondary:`MiLoPYP (eval)` blocks 
 #. **Position refinement** uses the :bdg-secondary:`Particle-Picking (train)` and :bdg-secondary:`Particle-Picking (eval)` blocks
 
-Here is an example of how the workflow looks in the project view (relevant blocks are highlighted in blue):
+Here is an example of how the workflow looks in the project view (MiLoPYP blocks are highlighted in blue):
 
 .. figure:: ../images/milopyp_workflow.webp
     :alt: MiLoPYP workflow
@@ -24,7 +24,7 @@ To analyze the results of ``MiLoPYP`` interactively, you need to install and run
 
 For a local installation on macOS, for example, follow these steps:
 
-#. Download and install miniconda following `these <https://conda.io/projects/conda/en/latest/user-guide/install/macos.html>`_ instructions
+#. Download and install miniconda following `these instructions <https://conda.io/projects/conda/en/latest/user-guide/install/macos.html>`_
 
 #. Activate the miniconda installation, create a new conda environment and install Phoenix:
   
@@ -38,7 +38,7 @@ For a local installation on macOS, for example, follow these steps:
 Data pre-processing
 ^^^^^^^^^^^^^^^^^^^
 
-Since ``MiLoPYP`` operates on reconstructed tomograms, you first need to pre-process your tilt-series using the :bdg-secondary:`Pre-processing` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
+Since ``MiLoPYP`` operates on reconstructed tomograms, you first need to pre-process your tilt-series using the :bdg-secondary:`Pre-processing` block (see examples of how to do this in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
 
 Pattern mining (training)
 -------------------------
@@ -49,7 +49,7 @@ To train the mining/exploration module:
 
 #. Set the training parameters as needed
 
-#. (optional) If you want to train MiLoPYP on a subset of the tomograms in your dataset, create a :doc:`Filter<filters>` in the :bdg-secondary:`Pre-processing` block and select its name from the **Filter tomograms** dropdown menu at the top of the form. For datasets with many tomograms, doing this will considerably speed up training
+#. (optional) If you want to train MiLoPYP on a subset of tomograms from your dataset, create a :doc:`Filter<filters>` in the :bdg-secondary:`Pre-processing` block and select its name from the **Filter tomograms** dropdown menu at the top of the form. For datasets with many tomograms, doing this will considerably speed up training
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -62,7 +62,7 @@ The trained model can now be evaluated to visualize the results:
 
 #. Click on ``MiLoPYP model`` (output of the :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
 
-#. Select the trained model from the block upstream (``*.pth``), for example, ``model_last_contrastive.pth``. The models will be saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
+#. Select the trained model from the block upstream (extension ``*.pth``), for example, ``model_last_contrastive.pth``. The models are saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
 
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -79,14 +79,14 @@ There are two ways to select target positions to train the refinement module:
 Option A: Manual cluster selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This option only requires specifying a list of cluster numbers as displayed in the **Class Labels** panel, and can be done within ``nextPYP`` without running any external tools
+This option requires specifying a comma separated list of cluster numbers as displayed in the **Class Labels** panel, and can be done directly within ``nextPYP`` (no external tools needed)
 
 Option B: Interactive target selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This option requires running the program `Phoenix-Arize <https://docs.arize.com/phoenix>`_ to interactively select locations of interest:
 
-* Navigate to the :bdg-secondary:`MiLoPYP (eval)` block and download the file ``*_milo.tbz``
+* Navigate to the :bdg-secondary:`MiLoPYP (eval)` block, go to the *Mapping* tab, and download the file ``*_milo.gzip`` by clicking on the gray/green download badge
 
 * Open a terminal in your local machine, decompress the ``*_milo.tbz`` file, and run Phoenix:
 
@@ -174,7 +174,7 @@ The last step is to evaluate the model and obtain the final particle positions o
 
 #. Once the run completes, navigate to the :bdg-secondary:`Particle-Picking (eval)` block to inspect the particle picking results
 
-The resulting set of particles can be used for 3D refinement using the :bdg-secondary:`Particle refinement` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
+The resulting set of particles can be used for 3D refinement using the :bdg-secondary:`Particle refinement` block (see examples of how to do this in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
 
 .. tip::
 

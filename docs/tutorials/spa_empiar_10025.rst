@@ -232,7 +232,7 @@ Step 4: Reference-based refinement
 
         - Set ``Last iteration`` to 5
 
-        - Unheck ``Skip refinement``
+        - Uncheck ``Skip refinement``
 
         - Check ``Use alignment priors``
 

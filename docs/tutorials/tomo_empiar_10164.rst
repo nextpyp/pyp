@@ -2,7 +2,7 @@
 Tomography tutorial (EMPIAR-10164)
 ##################################
 
-This tutorial shows how to convert raw tilt-series from `EMPIAR-10164 (HIV-1 Gag) <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ into a ~3A resolution structure. 
+This tutorial shows how to convert raw tilt-series from `EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ into a ~3A resolution structure of immature HIV-1 Gag protein.
 
 .. admonition::
 
@@ -10,7 +10,7 @@ This tutorial shows how to convert raw tilt-series from `EMPIAR-10164 (HIV-1 Gag
 
   * Pre-calculated results are available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/project/ab690@duke.edu/EMPIAR-10164-RtQMJrzN90C81gbU>`_.
 
-We first use the command line to download and decompress a tbz file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
+We first use the command line to download and decompress a `.tbz file <https://nextpyp.app/files/data/nextpyp_tomo_tutorial.tbz>`_ containing a subset of 5 tilt-series (down-sampled 2x compared to the original super-resolution data):
 
 .. code-block:: bash
 
@@ -18,6 +18,8 @@ We first use the command line to download and decompress a tbz file containing a
 
   wget https://nextpyp.app/files/data/nextpyp_tomo_tutorial.tbz
   tar xvfz nextpyp_tomo_tutorial.tbz
+
+After this, you should have 41 tilt movies in .tif format for each of the tilt-series (TS_01, TS_03, TS_43, TS_45, and TS_54), an initial reference, and a shape mask
 
 Open your browser and navigate to the url of your ``nextPYP`` instance (e.g., ``https://nextpyp.myorganization.org``).
 
@@ -103,12 +105,12 @@ Step 2: Import raw tilt-series
     .. figure:: ../images/tutorial_tomo_import_run_dialog.webp
       :alt: Gain thumbnail
 
-  * Since there is only one block available, simply click on :bdg-primary:`Start Run for 1 block`. This will launch a process that reads one tilt image, applies the gain reference (if applicable) and displays the resulting image inside the block
+  * Since there is only one block available, simply click on :bdg-primary:`Start Run for 1 block`. This will launch a process that reads one tilt at random and displays the resulting image inside the block
 
     .. figure:: ../images/tutorial_tomo_import_done.webp
       :alt: Gain thumbnail
 
-  * Click inside the block to see a larger version of the image
+  * Click on the thumbnail inside the block to see a larger version of the projection image
 
 
 Step 3: Pre-processing
@@ -128,7 +130,7 @@ Step 3: Pre-processing
 
       .. md-tab-item:: Frame alignment
 
-        - Set ``Frame pattern`` to TILTSERIES_SCANORD_ANGLE.tif
+        - Set ``Frame pattern`` to "TILTSERIES_SCANORD_ANGLE.tif". ``nextPYP`` uses this to extract the metadata from the file names, for example, ``TS_54_037_57.0.tif`` would indicate that the tilt-series name is ``TS_54``, the exposure acquistion order is ``37``, and the corresponding tilt-angle is ``57.0`` degrees
 
         - Click on the **CTF determination** tab
 
@@ -229,14 +231,14 @@ Step 4: Virion selection
 Step 5: Virion segmentation
 ---------------------------
 
-.. nextpyp:: Segment virions using minimal surfaces (:fa:`stopwatch` 1 min)
+.. nextpyp:: Segment individual virions in 3D (:fa:`stopwatch` 1 min)
   :collapsible: open
 
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-  This step is optional, but it showcases tools available in ``nextPYP`` to work with virions:
+  This next step is optional, but it showcases tools available in ``nextPYP`` to work with virions:
 
   * Go inside the :bdg-secondary:`Segmentation (closed surfaces)` block and click on the **Segmentation** tab
 

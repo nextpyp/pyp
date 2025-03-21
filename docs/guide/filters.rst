@@ -2,10 +2,10 @@
 Filter micrographs/tilt-series
 ==============================
 
-**Filters** allow users to select a subset of micrographs or tilt-series for processing downstream.
+**Filters** allow users to select a subset of micrographs or tilt-series to be processed downstream.
 
-Create filters
---------------
+Creating filters
+----------------
 
 - Click inside the :bdg-secondary:`Pre-processing` block and go to the **Table** view.
 
@@ -13,7 +13,7 @@ Create filters
 
 - Add new criteria to the filter using the :bdg-primary:`+Add` button.
 
-- Select the desired parameter from the dropdown list and set the range using the sliders.
+- Select the desired parameter from the dropdown list and set the desired range using the sliders.
 
 - Use :bdg-primary:`Apply filters` to preview the results of the filter.
 
@@ -21,19 +21,19 @@ Create filters
 
 - Once you are satisfied with the results, click :bdg-primary:`Save` to store the filter settings.
 
-Here is a screenshot showing the filter dropdown menu for a :bdg-primary:`Particle refinement` block:
+Here is a screenshot showing the use of filters in the :bdg-secondary:`Pre-processing` block:
 
 .. figure:: ../images/guide_create_new_filter.webp
     :alt: Create new filter
 
 .. admonition:: Tips
 
-    - You can create multiple filters by providing additional names and clicking :bdg-primary:`Save`.
-    - Saved filters can be retrieved by clicking :bdg-primary:`Load` and selecting the name of the filter from the list.
+    - You can create multiple filters by providing a new name and clicking :bdg-primary:`Save`.
+    - Previously saved filters can be retrieved by clicking :bdg-primary:`Load` and selecting the name of the filter from a list.
     - Once a filter is loaded, it can be edited, or deleted by clicking :bdg-primary:`Delete` (this operation cannot be undone).
 
-Apply filters
--------------
+Applying filters
+----------------
 
 - Filters are applied to blocks downstream of the :bdg-secondary:`Pre-processing` block
 
@@ -44,6 +44,6 @@ Apply filters
 
 .. admonition:: Tips
 
-    - Filters are applied only when first running blocks downstream of the :bdg-secondary:`Pre-processing` block. If a filter is updated or a different filter is selected, the option to ``Delete files and data`` must be selected before re-running the block (or a new block downstream of the :bdg-secondary:`Pre-processing` should be created).
+    - Filters are only applied when first running blocks downstream of the :bdg-secondary:`Pre-processing` block. If a filter is updated or a different filter is selected, the option to ``Delete files and data`` must be selected before re-running the block (or a new block downstream of the :bdg-secondary:`Pre-processing` should be created).
 
     - You can experiment using different subsets of micrographs or tilt-series by creating multiple :bdg-secondary:`Particle refinement` blocks and selecting a different filter for each block.
