@@ -281,7 +281,7 @@ def process_virion_multiprocessing(
                 fresh_template_match = True
 
             # Using uniform coordinates from virion surface
-            elif  "tomo_vir_detect_method" in parameters and parameters["tomo_vir_detect_method"] == "mesh":
+            elif "tomo_vir_detect_method" in parameters and parameters["tomo_vir_detect_method"] == "mesh":
                 fresh_template_match = True
                 bandwidth = band_width / virion_binning
                 distance = parameters["tomo_vir_detect_dist"]

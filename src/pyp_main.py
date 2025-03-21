@@ -2448,9 +2448,6 @@ def csp_split(parameters, iteration):
     os.chdir(workdir)
 
 
-@timer.Timer(
-    "csp_extract_frames", text="Particle extraction took: {}", logger=logger.info
-)
 def csp_extract_frames(
     allparxs,
     parameters,
@@ -2579,6 +2576,10 @@ def csp_extract_frames(
                         "Only {0} particles extracted from requested {1}".format(
                             particles, totalboxes
                         )
+                    )
+                elif is_tomo and use_frames:
+                    logger.info(
+                        f"Total number of particle projections to be extracted = {totalboxes:,}"
                     )
                 else:
                     logger.info(
