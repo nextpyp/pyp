@@ -42,7 +42,7 @@ def get_singularity_command(command, parameters, gpu=False):
             f"mkdir -p {os.environ['PYP_SCRATCH']}; {command} {parameters}"
         )
     else:
-        binds = "-B " + ",".join(config["pyp"]["binds"])
+        binds = "-B " + ",".join(config["pyp"]["binds"]) if config["pyp"].get("binds") else ""
 
         if os.path.exists(config["pyp"]["scratch"]):
             binds = binds + "," + config["pyp"]["scratch"]
