@@ -2577,7 +2577,7 @@ def csp_extract_frames(
                             particles, totalboxes
                         )
                     )
-                elif is_tomo and use_frames:
+                elif is_tomo or use_frames:
                     logger.info(
                         f"Total number of particle projections to be extracted = {totalboxes:,}"
                     )
