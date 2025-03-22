@@ -1672,7 +1672,7 @@ _description = "Settings for particle detection"
 _hidden = [ "spr_map_clean", "tomo_map_clean", "spr_flexible_refine", "tomo_flexible_refine" ]
 
 [tabs.extract.box]
-name = "Box size (pixels)"
+name = "Box size (pixels/voxels)"
 description = "Box size used for particle extraction"
 type = "int"
 default = 0
@@ -4447,24 +4447,28 @@ name = "Optimizer - Number of iterations"
 description = "Max number of iterations to use in Powell optimization"
 type = "int"
 default = 5
+advanced = true
 
 [tabs.csp.OptimizerStepLength]
 name = "Optimizer - Max step length"
 description = "Max step length to use in Powell optimization"
 type = "float"
 default = 20.0
+advanced = true
 
 [tabs.csp.OptimizerStepTolerance]
 name = "Optimizer - Step tolerance"
 description = "Step tolerance to use in Powell optimization"
 type = "float"
 default = 0.01
+advanced = true
 
 [tabs.csp.OptimizerValueTolerance]
 name = "Optimizer - Tolerance value"
 description = "Tolerance value to use in Powell optimization"
 type = "float"
 default = 0.0001
+advanced = true
 
 [tabs.csp.abinitio]
 name = "Ab-initio refinement"
@@ -4640,7 +4644,7 @@ hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.spatial_sigma]
 name = "Spatial sigma"
-description = "Sigma to use for spatial regularization (pixels)"
+description = "Sigma to use for spatial regularization (pixels/voxels)"
 type = "float"
 default = 500.0
 condition = { arg="transreg", value="true" }
@@ -7874,14 +7878,14 @@ hidden = true
 name = "Threads (merge task)"
 description = "Number of threads used during merging"
 type = "int"
-default = 1
+default = 6
 hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn"]
 
 [tabs.slurm.merge_memory]
 name = "Memory (merge task)"
 description = "Amount of memory used during merging (GB)"
 type = "int"
-default = 4
+default = 24
 hidden = ["stream_spa", "stream_tomo", "map_post_process", "stream_spr", "tomo_spr", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn"]
 
 [tabs.slurm.merge_gres]
