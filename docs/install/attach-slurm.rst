@@ -35,7 +35,7 @@ Step 1: Prerequisites
     The service account needs to have login access from the web server to the SLURM node via SSH without a password.
     This will require installing the public SSH key for the service account into the login system for the SLURM node.
     For a stock linux installation of ``sshd``, that usually means copying the public key into a file like
-    ``/home/account/.ssh/authorized_keys``. But for SLURM clusters with a networked login system or SSO,
+    ``/home/account/.ssh/authorized_keys``, for example, using the command ``ssh-copy-id user@domain``. But for SLURM clusters with a networked login system or SSO,
     you'll need to consult your organization's IT staff for SSH key installation instructions.
 
 * **Remote access enabled**
