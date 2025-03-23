@@ -480,7 +480,7 @@ def parse_arguments(block):
                         symlink_relative(source, f)
 
                 # create empty log folder
-                os.makedirs("log")
+                os.makedirs("log", exist_ok=True)
 
             else:
                 # create new folders and links to individual files
