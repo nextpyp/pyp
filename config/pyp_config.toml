@@ -1364,7 +1364,7 @@ description = "Select source for particle coorinates for training"
 type = "enum"
 enum = { none="particles from upstream block", phoenix="parquet file from MiLoPYP", classes="class labels from MiLoPYP" }
 default = "none"
-hidden = [ "tomo_import", "tomo_import_pure", "tomo_pre_process", "tomo_particles_eval" ]
+hidden = [ "tomo_import", "tomo_import_pure", "tomo_pre_process", "tomo_particles_eval", "stream_tomo" ]
 
 [tabs.detect_nn3d.milo_parquet]
 name = "Parquet file"
@@ -1395,7 +1395,7 @@ name = "Additional binning for training"
 description = "Bin data by this factor before training"
 type = "int"
 default = 2
-hidden = [ "tomo_particles_eval" ]
+hidden = [ "tomo_particles_eval", "stream_tomo" ]
 
 [tabs.detect_nn3d.compress]
 name = "Additional binning in Z"
@@ -1518,7 +1518,7 @@ name = "Debug mode"
 description = "Save diagnostic results to train/ folder"
 type = "bool"
 default = false
-hidden = ["tomo_particles_eval"]
+hidden = ["tomo_particles_eval", "stream_tomo"]
 
 #feature detect with milo
 [tabs.detect_milo]
