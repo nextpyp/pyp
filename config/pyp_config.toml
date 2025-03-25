@@ -252,7 +252,7 @@ tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "detect", "detect_nn
 [blocks.stream_tomo]
 name= "Tomography Streaming"
 description = "Data streaming mode for tomography sessions"
-tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_ext", "tomo_vir", "tomo_spk", "detect_nn3d", "slurm" ]
+tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
 ########
 # Tabs #
