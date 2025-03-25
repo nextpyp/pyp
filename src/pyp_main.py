@@ -1911,6 +1911,9 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if tilt_metadata["tilt_axis_angle"] % 180 > 45 and tilt_metadata["tilt_axis_angle"] % 180 < 135 and not parameters.get("tomo_ali_square"):
         x, y = y, x
         logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
+
+    # force generation of aligned tilt-series for sessions since we aren't using the force parameters in this case
+    parameters["detect_force"] = preprocess.need_recalculation_for_sessions(name,parameters)
     
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
