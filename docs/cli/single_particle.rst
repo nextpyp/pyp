@@ -2,9 +2,9 @@
 Single-particle tutorial
 ========================
 
-This tutorial shows how to process single-particle raw movies from `T20S proteasome (EMPIAR-10025) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a high-resolution 3D structure.
+This tutorial shows how to process single-particle raw movies from `T20S proteasome (EMPIAR-10025) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a ~3A resolution structure.
 
-We first download and decompress a tbz file containing a subset of 20 movies, the gain reference, and an initial model:
+We first download and decompress a ``.tbz`` file containing a subset of 20 movies, the gain reference, and an initial model:
 
 .. code-block:: bash
 
@@ -120,6 +120,7 @@ This step removes bad particles based on assigned particle scores during refinem
 .. code-block:: bash
 
     # make new project folder
+    
     cd ..
     mkdir T20S_clean
     cd T20S_clean
@@ -227,12 +228,12 @@ This step refines shifts for movie frames of each particle using the most recent
         -refine_iter 2                                                          \
         -refine_maxiter 3                                                       \
         -refine_skip                                                            \
+        -refine_parfile=`pwd`/frealign/maps_fine/T20S_clean_r01_09.bz2          \
+        -refine_model=`pwd`/frealign/maps_fine/T20S_clean_r01_09.mrc            \
         -csp_frame_refinement                                                   \
         -csp_UseImagesForRefinementMax 60                                       \
         -csp_transreg                                                           \
         -csp_spatial_sigma 15.0                                                 \
-        -refine_parfile=`pwd`/frealign/maps_fine/T20S_clean_r01_09.bz2          \
-        -refine_model=`pwd`/frealign/maps_fine/T20S_clean_r01_09.mrc            \
         -no-csp_refine_ctf
 
 .. note::
@@ -289,8 +290,3 @@ The final step does masking, sharpening, and produces FSC resolution plots:
 .. note::
 
     Output maps and FSC plots will be saved in the ``frealign/maps`` folder.
-
-.. seealso::
-
-    * :doc:`Tomography tutorial<tomography>`
-    * :doc:`Classification tutorial<classification>`

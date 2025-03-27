@@ -186,6 +186,9 @@ EOF
 	chmod +x /root/pyp.sh
 	micromamba run -n pyp /bin/bash -c "/root/pyp.sh > /proc/$$/fd/1 2>&1"
 	export PATH=/opt/conda/envs/pyp/bin:$PATH
+
+	# make fontconfig cache persistent to prevent the infamous warning: "Fontconfig error: No writable cache directories"
+	fc-cache
 	
 	# Topaz
 	cd /opt/pyp/external
@@ -218,7 +221,8 @@ cat << EOF > /root/pytom.sh
 
 	# install the python packages we need
 
-	python -m pip install pytom-match-pick
+	python -m pip install pytom-match-pick==0.8.0
+	python -m pip install matplotlib seaborn
 
 	micromamba clean --all -y
 	
@@ -228,12 +232,12 @@ cat << EOF > /root/pytom.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	#micromamba create --name pytom "python=3" -c conda-forge cupy cuda-version=11.8
+	micromamba create --name pytom "python=3" -c conda-forge cupy cuda-version=11.8
 
-	## run the conda script in the new environment
-	#chmod +x /root/pytom.sh
-	#micromamba run -n pytom /bin/bash -c "/root/pytom.sh > /proc/$$/fd/1 2>&1"
-	#rm -rf /root/pytom.sh
+	# run the conda script in the new environment
+	chmod +x /root/pytom.sh
+	micromamba run -n pytom /bin/bash -c "/root/pytom.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/pytom.sh
 
 	# Install tomoDRGN
 cat << EOF > /root/tomodrgn.sh
@@ -249,7 +253,7 @@ cat << EOF > /root/tomodrgn.sh
 	# git clone https://github.com/bpowell122/tomodrgn.git
 	# use custom version
 	cd /opt/pyp/external/
-	git clone https://github.com/bpowell122/tomodrgn.git
+	git clone --depth=1 https://github.com/bpowell122/tomodrgn.git
 	cd tomodrgn
 	pip install .
 	rm -rf .git/
@@ -262,14 +266,14 @@ cat << EOF > /root/tomodrgn.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	#micromamba create --name tomodrgn "python=3.10" -c conda-forge
+	micromamba create --name tomodrgn "python=3.10" -c conda-forge
 
-	## run the conda script in the new environment
-	#chmod +x /root/tomodrgn.sh
-	#micromamba run -n tomodrgn /bin/bash -c "/root/tomodrgn.sh > /proc/$$/fd/1 2>&1"
-	#rm -rf /root/tomodrgn.sh
+	# run the conda script in the new environment
+	chmod +x /root/tomodrgn.sh
+	micromamba run -n tomodrgn /bin/bash -c "/root/tomodrgn.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/tomodrgn.sh
 
-	#rm -rf /opt/pyp/external/tomoDRGN/.git
+	rm -rf /opt/pyp/external/tomoDRGN/.git
 
 	# Install cryoCARE
 cat << EOF > /root/cryocare.sh
@@ -289,12 +293,12 @@ cat << EOF > /root/cryocare.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	#micromamba create --name cryocare python=3.8 cudatoolkit=11.0 cudnn=8.0 -c conda-forge
+	micromamba create --name cryocare python=3.8 cudatoolkit=11.0 cudnn=8.0 -c conda-forge
 
-	## run the conda script in the new environment
-	#chmod +x /root/cryocare.sh
-	#micromamba run -n cryocare /bin/bash -c "/root/cryocare.sh > /proc/$$/fd/1 2>&1"
-	#rm -rf /root/cryocare.sh
+	# run the conda script in the new environment
+	chmod +x /root/cryocare.sh
+	micromamba run -n cryocare /bin/bash -c "/root/cryocare.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/cryocare.sh
 
 	# Install cryoDRGN
 cat << EOF > /root/cryodrgn.sh
@@ -311,12 +315,12 @@ cat << EOF > /root/cryodrgn.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	#micromamba create --name cryodrgn python=3.9 -c conda-forge
+	micromamba create --name cryodrgn python=3.9 -c conda-forge
 
-	## run the conda script in the new environment
-	#chmod +x /root/cryodrgn.sh
-	#micromamba run -n cryodrgn /bin/bash -c "/root/cryodrgn.sh > /proc/$$/fd/1 2>&1"
-	#rm -rf /root/cryodrgn.sh
+	# run the conda script in the new environment
+	chmod +x /root/cryodrgn.sh
+	micromamba run -n cryodrgn /bin/bash -c "/root/cryodrgn.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/cryodrgn.sh
 
 	# Install membrain
 cat << EOF > /root/membrain.sh
@@ -333,19 +337,19 @@ cat << EOF > /root/membrain.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	#micromamba create --name membrain python=3.9 -c conda-forge
+	micromamba create --name membrain python=3.9 -c conda-forge
 
-	## run the conda script in the new environment
-	#chmod +x /root/membrain.sh
-	#micromamba run -n membrain /bin/bash -c "/root/membrain.sh > /proc/$$/fd/1 2>&1"
-	#rm -rf /root/membrain.sh
+	# run the conda script in the new environment
+	chmod +x /root/membrain.sh
+	micromamba run -n membrain /bin/bash -c "/root/membrain.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/membrain.sh
 
 	# Install IsoNet
 cat << EOF > /root/isonet.sh
 
 	# install the python packages we need
 
-	git clone https://github.com/IsoNet-cryoET/IsoNet.git
+	git clone --depth=1 https://github.com/IsoNet-cryoET/IsoNet.git
 	cd IsoNet
 	rm -rf .git
 

@@ -1,21 +1,21 @@
-========================
-MiLoPYP - Pattern mining
-========================
+=======================
+Pattern mining (MiLoPYP)
+=======================
 
-`MiLoPYP <https://nextpyp.app/milopyp/>`_ can be used to map the contents of a set of tomograms, with the goal of identifying targets of interest for sub-tomogram averaging as described in `Huang et al., Nat Meth <https://cryoem.cs.duke.edu/node/milopyp-self-supervised-molecular-pattern-mining-and-particle-localization-in-situ/>`_.
+`MiLoPYP <https://nextpyp.app/milopyp/>`_ can be used to map the contents of a set of tomograms, with the goal of identifying targets of interest for sub-tomogram averaging as described in `Huang et al. (2024) <https://cryoem.cs.duke.edu/node/milopyp-self-supervised-molecular-pattern-mining-and-particle-localization-in-situ/>`_.
 
 The ``MiLoPYP`` workflow in ``nextPYP`` consists of two steps and is implemented using four blocks:
 
-#. **Pattern minning** uses the :badge:`MiLoPYP (train),badge-primary` and :badge:`MiLoPYP (eval),badge-primary` blocks 
-#. **Position refinement** uses the :badge:`Particle-Picking (train),badge-primary` and :badge:`Particle-Picking (eval),badge-primary` blocks
+#. **Pattern minning** uses the :bdg-secondary:`MiLoPYP (train)` and :bdg-secondary:`MiLoPYP (eval)` blocks 
+#. **Position refinement** uses the :bdg-secondary:`Particle-Picking (train)` and :bdg-secondary:`Particle-Picking (eval)` blocks
 
-Here is an example of how the workflow looks in the project view (relevant blocks are highlighted in blue):
+Here is an example of how the workflow looks in the project view (MiLoPYP blocks are highlighted in blue):
 
 .. figure:: ../images/milopyp_workflow.webp
     :alt: MiLoPYP workflow
 
-Step 0: Pre-requisites
-----------------------
+Pre-requisites
+--------------
 
 Visualization
 ^^^^^^^^^^^^^
@@ -24,7 +24,7 @@ To analyze the results of ``MiLoPYP`` interactively, you need to install and run
 
 For a local installation on macOS, for example, follow these steps:
 
-#. Download and install miniconda following `these <https://conda.io/projects/conda/en/latest/user-guide/install/macos.html>`_ instructions
+#. Download and install miniconda following `these instructions <https://conda.io/projects/conda/en/latest/user-guide/install/macos.html>`_
 
 #. Activate the miniconda installation, create a new conda environment and install Phoenix:
   
@@ -38,57 +38,57 @@ For a local installation on macOS, for example, follow these steps:
 Data pre-processing
 ^^^^^^^^^^^^^^^^^^^
 
-Since ``MiLoPYP`` operates on reconstructed tomograms, you first need to pre-process your tilt-series using the :badge:`Pre-processing,badge-primary` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
+Since ``MiLoPYP`` operates on reconstructed tomograms, you first need to pre-process your tilt-series using the :bdg-secondary:`Pre-processing` block (see examples of how to do this in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
 
-Step 1: Pattern mining (training)
----------------------------------
+Pattern mining (training)
+-------------------------
 
 To train the mining/exploration module:
 
-#. Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`MiLoPYP (train),badge-primary`
+#. Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`MiLoPYP (train)`
 
 #. Set the training parameters as needed
 
-#. (optional) If you want to train MiLoPYP on a subset of the tomograms in your dataset, create a :doc:`Filter<filters>` in the :badge:`Pre-processing,badge-secondary` block and select its name from the **Filter tomograms** dropdown menu at the top of the form. For datasets with many tomograms, doing this will considerably speed up training
+#. (optional) If you want to train MiLoPYP on a subset of tomograms from your dataset, create a :doc:`Filter<filters>` in the :bdg-secondary:`Pre-processing` block and select its name from the **Filter tomograms** dropdown menu at the top of the form. For datasets with many tomograms, doing this will considerably speed up training
 
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+#. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-#. Once the run completes, navigate to the :badge:`MiLoPYP (train),badge-primary` block to monitor the training metrics
+#. Once the run completes, navigate to the :bdg-secondary:`MiLoPYP (train)` block to monitor the training metrics
 
-Step 2: Pattern mining (evaluation)
------------------------------------
+Pattern mining (evaluation)
+---------------------------
 
 The trained model can now be evaluated to visualize the results:
 
-#. Click on :guilabel:`MiLoPYP model` (output of the :badge:`MiLoPYP (train),badge-secondary` block) and select :badge:`MiLoPYP (eval),badge-primary`
+#. Click on ``MiLoPYP model`` (output of the :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
 
-#. Select the trained model from the block upstream (``*.pth``), for example, ``model_last_contrastive.pth``. The models will be saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
+#. Select the trained model from the block upstream (extension ``*.pth``), for example, ``model_last_contrastive.pth``. The models are saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
 
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+#. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-#. Once the run completes, navigate to the :badge:`MiLoPYP (eval),badge-primary` block to visualize the embedding and the cluster labels
+#. Once the run completes, navigate to the :bdg-secondary:`MiLoPYP (eval)` block to visualize the embedding and the cluster labels
 
 .. figure:: ../images/milopyp_eval.webp
     :alt: MiLoPYP evaluation
 
-Step 3: Target selection
-------------------------
+Target selection
+----------------
 
 There are two ways to select target positions to train the refinement module:
 
 Option A: Manual cluster selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This option only requires specifying a list of cluster numbers as displayed in the **Class Labels** panel, and can be done within ``nextPYP`` without running any external tools (see Step 4 below)
+This option requires specifying a comma separated list of cluster numbers as displayed in the **Class Labels** panel, and can be done directly within ``nextPYP`` (no external tools needed)
 
 Option B: Interactive target selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This option requires running the program `Phoenix-Arize <https://docs.arize.com/phoenix>`_ to interactively select locations of interest:
 
-* Navigate to the :badge:`MiLoPYP (eval),badge-primary` block and download the file ***_milo.tbz**
+* Navigate to the :bdg-secondary:`MiLoPYP (eval)` block, go to the *Mapping* tab, and download the file ``*_milo.gzip`` by clicking on the gray/green download badge
 
-* Open a terminal in your local machine, decompress the ***_milo.tbz** file, and run Phoenix:
+* Open a terminal in your local machine, decompress the ``*_milo.tbz`` file, and run Phoenix:
 
 .. code-block:: bash
 
@@ -134,20 +134,20 @@ With Phoenix now running:
 
     By default, Phoenix's web server runs on port 7000. If that port is not available on your computer, you can specify a custom one using ``phoenix_visualization.py``'s ``--port`` option, for example, ``phoenix_visualization.py --input interactive_info_parquet.gzip --port 8000``. In this case, you will need to specify the same port number when running the http.server, for example, ``python -m http.server 8000``.
 
-* Go back to ``nextPYP`` and navigate to the :badge:`MiLoPYP (eval),badge-primary` block
+* Go back to ``nextPYP`` and navigate to the :bdg-secondary:`MiLoPYP (eval)` block
 
-* Click on the **Upload** button :fa:`upload, text-primary`, browse to the location of the ``.parquet`` file you exported from Phoenix, and upload the file
+* Click on the **Upload** button :fa:`upload`, browse to the location of the ``.parquet`` file you exported from Phoenix, and upload the file
 
 .. note::
 
     Currently, the file will be uploaded and always be renamed to ``particles.parquet`` on the remote server. If a file with that name already exists, it will be overwritten with the new file
 
-Step 4: Particle refinement (training)
---------------------------------------
+Particle refinement (training)
+------------------------------
 
 Now that we have identified our targets of interest, we will use them to train the refinement module:
 
-* Click on :guilabel:`MiLoPYP Particles` (output of the :badge:`MiLoPYP (eval),badge-secondary` block) and select :badge:`Particle-Picking (train),badge-primary`
+* Click on ``MiLoPYP Particles`` (output of the :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle-Picking (train)`
 
 * **Option A**: From the ``Coordinates for training`` menu select "class labels from MiLoPYP" and specify a comma separated list of classes using the class IDs displayed in the **Class Labels** panel
 
@@ -155,35 +155,27 @@ Now that we have identified our targets of interest, we will use them to train t
 
 * Set parameters for training as needed
 
-* Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+* Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-* Once the run completes, navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the training metrics
+* Once the run completes, navigate to the :bdg-primary:`Particle-Picking (eval)` block to inspect the training metrics
 
-Step 5: Particle refinement (evaluation)
-----------------------------------------
+Particle refinement (evaluation)
+--------------------------------
 
 The last step is to evaluate the model and obtain the final particle positions on all tomograms in the dataset:
 
-#. Click on :guilabel:`Particles Model` (output of the :badge:`Particle-Picking (train),badge-secondary` block) and select :badge:`Particle-Picking (eval),badge-primary`
+#. Click on ``Particles Model`` (output of the :bdg-secondary:`Particle-Picking (train)` block) and select :bdg-primary:`Particle-Picking (eval)`
 
 #. Select the location of the ``Trained model (*.pth)`` using the file browser. The models will be saved in sub-folders named with the date and time of training: ``YYYYMMDD_HHMMSS``
 
 #. Set parameters for evaluation as needed
 
-#. Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+#. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-#. Once the run completes, navigate to the :badge:`Particle-Picking (eval),badge-primary` block to inspect the particle picking results
+#. Once the run completes, navigate to the :bdg-secondary:`Particle-Picking (eval)` block to inspect the particle picking results
 
-The resulting set of particles can be used for 3D refinement using the :badge:`Particle refinement,badge-secondary` block (see examples in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
+The resulting set of particles can be used for 3D refinement using the :bdg-secondary:`Particle refinement` block (see examples of how to do this in the :doc:`tomography<../tutorials/tomo_empiar_10164>` and :doc:`classification<../tutorials/tomo_empiar_10304>` tutorials)
 
 .. tip::
 
     * To detect particles distributed along fibers or tubules, select ``Fiber mode``. This will group neighboring particles, fit a smooth trajectory to them, and re-sample positions along the fitted curve
-
-.. seealso::
-
-    * :doc:`2D particle picking<picking2d>`
-    * :doc:`3D particle picking<picking3d>`
-    * :doc:`Filter micrographs/tilt-series<filters>`
-    * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
-    * :doc:`Overview<overview>`

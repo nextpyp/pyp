@@ -2,9 +2,9 @@
 Tomography tutorial
 ===================
 
-This tutorial shows how to process tilt-series from the `HIV-1 Gag (EMPIAR-10164) <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset.
+This tutorial shows how to convert tilt-series from the `HIV-1 Gag (EMPIAR-10164) <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset into a ~3A resolution structure.
 
-We first download and decompress a tbz file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
+We first download and decompress a ``.tbz`` file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
 
 .. code-block:: bash
 
@@ -31,6 +31,7 @@ Data pre-processing consists of movie frame alignment, tilt-series alignment, to
 .. code-block:: bash
 
     # launch pre-processing
+    
     pyp -data_mode tomo                                 \
         -scope_voltage 300                              \
         -scope_pixel 1.35                               \
@@ -247,9 +248,9 @@ Next, we refine the raw movie frames against the most recent 3D reconstruction:
         -refine_iter 2                                                          \
         -refine_maxiter 2                                                       \
         -refine_rhref "3.2"                                                     \
-        -refine_spatial_sigma 200.0                                             \
-        -refine_transreg                                                        \
+        -csp_transreg                                                           \
         -no-csp_refine_ctf                                                      \
+        -csp_spatial_sigma 200.0                                                \
         -csp_frame_refinement                                                   \
         -csp_UseImagesForRefinementMax 4
 
@@ -286,8 +287,3 @@ The final step is to sharpen the map and produce FSC plots:
     psp -sharpen_input_map=`pwd`/frealign/maps/EMPIAR-10164_r01_half1.mrc   \
         -sharpen_automask_threshold 0.35                                    \
         -sharpen_adhoc_bfac -50
-
-.. seealso::
-
-    * :doc:`Single-particle tutorial<single_particle>`
-    * :doc:`Classification tutorial<classification>`

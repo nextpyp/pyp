@@ -1104,37 +1104,36 @@ def particle_cleaning(parameters: dict):
 
         parameter_files = [str(f) for f in Path(parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f) and "_stat.cistem" not in str(f)]
 
-        if not parameters["clean_discard"]:
-            
-            mpi_args = []
+        mpi_args = []
 
-            for parameter_file in parameter_files:
-                mpi_args.append((parameter_file, 
-                                parameters["clean_mintilt"], 
-                                parameters["clean_maxtilt"], 
-                                parameters["clean_dist"], 
-                                parameters["clean_threshold"],
-                                parameters["scope_pixel"]))
-            if len(mpi_args) > 0:
-                mpi.submit_function_to_workers(filter_particles, mpi_args, verbose=parameters["slurm_verbose"])
+        for parameter_file in parameter_files:
+            mpi_args.append((parameter_file, 
+                            parameters["clean_mintilt"], 
+                            parameters["clean_maxtilt"], 
+                            parameters["clean_dist"], 
+                            parameters["clean_threshold"],
+                            parameters["scope_pixel"]))
+        if len(mpi_args) > 0:
+            mpi.submit_function_to_workers(filter_particles, mpi_args, verbose=parameters["slurm_verbose"])
 
-            # Statistics             
-            clean_particle_count = 0
-            all_particle_count = 0
+        # Statistics             
+        clean_particle_count = 0
+        all_particle_count = 0
 
-            for parameter_file in parameter_files:
-                extended_parameters = cistem_star_file.Parameters.from_file(parameter_file).get_extended_data()
-                clean_particle_count += extended_parameters.get_num_clean_particles()
-                all_particle_count += extended_parameters.get_num_particles()
+        for parameter_file in parameter_files:
+            extended_parameters = cistem_star_file.Parameters.from_file(parameter_file).get_extended_data()
+            clean_particle_count += extended_parameters.get_num_clean_particles()
+            all_particle_count += extended_parameters.get_num_particles()
 
-            logger.warning(
-                "{:,} particles ({:.1f}%) from {} tilt-series will be kept".format(
-                    clean_particle_count,
-                    (float(clean_particle_count) / all_particle_count * 100),
-                    len(parameter_files),
-                )
+        logger.warning(
+            "{:,} particles ({:.1f}%) from {} tilt-series will be kept".format(
+                clean_particle_count,
+                (float(clean_particle_count) / all_particle_count * 100),
+                len(parameter_files),
             )
-        else:
+        )
+
+        if parameters["clean_discard"]:
             clean_parameter_folder = Path(str(parameter_folder_current) + "_clean")
             if clean_parameter_folder.exists():
                 shutil.rmtree(clean_parameter_folder)

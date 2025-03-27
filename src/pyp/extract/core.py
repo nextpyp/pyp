@@ -362,6 +362,9 @@ def extract_particles(
     return number_of_particles
 
 
+@timer.Timer(
+    "extract_particles_non_mpi", text="Projection extraction took: {}", logger=logger.info
+)
 def extract_particles_non_mpi(
     input,
     output,
@@ -483,54 +486,6 @@ def extract_particles_non_mpi(
                 logger.warning(
                     "Particle falls completely outside bounds:",
                     box[0] / coordinate_binning,
-                )
-                raw = np.zeros([boxsize, boxsize])
-        elif False and frames > 1:
-            if use_frames:
-                # if frames, coordinates would be like = [ x, y, tilt, frame ]
-                extraction = image[box[2]][
-                    box[3],
-                    int(round(minX)) : int(round(maxX)),
-                    int(round(minY)) : int(round(maxY)),
-                ]
-            else:
-                extraction = image[
-                    box[2],
-                    int(round(minX)) : int(round(maxX)),
-                    int(round(minY)) : int(round(maxY)),
-                ]
-            inside = np.squeeze(extraction)
-
-            inside = inside.reshape(
-                int(round(maxX)) - int(round(minX)), int(round(maxY)) - int(round(minY))
-            )
-
-            if min(inside.shape) > 0:
-                raw = inside.mean() * np.ones([boxsize, boxsize])
-                try:
-                    raw[
-                        int(round(minx)) : int(round(maxx)),
-                        int(round(miny)) : int(round(maxy)),
-                    ] = inside
-                except:
-                    logger.info(
-                        "ERROR - Dimensions do not match",
-                        raw[
-                            int(round(minx)) : int(round(maxx)),
-                            int(round(miny)) : int(round(maxy)),
-                        ].shape,
-                        inside.shape,
-                    )
-                    logger.info(minx, maxx, miny, maxy)
-                    raw[
-                        int(round(minx)) : int(round(maxx)),
-                        int(round(miny)) : int(round(maxy)) - 1,
-                    ] = inside
-                    pass
-            else:
-                logger.warning(
-                    "Particle falls completely outside bounds: [%d, %d, %d, %d]"
-                    % (minx, maxx, miny, maxy)
                 )
                 raw = np.zeros([boxsize, boxsize])
 

@@ -1995,7 +1995,7 @@ _rlnRandomSubset #14
     def TomoStar2meta(self, tomostar, refinestar, rln_path="relion/", parameters=None):
         """ Convert TOMO metadata from Relion to PYP 
 
-            Rquired inputs (Relion): 
+            Required inputs (Relion): 
                 - tomograms.star 
                 - refinement.star (any star file from Refine3D)
                 - *.tlt
@@ -2198,7 +2198,7 @@ _rlnRandomSubset #14
     def TomoStar2metaV5(self, tomo_star_file, tilt_series_star_file, refine_star_file, motion_star_file=None, rln_path="relion/", parameters=None):
         """ Convert TOMO metadata from Relion v5 to PYP 
 
-            Rquired inputs (from Relion): 
+            Required inputs (from Relion): 
                 - tomograms.star 
                 - aligned_tilt_series.star 
                 - refinement.star (any star file from Refine3D)

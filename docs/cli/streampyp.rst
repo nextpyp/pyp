@@ -1,4 +1,4 @@
-Single-particle session
+Single-Particle Session
 =======================
 
 ``PYP`` can be run during data collection to provide live feedback on data quality.

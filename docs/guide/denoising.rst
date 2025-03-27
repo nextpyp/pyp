@@ -2,65 +2,46 @@
 Tomogram denoising
 ==================
 
-``nextPYP`` has wrappers for several tomogram denoising methods, including `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `Topaz-Denoise <https://github.com/tbepler/topaz>`_ and `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_.
+``nextPYP`` provides wrappers for several tomogram denoising methods based on neural networks, including `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `Topaz-Denoise <https://github.com/tbepler/topaz>`_ and `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_
 
+Denoising is done in two phases using the :bdg-secondary:`Denosing (training)` and :bdg-secondary:`Denosing (eval)` blocks. If a pre-trained model is available, the training phase can be skipped. Training is only supported for cryoCARE and IsoNet models (Topaz-denoise uses pre-trained models)
 
-One-step denosing (cryoCARE, Topaz)
------------------------------------
+Training
+~~~~~~~~
 
-One-step denoising is done in the :badge:`Denosing,badge-secondary` block using cryoCARE (which needs to be trained on each pair of half-tomograms) or Topaz-denoise (which uses a pre-trained model).
+* Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Denoising (train)`
 
-* Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Denoising,badge-primary`
+* Select the desired denoising method and corresponding parameters for training
 
-* Select the desired algorithm and corresponding parameters
+* (optional) To train models on a subset of tomograms, create a :doc:`Filter<filters>` in the :bdg-secondary:`Pre-processing` block and select its name from the `Filter tomograms` dropdown menu
 
-* Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+* Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-* Navigate to the :badge:`Reconstruction,badge-primary` tab to inspect the denoised tomograms
-
-
-Two-step denosing (IsoNet)
---------------------------
-
-Two-step denoising is done in the :badge:`Denosing (training),badge-secondary` and :badge:`Denosing (eval),badge-secondary` blocks using IsoNet.
-
-1. Training
-~~~~~~~~~~~
-
-* Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Denoising (train),badge-primary`
-
-* Select the desired algorithm and corresponding parameters
-
-* (optional) To train on a subset of tomograms, create a :doc:`Filter<filters>` in the :badge:`Pre-processing,badge-secondary` block and select its name from the `Filter tomograms` dropdown menu
-
-* Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
-
-* Navigate to the :badge:`Denoising (training),badge-primary` block to inspect the results of training
-
-
-2. Evaluation
-~~~~~~~~~~~~~
-
-* Click on :guilabel:`Denoising model` (output of the :badge:`Denoising (traiing),badge-secondary` block) and select :badge:`Denoising (eval),badge-primary`
-
-* Select the algorithm and trained model from the block upstream
-
-* Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
-
-* Navigate to the :badge:`Denoising (eval),badge-primary` block to inspect the denoised tomograms
-
+* Navigate to the :bdg-secondary:`Denoising (training)` block to inspect the results of training
 
 .. note::
 
-    Evalaution is always done on the entire set of tomograms from the pre-processing block
+    This step can be skipped if a pre-trained model is available
+
+Evaluation
+~~~~~~~~~~
+
+* Click on ``Denoising model`` (output of the :bdg-secondary:`Denoising (traiing)` block) and select :bdg-primary:`Denoising (eval)`
+
+* Select the desired algorithm and corresponding trained model from the block upstream (cryoCARE and IsoNet) or list of pre-trained models (Topaz)
+
+* Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+* Navigate to the :bdg-secondary:`Denoising (eval)` block to inspect the denoised tomograms
 
 
-.. seealso::
+.. admonition:: Notes
 
-    * :doc:`2D particle picking<picking2d>`
-    * :doc:`3D particle picking<picking3d>`
-    * :doc:`Segmentation<segmentation>`
-    * :doc:`Pattern mining<milopyp>`
-    * :doc:`Filter micrographs/tilt-series<filters>`
-    * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
-    * :doc:`Overview<overview>`
+    * Evaluation is typically done on the entire set of tomograms, while training is done using a subset of tomograms
+    * cryoCARE and IsoNet need a GPU to run. Topaz can run on the CPU (default) or a GPU
+
+Denoised tomograms can be used as input for all downstream operations available in ``nextPYP`` (e.g., particle picking, segmentation, etc.)
+
+.. admonition:: Note
+
+    All downstream particle refinement operations will still use the raw data (regardless of whether denoising was used for particle picking or not)

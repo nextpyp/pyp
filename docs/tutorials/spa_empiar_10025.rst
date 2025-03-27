@@ -4,9 +4,11 @@ Single-particle tutorial (EMPIAR-10025)
 
 This tutorial shows how to convert raw movies from `EMPIAR-10025 (T20S proteasome) <https://www.ebi.ac.uk/empiar/EMPIAR-10025/>`_ into a ~3A resolution structure. 
 
-Total running time required to complete this tutorial: 45 min.
+.. admonition::
 
-Pre-calculated results are available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/project/ab690@duke.edu/EMPIAR-10025-RtQMJrzN90C81PHx>`_.
+  * Total running time required to complete this tutorial: **45 min**.
+
+  * Pre-calculated results are available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/project/ab690@duke.edu/EMPIAR-10025-RtQMJrzN90C81PHx>`_.
 
 We first use the command line to download and decompress a tbz file containing a subset of 20 movies, the gain reference, and an initial model:
 
@@ -22,22 +24,20 @@ Open your browser and navigate to the url of your ``nextPYP`` instance (e.g., ``
 Step 1: Create a new project
 ----------------------------
 
-.. dropdown:: Data processing runs are organized into projects. We will create a new project for this tutorial
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Data processing runs are organized into projects. We will create a new project for this tutorial
+  :collapsible: open
 
   * The first time you login into ``nextPYP``, you should see an empty **Dashboard**: 
 
     .. figure:: ../images/dashboard_empty.webp
       :alt: Create new project
 
-  * Click on :badge:`Create new project,badge-primary`, give the project a name, and select :badge:`Create,badge-primary`
+  * Click on :bdg-primary:`Create new project`, give the project a name, and select :bdg-primary:`Create`
 
     .. figure:: ../images/tutorial_spa_new.webp
       :alt: Create new project
 
-  * Select the new project from the **Dashboard** and click :badge:`Open,badge-primary`
+  * Select the new project from the **Dashboard** and click :bdg-primary:`Open`
 
     .. figure:: ../images/tutorial_spa_open.webp
       :alt: Select new project
@@ -50,12 +50,10 @@ Step 1: Create a new project
 Step 2: Import raw movies
 -------------------------
 
-.. dropdown:: Import the raw movies downloaded above (:fa:`stopwatch` <1 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Import the raw movies downloaded above (:fa:`stopwatch` <1 min)
+  :collapsible: open
 
-  * Click :badge:`Import Data,badge-primary` and select :badge:`Single Particle (from Raw Data),badge-primary`
+  * Click :bdg-primary:`Import Data` and select :bdg-primary:`Single Particle (from Raw Data)`
 
     .. figure:: ../images/tutorial_spa_import_dialog.webp
       :alt: Import dialog
@@ -67,187 +65,190 @@ Step 2: Import raw movies
 
   * Go to the **Raw data** tab:
 
-    .. tabbed:: Raw data
+    .. md-tab-set::
 
-      - Set the ``Location`` of the raw data clicking on the icon :fa:`search,text-primary` and browsing to the directory where the you downloaded the raw data
+      .. md-tab-item:: Raw data
 
-      - Type ``14*.tif`` in the filter box (lower right) and click on the icon :fa:`filter,text-primary` to verify your selection. 20 matches should be displayed
+        - Set the ``Location`` of the raw data clicking on the icon :fa:`search` and browsing to the directory where the you downloaded the raw data
 
-      - Click :badge:`Choose File Pattern,badge-primary`
+        - Type ``14*.tif`` in the filter box (lower right) and click on the icon :fa:`filter` to verify your selection. 20 matches should be displayed
 
-      - Click on the **Gain reference** tab
+        - Click :bdg-primary:`Choose File Pattern`
 
-      .. figure:: ../images/tutorial_spa_import_browser.webp
-        :alt: File browser
+        - Click on the **Gain reference** tab
 
-    .. tabbed:: Gain reference
+        .. figure:: ../images/tutorial_spa_import_browser.webp
+          :alt: File browser
 
-      - Set the ``Location`` of the gain reference by clicking the icon :fa:`search,text-primary` and navigating to the directory where you downloaded the data for the tutorial. Select the file ``Gain.mrc`` and click :badge:`Choose File,badge-primary`
+      .. md-tab-item:: Gain reference
 
-      - Check ``Flip vertically``
+        - Set the ``Location`` of the gain reference by clicking the icon :fa:`search` and navigating to the directory where you downloaded the data for the tutorial. Select the file ``Gain.mrc`` and click :bdg-primary:`Choose File`
 
-      - Click on the **Microscope parameters** tab
+        - Check ``Flip vertically``
 
-      .. figure:: ../images/tutorial_spa_import_gain.webp
-        :alt: File browser
+        - Click on the **Microscope parameters** tab
 
-    .. tabbed:: Microscope parameters
+        .. figure:: ../images/tutorial_spa_import_gain.webp
+          :alt: File browser
 
-      - Set ``Pixel size (A)`` to 0.66
+      .. md-tab-item:: Microscope parameters
 
-      - Set ``Acceleration voltage (kV)`` to 300
+        - Set ``Pixel size (A)`` to 0.66
 
-      .. figure:: ../images/tutorial_spa_import_scope.webp
-        :alt: Project dashboard
+        - Set ``Acceleration voltage (kV)`` to 300
 
-  * Click :badge:`Save,badge-primary` and the new block will appear on the project page
+        .. figure:: ../images/tutorial_spa_import_scope.webp
+          :alt: Project dashboard
+
+  * Click :bdg-primary:`Save` and the new block will appear on the project page
 
     .. figure:: ../images/tutorial_spa_import_modified.webp
       :alt: Project dashboard
 
   * The block is in the modified state (indicated by the :fa:`asterisk` sign, top bar) and is ready to be executed
 
-  * Clicking the button :badge:`Run,badge-primary` will show another dialog where you can select which blocks to run. Since there is only block available, simply click on :badge:`Start Run for 1 block,badge-primary`. This will launch a process that reads the first movie, applies the gain reference and displays a thumbnail inside the :badge:`Single Particle (from Raw Data),badge-secondary` block
+  * Clicking the button :bdg-primary:`Run` will show another dialog where you can select which blocks to run. Since there is only block available, simply click on :bdg-primary:`Start Run for 1 block`. This will launch a process that reads the first movie, applies the gain reference and displays a thumbnail inside the :bdg-secondary:`Single Particle (from Raw Data)` block
 
     .. figure:: ../images/tutorial_spa_import_done.webp
       :alt: Gain thumbnail
 
-.. tip::
+    .. tip::
 
-    Click inside the :badge:`Single Particle (from Raw Data),badge-secondary` block to see a larger version of the image
+        Click inside the :bdg-secondary:`Single Particle (from Raw Data)` block to see a larger version of the image
 
 Step 3: Pre-processing
 ----------------------
 
-.. dropdown:: Movie frame alignment, CTF estimation and particle picking (:fa:`stopwatch` 2 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Movie frame alignment, CTF estimation and particle picking (:fa:`stopwatch` 2 min)
+  :collapsible: open
 
-  * Click on :guilabel:`Movies` (output of :badge:`Single Particle (from Raw Data),badge-secondary` block) and select :badge:`Pre-processing,badge-primary`
+  * Click on ``Movies`` (output of :bdg-secondary:`Single Particle (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
 
     .. figure:: ../images/tutorial_spa_pre_process_dialog.webp
       :alt: File browser
 
   * Go to the **Particle detection** tab:
 
-    .. tabbed:: Particle detection
+    .. md-tab-set::
 
-      * Set ``Particle radius (A)`` to 65
+      .. md-tab-item:: Particle detection
 
-      * Set ``Detection method`` to all
+        * Set ``Particle radius (A)`` to 65
 
-      * Set ``Min distance (pixels)`` to 40
+        * Set ``Detection method`` to all
 
-      * Click on the **Resources** tab
+        * Set ``Min distance (pixels)`` to 40
 
-    .. tabbed:: Resources
+        * Click on the **Resources** tab
 
-      * Set ``Threads per task`` to 7
+      .. md-tab-item:: Resources
 
-      * Set ``Memory per task`` to 14
+        * Set ``Threads per task`` to 7
 
-      * Set other runtime parameters as needed (see :doc:`Computing resources<../reference/computing>`)
+        * Set ``Memory per task`` to 14
 
-  * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. You can monitor the status of the run using the **Jobs** panel
+        * Set other runtime parameters as needed (see :doc:`Computing resources<../reference/computing>`)
+
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. You can monitor the status of the run using the **Jobs** panel
 
     .. figure:: ../images/tutorial_spa_pre_process_modified.webp
       :alt: File browser
 
-  * Click inside the :badge:`Pre-processing,badge-secondary` block to inspect the results (you don't need to wait until processing is done to do this). Results will be grouped into tabs:
+  * Click inside the :bdg-secondary:`Pre-processing` block to inspect the results (you don't need to wait until processing is done to do this). Results will be grouped into tabs:
 
-    .. tabbed:: Plots
+    .. md-tab-set::
 
-      .. figure:: ../images/tutorial_spa_pre_process_page.webp
-        :alt: Dataset statistics
+      .. md-tab-item:: Plots
 
-    .. tabbed:: Table
+        .. figure:: ../images/tutorial_spa_pre_process_page.webp
+          :alt: Dataset statistics
 
-      .. figure:: ../images/tutorial_spa_pre_process_table.webp
-        :alt: Table view
+      .. md-tab-item:: Table
 
-    .. tabbed:: Gallery
+        .. figure:: ../images/tutorial_spa_pre_process_table.webp
+          :alt: Table view
 
-      .. figure:: ../images/tutorial_spa_pre_process_gallery.webp
-        :alt: Gallery view
+      .. md-tab-item:: Gallery
 
-    .. tabbed:: Micrograph
+        .. figure:: ../images/tutorial_spa_pre_process_gallery.webp
+          :alt: Gallery view
 
-      Data processing details (particle picking, drift trajectory, CTF profile, power spectrum)
+      .. md-tab-item:: Micrographs
 
-      .. figure:: ../images/tutorial_spa_pre_process_micrographs.webp
-        :alt: Micrograph view
+        Data processing details (particle picking, drift trajectory, CTF profile, power spectrum)
 
-.. tip::
+        .. figure:: ../images/tutorial_spa_pre_process_micrographs.webp
+          :alt: Micrograph view
 
-  While on the **Micrographs** tab, use the navigation bar at the top of the page to look at the results for other micrographs
+    .. tip::
+
+      While on the **Micrographs** tab, use the navigation bar at the top of the page to look at the results for other micrographs
 
 Step 4: Reference-based refinement
 ----------------------------------
 
-.. dropdown:: Reference-based particle alignment (:fa:`stopwatch` 3 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Reference-based particle alignment (:fa:`stopwatch` 3 min)
+  :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle refinement,badge-primary`
+  * Click on ``Particles`` (output of :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle refinement`
 
     .. figure:: ../images/tutorial_spa_coarse_dialog.webp
       :alt: File browser
 
   * Go to the **Sample** tab:
 
-    .. tabbed:: Sample
+    .. md-tab-set::
+      .. md-tab-item:: Sample
 
-      - Set ``Molecular weight (kDa)`` to 700
+        - Set ``Molecular weight (kDa)`` to 700
 
-      - Set ``Particle radius (A)`` to 80
+        - Set ``Particle radius (A)`` to 80
 
-      - Set ``Symmetry`` to D7
+        - Set ``Symmetry`` to D7
 
-      - Click on the **Extraction** tab
+        - Click on the **Extraction** tab
 
-      .. figure:: ../images/tutorial_spa_coarse_sample.webp
-        :alt: File browser
+        .. figure:: ../images/tutorial_spa_coarse_sample.webp
+          :alt: File browser
 
-    .. tabbed:: Extraction
+      .. md-tab-item:: Extraction
 
-      - Set ``Box size (pixels)`` to 128
+        - Set ``Box size (pixels)`` to 128
 
-      - Set ``Image binning`` to 4
+        - Set ``Image binning`` to 4
 
-      - Click on the **Refinement** tab
+        - Click on the **Refinement** tab
 
-      .. figure:: ../images/tutorial_spa_coarse_extract.webp
-        :alt: File browser
+        .. figure:: ../images/tutorial_spa_coarse_extract.webp
+          :alt: File browser
 
-    .. tabbed:: Refinement
+      .. md-tab-item:: Refinement
 
-      - Set the location of the ``Initial model`` by clicking on the icon :fa:`search, text-primary`, navigating to the folder where you downloaded the data for the tutorial, selecting the file  `EMPIAR-10025_init_ref.mrc`, and clicking :badge:`Choose File,badge-primary`
+        - Set the location of the ``Initial model`` by clicking on the icon :fa:`search`, navigating to the folder where you downloaded the data for the tutorial, selecting the file  `EMPIAR-10025_init_ref.mrc`, and clicking :bdg-primary:`Choose File`
 
-      - Set ``Max resolution (A)`` to 8:7:6
+        - Set ``Max resolution (A)`` to 8:7:6
 
-      - Check ``Use signed correlation``
+        - Check ``Use signed correlation``
 
-      - Set ``Last iteration`` to 5
+        - Set ``Last iteration`` to 5
 
-      - Unheck ``Skip refinement``
+        - Uncheck ``Skip refinement``
 
-      - Check ``Use alignment priors``
+        - Check ``Use alignment priors``
 
-      - Click on the **Reconstruction** tab
+        - Click on the **Reconstruction** tab
 
-      .. figure:: ../images/tutorial_spa_coarse_refinement.webp
-        :alt: File browser
+        .. figure:: ../images/tutorial_spa_coarse_refinement.webp
+          :alt: File browser
 
-    .. tabbed:: Reconstruction
+      .. md-tab-item:: Reconstruction
 
-      - Set ``Fraction of particles`` to 0
+        - Set ``Fraction of particles`` to 0
 
-      .. figure:: ../images/tutorial_spa_coarse_reconstruction.webp
-        :alt: File browser
+        .. figure:: ../images/tutorial_spa_coarse_reconstruction.webp
+          :alt: File browser
 
-  * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
     The new block will appear on the **Dashboard** and a thumbnail will be displayed inside after the run is finished
 
@@ -256,7 +257,7 @@ Step 4: Reference-based refinement
 
     This process executes four rounds of global orientation search (iterations 2-5). The fraction of good particles at each iteration will be determined automatically (``Fraction of particles`` = 0) and used for reconstruction
 
-  * Click inside the :badge:`Pre-processing,badge-secondary` block to inspect the results:
+  * Click inside the :bdg-secondary:`Pre-processing` block to inspect the results:
 
     .. figure:: ../images/tutorial_spa_coarse_iter5.webp
       :alt: Iteration 5
@@ -264,37 +265,36 @@ Step 4: Reference-based refinement
 Step 5: Filter bad particles
 ----------------------------
 
-.. dropdown:: Identify particles with low alignment scores (:fa:`stopwatch` 1 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Identify particles with low alignment scores (:fa:`stopwatch` 1 min)
+  :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :badge:`Particle refinement,badge-secondary` block) and select :badge:`Particle filtering,badge-primary`
+  * Click on ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Particle filtering`
 
     .. figure:: ../images/tutorial_spa_fine_dialog.webp
       :alt: File browser
 
   * Go to the **Particle filtering** tab:
 
-    .. tabbed:: Particle filtering
+    .. md-tab-set::
+      .. md-tab-item:: Particle filtering
 
-      - Check ``Automatic score threshold``
+        - Check ``Automatic score threshold``
 
-      - Set ``Min distance between particles (A)`` to 20
+        - Set ``Min distance between particles (A)`` to 20
 
-      - Select the ``Input parameter file`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-coarse-refinement-*_r01_05.par.bz2`
+        - Select the ``Input parameter file`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_05.par.bz2`
 
-      - Check ``Generate reconstruction after filtering``
+        - Check ``Generate reconstruction after filtering``
 
-      - Click on the **Refinement** tab
+        - Click on the **Refinement** tab
 
-    .. tabbed:: Refinement
+      .. md-tab-item:: Refinement
 
-      - Select the ``Initial model`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-coarse-refinement-*_r01_05.mrc`
+        - Select the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_05.mrc`
 
-  * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to execute particle cleaning and produce a reconstruction with only the clean particles
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to execute particle cleaning and produce a reconstruction with only the clean particles
 
-  * Click inside the :badge:`Filter particles,badge-secondary` block to look at the reconstruction after cleaning:
+  * Click inside the :bdg-secondary:`Filter particles` block to look at the reconstruction after cleaning:
 
     .. figure:: ../images/tutorial_spa_cleaning_iter2.webp
       :alt: Iteration 2
@@ -302,116 +302,116 @@ Step 5: Filter bad particles
 Step 6 Permanently remove bad particles
 ---------------------------------------
 
-.. dropdown:: Permanently remove bad particles to improve efficiency of steps downstream (:fa:`stopwatch` <1 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Permanently remove bad particles to improve efficiency of steps downstream (:fa:`stopwatch` <1 min)
+  :collapsible: open
 
-  * Edit the settings of the :badge:`Particle filtering,badge-secondary` block by clicking on the icon :fa:`bars, text-primary` and selecting the :fa:`edit, text-primary` Edit option
+  * Edit the settings of the :bdg-secondary:`Particle filtering` block by clicking on the icon :fa:`bars` and selecting the :fa:`edit` Edit option
 
   * Go to the **Particle filtering** tab
 
-    .. tabbed:: Particle filtering
+    .. md-tab-set::
 
-      - Check ``Permanently remove particles``
+      .. md-tab-item:: Particle filtering
 
-      - Uncheck ``Generate reconstruction after filtering``
+        - Check ``Permanently remove particles``
 
-  * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to launch the job
+        - Uncheck ``Generate reconstruction after filtering``
+
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to launch the job
 
 Step 7: Particle refinement
 ---------------------------
 
-.. dropdown:: Reconstruction and additional refinement using 2x binned particles (:fa:`stopwatch` 9 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Reconstruction and additional refinement using 2x binned particles (:fa:`stopwatch` 9 min)
+  :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :badge:`Filter particles,badge-secondary` block) and select :badge:`Particle refinement,badge-primary`
+  * Click on ``Particles`` (output of :bdg-secondary:`Filter particles` block) and select :bdg-primary:`Particle refinement`
 
     .. figure:: ../images/tutorial_spa_fine_dialog.webp
       :alt: File browser
 
   * Go to the **Extraction** tab:
 
-    .. tabbed:: Extraction
+    .. md-tab-set::
 
-      - Set ``Box size (pixels)`` to 256
+      .. md-tab-item:: Extraction
 
-      - Set ``Image binning`` to 2
+        - Set ``Box size (pixels)`` to 256
 
-      - Click on the **Refinement** tab
+        - Set ``Image binning`` to 2
 
-    .. tabbed:: Refinement
+        - Click on the **Refinement** tab
 
-      - Select the ``Initial model`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-fine-refinement-*_r01_02.mrc`
+      .. md-tab-item:: Refinement
 
-      - Select the ``Input parameter file`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-fine-refinement-*_r01_02_clean.par.bz2`
+        - Select the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `sp-fine-refinement-*_r01_02.mrc`
 
-      - Set ``Max resolution (A)`` to 6:4:3
+        - Select the ``Input parameter file`` by clicking on the icon :fa:`search` and selecting the file `sp-fine-refinement-*_r01_02_clean.par.bz2`
 
-      - Check ``Use signed correlation``
+        - Set ``Max resolution (A)`` to 6:4:3
 
-      - Set ``Last iteration`` to 6
+        - Check ``Use signed correlation``
 
-      - Set ``Search mode`` to local
+        - Set ``Last iteration`` to 6
 
-  * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to launch the job
+        - Set ``Search mode`` to local
 
-  * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results:
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to launch the job
+
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results:
 
     .. figure:: ../images/tutorial_spa_fine_iter2.webp
       :alt: Iteration 2
 
-.. tip::
+    .. tip::
 
-  Use the navigation bar at the top left of the page to look at the results for different iterations
+      Use the navigation bar at the top left of the page to look at the results for different iterations
 
 Step 8: Create shape mask
 -------------------------
 
-.. dropdown:: Use most recent reconstruction to build a shape mask (:fa:`stopwatch` <1 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Use most recent reconstruction to build a shape mask (:fa:`stopwatch` <1 min)
+  :collapsible: open
 
-  * Click on :guilabel:`Particles` (output of :badge:`Particle refinement,badge-secondary` block) and select :badge:`Masking,badge-primary`
+  * Click on ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
 
   * Enter parameter values for the **Masking** tab:
 
-    .. tabbed:: Masking
+    .. md-tab-set::
 
-      - Select the ``Input map`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-coarse-refinement-*_r01_06.mrc`
+      .. md-tab-item:: Masking
 
-      - Set ``Threshold for binarization`` to 0.3
+        - Select the ``Input map`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_06.mrc`
 
-  * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to launch the job
+        - Set ``Threshold for binarization`` to 0.3
 
-  * Click on the icon :fa:`bars, text-primary` of the :badge:`Masking,badge-secondary` block, select the :badge:`Show Filesystem Location` option, and :badge:`Copy,badge-primary` the location of the block in the filesystem (we will use this in the next step))
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to launch the job
 
-  * Click inside the :badge:`Masking,badge-secondary` block to inspect the results of masking
+  * Click on the icon :fa:`bars` of the :bdg-secondary:`Masking` block, select the :bdg-secondary:`Show Filesystem Location` option, and :bdg-primary:`Copy` the location of the block in the filesystem (we will use this in the next step))
+
+  * Click inside the :bdg-secondary:`Masking` block to inspect the results of masking
 
 Step 9: Local refinement
 ------------------------
 
-.. dropdown:: Additional refinement iterations using 2x binned data (:fa:`stopwatch` 2 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Additional refinement iterations using 2x binned data (:fa:`stopwatch` 2 min)
+  :collapsible: open
 
-  * Go one block upstream to the :badge:`Particle refinement,badge-secondary` block, click on the icon :fa:`bars, text-primary` and select the :fa:`edit, text-primary` Edit option from the menu 
+  * Go one block upstream to the :bdg-secondary:`Particle refinement` block, click on the icon :fa:`bars` and select the :fa:`edit` Edit option from the menu 
 
   * Go to the **Refinement** tab:
 
-    .. tabbed:: Refinement
+    .. md-tab-set::
 
-      - Set ``Last iteration`` to 7
+      .. md-tab-item:: Refinement
 
-      - Select the ``Shape mask`` by clicking on the icon :fa:`search, text-primary`, navigating to the path of the :badge:`Masking,badge-secondary` block copied above, and selecting the file `frealign/maps/mask.mrc`
+        - Set ``Last iteration`` to 7
 
-  * Click :badge:`Save,badge-primary`, then :badge:`Run,badge-primary`. We now need to uncheck the box for the :badge:`Masking,badge-secondary` block (since we don't want to re-run this block), then click :badge:`Start Run for 1 block,badge-primary`
+        - Select the ``Shape mask`` by clicking on the icon :fa:`search`, navigating to the path of the :bdg-secondary:`Masking` block copied above, and selecting the file `frealign/maps/mask.mrc`
 
-  * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results:
+  * Click :bdg-primary:`Save`, then :bdg-primary:`Run`. We now need to uncheck the box for the :bdg-secondary:`Masking` block (since we don't want to re-run this block), then click :bdg-primary:`Start Run for 1 block`
+
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results:
 
     .. figure:: ../images/tutorial_spa_fine_iter7.webp
       :alt: Iteration 7
@@ -419,77 +419,77 @@ Step 9: Local refinement
 Step 10: Particle-based CTF refinement
 --------------------------------------
 
-.. dropdown:: Per-particle CTF refinement using most recent reconstruction (:fa:`stopwatch` 9 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Per-particle CTF refinement using most recent reconstruction (:fa:`stopwatch` 9 min)
+  :collapsible: open
 
-    * Click on the menu icon :fa:`bars, text-primary` from the :badge:`Particle refinement,badge-secondary` block and choose the :fa:`edit, text-primary` Edit option.
+  * Click on the menu icon :fa:`bars` from the :bdg-secondary:`Particle refinement` block and choose the :fa:`edit` Edit option.
 
-    * Go to the **Refinement** tab:
+  * Go to the **Refinement** tab:
 
-      .. tabbed:: Refinement
+  .. md-tab-set::
 
-        - Set ``Last iteration`` to 8
+    .. md-tab-item:: Refinement
 
-        - Click on the **Constrained refinement** tab
+      - Set ``Last iteration`` to 8
 
-      .. tabbed:: Constrained refinement
+      - Click on the **Constrained refinement** tab
 
-        - Set ``Number of regions`` to 8,8
+    .. md-tab-item:: Constrained refinement
 
-        - Check ``Refine CTF per-particle``
+      - Set ``Number of regions`` to 8,8
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+      - Check ``Refine CTF per-particle``
 
-    * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results
 
 
 Step 11: Movie frame refinement
 -------------------------------
 
-.. dropdown:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 8 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 8 min)
+  :collapsible: open
 
-  * Click :guilabel:`Particle set` (output of :badge:`Particle refinement,badge-secondary` block) and select :badge:`Movie refinement,badge-primary`
+  * Click ``Particle set`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
 
   * Go to the **Refinement** tab:
 
-    .. tabbed:: Refinement
+    .. md-tab-set::
 
-      - Select the ``Initial model`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-coarse-refinement-*_r01_07.mrc`
+      .. md-tab-item:: Refinement
 
-      - Select the ``Input parameter`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-coarse-refinement-*_r01_07.par.bz2`
+        - Select the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_07.mrc`
 
-      - Set ``Max resolution (A)`` to 3
+        - Select the ``Input parameter`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_07.par.bz2`
 
-      - Set ``Last iteration`` to 3
+        - Set ``Max resolution (A)`` to 3
 
-      - Check ``Skip refinement``
+        - Set ``Last iteration`` to 3
 
-      - Go to the **Constrained refinement** tab
+        - Check ``Skip refinement``
 
-    .. tabbed:: Constrained refinement
+        - Go to the **Constrained refinement** tab
 
-      - Set ``Last exposure for refinement`` to 60
+      .. md-tab-item:: Constrained refinement
 
-      - Check ``Movie frame refinement``
+        - Set ``Last exposure for refinement`` to 60
 
-      - Check ``Regularize translations``
+        - Check ``Movie frame refinement``
 
-      - Set ``Spatial sigma`` to 15
+        - Check ``Regularize translations``
 
-      - Go to the **Exposure weighting** tab
+        - Set ``Spatial sigma`` to 15
 
-    .. tabbed:: Exposure weighting
+        - Go to the **Exposure weighting** tab
 
-      - Check ``Dose weighting``
+      .. md-tab-item:: Exposure weighting
 
-  * Click :badge:`Save,badge-primary`, then :badge:`Run,badge-primary` to launch Movie refinement. Uncheck the box for the :badge:`Masking,badge-secondary` block and click :badge:`Start Run for 1 block,badge-primary`
+        - Check ``Dose weighting``
 
-  * Click inside the :badge:`Movie refinement,badge-secondary` block to inspect the results:
+  * Click :bdg-primary:`Save`, then :bdg-primary:`Run` to launch Movie refinement. Uncheck the box for the :bdg-secondary:`Masking` block and click :bdg-primary:`Start Run for 1 block`
+
+  * Click inside the :bdg-secondary:`Movie refinement` block to inspect the results:
 
     .. figure:: ../images/tutorial_spa_movie_iter3.webp
       :alt: Iteration 3
@@ -497,30 +497,30 @@ Step 11: Movie frame refinement
 Step 12: Refinement after movie frame refinement
 ------------------------------------------------
 
-.. dropdown:: Additional refinement using new frame alignment parameters (:fa:`stopwatch` 8 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Additional refinement using new frame alignment parameters (:fa:`stopwatch` 8 min)
+  :collapsible: open
 
-  * Click on the menu icon :fa:`bars, text-primary` from the :badge:`Movie refinement,badge-secondary` block and choose the :fa:`edit, text-primary` Edit option.
+  * Click on the menu icon :fa:`bars` from the :bdg-secondary:`Movie refinement` block and choose the :fa:`edit` Edit option.
 
   * Go to the **Refinement** tab:
 
-    .. tabbed:: Refinement
+    .. md-tab-set::
 
-      - Set ``Last iteration`` to 4
+      .. md-tab-item:: Refinement
 
-      - Uncheck ``Skip refinement``
+        - Set ``Last iteration`` to 4
 
-      - Click on the **Constrained refinement** tab
+        - Uncheck ``Skip refinement``
 
-    .. tabbed:: Constrained refinement
+        - Click on the **Constrained refinement** tab
 
-      - Uncheck ``Movie frame refinement``
+      .. md-tab-item:: Constrained refinement
 
-  * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+        - Uncheck ``Movie frame refinement``
 
-  * Click inside the :badge:`Movie refinement,badge-secondary` block to inspect the results:
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+  * Click inside the :bdg-secondary:`Movie refinement` block to inspect the results:
 
     .. figure:: ../images/tutorial_spa_final_map.webp
       :alt: Final map
@@ -528,37 +528,30 @@ Step 12: Refinement after movie frame refinement
 Step 13: Map sharpening
 -----------------------
 
-.. dropdown:: Apply B-bactor weighting in frequency space (:fa:`stopwatch` <1 min)
-  :container: + shadow
-  :title: bg-primary text-white text-left
-  :open:
+.. nextpyp:: Apply B-bactor weighting in frequency space (:fa:`stopwatch` <1 min)
+  :collapsible: open
 
-  * Click :guilabel:`Frames` (output of :badge:`Movie refinement,badge-secondary` block) and select :badge:`Post-processing,badge-primary`
+  * Click ``Frames`` (output of :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
 
   * Go to the **Post-processing** tab:
 
-    .. tabbed:: Post-processing
+    .. md-tab-set::
 
-      - Select the ``First half map`` by clicking on the icon :fa:`search, text-primary` and selecting the file `sp-flexible-refinement-*_r01_half1.mrc`
+      .. md-tab-item:: Post-processing
 
-      - Set ``Automask threshold`` to 0.5
+        - Select the ``First half map`` by clicking on the icon :fa:`search` and selecting the file `sp-flexible-refinement-*_r01_half1.mrc`
 
-      - Set ``Adhoc B-factor (A^2)`` to -50
+        - Set ``Automask threshold`` to 0.5
 
-  * Click :badge:`Save,badge-primary`, then :badge:`Run,badge-primary`. Uncheck the box for the :badge:`Masking,badge-secondary` block and click :badge:`Start Run for 1 block,badge-primary`
+        - Set ``Adhoc B-factor (A^2)`` to -50
 
-  * Click inside the :badge:`Map sharpening,badge-secondary` block to inspect the results:
+  * Click :bdg-primary:`Save`, then :bdg-primary:`Run`. Uncheck the box for the :bdg-secondary:`Masking` block and click :bdg-primary:`Start Run for 1 block`
+
+  * Click inside the :bdg-secondary:`Map sharpening` block to inspect the results:
 
     .. figure:: ../images/tutorial_spa_post_processing.webp
       :alt: Post processing
 
-.. note::
+.. info::
 
   Running times were measured running micrographs in parallel on nodes with 124 vCPUs, 720GB RAM, and 3TB of local SSDs
-
-.. seealso::
-
-    * :doc:`Single-particle (on-the-fly)<stream_spr>`
-    * :doc:`Tomography tutorial<tomo_empiar_10164>`
-    * :doc:`Classification tutorial<tomo_empiar_10304>`
-    * :doc:`Tomography (on-the-fly)<stream_tomo>`

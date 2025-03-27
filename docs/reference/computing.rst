@@ -15,7 +15,7 @@ There are three types of processes used in ``nextPYP``:
 - **Task**: Set of *threads* used to process a single micrograph or tilt-series
 - **Array**: Set of *tasks* used to process an entire dataset
 
-Most jobs in ``nextPYP`` have a *Launch*, *Split* and *Merge* phases. The *Launch* phase is typically a lightweigth job used to initiate data processing. In the *Split* phase, multiple tasks are launched and executed in parallel (one task for each micrograph/tilt-series), while during the *Merge* phase information from the *Split* phase is condensed, for example, to produce a single 3D reconstruction from all micrographs or tilt-series in a dataset. Since each phase has different computational requirements, resources are allocated separately for each of them.
+Most jobs in ``nextPYP`` have a *Launch*, *Split* and *Merge* phases. The *Launch* phase is typically a lightweigth job used to initiate data processing. In the *Split* phase, multiple tasks are launched and executed in parallel (one task for each micrograph/tilt-series). During the *Merge* phase, information from the *Split* phase is condensed, for example, to produce a single 3D reconstruction from all micrographs or tilt-series in a dataset. Since each phase has different computational requirements, resources are allocated separately for each of them.
 
 Real time information about jobs can be found in the `Jobs panel <../guide/overview.html#jobs-panel>`_.
 

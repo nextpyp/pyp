@@ -1,6 +1,7 @@
 from .core import (
     invert_contrast,
     read_tilt_series,
+    need_recalculation_for_sessions,
     remove_xrays_from_file,
     remove_xrays_from_movie_file,
     resample_and_resize,

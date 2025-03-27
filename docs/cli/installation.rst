@@ -2,32 +2,33 @@
 Installation
 ============
 
+``PYP`` is the command line interface (CLI) of ``nextPYP``.
+
 Supported operating systems
 ---------------------------
 
 ``PYP`` has been tested and works on the following operating systems:
 
- * `Rocky Linux 8.6 <https://docs.rockylinux.org/release_notes/8_6>`_
- * `CentOS 7 <https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2009>`_
- * `Ubuntu 22.04.1 LTS <https://releases.ubuntu.com/22.04/>`_
-
-The ``PYP`` command line interface only works when a SLURM cluster is attached (i.e., it does not work in standalone mode).
+* `Rocky Linux 8.6 <https://docs.rockylinux.org/release_notes/8_6>`_
+* `CentOS 7 <https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2009>`_
+* `Ubuntu 22.04.1 LTS <https://releases.ubuntu.com/22.04/>`_
+* `Debian 12 Bookworm <https://www.debian.org/releases/bookworm>`_
 
 Step 1: Prerequisites for installation on a cluster
 ---------------------------------------------------
 
- * SLURM Cluster:
-     ``PYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM
-     cluster must be reachable on the network from the machine where ``PYP`` will be installed.
+* **SLURM Cluster**
+    ``PYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM
+    cluster must be reachable on the network from the machine where ``PYP`` will be installed.
 
- * Shared filesystem:
-     ``PYP`` requires that the web server and the SLURM cluster share a single filesystem (e.g.
-     an NFS storage system) and it be mounted at the same mount point on every machine.
-     For example, if the shared filesystem is mounted on the SLURM cluster nodes as ``/nfs/data``,
-     then those files should also be available on the web server machine as ``/nfs/data``.
+* **Shared filesystem**
+    ``PYP`` requires that the web server and the SLURM cluster share a single filesystem (e.g.
+    an NFS storage system) and it be mounted at the same mount point on every machine.
+    For example, if the shared filesystem is mounted on the SLURM cluster nodes as ``/nfs/data``,
+    then those files should also be available on the web server machine as ``/nfs/data``.
 
- * Paswordless SSH access to the SLURM login node:
-     The service account needs to have login access from the web server to the SLURM node via SSH without a password. This will require installing the public SSH key for the service account into the login system for the SLURM node. For a stock linux installation of sshd, that usually means copying the public key into a file like `/home/account/.ssh/authorized_keys`. But for SLURM clusters with a networked login system or SSO, you'll need to consult your organization's IT staff for SSH key installation instructions.
+* **Paswordless SSH access to the SLURM login node**
+    The service account needs to have login access from the web server to the SLURM node via SSH without a password. This will require installing the public SSH key for the service account into the login system for the SLURM node. For a stock linux installation of sshd, that usually means copying the public key into a file like `/home/account/.ssh/authorized_keys`. But for SLURM clusters with a networked login system or SSO, you'll need to consult your organization's IT staff for SSH key installation instructions.
 
 .. _SLURM: https://slurm.schedmd.com/overview.html
 
@@ -40,49 +41,51 @@ The only packages needed are Apptainer_ (formerly Singularity) and ``wget``.
 
 You can verify if these are installed in your system using:
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    command -v wget
-    command -v apptainer
+  command -v wget
+  command -v apptainer
 
 If they are not, you will need admin privileges to install them. Installation instructions vary by operating system:
 
-.. tabbed:: RedHat-based Linux (including CentOS and Rocky Linux)
+.. md-tab-set::
 
-  Before installing the packages, you will need first to enable the EPEL_ repository,
-  if it was not enabled already:
+  .. md-tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
 
-  .. _EPEL: https://www.redhat.com/en/blog/whats-epel-and-how-do-i-use-it
+    Before installing the packages, you will need first to enable the EPEL_ repository,
+    if it was not enabled already:
 
-  .. code-block:: bash
+    .. _EPEL: https://www.redhat.com/en/blog/whats-epel-and-how-do-i-use-it
 
-    sudo dnf install -y epel-release
+    .. code-block:: bash
 
-  Then you can install the packages:
+      sudo dnf install -y epel-release
 
-  .. code-block:: bash
+    Then you can install the packages:
 
-    sudo dnf install -y apptainer wget
+    .. code-block:: bash
 
-.. tabbed:: Ubuntu (22.04)
+      sudo dnf install -y apptainer wget
 
-  Install `wget`:
+  .. md-tab-item:: Ubuntu (22.04)
 
-  .. code-block:: bash
+    Install `wget`:
 
-	  sudo apt-get install -y wget
+    .. code-block:: bash
 
-  Download debian package for Apptainer:
+      sudo apt-get install -y wget
 
-  .. code-block:: bash
+    Download debian package for Apptainer:
 
-    wget https://github.com/apptainer/apptainer/releases/download/v1.1.0-rc.2/apptainer_1.1.0-rc.2_amd64.deb
+    .. code-block:: bash
 
-  Install Apptainer:
+      wget https://github.com/apptainer/apptainer/releases/download/v1.1.0-rc.2/apptainer_1.1.0-rc.2_amd64.deb
 
-  .. code-block:: bash
+    Install Apptainer:
 
-    sudo apt-get install -y ./apptainer_1.1.0-rc.2_amd64.deb
+    .. code-block:: bash
+
+      sudo apt-get install -y ./apptainer_1.1.0-rc.2_amd64.deb
 
 Step 3: Download and run the installation script
 ------------------------------------------------
@@ -145,20 +148,20 @@ Step 5 (recommended): Configure access system resources
 
 Configure how to access system resources by specifying the following parameters:
 
- * ``pyp.scratch``
-     Directory for large (multi-GB) temporary files on the compute nodes. This location should have fast read/write speeds, ideally in local storage.
+* ``pyp.scratch``
+    Directory for large (multi-GB) temporary files on the compute nodes. This location should have fast read/write speeds, ideally in local storage.
 
- * ``pyp.binds``
-     Since ``PYP`` runs inside of a Singularity/Apptainer container, by default, no files from outside of the container will be visible to ``PYP``. To make files visible to ``PYP``, bind the directories containing those files into the container.
+* ``pyp.binds``
+    Since ``PYP`` runs inside of a Singularity/Apptainer container, by default, no files from outside of the container will be visible to ``PYP``. To make files visible to ``PYP``, bind the directories containing those files into the container.
 
- * ``slurm.path`` (SLURM mode only)
-     Path to the SLURM binaries on the login node.
+* ``slurm.path`` (SLURM mode only)
+    Path to the SLURM binaries on the login node.
 
- * ``slurm.queues`` (SLURM mode only)
-     The names of any SLURM partitions to which users can submit ``PYP`` jobs.
+* ``slurm.queues`` (SLURM mode only)
+    The names of any SLURM partitions to which users can submit ``PYP`` jobs.
 
- * ``slurm.gpuQueues`` (SLURM mode only)
-     The names of any SLURM partitions with GPU hardware to which users can submit ``PYP`` jobs.
+* ``slurm.gpuQueues`` (SLURM mode only)
+    The names of any SLURM partitions with GPU hardware to which users can submit ``PYP`` jobs.
 
 Here is an example of how to specify these options in the configuration file:
 

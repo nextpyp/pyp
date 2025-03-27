@@ -39,14 +39,28 @@ html_favicon = '_static/favicon.png'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx_immaterial",
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx.ext.linkcode",
-    "sphinx_tabs.tabs",
-    "sphinx_panels",
+    "sphinx_design",
     "sphinx_copybutton",
+    "sphinx_immaterial",
+    "myst_parser",
+]
+
+# MyST parser config options
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+    "fieldlist",
+    "smartquotes",
+    "replacements",
+    "strikethrough",
+    "substitution",
+    "tasklist",
+    "attrs_inline",
+    "attrs_block",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -87,10 +101,76 @@ html_theme = "sphinx_immaterial"
 #}
 
 html_theme_options = { 
-                      "palette": { "primary": "pink" },
-                      "repo_url": "https://github.com/nextpyp", 
+                      "globaltoc_collapse": True,
+                      "palette": [
+                            {
+                                "media": "(prefers-color-scheme: light)",
+                                "scheme": "default",
+                                "primary": "indigo",
+                                "accent": "blue",
+                                "toggle": {
+                                    "icon": "material/lightbulb-outline",
+                                    "name": "Switch to dark mode",
+                                },
+                            },
+                            {
+                                "media": "(prefers-color-scheme: dark)",
+                                "scheme": "slate",
+                                "primary": "pink",
+                                "accent": "lime",
+                                "toggle": {
+                                    "icon": "material/lightbulb",
+                                    "name": "Switch to light mode",
+                                },
+                            },
+                        ],
+                      "features": [
+                            "navigation.expand",
+                            #"navigation.path",
+                            "navigation.tabs",
+                            "navigation.tabs.sticky",
+                            "navigation.sections",
+                            # "navigation.instant",
+                            # "header.autohide",
+                            "navigation.top",
+                            # "navigation.tracking",
+                            "search.highlight",
+                            "search.share",
+                            #"toc.integrate",
+                            "toc.follow",
+                            "toc.sticky",
+                            "content.tabs.link",
+                            "content.code.annotate",
+                            "announce.dismiss",
+                        ],
+                      "repo_url": "https://github.com/nextpyp/pyp", 
                       "site_url": "https://nextpyp.app", 
-                      "content_width": "1200px"
+                      "icon": {
+                            "logo": "_static/nextPYP_logo_white.svg",
+                            "url": "https://nextpyp.app", 
+                        },
+                      "repo_name": "nextPYP",
+                      "version_dropdown": True,
+                        "version_info": [
+                            {"version": "../0.7.0/docs", "title": "0.7.0", "aliases": ["latest"]},
+                            {"version": "../0.6.5/docs", "title": "0.6.5", "aliases": []},
+                            {"version": "../0.6.4/docs", "title": "0.6.4", "aliases": []},
+                            {"version": "../0.6.3/docs", "title": "0.6.3", "aliases": []},
+                            {"version": "../0.6.2/docs", "title": "0.6.2", "aliases": []},
+                            {"version": "../0.6.1/docs", "title": "0.6.1", "aliases": []},
+                            {"version": "../0.6.0/docs", "title": "0.6.0", "aliases": []},
+                            {"version": "../0.5.3/docs", "title": "0.5.3", "aliases": []},
+                            {"version": "../0.5.2/docs", "title": "0.5.2", "aliases": []},
+                            {"version": "../0.5.1/docs", "title": "0.5.1", "aliases": []},
+                            {"version": "../0.5.0/docs", "title": "0.5.0", "aliases": []},
+                        ],
+                      "social": [
+                            {
+                                "icon": "fontawesome/brands/github",
+                                "link": "https://github.com/nextpyp",
+                                "name": "Source on github.com",
+                            },
+                        ],
                       }
 
 html_logo = "_static/nextPYP_logo_white.svg"
@@ -107,6 +187,14 @@ html_css_files = [
     "versions.css"
 ]
 
+# define custom admonition
+sphinx_immaterial_custom_admonitions = [
+    {
+        "name": "nextpyp",
+        "color": (0, 123, 255),
+        "icon": "fontawesome/regular/note-sticky",
+    },
+]
 
 # Resolve function for linkcode extension.
 # Thanks to https://github.com/materialsproject/pymatgen/blob/master/docs_rst/conf.py#L324

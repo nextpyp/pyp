@@ -480,7 +480,7 @@ def parse_arguments(block):
                         symlink_relative(source, f)
 
                 # create empty log folder
-                os.makedirs("log")
+                os.makedirs("log", exist_ok=True)
 
             else:
                 # create new folders and links to individual files
@@ -971,7 +971,11 @@ def generate_list_of_all_subvolumes(parameters):
                 # print vector
                 vector[0] = str(count)
                 # randomize phi angle in +/- 180
-                if parameters["tomo_vir_detect_rand"] or parameters["tomo_spk_rand"]:
+                if  ( 
+                     parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
+                     or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
+                     or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]
+                ) and not parameters.get("tomo_pick_method") == "pytom":
                     vector[10] = "%.4f" % (360 * (random.random() - 0.5))
                 vector[-1] = os.getcwd() + "/sva/" + vector[-1]
                 f.write("\t".join([v for v in vector]) + "\n")
@@ -1906,7 +1910,10 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # Resize aligned tilt-seres depending on tilt-axis orientation
     if tilt_metadata["tilt_axis_angle"] % 180 > 45 and tilt_metadata["tilt_axis_angle"] % 180 < 135 and not parameters.get("tomo_ali_square"):
         x, y = y, x
-        logger.info(f"Resizing aligned tilt-series to {x}x{y} to accomodate tilt-axis orientation")
+        logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
+
+    # force generation of aligned tilt-series for sessions since we aren't using the force parameters in this case
+    parameters["detect_force"] = preprocess.need_recalculation_for_sessions(name,parameters)
     
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
@@ -1988,6 +1995,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # package CTF metadata into dictionary
     ctf_profiles = {}
     ctf_values = {}
+    all_defocus = []
     for index in range(len(tilt_angles)):
         profile_file = "%s_%04d_ctffind4_avrot.txt" % ( name, index )
         if os.path.exists(profile_file):
@@ -1995,6 +2003,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         values_file = "%s_%04d.txt" % ( name, index )
         if os.path.exists(values_file):
             ctf_values[index] = np.loadtxt( values_file, comments="#")
+            all_defocus.append(ctf_values[index][1])
+            all_defocus.append(ctf_values[index][2])
+    median_defocus = str(np.median(np.array(all_defocus)))
+    with open(name+"_mean_defocus.txt",'w') as outf:
+        outf.write(median_defocus)
     tilt_metadata["ctf_values"] = ctf_values
     tilt_metadata["ctf_profiles"] = ctf_profiles
 
@@ -2438,9 +2451,6 @@ def csp_split(parameters, iteration):
     os.chdir(workdir)
 
 
-@timer.Timer(
-    "csp_extract_frames", text="Particle extraction took: {}", logger=logger.info
-)
 def csp_extract_frames(
     allparxs,
     parameters,
@@ -2569,6 +2579,10 @@ def csp_extract_frames(
                         "Only {0} particles extracted from requested {1}".format(
                             particles, totalboxes
                         )
+                    )
+                elif is_tomo or use_frames:
+                    logger.info(
+                        f"Total number of particle projections to be extracted = {totalboxes:,}"
                     )
                 else:
                     logger.info(
@@ -5082,11 +5096,10 @@ if __name__ == "__main__":
                         "frealign"
                     ]
                     null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
-
                     if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
-                        input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
+                        parent_parameters = project_params.load_pyp_parameters(os.path.join( project_params.resolve_path(parameters.get("data_parent"))))
+                        input_star = sorted(glob.glob( os.path.join( parent_parameters.get("data_parent"), "relion", "stacks", "*_particles.star" )))[-1]
                         parameters["tomodrgn_vae_train_input_star"] = input_star
-
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
@@ -5113,7 +5126,12 @@ if __name__ == "__main__":
                         cryoDRGN.run_cryodrgn_eval(project_dir, parameters=parameters)
 
                     elif parameters["heterogeneity_method"] == "tomoDRGN":
-                        tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters)
+                        if parameters.get("micromon_block") == "tomo-drgn-filter":
+                            # run filter_star
+                            filtered_star_file = os.path.join(project_dir, "train", "filered_star_file.star")
+                            tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, project_dir=project_dir)
+                        else:
+                            tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
                     
                     else:
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
@@ -5204,17 +5222,20 @@ if __name__ == "__main__":
                     parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.bz2")
                     parameters["clean_parfile"] = parfile_occ_zero if parfile_occ_zero.exists() else parameters["clean_parfile"]
 
-                assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
+                if parameters.get("micromon_block") != "tomo-drgn-filter":
+                    assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
 
-                # copy reconstruction to current frealign/maps
-                filename_init = parameters["data_set"] + "_r01_01"
-                parfile = project_params.resolve_path(parameters["clean_parfile"])
-                reference = parfile.replace(".bz2", "") + ".mrc"
-                if os.path.exists(reference):
-                    shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
+                    # copy reconstruction to current frealign/maps
+                    filename_init = parameters["data_set"] + "_r01_01"
+                    parfile = project_params.resolve_path(parameters["clean_parfile"])
+                    reference = parfile.replace(".bz2", "") + ".mrc"
+                    if os.path.exists(reference):
+                        shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
 
-                # do the actual cleaning
-                parameters = particle_cleaning(parameters)
+                    # do the actual cleaning
+                    parameters = particle_cleaning(parameters)
+                else:
+                    logger.warning("Not implemented!")
 
                 # automatically run reconstruction using clean particles without any refinement 
                 # use clean_parfile as refine_parfile
@@ -5235,7 +5256,7 @@ if __name__ == "__main__":
                 project_params.save_parameters(parameters)
 
                 # run csp only if user wants to
-                if parameters["clean_check_reconstruction"] and not parameters["clean_discard"]:
+                if parameters["clean_check_reconstruction"]:
                     csp_split(parameters, parameters["refine_iter"])
                 else:
                     with open("{}.films".format(parameters["data_set"])) as f:

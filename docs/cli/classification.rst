@@ -270,8 +270,3 @@ In the last step we perform 3D classification into 8 classes:
         -dose_weighting_weights=`pwd`/frealign/weights/global_weight.txt"
 
 All results will be saved in the ``frealign/maps`` folder.
-
-.. seealso::
-
-    * :doc:`Tomography tutorial<tomography>`
-    * :doc:`Single-particle tutorial<single_particle>`

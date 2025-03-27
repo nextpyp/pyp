@@ -1,6 +1,8 @@
-=============
-Configuration
-=============
+:tocdepth: 3
+
+==================
+Configuration file
+==================
 
 ``nextPYP`` uses a single configuration file to provide all environmental information needed to run.
 
@@ -15,15 +17,15 @@ Placement
 The ``config.toml`` file can be placed anywhere you like on the filesystem, but you'll
 need to let PYP know where to find it. There are two mechanisms for doing this.
 
-1. Environment variable
------------------------
+Environment variable
+--------------------
 
 ``nextPYP`` first uses the ``$PYP_CONFIG`` environment variable to find the config file.
 If ``$PYP_CONFIG`` is present and its value is a path to an existing file in the filesystem,
 ``nextPYP`` will use that file for the configuration.
 
-2. Default location
--------------------
+Default location
+----------------
 
 Otherwise, ``nextPYP`` will look for the configuration file at the default location
 in the user's home directory:

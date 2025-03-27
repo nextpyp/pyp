@@ -1,6 +1,6 @@
 
 ======================
-Attach a SLURM cluster
+Attach a SLURM Cluster
 ======================
 
 The :doc:`base installation instructions <./install-web>` install a complete working application that does
@@ -15,30 +15,30 @@ these instructions will show you how.
 Step 1: Prerequisites
 ---------------------
 
- * SLURM scheduler:
-     ``nextPYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM cluster must be reachable on the network from the machine where ``nextPYP`` is installed.
+* **SLURM scheduler**
+    ``nextPYP`` uses a SLURM_ compute cluster to do the data processing. The login node of the SLURM cluster must be reachable on the network from the machine where ``nextPYP`` is installed.
 
- * Shared filesystem:
-     ``nextPYP`` requires that the web server and the SLURM cluster share a single filesystem (e.g.
-     an NFS storage system) and it be mounted at the same mount point on every machine.
-     For example, if the shared filesystem is mounted on the SLURM cluster nodes as ``/nfs/data``,
-     then those files should also be available on the web server machine as ``/nfs/data``.
-     Additionally, you should have installed ``nextPYP`` using the ``PYP_SHARED_DATA`` and ``PYP_SHARED_EXEC`` options.
+* **Shared filesystem**
+    ``nextPYP`` requires that the web server and the SLURM cluster share a single filesystem (e.g.
+    an NFS storage system) and it be mounted at the same mount point on every machine.
+    For example, if the shared filesystem is mounted on the SLURM cluster nodes as ``/nfs/data``,
+    then those files should also be available on the web server machine as ``/nfs/data``.
+    Additionally, you should have installed ``nextPYP`` using the ``PYP_SHARED_DATA`` and ``PYP_SHARED_EXEC`` options.
 
- * Service account:
-     ``nextPYP`` requires a service account to both run the web server process, and access files on
-     the shared filesystem. This user should be the same on the web server machine and the SLURM cluster.
-     Because this user account runs the web server on the web server machine (which may be exposed to
-     the public internet), the service account should not have administrative privileges.
+* **Service account**
+    ``nextPYP`` requires a service account to both run the web server process, and access files on
+    the shared filesystem. This user should be the same on the web server machine and the SLURM cluster.
+    Because this user account runs the web server on the web server machine (which may be exposed to
+    the public internet), the service account should not have administrative privileges.
 
- * Passwordless SSH access to the SLURM login node:
-     The service account needs to have login access from the web server to the SLURM node via SSH without a password.
-     This will require installing the public SSH key for the service account into the login system for the SLURM node.
-     For a stock linux installation of ``sshd``, that usually means copying the public key into a file like
-     ``/home/account/.ssh/authorized_keys``. But for SLURM clusters with a networked login system or SSO,
-     you'll need to consult your organization's IT staff for SSH key installation instructions.
+* **Passwordless SSH access to the SLURM login node**
+    The service account needs to have login access from the web server to the SLURM node via SSH without a password.
+    This will require installing the public SSH key for the service account into the login system for the SLURM node.
+    For a stock linux installation of ``sshd``, that usually means copying the public key into a file like
+    ``/home/account/.ssh/authorized_keys``, for example, using the command ``ssh-copy-id user@domain``. But for SLURM clusters with a networked login system or SSO,
+    you'll need to consult your organization's IT staff for SSH key installation instructions.
 
- * Remote access enabled:
+* **Remote access enabled**
     To attach a SLURM cluster, you will first need to enable remote access for your web server using the
     :doc:`enable remote access <./enable-remote-access>` installation instructions.
 
@@ -62,38 +62,40 @@ and should be set to the URL of ``nextPYP`` on the web server *from the point of
 
 Depending on how your network is configured, choose one of the following options:
 
-.. tabbed:: I configured remote access using a private network
+.. md-tab-set::
 
-  If you have enabled remote access using a private network,
-  then the correct value for ``web.webhost`` will look something like:
+  .. md-tab-item:: I configured remote access using a private network
 
-  .. code-block:: toml
+    If you have enabled remote access using a private network,
+    then the correct value for ``web.webhost`` will look something like:
 
-    [web]
-    webhost = 'http://nextpyp.internal.myorganization.org:8080'
+    .. code-block:: toml
 
-  For private networks, the ``http`` protocol (not ``https``) should be used here.
-  And the port should be specified in the url explicitly, eg ``:8080``.
+      [web]
+      webhost = 'http://nextpyp.internal.myorganization.org:8080'
 
-  .. note::
+    For private networks, the ``http`` protocol (not ``https``) should be used here.
+    And the port should be specified in the url explicitly, eg ``:8080``.
 
-    If you have changed the port from the default value using the ``web.port`` option, use that
-    port number here instead of 8080.
+    .. note::
+
+      If you have changed the port from the default value using the ``web.port`` option, use that
+      port number here instead of 8080.
 
 
-.. tabbed:: I configured remote access using a reverse proxy
+  .. md-tab-item:: I configured remote access using a reverse proxy
 
-  If you have configured remote access to the web server using the reverse proxy,
-  then the correct value for ``web.webhost`` will look something like:
+    If you have configured remote access to the web server using the reverse proxy,
+    then the correct value for ``web.webhost`` will look something like:
 
-  .. code-block:: toml
+    .. code-block:: toml
 
-    [web]
-    webhost = 'https://nextpyp.myorganization.org'
+      [web]
+      webhost = 'https://nextpyp.myorganization.org'
 
-  For access over public networks, the ``https`` protocol (not ``http``) should be used here.
-  And the port (``443`` for ``https``) should not be explicitly specified in the URL,
-  since the HTTPs protocol uses the correct port implicitly.
+    For access over public networks, the ``https`` protocol (not ``http``) should be used here.
+    And the port (``443`` for ``https``) should not be explicitly specified in the URL,
+    since the HTTPs protocol uses the correct port implicitly.
 
 
 SLURM configuration
@@ -112,14 +114,14 @@ the available settings in the :doc:`full documentation for the configuration fil
 
 Additionally, it may be helpful to set a few other commonly-needed options now, depending on your SLURM environment:
 
- * ``slurm.path``
-     Path to the SLURM binaries on the login node.
+* ``slurm.path``
+    Path to the SLURM binaries on the login node.
 
- * ``slurm.queues``
-     The names of any SLURM partitions to which users can submit ``nextPYP`` jobs.
+* ``slurm.queues``
+    The names of any SLURM partitions to which users can submit ``nextPYP`` jobs.
 
- * ``slurm.gpuQueues``
-     The names of any SLURM partitions with GPU hardware to which users can submit ``nextPYP`` jobs.
+* ``slurm.gpuQueues``
+    The names of any SLURM partitions with GPU hardware to which users can submit ``nextPYP`` jobs.
 
 For example:
 
@@ -180,7 +182,7 @@ After the website is restarted, go to the administration page. You can access th
 clicking on your username in the upper right corner and clicking the administration link there. Or you can
 just visit the administration page directly by changing the path (and hash) parts of the URL to ``/#/admin``.
 
-On the administration page, in the *PYP* tab, click the :badge:`PYP/WebRPC Ping,badge-primary` button.
+On the administration page, in the *PYP* tab, click the :bdg-primary:`PYP/WebRPC Ping` button.
 
 This button will launch a short simple job on the cluster and wait for the result.
 

@@ -157,6 +157,25 @@ def frames_from_pattern(filename,name,pattern):
 
     return detected_movies
 
+def need_recalculation_for_sessions(name,parameters):
+    """Figure out if we need to recalculate virions on sessions side. This side does not use the _force parameters so we need a dedicated method to figure out if recalculations are needed.
+
+    Args:
+        name (str): tilt-series name
+        parameters (dict): pyp parameters
+
+    Returns:
+        boolean: true if re-calculation is needed
+    """
+    from pyp.inout.metadata import pyp_metadata
+    from pyp.streampyp.web import Web
+    pklname = os.path.join(name + ".pkl")
+    if os.path.exists(pklname) and parameters["micromon_block"] == "" and Web.exists:
+        metadata = pyp_metadata.LocalMetadata(pklname, is_spr=False).data
+        if ( parameters.get("tomo_vir_method") != "none" and "vir" not in metadata ) or ( parameters.get("tomo_vir_detect_method") != "none" and "box" not in metadata ):
+            parameters["detect_force"] = True
+    return parameters["detect_force"]
+
 def read_tilt_series(
     filename, parameters, metadata, current_path=Path.cwd(), working_path=Path.cwd(), project_path=""
 ):
@@ -672,8 +691,10 @@ def read_tilt_series(
         elif metadata.get("web") and metadata.get("web").get("drift"):
             for i in metadata.get("web")["drift"]:
                 drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
-    else:
+    elif 'shifts' in locals():
         drift_metadata["drift"] = shifts
+    else:
+        drift_metadata["drift"] = {}
 
     if "eer" in parameters["data_path"] and parameters["movie_eer_reduce"] > 1:
         upsample = parameters["movie_eer_reduce"]
@@ -695,6 +716,8 @@ def read_tilt_series(
         squarey = y
 
     square = max(squarex, squarey)
+
+    parameters["detect_force"] = need_recalculation_for_sessions(name=name,parameters=parameters)
 
     # only need squared tilt-series when: 
     # 1. tiltseries alignment is not done yet

@@ -2,13 +2,15 @@
 Tomography tutorial (EMPIAR-10164)
 ##################################
 
-This tutorial shows how to convert raw tilt-series from `EMPIAR-10164 (HIV-1 Gag) <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ into a ~3A resolution structure. 
+This tutorial shows how to convert raw tilt-series from `EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ into a ~3A resolution structure of immature HIV-1 Gag protein.
 
-Total running time required to complete this tutorial: ~20 hrs.
+.. admonition::
 
-Pre-calculated results are available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/project/ab690@duke.edu/EMPIAR-10164-RtQMJrzN90C81gbU>`_.
+  * Total running time required to complete this tutorial: **~20 hrs**.
 
-We first use the command line to download and decompress a tbz file containing a subset of 5 tilt-series (down-sampled 2x compared to the original data), and an initial model:
+  * Pre-calculated results are available in `the demo instance of nextPYP <https://demo.nextpyp.app/#/project/ab690@duke.edu/EMPIAR-10164-RtQMJrzN90C81gbU>`_.
+
+We first use the command line to download and decompress a `.tbz file <https://nextpyp.app/files/data/nextpyp_tomo_tutorial.tbz>`_ containing a subset of 5 tilt-series (down-sampled 2x compared to the original super-resolution data):
 
 .. code-block:: bash
 
@@ -17,70 +19,70 @@ We first use the command line to download and decompress a tbz file containing a
   wget https://nextpyp.app/files/data/nextpyp_tomo_tutorial.tbz
   tar xvfz nextpyp_tomo_tutorial.tbz
 
+After this, you should have 41 tilt movies in .tif format for each of the tilt-series (TS_01, TS_03, TS_43, TS_45, and TS_54), an initial reference, and a shape mask
+
 Open your browser and navigate to the url of your ``nextPYP`` instance (e.g., ``https://nextpyp.myorganization.org``).
 
 Step 1: Create a new project
 ----------------------------
 
-.. dropdown:: Data processing runs are organized into projects. We will create a new project for this tutorial
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Data processing runs are organized into projects. We will create a new project for this tutorial
+  :collapsible: open
 
-    * The first time you login into ``nextPYP``, you should see an empty **Dashboard**:
+  * The first time you login into ``nextPYP``, you should see an empty **Dashboard**:
 
-      .. figure:: ../images/dashboard_empty.webp
-        :alt: Create new project
+    .. figure:: ../images/dashboard_empty.webp
+      :alt: Create new project
 
-    * Click on :badge:`Create new project,badge-primary`, give the project a name, and select :badge:`Create,badge-primary`
+  * Click on :bdg-primary:`Create new project`, give the project a name, and select :bdg-primary:`Create`
 
-      .. figure:: ../images/tutorial_tomo_new.webp
-        :alt: Create new project
+    .. figure:: ../images/tutorial_tomo_new.webp
+      :alt: Create new project
 
-    * Select the new project from the **Dashboard** and click :badge:`Open,badge-primary`
+  * Select the new project from the **Dashboard** and click :bdg-primary:`Open`
 
-      .. figure:: ../images/tutorial_tomo_open.webp
-        :alt: Select new project
+    .. figure:: ../images/tutorial_tomo_open.webp
+      :alt: Select new project
 
-    * The newly created project will be empty and a **Jobs** panel will appear on the right
+  * The newly created project will be empty and a **Jobs** panel will appear on the right
 
-      .. figure:: ../images/tutorial_tomo_empty.webp
-        :alt: Empty project
+    .. figure:: ../images/tutorial_tomo_empty.webp
+      :alt: Empty project
 
 Step 2: Import raw tilt-series
 ------------------------------
 
-.. dropdown:: Import the raw tilt-series downloaded above (:fa:`stopwatch` <1 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Import the raw tilt-series downloaded above (:fa:`stopwatch` <1 min)
+  :collapsible: open
 
-    * Go to :badge:`Import Data,badge-primary` and select :badge:`Tomography (from Raw Data),badge-primary`
+  * Go to :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Raw Data)`
 
-      .. figure:: ../images/tutorial_tomo_import_dialog.webp
-        :alt: Import dialog
+    .. figure:: ../images/tutorial_tomo_import_dialog.webp
+      :alt: Import dialog
 
-    * A form to enter parameters will appear:
+  * A form to enter parameters will appear:
 
-      .. figure:: ../images/tutorial_tomo_import_data.webp
-        :alt: File browser
+    .. figure:: ../images/tutorial_tomo_import_data.webp
+      :alt: File browser
 
-    * Go to the **Raw data** tab:
+  * Go to the **Raw data** tab:
 
-      .. tabbed:: Raw data
+    .. md-tab-set::
 
-        - Set the ``Location`` of the raw data by clicking on the icon :fa:`search,text-primary` and browsing to the directory where the you downloaded the raw movie frames
+      .. md-tab-item:: Raw data
 
-        - Type ``TS_*.tif`` in the filter box (lower right) and click on the icon :fa:`filter,text-primary` to verify your selection. 205 matches should be displayed
+        - Set the ``Location`` of the raw data by clicking on the icon :fa:`search` and browsing to the directory where the you downloaded the raw movie frames
 
-        - Click :badge:`Choose File Pattern,badge-primary` to save your selection
+        - Type ``TS_*.tif`` in the filter box (lower right) and click on the icon :fa:`filter` to verify your selection. 205 matches should be displayed
+
+        - Click :bdg-primary:`Choose File Pattern` to save your selection
 
         - Click on the **Microscope parameters** tab
 
         .. figure:: ../images/tutorial_tomo_import_browser.webp
           :alt: File browser
 
-      .. tabbed:: Microscope parameters
+      .. md-tab-item:: Microscope parameters
 
         - Set ``Pixel size (A)`` to 1.35
 
@@ -91,54 +93,54 @@ Step 2: Import raw tilt-series
         .. figure:: ../images/tutorial_tomo_microscope_params.webp
           :alt: Project dashboard
 
-    * Click :badge:`Save,badge-primary` and the new block will appear on the project page
+  * Click :bdg-primary:`Save` and the new block will appear on the project page
 
-      .. figure:: ../images/tutorial_tomo_import_modified.webp
-        :alt: Project dashboard
+    .. figure:: ../images/tutorial_tomo_import_modified.webp
+      :alt: Project dashboard
 
-    * The block is in the modified state (indicated by the :fa:`asterisk` sign) and is ready to be executed
+  * The block is in the modified state (indicated by the :fa:`asterisk` sign) and is ready to be executed
 
-    * Clicking the button :badge:`Run,badge-primary` will show another dialog where you can select which blocks to run:
+  * Clicking the button :bdg-primary:`Run` will show another dialog where you can select which blocks to run:
 
-      .. figure:: ../images/tutorial_tomo_import_run_dialog.webp
-        :alt: Gain thumbnail
+    .. figure:: ../images/tutorial_tomo_import_run_dialog.webp
+      :alt: Gain thumbnail
 
-    * Since there is only one block available, simply click on :badge:`Start Run for 1 block,badge-primary`. This will launch a process that reads one tilt image, applies the gain reference (if applicable) and displays the resulting image inside the block
+  * Since there is only one block available, simply click on :bdg-primary:`Start Run for 1 block`. This will launch a process that reads one tilt at random and displays the resulting image inside the block
 
-      .. figure:: ../images/tutorial_tomo_import_done.webp
-        :alt: Gain thumbnail
+    .. figure:: ../images/tutorial_tomo_import_done.webp
+      :alt: Gain thumbnail
 
-    * Click inside the block to see a larger version of the image
+  * Click on the thumbnail inside the block to see a larger version of the projection image
 
 
 Step 3: Pre-processing
 ----------------------
 
-.. dropdown:: Movie frame alignment, and CTF estimation (:fa:`stopwatch` 5 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Movie frame alignment, and CTF estimation (:fa:`stopwatch` 5 min)
+  :collapsible: open
 
-    * Click on :guilabel:`Tilt-series` (output of the :badge:`Tomography (from Raw Data),badge-secondary` block) and select :badge:`Pre-processing,badge-primary`
+  * Click on ``Tilt-series`` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
 
-      .. figure:: ../images/tutorial_tomo_pre_process_dialog.webp
-        :alt: File browser
+    .. figure:: ../images/tutorial_tomo_pre_process_dialog.webp
+      :alt: File browser
 
-    * Go to the **Frame alignment** tab:
+  * Go to the **Frame alignment** tab:
 
-      .. tabbed:: Frame alignment
+    .. md-tab-set::
 
-        - Set ``Frame pattern`` to TILTSERIES_SCANORD_ANGLE.tif
+      .. md-tab-item:: Frame alignment
+
+        - Set ``Frame pattern`` to "TILTSERIES_SCANORD_ANGLE.tif". ``nextPYP`` uses this to extract the metadata from the file names, for example, ``TS_54_037_57.0.tif`` would indicate that the tilt-series name is ``TS_54``, the exposure acquistion order is ``37``, and the corresponding tilt-angle is ``57.0`` degrees
 
         - Click on the **CTF determination** tab
 
-      .. tabbed:: CTF determination
+      .. md-tab-item:: CTF determination
 
         - Set ``Max resolution`` to 5.0
 
         - Click on the **Tomogram reconstruction** tab
 
-      .. tabbed:: Tomogram reconstruction
+      .. md-tab-item:: Tomogram reconstruction
 
         - Set ``Binning factor for reconstruction`` to 8
 
@@ -146,7 +148,7 @@ Step 3: Pre-processing
 
         - Click on the **Resources** tab
 
-      .. tabbed:: Resources
+      .. md-tab-item:: Resources
 
         - Set ``Threads per task`` to 7
 
@@ -154,114 +156,116 @@ Step 3: Pre-processing
 
         - Set other runtime parameters as needed (see :doc:`Computing resources<../reference/computing>`)
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. Follow the status of the run in the **Jobs** panel
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-      .. figure:: ../images/tutorial_tomo_pre_process_modified.webp
-        :alt: File browser
+    .. figure:: ../images/tutorial_tomo_pre_process_modified.webp
+      :alt: File browser
 
-    * Click inside the :badge:`Pre-processing,badge-secondary` block to inspect the results (you don't need to wait until processing is done to do this). Results will be grouped into tabs:
+  * Click inside the :bdg-secondary:`Pre-processing` block to inspect the results (you don't need to wait until processing is done to do this). Results will be grouped into tabs:
 
-      .. tabbed:: Plots
+    .. md-tab-set::
+
+      .. md-tab-item:: Plots
 
         .. figure:: ../images/tutorial_tomo_pre_process_page.webp
           :alt: Dataset statistics
 
-      .. tabbed:: Table
+      .. md-tab-item:: Table
 
         .. figure:: ../images/tutorial_tomo_pre_process_table.webp
           :alt: Table view
 
-      .. tabbed:: Gallery
+      .. md-tab-item:: Gallery
 
         .. figure:: ../images/tutorial_tomo_pre_process_gallery.webp
           :alt: Gallery view
 
-      .. tabbed:: Tilt-series
+      .. md-tab-item:: Tilt-series
 
-        .. tabbed:: Tilts
+        .. md-tab-set::
+          
+          .. md-tab-item:: Tilts
 
-          .. figure:: ../images/tutorial_tomo_pre_process_tilts.webp
-            :alt: Tilt-series (Tilts)
+            .. figure:: ../images/tutorial_tomo_pre_process_tilts.webp
+              :alt: Tilt-series (Tilts)
 
-        .. tabbed:: Alignment
+          .. md-tab-item:: Alignment
 
-          .. figure:: ../images/tutorial_tomo_pre_process_alignments.webp
-            :alt: Tilt-series (Alignment)
+            .. figure:: ../images/tutorial_tomo_pre_process_alignments.webp
+              :alt: Tilt-series (Alignment)
 
-        .. tabbed:: CTF
+          .. md-tab-item:: CTF
 
-          .. figure:: ../images/tutorial_tomo_pre_process_ctf.webp
-            :alt: Tilt-series (CTF)
+            .. figure:: ../images/tutorial_tomo_pre_process_ctf.webp
+              :alt: Tilt-series (CTF)
 
-        .. tabbed:: Reconstruction
+          .. md-tab-item:: Reconstruction
 
-          .. figure:: ../images/tutorial_tomo_pre_process_reconstruction.webp
-            :alt: Tilt-series (Reconstruction)
+            .. figure:: ../images/tutorial_tomo_pre_process_reconstruction.webp
+              :alt: Tilt-series (Reconstruction)
 
-.. tip::
+    .. tip::
 
-  While on the **Tilt Series** tab, use the navigation bar at the top of the page to look at the results for other tilt-series
+      While on the **Tilt Series** tab, use the navigation bar at the top of the page to look at the results for other tilt-series
 
 Step 4: Virion selection
 ------------------------
 
-.. dropdown:: Selection of virion centers (:fa:`stopwatch` 1 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Selection of virion centers (:fa:`stopwatch` 1 min)
+  :collapsible: open
 
-    * Click on :guilabel:`Tomograms` (output of the :badge:`Pre-processing,badge-secondary` block) and select :badge:`Particle-Picking,badge-primary`
+  * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
-    * Go to the **Particle detection** tab:
+  * Go to the **Particle detection** tab:
 
-      .. tabbed:: Particle detection
+    .. md-tab-set::
 
-        - Set ``Detection method`` to spherical
+      .. md-tab-item:: Particle detection
+
+        - Set ``Detection method`` to virions
 
         - Set ``Virion radius (A)`` to 500
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. Follow the status of the run in the **Jobs** panel
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
 Step 5: Virion segmentation
 ---------------------------
 
-.. dropdown:: Segment virions using minimal surfaces (:fa:`stopwatch` 1 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Segment individual virions in 3D (:fa:`stopwatch` 1 min)
+  :collapsible: open
 
-    * Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking,badge-secondary` block) and select :badge:`Segmentation (closed surfaces),badge-primary`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. Follow the status of the run in the **Jobs** panel
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-    This step is optional, but it showcases tools available in ``nextPYP`` to work with virions:
+  This next step is optional, but it showcases tools available in ``nextPYP`` to work with virions:
 
-    * Go inside the :badge:`Segmentation (closed surfaces),badge-secondary` block and click on the **Segmentation** tab
+  * Go inside the :bdg-secondary:`Segmentation (closed surfaces)` block and click on the **Segmentation** tab
 
-      .. figure:: ../images/tutorial_tomo_pre_process_virions.webp
-        :alt: Virion segmentation
+    .. figure:: ../images/tutorial_tomo_pre_process_virions.webp
+      :alt: Virion segmentation
 
-    * Select a virion from the table to show its 3D segmentation (8 different thresholds are shown as yellow contours in columns 1-8). The column number highlighted in blue represents the selected threshold value (default is 1, click on a different column to select a better threshold). If none of the columns look reasonable (or if you want to ignore the current virion virion), select the last column ("-")
+  * Select a virion from the table to show its 3D segmentation (8 different thresholds are shown as yellow contours in columns 1-8). The column number highlighted in blue represents the selected threshold value (default is 1, click on a different column to select a better threshold). The best threshold is the one that more closely follows the outermost membrane layer. If none of the columns look reasonable (or if you want to ignore the current virion), select the last column ("-")
 
-    * Repeat this process for all virions in the table and all tilt-series in the dataset
+  * Repeat this process for all virions in the table and all tilt-series in the dataset
 
-.. tip::
+    .. tip::
 
-  Click on `> Keyboard shortcuts` (under the virion image) to reveal instructions on how to speed up the threshold selection process
+      Click on `> Keyboard shortcuts` (under the virion image) to reveal instructions on how to speed up the threshold selection process
 
 Step 6: Particle picking
 ------------------------
 
-.. dropdown:: Select particles from the surface of virions (:fa:`stopwatch` 3 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Select particles from the surface of virions (:fa:`stopwatch` 3 min)
+  :collapsible: open
 
-    * Click on :guilabel:`Segmentation (closed)` (output of the :badge:`Segmentation (closed surfaces),badge-secondary` block) and select :badge:`Particle-Picking (closed surfaces),badge-primary`
+  * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
 
-    * Go to the **Particle detection** tab:
+  * Go to the **Particle detection** tab:
 
-      .. tabbed:: Particle detection
+    .. md-tab-set::
+
+      .. md-tab-item:: Particle detection
 
         - Set ``Detection method`` to uniform
 
@@ -271,26 +275,26 @@ Step 6: Particle picking
 
         - Set ``Size of equatorial band to restrict spike picking (A)`` to 800
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. Follow the status of the run in the **Jobs** panel
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-    * Navigate to the :badge:`Reconstruction,badge-primary` tab to inspect the particle coordinates:
+  * Navigate to the :bdg-primary:`Reconstruction` tab to inspect the particle coordinates:
 
-      .. figure:: ../images/tutorial_tomo_pre_process_spikes.webp
-        :alt: Spike coordinates
+    .. figure:: ../images/tutorial_tomo_pre_process_spikes.webp
+      :alt: Spike coordinates
 
 Step 7: Reference-based refinement
 ----------------------------------
 
-.. dropdown:: Constrained reference-based particle alignment (:fa:`stopwatch` 8 hr)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Constrained reference-based particle alignment (:fa:`stopwatch` 8 hr)
+  :collapsible: open
 
-    * Click on :guilabel:`Particles` (output of the :badge:`Particle-Picking (closed surfaces),badge-secondary` block) and select :badge:`Particle refinement,badge-primary`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking (closed surfaces)` block) and select :bdg-primary:`Particle refinement`
 
-    * Go to the **Sample** tab:
+  * Go to the **Sample** tab:
 
-      .. tabbed:: Sample
+    .. md-tab-set::
+
+      .. md-tab-item:: Sample
 
         - Set ``Molecular weight (kDa)`` to 300
 
@@ -300,7 +304,7 @@ Step 7: Reference-based refinement
 
         - Click on the **Extraction** tab
 
-      .. tabbed:: Extraction
+      .. md-tab-item:: Extraction
 
         - Set ``Box size (pixels)`` to 192
 
@@ -308,11 +312,11 @@ Step 7: Reference-based refinement
 
         - Click on the **Refinement** tab
 
-      .. tabbed:: Refinement
+      .. md-tab-item:: Refinement
 
-        - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search, text-primary`, navigating to the folder where you downloaded the data for the tutorial, and selecting the file `EMPIAR-10164_init_ref.mrc`
+        - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search`, navigating to the folder where you downloaded the data for the tutorial, and selecting the file `EMPIAR-10164_init_ref.mrc`
 
-        - Click :fa:`search,text-primary` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-preprocessing-*_original_volumes.txt`` from :badge:`Pre-processing,badge-secondary`
+        - Click :fa:`search` in ``Alignments from sub-volume averaging`` to select the initial parameters text file ``tomo-picking-closed-*_original_volumes.txt`` from :bdg-secondary:`Pre-processing`
 
         - Set ``Max resolution (A)`` to 8.0
 
@@ -320,7 +324,7 @@ Step 7: Reference-based refinement
 
         - Click on the **Constrained refinement** tab
 
-      .. tabbed:: Constrained refinement
+      .. md-tab-item:: Constrained refinement
 
         - Set ``Last exposure for refinement`` to 10
 
@@ -334,7 +338,7 @@ Step 7: Reference-based refinement
 
         - Click on the **Reconstruction** tab
 
-      .. tabbed:: Reconstruction
+      .. md-tab-item:: Reconstruction
 
         - Set ``Max tilt-angle`` to 50
 
@@ -342,7 +346,7 @@ Step 7: Reference-based refinement
 
         - Click on the **Resources** tab
 
-      .. tabbed:: Resources
+      .. md-tab-item:: Resources
 
         - Set ``Walltime per task`` to 9:00:00
 
@@ -350,25 +354,25 @@ Step 7: Reference-based refinement
 
         - Set ``Memory (merge task)`` to 20
 
-    * :badge:`Save,badge-primary` your changes, click :badge:`Run,badge-primary` and :badge:`Start Run for 1 block,badge-primary`
+  * :bdg-primary:`Save` your changes, click :bdg-primary:`Run` and :bdg-primary:`Start Run for 1 block`
 
-    * One round of refinement and reconstruction will be executed. Click inside the block to see the results
+  * One round of refinement and reconstruction will be executed. Click inside the block to see the results
 
-      .. figure:: ../images/tutorial_tomo_coarse_iter2.webp
-        :alt: Iter 2
+    .. figure:: ../images/tutorial_tomo_coarse_iter2.webp
+      :alt: Iter 2
 
 
 Step 8. Fully constrained refinement
 ------------------------------------
 
-.. dropdown:: Tilt-geometry parameters and particle poses are refined in this step (:fa:`stopwatch` 1.5 hr)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Tilt-geometry parameters and particle poses are refined in this step (:fa:`stopwatch` 1.5 hr)
+  :collapsible: open
 
-    * Edit the settings of the existing :badge:`Particle refinement,badge-secondary` block and go the **Refinement** tab:
+  * Edit the settings of the existing :bdg-secondary:`Particle refinement` block and go the **Refinement** tab:
 
-      .. tabbed:: Refinement
+    .. md-tab-set::
+
+      .. md-tab-item:: Refinement
 
         - Set ``Max resolution (A)`` to 8:10:8:6 (this will use an 8A limit for the first iteration, 10A for the second, etc.)
 
@@ -376,7 +380,7 @@ Step 8. Fully constrained refinement
 
         - Click on the **Constrained refinement** tab
 
-      .. tabbed:: Constrained refinement
+      .. md-tab-item:: Constrained refinement
 
         - Check ``Refine tilt-geometry``
 
@@ -388,42 +392,42 @@ Step 8. Fully constrained refinement
 
         - Click on the **Exposure weighting** tab
 
-      .. tabbed:: Exposure weighting
+      .. md-tab-item:: Exposure weighting
 
         - Check ``Dose weighting``
         
         - Set ``Frame weight fraction`` to 4
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to execute three rounds of refinement and reconstruction
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to execute three rounds of refinement and reconstruction
 
-    * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results:
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results:
 
-      .. figure:: ../images/tutorial_tomo_coarse_iter5.webp
-        :alt: Iter 5
+    .. figure:: ../images/tutorial_tomo_coarse_iter5.webp
+      :alt: Iter 5
 
-.. tip::
+    .. tip::
 
-  Use the navigation bar at the top left of the page to look at the results for different iterations
+      Use the navigation bar at the top left of the page to look at the results for different iterations
 
 Step 9. Filter particles
 ------------------------
 
-.. dropdown:: Identify duplicates and particles with low alignment scores (:fa:`stopwatch` 4 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Identify duplicates and particles with low alignment scores (:fa:`stopwatch` 4 min)
+  :collapsible: open
 
-    * Click on :guilabel:`Particles` (output of the :badge:`Particle refinement,badge-secondary` block) and select :badge:`Filter particles,badge-primary`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Filter particles`
 
-    * Go to the **Particle filtering** tab:
+  * Go to the **Particle filtering** tab:
 
-      .. tabbed:: Particle filtering
+    .. md-tab-set::
+
+      .. md-tab-item:: Particle filtering
 
         - Set ``Score threshold`` to 2.5
 
         - Set ``Min distance between particles (A)`` to 10
 
-        - Specify the location of ``Input parameter file`` by clicking on the icon :fa:`search, text-primary` and selecting the file `tomo-coarse-refinement-*_r01_05.par.bz2`
+        - Specify the location of ``Input parameter file`` by clicking on the icon :fa:`search` and selecting the file `tomo-coarse-refinement-*_r01_05.par.bz2`
 
         - Set ``Lowest tilt-angle`` to -15.0
 
@@ -433,52 +437,52 @@ Step 9. Filter particles
 
         - Click on the **Refinement** tab
 
-      .. tabbed:: Refinement
+      .. md-tab-item:: Refinement
 
-        - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search, text-primary` and selecting the file `tomo-coarse-refinement-*_r01_05.mrc`
+        - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `tomo-coarse-refinement-*_r01_05.mrc`
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`. You can see how many particles were left after filtering by looking at the job logs.
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. You can see how many particles were left after filtering by looking at the job logs.
 
 Step 10 (optional): Permanently remove bad particles
 ----------------------------------------------------
 
-.. dropdown:: Permanently remove bad particles to improve processing efficiency downstream (:fa:`stopwatch` 1 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Permanently remove bad particles to improve processing efficiency downstream (:fa:`stopwatch` 1 min)
+  :collapsible: open
 
-    * Edit the settings of the existing :badge:`Filter particles,badge-secondary` block
+  * Edit the settings of the existing :bdg-secondary:`Filter particles` block
 
-    * Go to the **Particle refinement** tab:
+  * Go to the **Particle filtering** tab:
 
-      .. tabbed:: Particle filtering
+    .. md-tab-set::
+
+      .. md-tab-item:: Particle filtering
 
         - Check ``Permanently remove particles``
 
         - Uncheck ``Generate reconstruction after filtering``
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to launch the job
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to launch the job
 
 
 Step 11. Region-based local refinement (before masking)
 -------------------------------------------------------
 
-.. dropdown:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 1 hr)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 1 hr)
+  :collapsible: open
 
-    * Click on :guilabel:`Particles` (output of :badge:`Filter particles,badge-secondary` block) and select :badge:`Particle refinement,badge-primary`
+  * Click on ``Particles`` (output of :bdg-secondary:`Filter particles` block) and select :bdg-primary:`Particle refinement`
 
-    * Go to the **Sample** tab:
+  * Go to the **Sample** tab:
 
-      .. tabbed:: Sample
+    .. md-tab-set::
+
+      .. md-tab-item:: Sample
 
         - Set ``Particle radius`` to 100
 
         - Click on the **Extraction** tab
 
-      .. tabbed:: Extraction
+      .. md-tab-item:: Extraction
 
         - Set ``Box size (pixels)`` to 384
 
@@ -486,11 +490,11 @@ Step 11. Region-based local refinement (before masking)
 
         - Click on the **Refinement** tab
 
-      .. tabbed:: Refinement
+      .. md-tab-item:: Refinement
 
-        - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search, text-primary` and selecting the file `tomo-fine-refinement-*_r01_02.mrc`
+        - Specify the location of the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `tomo-fine-refinement-*_r01_02.mrc`
 
-        - Select the location of the ``Initial parameter file`` by clicking on the icon :fa:`search,text-primary` and selecting the file `tomo-fine-refinement-*_r01_02.par.bz2` (select the file ``tomo-fine-refinement-*_r01_02_clean.par.bz2`` if bad particles were permanently removed in the previous step)
+        - Select the location of the ``Initial parameter file`` by clicking on the icon :fa:`search` and selecting the file `tomo-fine-refinement-*_r01_02.par.bz2` (select the file ``tomo-fine-refinement-*_r01_02_clean.par.bz2`` if bad particles were permanently removed in the previous step)
 
         - Set ``Max resolution (A)`` to 6:5
 
@@ -498,7 +502,7 @@ Step 11. Region-based local refinement (before masking)
 
         - Click on the **Constrained refinement** tab
 
-      .. tabbed:: Constrained refinement
+      .. md-tab-item:: Constrained refinement
 
         - Set ``Last exposure for refinement`` to 4
 
@@ -506,55 +510,55 @@ Step 11. Region-based local refinement (before masking)
 
         - Set ``Translation range (voxels)`` to 20.0
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to run the job
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to run the job
 
-    * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results:
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results:
 
-      .. figure:: ../images/tutorial_tomo_region_before_masking_iter3.webp
-        :alt: Iter 3
+    .. figure:: ../images/tutorial_tomo_region_before_masking_iter3.webp
+      :alt: Iter 3
 
 
 Step 12: Create shape mask
 --------------------------
 
-.. dropdown:: Use most recent reconstruction to create a shape mask (:fa:`stopwatch` <1 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Use most recent reconstruction to create a shape mask (:fa:`stopwatch` <1 min)
+  :collapsible: open
 
-    * Click on :guilabel:`Particles` (output of :badge:`Particle refinement,badge-secondary` block) and select :badge:`Masking,badge-primary`
+  * Click on ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
 
-    * Go to the **Masking** tab:
+  * Go to the **Masking** tab:
 
-      .. tabbed:: Masking
+    .. md-tab-set::
 
-        - Select the ``Input map`` by click on the icon :fa:`search, text-primary` and selecting the file `tomo-coarse-refinement-*_r01_03.mrc`
+      .. md-tab-item:: Masking
+
+        - Select the ``Input map`` by click on the icon :fa:`search` and selecting the file `tomo-coarse-refinement-*_r01_03.mrc`
 
         - Set ``Threshold for binarization`` to 0.45
 
         - Check ``Use normalized threshold``
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to run the job
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to run the job
 
-    * Click on the menu icon :fa:`bars, text-primary` of the :badge:`Masking,badge-secondary` block, select the :badge:`Show Filesystem Location` option, and :badge:`Copy,badge-primary` the location of the block in the filesystem (we will use this in the next step))
+  * Click on the menu icon :fa:`bars` of the :bdg-secondary:`Masking` block, select the :bdg-secondary:`Show Filesystem Location` option, and :bdg-primary:`Copy` the location of the block in the filesystem (we will use this in the next step))
 
-    * Click inside the :badge:`Masking,badge-secondary` block to inspect the results of masking.
+  * Click inside the :bdg-secondary:`Masking` block to inspect the results of masking.
 
-.. note::
+  .. note::
 
-  You may need to adjust the binarization threshold to obtain a mask that includes the protein density and excludes the background (a pre-calculated mask is provided with the raw data if you rather use that).
+    You may need to adjust the binarization threshold to obtain a mask that includes the protein density and excludes the background (a pre-calculated mask is provided with the raw data if you rather use that).
 
 Step 13: Region-based constrained refinement
 --------------------------------------------
 
-.. dropdown:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 2 hr)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 2 hr)
+  :collapsible: open
 
-    * Edit the settings of the existing :badge:`Particle refinement,badge-secondary` block and go to the **Refinement** tab:
+  * Edit the settings of the existing :bdg-secondary:`Particle refinement` block and go to the **Refinement** tab:
 
-      .. tabbed:: Refinement
+    .. md-tab-set::
+
+      .. md-tab-item:: Refinement
 
         - Set ``Max resolution (A)`` to 6:5:5:4:3.5
 
@@ -564,28 +568,28 @@ Step 13: Region-based constrained refinement
 
         - Set ``Last iteration`` to 6
 
-        - Specify the location of the ``Shape mask`` produced in Step 11 by clicking on the icon :fa:`search, text-primary`, navigating to the location of the :badge:`Masking,badge-secondary` block by copying the path we saved above, and selecting the file `frealign/maps/mask.mrc`
+        - Specify the location of the ``Shape mask`` produced in Step 11 by clicking on the icon :fa:`search`, navigating to the location of the :bdg-secondary:`Masking` block by copying the path we saved above, and selecting the file `frealign/maps/mask.mrc`
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary` to run the job
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to run the job
 
-    * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results:
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results:
 
-      .. figure:: ../images/tutorial_tomo_region_iter6.webp
-        :alt: Iter 6
+    .. figure:: ../images/tutorial_tomo_region_iter6.webp
+      :alt: Iter 6
 
 Step 14: Particle-based CTF refinement
 --------------------------------------
 
-.. dropdown:: Per-particle CTF refinement using most recent reconstruction (:fa:`stopwatch` 3 hr)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Per-particle CTF refinement using most recent reconstruction (:fa:`stopwatch` 3 hr)
+  :collapsible: open
 
-    * Click on the menu icon :fa:`bars, text-primary` from the :badge:`Particle refinement,badge-secondary` block and choose the :fa:`edit, text-primary` Edit option
+  * Click on the menu icon :fa:`bars` from the :bdg-secondary:`Particle refinement` block and choose the :fa:`edit` Edit option
 
-    * Go to the **Refinement** tab:
+  * Go to the **Refinement** tab:
 
-      .. tabbed:: Refinement
+    .. md-tab-set::
+
+      .. md-tab-item:: Refinement
 
         - Set ``Max resolution (A)`` to 3.1
 
@@ -593,7 +597,7 @@ Step 14: Particle-based CTF refinement
 
         - Click on the **Constrained refinement** tab
 
-      .. tabbed:: Constrained refinement
+      .. md-tab-item:: Constrained refinement
 
         - Set ``Last exposure for refinement`` to 10
 
@@ -603,42 +607,42 @@ Step 14: Particle-based CTF refinement
 
         - Check ``Refine CTF per-particle``
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results
 
-      .. figure:: ../images/tutorial_tomo_ctf_iter7.webp
-        :alt: Iter 7
+    .. figure:: ../images/tutorial_tomo_ctf_iter7.webp
+      :alt: Iter 7
 
 Step 15: Movie frame refinement
 -------------------------------
 
-.. dropdown:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 3 hr)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 3 hr)
+  :collapsible: open
 
-    * Click :guilabel:`Particles` (output of :badge:`Particle refinement,badge-secondary` block) and select :badge:`Movie refinement,badge-primary`
+  * Click ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
 
-    * Go to the **Sample** tab:
+  * Go to the **Sample** tab:
 
-      .. tabbed:: Sample
+    .. md-tab-set::
+
+      .. md-tab-item:: Sample
 
         - Set ``Particle radius`` to 80
 
         - Click on the **Refinement** tab
 
-      .. tabbed:: Refinement
+      .. md-tab-item:: Refinement
 
-        - Specify the ``Initial model`` by clicking on the icon :fa:`search, text-primary` and selecting the file `tomo-coarse-refinement-*_r01_07.mrc`
+        - Specify the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `tomo-coarse-refinement-*_r01_07.mrc`
 
-        - Specify the ``Input parameter file`` by clicking on the icon :fa:`search,text-primary` and selecting the file `tomo-coarse-refinement-*_r01_07.par.bz2`
+        - Specify the ``Input parameter file`` by clicking on the icon :fa:`search` and selecting the file `tomo-coarse-refinement-*_r01_07.par.bz2`
 
         - Set ``Max resolution (A)`` to 3.2
 
         - Click on the **Constrained refinement** tab
 
-      .. tabbed:: Constrained refinement
+      .. md-tab-item:: Constrained refinement
 
         - Set ``Last exposure for refinement`` to 4
 
@@ -650,32 +654,32 @@ Step 15: Movie frame refinement
 
         - Set ``Spatial sigma`` to 200.0
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results:
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results:
 
-      .. figure:: ../images/tutorial_tomo_movie_iter2.webp
-        :alt: Iter 2
+    .. figure:: ../images/tutorial_tomo_movie_iter2.webp
+      :alt: Iter 2
 
 Step 16: Refinement after movie frame refinement
 ------------------------------------------------
 
-.. dropdown:: Additional refinement using new frame alignment parameters (:fa:`stopwatch` 1 hr)
-    :container: + shadow
-    :title: bg-primary text-white text-left
-    :open:
+.. nextpyp:: Additional refinement using new frame alignment parameters (:fa:`stopwatch` 1 hr)
+  :collapsible: open
 
-    * Click on the menu icon :fa:`bars, text-primary` from the :badge:`Movie refinement,badge-secondary` block and choose the :fa:`edit, text-primary` Edit option.
+  * Click on the menu icon :fa:`bars` from the :bdg-secondary:`Movie refinement` block and choose the :fa:`edit` Edit option.
 
-    * Go to the **Refinement** tab:
+  * Go to the **Refinement** tab:
 
-      .. tabbed:: Refinement
+    .. md-tab-set::
+
+      .. md-tab-item:: Refinement
 
         - Set ``Max resolution (A)`` to 3.3
 
         - Click on the **Constrained refinement** tab
 
-      .. tabbed:: Constrained refinement
+      .. md-tab-item:: Constrained refinement
 
         - Set ``Min number of projections for refinement`` to 2
 
@@ -697,45 +701,38 @@ Step 16: Refinement after movie frame refinement
 
         - Uncheck ``Movie frame refinement``
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    * Click inside the :badge:`Particle refinement,badge-secondary` block to inspect the results:
+  * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results:
 
-      .. figure:: ../images/tutorial_tomo_after_movie_iter3.webp
-        :alt: Iter 3
+    .. figure:: ../images/tutorial_tomo_after_movie_iter3.webp
+      :alt: Iter 3
 
 Step 17: Map sharpening
 -----------------------
 
-.. dropdown:: Apply B-factor weighting in frequency space (:fa:`stopwatch` <1 min)
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
-    :open:
+.. nextpyp:: Apply B-factor weighting in frequency space (:fa:`stopwatch` <1 min)
+  :collapsible: open
 
-    * Click :guilabel:`Movies` (output of :badge:`Movie refinement,badge-secondary` block) and select :badge:`Post-processing,badge-primary`
+  * Click ``Movies`` (output of :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
 
-    * Go to the **Post-processing** tab:
+  * Go to the **Post-processing** tab:
 
-      .. tabbed:: Post-processing
+    .. md-tab-set::
 
-       - Specify the ``First half map`` by clicking on the icon :fa:`search, text-primary` and selecting the file `tomo-flexible-refinement-*_r01_half1.mrc` (output of the :badge:`Movie refinement,badge-secondary` block)
+      .. md-tab-item:: Post-processing
 
-       - Set ``Automask threshold`` to 0.4
+        - Specify the ``First half map`` by clicking on the icon :fa:`search` and selecting the file `tomo-flexible-refinement-*_r01_half1.mrc` (output of the :bdg-secondary:`Movie refinement` block)
 
-    * Click :badge:`Save,badge-primary`, :badge:`Run,badge-primary`, and :badge:`Start Run for 1 block,badge-primary`
+        - Set ``Automask threshold`` to 0.4
 
-    * You can inspect the result by clicking inside the :badge:`Map sharpening,badge-secondary` block:
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-      .. figure:: ../images/tutorial_tomo_final_map.webp
-        :alt: Final map
+  * You can inspect the result by clicking inside the :bdg-secondary:`Map sharpening` block:
 
-.. note::
+    .. figure:: ../images/tutorial_tomo_final_map.webp
+      :alt: Final map
+
+.. info::
 
   Running times were measured running all tilt-series in parallel on nodes with 124 vCPUs, 720GB RAM, and 3TB of local SSDs
-
-.. seealso::
-
-    * :doc:`Classification tutorial<tomo_empiar_10304>`
-    * :doc:`Single-particle tutorial<spa_empiar_10025>`
-    * :doc:`Single-particle (on-the-fly)<stream_spr>`
-    * :doc:`Tomography (on-the-fly)<stream_tomo>`

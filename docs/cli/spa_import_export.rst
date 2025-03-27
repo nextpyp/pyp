@@ -21,10 +21,6 @@ A single command is needed to convert the project to the ``pyp`` format:
 
 After running this command, everything necessary to continue refinement in ``pyp`` will be created.
 
-==========================================
-Export single-particle data in star format
-==========================================
-
 Export data from ``pyp``
 ------------------------
 

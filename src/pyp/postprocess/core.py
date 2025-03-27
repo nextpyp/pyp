@@ -183,22 +183,26 @@ def fit_tanh(data_x,data_y):
     data_x /= data_x.max()
     data_y /= data_y.max()
 
-    # Fit the data to the tanh function
-    # Set initial guess to apparent inflection point
-    initial_guess = [1.0, 1.0, 0.0, 0.0]
-    params, _ = curve_fit(tanh_func, data_x, data_y, p0=initial_guess)
+    try:
+        # Fit the data to the tanh function
+        # Set initial guess to apparent inflection point
+        initial_guess = [1.0, 1.0, 0.0, 0.0]
+        params, _ = curve_fit(tanh_func, data_x, data_y, p0=initial_guess)
 
-    # Extract the parameters
-    a, b, c, d = params
+        # Extract the parameters
+        a, b, c, d = params
 
-    # Create a range of x values for the curve change value of "127" to max number or data points i didnt know how to get max size of the data sheet
-    x_fit = np.linspace(min(data_x), max(data_x), data_x.size)
+        # Create a range of x values for the curve change value of "127" to max number or data points i didnt know how to get max size of the data sheet
+        x_fit = np.linspace(min(data_x), max(data_x), data_x.size)
 
-    # Calculate the y values for the fitted curve
-    y_fit = tanh_func(x_fit, a, b, c, d)
-    y_fit = ( y_fit - min(y_fit) ) / ( max(y_fit) - min(y_fit))
+        # Calculate the y values for the fitted curve
+        y_fit = tanh_func(x_fit, a, b, c, d)
+        y_fit = ( y_fit - min(y_fit) ) / ( max(y_fit) - min(y_fit))
 
-    return x_fit, y_fit
+        return x_fit, y_fit
+    except Exception as e:
+        logger.warning(repr(e))
+        return data_x, data_y
 
 def tanh_part_fsc(stats_file_name, plot_name):
     stats = np.loadtxt(stats_file_name, comments=["C"])

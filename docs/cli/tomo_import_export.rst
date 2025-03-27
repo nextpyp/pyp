@@ -2,8 +2,8 @@
 Tomography import/export
 ########################
 
-1 Import tomography data in star format
-=======================================
+Import data in star format
+==========================
 
 
 .. attention::
@@ -18,7 +18,8 @@ Requirements
 - Tilt-series files in correct relative path as indicated in the tomogram star file
 - Corresponding tilt-series parameter files (``*.xf``, ``*.tlt`` and ``*.com``) in the same folder with tilt-series files
 
-.. note::
+.. admonition:: Notes
+
     * ``*.xf, *.tlt`` are alignment parameters, which are required for each tilt-series.
     * ``*.com`` is optional. If they are not present, we would assume **NO** x or z shift applied to the tomograms. This might affect the outcome of particle coordinate conversion.
 
@@ -62,8 +63,8 @@ We suggest you to run an iteration of ``csp`` to make sure they are correctly co
         -refine_maxiter 2
 
 
-2 Export tomography data in star format
-=======================================
+Export data in star format
+==========================
 
 Requirements
 ------------
