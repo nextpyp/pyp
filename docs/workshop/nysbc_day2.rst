@@ -110,9 +110,9 @@ Making Changes to Pre-Processing Parameters
 .. nextpyp:: Using the ``Restart`` Option
   :collapsible: open
 
-  * "Smart" method of rerunning only what is necessary after changing pre-processing parameters
+  *  :bdg-primary:`Restart` is a "smart" method of rerunning only what is necessary after changing pre-processing parameters.
 
-  * Workflow: Change a parameter → :bdg-primary:`Save` settings changes → :bdg-primary:`Restart` Pre-processing daemon
+  * Workflow: Change a parameter → :bdg-primary:`Save` settings changes → :bdg-primary:`Restart` pre-processing daemon.
 
   * Example: Changing the minimum distance between spikes
 
@@ -126,18 +126,18 @@ Making Changes to Pre-Processing Parameters
 
     * Click :bdg-primary:`Restart` on pre-processing daemon
 
-    * Open :bdg-primary:`Logs` to check that the restart flag has been detected and new pre-processing jobs will be launched in response to this change
+    * Open :bdg-primary:`Logs` to check that the restart flag has been detected and new pre-processing jobs will be launched in response to this change.
 
-    * Check the :bdg-secondary:`Tilt Series` tab to see that fewer particles have been picked
+    * Check the :bdg-secondary:`Tilt Series` tab to see that fewer particles have been picked.
 
-.. nextpyp:: Using the Clear Option
+.. nextpyp:: Using the ``Clear`` Option
   :collapsible: open
 
-  * Start pre-processing procedure from scratch
+  * :bdg-primary:`Clear` will start pre-processing procedure from scratch.
 
-  * Helpful if the changes you've made touch multiple parts of the pre-processing pipeline
+  * This is helpful if the changes you've made touch multiple parts of the pre-processing pipeline.
 
-    - Like re-calculating CTF or re-doing frame alignment
+    - Like re-calculating CTF or re-doing frame alignment.
 
 Navigating the Sessions Homepage
 --------------------------------
@@ -145,11 +145,11 @@ Navigating the Sessions Homepage
 .. nextpyp:: Now to Move and Delete Sessions
   :collapsible: open
 
-  * Sessions can be **copied** or **deleted**
+  * Sessions can be **copied** or **deleted**.
 
     - **CAUTION**: Deleting a session whose mode of file transfer was ``Move`` will **delete the data**.
 
-  * Click the arrow to find where the session's network file storage location
+  * Click the arrow to find where the session's network file storage location.
 
 Importing and Exporting Sessions
 --------------------------------
