@@ -171,151 +171,263 @@ Dataset 2: EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
 Dataset 3: EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
 -------------------------------------------------------------------------
 
-Import Workflow
+.. nextpyp:: Import Workflow
 
-- We will follow much the same steps for EMPIAR-10987 as we did for EMPIAR-10499 and use blocks that we have pre-populated with runtime parameters for you. 
-- In the upper left of your project page, click **Import Workflow**
-- From the menu that populates, select the **Import** button to the right of **2025 NYSBC workshop: Pre-processing (EMPIAR-10987)**
-- Click **Save**
-- Three blocks should populate on your project page, **Tomgoraphy (from Raw Data)**, **Pre-processing**, and **Particle-Picking (eval)**. 
-- Click **Run**, if only those 3 blocks are selected you can click **Start Run for 3 blocks**. If more than those three blocks are selected, deselect the extra blocks by clicking the blue checkbox to the left of the block name. Then click **Start Run for 3 blocks**. 
+  * In the upper left of your project page, click :bdg-primary:`Import Workflow`
 
-Particle Picking go through parameters
+  * Choose the **2025 NYSBC workshop: Pre-processing (EMPIAR-10987)** workflow by clicking :bdg-primary:`Import`
+
+  * We pre-set the parameters for the workflow, so you can immediately click :bdg-primary:`Save`. Three blocks will populate on the project page. 
+
+.. nextpyp:: Edit Particle Picking Parameters
+
+  * Click into the settings of the :bdg-primary:`Particle-Picking (eval)` block
+
+    - Click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10987/model_last_contrastive.pth``
+
+    - Set ``Particle radius (A)`` to 100
+
+    - Set ``Threshold for soft/hard positives`` to 0.5
+
+    - Set ``Max number of particles`` to 700
+  
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 3 blocks`. Follow the status of the run in the **Jobs** panel
 
 Session Goal: 3D Refinement
----------------------------
-In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. For the sake of time, we have pre-populated a workflow with parameters. As a group, we will import this work flow, then we will go through the steps and discuss the parameters and features while the refinement runs. 
+--------------------------
 
-Show slides before hand what general steps are going to be (high level)
+* In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. For the sake of time, we have pre-populated a workflow with parameters. As a group, we will import this work flow, then we will go through the steps and discuss the parameters and features while the refinement runs. 
 
+.. nextpyp:: Step one: Import particles
 
-Import Workflow
+  * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
-- Click on the **Import Workflow** button in the top left of your project page. 
-- Next to **2025 NYSBC workshop: end-to-end processing (EMPIAR-10164)** click the **Import** button. 
-- Click **Save**, a series of 8 blocks should populate. 
-- In the upper right hand corner, click **Run**, then **Start Run for 8 blocks**. 
+  * Set ``Detection method`` to import
 
+  * Set ``Particle radius (A)`` to 50 
 
+  * Click :fa:`search` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/particles``. Select :bdg-primary:`Choose Folder`
 
-End-To-End Processing
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-- Raw Data Import
-- Pre-processing and Tomogram Generation
-- Particle Picking (Imported)
-- Initial Reference-Based Refinement (Imported)
+.. nextpyp:: Step two: Import alignments
 
-.. figure:: ../images/workshop/cspt.webp
-  :alt: Create new project
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Pickng` block) and select :bdg-primary:`Particle refinement`
 
-- Click into the block and navigate to the **Reconstruction** tab. You can see a variety of refinement statistics.
-
-- Projections and slices of the reconstruction, FSC, per-projection statistics, per-particle statistics, per-particle scores
-- Click on the **Expsoure Weights** tab to visualize the mean score per tilt over the order of acquisition. The weights are based on these scores. 
-- Click on the **3D View** tab. In one of the drop down menus, select **Class 1, Iter 2**. Our initial map will populate. Alter the **Level of detail** and/or **Contour value** to sharpen the map, note we can visualize rough "sausages" representing our helices. 
-- Particle Filtering
-
-
-- Click into the **Particle filtering** block. 
-- Navigate to the **Per-particle Scores** tab. Here we can visualize the global score cut off and where it lies on the score distribution for each of our tilt-series. Note it is settled nicely between the two peaks of the distribution. 
-
-- Region-Based and Tilt Geometry Refinement
-
-- Now we are used a filtered particle set to perform further refinement steps on. 
-- Rather than clicking into the block, select the **Particle refinement** block menu at hte top right corner of the block. 
-- From the drop down menu, select **Read** or **Edit** depending on if the block is still running or if it has finished. 
-- Note the settings we have changed:
-
-- In the **Sample** tab, we have applied C6 symmetry. 
-- In the **Extraction** tab, we have reduced our binning to 1. 
-- In the **Refinement** tab, we have increased our Max resolution (A) to 4 for the first iteration, and 3 for the second iteration. 
-- In the **Constrained refinement** tab, we have applied a 8 regions in x and y and 2 regions in z. We have also turned ON Refine tilt-geometry 
-- When the block is done running, click into the block. 
-- Navigate to the **Reconstruction** tab and note immediately that we see details in both the projections and slices of our reeconstruction. Between our two iterations we see improvement in our FSC plots. We can clearly visualize defocus groups in our projection-based plots. Finally, We can also see that after filtering and further refinement, we no longer have a bimodal distribution in our Per-Particle Scores plot as we have removed all of the bad particles. 
-- If one wanted to save plots from different blocks for say showing a supervisor during meetings, we are set up with Plotly and you can simply hover over the plot, then click the camera icon to download your plot in svg format for high resolution images. 
-
-
-- Movie Frame Refinement
-
-  - This step will optimize particle positions across frames, allowing for not only tilt-based refinement, but frame-based refinement. This is useful because the sample does not remain perfectly still across frame images and we can correction for this motion. 
-  - Click into the **Movie refinement** block. 
-  - I'll highlight some unique features of this block type, so click on the **Particle View** tab. 
-  - Here you can click on a tilt-series image to enlareg it, and hit plus to further enlarge it. One can visualize the starting points (red), end points after movie frame refinement (yellow) and trajectories (green) of each particle identified on the 0 degree tilt. 
-  - Click on the **Exposure Weights** tab. Click one of the plots to enlarge it. 
-  - Here on the left you can see the mean score of each frame, with the first frame of each tilt highlighted in green. On the right is dose weighting by frame. 
-
-- Post Processing
-
-  - Once again, before we enter the block, click into the block settings. 
-  - At this stage we are applying a mask and performing B-factor sharpening on our map. 
-  - Return to the project page and click into the **Post-processing** block. 
-  - Click on the **Reconstruction** tab. 
-  - The final projections and slices should appear crisp with the corrected FSC showing a final resolution around 3.7 Ångstroms. 
-  - Click on the **3D View** tab. 
-  - If you remember, when we looked at our initial reconstruction after reference-based refienment, our helices looked like sausages. Now we can see definitive backbone density with some sidechain density as well. 
-  - We will look at this map in Chimera now to view it along-side our model. 
-
-
-
-
-
-Map/Model Assessment in Chimera (just watch, you can follow if you have Chimera with necessary plugins)
-
-- I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
-- 
-  Download files
-
-  - In the **Post-Processing** block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
-
-  - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
-  
-- Open the downloaded MRC file in Chimera. Visualize your beautiful map. To get a better look at your map/model fitting, open an atomic model in Chimera. Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
-
- .. code-block:: bash 
-
-  volume zone #2 nearAtoms #1 range 2.4
-
-- Select the model, go to **Actions**, **Atoms/Bonds**, and **Show Sidechain/Base**
-- You can now view the model fit to your map interactively in ChimeraX
-
-
-
-3D Visualization in ArtiaX (just watch, though you can follow if you have ArtiaX plugin)
-
-  - For future reference, these instructions are available on the nextPYP help page, under **User Guide**, and **3D Visualization (ArtiaX)**
-  - We assume the user already has the ArtiaX plugin, if not a simple google search will bring you to their docs for installation. 
-  - 
-      Download files
-
-      - Select a tomogram you wish to visualize the particles in. I will be using TS_01. 
-      - Click into the **Pre-processing** block, go to **Tilt Series** and **Tomogram**. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
-      - Click into the **Particle refinement** block, go to the **Metadata** tab. On this page, type **TS_43** into the search bar and click **Search**. Click the .star file to download particle alignments. 
-      - TODO: change to actual download, you can download a map in .mrc format from the **Reconstruction** tab of the **Particle refinement** block to attach to the particle locations. I will not be doing this today. 
+  * Go to the **Sample** tab 
     
-  - 
-      Display in ChimeraX
+    - Set ``Molecular weight (kDa)`` to 300 
 
-      - Open ChimeraX (again, we assume ArtiaX is installed)
-      - Open the tomogram **TS_01.rec** 
-      - Run the following commands in the ChimeraX shell:
+    - Set ``Particle radius (A)`` to 150 
+
+    - Set ``Symmetry`` to C6
+
+  * Go to the **Extraction** tab
+
+    - Set **Box size (pixels/voxels)** to 128 
+
+    - Set **Image binning** to 2
+
+  * Go to the **Refinement** tab
+
+    - To demonstrate inserting a model, we will click the :fa:`search` icon next to ``Initial model (*.mrc)`` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_init_ref.mrc``  Click :bdg-primary:`Choose File`
+
+    - Click the :fa:`search` icon next to ``Input parameter file (*.bz2)`` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/tomo-coarse-refinement-fg2v2MJLSY4Ui908_r01_02.bz2``  Click :bdg-primary:`Choose File`
+
+    - Set the ``Max resolution (A)`` to 8
+
+  * Go to the **Exposure weighting** tab
+
+    - Turn ON ``Dose Weighting`` by checking the box 
+
+  * Go to the **Resources** tab
+
+    - Set ``Threads per task`` to 124
+
+    - Set ``Memory per task in GB`` to 720 
+
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+.. nextpyp:: Step three: Particle Filtering
+
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Particle filtering`
+
+  * Go to the **Particle filtering** tab
+
+    - Set ``Score threshold`` to 3.5
+
+    - Set ``Min distance between particles (unbinned pixels)`` to 54
+
+    - Click the :fa:`search` icon next to ``Input parameter file(*.bz2)`` and select the ``*.bz2`` file that appears (this is from the parent directory). Click :bdg-primary:`Choose File`
+
+    - Check the box next to ``Permanently remove particles``
+
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+.. nextpyp:: Step four: Region-based refinement, Tilt-geometry refinement, Further Particle refinement
+
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle filtering` block) and select :bdg-primary:`Particle refinement`
+
+  * Go to the **Extraction** tab
+
+    - Set ``Box size (pixels/voxels)`` to 256
+
+    - Set ``Image binning`` to 1
+
+  * Go to the **Refinement** tab
+
+    - Next to ``Initial model (*.mrc)`` click the :fa:`search` icon. Select the ``*_r01_01.mrc`` file and click :bdg-primary:`Choose File`
+
+    - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_02_clean.bz2`` file and click :bdg-primary:`Choose File`
+
+    - Set ``Max resolution (A)`` to 4:3
+
+    - Check ``Use signed correlation``
+
+    - Set ``Last iteration`` to 3
+
+    - Next to ``Shape mask (*.mrc)`` click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc`` and click :bdg-primary:`Choose File`
+
+  * Go to the **Constrained refinemnt** tab
+
+    - Set ``Last exposure for refinement`` to 8 
+
+    - Set ``Number of regions`` to 8,8,2 
+
+    - Check ``Refine tilt-geometry``
+
+    - Check ``Refine particle alignments`` 
+
+  * Go to the **Exposure weighting** tab
+
+    - Check ``Dose weighting`` (It may already be checked)
+
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+.. nextpyp:: Step five: Movie frame refinement
+
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
+
+  * Go to the **Refinement** tab
+
+    - Next to ``Initial model (*.mrc)`` click the :fa:`search` icon. Select the ``*_r01_03.mrc`` file and click :bdg-primary:`Choose File`
+
+    - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_03.bz2`` file and click :bdg-primary:`Choose File`
+
+    - Set ``Max resolution (A)`` to 3
+
+    - Check ``Use signed correlation`` if it is not already checked
+
+    - Next to ``Shape mask (*.mrc)`` click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc`` and click :bdg-primary:`Choose File`
+
+  * Go to the **Constrained refinement** tab
+
+    - Set ``Last exposure for refinement`` to 4 
+
+    - Check ``Movie fream refinement`` 
+
+    - Check ``Regularize translations`` 
+
+    - If other boxes are checked, uncheck them 
+
+  * Go to the **Exposure weighting** tab 
+
+    - Check ``Dose weighting``
+
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+.. nextpyp:: Step six: Post-processing
+
+  * Click on ``Frames`` (output of the :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
+
+  * Go to the **Post-processing** tab
+
+    - Next to ``First half map (*_half1.mrc)`` click the :fa:`search` icon. Select the ``*_half1.mrc`` file and click :bdg-primary:`Choose File`
+
+    - Set ``Masking method`` to from file usign the dropdown menu
+
+    - Next to ``Mask file (*.mrc)`` click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc`` and click :bdg-primary:`Choose File`
+
+    - Set the ``B-factor method`` to adhoc using the dropdown menu
+
+    - Set the ``Adhoc value (A^2)`` to -25 
+
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+
+
+
+.. nextpyp:: Map/Model Assessment in Chimera (just watch, you can follow if you have Chimera with necessary plugins)
+
+  * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
+
+  * Download files
+
+    - In the **Post-Processing** block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
+
+    - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
   
-   
-        >volume permuteAxes #1 xzy
-        >volume flip #2 axis z<h6>
+    - Open the downloaded MRC file in Chimera. Visualize your beautiful map. To get a better look at your map/model fitting, open an atomic model in Chimera. Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
+
+    .. code-block:: bash 
+
+      volume zone #2 nearAtoms #1 range 2.4
+
+    - Select the model, go to **Actions**, **Atoms/Bonds**, and **Show Sidechain/Base**
+    
+    - You can now view the model fit to your map interactively in ChimeraX
+
+
+
+.. nextpyp:: 3D Visualization in ArtiaX (just watch, though you can follow if you have ArtiaX plugin)
+
+  * For future reference, these instructions are available on the nextPYP help page, under **User Guide**, and **3D Visualization (ArtiaX)**
+  
+  * We assume the user already has the ArtiaX plugin, if not a simple google search will bring you to their docs for installation. 
+  
+  * Download files
+
+    - Select a tomogram you wish to visualize the particles in. I will be using TS_01. 
+    
+    - Click into the **Pre-processing** block, go to **Tilt Series** and **Tomogram**. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
+    
+    - Click into the **Particle refinement** block, go to the **Metadata** tab. On this page, type **TS_43** into the search bar and click **Search**. Click the .star file to download particle alignments. 
+    
+    - Go to the **Reconstruction** tab of the **Particle refinement** block  and download the **Cropped Map**. 
+    
+  * Display in ChimeraX
+
+    - Open ChimeraX (again, we assume ArtiaX is installed)
+    
+    - Open the tomogram **TS_01.rec** 
+    
+    - Run the following commands in the ChimeraX shell:
+  
+    .. code-block:: bash
+
+      volume permuteAxes #1 xzy
+      volume flip #2 axis z<h6>
         
-      - Go to the **ArtiaX** tab and click **Launch** to start the plugin. 
-      - In the **Tomograms** section on the left, select model #3 (permuted z flip) from the **Add Model** dropdown menu and click **Add!**
-      - Go to the ArtiaX options panel on the right, and set the **Pixel Size** for the **Current Tomogram** to 10.8 (The current binned pixel size) 
-      - On the left panel, under the **Particles List** section, select **Open List ...** and oepn the .star file. 
-      - Return to the panel on the right and select the **Select/Manipulate** tab. Set the **Origin** to 1.35 (the unbinned pixel size)
-      - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
-      - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations. 
+    - Go to the **ArtiaX** tab and click **Launch** to start the plugin. 
+    
+    - In the **Tomograms** section on the left, select model #3 (permuted z flip) from the **Add Model** dropdown menu and click **Add!**
+    
+    - Go to the ArtiaX options panel on the right, and set the **Pixel Size** for the **Current Tomogram** to 10.8 (The current binned pixel size) 
+    
+    - On the left panel, under the **Particles List** section, select **Open List ...** and oepn the .star file. 
+    
+    - Return to the panel on the right and select the **Select/Manipulate** tab. Set the **Origin** to 1.35 (the unbinned pixel size)
+    
+    - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
+    
+    - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations. 
 
 
 
 
-
-# NYSBC Workshop nextPYP Practical (Day Two)
+#########################################
+NYSBC Workshop nextPYP Practical (Day Two)
+#########################################
 
 We will demonstrate how explicitly optimizing for fast runtime and giving users flexibility in pre-processing steps can aid in achieving high-quality and high-throughput data acquisition in nextPYP. Starting from **raw data** obtained at the microscope, we'll develop an **automatic pipeline** that can perform all **pre-processing** tasks up to and including particle picking. We will demonstrate this workflow on the EMPIAR-10164 dataset of HIV purified VLPs.
 
