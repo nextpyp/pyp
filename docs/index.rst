@@ -30,6 +30,9 @@
    Tomography session<tutorials/stream_tomo>
    Import/export<tutorials/import_export>
 
+   NYSBC course (day 1)<workshop/nysbc_day1>
+   NYSBC course (day 2)<workshop/nysbc_day2>
+
 .. toctree::
    :caption: User Guide
    :hidden:

@@ -1,15 +1,15 @@
-##########################################
-NYSBC Workshop nextPYP Practical (Day One)
-##########################################
+#########################################
+NYSBC course: nextPYP practical (Day One)
+#########################################
 
 This session shows how to use :fa:`nextPYP` to convert raw tilt-series from `EMPIAR-10164` into a ~4Å resolution structure of immature HIV-1 Gag protein. We will also cover pre-processing, tomogram reconstruction, and particle-picking for two other datasets representative of datatypes often processed in tomography. 
 
 Datasets
 -------
 
-  * EMPIAR-10164: HIV Virus-Like Particles (purified VLPs)
-  * EMPIAR-10499: *Mycoplasma pneumoniae* cells (whole cells on grids) 
-  * EMPIAR-10987: Mouse eplithelial cells (FIB-SEM milled lamellae)
+#. EMPIAR-10164: HIV Virus-Like Particles (purified VLPs)
+#. EMPIAR-10499: *Mycoplasma pneumoniae* cells (whole cells on grids) 
+#. EMPIAR-10987: Mouse eplithelial cells (FIB-SEM milled lamellae)
 
 Session Goal: Pre-Processing and Particle Picking
 -------------------------------------------------
@@ -21,6 +21,20 @@ Create a new project
 
 .. nextpyp:: Data processing runs are organized into projects. We will create a new project for this tutorial
   :collapsible: open
+  
+  - We will be utilizing three steps in three separate blocks to perform geometrically constrained particle picking. This will allow for increased accuracy in particle detection and provides geometric priors for downstream refinement. 
+  - 
+    Step One: Virion Selection
+  
+    - On the bottom right of the **Pre-processing** block, select the blue button labeled **Tomograms**. 
+    - From the drop down **Use Data** menu, select **Particle-Picking** 
+    - 
+        Go to the Particle Detection tab and change the following parameters:
+      
+        - Detection method: virions
+        - Virion radius (A): 500 
+      
+    - Click **Save**, **Run**, and **Start Run for 1 block**. 
 
   * Click on :bdg-primary:`Create new project`, give the project a name, and select :bdg-primary:`Create`
 
@@ -144,7 +158,7 @@ Dataset 2: EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
 
 .. nextpyp:: Edit Particle Picking Parameters
 
-  * Click into the settings of the :bdg-primary:`Particle-Picking` block
+  * Click into the settings of the :bdg-secondary:`Particle-Picking` block
 
     - Set ``Particle radius (A)`` to 80
 
@@ -162,7 +176,7 @@ Dataset 2: EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
 
   * Click :bdg-primary:`Next`
 
-  * Click into the new :bdg-primary:`Particle-Picking` block. 
+  * Click into the new :bdg-secondary:`Particle-Picking` block. 
 
   * Ensure you are on the **Particles** tab. Here, you can right click to remove particles and left click to add particles. 
 
@@ -196,7 +210,7 @@ Dataset 3: EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
 Session Goal: 3D Refinement
 --------------------------
 
-* In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. For the sake of time, we have pre-populated a workflow with parameters. As a group, we will import this work flow, then we will go through the steps and discuss the parameters and features while the refinement runs. 
+* In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. For the sake of time, we have pre-populated a workflow with parameters. As a group, we will import this workflow, then we will go through the steps and discuss the parameters and features while the refinement runs. 
 
 .. nextpyp:: Step one: Import particles
 
@@ -316,15 +330,11 @@ Session Goal: 3D Refinement
 
     - Set ``Max resolution (A)`` to 3
 
-    - Check ``Use signed correlation`` if it is not already checked
-
-    - Next to ``Shape mask (*.mrc)`` click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc`` and click :bdg-primary:`Choose File`
-
   * Go to the **Constrained refinement** tab
 
     - Set ``Last exposure for refinement`` to 4 
 
-    - Check ``Movie fream refinement`` 
+    - Check ``Movie frame refinement`` 
 
     - Check ``Regularize translations`` 
 
@@ -381,7 +391,7 @@ Session Goal: 3D Refinement
 
 .. nextpyp:: 3D Visualization in ArtiaX (just watch, though you can follow if you have ArtiaX plugin)
 
-  * For future reference, these instructions are available on the nextPYP help page, under **User Guide**, and **3D Visualization (ArtiaX)**
+  * For reference, these instructions are available on the :doc:`nextPYP User Guide<../guide/chimera_artiax>`.
   
   * We assume the user already has the ArtiaX plugin, if not a simple google search will bring you to their docs for installation. 
   
@@ -389,9 +399,9 @@ Session Goal: 3D Refinement
 
     - Select a tomogram you wish to visualize the particles in. I will be using TS_01. 
     
-    - Click into the :bdg-primary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
+    - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
     
-    - Click into the :bdg-primary:`Particle refinement` block, go to the **Metadata** tab. On this page, type **TS_43** into the search bar and click **Search**. Click the .star file to download particle alignments. 
+    - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type **TS_43** into the search bar and click **Search**. Click the .star file to download particle alignments. 
     
     - Go to the **Reconstruction** tab and download the **Cropped Map**. 
     
@@ -406,7 +416,7 @@ Session Goal: 3D Refinement
     .. code-block:: bash
 
       volume permuteAxes #1 xzy
-      volume flip #2 axis z<h6>
+      volume flip #2 axis z
         
     - Go to the **ArtiaX** tab and click **Launch** to start the plugin. 
     
@@ -414,135 +424,10 @@ Session Goal: 3D Refinement
     
     - Go to the ArtiaX options panel on the right, and set the **Pixel Size** for the **Current Tomogram** to 10.8 (The current binned pixel size) 
     
-    - On the left panel, under the **Particles List** section, select **Open List ...** and oepn the .star file. 
+    - On the left panel, under the **Particles List** section, select **Open List ...** and open the .star file. 
     
     - Return to the panel on the right and select the **Select/Manipulate** tab. Set the **Origin** to 1.35 (the unbinned pixel size)
     
     - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
     
-    - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations. 
-
-
-
-
-#########################################
-NYSBC Workshop nextPYP Practical (Day Two)
-#########################################
-
-We will demonstrate how explicitly optimizing for fast runtime and giving users flexibility in pre-processing steps can aid in achieving high-quality and high-throughput data acquisition in nextPYP. Starting from **raw data** obtained at the microscope, we'll develop an **automatic pipeline** that can perform all **pre-processing** tasks up to and including particle picking. We will demonstrate this workflow on the EMPIAR-10164 dataset of HIV purified VLPs.
-
-## Data
-
->EMPIAR-10164: HIV Virus-Like Particles (purified VLPs)
-
-
-Create a Session
- 
-- On your Dashboard, select the blue **Go to Sessions** button.
-- Click the blue **Start Tomography** button.
-
-
-
-Session settings
- 
-- Give your session a user-readable name by typing in the ``Name`` box.
-- The ``Parent Folder`` box will be auto-populated with the storage location specified in your ``pyp_config.toml`` file.
-  - For the workshop, this is the ``/nfs`` mount for ``bartesaghilab``.
-- Pick a *unique* ``Folder Name`` for your session. There can only be one folder name per session, regardless of the user-readable name!
-- Select the ``Workshop`` group
-
-
-
-  Raw data
-
-- Path to raw data: ``/nfs/bartesaghilab/nextpyp/workshop/10164/TS_*.tif``
-
-
-
-Microscope parameters
-
-- Pixel size: 1.35
-- Acceleration voltage: 300
-- Tilt-axis angle: 85.3
-
-
-
-Session settings
-
-- Number of tilts: 41
-- Raw data transfer: ``link``
-  - ``Link``: Create a symlink between the data on the microscope and your local computer. The data still *only* exists at the microscope.
-  - ``Move``: Transfer the data from the microscope to your local computer, removing the data at the microscope. The data will now *only* exist on your local computer.
-  - ``Copy``: Make a copy of the data in the microscope, and transfer the copy to your local computer. The data will now exist at both the microscope *and* your local computer.
-
-
-
-CTF determination
-
-- Max resolution: 5
-
-
-
-Virion detection
-
-- Virion radius: 500
-- Virion detection method: ``auto``
-- Spike detection method: ``uniform``
-- Minimum distance between spikes: 8
-- Size of equatorial band to restrict spike picking: 800
-
-
-
-Particle detection
-
-- Detection method: ``none``
-  - Remember that we have just picked our "particles" (virions) in the previous tab!
-- Detection radius: 50
-
-
-
-  Resources
-  The following settings apply for all datasets:
-
-  - Threads per task: 41
-    - This number should match the number of tilts in your tilt series.
-    - In general, the more threads you use, the more tilts that can be processed at the same time, and the faster you see pre-processing results.
-  - Memory per task: 164
-    - As a rule of thumb, use 4x as much memory as you have threads.
-  
-
-
-## More Features
-
-  Using the Restart Option
- 
-  - "Smart" method of rerunning only what is necessary after changing pre-processing parameters
-  - Workflow: Change a parameter → ``Save`` settings changes → ``Restart`` Pre-processing daemon
-  - 
-    Example: Changing the minimum distance between spikes
-
-      - Virion detection
-        - Increase ``Minimum distance between spikes (voxels)`` to 20
-        - Click ``Save``
-      - Navigate to ``Operations`` tab
-      - Click ``Restart`` on pre-processing daemon
-      - Open ``Logs`` to check that the restart flag has been detected and new pre-processing jobs will be launched in response to this change
-      - Check ``Tilt series`` tab to see that fewer particles have been picked
-    
-
-
-
-  Using the Clear Option
-
-  - Start pre-processing procedure from scratch
-  - Helpful if the changes you've made touch multiple parts of the pre-processing pipeline
-    - Like re-calculating CTF or re-doing frame alignment
-
-
-
-  Navigating the Sessions homepage
-
-  - Sessions can be **copied** or **deleted**
-    - **CAUTION**: Deleting a session whose mode of file transfer was ``Move`` will **delete the data**.
-  - Click the arrow to find where the session's network file storage location 
-  
+    - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations.
