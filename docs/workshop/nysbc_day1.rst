@@ -1,20 +1,20 @@
-#########################################
-NYSBC course: nextPYP practical (Day One)
-#########################################
+#######################################
+NYSBC course: nextPYP practical (day 1)
+#######################################
 
 This session shows how to use :fa:`nextPYP` to convert raw tilt-series from `EMPIAR-10164` into a ~4Å resolution structure of immature HIV-1 Gag protein. We will also cover pre-processing, tomogram reconstruction, and particle-picking for two other datasets representative of datatypes often processed in tomography. 
 
 Datasets
--------
+========
 
-#. EMPIAR-10164: HIV Virus-Like Particles (purified VLPs)
-#. EMPIAR-10499: *Mycoplasma pneumoniae* cells (whole cells on grids) 
-#. EMPIAR-10987: Mouse eplithelial cells (FIB-SEM milled lamellae)
+  #. Immature Gag protein from HIV-1 Virus-Like Particles (`EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_)
+  #. Ribosomes from whole *Mycoplasma pneumoniae* cells (`EMPIAR-10499 <https://www.ebi.ac.uk/empiar/EMPIAR-10499/>`_)
+  #. Ribosomes from FIB-SEM milled mouse eplithelial cells (`EMPIAR-10987 <https://www.ebi.ac.uk/empiar/EMPIAR-10987/>`_)
 
-Session Goal: Pre-Processing and Particle Picking
--------------------------------------------------
+Session 1: Pre-processing and particle picking
+==============================================
+
 In this session we will import frames, perform pre-processing and tomogram reconstruction, and pick particles for on HIV VLPs together. We will also import workflows to pick ribosomes from bacteria cells and lamellae cut from mouse epithelial cells. 
-
 
 Create a new project
 --------------------
@@ -22,28 +22,14 @@ Create a new project
 .. nextpyp:: Data processing runs are organized into projects. We will create a new project for this tutorial
   :collapsible: open
   
-  - We will be utilizing three steps in three separate blocks to perform geometrically constrained particle picking. This will allow for increased accuracy in particle detection and provides geometric priors for downstream refinement. 
-  - 
-    Step One: Virion Selection
-  
-    - On the bottom right of the **Pre-processing** block, select the blue button labeled **Tomograms**. 
-    - From the drop down **Use Data** menu, select **Particle-Picking** 
-    - 
-        Go to the Particle Detection tab and change the following parameters:
-      
-        - Detection method: virions
-        - Virion radius (A): 500 
-      
-    - Click **Save**, **Run**, and **Start Run for 1 block**. 
-
   * Click on :bdg-primary:`Create new project`, give the project a name, and select :bdg-primary:`Create`
 
   * Select the new project from the **Dashboard** and click :bdg-primary:`Open`
 
   * The newly created project will be empty and a **Jobs** panel will appear on the right
 
-Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
-----------------------------------------------
+Dataset 1: Immature Gag protein from HIV-1 VLPs
+-----------------------------------------------
 
 .. nextpyp:: Step 1: Import raw tilt-series 
 
@@ -75,7 +61,7 @@ Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
 
   * Click on the thumbnail inside the block to see a larger version of the projection image
 
-.. nextpyp:: Step 2: Pre-Processing and Tomogram Reconstruction
+.. nextpyp:: Step 2: Pre-processing and tomogram reconstruction
 
   * Click on ``Tilt-series`` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
 
@@ -107,11 +93,11 @@ Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
 
   * When the block finishes running, examine the **Tilt-series**, **Plots**, **Table**, and **Gallery** tabs. We will measure our virions in this block as well.  
 
-.. nextpyp:: Step 3: Particle Picking
+.. nextpyp:: Step 3: Particle picking
   
   * We will be utilizing three separate blocks to perform geometrically constrained particle picking. This will allow for increased accruacy in particle detection and provides geometric priors for downstream refinement. 
   
-  * Block One: Virion Selection
+  * Block 1: Virion selection
   
     * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
@@ -123,13 +109,13 @@ Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
       
     * Click :bdg-primary:`Save`
 
-  * Block Two: Virion Segmentation
+  * Block 2: Virion segmentation
 
     * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
 
     * Click :bdg-primary:`Save`
 
-  * Block Three: Spike (Gag) Detection
+  * Block 3: Spike (Gag) detection
   
     * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
     
@@ -145,10 +131,10 @@ Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
     
 
 
-Dataset 2: EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
-------------------------------------------------------------
+Dataset 2: Ribosomes (whole *Mycoplasma* cells)
+-----------------------------------------------
 
-.. nextpyp:: Import Workflow
+.. nextpyp:: Step 1: Import workflow
 
   * In the upper left of your project page, click :bdg-primary:`Import Workflow`
 
@@ -156,7 +142,7 @@ Dataset 2: EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
 
   * We pre-set the parameters for the workflow, so you can immediately click :bdg-primary:`Save`. Three blocks will populate on the project page. 
 
-.. nextpyp:: Edit Particle Picking Parameters
+.. nextpyp:: Step 2: Edit particle picking parameters
 
   * Click into the settings of the :bdg-secondary:`Particle-Picking` block
 
@@ -166,9 +152,9 @@ Dataset 2: EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
   
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 3 blocks`. Follow the status of the run in the **Jobs** panel
 
-.. nextpyp:: Copy Particles and Manually Edit
+.. nextpyp:: Step 3: Copy particles and manually edit
 
-  * Click on the menu for the :bdg-primary:`Particle-Picking` block
+  * Click on the menu for the :bdg-secondary:`Particle-Picking` block
 
   * Select **Copy** 
 
@@ -182,10 +168,10 @@ Dataset 2: EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
 
   * This manual picking feature is what I used the generate a particle set for nn-training for the next particle picking method we will use on the third dataset. 
 
-Dataset 3: EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
--------------------------------------------------------------------------
+Dataset 3: Ribosomes (mouse epithelial cells lamellae)
+------------------------------------------------------
 
-.. nextpyp:: Import Workflow
+.. nextpyp:: Step 1: Import workflow
 
   * In the upper left of your project page, click :bdg-primary:`Import Workflow`
 
@@ -193,9 +179,9 @@ Dataset 3: EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
 
   * We pre-set the parameters for the workflow, so you can immediately click :bdg-primary:`Save`. Three blocks will populate on the project page. 
 
-.. nextpyp:: Edit Particle Picking Parameters
+.. nextpyp:: Step 2: Edit particle picking parameters
 
-  * Click into the settings of the :bdg-primary:`Particle-Picking (eval)` block
+  * Click into the settings of the :bdg-secondary:`Particle-Picking (eval)` block
 
     - Click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10987/model_last_contrastive.pth``
 
@@ -207,12 +193,12 @@ Dataset 3: EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
   
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 3 blocks`. Follow the status of the run in the **Jobs** panel
 
-Session Goal: 3D Refinement
---------------------------
+Session 2: 3D reconstruction and refinement
+===========================================
 
 * In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. For the sake of time, we have pre-populated a workflow with parameters. As a group, we will import this workflow, then we will go through the steps and discuss the parameters and features while the refinement runs. 
 
-.. nextpyp:: Step one: Import particles
+.. nextpyp:: Step 1: Import particles
 
   * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
@@ -224,7 +210,7 @@ Session Goal: 3D Refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Step two: Import alignments
+.. nextpyp:: Step 2: Import alignments
 
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Pickng` block) and select :bdg-primary:`Particle refinement`
 
@@ -262,7 +248,7 @@ Session Goal: 3D Refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Step three: Particle Filtering
+.. nextpyp:: Step 3: Particle filtering
 
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Particle filtering`
 
@@ -278,7 +264,7 @@ Session Goal: 3D Refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Step four: Region-based refinement, Tilt-geometry refinement, Further Particle refinement
+.. nextpyp:: Step 4: Region-based refinement, tilt-geometry refinement, further particle refinement
 
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle filtering` block) and select :bdg-primary:`Particle refinement`
 
@@ -318,7 +304,7 @@ Session Goal: 3D Refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Step five: Movie frame refinement
+.. nextpyp:: Step 5: Movie frame refinement
 
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
 
@@ -346,7 +332,7 @@ Session Goal: 3D Refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Step six: Post-processing
+.. nextpyp:: Step 6: Post-processing
 
   * Click on ``Frames`` (output of the :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
 
@@ -364,16 +350,13 @@ Session Goal: 3D Refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-
-
-
 .. nextpyp:: Map/Model Assessment in Chimera (just watch, you can follow if you have Chimera with necessary plugins)
 
   * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
 
   * Download files
 
-    - In the :bdg-primary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
+    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
 
     - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
   

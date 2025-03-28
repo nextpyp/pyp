@@ -1,6 +1,6 @@
-#########################################
-NYSBC course: nextPYP practical (Day Two)
-#########################################
+#######################################
+NYSBC course: nextPYP practical (day 2)
+#######################################
 
 We will demonstrate how explicitly optimizing for fast runtime and giving users flexibility in pre-processing steps can aid in achieving high-quality and high-throughput data acquisition in nextPYP. Starting from **raw data** obtained at the microscope, we'll develop an **automatic pipeline** that can perform all **pre-processing** tasks up to and including particle picking. We will demonstrate this workflow on the EMPIAR-10164 dataset of HIV purified VLPs.
 
