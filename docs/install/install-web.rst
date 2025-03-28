@@ -55,11 +55,16 @@ then vary by operating system:
 
 .. _Apptainer: http://apptainer.org/
 
-.. md-tab-set::
+.. comment:
+   Looks like we're using sphinx-design for panels now?
+   The panels in sphinx-design seem to be a bit different than panels from our old lib, sphinx-panels.
+   See: https://sphinx-design.readthedocs.io/en/pydata-theme/tabs.html
+
+.. tab-set::
   :class: custom-tab-set-style
-  :name: ref_this_tab_set
-  
-  .. md-tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
+  :sync-group: install_web_os
+
+  .. tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
 
     Before installing the packages, you will need first to enable the EPEL_ repository,
     if it was not enabled already:
@@ -76,7 +81,7 @@ then vary by operating system:
 
       sudo dnf install -y apptainer wget
 
-  .. md-tab-item:: Ubuntu (22.04)
+  .. tab-item:: Debian-based Linux (including Ubuntu)
 
     Install `wget`:
 
@@ -100,11 +105,12 @@ then vary by operating system:
 Step 3: Download and run the installation script
 ------------------------------------------------
 
-.. md-tab-set::
+.. tab-set::
   :class: custom-tab-set-style
-  :name: ref_this_tab_set
+  :sync-group: install_web_user
 
-  .. md-tab-item:: I'm using a regular user account
+  .. tab-item:: I'm using a regular user account
+    :sync: user
 
     First, create the folder where ``nextPYP`` will be installed. The location can be anywhere you have write access, for example, ``~/nextPYP`` works well:
 
@@ -134,7 +140,8 @@ Step 3: Download and run the installation script
       ./install
 
 
-  .. md-tab-item:: I'm using an administrator account
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
 
     First, create the folder where ``nextPYP`` will be installed. This folder should be on the local
     filesystem of the web server machine. Something like ``/opt/nextPYP`` works well.
@@ -215,9 +222,12 @@ the installation script would need at least a few minutes to finish.
 Step 4: Check installation results
 ----------------------------------
 
-.. md-tab-set::
+.. tab-set::
+  :class: custom-tab-set-style
+  :sync-group: install_web_user
 
-  .. md-tab-item:: I'm using a regular user account
+  .. tab-item:: I'm using a regular user account
+    :sync: user
 
     Now that ``nextPYP`` is installed, you can start the service and see if it works.
 
@@ -243,7 +253,8 @@ Step 4: Check installation results
 
       ./nextpyp stop
 
-  .. md-tab-item:: I'm using an administrator account
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
 
     Among other things, the installer created a ``systemd`` deamon named ``nextPYP`` to start and stop the
     application automatically. The daemon should be running now. Check it with:
@@ -352,16 +363,20 @@ Here is an example of how to specify these options in the configuration file:
 
 After making changes to your configuration file, restart the application:
 
-.. md-tab-set::
+.. tab-set::
+  :class: custom-tab-set-style
+  :sync-group: install_web_user
 
-  .. md-tab-item:: I'm using a regular user account
+  .. tab-item:: I'm using a regular user account
+    :sync: user
 
     .. code-block:: bash
 
       ./nextpyp stop
       ./nextpyp start
 
-  .. md-tab-item:: I'm using an administrator account
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
 
     .. code-block:: bash
 
@@ -402,9 +417,12 @@ Upgrading to a new version
 
 To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation:
 
-.. md-tab-set::
+.. tab-set::
+  :class: custom-tab-set-style
+  :sync-group: install_web_user
 
-  .. md-tab-item:: I'm using a regular user account
+  .. tab-item:: I'm using a regular user account
+    :sync: user
 
     First, ``cd`` into the folder where you first installed ``nextPYP``.
     Then, stop the website, (re)run the installer, and then start the website again:
@@ -424,7 +442,8 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
       # re-start nextPYP
       ./nextpyp start
 
-  .. md-tab-item:: I'm using an administrator account
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
 
     .. code-block:: bash
 

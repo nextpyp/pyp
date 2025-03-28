@@ -7,7 +7,7 @@ This tutorial shows how to import and export single-particle and tomography proj
 Import single-particle
 ======================
 
-.. nextpyp:: Import single-particle project from *.star files
+.. nextpyp:: Import single-particle project from \*.star files
   :collapsible: open  
 
   * Create or navigate to an existing single-particle project, click :bdg-primary:`Import Data` and select :bdg-primary:`Single-particle (from Star)`
@@ -50,7 +50,7 @@ Import single-particle
 Import tomography
 =================
 
-.. nextpyp:: Import tomography project from *.star files
+.. nextpyp:: Import tomography project from \*.star files
   :collapsible: open  
 
   * Create or navigate to an existing tomography project, click :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Star)`
@@ -95,7 +95,7 @@ Import tomography
 Export refinements
 ==================
 
-.. nextpyp:: Export 3D refinements in *.star format
+.. nextpyp:: Export 3D refinements in \*.star format
   :collapsible: open
 
   * Choose an existing :bdg-primary:`Particle refinement` block, click on the menu icon :fa:`bars`, and select the :fa:`edit` Edit option

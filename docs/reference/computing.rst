@@ -26,9 +26,14 @@ Each processing block in ``nextPYP`` has a **Resources** tab that allows specify
 
 The **Resources** tab consists of three sections, one for each phase (*Launch*, *Split* and *Merge*):
 
+.. comment:
+   Looks like we're using sphinx-design for panels now?
+   The panels in sphinx-design seem to be a bit different than panels from our old lib, sphinx-panels.
+   See: https://sphinx-design.readthedocs.io/en/pydata-theme/dropdowns.html
+
 .. dropdown:: Launch task options
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
+    :class-container: shadow
+    :class-title: bg-primary text-white text-left font-weight-bold
     :open:
 
     .. rst-class:: dl-parameters
@@ -54,8 +59,8 @@ The **Resources** tab consists of three sections, one for each phase (*Launch*, 
       **Default**: Set by admin
 
 .. dropdown:: Split task options
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
+    :class-container: shadow
+    :class-title: bg-primary text-white text-left font-weight-bold
     :open:
 
     .. rst-class:: dl-parameters
@@ -96,8 +101,8 @@ The **Resources** tab consists of three sections, one for each phase (*Launch*, 
       **Default**: Set by admin
 
 .. dropdown:: Merge task options
-    :container: + shadow
-    :title: bg-primary text-white text-left font-weight-bold
+    :class-container: shadow
+    :class-title: bg-primary text-white text-left font-weight-bold
     :open:
 
     .. rst-class:: dl-parameters

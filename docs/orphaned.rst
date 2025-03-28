@@ -7,14 +7,14 @@ Orphaned Documents
    :maxdepth: 2
    :caption: Menu
 
-   install
    introduction
    dump/contributing
    dump/releases
    guide/denoising
    guide/segmentation
-   reference/cli/constrained
-   reference/cli/streampyp
+   cli/constrained
+   cli/streampyp
+   workshop/pre_processing
 
 
 This file just links to documents that aren't linked anywhere else,

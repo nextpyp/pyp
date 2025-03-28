@@ -13,7 +13,7 @@ Import a workflow
 
 - Choose a workflow from the list and click :bdg-primary:`Import`
 
-- A form will appear asking for any required parameters. This typically includes the location of the raw data (and associated files) and the compute :doc:`Resources<computing>` to use
+- A form will appear asking for any required parameters. This typically includes the location of the raw data (and associated files) and the compute :doc:`Resources<../reference/computing>` to use
 
 - Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for N blocks` (where N is the number of blocks in the workflow)
 
