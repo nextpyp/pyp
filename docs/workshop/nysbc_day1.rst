@@ -343,10 +343,11 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-While the :bdg-secondary:`Movie Frame Refinement` block is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
+While the :bdg-secondary:`Movie refinement` block is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
 
 .. nextpyp:: 3D Visualization of alignments in ArtiaX
-  
+  :collapsible: open
+
   * For reference, these instructions are also available on the :doc:`User Guide<../guide/chimerax_artiax>`.
   
   * We assume the user already has the ArtiaX plugin, if not a simple google search will bring you to their docs for installation. 
@@ -408,6 +409,7 @@ While the :bdg-secondary:`Movie Frame Refinement` block is running, we will demo
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
 .. nextpyp:: Map and model assessment in ChimeraX
+  :collapsible: open
   
   * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
 
@@ -430,26 +432,29 @@ While the :bdg-secondary:`Movie Frame Refinement` block is running, we will demo
 Day 1 summary
 =============
 
-Today we learned some of the things we are capable of doing in ``nextPYP``: 
+.. nextpyp:: What we learned on this session
+  :collapsible: open
 
+  Today we learned some of the things we are capable of doing in ``nextPYP``:
+  
   * Raw data import
 
   * Pre-processing (frame alignment, tilt-series alignment, CTF estimation)
 
   * Tomogram reconstruction (WBP, fakeSIRT, SART)
 
-    - Though not covered, ``nextPYP`` also supports :doc:`tomogram denoising<../guide/denoising>` using cryoCARE, IsoNet and Topaz Denoise
+    - ``nextPYP`` also supports :doc:`tomogram denoising<../guide/denoising>` using cryoCARE, IsoNet and Topaz Denoise
 
   * Segmentation (closed surfaces)
 
-    - Though not covered here, ``nextPYP`` also supports :doc:`open surface segmentation<../guide/segmentation>` which uses membrain-seg
+    - ``nextPYP`` also supports :doc:`open surface segmentation<../guide/segmentation>` which uses membrain-seg
 
   * Particle picking (geometrically constrained, size-based, nn-based, manual)
 
-    - Though not covered in this practical, ``nextPYP`` also supports :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
+    - ``nextPYP`` also supports :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
 
   * Particle refinement (constrained single particle tomography, particle filtering, exposure weighting, region-based refinement, movie frame refinement, and post-processing)
 
-    - Though not covered, ``nextPYP`` also supports particle-based CTF refinement, mask building, ab-initio refinement, and 3D classification
+    - Though not covered, ``nextPYP`` also supports particle-based CTF refinement, building shape masks, ab-initio refinement, and 3D classification
 
-  * We hope you enjoy the final bit of today's time and encourage you to explore the things we used today as well as the other options in ``nextPYP``
+  We hope you enjoy the final bit of today's time and encourage you to explore the things we learned as well as the other options available in ``nextPYP``

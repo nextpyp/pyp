@@ -125,16 +125,14 @@ Restarting a session
 
     * Open :bdg-primary:`Logs` to check that the restart flag has been detected and new pre-processing jobs will be launched in response to this change.
 
-    * Check the :bdg-secondary:`Tilt Series` tab to see that fewer particles have been picked.
+    * Check the **Tilt Series** tab to see that fewer particles have been picked.
 
-.. nextpyp:: Using the ``Clear`` Option
+.. nextpyp:: Using the ``Clear`` option
   :collapsible: open
 
-  * :bdg-primary:`Clear` will start pre-processing procedure from scratch.
+  * :bdg-primary:`Clear` will start pre-processing procedure from scratch
 
-  * This is helpful if the changes you've made touch multiple parts of the pre-processing pipeline.
-
-    - Like re-calculating CTF or re-doing frame alignment.
+  * This is helpful if you want to start fresh making sure any previous pre-processing results are ignored.
 
 Copying and deleting sessions
 =============================
@@ -146,7 +144,7 @@ Copying and deleting sessions
 
   * Click the arrow to find where the session's file storage location.
 
-.. important::
+.. warning::
 
   Deleting a session whose mode of file transfer was set to ``Move`` will **delete all files including the raw data**.
 
