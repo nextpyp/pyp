@@ -2725,6 +2725,12 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         # extract paticle frames and write parameter and stack files:
         # 1) parxfile's: working_path/frealign/maps/filename_r??_??.parx
         # 2) stackfile: working_path/filename_stack.mrc
+
+        # show dedicated timer for spr
+        if not is_tomo and not use_frames:
+            t = timer.Timer(text="Projection extraction took: {}", logger=logger.info)
+            t.start()
+
         actual_number_of_frames = csp_extract_frames(
             allparxs,
             parameters,
@@ -2734,6 +2740,9 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             working_path,
             current_path,
         )
+
+        if not is_tomo and not use_frames:
+            t.stop()
 
         # refinement
         # outputs: working_path/frealign/maps/filename_r??_??.parx
