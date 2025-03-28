@@ -202,7 +202,7 @@ Dataset 3: Ribosomes (mouse epithelial cells lamellae)
 Session 2: 3D reconstruction and refinement
 ===========================================
 
-* In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. At a high level, we will be performing reference-based refinement, filtering particles, performing region-based refinement and tilt-geometry refinement, refining movie frames, and completing post-processing. Then we will demonstrate using ChimeraX to visualize our results. 
+In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. At a high level, we will be performing reference-based refinement, filtering particles, performing region-based refinement and tilt-geometry refinement, refining movie frames, and completing post-processing. Then we will demonstrate using ChimeraX to visualize our results. 
 
 .. nextpyp:: Step 1: Import particles
   :collapsible: open
@@ -343,7 +343,7 @@ Session 2: 3D reconstruction and refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-* While :bdg-secondary:`Movie Frame Refinement` is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
+While :bdg-secondary:`Movie Frame Refinement` is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
 
 .. nextpyp:: 3D Visualization of alignments in ArtiaX
   
@@ -428,25 +428,26 @@ Session 2: 3D reconstruction and refinement
     - You can now view the model fit to your map interactively in ChimeraX
 
 Day One Summary
----------------
+===============
+
 Today we learned some of the things we are capable of doing in ``nextPYP``: 
 
-* Raw data import
+  * Raw data import
 
-* Pre-processing of tilt-series (unblur, motioncorr, ctffind5)
+  * Pre-processing (frame alignment, tilt-series alignment, CTF estimation)
 
-* Tomogram reconstruction (imod, aretomo)
+  * Tomogram reconstruction (imod, aretomo)
 
-* Segmentation (closed surfaces)
+  * Segmentation (closed surfaces)
 
-  - Though not covered, we also have open surface segmentation which uses membrain-seg
+    - Though not covered, we also have :doc:`open surface segmentation<../guide/segmentation>` which uses membrain-seg
 
-* Particle Picking (geometrically constrained, size-based, nn-based, manual)
+  * Particle picking (geometrically constrained, size-based, nn-based, manual)
 
-  - Though not covered in this workshop, we also support template search and molecular pattern mining
+    - Though not covered in this practical, we also support :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
 
-* Particle Refinement (fully constrained single particle tomography, reference-based refinement, particle fitlering, exposure weighting, region-based local refinemnet, masking, movie frame refinement, post-processing)
+  * Particle refinement (fully constrained single particle tomography, reference-based refinement, particle fitlering, exposure weighting, region-based local refinemnet, masking, movie frame refinement, post-processing)
 
-  - Though not covered, we also have Particle-based CTF refinement, dedicated masking block, ab-initio refinement, classification, and denoising
+    - Though not covered, we also have oarticle-based CTF refinement, dedicated masking block, ab-initio refinement, classification, and denoising
 
-* We hope you enjoy the final bit of today's time and encourage you to explore the things we used today as well as the other options in nextPYP
+  * We hope you enjoy the final bit of today's time and encourage you to explore the things we used today as well as the other options in ``nextPYP``
