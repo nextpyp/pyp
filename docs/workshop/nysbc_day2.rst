@@ -1,8 +1,8 @@
-###############################################
-NYSBC Workshop: nextPYP Practical
-###############################################
+#######################################
+NYSBC course: nextPYP practical (day 2)
+#######################################
 
-We will demonstrate how explicitly optimizing for fast runtime and giving users flexibility in pre-processing steps can aid in achieving high-quality and high-throughput data acquisition in :fa:`nextPYP`. Starting from **raw data** obtained at the microscope, we'll develop an **automatic pipeline** that can perform all **pre-processing** tasks up to and including particle picking. We will demonstrate this workflow on the `EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset of HIV purified VLPs.
+This session demonstrates how explicitly optimizing for fast runtime and giving users flexibility in pre-processing steps can aid in achieving high-quality and high-throughput data acquisition in :fa:`nextPYP`. Starting from **raw data** obtained at the microscope, we'll develop an **automatic pipeline** that can perform all **pre-processing** tasks up to and including particle picking. We will demonstrate this workflow on the `EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset of HIV purified VLPs.
 
 Dataset
 =======
@@ -177,5 +177,5 @@ Navigating the Sessions Homepage
   * Sessions can be **copied** or **deleted**
 
     - **CAUTION**: Deleting a session whose mode of file transfer was ``Move`` will **delete the data**.
-    
+
   * Click the arrow to find where the session's network file storage location
