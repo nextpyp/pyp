@@ -3,12 +3,13 @@ NYSBC Workshop nextPYP Practical (Day One)
 ##########################################
 
 This session shows how to use :fa:`nextPYP` to convert raw tilt-series from `EMPIAR-10164` into a ~4Å resolution structure of immature HIV-1 Gag protein. We will also cover pre-processing, tomogram reconstruction, and particle-picking for two other datasets representative of datatypes often processed in tomography. 
-Datasets
---------
 
-  EMPIAR-10164: HIV Virus-Like Particles (purified VLPs)
-  EMPIAR-10499: *Mycoplasma pneumoniae* cells (whole cells on grids) 
-  EMPIAR-10987: Mouse eplithelial cells (FIB-SEM milled lamellae)
+Datasets
+-------
+
+  * EMPIAR-10164: HIV Virus-Like Particles (purified VLPs)
+  * EMPIAR-10499: *Mycoplasma pneumoniae* cells (whole cells on grids) 
+  * EMPIAR-10987: Mouse eplithelial cells (FIB-SEM milled lamellae)
 
 Session Goal: Pre-Processing and Particle Picking
 -------------------------------------------------
@@ -16,7 +17,7 @@ In this session we will import frames, perform pre-processing and tomogram recon
 
 
 Create a new project
-----------------------------
+--------------------
 
 .. nextpyp:: Data processing runs are organized into projects. We will create a new project for this tutorial
   :collapsible: open
@@ -28,7 +29,7 @@ Create a new project
   * The newly created project will be empty and a **Jobs** panel will appear on the right
 
 Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
----------------------------------------
+----------------------------------------------
 
 .. nextpyp:: Step 1: Import raw tilt-series 
 
@@ -90,61 +91,85 @@ Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
   
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-.. nextpyp:: Particle Picking
-  :collapsible: open
+  * When the block finishes running, examine the **Tilt-series**, **Plots**, **Table**, and **Gallery** tabs. We will measure our virions in this block as well.  
+
+.. nextpyp:: Step 3: Particle Picking
   
-  - We will be utilizing three steps in three separate blocks to perform geometrically constrained particle picking. This will allow for increased accruacy in particle detection and provides geometric priors for downstream refinement. 
-
-    Step One: Virion Selection
+  * We will be utilizing three separate blocks to perform geometrically constrained particle picking. This will allow for increased accruacy in particle detection and provides geometric priors for downstream refinement. 
   
-    - On the bottom right of the **Pre-processing** block, select the blue button labeled **Tomograms**. 
-    - From the drop down **Use Data** menu, select **Particle-Picking** 
+  * Block One: Virion Selection
+  
+    * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
-        Go to the Particle Detection tab and change the following parameters:
+    * Go to the **Particle detection** tab:
       
-        - Detection method: virions
-        - Virion radius (A): 500 
+      - Set ``Detection method`` to virions
+
+      - Set ``Virion radius (A)`` to 500 (half the diameter we measured)
       
-    - Click **Save**, **Run**, and **Start Run for 1 block**. 
+    * Click :bdg-primary:`Save`
 
-Step Two: Virion Segmentation
+  * Block Two: Virion Segmentation
 
-    - Click the blue button on the Virion Selection block labeled **Particles** and fromt he drop down menu, select **Segmentation (closed surfaces)**
-    - We will not change any parameters for this block, so you can click **Save**, **Run**, and **Start Run for 1 block**. 
+    * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
 
+    * Click :bdg-primary:`Save`
+
+  * Block Three: Spike (Gag) Detection
+  
+    * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
     
-Step Three: Spike (Gag) Detection
-  
-    - Click the blue button on the Virion Segmentation block labeled **Segmentation (closed)** and from the drop down menu, select Particle-Picking (closed surfaces). 
-    - 
-        Go to the Particle Detection tab and change the following parameters:
+    * Go to the **Particle detection** tab:
       
-        - Detection method: uniform
-        - Particle radius (A): 50
-        - Size of equatorial band to restrict spike picking (A): 800
+      - Set ``Detection method`` to uniform
+
+      - Set ``Particle radius (A)`` to 50
+
+      - Set ``Size of equatorial band to restrict spike picking (A)`` to 800
       
-    - Click **Save**, **Run**, and **Start Run for 1 block**
+    * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 3 blocks`. Follow the status of the run in the **Jobs** panel
     
 
 
-2. EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
------------------------------------------------------
+Dataset 2: EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
+------------------------------------------------------------
 
-Import Workflow
+.. nextpyp:: Import Workflow
 
-- In the upper left of your project page, click **Import Workflow**
-- From the menu that populates, select the **Import** button to the right of **2025 NYSBC workshop: Pre-processing (EMPIAR-10499)**
-- We have pre-set the parameters for each block, so you can immediately click **Save**
-- Three blocks should populate on your project page, **Tomgoraphy (from Raw Data)**, **Pre-processing**, and **Particle-Picking**. 
-- Click **Run**, if only those 3 blocks are selected you can click **Start Run for 3 blocks**. If more than those three blocks are selected, deselect the extra blocks by clicking the blue checkbox to the left of the block name. Then click **Start Run for 3 blocks**. 
+  * In the upper left of your project page, click :bdg-primary:`Import Workflow`
 
-Particle picking, go through parameters
+  * Choose the **2025 NYSBC workshop: Pre-processing (EMPIAR-10499)** workflow by clicking :bdg-primary:`Import`
 
-- how did I get the trained model?? (how many particles do I need, how long does it take to run)
-- can copy the block and go through manual picking
+  * We pre-set the parameters for the workflow, so you can immediately click :bdg-primary:`Save`. Three blocks will populate on the project page. 
 
-3. EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
-------------------------------------------------------------------
+.. nextpyp:: Edit Particle Picking Parameters
+
+  * Click into the settings of the :bdg-primary:`Particle-Picking` block
+
+    - Set ``Particle radius (A)`` to 80
+
+    - Change ``Detection method`` from none to auto using the dropdown menu
+  
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 3 blocks`. Follow the status of the run in the **Jobs** panel
+
+.. nextpyp:: Copy Particles and Manually Edit
+
+  * Click on the menu for the :bdg-primary:`Particle-Picking` block
+
+  * Select **Copy** 
+
+  * Check **Copy files and data** and **Make automatically-picked particles editable** 
+
+  * Click :bdg-primary:`Next`
+
+  * Click into the new :bdg-primary:`Particle-Picking` block. 
+
+  * Ensure you are on the **Particles** tab. Here, you can right click to remove particles and left click to add particles. 
+
+  * This manual picking feature is what I used the generate a particle set for nn-training for the next particle picking method we will use on the third dataset. 
+
+Dataset 3: EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
+-------------------------------------------------------------------------
 
 Import Workflow
 
