@@ -1,6 +1,6 @@
-=======================
+========================
 Pattern mining (MiLoPYP)
-=======================
+========================
 
 `MiLoPYP <https://nextpyp.app/milopyp/>`_ can be used to map the contents of a set of tomograms, with the goal of identifying targets of interest for sub-tomogram averaging as described in `Huang et al. (2024) <https://cryoem.cs.duke.edu/node/milopyp-self-supervised-molecular-pattern-mining-and-particle-localization-in-situ/>`_.
 
