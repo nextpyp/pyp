@@ -27,7 +27,7 @@ Starting a Session
 
     * Pick a *unique* **Folder Name** for your session. There can only be one folder name per session, regardless of the user-readable name!
 
-    * Select the ``Workshop`` group
+    * Select the ``Workshop`` group.
 
   * Click on the :bdg-secondary:`Raw Data` tab.
 
