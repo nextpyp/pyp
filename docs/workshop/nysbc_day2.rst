@@ -181,7 +181,7 @@ Importing and Exporting Sessions
 
   Since Sessions also perform pre-processing, we can import a finished Sessions job into a project to kick-start the process of structure determination.
 
-  * Click the :bdg-primary:`Dashboard` link to go back to nextPYP's homepage.
+  * Click the :bdg-secondary:`Dashboard` link to go back to nextPYP's homepage.
 
   * Click the :bdg-primary:`Create New Project` button and give your project a name.
 
