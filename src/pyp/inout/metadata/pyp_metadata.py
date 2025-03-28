@@ -13,7 +13,7 @@ from tqdm import tqdm
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system import project_params
-from pyp.utils import get_relative_path, movie2regex, symlink_force
+from pyp.utils import get_relative_path, movie2regex, symlink_force, symlink_relative
 from pyp.system.utils import get_imod_path
 from pyp.streampyp.logging import TQDMLogger
 from pyp.inout.metadata import frealign_parfile, cistem_star_file
@@ -1510,7 +1510,7 @@ _rlnOriginZAngst #3
                     except OSError:
                         pass
                 try:
-                    os.symlink(os.path.join(input_dir,"mrc",imagename + ".mrc"), target)
+                    symlink_relative(os.path.join(input_dir,"mrc",imagename + ".mrc"), target)
                 except OSError:
                     pass
 
@@ -1610,7 +1610,7 @@ _rlnCtfMaxResolution #6 """
 
             CTFs = self.refinement[["DF1", "DF2", "ANGAST", "CTF_MERIT", "CTF_MAX_RESOLUTION"]]
             if coords: 
-                micrograph_coord = self.refinement[["FILM", "COORDX", "COORDY"]]
+                micrograph_coord = self.refinement[["IMAGE_IS_ACTIVE", "ORIGINAL_X_POSITION", "ORIGINAL_Y_POSITION"]]
                 total_ptl = micrograph_coord.shape[0]
                 length = len(str(total_ptl))
                 ptl_name = pd.DataFrame([f"{i:0{length}d}@stack.mrcs" for i in range(1, total_ptl + 1)], columns=["PTL_NAME"])
@@ -1779,7 +1779,7 @@ _rlnRandomSubset #14
                     if not os.path.exists(os.path.join("relion", "Movies")):
                         os.mkdir(os.path.join("relion", "Movies"))
                     if not os.path.exists(os.path.join("relion", "Movies", f"{micrograph}.mrc")):
-                        os.symlink(os.path.join(os.getcwd(), "mrc", f"{micrograph}.mrc"), os.path.join("relion", "Movies", f"{micrograph}.mrc"))
+                        symlink_relative(os.path.join(input_dir, "mrc", f"{micrograph}.mrc"), os.path.join("relion", "Movies", f"{micrograph}.mrc"))
 
                     # raw image size
                     num_tilts = data["image"].values[0][-1]
@@ -1870,7 +1870,7 @@ _rlnRandomSubset #14
 
                         coordinates = data["box"].values
                         for particle_index, coord in enumerate(coordinates):
-                            x, y, z = coord
+                            x, y, z = coord[:3]
                             relion_x, relion_y, relion_z = spk2Relion(x, y, z, binning, full_tomo_x, full_tomo_y, thickness=full_thickness, tomo_x_bin=tomo_x, tomo_y_bin=tomo_y, tomo_z_bin=tomo_z)
 
                             # there is no alignment info here, only particle coordinates
