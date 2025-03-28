@@ -59,7 +59,7 @@ Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
 
   * Click :bdg-primary:`Start Run for 1 block`. This will launch a process that reads one tilt at random and displays the resulting image inside the block
 
-  * Click on the thumbnail inside hte block to see a larger version of hte projection image
+  * Click on the thumbnail inside the block to see a larger version of the projection image
 
 .. nextpyp:: Step 2: Pre-Processing and Tomogram Reconstruction
 
@@ -363,7 +363,7 @@ Session Goal: 3D Refinement
 
   * Download files
 
-    - In the **Post-Processing** block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
+    - In the :bdg-primary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
 
     - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
   
@@ -389,11 +389,11 @@ Session Goal: 3D Refinement
 
     - Select a tomogram you wish to visualize the particles in. I will be using TS_01. 
     
-    - Click into the **Pre-processing** block, go to **Tilt Series** and **Tomogram**. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
+    - Click into the :bdg-primary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
     
-    - Click into the **Particle refinement** block, go to the **Metadata** tab. On this page, type **TS_43** into the search bar and click **Search**. Click the .star file to download particle alignments. 
+    - Click into the :bdg-primary:`Particle refinement` block, go to the **Metadata** tab. On this page, type **TS_43** into the search bar and click **Search**. Click the .star file to download particle alignments. 
     
-    - Go to the **Reconstruction** tab of the **Particle refinement** block  and download the **Cropped Map**. 
+    - Go to the **Reconstruction** tab and download the **Cropped Map**. 
     
   * Display in ChimeraX
 
