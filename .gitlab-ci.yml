@@ -1,4 +1,4 @@
-image: python:3.8.8
+image: python:3.11
 
 # container:
 #   tags:
@@ -17,7 +17,7 @@ image: python:3.8.8
 docs:
   script:
     - python3 -m pip install --upgrade build
-    - pip install -r docs/requirements_docs.txt
+    - pip install -r docs/requirements_docs_minimal.txt
     # - sphinx-apidoc src/ -f -o docs/
     - cd docs/
     - sphinx-build -d _build/doctrees . _build/html
