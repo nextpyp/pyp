@@ -362,9 +362,6 @@ def extract_particles(
     return number_of_particles
 
 
-@timer.Timer(
-    "extract_particles_non_mpi", text="Projection extraction took: {}", logger=logger.info
-)
 def extract_particles_non_mpi(
     input,
     output,
