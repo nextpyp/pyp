@@ -236,7 +236,7 @@ AreTomo2 and MotioCor3
 Topaz
 =====
 
-Topaz is distributed under the `GNU General Public License v3.0 <https://github.com/tbepler/topaz/blob/master/LICENSE>`_.
+Topaz is distributed under the `GNU General Public License v3.0 <https://github.com/tbepler/topaz/blob/master/LICENSE>`__.
 
 
 IsoNet
@@ -340,10 +340,10 @@ MemBrain-Seg
 tomoDRGN
 ========
 
-tomoDRGN is distributed under the `GNU General Public License v3.0 <https://github.com/bpowell122/tomodrgn/blob/master/LICENSE.txt>`_.
+tomoDRGN is distributed under the `GNU General Public License v3.0 <https://github.com/bpowell122/tomodrgn/blob/master/LICENSE.txt>`__.
 
 
 pytom-match-pick
 ================
 
-pytom-match-pick is distributed under the `GNU General Public License v2.0 <https://github.com/SBC-Utrecht/pytom-match-pick/blob/main/LICENSE>`_.
+pytom-match-pick is distributed under the `GNU General Public License v2.0 <https://github.com/SBC-Utrecht/pytom-match-pick/blob/main/LICENSE>`__.

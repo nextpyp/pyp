@@ -34,7 +34,7 @@ def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, do
         tasks = []
         for stack in particle_stack_list:
             
-            command = f"{get_cryodrgn_path()} downsample {stack} -D {downsample_size} -o {stack.replace('.mrcs', '')}_{downsample_size}.mrcs"
+            command = f"{get_cryodrgn_path()} downsample {stack} -D {int(downsample_size)} -o {stack.replace('.mrcs', '')}_{downsample_size}.mrcs"
             # local_run.run_shell_command(command, verbose=True)
             tasks.append(command)
         

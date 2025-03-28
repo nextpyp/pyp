@@ -30,20 +30,28 @@ Step 1: Prerequisites for installation
     to the required network resources, like the SLURM login node, and a shared filesystem.
 
   If you don't have a service account ready already, and you only need it to work on the local machine,
-  you can create one in Debian-like Linux with:
+  you can create one with:
 
-  .. code-block:: bash
+.. tab-set::
+  :sync-group: install_web_os
+
+  .. tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
+    :sync: rhel
+
+    .. code-block:: bash
 
       sudo adduser --system --group nextpyp
 
-  If you're using RHEL-like Linux, try:
+  .. tab-item:: Debian-based Linux (including Ubuntu)
+    :sync: debian
 
-  .. code-block:: bash
+    .. code-block:: bash
 
       sudo adduser --system --user-group nextpyp
 
+
 * **Access to GPUs (optional)**
-  
+
   GPUs are only required to execute certain processing steps in ``nextPYP`` (e.g.: train neural networks for particle picking, run MotionCor3 for frame alignment or Aretomo for tilt-series alignment and reconstruction). ``nextPYP`` uses Apptainer_ which natively supports NVIDIA CUDA & AMD ROCm, but we have only tested it with NVIDIA GPUs. If you have problems using AMD ROCm GPUs, please contact us.
 
 
@@ -55,11 +63,16 @@ then vary by operating system:
 
 .. _Apptainer: http://apptainer.org/
 
-.. md-tab-set::
-  :class: custom-tab-set-style
-  :name: ref_this_tab_set
-  
-  .. md-tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
+.. comment:
+   Looks like we're using sphinx-design for panels now?
+   The panels in sphinx-design seem to be a bit different than panels from our old lib, sphinx-panels.
+   See: https://sphinx-design.readthedocs.io/en/pydata-theme/tabs.html
+
+.. tab-set::
+  :sync-group: install_web_os
+
+  .. tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
+    :sync: rhel
 
     Before installing the packages, you will need first to enable the EPEL_ repository,
     if it was not enabled already:
@@ -76,7 +89,8 @@ then vary by operating system:
 
       sudo dnf install -y apptainer wget
 
-  .. md-tab-item:: Ubuntu (22.04)
+  .. tab-item:: Debian-based Linux (including Ubuntu)
+    :sync: debian
 
     Install `wget`:
 
@@ -100,11 +114,11 @@ then vary by operating system:
 Step 3: Download and run the installation script
 ------------------------------------------------
 
-.. md-tab-set::
-  :class: custom-tab-set-style
-  :name: ref_this_tab_set
+.. tab-set::
+  :sync-group: install_web_user
 
-  .. md-tab-item:: I'm using a regular user account
+  .. tab-item:: I'm using a regular user account
+    :sync: user
 
     First, create the folder where ``nextPYP`` will be installed. The location can be anywhere you have write access, for example, ``~/nextPYP`` works well:
 
@@ -134,10 +148,18 @@ Step 3: Download and run the installation script
       ./install
 
 
-  .. md-tab-item:: I'm using an administrator account
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
 
     First, create the folder where ``nextPYP`` will be installed. This folder should be on the local
     filesystem of the web server machine. Something like ``/opt/nextPYP`` works well.
+
+    .. warning::
+
+      While you can install ``nextPYP`` to a networked folder, doing so often comes with performance penalties,
+      since reading files from remote folders can be much slower than a local folder. For the best performance,
+      install ``nextPYP`` to folder in the web server's local filesystem.
+
     This folder should be owned by `root` or your administrator account.
     The installation folder should *not* be owned by the service account, for security reasons.
 
@@ -167,7 +189,8 @@ Step 3: Download and run the installation script
 
       sudo chmod u+x install
 
-    The installation script has a few different options, to handle different environments.
+    The installation script has a few different options, configured as environment variables, to handle different
+    needs during installation.
     In privileged installation, you'll need at least the ``PYP_USER`` option, and maybe some others too.
     All of the options are described below.
 
@@ -175,11 +198,19 @@ Step 3: Download and run the installation script
         The name of the service account. The service account should be an unprivileged user for security reasons.
 
     * ``PYP_GROUP``
-        The group of the service account. By default, the installer will try using a group with the same name as the account. If the installer fails with an error like: ``$username is not a valid group``, then you'll need to set ``PYP_GROUP`` explicitly: eg, ``PYP_GROUP=services``
+        The group of the service account. By default, the installer will try using a group with the same name as the
+        account. If the installer fails with an error like: ``$username is not a valid group``, then you'll need to
+        set ``PYP_GROUP`` explicitly: eg, ``PYP_GROUP=services``
 
     * ``PYP_LOCAL``
-        If your web server has access to fast local storage that is different than the storage used by the operating system (eg. NVMe SSDs mounted at ``/scratch``), this option will configure ``nextPYP`` to use it. Omitting this option will use a location inside the install folder for local storage instead.
-        This setting should be the path to a folder on the local filesystem that is owned by the service account, eg. ``PYP_LOCAL="/media/nvme/nextPYP"``
+        If your web server has access to fast local storage that is different than the storage used by the operating
+        system (eg. NVMe SSDs mounted at ``/nvme``), this option will configure ``nextPYP`` to use it. Omitting this
+        option will use a location inside the install folder for local storage instead.
+
+        To use the separate local folder, set ``PYP_LOCAL`` to the path of a folder that already exists and is owned
+        by the service account, eg, ``PYP_LOCAL="/nvme/nextPYP"``.
+        During installation, the installer will create the ``local`` sub-folder inside of the folder you chose.
+        During operation, the service account will need to be able to read and write from this sub-folder.
 
     If you're installing onto a compute cluster with a shared filesystem, you'll need both the ``PYP_SHARED_DATA`` and ``PYP_SHARED_EXEC`` options:
 
@@ -215,9 +246,11 @@ the installation script would need at least a few minutes to finish.
 Step 4: Check installation results
 ----------------------------------
 
-.. md-tab-set::
+.. tab-set::
+  :sync-group: install_web_user
 
-  .. md-tab-item:: I'm using a regular user account
+  .. tab-item:: I'm using a regular user account
+    :sync: user
 
     Now that ``nextPYP`` is installed, you can start the service and see if it works.
 
@@ -243,7 +276,8 @@ Step 4: Check installation results
 
       ./nextpyp stop
 
-  .. md-tab-item:: I'm using an administrator account
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
 
     Among other things, the installer created a ``systemd`` deamon named ``nextPYP`` to start and stop the
     application automatically. The daemon should be running now. Check it with:
@@ -289,7 +323,7 @@ Executing this command should return a response like the following:
     HTTP request sent, awaiting response... 200 OK
     Length: 353 [text/html]
     Saving to: ‘STDOUT’
-    
+
     -                                    0%[                                                                 ]       0  --.-KB/s               <!DOCTYPE html>
     <html>
     <head>
@@ -303,8 +337,8 @@ Executing this command should return a response like the following:
     <div id="mmapp"></div>
     </body>
     </html>
-    -                                  100%[================================================================>]     353  --.-KB/s    in 0s      
-    
+    -                                  100%[================================================================>]     353  --.-KB/s    in 0s
+
     2023-11-15 11:46:35 (47.7 MB/s) - written to stdout [353/353]
 
 If you get errors instead of something similar to the responses above, then the application did not start up successfully.
@@ -352,16 +386,19 @@ Here is an example of how to specify these options in the configuration file:
 
 After making changes to your configuration file, restart the application:
 
-.. md-tab-set::
+.. tab-set::
+  :sync-group: install_web_user
 
-  .. md-tab-item:: I'm using a regular user account
+  .. tab-item:: I'm using a regular user account
+    :sync: user
 
     .. code-block:: bash
 
       ./nextpyp stop
       ./nextpyp start
 
-  .. md-tab-item:: I'm using an administrator account
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
 
     .. code-block:: bash
 
@@ -402,9 +439,11 @@ Upgrading to a new version
 
 To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation:
 
-.. md-tab-set::
+.. tab-set::
+  :sync-group: install_web_user
 
-  .. md-tab-item:: I'm using a regular user account
+  .. tab-item:: I'm using a regular user account
+    :sync: user
 
     First, ``cd`` into the folder where you first installed ``nextPYP``.
     Then, stop the website, (re)run the installer, and then start the website again:
@@ -424,7 +463,8 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
       # re-start nextPYP
       ./nextpyp start
 
-  .. md-tab-item:: I'm using an administrator account
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
 
     .. code-block:: bash
 

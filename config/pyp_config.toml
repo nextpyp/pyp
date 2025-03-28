@@ -1419,7 +1419,7 @@ hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" 
 
 [tabs.detect_nn3d.thresh]
 name = "Threshold for soft/hard positives"
-description = "Higher values give fewer partiles, lower values give more particles"
+description = "Higher values give fewer particles, lower values give more particles"
 type = "float"
 default = 0.85
 hidden = ["stream_spr", "stream_tomo", "tomo_particles_train"]
@@ -4819,8 +4819,8 @@ default = "tomoDRGN"
 [tabs.heterogeneity.cryodrgn_downsample_size]
 name = "Downsample boxsize"
 description = "Downsampled particle boxsize for training"
-type = "int"
-default = 128
+type = "float"
+default = 128.0
 condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_zdim]
