@@ -62,7 +62,7 @@ Dataset 1: Immature Gag protein from HIV-1 VLPs
 
   * Click on the thumbnail inside the block to see a larger version of the projection image
 
-.. nextpyp:: Step 2: Pre-processing and tomogram reconstruction
+.. nextpyp:: Step 2: Pre-processing
   :collapsible: open
   
   * Click on ``Tilt-series`` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
@@ -140,7 +140,7 @@ Dataset 2: Ribosomes (whole *Mycoplasma* cells)
   
   * In the upper left of your project page, click :bdg-primary:`Import Workflow`
 
-  * Choose the **2025 NYSBC workshop: Pre-processing (EMPIAR-10499)** workflow by clicking the :bdg-primary:`Import` button to its right
+  * Choose the **2025 NYSBC course: Pre-processing (EMPIAR-10499)** workflow by clicking the :bdg-primary:`Import` button to its right
 
   * We pre-set the parameters for the workflow, so you can immediately click :bdg-primary:`Save`. Three blocks will populate on the project page. 
 
@@ -172,15 +172,15 @@ Dataset 2: Ribosomes (whole *Mycoplasma* cells)
 
   * This manual picking feature is what I used the generate a particle set for nn-training for the next particle picking method we will use on the third dataset. 
 
-Dataset 3: Ribosomes (mouse epithelial cells lamellae)
-------------------------------------------------------
+Dataset 3: Ribosomes (lamellae from mouse epithelial cells)
+-----------------------------------------------------------
 
 .. nextpyp:: Step 1: Import workflow
   :collapsible: open
   
   * In the upper left of your project page, click :bdg-primary:`Import Workflow`
 
-  * Choose the **2025 NYSBC workshop: Pre-processing (EMPIAR-10987)** workflow by clicking :bdg-primary:`Import`
+  * Choose the **2025 NYSBC course: Pre-processing (EMPIAR-10987)** workflow by clicking :bdg-primary:`Import`
 
   * We pre-set the parameters for the workflow, so you can immediately click :bdg-primary:`Save`. Three blocks will populate on the project page. 
 
@@ -343,21 +343,21 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-While :bdg-secondary:`Movie Frame Refinement` is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
+While the :bdg-secondary:`Movie Frame Refinement` block is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
 
 .. nextpyp:: 3D Visualization of alignments in ArtiaX
   
-  * For reference, these instructions are available on the :doc:`nextPYP User Guide<../guide/chimerax_artiax>`.
+  * For reference, these instructions are also available on the :doc:`User Guide<../guide/chimerax_artiax>`.
   
   * We assume the user already has the ArtiaX plugin, if not a simple google search will bring you to their docs for installation. 
   
   * Download files
 
-    - Select a tomogram you wish to visualize the particles in. I will be using TS_43. 
+    - Select a tomogram you wish to visualize the particles in. I will be using ``TS_43``. 
     
     - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
     
-    - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type **TS_43** into the search bar and click **Search**. Click the .star file to download particle alignments. 
+    - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type ``TS_43`` into the search bar and click **Search**. Click the .star file to download particle alignments. 
     
     - Go to the **Reconstruction** tab and download the **Cropped Map**. 
     
@@ -365,7 +365,7 @@ While :bdg-secondary:`Movie Frame Refinement` is running, we will demonstrate us
 
     - Open ChimeraX (again, we assume ArtiaX is installed)
     
-    - Open the tomogram **TS_43.rec** 
+    - Open the tomogram ``TS_43.rec``
     
     - Run the following commands in the ChimeraX shell:
   
@@ -407,7 +407,7 @@ While :bdg-secondary:`Movie Frame Refinement` is running, we will demonstrate us
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Map/Model Assessment in ChimeraX
+.. nextpyp:: Map and model assessment in ChimeraX
   
   * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
 
@@ -427,8 +427,8 @@ While :bdg-secondary:`Movie Frame Refinement` is running, we will demonstrate us
     
     - You can now view the model fit to your map interactively in ChimeraX
 
-Day One Summary
-===============
+Day 1 summary
+=============
 
 Today we learned some of the things we are capable of doing in ``nextPYP``: 
 
@@ -436,18 +436,20 @@ Today we learned some of the things we are capable of doing in ``nextPYP``:
 
   * Pre-processing (frame alignment, tilt-series alignment, CTF estimation)
 
-  * Tomogram reconstruction (imod, aretomo)
+  * Tomogram reconstruction (WBP, fakeSIRT, SART)
+
+    - Though not covered, ``nextPYP`` also supports :doc:`tomogram denoising<../guide/denoising>` using cryoCARE, IsoNet and Topaz Denoise
 
   * Segmentation (closed surfaces)
 
-    - Though not covered, we also have :doc:`open surface segmentation<../guide/segmentation>` which uses membrain-seg
+    - Though not covered here, ``nextPYP`` also supports :doc:`open surface segmentation<../guide/segmentation>` which uses membrain-seg
 
   * Particle picking (geometrically constrained, size-based, nn-based, manual)
 
-    - Though not covered in this practical, we also support :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
+    - Though not covered in this practical, ``nextPYP`` also supports :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
 
-  * Particle refinement (fully constrained single particle tomography, reference-based refinement, particle fitlering, exposure weighting, region-based local refinemnet, masking, movie frame refinement, post-processing)
+  * Particle refinement (constrained single particle tomography, particle filtering, exposure weighting, region-based refinement, movie frame refinement, and post-processing)
 
-    - Though not covered, we also have oarticle-based CTF refinement, dedicated masking block, ab-initio refinement, classification, and denoising
+    - Though not covered, ``nextPYP`` also supports particle-based CTF refinement, mask building, ab-initio refinement, and 3D classification
 
   * We hope you enjoy the final bit of today's time and encourage you to explore the things we used today as well as the other options in ``nextPYP``
