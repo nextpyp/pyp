@@ -4358,7 +4358,8 @@ if __name__ == "__main__":
                     session_parameters = project_params.load_pyp_parameters(session_path)
                     data_set = session_parameters["data_set"]
 
-                    micrographs = "{}.micrographs".format(data_set)
+                    # find .micrographs file in export directory
+                    micrographs = glob.glob("*.micrographs")[0]
                     micrograph_list = [line.strip() for line in open(micrographs, "r") if line.strip()]
 
                     os.chdir(session_path)
