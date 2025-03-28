@@ -362,7 +362,10 @@ Session 2: 3D reconstruction and refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Map/Model Assessment in Chimera (just watch, you can follow if you have Chimera with necessary plugins)
+Map/Model Assessment in Chimera
+-------------------------------
+
+.. nextpyp:: Assess map in Chimera (just watch, you can follow if you have Chimera with necessary plugins)
   :collapsible: open
   
   * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
@@ -383,7 +386,10 @@ Session 2: 3D reconstruction and refinement
     
     - You can now view the model fit to your map interactively in ChimeraX
 
-.. nextpyp:: 3D Visualization in ArtiaX (just watch, though you can follow if you have ArtiaX plugin)
+3D Visualization in ArtiaX
+--------------------------
+
+.. nextpyp:: Map structure into tomograms (just watch, though you can follow if you have ArtiaX plugin)
   :collapsible: open
   
   * For reference, these instructions are available on the :doc:`nextPYP User Guide<../guide/chimerax_artiax>`.
