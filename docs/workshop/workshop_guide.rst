@@ -2,9 +2,7 @@
 NYSBC Workshop nextPYP Practical (Day One)
 ##########################################
 
-We will demonstrate the use of **nextPYP** to generate an ~4Å resolution structure of HIV-Gag protein from three tilt-series. In this practical we will import raw data, perform pre-processing tasks, reconstruct tomograms, pick particles, and perform refinement to generate a map. We will all complete this procedure together on **EMPIAR-10164** and import workflows for two other datasets that are representative of additional sample types commonly imaged using cryo-ET. 
-
-
+This session shows how to use :fa:`nextPYP` to convert raw tilt-series from `EMPIAR-10164` into a ~4Å resolution structure of immature HIV-1 Gag protein. We will also cover pre-processing, tomogram reconstruction, and particle-picking for two other datasets representative of datatypes often processed in tomography. 
 Datasets
 --------
 
@@ -17,86 +15,91 @@ Session Goal: Pre-Processing and Particle Picking
 In this session we will import frames, perform pre-processing and tomogram reconstruction, and pick particles for on HIV VLPs together. We will also import workflows to pick ribosomes from bacteria cells and lamellae cut from mouse epithelial cells. 
 
 
-Create a Project
- 
-- On your Dashboard, select the blue **Create new project** button.
-- In the window that pops up, name your project and hit **Create**. 
-- Select your project, and then click **Open**. 
+Create a new project
+----------------------------
 
+.. nextpyp:: Data processing runs are organized into projects. We will create a new project for this tutorial
+  :collapsible: open
 
-### 1. EMPIAR-10164: HIV VLPs (Gag Protein)
+  * Click on :bdg-primary:`Create new project`, give the project a name, and select :bdg-primary:`Create`
 
+  * Select the new project from the **Dashboard** and click :bdg-primary:`Open`
 
-Import Raw Data
+  * The newly created project will be empty and a **Jobs** panel will appear on the right
 
-- Go to the upper left fo the project page, select **Import Data**
-- Click on :bdg-primary:`Tomography (from Raw Data)`
-- Edit the following parameters:
-  - 
-    Raw Data
-  
-    - Click the magnifying glass and set the path to raw data:
-     /nfs/bartesaghilab/nextpyp/workshop/10164/
-    - Type *.tif into the box on the bottom right and hit the filter icon.
+Dataset 1: EMPIAR-10164: HIV VLPs (Gag Protein)
+---------------------------------------
+
+.. nextpyp:: Step 1: Import raw tilt-series 
+
+  * Go to :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Raw Data)`  
+
+  * A form to enter parameters will appear:
+
+  * Go to the **Raw data** tab:
+
+    - Set the ``path to raw data`` by clicking on the icon :fa:`search` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/``
+    
+    - Type ``*.tif`` into the filter box (lower right) and click the icon :fa:`filter`
        
-  - 
-     Microscope Parameters
-  
-      - Pixel size (A): 1.35
-      - Acceleration voltage (kV): 300
-      - Tilt-axis angle (degrees): 85.3
-    
-- Click **Save**
-- In the upper right hand corner of the project page, select **Run**, then **Start Run for 1 block**.
+  * Go the the **Microscope Parameters** tab: 
 
+    - Set ``Pixel size (A)`` to 1.35
 
+    - Set ``Acceleration voltage (kV)`` to 300
 
-Pre-Processing and Tomogram Reconstruction
-  
-- At the bottom right of the **Tomography (from Raw Data)** block, select the blue button labeled **Tilt-series**. 
-- From the drop down **Use Data** menu, select **Pre-processing**. 
-- Examine the following tabs:
-  - 
-    Frame Alignment
+    - Set ``Tilt-axis angle (degrees)`` to 85.3    
 
-    - Our frames are **.tif** files.
-    - We will be using **unblur** to perform frame alignment. 
-    - These are the default settings, so we do not change anything on this tab. 
-    
-  - 
-    CTF Determination
+  * Click :bdg-primary:`Save` and the new block will appear on the project page
+
+  * The block is in the modified state (indicated by the :fa:`asterisk` sign) and is ready to be executed
+
+  * Clicking the button :bdg-primary:`Run` will show another dialog where you can select which blocks to run:
+
+  * Click :bdg-primary:`Start Run for 1 block`. This will launch a process that reads one tilt at random and displays the resulting image inside the block
+
+  * Click on the thumbnail inside hte block to see a larger version of hte projection image
+
+.. nextpyp:: Step 2: Pre-Processing and Tomogram Reconstruction
+
+  * Click on ``Tilt-series`` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
+
+  * Go to the **Frame alignment** tab:
+
+    - ``nextPYP`` uses the ``Frame pattern`` to extract metadata form the file names. EMPIAR-10164 follows the default file naming scheme and ``.tif`` extension, so we will leave the default setting. 
+
+    - We will use ``unblur`` for frame alignment. 
+
+  * Go to the **CTF determination** tab
+
+    - Set ``Max resolution`` to 5 
+
+  * Go to the **Tilt-series alignment** tab
+
+    - Our ``Alignment method`` will be IMOD fiducial-based which is the default so make no changes.
   
-      - Change the **Max resolution (A)** to 5.
-    
-  - 
-    Tilt-series alignment
+  * Go to the **Tomogram reconstruction** tab
   
-      - We will use **IMOD fiducials** based alignment. 
-      - This is the default so we do not change anything. 
-    
-  - 
-    Tomogram reconstruction
+    - Our ``Reconstruction method`` will be IMOD, this is the default so make no changes. 
+
+  * Go to the **Resources** tab
+
+    - Set ``Threads per task`` to 41
+
+    - Set ``Memory per task`` to 164
   
-    - We will use **IMOD** to reconstruct our tomograms. 
-    - For this dataset, the default setting work so we will not change them.
-    
-  - Resources
-    
-    - 41 threads
-    - 164 memory
-- Select **Save**
-- In the upper right hand corner of your project page, select **Run**, then **Start Run for 1 block**. 
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
 .. nextpyp:: Particle Picking
   :collapsible: open
   
   - We will be utilizing three steps in three separate blocks to perform geometrically constrained particle picking. This will allow for increased accruacy in particle detection and provides geometric priors for downstream refinement. 
-  - 
+
     Step One: Virion Selection
   
     - On the bottom right of the **Pre-processing** block, select the blue button labeled **Tomograms**. 
     - From the drop down **Use Data** menu, select **Particle-Picking** 
-    - 
+
         Go to the Particle Detection tab and change the following parameters:
       
         - Detection method: virions
@@ -104,15 +107,13 @@ Pre-Processing and Tomogram Reconstruction
       
     - Click **Save**, **Run**, and **Start Run for 1 block**. 
 
-hello   
-    Step Two: Virion Segmentation
+Step Two: Virion Segmentation
 
     - Click the blue button on the Virion Selection block labeled **Particles** and fromt he drop down menu, select **Segmentation (closed surfaces)**
     - We will not change any parameters for this block, so you can click **Save**, **Run**, and **Start Run for 1 block**. 
 
     
-  - 
-    Step Three: Spike (Gag) Detection
+Step Three: Spike (Gag) Detection
   
     - Click the blue button on the Virion Segmentation block labeled **Segmentation (closed)** and from the drop down menu, select Particle-Picking (closed surfaces). 
     - 
@@ -126,8 +127,8 @@ hello
     
 
 
-### 2. EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
-
+2. EMPIAR-10499: Whole *Mycoplasma* Cells (Ribosomes)
+-----------------------------------------------------
 
 Import Workflow
 
@@ -142,8 +143,8 @@ Particle picking, go through parameters
 - how did I get the trained model?? (how many particles do I need, how long does it take to run)
 - can copy the block and go through manual picking
 
-### 3. EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
-
+3. EMPIAR-10987: FIB-SEM Milled Mouse Epithelial Cells (Ribosomes)
+------------------------------------------------------------------
 
 Import Workflow
 
@@ -156,8 +157,8 @@ Import Workflow
 
 Particle Picking go through parameters
 
-## Session Goal: 3D Refinement
-
+Session Goal: 3D Refinement
+---------------------------
 In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. For the sake of time, we have pre-populated a workflow with parameters. As a group, we will import this work flow, then we will go through the steps and discuss the parameters and features while the refinement runs. 
 
 Show slides before hand what general steps are going to be (high level)
@@ -179,34 +180,36 @@ End-To-End Processing
 - Particle Picking (Imported)
 - Initial Reference-Based Refinement (Imported)
 
-    .. figure:: ../images/workshop/cspt.webp
-      :alt: Create new project
+.. figure:: ../images/workshop/cspt.webp
+  :alt: Create new project
 
-  - Click into the block and navigate to the **Reconstruction** tab. You can see a variety of refinement statistics.
+- Click into the block and navigate to the **Reconstruction** tab. You can see a variety of refinement statistics.
 
-    - Projections and slices of the reconstruction, FSC, per-projection statistics, per-particle statistics, per-particle scores
-  - Click on the **Expsoure Weights** tab to visualize the mean score per tilt over the order of acquisition. The weights are based on these scores. 
-  - Click on the **3D View** tab. In one of the drop down menus, select **Class 1, Iter 2**. Our initial map will populate. Alter the **Level of detail** and/or **Contour value** to sharpen the map, note we can visualize rough "sausages" representing our helices. 
+- Projections and slices of the reconstruction, FSC, per-projection statistics, per-particle statistics, per-particle scores
+- Click on the **Expsoure Weights** tab to visualize the mean score per tilt over the order of acquisition. The weights are based on these scores. 
+- Click on the **3D View** tab. In one of the drop down menus, select **Class 1, Iter 2**. Our initial map will populate. Alter the **Level of detail** and/or **Contour value** to sharpen the map, note we can visualize rough "sausages" representing our helices. 
 - Particle Filtering
 
-    - Click into the **Particle filtering** block. 
-    - Navigate to the **Per-particle Scores** tab. Here we can visualize the global score cut off and where it lies on the score distribution for each of our tilt-series. Note it is settled nicely between the two peaks of the distribution. 
+
+- Click into the **Particle filtering** block. 
+- Navigate to the **Per-particle Scores** tab. Here we can visualize the global score cut off and where it lies on the score distribution for each of our tilt-series. Note it is settled nicely between the two peaks of the distribution. 
+
 - Region-Based and Tilt Geometry Refinement
 
-  - Now we are used a filtered particle set to perform further refinement steps on. 
-  - Rather than clicking into the block, select the **Particle refinement** block menu at hte top right corner of the block. 
-  - From the drop down menu, select **Read** or **Edit** depending on if the block is still running or if it has finished. 
-  - Note the settings we have changed:
+- Now we are used a filtered particle set to perform further refinement steps on. 
+- Rather than clicking into the block, select the **Particle refinement** block menu at hte top right corner of the block. 
+- From the drop down menu, select **Read** or **Edit** depending on if the block is still running or if it has finished. 
+- Note the settings we have changed:
 
-    - In the **Sample** tab, we have applied C6 symmetry. 
-    - In the **Extraction** tab, we have reduced our binning to 1. 
-    - In the **Refinement** tab, we have increased our Max resolution (A) to 4 for the first iteration, and 3 for the second iteration. 
-    - In the **Constrained refinement** tab, we have applied a 8 regions in x and y and 2 regions in z. We have also turned ON Refine tilt-geometry 
-  - When the block is done running, click into the block. 
-  - Navigate to the **Reconstruction** tab and note immediately that we see details in both the projections and slices of our reeconstruction. Between our two iterations we see improvement in our FSC plots. We can clearly visualize defocus groups in our projection-based plots. Finally, We can also see that after filtering and further refinement, we no longer have a bimodal distribution in our Per-Particle Scores plot as we have removed all of the bad particles. 
-  - If one wanted to save plots from different blocks for say showing a supervisor during meetings, we are set up with Plotly and you can simply hover over the plot, then click the camera icon to download your plot in svg format for high resolution images. 
+- In the **Sample** tab, we have applied C6 symmetry. 
+- In the **Extraction** tab, we have reduced our binning to 1. 
+- In the **Refinement** tab, we have increased our Max resolution (A) to 4 for the first iteration, and 3 for the second iteration. 
+- In the **Constrained refinement** tab, we have applied a 8 regions in x and y and 2 regions in z. We have also turned ON Refine tilt-geometry 
+- When the block is done running, click into the block. 
+- Navigate to the **Reconstruction** tab and note immediately that we see details in both the projections and slices of our reeconstruction. Between our two iterations we see improvement in our FSC plots. We can clearly visualize defocus groups in our projection-based plots. Finally, We can also see that after filtering and further refinement, we no longer have a bimodal distribution in our Per-Particle Scores plot as we have removed all of the bad particles. 
+- If one wanted to save plots from different blocks for say showing a supervisor during meetings, we are set up with Plotly and you can simply hover over the plot, then click the camera icon to download your plot in svg format for high resolution images. 
 
-  -QUEESTION FOR ALBERTO: SHOULD I WAIT TO SHOW DOSE WEIGHTING UNTIL HERE AS THERE IS NOT THAT WEIRD JUMP
+
 - Movie Frame Refinement
 
   - This step will optimize particle positions across frames, allowing for not only tilt-based refinement, but frame-based refinement. This is useful because the sample does not remain perfectly still across frame images and we can correction for this motion. 
