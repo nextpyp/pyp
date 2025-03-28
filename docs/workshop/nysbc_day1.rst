@@ -2,7 +2,7 @@
 NYSBC course: nextPYP practical (day 1)
 #######################################
 
-This session shows how to use :fa:`nextPYP` to convert raw tilt-series from `EMPIAR-10164` into a ~4Å resolution structure of immature HIV-1 Gag protein. We will also cover pre-processing, tomogram reconstruction, and particle-picking for two other datasets representative of datatypes often processed in tomography. 
+This session shows how to use ``nextPYP`` to convert raw tilt-series from `EMPIAR-10164` into a ~4Å resolution structure of immature HIV-1 Gag protein. We will also cover pre-processing, tomogram reconstruction, and particle-picking for two other datasets representative of datatypes often processed in tomography. 
 
 Datasets
 ========
@@ -14,7 +14,7 @@ Datasets
 Session 1: Pre-processing and particle picking
 ==============================================
 
-In this session we will import frames, perform pre-processing and tomogram reconstruction, and pick particles for on HIV VLPs together. We will also import workflows to pick ribosomes from bacteria cells and lamellae cut from mouse epithelial cells. 
+In this session we will import frames, perform pre-processing and tomogram reconstruction, and pick particles for HIV VLPs together. We will also import workflows to pick ribosomes from whole *Mycoplasma* cells and lamellae cut from mouse epithelial cells. 
 
 Create a new project
 --------------------
@@ -40,9 +40,9 @@ Dataset 1: Immature Gag protein from HIV-1 VLPs
 
   * Go to the **Raw data** tab:
 
-    - Set the ``path to raw data`` by clicking on the icon :fa:`search` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/``
+    - Set the ``path to raw data`` by clicking on the :fa:`search` icon and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/``
     
-    - Type ``*.tif`` into the filter box (lower right) and click the icon :fa:`filter`
+    - Type ``*.tif`` into the filter box (lower right) and click the :fa:`filter` icon
        
   * Go the the **Microscope Parameters** tab: 
 
@@ -56,7 +56,7 @@ Dataset 1: Immature Gag protein from HIV-1 VLPs
 
   * The block is in the modified state (indicated by the :fa:`asterisk` sign) and is ready to be executed
 
-  * Clicking the button :bdg-primary:`Run` will show another dialog where you can select which blocks to run:
+  * Clicking the :bdg-primary:`Run` button will show another dialog where you can select which blocks to run:
 
   * Click :bdg-primary:`Start Run for 1 block`. This will launch a process that reads one tilt at random and displays the resulting image inside the block
 
@@ -140,7 +140,7 @@ Dataset 2: Ribosomes (whole *Mycoplasma* cells)
   
   * In the upper left of your project page, click :bdg-primary:`Import Workflow`
 
-  * Choose the **2025 NYSBC workshop: Pre-processing (EMPIAR-10499)** workflow by clicking :bdg-primary:`Import`
+  * Choose the **2025 NYSBC workshop: Pre-processing (EMPIAR-10499)** workflow by clicking the :bdg-primary:`Import` button to its right
 
   * We pre-set the parameters for the workflow, so you can immediately click :bdg-primary:`Save`. Three blocks will populate on the project page. 
 
@@ -202,7 +202,7 @@ Dataset 3: Ribosomes (mouse epithelial cells lamellae)
 Session 2: 3D reconstruction and refinement
 ===========================================
 
-* In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. For the sake of time, we have pre-populated a workflow with parameters. As a group, we will import this workflow, then we will go through the steps and discuss the parameters and features while the refinement runs. 
+* In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. At a high level, we will be performing reference-based refinement, filtering particles, performing region-based refinement and tilt-geometry refinement, refining movie frames, and completing post-processing. Then we will demonstrate using ChimeraX to visualize our results. 
 
 .. nextpyp:: Step 1: Import particles
   :collapsible: open
@@ -232,9 +232,9 @@ Session 2: 3D reconstruction and refinement
 
   * Go to the **Extraction** tab
 
-    - Set **Box size (pixels/voxels)** to 128 
+    - Set ``Box size (pixels/voxels)`` to 128 
 
-    - Set **Image binning** to 2
+    - Set ``Image binning`` to 2
 
   * Go to the **Refinement** tab
 
@@ -343,54 +343,9 @@ Session 2: 3D reconstruction and refinement
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Step 6: Post-processing
-  :collapsible: open
-  
-  * Click on ``Frames`` (output of the :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
+* While :bdg-secondary:`Movie Frame Refinement` is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
 
-  * Go to the **Post-processing** tab
-
-    - Next to ``First half map (*_half1.mrc)`` click the :fa:`search` icon. Select the ``*_half1.mrc`` file and click :bdg-primary:`Choose File`
-
-    - Set ``Masking method`` to from file usign the dropdown menu
-
-    - Next to ``Mask file (*.mrc)`` click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc`` and click :bdg-primary:`Choose File`
-
-    - Set the ``B-factor method`` to adhoc using the dropdown menu
-
-    - Set the ``Adhoc value (A^2)`` to -25 
-
-  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
-
-Map/Model Assessment in Chimera
--------------------------------
-
-.. nextpyp:: Assess map in Chimera (just watch, you can follow if you have Chimera with necessary plugins)
-  :collapsible: open
-  
-  * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
-
-  * Download files
-
-    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
-
-    - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
-  
-    - Open the downloaded MRC file in Chimera. Visualize your beautiful map. To get a better look at your map/model fitting, open an atomic model in Chimera. Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
-
-    .. code-block:: bash 
-
-      volume zone #2 nearAtoms #1 range 2.4
-
-    - Select the model, go to **Actions**, **Atoms/Bonds**, and **Show Sidechain/Base**
-    
-    - You can now view the model fit to your map interactively in ChimeraX
-
-3D Visualization in ArtiaX
---------------------------
-
-.. nextpyp:: Map structure into tomograms (just watch, though you can follow if you have ArtiaX plugin)
-  :collapsible: open
+.. nextpyp:: 3D Visualization of alignments in ArtiaX
   
   * For reference, these instructions are available on the :doc:`nextPYP User Guide<../guide/chimerax_artiax>`.
   
@@ -398,7 +353,7 @@ Map/Model Assessment in Chimera
   
   * Download files
 
-    - Select a tomogram you wish to visualize the particles in. I will be using TS_01. 
+    - Select a tomogram you wish to visualize the particles in. I will be using TS_43. 
     
     - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
     
@@ -410,7 +365,7 @@ Map/Model Assessment in Chimera
 
     - Open ChimeraX (again, we assume ArtiaX is installed)
     
-    - Open the tomogram **TS_01.rec** 
+    - Open the tomogram **TS_43.rec** 
     
     - Run the following commands in the ChimeraX shell:
   
@@ -432,3 +387,66 @@ Map/Model Assessment in Chimera
     - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
     
     - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations.
+
+.. nextpyp:: Step 6: Post-processing
+  :collapsible: open
+  
+  * Click on ``Frames`` (output of the :bdg-secondary:`Movie refinement` block) and select :bdg-primary:`Post-processing`
+
+  * Go to the **Post-processing** tab
+
+    - Next to ``First half map (*_half1.mrc)`` click the :fa:`search` icon. Select the ``*_half1.mrc`` file and click :bdg-primary:`Choose File`
+
+    - Set ``Masking method`` to from file usign the dropdown menu
+
+    - Next to ``Mask file (*.mrc)`` click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc`` and click :bdg-primary:`Choose File`
+
+    - Set the ``B-factor method`` to adhoc using the dropdown menu
+
+    - Set the ``Adhoc value (A^2)`` to -25 
+
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
+
+.. nextpyp:: Map/Model Assessment in ChimeraX
+  
+  * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
+
+  * Download files
+
+    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
+
+    - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
+  
+    - Open the downloaded MRC file in Chimera. Visualize your beautiful map. To get a better look at your map/model fitting, open an atomic model in Chimera. Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
+
+    .. code-block:: bash 
+
+      volume zone #2 nearAtoms #1 range 2.4
+
+    - Select the model, go to **Actions**, **Atoms/Bonds**, and **Show Sidechain/Base**
+    
+    - You can now view the model fit to your map interactively in ChimeraX
+
+Day One Summary
+---------------
+Today we learned some of the things we are capable of doing in ``nextPYP``: 
+
+* Raw data import
+
+* Pre-processing of tilt-series (unblur, motioncorr, ctffind5)
+
+* Tomogram reconstruction (imod, aretomo)
+
+* Segmentation (closed surfaces)
+
+  - Though not covered, we also have open surface segmentation which uses membrain-seg
+
+* Particle Picking (geometrically constrained, size-based, nn-based, manual)
+
+  - Though not covered in this workshop, we also support template search and molecular pattern mining
+
+* Particle Refinement (fully constrained single particle tomography, reference-based refinement, particle fitlering, exposure weighting, region-based local refinemnet, masking, movie frame refinement, post-processing)
+
+  - Though not covered, we also have Particle-based CTF refinement, dedicated masking block, ab-initio refinement, classification, and denoising
+
+* We hope you enjoy the final bit of today's time and encourage you to explore the things we used today as well as the other options in nextPYP
