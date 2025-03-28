@@ -4819,8 +4819,8 @@ default = "tomoDRGN"
 [tabs.heterogeneity.cryodrgn_downsample_size]
 name = "Downsample boxsize"
 description = "Downsampled particle boxsize for training"
-type = "int"
-default = 128
+type = "float"
+default = 128.0
 condition = { arg="method", value="cryoDRGN" }
 
 [tabs.heterogeneity.cryodrgn_train_zdim]
