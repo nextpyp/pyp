@@ -26,13 +26,13 @@ Each processing block in ``nextPYP`` has a **Resources** tab that allows specify
 
 The **Resources** tab consists of three sections, one for each phase (*Launch*, *Split* and *Merge*):
 
-.. nextpyp:: Launch task options
-  :collapsible: open
 .. comment:
    Looks like we're using sphinx-design for panels now?
    The panels in sphinx-design seem to be a bit different than panels from our old lib, sphinx-panels.
    See: https://sphinx-design.readthedocs.io/en/pydata-theme/dropdowns.html
-..
+
+.. nextpyp:: Launch task options
+  :collapsible: open
 
   Threads (launch task)
     Number of threads used when launching jobs. Setting this parameter to ``0`` will allocate all cores available in a compute node.
