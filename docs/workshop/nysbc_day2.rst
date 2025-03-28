@@ -12,103 +12,94 @@ Dataset
 Starting a Session
 ==================
 
-.. nextpyp:: Create a Session
+.. nextpyp:: Starting a Session
   :collapsible: open
 
   * On your Dashboard, select the blue :bdg-primary:`Go to Sessions` button.
 
   * Click the blue :bdg-primary:`Start Tomography` button.
 
+    * Give your session a user-readable name by typing in the **Name** box.
 
-.. nextpyp:: Session Settings
-  :collapsible: open
+    * The **Parent Folder** box will be auto-populated with the storage location specified in your ``pyp_config.toml`` file.
 
-  * Give your session a user-readable name by typing in the **Name** box.
+      - For the workshop, this is the ``/nfs`` mount for ``bartesaghilab``.
 
-  * The **Parent Folder** box will be auto-populated with the storage location specified in your ``pyp_config.toml`` file.
+    * Pick a *unique* **Folder Name** for your session. There can only be one folder name per session, regardless of the user-readable name!
 
-    - For the workshop, this is the ``/nfs`` mount for ``bartesaghilab``.
+    * Select the ``Workshop`` group
 
-  * Pick a *unique* **Folder Name** for your session. There can only be one folder name per session, regardless of the user-readable name!
+  * Click on the :bdg-secondary:`Raw Data` tab.
 
-  * Select the ``Workshop`` group
-
-
-.. nextpyp:: Raw Data
-  :collapsible: open
-
-  * **Path to raw data**: ``/nfs/bartesaghilab/nextpyp/workshop/10164/TS_*.tif``
-
-
-.. nextpyp:: Microscope Parameters
-  :collapsible: open
-
-  * ``Pixel size (A)``: 1.35
-
-  * ``Acceleration voltage (kV)``: 300
-
-  * ``Tilt-axis angle (degrees)``: 85.3
-
-
-.. nextpyp:: Session Settings (continued)
-  :collapsible: open
-
-  * **Number of tilts**: 41
-
-  * **Raw data transfer**: ``link``
-
-    - ``Link``: Create a symlink between the data on the microscope and your local computer. The data still *only* exists at the microscope.
-    
-    - ``Move``: Transfer the data from the microscope to your local computer, removing the data at the microscope. The data will now *only* exist on your local computer.
-    
-    - ``Copy``: Make a copy of the data in the microscope, and transfer the copy to your local computer. The data will now exist at both the microscope *and* your local computer.
-
-
-
-.. nextpyp:: CTF Determination
-  :collapsible: open
-
-  * **Max resolution**: 5
-
-
-.. nextpyp:: Virion Detection
-  :collapsible: open
-
-  * **Virion radius**: 500
-
-  * **Virion detection method**: ``auto``
-
-  * **Spike detection method**: ``uniform``
-
-  * **Minimum distance between spikes**: 10
-
-  * **Size of equatorial band to restrict spike picking**: 800
-
-
-.. nextpyp:: Particle Detection
-  :collapsible: open
-
-  * **Detection method**: ``none``
-
-    - Remember that we have just picked our "particles" (virions) in the previous tab!
-
-  * **Detection radius**: 50
-
-
-.. nextpyp:: Resources
-  :collapsible: open
-
-  * **Threads per task**: 41
-
-    - This number should match the number of tilts in your tilt series.
-
-    - In general, the more threads you use, the more tilts that can be processed at the same time, and the faster you see pre-processing results.
+    * Set **Path to raw data**: ``/nfs/bartesaghilab/nextpyp/workshop/10164/TS_*.tif``
   
-  * **Memory per task**: 164
+  * Click on the :bdg-secondary:`Microscope Parameters` tab.
 
-    - As a rule of thumb, use 4x as much memory as you have threads.
+    * Set the microscope parameters as follows:
 
-* Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
+      - **Pixel size (A)**: 1.35
+
+      - **Acceleration voltage (kV)**: 300
+
+      - **Tilt-axis angle (degrees)**: 85.3
+  
+  * Click on the :bdg-secondary:`Session Settings` tab.
+
+    * Set the session settings as follows:
+
+      - **Number of tilts**: 41
+
+      - **Raw data transfer**: ``link``
+
+        - ``Link``: Create a symlink between the data on the microscope and your local computer. The data still *only* exists at the microscope.
+        
+        - ``Move``: Transfer the data from the microscope to your local computer, removing the data at the microscope. The data will now *only* exist on your local computer.
+        
+        - ``Copy``: Make a copy of the data in the microscope, and transfer the copy to your local computer. The data will now exist at both the microscope *and* your local computer.
+
+  * Click on the :bdg-secondary:`CTF Determination` tab.
+
+    * Set the CTF determination parameters as follows:
+
+      - **Max resolution**: 5
+  
+  * Click on the :bdg-secondary:`Virion Detection` tab.
+
+    * Set the virion detection parameters as follows:
+
+      - **Virion radius**: 500
+
+      - **Virion detection method**: ``auto``
+
+      - **Spike detection method**: ``uniform``
+
+      - **Size of equatorial band to restrict spike picking**: 800
+  
+  * Click on the :bdg-secondary:`Particle Detection` tab.
+  
+      * Set the particle detection parameters as follows:
+  
+        - **Detection method**: ``none``
+
+          - Remember that we have just picked our "particles" (virions) in the previous tab!
+  
+        - **Detection radius**: 50
+
+  * Click on the :bdg-secondary:`Resources` tab.
+  
+      * Set the resources as follows:
+  
+        - **Threads per task**: 41
+
+          - This number should match the number of tilts in your tilt series.
+
+          - In general, the more threads you use, the more tilts that can be processed at the same time, and the faster you see pre-processing results.
+
+        - **Memory per task**: 164
+
+          - As a rule of thumb, use 4x as much memory as you have threads.
+
+  * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
 
 More Features
 =============
@@ -116,16 +107,14 @@ More Features
 Making Changes to Pre-Processing Parameters
 ------------------------
 
-.. nextpyp:: Using the Restart Option
+.. nextpyp:: Using the ``Restart`` Option
   :collapsible: open
 
   * "Smart" method of rerunning only what is necessary after changing pre-processing parameters
 
   * Workflow: Change a parameter → :bdg-primary:`Save` settings changes → :bdg-primary:`Restart` Pre-processing daemon
 
-  .. nextpyp:: 
-    :collapsible: open
-    :title: Example: Changing the minimum distance between spikes
+  * Example: Changing the minimum distance between spikes
 
     * Virion detection
 
