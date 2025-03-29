@@ -17,7 +17,7 @@ relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 def get_isonet_path():
-    command_base = f"export PATH=/opt/conda/envs/isonet/bin:$PATH; export PYTHONPATH=/opt/pyp/external:/opt/conda/envs/isonet/lib/python3.12/site-packages:$PYTHONPATH; micromamba run -n isonet /opt/pyp/external/IsoNet/bin/"
+    command_base = f"export PATH=/opt/conda/envs/isonet/bin:$PATH; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/isonet/lib:/opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs; export PYTHONPATH=/opt/pyp/external:/opt/conda/envs/isonet/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n isonet /opt/pyp/external/IsoNet/bin/"
     return command_base
 
 isonet_command = get_isonet_path()
