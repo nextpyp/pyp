@@ -52,7 +52,7 @@ Creating/starting new sessions
 
       - ``Link``: Create a symlink between the data on the microscope and the Session folder. The data still *only* exists at the microscope.
       
-      - ``Move``: Transfer the data from the microscope to the Session folder, removing the data at the microscope. The data will now *only* exist on your local computer.
+      - ``Move``: Transfer the data from the microscope to the Session folder, removing the data at the microscope. The data will now *only* exist on the Sessions folder.
       
       - ``Copy``: Make a copy of the data in the microscope to your Session folder. The data will now exist at both the microscope *and* your Session folder.
 
@@ -91,6 +91,8 @@ Creating/starting new sessions
       - The ``Memory per task`` should be set to 4 GB per thread.
 
   * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
+
+  * Click :bdg-primary:`Start` to launch the session.
 
 Restarting sessions
 -------------------
@@ -188,4 +190,4 @@ Day 2 summary
 
   * Copy or delete a session
 
-  Feel free to re-visit :doc:`yesterday's session<nysbc_day2>` or explore other options available in ``nextPYP`` in the :doc:`User Guide<../guide/overview>`.
+  Feel free to re-visit :doc:`yesterday's session<nysbc_day1>` or explore other options available in ``nextPYP`` in the :doc:`User Guide<../guide/overview>`.
