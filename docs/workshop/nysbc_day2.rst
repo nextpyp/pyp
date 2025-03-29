@@ -11,8 +11,11 @@ Dataset
 
 For this session we will use the `EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset of HIV-1 purified VLPs.
 
-Creating and starting a session
-===============================
+On-the-fly pre-processing
+=========================
+
+Creating/starting new sessions
+------------------------------
 
 .. nextpyp:: Sessions allow pre-processing of tilt-series on-the-fly
   :collapsible: open
@@ -89,8 +92,8 @@ Creating and starting a session
 
   * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
 
-Restarting a session
-====================
+Restarting sessions
+-------------------
 
 .. nextpyp:: Use the ``Restart`` option to make changes to ongoing Sessions
   :collapsible: open
@@ -122,8 +125,8 @@ Restarting a session
 
   * This is helpful if you want to start fresh making sure any previous pre-processing results are ignored.
 
-Copying and deleting sessions
-=============================
+Copying/deleting sessions
+-------------------------
 
 .. nextpyp:: Quickly create a session by copying an existing one
   :collapsible: open
@@ -137,7 +140,7 @@ Copying and deleting sessions
   Deleting a session whose mode of file transfer was set to ``Move`` will **delete all files (including the raw data)!**.
 
 Importing/exporting sessions
-============================
+----------------------------
 
 .. nextpyp:: Exporting a session in ``.star`` format
   :collapsible: open
