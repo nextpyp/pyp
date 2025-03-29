@@ -432,10 +432,10 @@ While the :bdg-secondary:`Movie refinement` block is running, we will demonstrat
 Day 1 summary
 =============
 
-.. nextpyp:: What we learned on this session
+.. nextpyp:: What we learned today
   :collapsible: open
 
-  Today we learned some of the things we are capable of doing in ``nextPYP``:
+  In this session we learned some of the things we are capable of doing in ``nextPYP``:
   
   * Raw data import
 
@@ -455,6 +455,6 @@ Day 1 summary
 
   * Particle refinement (constrained single particle tomography, particle filtering, exposure weighting, region-based refinement, movie frame refinement, and post-processing)
 
-    - Though not covered, ``nextPYP`` also supports particle-based CTF refinement, building shape masks, ab-initio refinement, and 3D classification
+    - ``nextPYP`` also supports particle-based CTF refinement, building shape masks, ab-initio refinement, and 3D classification
 
-  We hope you enjoy the final bit of today's time and encourage you to explore the things we learned as well as the other options available in ``nextPYP``
+  We encourage you to explore the things we learned today as well as the other options available in ``nextPYP``. :doc:`Tomorrow<nysbc_day2>`, we will demonstrate ``nextPYP``'s functionality for on-the-fly data pre-processing and give you a chance to ask questions.

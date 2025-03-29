@@ -35,61 +35,49 @@ Creating and starting a session
   
   * Click on the **Microscope parameters** tab.
 
-    * Set the microscope parameters as follows:
+    - Set ``Pixel size (A)`` to 1.35
 
-      - ``Pixel size (A)``: 1.35
+    - Set ``Acceleration voltage (kV)`` to 300
 
-      - ``Acceleration voltage (kV)``: 300
-
-      - ``Tilt-axis angle (degrees)``: 85.3
+    - Set ``Tilt-axis angle (degrees)`` to 85.3
   
   * Click on the **Session settings** tab.
 
-    * Set the session settings as follows:
+    - Set ``Number of tilts`` to 41
 
-      - ``Number of tilts``: 41
+    - Set ``Raw data transfer`` to link
 
-      - ``Raw data transfer``: link
-
-        - ``Link``: Create a symlink between the data on the microscope and the Session folder. The data still *only* exists at the microscope.
-        
-        - ``Move``: Transfer the data from the microscope to the Session folder, removing the data at the microscope. The data will now *only* exist on your local computer.
-        
-        - ``Copy``: Make a copy of the data in the microscope to your Session folder. The data will now exist at both the microscope *and* your Session folder.
+      - ``Link``: Create a symlink between the data on the microscope and the Session folder. The data still *only* exists at the microscope.
+      
+      - ``Move``: Transfer the data from the microscope to the Session folder, removing the data at the microscope. The data will now *only* exist on your local computer.
+      
+      - ``Copy``: Make a copy of the data in the microscope to your Session folder. The data will now exist at both the microscope *and* your Session folder.
 
   * Click on the **CTF Determination** tab.
 
-    * Set the CTF determination parameters as follows:
-
-      - ``Max resolution``: 5
+    - Set ``Max resolution`` to 5
   
   * Click on the **Virion detection** tab.
 
-    * Set the virion detection parameters as follows:
+    - Set ``Virion radius`` to 500
 
-      - ``Virion radius``: 500
+    - Set ``Virion detection method`` to auto
 
-      - ``Virion detection method``: auto
+    - Set ``Spike detection method`` to uniform
 
-      - ``Spike detection method``: uniform
-
-      - ``Size of equatorial band to restrict spike picking``: 800
+    - Set ``Size of equatorial band to restrict spike picking`` to 800
   
   * Click on the **Particle detection** tab.
   
-    * Set the particle detection parameters as follows:
+    - Set ``Detection method`` to none
 
-      - ``Detection method``: none
-
-      - ``Detection radius``: 50
+    - Set ``Detection radius`` to 50
 
   * Click on the **Resources** tab.
   
-    * Set the resources as follows:
+    - Set ``Threads per task`` to 41
 
-      - ``Threads per task``: 41
-
-      - ``Memory per task``: 164
+    - Set ``Memory per task`` to 164
     
     * General advice for setting resource limits:
       
@@ -97,7 +85,7 @@ Creating and starting a session
 
       - In general, the more threads you use, the more tilts that can be processed at the same time, and the faster you see pre-processing results.
 
-      - The *`Memory per task`` should be set to 4 GB per thread.
+      - The ``Memory per task`` should be set to 4 GB per thread.
 
   * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
 
@@ -107,17 +95,17 @@ Restarting a session
 .. nextpyp:: Use the ``Restart`` option to make changes to ongoing Sessions
   :collapsible: open
 
-  *  :bdg-primary:`Restart` is a "smart" method of rerunning only what is necessary after changing pre-processing parameters.
+  *  :bdg-primary:`Restart` is a "smart" method of re-running only what is necessary after changing pre-processing parameters.
 
   * Workflow: Change a parameter → :bdg-primary:`Save` settings changes → :bdg-primary:`Restart` pre-processing daemon.
 
   * Example: Changing the minimum distance between spikes
 
-    * Virion detection
+    * Go to the **Virion detection** tab
 
-      - Increase **Minimum distance between spikes (voxels)** to 50
+    * Increase **Minimum distance between spikes (voxels)** to 50
 
-      - Click :bdg-primary:`Save`
+    * Click :bdg-primary:`Save`
 
     * Navigate to :bdg-primary:`Operations` tab
 
@@ -142,30 +130,30 @@ Copying and deleting sessions
 
   * Sessions can be **copied** or **deleted**.
 
-  * Click the arrow to find where the session's file storage location.
+  * Click the icon :fa:`location-arrow` to find the session's file storage location.
 
 .. warning::
 
-  Deleting a session whose mode of file transfer was set to ``Move`` will **delete all files including the raw data**.
+  Deleting a session whose mode of file transfer was set to ``Move`` will **delete all files (including the raw data)!**.
 
-Importing and exporting sessions
-================================
+Importing/exporting sessions
+============================
 
 .. nextpyp:: Exporting a session in ``.star`` format
   :collapsible: open
 
-  Sessions can be exported to ``.star`` files for downstream processing and refinement in other software.
+  Sessions can be exported in ``.star`` format for downstream processing and refinement in other software.
 
   * Navigate to the :bdg-Secondary:`Table` tab.
 
   * In the **Filters** box, type a name for your exported session.
 
-  * Click :bdg-primary:`Export` to download the ``.star`` file.
+  * Click :bdg-primary:`Export` to launch the export job. The job's log will indicate the location of the exported ``.star`` file.
 
 .. nextpyp:: Importing a session into a project
   :collapsible: open
 
-  Since Sessions also perform pre-processing, we can import a finished Sessions job into a project to kick-start the process of structure determination.
+  Since Sessions also perform pre-processing, we can import a finished Session into a project to kick-start the process of structure determination.
 
   * Click the :bdg-secondary:`Dashboard` link to go back to nextPYP's homepage.
 
@@ -176,3 +164,25 @@ Importing and exporting sessions
   * Search for the name of the session you wish to import.
 
   * Click the :bdg-primary:`Save` button, and then launch the job.
+
+Day 2 summary
+=============
+
+.. nextpyp:: What we learned today
+  :collapsible: open
+
+  In this session we learned how to run on-the-fly pre-processing in ``nextPYP``:
+  
+  * Continuously monitor raw data folder for incoming tilt-series
+
+  * Data transfer (copy, link, move)
+
+  * Pre-processing (frame alignment, tilt-series alignment, CTF estimation, and tomogram reconstruction)
+
+  * Particle picking (geometry-based, size-based, etc.)
+
+  * Restart or clear a session
+
+  * Copy or delete a session
+
+  Feel free to re-visit :doc:`yesterday's session<nysbc_day2>` or explore other options available in ``nextPYP`` in the :doc:`User Guide<../guide/overview>`.
