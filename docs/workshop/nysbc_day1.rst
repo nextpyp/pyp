@@ -266,7 +266,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
     .. figure:: ../images/workshop/cspt.webp
       :width: 75%
-      :heigth: 75%
+      :height: 75%
       
       Constrained single-particle tomography (CSPT)
 
@@ -368,7 +368,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
     .. figure:: ../images/workshop/movie_refinement.webp
       :width: 75%
-      :heigth: 75%
+      :height: 75%
       
       Refinement of individual tilt-frames
 
