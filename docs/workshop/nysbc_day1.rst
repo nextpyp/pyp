@@ -256,8 +256,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    figure:: ../images/workshop/cspt_nb.webp
-    :alt: Constrained Single Particle Tomography (CSPT)
+    .. figure:: ../images/workshop/cspt_nb.webp
 
 .. nextpyp:: Step 3: Particle filtering
   :collapsible: open
@@ -317,8 +316,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    .. figure:: ../images/workshop/regionbased_nb.webp
-    Region-based refinement
+    .. figure:: ../images/workshop/regionbased_nb.webp 
 
 .. nextpyp:: Step 5: Movie frame refinement
   :collapsible: open
@@ -350,7 +348,6 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
     .. figure:: ../images/workshop/MR_nb.webp
-    :alt: Movie Frame Refinement
 
 While the :bdg-secondary:`Movie refinement` block is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
 
