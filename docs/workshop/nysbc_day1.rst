@@ -250,13 +250,13 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
     .. md-tab-set::
 
-      .. md-tab-item:: Core course participant
+      .. md-tab-item:: I'm a core course participant
 
         - Set ``Threads per task`` to 124
 
         - Set ``Memory per task in GB`` to 720 
 
-      .. md-tab-item:: Additional TA
+      .. md-tab-item:: I'm an additional TA
 
         - Set ``Threads per task`` to 70
 
@@ -264,7 +264,9 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    .. figure:: ../images/workshop/cspt_nb.webp
+    .. figure:: ../images/workshop/cspt.webp
+      :scale: 75%
+      :caption: Constrained single-particle tomography (CSPT)
 
 .. nextpyp:: Step 3: Particle filtering
   :collapsible: open
@@ -324,7 +326,9 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    .. figure:: ../images/workshop/regionbased_nb.webp 
+    .. figure:: ../images/workshop/regionbased.webp
+      :scale: 50%
+      :caption: Region-based refinement
 
 .. nextpyp:: Step 5: Movie frame refinement
   :collapsible: open
@@ -359,7 +363,9 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    .. figure:: ../images/workshop/MR_nb.webp
+    .. figure:: ../images/workshop/movie_refinement.webp
+      :scale: 75%
+      :caption: Refinement of individual tilt-frames
 
 While the :bdg-secondary:`Movie refinement` block is running, we will demonstrate use of **ArtiaX** to visualize particle alignments
 
