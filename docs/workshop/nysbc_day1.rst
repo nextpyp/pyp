@@ -265,7 +265,8 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
     .. figure:: ../images/workshop/cspt.webp
-      :scale: 75%
+      :width: 75%
+      :heigth: 75%
       
       Constrained single-particle tomography (CSPT)
 
@@ -366,7 +367,8 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
     .. figure:: ../images/workshop/movie_refinement.webp
-      :scale: 75%
+      :width: 75%
+      :heigth: 75%
       
       Refinement of individual tilt-frames
 
