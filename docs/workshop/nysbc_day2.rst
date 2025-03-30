@@ -11,8 +11,11 @@ Dataset
 
 For this session we will use the `EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset of HIV-1 purified VLPs.
 
-Creating and starting a session
-===============================
+On-the-fly pre-processing
+=========================
+
+Creating/starting new sessions
+------------------------------
 
 .. nextpyp:: Sessions allow pre-processing of tilt-series on-the-fly
   :collapsible: open
@@ -49,7 +52,7 @@ Creating and starting a session
 
       - ``Link``: Create a symlink between the data on the microscope and the Session folder. The data still *only* exists at the microscope.
       
-      - ``Move``: Transfer the data from the microscope to the Session folder, removing the data at the microscope. The data will now *only* exist on your local computer.
+      - ``Move``: Transfer the data from the microscope to the Session folder, removing the data at the microscope. The data will now *only* exist on the Sessions folder.
       
       - ``Copy``: Make a copy of the data in the microscope to your Session folder. The data will now exist at both the microscope *and* your Session folder.
 
@@ -89,8 +92,10 @@ Creating and starting a session
 
   * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
 
-Restarting a session
-====================
+  * Click :bdg-primary:`Start` to launch the session.
+
+Restarting sessions
+-------------------
 
 .. nextpyp:: Use the ``Restart`` option to make changes to ongoing Sessions
   :collapsible: open
@@ -122,8 +127,8 @@ Restarting a session
 
   * This is helpful if you want to start fresh making sure any previous pre-processing results are ignored.
 
-Copying and deleting sessions
-=============================
+Copying/deleting sessions
+-------------------------
 
 .. nextpyp:: Quickly create a session by copying an existing one
   :collapsible: open
@@ -137,7 +142,7 @@ Copying and deleting sessions
   Deleting a session whose mode of file transfer was set to ``Move`` will **delete all files (including the raw data)!**.
 
 Importing/exporting sessions
-============================
+----------------------------
 
 .. nextpyp:: Exporting a session in ``.star`` format
   :collapsible: open
@@ -185,4 +190,4 @@ Day 2 summary
 
   * Copy or delete a session
 
-  Feel free to re-visit :doc:`yesterday's session<nysbc_day2>` or explore other options available in ``nextPYP`` in the :doc:`User Guide<../guide/overview>`.
+  Feel free to re-visit :doc:`yesterday's session<nysbc_day1>` or explore other options available in ``nextPYP`` in the :doc:`User Guide<../guide/overview>`.
