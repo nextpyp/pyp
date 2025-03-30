@@ -52,9 +52,7 @@ Dataset 1: Immature Gag protein from HIV-1 VLPs
 
     - Set ``Tilt-axis angle (degrees)`` to 85.3    
 
-  * Click :bdg-primary:`Save` and the new block will appear on the project page
-
-  * The block is in the modified state (indicated by the :fa:`asterisk` sign) and is ready to be executed
+  * Click :bdg-primary:`Save` and the new block will appear on the project page. The block is in the modified state (indicated by the :fa:`asterisk` sign) and is ready to be executed
 
   * Clicking the :bdg-primary:`Run` button will show another dialog where you can select which blocks to run:
 
@@ -290,7 +288,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
     - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_02_clean.bz2`` file and click :bdg-primary:`Choose File`
 
-    - Set ``Max resolution (A)`` to 4:3
+    - Set ``Max resolution (A)`` to 4:3.5
 
     - Check ``Use signed correlation``
 
@@ -325,7 +323,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
     - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_03.bz2`` file and click :bdg-primary:`Choose File`
 
-    - Set ``Max resolution (A)`` to 3
+    - Set ``Max resolution (A)`` to 3.5
 
   * Go to the **Constrained refinement** tab
 
@@ -334,6 +332,10 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
     - Check ``Movie frame refinement`` 
 
     - Check ``Regularize translations`` 
+
+    - Set ``Spatial sigma`` to 400
+
+    - Set ``Time sigma`` to 16
 
     - If other boxes are checked, uncheck them 
 
