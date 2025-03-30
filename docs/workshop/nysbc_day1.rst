@@ -248,9 +248,19 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Go to the **Resources** tab
 
-    - Set ``Threads per task`` to 124
+    .. md-tab-set::
 
-    - Set ``Memory per task in GB`` to 720 
+      .. md-tab-item:: Core course participant
+
+        - Set ``Threads per task`` to 124
+
+        - Set ``Memory per task in GB`` to 720 
+
+      .. md-tab-item:: Additional TA
+
+        - Set ``Threads per task`` to 70
+
+        - Set ``Memory per task in GB`` to 720
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
