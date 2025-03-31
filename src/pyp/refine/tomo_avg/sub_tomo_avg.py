@@ -245,7 +245,7 @@ def parse_arguments():
     parser.add_argument(
         "-sq",
         "--slurm_queue",
-        help="The partition you wish to use to run your jobs"
+        help="The partition you wish to use to run your jobs",
         type=str,
     )
 
