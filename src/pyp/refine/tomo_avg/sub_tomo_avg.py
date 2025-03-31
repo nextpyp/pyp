@@ -242,6 +242,12 @@ def parse_arguments():
         help="Plot slices of classified volumes from 3DAVG. Only use this option after each iteration is done. (e.g. 3davg -plot)",
         action="store_true",
     )
+    parser.add_argument(
+        "-sq",
+        "--slurm_queue",
+        help="The partition you wish to use to run your jobs"
+        type=str,
+    )
 
     args = parser.parse_args()
 
@@ -270,6 +276,7 @@ def parse_arguments():
             ("lowpass", "0.25,0.05"),
             ("cpu", 320),
             ("filter_map", empty_parameters["dataset"] + "_global_average.mrc"),
+            ("slurm_queue", '')
         ]
     )
 
@@ -435,7 +442,7 @@ def sva_iterate(mp, sp, iter):
     test_mrc = sp["filter_map"]
     executable = r"${PYP_DIR}/external/TOMO" + "/MPI_Classification"
     test_filter = r"${PYP_DIR}/external/TOMO" + "/Test_Metric_Filter"
-    queue = mp["slurm_queue"]
+    queue = sp["slurm_queue"]
 
     if iter != 1 and mode == 0:
         logger.error(f"Re-cetering (mode 0) can only be used with iter 1.")
