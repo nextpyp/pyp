@@ -180,14 +180,14 @@ Day 2 summary
   
   * Continuously monitor raw data folder for incoming tilt-series
 
-  * Data transfer (copy, link, move)
+  * Raw data transfer (copy, link, move)
 
   * Pre-processing (frame alignment, tilt-series alignment, CTF estimation, and tomogram reconstruction)
 
   * Particle picking (geometry-based, size-based, etc.)
 
-  * Restart or clear a session
+  * Restart, clear, copy or delete sessions
 
-  * Copy or delete a session
+  * Import and export sessions
 
-  Feel free to re-visit :doc:`yesterday's session<nysbc_day1>` or explore other options available in ``nextPYP`` in the :doc:`User Guide<../guide/overview>`.
+  Feel free to revisit :doc:`day 1<nysbc_day1>` or explore other options available in ``nextPYP`` as described in the :doc:`User Guide<../guide/overview>`.
