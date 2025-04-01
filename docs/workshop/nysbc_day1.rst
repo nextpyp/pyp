@@ -149,7 +149,7 @@ Dataset 2: Ribosomes (whole *Mycoplasma* cells)
 
     - Set ``Particle radius (A)`` to 80
 
-    - Change ``Detection method`` from none to auto using the dropdown menu
+    - Change ``Detection method`` from none to size-based using the dropdown menu
   
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 3 blocks`. Follow the status of the run in the **Jobs** panel
 
