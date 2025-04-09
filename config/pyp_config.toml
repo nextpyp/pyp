@@ -4027,6 +4027,13 @@ default = "1"
 hidden = ["spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine"]
 copyToNewBlock = false
 
+[tabs.reconstruct.export_enable]
+name = "Export metadata (*.star)"
+description = "Export metadata after reconstruction"
+type = "bool"
+default = true
+advanced = true
+
 [tabs.reconstruct.min_occ]
 name = "Min occupancy"
 description = "Minimum occupancy to use during reconstruction"
@@ -7673,37 +7680,6 @@ type = "enum"
 enum = { mrc="mrc", tif="tif" }
 default = "tif"
 hidden = true
-
-#####################
-# Export parameters #
-#####################
-
-[tabs.export]
-_name = "Export"
-_description = "Export results to other packages"
-_hidden = [ "spr_map_clean", "tomo_map_clean" ]
-
-[tabs.export.enable]
-name = "Export metadata"
-description = "Export metadata after finishing processing"
-type = "bool"
-default = false
-
-[tabs.export.format]
-name = "Output format"
-description = "Format used to export the metadata"
-type = "enum"
-enum = { relion="star" }
-default = "relion"
-condition = { arg="enable", value="true" }
-
-[tabs.export.parfile]
-name = "Input parfile"
-description = "Parfile input for the alignment parameters"
-type = "path"
-path = { type="files" }
-input = { type="parfile" }
-condition = { arg="enable", value="true" }
 
 #####################
 # Import parameters #

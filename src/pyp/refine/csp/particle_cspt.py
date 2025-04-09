@@ -1297,6 +1297,50 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
             except:
                 raise Exception("Failed to copy files?")
 
+    # export metadata in star format
+    if mp["reconstruct_export_enable"]:
+
+        with timer.Timer(
+            "Export to star", text = "Export metadata to .star format took: {}", logger=logger.info
+        ):
+            mode = mp["data_mode"].lower()
+            iteration = mp["refine_iter"]
+            micrographs = {}
+            all_micrographs_file = mp["data_set"] + ".films"
+            with open(all_micrographs_file) as f:
+                index = 0
+                for line in f.readlines():
+                    micrographs[line.strip()] = index
+                    index += 1
+
+            par_input = os.path.join(project_dir, "frealign", "maps", mp["data_set"] + "_r01_%02d" % ( iteration - 1 ) + ".bz2")
+
+            if not os.path.exists(par_input):
+                raise Exception(f"Cannot find {par_input} to read particle alignments")
+
+            if os.path.isdir(par_input):
+                parfile = par_input
+            elif par_input.endswith(".bz2"):
+                parfile = par_input.replace(".bz2", "")
+                frealign_parfile.Parameters.decompress_parameter_file_and_move(Path(par_input), Path(parfile), threads=mp["slurm_tasks"])
+            else:
+                raise Exception(f"Unknown parfile format: {par_input}")
+
+            imagelist = list(micrographs.keys())
+
+            globalmeta = pyp_metadata.GlobalMetadata(
+                mp["data_set"],
+                mp,
+                imagelist=imagelist,
+                mode=mode,
+                getpickle=True,
+                parfile=parfile,
+                path="./pkl"
+                )
+
+            select = mp["extract_cls"]
+            globalmeta.meta2Star(mp["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
+
     # launch next iteration if needed
     if iteration < maxiter:
         if not standalone_mode():
