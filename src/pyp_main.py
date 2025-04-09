@@ -5136,12 +5136,7 @@ if __name__ == "__main__":
                         cryoDRGN.run_cryodrgn_eval(project_dir, parameters=parameters)
 
                     elif parameters["heterogeneity_method"] == "tomoDRGN":
-                        if parameters.get("micromon_block") == "tomo-drgn-filter":
-                            # run filter_star
-                            filtered_star_file = os.path.join(project_dir, "train", "filered_star_file.star")
-                            tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, project_dir=project_dir)
-                        else:
-                            tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
+                        tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
                     
                     else:
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
@@ -5245,7 +5240,12 @@ if __name__ == "__main__":
                     # do the actual cleaning
                     parameters = particle_cleaning(parameters)
                 else:
-                    logger.warning("Not implemented!")
+                    # run filter_star
+                    project_dir = os.getcwd()
+                    parent_project_dir = parameters["data_parent"]
+                    input_star = parameters["tomodrgn_vae_train_input_star"]
+                    filtered_star_file = os.path.join(project_dir, "train", "filered_star_file.star")
+                    tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, parent_project_dir=parent_project_dir)
 
                 # automatically run reconstruction using clean particles without any refinement 
                 # use clean_parfile as refine_parfile

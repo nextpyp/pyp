@@ -6695,11 +6695,26 @@ condition = {arg="mask", value="soft"}
 _name = "tomoDRGN (filter_star)"
 _description = "tomoDRGN filter_star"
 
+[tabs.tomodrgn_filter_star.method]
+name = "Filtering method"
+description = "Method to filter particles"
+type = "enum"
+enum = { classids="list of class IDs", indices="indices file (*.pkl)" }
+default = "classids"
+
 [tabs.tomodrgn_filter_star.classes]
 name = "Class IDs to keep"
 description = "Comma separated list of selected classes"
 type = "str"
 default = ""
+condition = {arg="method", value="classids"}
+
+[tabs.tomodrgn_filter_star.pklfile]
+name = "File name (*.pkl)"
+description = "Pickle file with indices to keep"
+type = "path"
+path = { type="files" }
+condition = {arg="method", value="indices" }
 
 [tabs.tomodrgn_filter_star.check_reconstruction]
 name = "Generate reconstruction after filtering"

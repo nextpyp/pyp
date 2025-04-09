@@ -828,7 +828,7 @@ def tomodrgn_analyze_volumes(parameters, output_dir, vol_dir, parent):
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
     
-def filtering_with_labels(args,input_star,filtered_star_file,project_dir):
+def filtering_with_labels(args,input_star,filtered_star_file,parent_project_dir):
     """Select k-means classes of interest
 
     tomodrgn filter_star \
@@ -870,20 +870,36 @@ def filtering_with_labels(args,input_star,filtered_star_file,project_dir):
                             space-separated list of integer class labels to be selected (to be kept or dropped in accordance with ``--action``)
     """
 
-    if args.get('tomodrgn_filter_star_classes') and len(args.get('tomodrgn_filter_star_classes').split(',')) > 0:
-        kmeans_labels_to_keep = ' '.join(args.get('tomodrgn_filter_star_classes').split(','))
+    parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parent_project_dir))
+    
+    if parent_parameters['micromon_block'] == "tomo-drgn-eval":
+        label_directory = os.path.join( parent_project_dir, "train", f"kmeans{args.get('tomodrgn_analyze_ksample')}" )
+        assert os.path.exists(label_directory), f"Cannot find output of tomodrgn analyze in {label_directory}"
+    elif parent_parameters['micromon_block'] == "tomo-drgn-eval-vols":
+        label_directory = os.path.join( parent_project_dir, "train", f"kmeans{args.get('tomodrgn_analyze_volumes_ksample')}" )
+        assert os.path.exists(label_directory), f"Cannot find output of tomodrgn analyze_volumes in {label_directory}"
+
+    filtering_parameters = ""
+    if args.get('tomodrgn_filter_star_method') == "classids":
+        logger.info("Filtering particles based on class IDs")        
+        if args.get('tomodrgn_filter_star_classes') and len(args.get('tomodrgn_filter_star_classes').split(',')) > 0:
+            kmeans_labels_to_keep = ' '.join(args.get('tomodrgn_filter_star_classes').split(','))
+            filtering_parameters += f" --labels {label_directory}/labels.pkl --labels-sel {kmeans_labels_to_keep}"
+        else:
+            logger.warning("No classes selected for filtering!")
+            return
+    elif args.get('tomodrgn_filter_star_method') == "indices":
+        if args.get('tomodrgn_filter_star_pklfile') and os.path.exists(args.get('tomodrgn_filter_star_pklfile')):
+            logger.info("Filtering particles based on indices file")
+            filtering_parameters += f" --ind {args.get('tomodrgn_filter_star_pklfile')}"
+        else:
+            logger.warning("No indices file selected for filtering!")
+            return
     else:
-        logger.warning("No classes selected for filtering")
+        logger.warning("No filtering method selected!")
         return
     
-    if args.get('tomodrgn_filter_star_volumes') == "analyze":
-        label_directory = os.path.join( project_dir, "train", f"kmeans{args.get('tomodrgn_analyze_ksample')}" )
-        assert os.path.exists(label_directory), f"Cannot find output of tomodrgn analize in {label_directory}"
-    else:
-        label_directory = os.path.join( project_dir, "train", f"kmeans{args.get('tomodrgn_analyze_volumes_ksample')}" )
-        assert os.path.exists(label_directory), f"Cannot find output of tomodrgn analize_volumes in {label_directory}"
-    
-    command = f"{get_tomodrgn_path()} filter_star {input_star} -o {filtered_star_file} --labels {label_directory}/labels.pkl --labels-sel {kmeans_labels_to_keep}"
+    command = f"{get_tomodrgn_path()} filter_star {input_star} -o {filtered_star_file} {filtering_parameters}"
 
     local_run.stream_shell_command(command, verbose=args['slurm_verbose'])
 
