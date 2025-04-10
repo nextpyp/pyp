@@ -1304,7 +1304,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
             "Export to star", text = "Export metadata to .star format took: {}", logger=logger.info
         ):
             mode = mp["data_mode"].lower()
-            iteration = mp["refine_iter"]
+            export_iteration = mp["refine_iter"]
             micrographs = {}
             all_micrographs_file = mp["data_set"] + ".films"
             with open(all_micrographs_file) as f:
@@ -1313,7 +1313,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
                     micrographs[line.strip()] = index
                     index += 1
 
-            par_input = os.path.join(project_dir, "frealign", "maps", mp["data_set"] + "_r01_%02d" % ( iteration - 1 ) + ".bz2")
+            par_input = os.path.join(project_dir, "frealign", "maps", mp["data_set"] + "_r01_%02d" % ( export_iteration - 1 ) + ".bz2")
 
             if not os.path.exists(par_input):
                 raise Exception(f"Cannot find {par_input} to read particle alignments")
