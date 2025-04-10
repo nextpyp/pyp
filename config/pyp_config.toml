@@ -4027,6 +4027,96 @@ default = "1"
 hidden = ["spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine"]
 copyToNewBlock = false
 
+[tabs.reconstruct.dose_weighting_enable]
+name = "Apply dose weighting"
+description = "Perform data-driven dose weighting during reconstruction"
+type = "bool"
+default = false
+
+[tabs.reconstruct.dose_weighting_global]
+name = "Global weights"
+description = "Compute global weights using the entire dataset for dose weighting (rather than local weights inferred from a bundle)"
+type = "bool"
+default = false
+condition = { arg="dose_weighting_enable", value="true" }
+advanced = true
+
+[tabs.reconstruct.dose_weighting_weights]
+name = "External weights"
+description = "External weights for dose weighting (rather than weights inferred from current parfile)"
+type = "path"
+path = { type="files" }
+condition = { arg="dose_weighting_enable", value="true" }
+advanced = true
+
+[tabs.reconstruct.dose_weighting_fraction]
+name = "Frame weight fraction"
+description = "Using larger values contributes fewer frames to high-resolution, and viceversa"
+type = "int"
+default = 4
+condition = { arg="dose_weighting_enable", value="true" }
+advanced = true
+
+[tabs.reconstruct.dose_weighting_transition]
+name = "Frame weight transition"
+description = "Weight transition (for per-frame reconstruction)"
+type = "float"
+default = 0.75
+condition = { arg="dose_weighting_enable", value="true" }
+advanced = true
+
+[tabs.reconstruct.dose_weighting_multiply]
+name = "Multiply by number of frames"
+description = "Multiply dose weighting parameters by the number of frames"
+type = "bool"
+default = true
+condition = { arg="dose_weighting_enable", value="true" }
+advanced = true
+
+[tabs.reconstruct.denoise_enable]
+name = "Apply denoising"
+description = "Apply denoising after reconstruction"
+type = "bool"
+default = false
+
+[tabs.reconstruct.denoise_method]
+name = "Method"
+description = "Method to use for denosing"
+type = "enum"
+enum = { bm4d="bm4d (block matching 4d)", nad="imod-nad (anisotropic difussion)" }
+default = "bm4d"
+condition = { arg="denoise_enable", value="true" }
+
+[tabs.reconstruct.denoise_iters]
+name = "Number of iterations"
+description = "More iterations for more aggressive denoising"
+type = "int"
+default = 1
+condition = { arg="denoise_method", value="nad" }
+
+[tabs.reconstruct.denoise_nsearch]
+name = "Neighborhood size"
+description = "Size of area to search for similar patches (voxels)"
+type = "int"
+default = 11
+hidden = true
+condition = { arg="denoise_method", value="nad" }
+
+[tabs.reconstruct.denoise_patch_size]
+name = "Patch size"
+description = "Patch size used for denoising (must be power of 2, voxels)"
+type = "int"
+default = 4
+hidden = true
+condition = { arg="denoise_method", value="nad" }
+
+[tabs.reconstruct.denoise_sigma]
+name = "Noise sigma"
+description = "Noise sigma estimation, use higher values for more aggresive denoising"
+type = "float"
+default = 0.25
+condition = { arg="denoise_method", value="bm4d" }
+
 [tabs.reconstruct.export_enable]
 name = "Export metadata (*.star)"
 description = "Export metadata after reconstruction"
@@ -4318,7 +4408,7 @@ _hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.dose_weighting.enable]
 name = "Dose weighting"
-description = "Enable dose weighting during reconstruction"
+description = "Perform data-driven dose weighting during reconstruction"
 type = "bool"
 default = false
 

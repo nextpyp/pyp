@@ -2335,7 +2335,7 @@ def csp_split(parameters, iteration):
                     os.chdir(current_dir)
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
 
-        if parameters["dose_weighting_enable"] and ref == 0:
+        if parameters["reconstruct_dose_weighting_enable"] and ref == 0:
      
             # create weights folder for storing weights.txt
             weights_folder = Path.cwd() / "frealign" / "weights"

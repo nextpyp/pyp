@@ -808,7 +808,7 @@ def run_reconstruction(
     recon_T = recon_E - recon_S
     timer.Timer.timers.update({"reconstruct3d_splitcom" :{"elapsed_time": recon_T, "start_time": recon_st, "end_time": str(datetime.datetime.now())}})
 
-    if mp["dose_weighting_enable"]:
+    if mp["reconstruct_dose_weighting_enable"]:
         if os.path.exists("weights.txt"):
             pyp_frealign_plot_weights.plot_weights(name, "weights.txt", num_tilts, frames_per_tilt, mp["extract_box"], mp["scope_pixel"] * mp["extract_bin"])
         else:

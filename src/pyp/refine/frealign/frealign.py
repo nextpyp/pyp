@@ -1729,7 +1729,7 @@ def split_reconstruction(
 
     if True: 
         
-        if project_params.param(mp["dose_weighting_enable"], i):
+        if project_params.param(mp["reconstruct_dose_weighting_enable"], i):
             dose_weighting = "yes"
 
             # if dose weighting is enabled, we will go into this block
@@ -2426,20 +2426,20 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
     new_mrc_path = "../maps/" + name + ".mrc"
     same_ref = fp["refine_same_ref"]
 
-    if fp["denoise_enable"]:
+    if fp["reconstruct_denoise_enable"]:
         logger.info(f"Denoising map using {fp['denoise_method']}")
         try:
             # increase the contrast of virus volume
             volume = scratch + name
-            if fp["denoise_method"] == "nad":
-                iterations = fp["denoise_iters"] 
+            if fp["reconstruct_denoise_method"] == "nad":
+                iterations = fp["reconstruct_denoise_iters"] 
                 command = f"{get_imod_path()}/bin/nad_eed_3d -n {iterations} {volume}.mrc {volume}_denoised.mrc".format(
                 )
                 local_run.run_shell_command(command,verbose=fp["slurm_verbose"])
             elif False:
-                sigma = fp["denoise_sigma"]
-                nsearch = fp["denoise_nsearch"]
-                patchsize = fp["denoise_patch_size"]
+                sigma = fp["reconstruct_denoise_sigma"]
+                nsearch = fp["reconstruct_denoise_nsearch"]
+                patchsize = fp["reconstruct_denoise_patch_size"]
                 command = "{0}/pyp/postprocess/pyp_bm4d.py -input {1} -output {2} -sigma {3} -nsearch {4} -patch_size {5}".format(
                     os.environ["PYP_DIR"],
                     scratch + name + ".mrc",
@@ -2449,7 +2449,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
                     patchsize,
                 )
                 local_run.run_shell_command(command)
-            elif fp["denoise_method"] == "bm4d":
+            elif fp["reconstruct_denoise_method"] == "bm4d":
                 with timer.Timer(
                     "BM4D denoising", text = "BM4D denoising took: {}", logger=logger.info
                 ):
@@ -2457,7 +2457,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
                     from bm4d import bm4d
                     input = mrc.read(volume + ".mrc")
                     header = mrc.readHeaderFromFile(volume + ".mrc")
-                    output = bm4d(input,fp["denoise_sigma"])
+                    output = bm4d(input,fp["reconstruct_denoise_sigma"])
                     mrc.write(output,volume + "_denoised.mrc",header=header)
             else:
                 logger.error("Unknown denoising method")
@@ -2744,9 +2744,6 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
 
     plt.savefig("../maps/%s_fsc.png" % dataset)
     plt.close()
-
-    if False and os.path.exists(fp["refine_maskth"]):
-        shutil.copy(star_file.replace(".star", "_fsc.eps"), "../maps/%s_fsc.eps" % name)
 
     # reconstruction montage
     rec = mrc.read(scratch + name + ".mrc")
@@ -3502,7 +3499,7 @@ def merge_refinements(mp, fp, iteration, alignment_option):
                     and int(project_params.param(fp["refine_mode"], iteration)) == 0
                 )
                 or (
-                    fp["dose_weighting_enable"]
+                    fp["reconstruct_dose_weighting_enable"]
                     and not "frealignx"
                     in project_params.param(fp["refine_metric"], iteration).lower()
                 )
@@ -3541,7 +3538,7 @@ def merge_refinements(mp, fp, iteration, alignment_option):
                 #    commands.getoutput(com)
 
         # if using dose weighting we need to use frealignx mode
-        if fp["dose_weighting_enable"]:
+        if fp["reconstruct_dose_weighting_enable"]:
             phases_or_scores = "-frealignx"
             arg_scores = False
             arg_frealignx = True
