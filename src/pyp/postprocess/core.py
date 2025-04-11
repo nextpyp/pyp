@@ -201,6 +201,7 @@ def fit_tanh(data_x,data_y):
 
         return x_fit, y_fit
     except Exception as e:
+        logger.warning(f"Fitting of tanh function to part-FSC curve failed")
         logger.warning(repr(e))
         return data_x, data_y
 
