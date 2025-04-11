@@ -5179,25 +5179,25 @@ if __name__ == "__main__":
                     parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.bz2")
                     parameters["clean_parfile"] = parfile_occ_zero if parfile_occ_zero.exists() else parameters["clean_parfile"]
 
-                if parameters.get("micromon_block") != "tomo-drgn-filter":
-                    assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
-
-                    # copy reconstruction to current frealign/maps
-                    filename_init = parameters["data_set"] + "_r01_01"
-                    parfile = project_params.resolve_path(parameters["clean_parfile"])
-                    reference = parfile.replace(".bz2", "") + ".mrc"
-                    if os.path.exists(reference):
-                        shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
-
-                    # do the actual cleaning
-                    parameters = particle_cleaning(parameters)
-                else:
+                if parameters.get("micromon_block") == "tomo-drgn-filter":
                     # run filter_star
                     project_dir = os.getcwd()
                     parent_project_dir = parameters["data_parent"]
                     input_star = parameters["tomodrgn_vae_train_input_star"]
                     filtered_star_file = os.path.join(project_dir, "train", "filered_star_file.star")
                     tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, parent_project_dir=parent_project_dir)
+                else:
+                    assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
+
+                    # copy reconstruction to current frealign/maps
+                    filename_init = parameters["data_set"] + "_r01_01"
+                    parfile = project_params.resolve_path(parameters["clean_parfile"])
+                    reference = parfile.replace(".bz2",".mrc")
+                    if os.path.exists(reference):
+                        shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
+
+                    # do the actual cleaning
+                    parameters = particle_cleaning(parameters)
 
                 # automatically run reconstruction using clean particles without any refinement 
                 # use clean_parfile as refine_parfile
