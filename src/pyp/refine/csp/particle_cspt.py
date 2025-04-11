@@ -1298,7 +1298,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
                 raise Exception("Failed to copy files?")
 
     # export metadata in star format
-    if mp["reconstruct_export_enable"]:
+    if mp["reconstruct_export_enable"] and "local" not in mp["extract_fmt"].lower():
 
         with timer.Timer(
             "Export to star", text = "Export metadata to .star format took: {}", logger=logger.info
