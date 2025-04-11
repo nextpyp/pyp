@@ -2681,8 +2681,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             if len(frame_list) > 0:
                 imagefile = frame_list
             else:
-                logger.error("Either data do not have frames or pre-processing was incomplete")
-                raise Exception("Frames not found.")
+                raise Exception("Data does not have frames or pre-processing was incomplete")
 
         elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
             imagefile = "mrc/" + filename
