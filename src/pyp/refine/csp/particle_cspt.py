@@ -1340,6 +1340,9 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
             select = mp["extract_cls"]
             globalmeta.meta2Star(mp["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
+            
+            # cleanup
+            shutil.rmtree(Path(parfile), ignore_errors=True)
 
     # launch next iteration if needed
     if iteration < maxiter:
