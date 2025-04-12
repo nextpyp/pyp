@@ -1004,7 +1004,7 @@ def particle_cleaning(parameters: dict):
     assert Path(parameter_folder).exists(), f"{parameter_folder} does not exists."
 
     # decompress the parametere file (if needed), and copy it over to the particle filtering block
-    parameter_folder_init = f"{parameters['data_set']}_r01_02" if parameters["clean_discard"] else f"{parameters['data_set']}_r01_01"
+    parameter_folder_init = f"{parameters['data_set']}_r01_01"
 
     parameter_folder_current = Path("frealign", "maps", parameter_folder_init) 
 
@@ -1012,14 +1012,14 @@ def particle_cleaning(parameters: dict):
     p_obj = cistem_star_file.Parameters()
 
     # first check class selection, and generate one parfile with occ=0 to mark the discarded particles
-    if parameters["clean_class_selection"] and not parameters["clean_discard"]:
+    if parameters["clean_class_selection"]:
         sel = parameters["clean_class_selection"]
         selist = sel.split(",")
         selection = [int(x) for x in selist]
         # merge_align = parameters["clean_class_merge_alignment"]
         
         output_parfile = parameter_folder_current 
-        os.makedirs(output_parfile)
+        os.makedirs(output_parfile,exist_ok=True)
 
         all_zero_list = pyp_metadata.merge_par_selection(parameter_folder, output_parfile, films, selection, parameters)
         parameter_folder = output_parfile
@@ -1061,7 +1061,7 @@ def particle_cleaning(parameters: dict):
         if parameters["clean_discard"]:
             film_col = p_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
             film_ids = np.unique(new_pardata[:, film_col])
-            clean_output_folder = str(parameter_folder_current) + "_clean"
+            clean_output_folder = str(parameter_folder_current)[:-3] + "_clean"
             
             if os.path.exists(clean_output_folder):
                 shutil.rmtree(clean_output_folder)
@@ -1134,7 +1134,7 @@ def particle_cleaning(parameters: dict):
         )
 
         if parameters["clean_discard"]:
-            clean_parameter_folder = Path(str(parameter_folder_current) + "_clean")
+            clean_parameter_folder = Path(str(parameter_folder_current)[:-3] + "_clean")
             if clean_parameter_folder.exists():
                 shutil.rmtree(clean_parameter_folder)
             os.mkdir(clean_parameter_folder)
@@ -1161,6 +1161,8 @@ def particle_cleaning(parameters: dict):
             frealign_parfile.Parameters.compress_parameter_file(str(clean_parameter_folder.name), 
                                                                 str(clean_parameter_folder.name) + ".bz2", 
                                                                 parameters["slurm_merge_tasks"])
+            # cleanup
+            shutil.rmtree(clean_parameter_folder.name)
             os.chdir(current_dir)
 
             # update film file
@@ -1168,6 +1170,10 @@ def particle_cleaning(parameters: dict):
                 os.rename(filmlist_file, filmlist_file.replace(".films", ".films_original"))
                 np.savetxt(filmlist_file, clean_micrograph_list, fmt="%s")
                 shutil.copy2(filmlist_file, filmlist_file.replace(".films", ".micrographs"))
+
+        # cleanup, if needed
+        if not parameters["clean_check_reconstruction"]:
+            shutil.rmtree(parameter_folder, ignore_errors=True)
 
     return parameters 
 

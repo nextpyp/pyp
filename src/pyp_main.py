@@ -554,7 +554,7 @@ def parse_arguments(block):
                         parent_project_name + "_r01_02.par.bz2",
                     )
                     # find out what is the most recent parameter file
-                    potential_file_patterns = ["*_r01_??.bz2", "*_r01_??", "*_r01_??_clean.bz2"]
+                    potential_file_patterns = ["*_r01_??.bz2", "*_r01_??", "*_r01_clean.bz2", "*_r01_??_clean.bz2"]
                     potential_parameter_files = [Path(parent_parameters["data_parent"], "frealign", "maps").glob(pattern) for pattern in potential_file_patterns]
                     potential_parameter_files = [str(file) for files in potential_parameter_files for file in files]
                     reference_par_file = sorted(potential_parameter_files)
