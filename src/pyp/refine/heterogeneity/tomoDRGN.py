@@ -875,16 +875,18 @@ def filtering_with_labels(args,input_star,filtered_star_file,parent_project_dir)
     if parent_parameters['micromon_block'] == "tomo-drgn-eval":
         label_directory = os.path.join( parent_project_dir, "train", f"kmeans{args.get('tomodrgn_analyze_ksample')}" )
         assert os.path.exists(label_directory), f"Cannot find output of tomodrgn analyze in {label_directory}"
+        labels = os.path.join( label_directory, "labels.pkl" )
     elif parent_parameters['micromon_block'] == "tomo-drgn-eval-vols":
         label_directory = os.path.join( parent_project_dir, "train", f"kmeans{args.get('tomodrgn_analyze_volumes_ksample')}" )
         assert os.path.exists(label_directory), f"Cannot find output of tomodrgn analyze_volumes in {label_directory}"
+        labels = os.path.join( label_directory, f"voxel_kmeans{args.get('tomodrgn_analyze_volumes_ksample')}_labels.pkl" )
 
     filtering_parameters = ""
     if args.get('tomodrgn_filter_star_method') == "classids":
         logger.info("Filtering particles based on class IDs")        
         if args.get('tomodrgn_filter_star_classes') and len(args.get('tomodrgn_filter_star_classes').split(',')) > 0:
             kmeans_labels_to_keep = ' '.join(args.get('tomodrgn_filter_star_classes').split(','))
-            filtering_parameters += f" --labels {label_directory}/labels.pkl --labels-sel {kmeans_labels_to_keep}"
+            filtering_parameters += f" --labels {labels} --labels-sel {kmeans_labels_to_keep}"
         else:
             logger.warning("No classes selected for filtering!")
             return

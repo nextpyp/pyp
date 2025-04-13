@@ -4998,7 +4998,7 @@ if __name__ == "__main__":
                     if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
                         input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
                         parameters["tomodrgn_vae_train_input_star"] = input_star
-
+                        project_params.save_parameters(parameters)
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
@@ -5062,6 +5062,7 @@ if __name__ == "__main__":
                         parent_parameters = project_params.load_pyp_parameters(os.path.join( project_params.resolve_path(parameters.get("data_parent"))))
                         input_star = sorted(glob.glob( os.path.join( parent_parameters.get("data_parent"), "relion", "stacks", "*_particles.star" )))[-1]
                         parameters["tomodrgn_vae_train_input_star"] = input_star
+                        project_params.save_parameters(parameters)
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
@@ -5089,7 +5090,6 @@ if __name__ == "__main__":
 
                     elif parameters["heterogeneity_method"] == "tomoDRGN":
                         tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
-                    
                     else:
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
 
