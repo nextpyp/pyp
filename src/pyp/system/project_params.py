@@ -1049,7 +1049,7 @@ def get_latest_refinement_reference(parent_path: str, parfile_compress: bool = F
     # then look for txt file in frealign/
     parent_refinement_tomo_path = Path(parent_path) / "frealign"
     if parent_refinement_tomo_path.exists():
-        parfiles = sorted(list(parent_refinement_tomo_path.glob("*_original_volumes.txt")), key=lambda x: str(x))
+        parfiles = sorted(list(parent_refinement_tomo_path.glob("*_volumes.txt")), key=lambda x: str(x))
         latest_parfile = parfiles[-1] if len(parfiles) > 0 else None
         return latest_parfile, None
 

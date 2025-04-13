@@ -70,10 +70,15 @@ is dedicated to configuring the container environment.
 ~~~~~~~~~~~~~
 
 :Type: string
-:Required: yes
+:Required: no in web mode, yes in CLI mode
 :Description:
 	Path to the PYP Singularity container on the SLURM cluster,
 	ideally in a read-only location.
+
+	For web-enabled installations of nextPYP, this configuration option is not required.
+	If this option is not explicitly specified, nextPYP will look for the pyp container
+	at ``<web.sharedExecDir>/containers/pyp.sif``, where ``<web.sharedExecDir>`` is the
+	:ref:`web.sharedExecDir` configuration option in the :ref:`web` section, described below.
 :Examples:
 	``container = '/storage/singularity-images/pyp.sif'``
 
@@ -360,6 +365,8 @@ in different directories on different servers, there are two ways to fix it:
 
 ----
 
+.. _web:
+
 ``[web]``
 ~~~~~~~~~
 
@@ -461,6 +468,8 @@ in different directories on different servers, there are two ways to fix it:
 		This setting is initially set by the installation script using the ``PYP_SHARED_DATA`` environment variable.
 :Examples:
 	``sharedDir = '/network/streamPYP/sharedData'``
+
+.. _web.sharedExecDir:
 
 ``sharedExecDir``
 ~~~~~~~~~~~~~~~~~

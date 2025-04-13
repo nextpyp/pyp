@@ -554,7 +554,7 @@ def parse_arguments(block):
                         parent_project_name + "_r01_02.par.bz2",
                     )
                     # find out what is the most recent parameter file
-                    potential_file_patterns = ["*_r01_??.bz2", "*_r01_??", "*_r01_??_clean.bz2"]
+                    potential_file_patterns = ["*_r01_??.bz2", "*_r01_??", "*_r01_clean.bz2", "*_r01_??_clean.bz2"]
                     potential_parameter_files = [Path(parent_parameters["data_parent"], "frealign", "maps").glob(pattern) for pattern in potential_file_patterns]
                     potential_parameter_files = [str(file) for files in potential_parameter_files for file in files]
                     reference_par_file = sorted(potential_parameter_files)
@@ -2335,7 +2335,7 @@ def csp_split(parameters, iteration):
                     os.chdir(current_dir)
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
 
-        if parameters["dose_weighting_enable"] and ref == 0:
+        if parameters["reconstruct_dose_weighting_enable"] and ref == 0:
      
             # create weights folder for storing weights.txt
             weights_folder = Path.cwd() / "frealign" / "weights"
@@ -2434,11 +2434,20 @@ def csp_split(parameters, iteration):
 
     # ab initio 
     if "csp_abinitio" in parameters.keys() and parameters["csp_abinitio"]:
-        if parameters["refine_maxiter"] > parameters["refine_iter"]:
+        if parameters["refine_maxiter"] > parameters["refine_first_iter"]:
             logger.info('Doing ab-initio refinement')
             ab_initio(parameters)    
         else:
             raise Exception("Ab-initio refinement requires more than one iteration")
+    elif parameters["csp_automask"] and iter > 3 and classes == 1:
+        logger.info('Doing auto masking')
+        dataset = parameters["data_set"]
+        # Auto masking the cisTEM way 
+        current_ref = os.path.join(os.getcwd(), "frealign", "maps", "%s_r%02d_%02d.mrc" % (dataset, ref + 1, iter - 1) )
+        voxel_size = float(parameters["scope_pixel"] * parameters["data_bin"] * parameters["extract_bin"])
+        radius = parameters["particle_rad"]
+        mask_file = mrc.auto_masking(current_ref, voxel_size, radius)
+        parameters["refine_maskth"] = mask_file
 
     os.makedirs("swarm", exist_ok=True)
     os.chdir("swarm")
@@ -2681,8 +2690,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             if len(frame_list) > 0:
                 imagefile = frame_list
             else:
-                logger.error("Either data do not have frames or pre-processing was incomplete")
-                raise Exception("Frames not found.")
+                raise Exception("Data does not have frames or pre-processing was incomplete")
 
         elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
             imagefile = "mrc/" + filename
@@ -3475,8 +3483,8 @@ def ab_initio(parameters):
             raise Exception("Initial resolution limit must be lower than final used resolution")
         else:
             step = round(res_range / all_iters, 2)
-            res_limit = [str(low_limit - i * step) for i in np.arange(all_iters + 1)]
-            parameters["refine_rhref"] = ":".join(res_limit)
+            res_limit = [f"{(low_limit - i * step):.1f}" for i in np.arange(all_iters + 1)]
+            parameters["metric_rhref"] = parameters["refine_rhref"] = ":".join(res_limit)
             parameters["reconstruct_cutoff"] = "0.1"
             parameters["refine_skip"] = True
             parameters["refine_bsc"] = "0.0"
@@ -3486,51 +3494,52 @@ def ab_initio(parameters):
     else:
         parameters["reconstruct_cutoff"] = "1"
         if iter == 3:
-            parameters["csp_InitialSkip"] = True
             parameters["csp_refine_particles"] = True
-            parameters["csp_GridSearch"] = True
-            parameters["csp_AngleStep"] = 36
-            parameters["csp_ShiftStep"] = 20
+            parameters["csp_tomo_init_InitialSkip"] = True
+            parameters["csp_tomo_init_GridSearch"] = True
+            parameters["csp_tomo_init_AngleStep"] = 36
+            parameters["csp_tomo_init_ShiftStep"] = 20
             parameters["reconstruct_minscore"] = 1
             parameters["reconstruct_maxscore"] = 50
         else:
-            parameters["csp_InitialSkip"] = False
+            parameters["csp_tomo_init_InitialSkip"] = False
         
-        if parameters["csp_automask"] and iter > 3:
-            classes = int(project_params.param(parameters["class_num"], iter))
+        if parameters["metric_masking_method"] == "auto" and iter > 3:
+            classes = int(project_params.param(parameters["csp_tomo_init_num"], iter))
             dataset = parameters["data_set"]
-            # Auto masking the cisTEM way 
+            # Auto masking the cisTEM way
+            # TODO: Do we really need a mask for each class if we are saving into the same refine_maskth parameter? 
             for ref in range(classes):
                 current_ref = os.path.join(os.getcwd(), "frealign", "maps", "%s_r%02d_%02d.mrc" % (dataset, ref + 1, iter - 1) )
                 voxel_size = float(parameters["scope_pixel"] * parameters["data_bin"] * parameters["extract_bin"])
                 radius = parameters["particle_rad"]
                 mask_file = mrc.auto_masking(current_ref, voxel_size, radius)
-                parameters["refine_maskth"] = mask_file
+                parameters["metric_maskth"] = mask_file
 
         if running_particles > 500:
-            parameters["csp_ToleranceParticlesShifts"] = 30
+            parameters["csp_tomo_init_ToleranceParticlesShifts"] = 30
             parameters["reconstruct_cutoff"] = "0"
-            parameters["csp_ShiftStep"] = 10
-            parameters["csp_AngleStep"] = 30
+            parameters["csp_tomo_init_ShiftStep"] = 10
+            parameters["csp_tomo_init_AngleStep"] = 30
             parameters["refine_bsc"] = "2.0"
-            parameters["refine_score_weighting"] = True
+            parameters["metric_score_weighting"] = True
             # start to re-evaluate the score
             parameters["refine_skip"] = False
 
         if iter == 80:
-            parameters["csp_ToleranceParticlesShifts"] = 6
-            parameters["csp_ShiftStep"] = 6
-            parameters["csp_AngleStep"] = 20
-            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 30
+            parameters["csp_tomo_init_ToleranceParticlesShifts"] = 6
+            parameters["csp_tomo_init_ShiftStep"] = 6
+            parameters["csp_tomo_init_AngleStep"] = 20
+            parameters["csp_tomo_init_RandomParticles"] += 30
             parameters["refine_bsc"] = "2.0"
            
             # start to re-evaluate the score
             parameters["refine_skip"] = False
 
         elif iter == 140:
-            parameters["csp_ToleranceParticlesShifts"] = 0
-            parameters["csp_AngleStep"] = 10
-            parameters["csp_RandomParticles"] = parameters["csp_RandomParticles"] + 30
+            parameters["csp_tomo_init_ToleranceParticlesShifts"] = 0
+            parameters["csp_tomo_init_AngleStep"] = 10
+            parameters["csp_tomo_init_RandomParticles"] += 30
     
     project_params.save_parameters(parameters)
 
@@ -4445,155 +4454,318 @@ if __name__ == "__main__":
                 parameters = parse_arguments("refine")
  
                 if parameters != 0:
-                    if parameters["export_enable"]:
 
-                        mode = parameters["data_mode"].lower()
-                        iteration = parameters["refine_iter"]
-                        micrographs = {}
-                        all_micrographs_file = parameters["data_set"] + ".films"
-                        with open(all_micrographs_file) as f:
-                            index = 0
-                            for line in f.readlines():
-                                micrographs[line.strip()] = index
-                                index += 1
+                    if "particle_rad" not in parameters.keys() and not "import_mode" in parameters.keys() or parameters["extract_box"] == 0:
+                        logger.error("You need to pick particles before running refinement")
+                        sys.exit()
 
-                        par_input = project_params.resolve_path(parameters["export_parfile"])
+                    # Manage csp parameters from the multiple refinement blocks
+                    parameters_copy = parameters.copy()
+                    
+                    # ab-initio
+                    if parameters.get("micromon_block") == "tomo-initial-refinement":
+    
+                        # transfer iteration parameters
+                        parameters['refine_resume'] = parameters['csp_tomo_init_resume']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_init_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_init_first_iter']
+                        
+                        # transfer classification parameters
+                        parameters['class_num'] = parameters['csp_tomo_init_num']
+                        parameters['class_rhcls'] = parameters['csp_tomo_init_rhcls']
+                        
+                        # enable ab-initio mode
+                        parameters["csp_abinitio"] = True
+                        
+                        # transfer refinement parameters
+                        for key in parameters_copy.keys():
+                            if key.startswith("csp_tomo_init_"):
+                                new_key = key.replace("csp_tomo_init_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+                        
+                        # transfer ctf handedness parameters
+                        parameters["csp_ctf_handedness"] = parameters["extract_ctf_handedness"]
 
-                        if not os.path.exists(par_input):
-                            try:
-                                logger.warning(f"No input parfile specified, trying to find one automatically")
-                                par_input = os.path.join(os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01_%02d" % parameters["refine_iter"] + ".bz2")
-                                logger.info(f"Using parfile {par_input} as template for alignment")
-                            except:
-                                raise Exception("Cannot find parfile to read particle alignments")
-
-                        if os.path.isdir(par_input):
-                            parfile = par_input
-                        elif par_input.endswith(".bz2"):
-                            parfile = par_input.replace(".bz2", "")
-                            frealign_parfile.Parameters.decompress_parameter_file_and_move(Path(par_input), Path(parfile), threads=parameters["slurm_tasks"])
+                        # create inital model if needed
+                        if parameters.get("refine_iter") == 2:
+                            boxsize = parameters.get('extract_box')
+                            A = np.ones([boxsize, boxsize, boxsize], dtype=np.float32)
+                            dummy_reference = os.path.join( os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01" + "_01.mrc" )
+                            os.makedirs(Path(dummy_reference).parents[0], exist_ok=True)
+                            mrc.write(A, dummy_reference)
+                            parameters["refine_model"] = dummy_reference
                         else:
-                            raise Exception(f"Unknown parfile format: {par_input}")
+                            parameters["refine_model"] = os.path.join( os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01" + "_%02d.mrc" % ( parameters.get("refine_iter") - 1 ) )
+                        assert os.path.exists(parameters["refine_model"]), f"Could not find reference file {parameters['refine_model']}!"
+                        
+                        # resolve parameter file (*.txt from parent block)
+                        parfile, _ = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+                        assert os.path.exists(project_params.resolve_path(parfile)), f"Could not find metadata file!"
+                        parameters["refine_parfile_tomo"] = parfile
+                    
+                    # reference-based
+                    elif parameters.get("micromon_block") == "tomo-reference-refinement":
+ 
+                        # always do a single interation
+                        parameters["refine_iter"] = parameters["refine_maxiter"] = 2
 
-                        imagelist = list(micrographs.keys())
+                        # calculate number of random iterations based on range and step size if doing reference-based alignment
+                        parameters['csp_NumberOfRandomIterations'] = int(2**4 * parameters.get("csp_tomo_reference_ToleranceParticlesPhi") * parameters.get("csp_tomo_reference_ToleranceParticlesPsi") * parameters.get("csp_tomo_reference_ToleranceParticlesTheta") * parameters.get("csp_tomo_reference_ToleranceParticlesShifts") / ( parameters.get("csp_tomo_reference_AngleStep") ** 3 ) / parameters.get("csp_tomo_reference_ShiftStep"))
+                        logger.warning(f"Number of random points based on search range and step size: {parameters.get('csp_NumberOfRandomIterations'):,}")
+                        
+                        # transfer refinement parameters
+                        for key in parameters_copy.keys():
+                            if key.startswith("csp_tomo_reference_"):
+                                new_key = key.replace("csp_tomo_reference_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+                        
+                        # transfer ctf handedness parameters
+                        parameters["csp_ctf_handedness"] = parameters["extract_ctf_handedness"]
+                        parameters["csp_refine_particles"] = True
+                        parameters["csp_refine_micrographs"] = False
+                        parameters["csp_refine_ctf"] = False
 
-                        globalmeta = pyp_metadata.GlobalMetadata(
-                            parameters["data_set"],
-                            parameters,
-                            imagelist=imagelist,
-                            mode=mode,
-                            getpickle=True,
-                            parfile=parfile,
-                            path="./pkl"
-                            )
+                        # resolve initial model
+                        assert parameters.get("csp_tomo_reference_model") and os.path.exists(project_params.resolve_path(parameters.get("csp_tomo_reference_model"))), f"Reference is missing!"
+                        parameters["refine_model"] = parameters.get("csp_tomo_reference_model")
+                        
+                        # resolve parameter file (*.txt from parent block)
+                        parfile, _ = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+                        assert os.path.exists(project_params.resolve_path(parfile)), f"Could not find metadata file!"
+                        parameters["refine_parfile_tomo"] = parfile
 
-                        select = parameters["extract_cls"]
-                        globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
+                    # reference-free
+                    elif parameters.get("micromon_block") == "tomo-initial-reconstruct":
 
-                        logger.info("nextPYP (export_star) finished successfully")
+                        # always do a single interation
+                        parameters["refine_iter"] = parameters["refine_maxiter"] = 2
 
-                    else:
-                        if "particle_rad" not in parameters.keys() and not "import_mode" in parameters.keys() or parameters["extract_box"] == 0:
-                            logger.error("You need to pick particles before running refinement")
-                            sys.exit()
+                        # transfer refinement parameters
+                        for key in parameters_copy.keys():
+                            new_key = key.replace("csp_tomo_free_","csp_")
+                            if new_key in parameters:
+                                parameters[new_key] = parameters_copy.get(key)
+                        
+                        # transfer ctf handedness parameters
+                        parameters["csp_ctf_handedness"] = parameters["extract_ctf_handedness"]
 
-                        if not parameters["refine_resume"]:
-                            parameters["refine_iter"] = parameters["refine_first_iter"]
-
-                        # normal csp procedure
-                        iteration = parameters["refine_iter"]
-                        if iteration < 2:
-                            iteration = parameters["refine_iter"] = 2
-
-                        if parameters["data_mode"] == "spr":
-                            set_up.prepare_spr_dir()
+                        # create inital model
+                        boxsize = parameters.get('extract_box')
+                        A = np.ones([boxsize, boxsize, boxsize], dtype=np.float32)
+                        dummy_reference = os.path.join( os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01" + "_01.mrc" )
+                        os.makedirs(Path(dummy_reference).parents[0], exist_ok=True)
+                        mrc.write(A, dummy_reference)
+                        parameters["refine_model"] = dummy_reference
+                        
+                        # resolve parameter file
+                        if parameters.get("csp_tomo_free_format") == "bz2":
+                            assert parameters["csp_tomo_free_parfile"], f"Metadata file is missing!"
+                            parameters["refine_parfile"] = project_params.resolve_path(parameters["csp_tomo_free_parfile"])
+                        elif parameters.get("csp_tomo_free_format") == "txt":
+                            parameters["refine_parfile_tomo"] = project_params.resolve_path(parameters.get("csp_tomo_free_parfile_tomo"))
+                            assert os.path.exists(parameters["refine_parfile_tomo"]), f"Metadata file is missing!"
                         else:
-                            set_up.prepare_tomo_dir()
-
-                        # prepare directory structure
-                        folders = [
-                            "frealign",
-                            "frealign/maps",
-                            "frealign/log",
-                        ]
-                        null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
-
-                        if parameters["refine_iter"] == 2:
-
-                            # if using particles from manual picking, we need to populate the metadata manually
-                            if parameters.get("data_parent"):
-                                parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
-                                if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking":
-                                    update_metadata_coordinates_and_merge(project_path=os.getcwd(),working_path=os.environ["PYP_SCRATCH"],parameters=parameters)
-                                    # set the volumes files we just calculated as reference
-                                    parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
-
-                                latest_parfile, latest_reference = None, None
-                                # data_parent is None if running CLI
-                                if "data_parent" in parameters and parameters["data_parent"] is not None:
-                                    latest_parfile, latest_reference = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
-
-                                parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
-
-                                # NOTE: spr does not really require a parfile first time we run csp
-                                if "refine_parfile" in parameters and parameters["refine_parfile"] is not None:
-                                    parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
-                                elif "refine_parfile_tomo" in parameters and parameters["refine_parfile_tomo"] is not None:
-                                    parameters["refine_parfile_tomo"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto" else parameters["refine_parfile_tomo"]
-                                    
-                        else:
-                                latest_parfile, latest_reference = project_params.get_latest_refinement_reference(os.getcwd(), parameters["refine_parfile_compress"])
-                                parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
-                                parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
+                            # find *.txt file from parent block
+                            parfile, _ = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+                            parameters["refine_parfile_tomo"] = project_params.resolve_path(parfile)
+                            assert os.path.exists(parameters["refine_parfile_tomo"]), f"Metadata file is missing!"
                             
-                        # ensure backwards compatibility
-                        parameters = sync_parameters(parameters=parameters)
+                    elif parameters.get("micromon_block") == "tomo-new-coarse-refinement":
 
-                        project_params.save_parameters(parameters)
+                        for key in parameters_copy.keys():
+                            if key.startswith("csp_tomo_coarse_"):
+                                new_key = key.replace("csp_tomo_coarse_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+                        parameters["refine_model"] = parameters["csp_tomo_coarse_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+                        parameters["refine_parfile"] = parameters["csp_tomo_coarse_parfile"]
 
-                        if (
-                            parameters["refine_model"] is None
-                            or not Path(project_params.resolve_path(parameters["refine_model"])).exists() 
+                        # transfer iteration parameters
+                        if not parameters.get('csp_tomo_coarse_resume'):
+                            parameters['refine_iter'] = parameters['csp_tomo_coarse_first_iter']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_coarse_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_coarse_first_iter']
+
+                    elif parameters.get("micromon_block") == "tomo-new-coarse-classification":
+                        for key in parameters_copy.keys():
+                            if key.startswith("csp_tomo_classification_"):
+                                new_key = key.replace("csp_tomo_classification_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+
+                        # transfer classification parameters                    
+                        parameters['class_num'] = parameters['csp_tomo_classification_num']
+                        parameters['class_rhcls'] = parameters['csp_tomo_classification_rhcls']
+                        parameters['class_force_init'] = parameters['csp_tomo_classification_force_init']
+                        parameters['class_bin'] = parameters['csp_tomo_classification_bin']
+                        parameters['class_refineeulers'] = parameters['csp_tomo_classification_refineeulers']
+                        parameters['class_refineshifts'] = parameters['csp_tomo_classification_refineshifts']
+                        parameters['class_focusmask'] = parameters['csp_tomo_classification_focusmask']
+                        # parameters['class_refine_poses'] = parameters['csp_tomo_classification_refine_poses']
+                        
+                        # transfer iteration parameters
+                        if not parameters.get('csp_tomo_classification_resume'):
+                            parameters['refine_iter'] = parameters['csp_tomo_classification_first_iter']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_classification_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_classification_first_iter']
+                        
+                        assert parameters.get("csp_tomo_classification_parfile"), f"An input parameter file (*.bz2) is required"
+                        parameters["refine_parfile"] = parameters["csp_tomo_classification_parfile"]
+                        parameters["refine_model"] = parameters["csp_tomo_classification_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+
+                    elif parameters.get("micromon_block") == "tomo-flexible-refinement":
+                        for key in parameters_copy.keys(): 
+                            if key.startswith("csp_tomo_movie_"):
+                                new_key = key.replace("csp_tomo_movie_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+
+                        assert parameters.get("csp_tomo_movie_parfile"), f"An input parameter file (*.bz2) is required"
+                        parameters["refine_parfile"] = parameters["csp_tomo_movie_parfile"]
+                        parameters["refine_model"] = parameters["csp_tomo_movie_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+
+                        # transfer iteration parameters
+                        if not parameters.get('csp_tomo_movie_resume'):
+                            parameters['refine_iter'] = parameters['csp_tomo_movie_first_iter']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_movie_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_movie_first_iter']
+
+                        # turn on frame refinement and everything else off
+                        parameters['csp_refine_micrographs'] = False
+                        parameters['csp_refine_particles'] = False
+                        parameters['csp_refine_ctf'] = False
+                        parameters['csp_frame_refinement'] = True
+
+                    elif parameters.get("micromon_block") == "tomo-flexible-refinement-after":
+                        for key in parameters_copy.keys(): 
+                            if key.startswith("csp_tomo_movie_after_"):
+                                parameters[key.replace("csp_tomo_movie_after_","csp_")] = parameters_copy.get(key)
+                        parameters["refine_parfile"] = parameters["csp_tomo_movie_after_parfile"]
+                        parameters["refine_model"] = parameters["csp_tomo_movie_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+                    
+                        # transfer iteration parameters
+                        if not parameters.get('csp_tomo_movie_after_resume'):
+                            parameters['refine_iter'] = parameters['csp_tomo_movie_after_first_iter']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_movie_after_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_movie_after_first_iter']
+                        
+                        # turn off frame refinement
+                        parameters['csp_frame_refinement'] = False
+                        
+                    # transfer metric parameters from new tomo pipeline to old one
+                    if parameters.get("data_mode") == "tomo" and parameters.get("micromon_block") != "tomo_coarse_refinement":
+                        for key in parameters_copy.keys():
+                            if key.startswith("metric_"):
+                                if key.replace("metric_","refine_") in parameters:
+                                    parameters[key.replace("metric_","refine_")] = parameters_copy.get(key)
+                                elif key.replace("metric_","csp_") in parameters:
+                                    parameters[key.replace("metric_","csp_")] = parameters_copy.get(key)
+                                elif key == "metric_masking_method":
+                                    if parameters.get(key) == "auto":
+                                        parameters["csp_automask"] = True
+                                    elif parameters.get(key) == "file":
+                                        assert os.path.exists(project_params.resolve_path(parameters.get("metric_maskth"))), f"Mask file {parameters.get('metric_maskth')} does not exist"
+                                        parameters["refine_maskth"] = project_params.resolve_path(parameters_copy.get("metric_maskth"))
+
+                    if not parameters["refine_resume"]:
+                        parameters["refine_iter"] = parameters["refine_first_iter"]
+
+                    # normal csp procedure
+                    iteration = parameters["refine_iter"]
+                    if iteration < 2:
+                        iteration = parameters["refine_iter"] = 2
+
+                    if parameters["data_mode"] == "spr":
+                        set_up.prepare_spr_dir()
+                    else:
+                        set_up.prepare_tomo_dir()
+
+                    # prepare directory structure
+                    folders = [
+                        "frealign",
+                        "frealign/maps",
+                        "frealign/log",
+                    ]
+                    null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
+
+                    if parameters["refine_iter"] == 2:
+
+                        # if using particles from manual picking, we need to populate the metadata manually
+                        if parameters.get("data_parent"):
+                            parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
+                            if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking":
+                                update_metadata_coordinates_and_merge(project_path=os.getcwd(),working_path=os.environ["PYP_SCRATCH"],parameters=parameters)
+                                # set the volumes files we just calculated as reference
+                                parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
+
+                            latest_parfile, latest_reference = None, None
+                            # data_parent is None if running CLI
+                            if "data_parent" in parameters and parameters["data_parent"] is not None:
+                                latest_parfile, latest_reference = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+
+                            parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
+
+                            # NOTE: spr does not really require a parfile first time we run csp
+                            if "refine_parfile" in parameters and parameters["refine_parfile"] is not None:
+                                parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
+                            elif "refine_parfile_tomo" in parameters and parameters["refine_parfile_tomo"] is not None:
+                                parameters["refine_parfile_tomo"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto" else parameters["refine_parfile_tomo"]
+                                
+                    else:
+                            latest_parfile, latest_reference = project_params.get_latest_refinement_reference(os.getcwd(), parameters["refine_parfile_compress"])
+                            parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
+                            parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
+                        
+                    # ensure backwards compatibility
+                    parameters = sync_parameters(parameters=parameters)
+
+                    project_params.save_parameters(parameters)
+
+                    if (
+                        parameters["refine_model"] is None
+                        or not Path(project_params.resolve_path(parameters["refine_model"])).exists() 
+                    ):
+                        logger.error(
+                            f"Reference {parameters['refine_model']} does not exist"
+                        )
+                    else:
+                        try:
+                            data_set = parameters["data_set"]
+                        except KeyError:
+                            data_set = None
+
+                        parxfile = f"frealign/{data_set}_frames_01.parx"
+                        stackfile = f"frealign/{data_set}_frames_stack.mrc"
+
+                        # resize reference and copy to frealign/maps
+                        reference = (
+                            "frealign/maps/" + parameters["data_set"] + "_r01_01.mrc"
+                        )
+                        if parameters["refine_iter"] == 2:
+                            initial_model = project_params.resolve_path(
+                                parameters["refine_model"]
+                            )
+                            preprocess.resize_initial_model(
+                                parameters, initial_model, reference
+                            )
+
+                        films_csp = f"{data_set}.films_csp"
+                        if os.path.exists(films_csp):
+                            os.remove(films_csp)
+                        if not os.path.isfile(stackfile) or not os.path.isfile(
+                            parxfile
                         ):
-                            logger.error(
-                                f"Reference {parameters['refine_model']} does not exist"
-                            )
+                            csp_split(parameters, iteration)
                         else:
-                            try:
-                                data_set = parameters["data_set"]
-                            except KeyError:
-                                data_set = None
-
-                            parxfile = f"frealign/{data_set}_frames_01.parx"
-                            stackfile = f"frealign/{data_set}_frames_stack.mrc"
-
-                            # resize reference and copy to frealign/maps
-                            reference = (
-                                "frealign/maps/" + parameters["data_set"] + "_r01_01.mrc"
+                            logger.warning(
+                                "CSPT files already exist. Please delete if you want to re-create them."
                             )
-                            if parameters["refine_iter"] == 2:
-                                initial_model = project_params.resolve_path(
-                                    parameters["refine_model"]
-                                )
-                                preprocess.resize_initial_model(
-                                    parameters, initial_model, reference
-                                )
+                            logger.info("\t %s", parxfile)
+                            logger.info("\t %s", stackfile)
 
-                            films_csp = f"{data_set}.films_csp"
-                            if os.path.exists(films_csp):
-                                os.remove(films_csp)
-                            if not os.path.isfile(stackfile) or not os.path.isfile(
-                                parxfile
-                            ):
-                                csp_split(parameters, iteration)
-                            else:
-                                logger.warning(
-                                    "CSPT files already exist. Please delete if you want to re-create them."
-                                )
-                                logger.info("\t %s", parxfile)
-                                logger.info("\t %s", stackfile)
-
-                        logger.info("nextPYP (csp) finished successfully")
+                    logger.info("nextPYP (csp) finished successfully")
 
             except:
                 trackback()
@@ -5046,7 +5218,7 @@ if __name__ == "__main__":
                     if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
                         input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
                         parameters["tomodrgn_vae_train_input_star"] = input_star
-
+                        project_params.save_parameters(parameters)
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
@@ -5110,6 +5282,7 @@ if __name__ == "__main__":
                         parent_parameters = project_params.load_pyp_parameters(os.path.join( project_params.resolve_path(parameters.get("data_parent"))))
                         input_star = sorted(glob.glob( os.path.join( parent_parameters.get("data_parent"), "relion", "stacks", "*_particles.star" )))[-1]
                         parameters["tomodrgn_vae_train_input_star"] = input_star
+                        project_params.save_parameters(parameters)
                     if "data_parent" in parameters and parameters["data_parent"] is not None: 
                         input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
                         input = Path(os.getcwd()) / "frealign" / "stacks" 
@@ -5136,13 +5309,7 @@ if __name__ == "__main__":
                         cryoDRGN.run_cryodrgn_eval(project_dir, parameters=parameters)
 
                     elif parameters["heterogeneity_method"] == "tomoDRGN":
-                        if parameters.get("micromon_block") == "tomo-drgn-filter":
-                            # run filter_star
-                            filtered_star_file = os.path.join(project_dir, "train", "filered_star_file.star")
-                            tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, project_dir=project_dir)
-                        else:
-                            tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
-                    
+                        tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
                     else:
                         raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
 
@@ -5228,24 +5395,33 @@ if __name__ == "__main__":
                         parameters["refine_parfile"] = reference_par_file[-1]
                         parameters["refine_model"] = reference_par_file[-1].replace(".bz2","") + ".mrc"
 
-                if parameters["clean_discard"]:
-                    parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.bz2")
-                    parameters["clean_parfile"] = parfile_occ_zero if parfile_occ_zero.exists() else parameters["clean_parfile"]
-
-                if parameters.get("micromon_block") != "tomo-drgn-filter":
+                if parameters.get("micromon_block") == "tomo-drgn-filter":
+                    # run filter_star
+                    project_dir = os.getcwd()
+                    parent_project_dir = parameters["data_parent"]
+                    if "tomodrgn_vae_train_input_star" in parameters:
+                        if parameters.get("tomodrgn_vae_train_input_star") == "auto":
+                            parent_parameters = project_params.load_pyp_parameters(os.path.join( project_params.resolve_path(parameters.get("data_parent"))))
+                            # input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
+                            input_star = parent_parameters["tomodrgn_vae_train_input_star"]
+                            parameters["tomodrgn_vae_train_input_star"] = input_star
+                        else:
+                            input_star = parameters["tomodrgn_vae_train_input_star"]
+                    
+                    filtered_star_file = os.path.join(project_dir, "train", "filtered_star_file.star")
+                    tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, parent_project_dir=parent_project_dir)
+                else:
                     assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
 
                     # copy reconstruction to current frealign/maps
                     filename_init = parameters["data_set"] + "_r01_01"
                     parfile = project_params.resolve_path(parameters["clean_parfile"])
-                    reference = parfile.replace(".bz2", "") + ".mrc"
+                    reference = parfile.replace(".bz2",".mrc")
                     if os.path.exists(reference):
                         shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
 
                     # do the actual cleaning
                     parameters = particle_cleaning(parameters)
-                else:
-                    logger.warning("Not implemented!")
 
                 # automatically run reconstruction using clean particles without any refinement 
                 # use clean_parfile as refine_parfile

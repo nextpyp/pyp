@@ -454,8 +454,8 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
       ./nextpyp stop
 
       # download the new installer and mark it executable
-      sudo wget https://nextpyp.app/files/pyp/latest/install -O install
-      sudo chmod u+x install
+      wget https://nextpyp.app/files/pyp/latest/install -O install
+      chmod u+x install
 
       # run the new installer to upgrade
       ./install

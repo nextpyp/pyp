@@ -57,3 +57,71 @@ The various stages of service startup are written to log files in the ``local/lo
     This log file is typically the last one to appear in the startup sequence. Its absence usually indicates
     that some earlier error (hopefully in one of the above logs) prevented the startup sequence from reaching
     this stage.
+
+
+Frequently Asked Questions
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+I get the following error message in the console when trying to start nextPYP. What does it mean and how do I fix it?
+---------------------------------------------------------------------------------------------------------------------
+
+ | ERROR  : Could not write info to setgroups: Permission denied
+ | ERROR  : Error while waiting event for user namespace mappings: no event received
+
+This error is usually caused by an incomplete installation of `apptainer`_, the container runtime used by nextPYP.
+On some systems, apptainer needs to be granted additional permissions with kernel security modules, like `AppArmor`_.
+
+.. _apptainer: https://apptainer.org/
+.. _AppArmor: https://apparmor.net/
+
+To check if AppArmor is running on your system, run:
+
+.. code-block:: bash
+
+  sudo systemctl status apparmor
+
+If the above command indicates no apparmor service is running (or even installed), then some security module
+other than AppArmor may be interfering with apptainer, but we don't know how fix this issue in that case.
+If the above command does indicate an active AppArmor service,
+then you can grant the necessary permissions to apptainer by creating an AppArmor profile.
+
+Create a file at ``/etc/apparmor.d/apptainer`` with the following content:
+
+ | # Permit unprivileged user namespace creation for apptainer starter
+ | abi <abi/4.0>,
+ | include <tunables/global>
+ | profile apptainer /usr/libexec/apptainer/bin/starter{,-suid}
+ | flags=(unconfined) {
+ |   userns,
+ |   # Site-specific additions and overrides. See local/README for details.
+ |   include if exists <local/apptainer>
+ | }
+
+Double-check that the ``/usr/libexec/apptainer/bin/starter`` path above refers to your actual
+apptainer executable:
+
+.. code-block:: bash
+
+  ls -al "/usr/libexec/apptainer/bin/starter"
+
+If the executable file does exist at that location, then the above AppArmor profile should work on your system.
+If no executable file exists at that location, then you'll have to try to find the correct location.
+Try a search command like:
+
+.. code-block:: bash
+
+  find /usr -wholename "*/apptainer/bin/starter"
+
+Once you've found the correct location of the apptainer executable file, edit the path above in the AppArmor profile.
+
+Finally, to apply the new AppArmor profile, ask the AppArmor service to reload its configuration with:
+
+.. code-block:: bash
+
+  sudo systemctl reload apparmor
+
+You should now be able to start your nextPYP service without encountering the original error.
+
+If you want to lean more, you can also `read the original apptainer docs`_ about how apptainer interacts with AppArmor.
+
+.. _read the original apptainer docs: https://github.com/apptainer/apptainer/blob/main/INSTALL.md#apparmor-profile-ubuntu-2310

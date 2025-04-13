@@ -327,7 +327,6 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
     .. figure:: ../images/workshop/regionbased.webp
-      :scale: 50%
       
       Region-based refinement
 
@@ -482,4 +481,4 @@ Day 1 summary
 
     - ``nextPYP`` also supports particle-based CTF refinement, building shape masks, ab-initio refinement, and 3D classification
 
-  We encourage you to explore the things we learned today as well as the other options available in ``nextPYP``. :doc:`Tomorrow<nysbc_day2>`, we will demonstrate ``nextPYP``'s functionality for on-the-fly data pre-processing and give you a chance to ask questions.
+  We encourage you to explore the things we learned today as well as the other options available in ``nextPYP``. :doc:`On day 2<nysbc_day2>` we will demonstrate ``nextPYP``'s functionality for on-the-fly data pre-processing.

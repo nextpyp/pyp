@@ -808,7 +808,7 @@ def run_reconstruction(
     recon_T = recon_E - recon_S
     timer.Timer.timers.update({"reconstruct3d_splitcom" :{"elapsed_time": recon_T, "start_time": recon_st, "end_time": str(datetime.datetime.now())}})
 
-    if mp["dose_weighting_enable"]:
+    if mp["reconstruct_dose_weighting_enable"]:
         if os.path.exists("weights.txt"):
             pyp_frealign_plot_weights.plot_weights(name, "weights.txt", num_tilts, frames_per_tilt, mp["extract_box"], mp["scope_pixel"] * mp["extract_bin"])
         else:
@@ -1296,6 +1296,53 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
                 shutil.rmtree(folder)
             except:
                 raise Exception("Failed to copy files?")
+
+    # export metadata in star format
+    if mp["reconstruct_export_enable"] and "local" not in mp["extract_fmt"].lower():
+
+        with timer.Timer(
+            "Export to star", text = "Export metadata to .star format took: {}", logger=logger.info
+        ):
+            mode = mp["data_mode"].lower()
+            export_iteration = mp["refine_iter"]
+            micrographs = {}
+            all_micrographs_file = mp["data_set"] + ".films"
+            with open(all_micrographs_file) as f:
+                index = 0
+                for line in f.readlines():
+                    micrographs[line.strip()] = index
+                    index += 1
+
+            par_input = os.path.join(project_dir, "frealign", "maps", mp["data_set"] + "_r01_%02d" % ( export_iteration - 1 ) + ".bz2")
+
+            if not os.path.exists(par_input):
+                raise Exception(f"Cannot find {par_input} to read particle alignments")
+
+            if os.path.isdir(par_input):
+                parfile = par_input
+            elif par_input.endswith(".bz2"):
+                parfile = par_input.replace(".bz2", "")
+                frealign_parfile.Parameters.decompress_parameter_file_and_move(Path(par_input), Path(parfile), threads=mp["slurm_tasks"])
+            else:
+                raise Exception(f"Unknown parfile format: {par_input}")
+
+            imagelist = list(micrographs.keys())
+
+            globalmeta = pyp_metadata.GlobalMetadata(
+                mp["data_set"],
+                mp,
+                imagelist=imagelist,
+                mode=mode,
+                getpickle=True,
+                parfile=parfile,
+                path="./pkl"
+                )
+
+            select = mp["extract_cls"]
+            globalmeta.meta2Star(mp["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
+            
+            # cleanup
+            shutil.rmtree(Path(parfile), ignore_errors=True)
 
     # launch next iteration if needed
     if iteration < maxiter:
