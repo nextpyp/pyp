@@ -57,7 +57,7 @@ tabs = [ "heterogeneity", "slurm" ]
 
 [blocks.spr_flexible_refine]
 name = "SPA Frame Refinement"
-description = "Per-partcle movie frame refinement"
+description = "Per-particle movie frame refinement"
 tabs = [ "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
 
 [blocks.spr_denoise]
@@ -931,7 +931,7 @@ condition={ arg="method", value="ctffind5" }
 
 [tabs.ctf.known_ast_angle]
 name = "Known astigmatism angle"
-description = "Astigmatism angle values (degree)"
+description = "Astigmatism angle values (degrees)"
 type = "float"
 default = 0.0
 condition={ arg="known_ast", value="true" }
@@ -1659,41 +1659,41 @@ required = true
 [tabs.particle.sym]
 # TODO: what kind of input validation to do here? the rules are non-trivial
 #  see: https://blake.bcm.edu/emanwiki/EMAN2/Symmetry
-name = "Symmetry"
-description = "Particle symmetry (Cn,Dn,T,O,I,I1,I2,N or H)"
+name = "Particle symmetry"
+description = "Symmetry to apply during reconstruction (Cn,Dn,T,O,I,I1,I2,N or H)"
 type = "str"
 default = "C1"
 
 # Particle Extraction
 
 [tabs.extract]
-_name = "Extraction"
+_name = "Particle extraction"
 _description = "Settings for particle detection"
 _hidden = [ "spr_map_clean", "tomo_map_clean", "spr_flexible_refine", "tomo_flexible_refine" ]
 
 [tabs.extract.box]
-name = "Box size (pixels/voxels)"
-description = "Box size used for particle extraction"
+name = "Box size (pixels)"
+description = "Box size used for projection extraction"
 type = "int"
 default = 0
 required = true
 
 [tabs.extract.bnd]
 name = "Max box size"
-description = "Maximum size of extracted particles"
+description = "Maximum size of extracted projections"
 type = "int"
 default = { ref="box" }
 hidden = true
 
 [tabs.extract.bin]
 name = "Image binning"
-description = "Binning used for particle extraction"
+description = "Binning used for projection extraction"
 type = "int"
 default = 1
 
 [tabs.extract.gold]
 name = "Skip gold fiducials"
-description = "Skip particle positions that are too close to gold fiducials"
+description = "Skip particle projections that overlap with gold particles"
 type = "bool"
 default = true
 hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "stream_spa",  "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean"]
@@ -1739,7 +1739,7 @@ hidden = true
 
 [tabs.extract.stacks]
 name = "Save particle stacks"
-description = "Save particle stacks to use in external programs"
+description = "Store particle stacks in project directory"
 type = "bool"
 default = false
 
@@ -3596,7 +3596,7 @@ copyToNewBlock = false
 
 [tabs.refine.parfile_tomo]
 name = "Alignments from sub-volume averaging (*.txt)"
-description = "Parameter file containing poses from sub-volume averaging"
+description = "Parameter file containing initial alignment information"
 type = "path"
 path = { type="files" }
 input = { type="txtfile" }
@@ -3656,7 +3656,7 @@ condition = { arg="fboost", value="true" }
 
 [tabs.refine.resume]
 name = "Resume refinement"
-description = "Resume refinement from most recent iteration"
+description = "Continue refinement from most recent iteration"
 type = "bool"
 default = true
 copyToNewBlock = false
@@ -4357,7 +4357,7 @@ _description = "Denoise reconstruction after each iteration"
 
 [tabs.denoise.enable]
 name = "Denoise reconstruction"
-description = "Denoise reconstruction after each iteration"
+description = "Apply denoising after reconstruction"
 type = "bool"
 default = false
 
@@ -4532,37 +4532,37 @@ default = 0
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.NumberOfRandomIterations]
-name = "Optimizer - Exhaustive search points"
-description = "Number of points to evalaute during reference-based exhaustive search"
+name = "Optimizer exhaustive search points"
+description = "Number of points to evaluate during reference-based exhaustive search"
 type = "int"
 default = 0
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'tomo_flexible_refine', 'spr_map_clean' ]
 copyToNewBlock = false
 
 [tabs.csp.OptimizerMaxIter]
-name = "Optimizer - Number of iterations"
-description = "Max number of iterations to use in Powell optimization"
+name = "Optimizer number of iterations"
+description = "Max number of iterations to use during Powell optimization"
 type = "int"
 default = 5
 advanced = true
 
 [tabs.csp.OptimizerStepLength]
-name = "Optimizer - Max step length"
-description = "Max step length to use in Powell optimization"
+name = "Optimizer max step length"
+description = "Max step length to use during Powell optimization"
 type = "float"
 default = 20.0
 advanced = true
 
 [tabs.csp.OptimizerStepTolerance]
-name = "Optimizer - Step tolerance"
-description = "Step tolerance to use in Powell optimization"
+name = "Optimizer step tolerance"
+description = "Step tolerance to use during Powell optimization"
 type = "float"
 default = 0.01
 advanced = true
 
 [tabs.csp.OptimizerValueTolerance]
-name = "Optimizer - Tolerance value"
-description = "Tolerance value to use in Powell optimization"
+name = "Optimizer tolerance value"
+description = "Tolerance value to use during Powell optimization"
 type = "float"
 default = 0.0001
 advanced = true
@@ -4576,7 +4576,7 @@ copyToNewBlock = false
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.csp.InitialResolution]
-name = "Starting resolution limit"
+name = "Starting resolution limit (A)"
 description = "Initial resolution used for ab-initio refinement"
 type = "float"
 default = 60.0
@@ -4584,7 +4584,7 @@ hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_f
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.ResolutionLimit]
-name = "Final resolution limit"
+name = "Final resolution limit (A)"
 description = "Highest resolution used for ab-initio refinement"
 type = "float"
 default = 16.0
@@ -4628,8 +4628,8 @@ copyToNewBlock = false
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.AngleStep]
-name = "Angle Step"
-description = "Angle step to use for global search (degrees)"
+name = "Rotation step (degrees)"
+description = "Step size to use for rotational search"
 type = "float"
 default = 20
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
@@ -4637,8 +4637,8 @@ copyToNewBlock = false
 condition = { arg="GridSearch", value="true" }
 
 [tabs.csp.ShiftStep]
-name = "Shift Step"
-description = "Shift step to use for global search (A)"
+name = "Translation step (A)"
+description = "Step size to use for translational search"
 type = "float"
 default = 6
 hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
@@ -4677,8 +4677,8 @@ condition = { arg="refine_micrographs", value="true" }
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceMicrographTiltAxisAngles]
-name = "Tilt-axis range (degrees)"
-description = "Tolerance to use for micrograph tilt-axis angles"
+name = "Tilt-axis angle range (degrees)"
+description = "Tolerance to use when refining tilt-axis angle"
 type = "float"
 default = 1.0
 condition = { arg="refine_micrographs", value="true" }
@@ -4693,32 +4693,32 @@ copyToNewBlock = false
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesPhi]
-name = "Phi range (degrees)"
-description = "Tolerance to use for particle Phi angle (in-plane rotation)"
+name = "Particle rotation Phi range (degrees)"
+description = "Tolerance to use when refining Phi angle (in-plane rotation)"
 type = "float"
 default = 30.0
 condition = { arg="refine_particles", value="true" }
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesPsi]
-name = "Psi range (degrees)"
-description = "Tolerance to use for particle Psi angle"
+name = "Particle rotation Psi range (degrees)"
+description = "Tolerance to use when refining Psi angle"
 type = "float"
 default = 30.0
 condition = { arg="refine_particles", value="true" }
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesTheta]
-name = "Theta range (degrees)"
-description = "Tolerance to use for particle Theta angle"
+name = "Particle rotation Theta range (degrees)"
+description = "Tolerance to use when refining Theta angle"
 type = "float"
 default = 30.0
 condition = { arg="refine_particles", value="true" }
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesShifts]
-name = "Translation range (A)"
-description = "Tolerance to use for particle translations"
+name = "Particle translation range (A)"
+description = "Tolerance to use when refining particle translations"
 type = "float"
 default = 20.0
 condition = { arg="refine_particles", value="true" }
@@ -7552,7 +7552,7 @@ copyToNewBlock = false
 condition = { arg="spr_auto", value="false" }
 
 [tabs.clean.dist]
-name = "Min distance between particles (unbinned pixels)"
+name = "Min distance between particles (unbinned pixels/voxels)"
 description = "Distance cutoff to remove neighboring particles"
 type = "float"
 default = 0.0
@@ -7584,7 +7584,7 @@ copyToNewBlock = false
 condition = { arg="discard", value="true" }
 
 [tabs.clean.mintilt]
-name = "Lowest tilt-angle (degree)"
+name = "Lowest tilt-angle (degrees)"
 description = "Only keep projections with tilt-angles above this limit"
 type = "float"
 default = -90.0
@@ -7592,7 +7592,7 @@ hidden = ["spr_map_clean", "spr_coarse_refine"]
 copyToNewBlock = false
 
 [tabs.clean.maxtilt]
-name = "Highest tilt-angle (degree)"
+name = "Highest tilt-angle (degrees)"
 description = "Only keep projections with tilt-angles below this limit"
 type = "float"
 default = 90.0
