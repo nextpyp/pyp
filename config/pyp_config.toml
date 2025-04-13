@@ -43,12 +43,12 @@ forwarded_tabs = [ "data", "scope", "gain" ]
 [blocks.spr_coarse_refine]
 name = "SPA Coarse Refinement"
 description = "3D refinement and classification"
-tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "export", "slurm" ]
+tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "slurm" ]
 
 [blocks.spr_fine_refine]
 name = "SPA Fine Refinement"
 description = "3D refinement"
-tabs = [ "extract", "refine", "reconstruct", "class", "denoise", "export", "slurm" ]
+tabs = [ "extract", "refine", "reconstruct", "class", "slurm" ]
 
 [blocks.spr_drgn]
 name = "Heterogeneity analysis"
@@ -58,7 +58,7 @@ tabs = [ "heterogeneity", "slurm" ]
 [blocks.spr_flexible_refine]
 name = "SPA Frame Refinement"
 description = "Per-particle movie frame refinement"
-tabs = [ "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
+tabs = [ "refine", "csp", "reconstruct", "slurm" ]
 
 [blocks.spr_denoise]
 name = "SPA Denoising"
@@ -74,7 +74,7 @@ tabs = [ "detect", "detect_nn2d", "detect_topaz2d", "slurm" ] # TODO
 name = "Particle Filtering"
 description = "Filter particles based on scores or by class"
 tabs = [ "clean", "refine", "slurm" ]
-forwarded_tabs = [ "particle", "extract", "csp", "reconstruct", "dose_weighting", "export" ]
+forwarded_tabs = [ "particle", "extract", "csp", "reconstruct" ]
 
 # Tomography 
 
@@ -145,10 +145,35 @@ description = "Uniform sampling or TM on virion surfaces"
 tabs = [ "tomo_srf", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "movie" ]
 
-[blocks.tomo_coarse_refine]
+[blocks.tomo_initial_refine]
+name = "TOMO Initial Refinement"
+description = "Ab-initio refinement and reconstruction"
+tabs = [ "particle", "extract", "metric", "csp_tomo_init", "reconstruct", "slurm" ]
+
+[blocks.tomo_reference_refine]
+name = "TOMO Initial Refinement"
+description = "Align particles to external reference"
+tabs = [ "particle", "extract", "metric", "csp_tomo_reference", "reconstruct", "slurm" ]
+
+[blocks.tomo_initial_reconstruct]
+name = "TOMO Initial Refinement"
+description = "Reconstruct using exisiting/no alignments"
+tabs = [ "particle", "extract", "csp_tomo_free", "reconstruct", "slurm" ]
+
+[blocks.tomo_new_coarse_refine]
 name = "TOMO Coarse Refinement"
-description = "3D refinement and classification"
-tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "dose_weighting", "denoise", "export", "slurm" ]
+description = "Constrained 3D refinement"
+tabs = [ "particle", "extract", "metric", "csp_tomo_coarse", "reconstruct", "slurm" ]
+
+[blocks.tomo_new_coarse_classification]
+name = "TOMO Coarse Refinement"
+description = "Constrained 3D classification"
+tabs = [ "particle", "extract", "metric", "csp_tomo_classification", "reconstruct", "slurm" ]
+
+[blocks.tomo_coarse_refine]
+name = "TOMO Coarse Refinement (legacy)"
+description = "3D refinement and classification (legacy)"
+tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "slurm" ]
 
 [blocks.tomo_drgn_vae]
 name = "tomoDRGN VAE"
@@ -168,7 +193,7 @@ tabs = [ "tomodrgn_eval_vol", "tomodrgn_analyze_volumes", "slurm" ]
 [blocks.tomo_drgn_filter]
 name = "tomoDRGN filtering"
 description = "tomoDRGN (filter_star)"
-tabs = [ "tomodrgn_filter_star", "refine", "slurm" ]
+tabs = [ "tomodrgn_filter_star", "slurm" ]
 
 [blocks.tomo_milo_train]
 name = "MiLoPYP training"
@@ -216,14 +241,19 @@ tabs = [ "tomo_denoise", "slurm", "micromon" ]
 
 [blocks.tomo_flexible_refine]
 name = "TOMO Frame Refinement"
-description = "Per-particle frame refinement (constrained)"
-tabs = [ "refine", "csp", "reconstruct", "dose_weighting", "denoise", "slurm" ]
+description = "Refine tilt-movie frames per-particle"
+tabs = [ "metric", "csp_tomo_movie", "reconstruct", "slurm" ]
+
+[blocks.tomo_flexible_refine_after]
+name = "TOMO Frame Refinement"
+description = "Additional refinement after movie alignment"
+tabs = [ "metric", "csp_tomo_movie_after", "reconstruct", "slurm" ]
 
 [blocks.tomo_map_clean]
 name = "Particle Filtering"
 description = "Filter particles by score, distance, or class"
-tabs = [ "clean", "refine", "slurm" ]
-forwarded_tabs = [ "particle", "extract", "csp", "reconstruct", "dose_weighting", "export" ]
+tabs = [ "clean", "slurm" ]
+forwarded_tabs = [ "particle", "extract", "csp", "reconstruct" ]
 
 # common blocks
 
@@ -235,7 +265,7 @@ tabs = [ "mask", "slurm" ]
 [blocks.spr_tomo_map_clean]
 name = "Particle Filtering"
 description = "Select particles by score, distance, or class"
-tabs = [ "clean", "particle", "extract", "refine", "csp", "reconstruct", "dose_weighting", "export", "slurm" ]
+tabs = [ "clean", "particle", "extract", "refine", "csp", "reconstruct", "slurm" ]
 
 [blocks.spr_tomo_post_process]
 name = "Post-processing"
@@ -1696,7 +1726,21 @@ name = "Skip gold fiducials"
 description = "Skip particle projections that overlap with gold particles"
 type = "bool"
 default = true
-hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "stream_spa",  "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean"]
+hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "stream_spa",  "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean"]
+
+[tabs.extract.ctf_handedness]
+name = "Invert CTF handedness"
+description = "Use reverse CTF handedness when extracting particle projections"
+type = "bool"
+default = false
+hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "stream_spa", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.extract.ctf_handedness_force]
+name = "Force re-calculation of CTF handedness"
+description = "Force CTF handedness re-calculation"
+type = "bool"
+default = false
+hidden = true
 
 [tabs.extract.method]
 name = "Interpolation"
@@ -1721,7 +1765,7 @@ name = "Use only clean particles"
 description = "Only extract clean particles for processing"
 type = "bool"
 default = false
-hidden = [ "spr_coarse_refine", "spr_flexible_refine", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "stream_spa", "stream_tomo", "spr_map_clean", "tomo_map_clean"]
+hidden = [ "spr_coarse_refine", "spr_flexible_refine", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "stream_spa", "stream_tomo", "spr_map_clean", "tomo_map_clean"]
 
 [tabs.extract.cls]
 name = "Clean only"
@@ -3435,7 +3479,7 @@ default = 20
 name = "Box size (pixels)"
 description = "Box size used for extraction"
 type = "int"
-hidden = ["spr_flexible_refine", "tomo_flexible_refine"]
+hidden = ["spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after"]
 default = 96
 
 [tabs.class2d.bin]
@@ -3591,8 +3635,8 @@ description = "Initial model used for refinement"
 type = "path"
 path = { type="files" }
 input = { type="initialModel" }
-required = true
 copyToNewBlock = false
+hidden = [ "tomo_flexible_refine", "tomo_map_clean" ]
 
 [tabs.refine.parfile_tomo]
 name = "Alignments from sub-volume averaging (*.txt)"
@@ -3601,7 +3645,7 @@ type = "path"
 path = { type="files" }
 input = { type="txtfile" }
 copyToNewBlock = false
-hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
+hidden = ["spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.refine.parfile]
 name = "Input parameter file (*.bz2)"
@@ -3721,7 +3765,7 @@ type = "enum"
 enum = { 0="global", 1="local" }
 default = "0"
 condition = { arg="skip", value="false" }
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 
 [tabs.refine.itmax]
 name = "Random search cycles"
@@ -3999,6 +4043,109 @@ type = "str"
 default = "1,1,1,1,1"
 hidden = true
 
+# Refinement metric
+
+[tabs.metric]
+_name = "Particle scoring function"
+_description = "Metric parameters for 3D refinement"
+
+[tabs.metric.UseImagesForRefinementMin]
+name = "First tilt for refinement"
+description = "Index of first tilt used during refinement (earlier tilts will not contribute to score)"
+type = "int"
+default = 0
+
+[tabs.metric.UseImagesForRefinementMax]
+name = "Last tilt for refinement"
+description = "Index of last tilt used during refinement (later tilts will not contribute to score)"
+type = "int"
+default = 20
+
+[tabs.metric.RefineProjectionCutoff]
+name = "Min number of tilts for refinement"
+description = "Only refine particles that have at least this number of tilts (0=all)"
+type = "int"
+default = 0
+advanced = true
+
+[tabs.metric.rlref]
+name = "Min resolution (A)"
+description = "Minimum resolution used for score calculation"
+type = "float"
+default = 100.0
+
+[tabs.metric.rhref]
+name = "Max resolution (A)"
+description = "Maximum resolution used for score calculation (per iteration, colon separated)"
+type = "str"
+default = "10"
+hidden = [ "tomo_initial_refine" ]
+
+[tabs.metric.fboost]
+name = "Use signed correlation"
+description = "May increase the chance of overfitting"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.metric.fboostlim]
+name = "Resolution limit for signed correlation"
+description = "Resolution limit to use for signed correlation coefficient (0=no limit)"
+type = "float"
+default = 0.0
+condition = { arg="fboost", value="true" }
+advanced = true
+
+[tabs.metric.fssnr]
+name = "Use SSNR table"
+description = "Use SSNR table during evaluation of refinement metric"
+type = "bool"
+default = true
+advanced = true
+
+[tabs.metric.global_stat]
+name = "Use global statistics"
+description = "Use global statistics for refinement and reconstruction"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.metric.priors]
+name = "Use alignment priors"
+description = "Using priors during refinement may reduce the chance of overfitting"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.metric.score_weighting]
+name = "Score weighting"
+description = "Use score weighting during refinement (higher score, stronger contribution)"
+type = "bool"
+default = false
+advanced = true
+
+[tabs.metric.masking_method]
+name = "Masking strategy"
+description = "Mask used during score evaluation"
+type = "enum"
+enum = { spherical="spherical", file="from file", auto="automask" }
+default = "spherical"
+
+[tabs.metric.srad]
+name = "Mask radius (A)"
+description = "Radius of spherical mask (0=1.5x particle radius)"
+type = "float"
+default =  0.0
+condition = { arg="masking_method", value="spherical" }
+
+[tabs.metric.maskth]
+name = "Shape mask (*.mrc)"
+description = "Must have same dimensions as current box size"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+condition = { arg="masking_method", value="file" }
+
 # 3D reconstruction parameters
 
 [tabs.reconstruct]
@@ -4024,7 +4171,7 @@ name = "Fraction of particles"
 description = "Use subset of particles for reconstruction (0=automatic,<1=percentage,1=all,>1=number of particles)"
 type = "str"
 default = "1"
-hidden = ["spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine"]
+hidden = ["spr_fine_refine", "spr_flexible_refine", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 copyToNewBlock = false
 
 [tabs.reconstruct.dose_weighting_enable]
@@ -4121,7 +4268,7 @@ condition = { arg="denoise_method", value="bm4d" }
 name = "Export metadata (*.star)"
 description = "Export metadata after reconstruction"
 type = "bool"
-default = true
+default = false
 advanced = true
 
 [tabs.reconstruct.min_occ]
@@ -4515,7 +4662,7 @@ name = "Number of regions"
 description = "Number of regions in x, y (default is global refinement with x=1, y=1)"
 type = "str"
 default = "1,1"
-hidden = [ 'tomo_coarse_refine', 'tomo_flexible_refine', 'tomo_map_clean' ]
+hidden = [ 'tomo_initial_refine', "tomo_reference_refine", 'tomo_coarse_refine', 'tomo_flexible_refine', "tomo_flexible_refine_after", 'tomo_map_clean' ]
 
 [tabs.csp.Grid]
 name = "Number of regions"
@@ -4536,7 +4683,7 @@ name = "Optimizer exhaustive search points"
 description = "Number of points to evaluate during reference-based exhaustive search"
 type = "int"
 default = 0
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'tomo_flexible_refine', 'spr_map_clean' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'tomo_flexible_refine', "tomo_flexible_refine_after", 'spr_map_clean' ]
 copyToNewBlock = false
 
 [tabs.csp.OptimizerMaxIter]
@@ -4573,14 +4720,14 @@ description = "De-novo 3D reconstruction"
 type = "bool"
 default = false
 copyToNewBlock = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.csp.InitialResolution]
 name = "Starting resolution limit (A)"
 description = "Initial resolution used for ab-initio refinement"
 type = "float"
 default = 60.0
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.ResolutionLimit]
@@ -4588,7 +4735,7 @@ name = "Final resolution limit (A)"
 description = "Highest resolution used for ab-initio refinement"
 type = "float"
 default = 16.0
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.InitialSkip]
@@ -4615,7 +4762,7 @@ description = "Particles per tilt-series in each batch to use for ab-initio refi
 type = "int"
 default = 10
 copyToNewBlock = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.GridSearch]
@@ -4623,7 +4770,7 @@ name = "Grid search"
 description = "Use uniform grid search instead of random search"
 type = "bool"
 default = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 copyToNewBlock = false
 condition = { arg="abinitio", value="true" }
 
@@ -4632,7 +4779,7 @@ name = "Rotation step (degrees)"
 description = "Step size to use for rotational search"
 type = "float"
 default = 20
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 copyToNewBlock = false
 condition = { arg="GridSearch", value="true" }
 
@@ -4641,7 +4788,7 @@ name = "Translation step (A)"
 description = "Step size to use for translational search"
 type = "float"
 default = 6
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_fine_refine", "tomo_flexible_refine" ]
+hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 copyToNewBlock = false
 condition = { arg="GridSearch", value="true" }
 
@@ -4660,14 +4807,6 @@ type = "bool"
 default = false
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
-[tabs.csp.ToleranceMicrographShifts]
-name = "Translation range (A)"
-description = "Tolerance to use for micrograph shifts"
-type = "float"
-default = 100.0
-condition = { arg="refine_micrographs", value="true" }
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
-
 [tabs.csp.ToleranceMicrographTiltAngles]
 name = "Tilt-angle range (degrees)"
 description = "Tolerance to use for micrograph tilt-angles"
@@ -4681,6 +4820,14 @@ name = "Tilt-axis angle range (degrees)"
 description = "Tolerance to use when refining tilt-axis angle"
 type = "float"
 default = 1.0
+condition = { arg="refine_micrographs", value="true" }
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
+
+[tabs.csp.ToleranceMicrographShifts]
+name = "Tilt-axis position range (A)"
+description = "Tolerance to use when refining tilt-axis position"
+type = "float"
+default = 100.0
 condition = { arg="refine_micrographs", value="true" }
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
@@ -4729,7 +4876,7 @@ name = "Movie frame refinement"
 description = "Optimize particle position across frames"
 type = "bool"
 default = false
-hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
+hidden = [ 'spr_coarse_refine', 'tomo_initial_refine', "tomo_reference_refine", 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.transreg]
 name = "Regularize translations"
@@ -4737,7 +4884,7 @@ description = "Regularize translational parameters"
 type = "bool"
 default = false
 condition = { arg="frame_refinement", value="true" }
-hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
+hidden = [ 'spr_coarse_refine', 'tomo_initial_refine', "tomo_reference_refine", 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.spatial_sigma]
 name = "Spatial sigma"
@@ -4745,7 +4892,7 @@ description = "Sigma to use for spatial regularization (pixels/voxels)"
 type = "float"
 default = 500.0
 condition = { arg="transreg", value="true" }
-hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
+hidden = [ 'spr_coarse_refine', 'tomo_initial_refine', "tomo_reference_refine", 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.time_sigma]
 name = "Time sigma"
@@ -4753,7 +4900,7 @@ description = "Sigma to use for time regularization (number of frames)"
 type = "int"
 default = 21
 condition = { arg="transreg", value="true" }
-hidden = [ 'spr_coarse_refine', 'tomo_coarse_refine', 'spr_map_clean' ]
+hidden = [ 'spr_coarse_refine', 'tomo_initial_refine', "tomo_reference_refine", 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.transreg_method]
 name = "Translation regularization method"
@@ -4792,7 +4939,7 @@ name = "Invert CTF handedness"
 description = "Use reverse CTF handedness"
 type = "bool"
 default = false
-hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean', 'tomo_flexible_refine' ]
+hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean', 'tomo_flexible_refine', "tomo_flexible_refine_after" ]
 
 [tabs.csp.ctf_handedness_force]
 name = "Force re-calculation of CTF handedness"
@@ -4891,6 +5038,819 @@ type = "bool"
 default = false
 hidden = true
 
+# Constrained movie refinement
+
+[tabs.csp_tomo_movie]
+_name = "Frame refinement"
+_description = "Settings for constrained single particle (CSP) refinement"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.csp_tomo_movie.parfile]
+name = "Input parameter file (*.bz2)"
+description = "Parameter file to initialize refinement"
+type = "path"
+path = { type="files" }
+input = { type="parfile" }
+copyToNewBlock = false
+required = true
+
+[tabs.csp_tomo_movie.resume]
+name = "Resume refinement"
+description = "Continue refinement from most recent iteration"
+type = "bool"
+default = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_movie.first_iter]
+name = "First iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+condition = { arg="resume", value="false" }
+
+[tabs.csp_tomo_movie.iter]
+name = "Starting iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+hidden = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_movie.maxiter]
+name = "Last iteration"
+description = "Number of last refinement iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+
+[tabs.csp_tomo_movie.transreg]
+name = "Regularize translations"
+description = "Regularize translational parameters"
+type = "bool"
+default = true
+
+[tabs.csp_tomo_movie.spatial_sigma]
+name = "Spatial sigma"
+description = "Sigma to use for spatial regularization (pixels/voxels)"
+type = "float"
+default = 500.0
+
+[tabs.csp_tomo_movie.time_sigma]
+name = "Time sigma"
+description = "Sigma to use for time regularization (number of frames)"
+type = "int"
+default = 21
+
+# Constrained movie refinement after
+
+[tabs.csp_tomo_movie_after]
+_name = "Refinement"
+_description = "Settings for constrained single particle (CSP) refinement"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.csp_tomo_movie_after.parfile]
+name = "Input parameter file (*.bz2)"
+description = "Parameter file to initialize refinement"
+type = "path"
+path = { type="files" }
+input = { type="parfile" }
+copyToNewBlock = false
+required = true
+
+[tabs.csp_tomo_movie_after.resume]
+name = "Resume refinement"
+description = "Continue refinement from most recent iteration"
+type = "bool"
+default = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_movie_after.first_iter]
+name = "First iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+condition = { arg="resume", value="false" }
+
+[tabs.csp_tomo_movie_after.iter]
+name = "Starting iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+hidden = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_movie_after.maxiter]
+name = "Last iteration"
+description = "Number of last refinement iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+
+[tabs.csp_tomo_movie_after.refine_micrographs]
+name = "Refine tilt-geometry"
+description = "Optimize tilt-axis orientation and position for each tilt-image"
+type = "bool"
+default = false
+
+[tabs.csp_tomo_movie_after.ToleranceMicrographTiltAngles]
+name = "Tilt-angle range (degrees)"
+description = "Tolerance to use when refining tilt-angles"
+type = "float"
+default = 1.5
+condition = { arg="refine_micrographs", value=true }
+
+[tabs.csp_tomo_movie_after.ToleranceMicrographTiltAxisAngles]
+name = "Tilt-axis angle range (degrees)"
+description = "Tolerance to use when refining tilt-axis angle"
+type = "float"
+default = 1.0
+condition = { arg="refine_micrographs", value=true }
+
+[tabs.csp_tomo_movie_after.ToleranceMicrographShifts]
+name = "Tilt-axis position range (A)"
+description = "Tolerance to use when refining tilt-axis position"
+type = "float"
+default = 100.0
+condition = { arg="refine_micrographs", value=true }
+
+[tabs.csp_tomo_movie_after.refine_particles]
+name = "Refine particle alignments"
+description = "Optimize sub-tomogram orientations and translations in 3D"
+type = "bool"
+default = false
+copyToNewBlock = false
+
+[tabs.csp_tomo_movie_after.ToleranceParticlesPhi]
+name = "Particle rotation Phi range (degrees)"
+description = "Tolerance to use when refining Phi angle (in-plane rotation)"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_movie_after.ToleranceParticlesPsi]
+name = "Particle rotation Psi range (degrees)"
+description = "Tolerance to use when refining Psi angle"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_movie_after.ToleranceParticlesTheta]
+name = "Particle rotation Theta range (degrees)"
+description = "Tolerance to use when refining Theta angle"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_movie_after.ToleranceParticlesShifts]
+name = "Particle translation range (A)"
+description = "Tolerance to use when refining particle translations"
+type = "float"
+default = 20.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_movie_after.NumberOfRandomIterations]
+name = "Optimizer exhaustive search points"
+description = "Number of radnom points to evaluate during search"
+type = "int"
+default = 0
+copyToNewBlock = false
+advanced = true
+
+[tabs.csp_tomo_movie_after.OptimizerMaxIter]
+name = "Optimizer number of iterations"
+description = "Max number of iterations to use during Powell optimization"
+type = "int"
+default = 5
+advanced = true
+
+[tabs.csp_tomo_movie_after.OptimizerStepLength]
+name = "Optimizer max step length"
+description = "Max step length to use during Powell optimization"
+type = "float"
+default = 20.0
+advanced = true
+
+[tabs.csp_tomo_movie_after.OptimizerStepTolerance]
+name = "Optimizer step tolerance"
+description = "Step tolerance to use during Powell optimization"
+type = "float"
+default = 0.01
+advanced = true
+
+[tabs.csp_tomo_movie_after.OptimizerValueTolerance]
+name = "Optimizer tolerance value"
+description = "Tolerance value to use during Powell optimization"
+type = "float"
+default = 0.0001
+advanced = true
+
+# Tomo constrained refinement (initital)
+
+[tabs.csp_tomo_init]
+_name = "Ab-initio refinement"
+_description = "Settings for constrained single particle (CSP) refinement"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.csp_tomo_init.resume]
+name = "Resume refinement"
+description = "Continue refinement from most recent iteration"
+type = "bool"
+default = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_init.first_iter]
+name = "First iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+condition = { arg="resume", value="false" }
+
+[tabs.csp_tomo_init.maxiter]
+name = "Last iteration"
+description = "Number of last refinement iteration"
+type = "int"
+default = 20
+copyToNewBlock = false
+
+[tabs.csp_tomo_init.InitialResolution]
+name = "Starting Max resolution (A)"
+description = "Initial resolution used for ab-initio refinement"
+type = "float"
+default = 60.0
+
+[tabs.csp_tomo_init.ResolutionLimit]
+name = "Final Max resolution (A)"
+description = "Highest resolution used for ab-initio refinement"
+type = "float"
+default = 16.0
+
+[tabs.csp_tomo_init.InitialSkip]
+name = "Skip initialization"
+description = "Skip initialization during ab-initio refinement"
+type = "bool"
+default = false
+copyToNewBlock = false
+hidden = true
+
+[tabs.csp_tomo_init.RandomSkipRatio]
+name = "Skip ratio for csp refinement"
+description = "Ratio to skip for csp random refinement"
+type = "float"
+default = 0.0
+copyToNewBlock = false
+hidden = true
+
+[tabs.csp_tomo_init.RandomParticles]
+name = "Particle batch size (per tilt-series)"
+description = "Particles per tilt-series in each batch to use for ab-initio refinement"
+type = "int"
+default = 10
+copyToNewBlock = false
+
+[tabs.csp_tomo_init.GridSearch]
+name = "Grid search"
+description = "Use uniform grid search instead of random search"
+type = "bool"
+default = false
+copyToNewBlock = false
+
+[tabs.csp_tomo_init.ToleranceParticlesPhi]
+name = "Particle rotation Phi range (degrees)"
+description = "Tolerance to use when refining Phi angle (in-plane rotation)"
+type = "float"
+default = 30.0
+
+[tabs.csp_tomo_init.ToleranceParticlesPsi]
+name = "Particle rotation Psi range (degrees)"
+description = "Tolerance to use when refining Psi angle"
+type = "float"
+default = 30.0
+
+[tabs.csp_tomo_init.ToleranceParticlesTheta]
+name = "Particle rotation Theta range (degrees)"
+description = "Tolerance to use when refining Theta angle"
+type = "float"
+default = 30.0
+
+[tabs.csp_tomo_init.AngleStep]
+name = "Rotation step (degrees)"
+description = "Angular step to use for rotational search"
+type = "float"
+default = 10.0
+copyToNewBlock = false
+
+[tabs.csp_tomo_init.ToleranceParticlesShifts]
+name = "Particle translation range (A)"
+description = "Tolerance to use when refining particle translations"
+type = "float"
+default = 20.0
+
+[tabs.csp_tomo_init.ShiftStep]
+name = "Translation step (A)"
+description = "Step size to use for translational search"
+type = "float"
+default = 5.0
+copyToNewBlock = false
+
+[tabs.csp_tomo_init.num]
+name = "Number of classes"
+description = "Number of classes for ab-initio reconstruction"
+type = "int"
+default = 5
+
+[tabs.csp_tomo_init.rhcls]
+name = "Max resolution for classification (A)"
+description = "Highest resolution used for classification during ab-initio refinement"
+type = "float"
+default = 12.0
+
+[tabs.csp_tomo_init.OptimizerMaxIter]
+name = "Optimizer number of iterations"
+description = "Max number of iterations to use during Powell optimization"
+type = "int"
+default = 5
+advanced = true
+
+[tabs.csp_tomo_init.OptimizerStepLength]
+name = "Optimizer max step length"
+description = "Max step length to use during Powell optimization"
+type = "float"
+default = 20.0
+advanced = true
+
+[tabs.csp_tomo_init.OptimizerStepTolerance]
+name = "Optimizer step tolerance"
+description = "Step tolerance to use during Powell optimization"
+type = "float"
+default = 0.01
+advanced = true
+
+[tabs.csp_tomo_init.OptimizerValueTolerance]
+name = "Optimizer tolerance value"
+description = "Tolerance value to use during Powell optimization"
+type = "float"
+default = 0.0001
+advanced = true
+
+# Tomo constrained refinement (reference-free)
+
+[tabs.csp_tomo_free]
+_name = "Alignments"
+_description = "Settings for constrained single particle (CSP) refinement"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.csp_tomo_free.format]
+name = "Import from"
+description = "Import external alignments"
+type = "enum"
+enum = { none="none", txt="3DAVG (*.txt)", bz2="nextPYP (*.bz2)" }
+default = "none"
+
+[tabs.csp_tomo_free.parfile_tomo]
+name = "Particle metadata (*.txt)"
+description = "Parameter file containing initial poses"
+type = "path"
+path = { type="files" }
+input = { type="txtfile" }
+condition = { arg="format", value=[ "txt" ] }
+copyToNewBlock = false
+
+[tabs.csp_tomo_free.parfile]
+name = "Input parameter file (*.bz2)"
+description = "Parameter file to initialize refinement"
+type = "path"
+path = { type="files" }
+input = { type="parfile" }
+copyToNewBlock = false
+condition = { arg="format", value=[ "bz2" ] }
+
+# Tomo constrained refinement (reference-based)
+
+[tabs.csp_tomo_reference]
+_name = "Reference-based refinement"
+_description = "Settings for constrained single particle (CSP) refinement"
+_hidden = [ "spr_map_clean", "tomo_map_clean" ]
+
+[tabs.csp_tomo_reference.model]
+name = "Initial model (*.mrc)"
+description = "Initial model used for refinement"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+copyToNewBlock = false
+required = true
+
+[tabs.csp_tomo_reference.ToleranceParticlesPhi]
+name = "Particle rotation Phi range (degrees)"
+description = "Tolerance to use when refining Phi angle (in-plane rotation)"
+type = "float"
+default = 30.0
+
+[tabs.csp_tomo_reference.ToleranceParticlesPsi]
+name = "Particle rotation Psi range (degrees)"
+description = "Tolerance to use when refining Psi angle"
+type = "float"
+default = 30.0
+
+[tabs.csp_tomo_reference.ToleranceParticlesTheta]
+name = "Particle rotation Theta range (degrees)"
+description = "Tolerance to use when refining Theta angle"
+type = "float"
+default = 30.0
+
+[tabs.csp_tomo_reference.AngleStep]
+name = "Rotation step (degrees)"
+description = "Angular step to use for rotational search"
+type = "float"
+default = 10.0
+copyToNewBlock = false
+
+[tabs.csp_tomo_reference.ToleranceParticlesShifts]
+name = "Particle translation range (A)"
+description = "Tolerance to use when refining particle translations"
+type = "float"
+default = 20.0
+
+[tabs.csp_tomo_reference.ShiftStep]
+name = "Translation step (A)"
+description = "Step size to use for translational search"
+type = "float"
+default = 5.0
+copyToNewBlock = false
+
+[tabs.csp_tomo_reference.OptimizerMaxIter]
+name = "Optimizer number of iterations"
+description = "Max number of iterations to use during Powell optimization"
+type = "int"
+default = 5
+advanced = true
+
+[tabs.csp_tomo_reference.OptimizerStepLength]
+name = "Optimizer max step length"
+description = "Max step length to use during Powell optimization"
+type = "float"
+default = 20.0
+advanced = true
+
+[tabs.csp_tomo_reference.OptimizerStepTolerance]
+name = "Optimizer step tolerance"
+description = "Step tolerance to use during Powell optimization"
+type = "float"
+default = 0.01
+advanced = true
+
+[tabs.csp_tomo_reference.OptimizerValueTolerance]
+name = "Optimizer tolerance value"
+description = "Tolerance value to use during Powell optimization"
+type = "float"
+default = 0.0001
+advanced = true
+
+# Tomo constrained refinement
+
+[tabs.csp_tomo_coarse]
+_name = "Refinement"
+_description = "Settings for constrained single particle (CSP) refinement"
+
+[tabs.csp_tomo_coarse.parfile]
+name = "Input parameter file (*.bz2)"
+description = "Parameter file to initialize refinement"
+type = "path"
+path = { type="files" }
+input = { type="parfile" }
+copyToNewBlock = false
+required = true
+
+[tabs.csp_tomo_coarse.resume]
+name = "Resume refinement"
+description = "Continue refinement from most recent iteration"
+type = "bool"
+default = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_coarse.first_iter]
+name = "First iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+condition = { arg="resume", value="false" }
+
+[tabs.csp_tomo_coarse.iter]
+name = "Starting iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+hidden = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_coarse.maxiter]
+name = "Last iteration"
+description = "Number of last refinement iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+
+[tabs.csp_tomo_coarse.refine_micrographs]
+name = "Refine tilt-geometry"
+description = "Optimize tilt-axis orientation and position for each tilt-image"
+type = "bool"
+default = false
+
+[tabs.csp_tomo_coarse.ToleranceMicrographTiltAngles]
+name = "Tilt-angle range (degrees)"
+description = "Tolerance to use when refining tilt-angles"
+type = "float"
+default = 1.5
+condition = { arg="refine_micrographs", value=true }
+
+[tabs.csp_tomo_coarse.ToleranceMicrographTiltAxisAngles]
+name = "Tilt-axis angle range (degrees)"
+description = "Tolerance to use when refining tilt-axis angle"
+type = "float"
+default = 1.0
+condition = { arg="refine_micrographs", value=true }
+
+[tabs.csp_tomo_coarse.ToleranceMicrographShifts]
+name = "Tilt-axis position range (A)"
+description = "Tolerance to use when refining tilt-axis position"
+type = "float"
+default = 100.0
+condition = { arg="refine_micrographs", value=true }
+
+[tabs.csp_tomo_coarse.refine_particles]
+name = "Refine particle alignments"
+description = "Optimize sub-tomogram orientations and translations in 3D"
+type = "bool"
+default = false
+copyToNewBlock = false
+
+[tabs.csp_tomo_coarse.ToleranceParticlesPhi]
+name = "Particle rotation Phi range (degrees)"
+description = "Tolerance to use when refining Phi angle (in-plane rotation)"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_coarse.ToleranceParticlesPsi]
+name = "Particle rotation Psi range (degrees)"
+description = "Tolerance to use when refining Psi angle"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_coarse.ToleranceParticlesTheta]
+name = "Particle rotation Theta range (degrees)"
+description = "Tolerance to use when refining Theta angle"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_coarse.ToleranceParticlesShifts]
+name = "Particle translation range (A)"
+description = "Tolerance to use when refining particle translations"
+type = "float"
+default = 20.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_coarse.refine_ctf]
+name = "Refine CTF per-particle"
+description = "Optimize defocus and astigmatism parameters per-tilt"
+type = "bool"
+default = false
+
+[tabs.csp_tomo_coarse.ToleranceMicrographAstigmatism]
+name = "Astigmatism range (degrees)"
+description = "Tolerance to use for astigmatism refinement"
+type = "float"
+default = 90.0
+condition = { arg="refine_ctf", value=true }
+
+[tabs.csp_tomo_coarse.ToleranceMicrographDefocus1]
+name = "Defocus 1 range (A)"
+description = "Tolerance to use for defocus 1 refinement"
+type = "float"
+default = 750.0
+condition = { arg="refine_ctf", value=true }
+
+[tabs.csp_tomo_coarse.ToleranceMicrographDefocus2]
+name = "Defocus 2 range (A)"
+description = "Tolerance to use for defocus 2 refinement"
+type = "float"
+default = 750.0
+condition = { arg="refine_ctf", value=true }
+
+[tabs.csp_tomo_coarse.Grid]
+name = "Number of regions"
+description = "Sub-divide tomograms into regions along x,y,z (1,1,1=single region)"
+type = "str"
+default = "1,1,1"
+
+[tabs.csp_tomo_coarse.NumberOfRandomIterations]
+name = "Optimizer exhaustive search points"
+description = "Number of random points to evaluate"
+type = "int"
+default = 0
+copyToNewBlock = false
+advanced = true
+
+[tabs.csp_tomo_coarse.OptimizerMaxIter]
+name = "Optimizer number of iterations"
+description = "Max number of iterations to use during Powell optimization"
+type = "int"
+default = 5
+advanced = true
+
+[tabs.csp_tomo_coarse.OptimizerStepLength]
+name = "Optimizer max step length"
+description = "Max step length to use during Powell optimization"
+type = "float"
+default = 20.0
+advanced = true
+
+[tabs.csp_tomo_coarse.OptimizerStepTolerance]
+name = "Optimizer step tolerance"
+description = "Step tolerance to use during Powell optimization"
+type = "float"
+default = 0.01
+advanced = true
+
+[tabs.csp_tomo_coarse.OptimizerValueTolerance]
+name = "Optimizer tolerance value"
+description = "Tolerance value to use during Powell optimization"
+type = "float"
+default = 0.0001
+advanced = true
+
+# Tomo constrained refinement
+
+[tabs.csp_tomo_classification]
+_name = "Classification"
+_description = "Settings for constrained single particle (CSP) refinement"
+
+[tabs.csp_tomo_classification.parfile]
+name = "Input parameter file (*.bz2)"
+description = "Parameter file to initialize refinement"
+type = "path"
+path = { type="files" }
+input = { type="parfile" }
+copyToNewBlock = false
+required = true
+
+[tabs.csp_tomo_classification.resume]
+name = "Resume refinement"
+description = "Continue refinement from most recent iteration"
+type = "bool"
+default = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_classification.first_iter]
+name = "First iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+condition = { arg="resume", value="false" }
+
+[tabs.csp_tomo_classification.iter]
+name = "Starting iteration"
+description = "Start refinement from this iteration"
+type = "int"
+default = 2
+hidden = true
+copyToNewBlock = false
+
+[tabs.csp_tomo_classification.maxiter]
+name = "Last iteration"
+description = "Number of last refinement iteration"
+type = "int"
+default = 2
+copyToNewBlock = false
+
+[tabs.csp_tomo_classification.num]
+name = "Number of classes"
+description = "Number of classes to use during classification"
+type = "int"
+default = 1
+
+[tabs.csp_tomo_classification.rhcls]
+name = "Max resolution (A)"
+description = "Highest resolution used for classification"
+type = "float"
+default = 8.0
+
+[tabs.csp_tomo_classification.force_init]
+name = "Force initialization"
+description = "Force class initialization"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.csp_tomo_classification.bin]
+name = "Binning"
+description = "Additional binning used for classification"
+type = "int"
+default = 2
+hidden = true
+
+[tabs.csp_tomo_classification.refineeulers]
+name = "Angle refinement interval"
+description = "Refine Euler angles every this many iterations"
+type = "int"
+default = 3
+hidden = true
+
+[tabs.csp_tomo_classification.refineshifts]
+name = "Translation refinement interval"
+description = "Refine translations every this many iterations"
+type = "int"
+default = 2
+hidden = true
+
+[tabs.csp_tomo_classification.focusmask]
+name = "2D mask for focused classification (A)"
+description = "(X,Y,Z,R): spherical mask of radius R centered at (X,Y,Z)"
+type = "str"
+default = "0,0,0,0"
+
+[tabs.csp_tomo_classification.refine_particles]
+name = "Refine particle alignments"
+description = "Refine particle alignments during refinement"
+type = "bool"
+default = false
+
+[tabs.csp_tomo_classification.ToleranceParticlesPhi]
+name = "Particle rotation Phi range (degrees)"
+description = "Tolerance to use when refining Phi angle (in-plane rotation)"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_classification.ToleranceParticlesPsi]
+name = "Particle rotation Psi range (degrees)"
+description = "Tolerance to use when refining Psi angle"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_classification.ToleranceParticlesTheta]
+name = "Particle rotation Theta range (degrees)"
+description = "Tolerance to use when refining Theta angle"
+type = "float"
+default = 30.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_classification.ToleranceParticlesShifts]
+name = "Particle translation range (A)"
+description = "Tolerance to use when refining particle translations"
+type = "float"
+default = 20.0
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_classification.NumberOfRandomIterations]
+name = "Optimizer exhaustive search points"
+description = "Number of random points to evaluate during search"
+type = "int"
+default = 0
+copyToNewBlock = false
+condition = { arg="refine_particles", value=true }
+advanced = true
+
+[tabs.csp_tomo_classification.OptimizerMaxIter]
+name = "Optimizer number of iterations"
+description = "Max number of iterations to use during Powell optimization"
+type = "int"
+default = 5
+advanced = true
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_classification.OptimizerStepLength]
+name = "Optimizer max step length"
+description = "Max step length to use during Powell optimization"
+type = "float"
+default = 20.0
+advanced = true
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_classification.OptimizerStepTolerance]
+name = "Optimizer step tolerance"
+description = "Step tolerance to use during Powell optimization"
+type = "float"
+default = 0.01
+advanced = true
+condition = { arg="refine_particles", value=true }
+
+[tabs.csp_tomo_classification.OptimizerValueTolerance]
+name = "Optimizer tolerance value"
+description = "Tolerance value to use during Powell optimization"
+type = "float"
+default = 0.0001
+advanced = true
+condition = { arg="refine_particles", value=true }
+
 # heterogeneity analysis with ML
 [tabs.heterogeneity]
 _name = "Continuous heterogeneity"
@@ -4904,7 +5864,6 @@ type = "path"
 path = { type="files" }
 input = { type="starfile" }
 required = false
-hidden = [ "tomo_drgn_eval" ]
 
 [tabs.heterogeneity.method]
 name = "Method"
@@ -7540,7 +8499,7 @@ description = "Automatically determine score threshold based on bimodal distribu
 type = "bool"
 default = false
 required = false
-hidden = ["tomo_coarse_refine"]
+hidden = [ "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification"]
 copyToNewBlock = false
 
 [tabs.clean.threshold]
@@ -7896,6 +8855,14 @@ type = "int"
 default = 600
 advanced = true
 
+[tabs.slurm.bundle_size]
+name = "Bundle size"
+description = "Number of micrographs/tilt-series to process sequentially in a batch"
+type = "int"
+default = 1
+hidden = [ "map_post_process", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+advanced = true
+
 [tabs.slurm.max_cpus]
 name = "Max number of threads"
 description = "Limit the total number of threads that can run simultaneously (0=follow slurm limits)"
@@ -7933,13 +8900,6 @@ description = "Limit running time for each task (dd-hh:mm:ss)"
 type = "str"
 default = "2:00:00"
 hidden = [ "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process" ]
-
-[tabs.slurm.bundle_size]
-name = "Bundle size"
-description = "Number of micrographs/tilt-series to process sequentially in a batch"
-type = "int"
-default = 1
-hidden = [ "map_post_process", "spr_import_raw", "tomo_import_raw", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_particles_train", "tomo_milo_train", "tomo_denoise_train", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 
 [tabs.slurm.queue]
 name = "CPU partition"
@@ -8012,21 +8972,21 @@ name = "Threads per task (pre-processing daemon)"
 description = "Number of CPUs used during pre-processing"
 type = "int"
 default = 1
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_star", "tomo_pre_process", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "tomo_post_process", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 
 [tabs.slurm.daemon_memory]
 name = "Memory per task in GB (pre-processing daemon)"
 description = "Amount of memory used for pre-processing daemon"
 type = "int"
 default = 2
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 
 [tabs.slurm.daemon_gres]
 name = "Gres (pre-processing daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64,gpu:H100:1)"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 advanced = true
 
 [tabs.slurm.daemon_account]
@@ -8041,7 +9001,7 @@ name = "Walltime per task (pre-processing daemon)"
 description = "Max running time for pre-processing task (dd-hh:mm:ss)"
 type = "str"
 default = "5-00:00:00"
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 
 [tabs.slurm.daemon_queue]
 name = "CPU partition (pre-processing daemon)"
@@ -8056,21 +9016,21 @@ name = "Threads per task (refinement daemon)"
 description = "Number of CPUs used during 2D/3D refinement"
 type = "int"
 default = 1
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 
 [tabs.slurm.class2d_memory]
 name = "Memory per task in GB (refinement daemon)"
 description = "Amount of memory used for 2D/3D refinement daemon"
 type = "int"
 default = 4
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 
 [tabs.slurm.class2d_gres]
 name = "Gres (refinement daemon)"
 description = "Comma separated list of generic resource scheduling options (e.g., lscratch:500,shrd=64)"
 type = "str"
 default = ""
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_reference_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 advanced = true
 
 [tabs.slurm.class2d_account]
@@ -8085,7 +9045,7 @@ name = "Walltime (refinement daemon)"
 description = "Max running time for 2D/3D refinement daemon (dd-hh:mm:ss)"
 type = "str"
 default = "5-00:00:00"
-hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_coarse_refine", "tomo_fine_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
+hidden = ["spr_import_raw", "spr_import", "spr_import_star", "spr_pre_process", "spr_pure_preprocess", "spr_picking", "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "map_post_process", "tomo_import_raw", "tomo_import", "tomo_import_pure", "tomo_import_star", "tomo_pre_process", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "spr_map_clean", "tomo_map_clean", "stream_tomo", "spr_tomo_map_mask", "tomo_mask", "spr_tomo_post_process", "tomo_pure_preprocess", "tomo_segment_close", "tomo_segment_open", "tomo_picking", "tomo_particles_train", "tomo_particles_eval", "tomo_par_close", "tomo_par_open", "tomo_milo_train", "tomo_milo_eval", "tomo_denoise_train", "tomo_denoise_eval", "tomo_par_train", "tomo_par_eval", "tomo_drgn_vae", "tomo_drgn_analyze", "spr_drgn" ]
 
 [tabs.slurm.class2d_queue]
 name = "Partition (refinement daemon)"
