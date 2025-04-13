@@ -5175,16 +5175,20 @@ if __name__ == "__main__":
                         parameters["refine_parfile"] = reference_par_file[-1]
                         parameters["refine_model"] = reference_par_file[-1].replace(".bz2","") + ".mrc"
 
-                if parameters["clean_discard"]:
-                    parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.bz2")
-                    parameters["clean_parfile"] = parfile_occ_zero if parfile_occ_zero.exists() else parameters["clean_parfile"]
-
                 if parameters.get("micromon_block") == "tomo-drgn-filter":
                     # run filter_star
                     project_dir = os.getcwd()
                     parent_project_dir = parameters["data_parent"]
-                    input_star = parameters["tomodrgn_vae_train_input_star"]
-                    filtered_star_file = os.path.join(project_dir, "train", "filered_star_file.star")
+                    if "tomodrgn_vae_train_input_star" in parameters:
+                        if parameters.get("tomodrgn_vae_train_input_star") == "auto":
+                            parent_parameters = project_params.load_pyp_parameters(os.path.join( project_params.resolve_path(parameters.get("data_parent"))))
+                            # input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
+                            input_star = parent_parameters["tomodrgn_vae_train_input_star"]
+                            parameters["tomodrgn_vae_train_input_star"] = input_star
+                        else:
+                            input_star = parameters["tomodrgn_vae_train_input_star"]
+                    
+                    filtered_star_file = os.path.join(project_dir, "train", "filtered_star_file.star")
                     tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, parent_project_dir=parent_project_dir)
                 else:
                     assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
