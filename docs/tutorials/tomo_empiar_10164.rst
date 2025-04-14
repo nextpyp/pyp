@@ -130,7 +130,7 @@ Step 3: Pre-processing
 
       .. md-tab-item:: Frame alignment
 
-        - Set ``Frame pattern`` to "TILTSERIES_SCANORD_ANGLE.tif". ``nextPYP`` uses this to extract the metadata from the file names, for example, ``TS_54_037_57.0.tif`` would indicate that the tilt-series name is ``TS_54``, the exposure acquistion order is ``37``, and the corresponding tilt-angle is ``57.0`` degrees
+        - Leave ``Frame pattern`` as the default value *TILTSERIES_SCANORD_ANGLE.tif*. ``nextPYP`` uses this to extract the metadata from the file names, for example, ``TS_54_037_57.0.tif`` would indicate that the tilt-series name is ``TS_54``, the exposure acquistion order is ``37``, and the corresponding tilt-angle is ``57.0`` degrees
 
         - Click on the **CTF determination** tab
 
@@ -138,21 +138,11 @@ Step 3: Pre-processing
 
         - Set ``Max resolution`` to 5.0
 
-        - Click on the **Tomogram reconstruction** tab
-
-      .. md-tab-item:: Tomogram reconstruction
-
-        - Set ``Binning factor for reconstruction`` to 8
-
-        - Set ``Thickness of reconstruction (unbinned voxels)`` to 2048
-
         - Click on the **Resources** tab
 
       .. md-tab-item:: Resources
 
-        - Set ``Threads per task`` to 7
-
-        - Set ``Memory per task`` to 14
+        - Set ``Threads per task`` to 11
 
         - Set other runtime parameters as needed (see :doc:`Computing resources<../reference/computing>`)
 
@@ -234,7 +224,7 @@ Step 5: Virion segmentation
 .. nextpyp:: Segment individual virions in 3D (:fa:`stopwatch` 1 min)
   :collapsible: open
 
-  * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
@@ -259,7 +249,7 @@ Step 6: Particle picking
 .. nextpyp:: Select particles from the surface of virions (:fa:`stopwatch` 3 min)
   :collapsible: open
 
-  * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
+  * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle picking (closed surfaces)`
 
   * Go to the **Particle detection** tab:
 
@@ -267,13 +257,13 @@ Step 6: Particle picking
 
       .. md-tab-item:: Particle detection
 
-        - Set ``Detection method`` to uniform
-
         - Set ``Particle radius (A)`` to 50
 
-        - Set ``Minimum distance between spikes (voxels)`` to 8
+        - Set ``Detection method`` to uniform
 
-        - Set ``Size of equatorial band to restrict spike picking (A)`` to 800
+        - Set ``Minimum distance between particles (voxels)`` to 8
+
+        - Set ``Size of equatorial band to restrict search (A)`` to 800
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
@@ -326,11 +316,11 @@ Step 7: Reference-based refinement
 
         - Set ``Particle rotation Psi range (degrees)`` and ``Particle rotation Theta range (degrees)`` to 10
 
-        - Set ``Rotation step (degrees)`` to 2
+        - Set ``Particle rotation step (degrees)`` to 2
 
         - Set ``Particle translation range (A)`` to 50
 
-        - Set ``Translation step (A)`` to 6
+        - Set ``Particle translation step (A)`` to 6
 
         - Click on the **Reconstruction** tab
 
@@ -346,11 +336,9 @@ Step 7: Reference-based refinement
 
       .. md-tab-item:: Resources
 
-        - Set ``Walltime per task`` to 9:00:00
+        - Set ``Threads per task`` to the maximum allowable by your system
 
         - Set ``Threads (merge task)`` to 6
-
-        - Set ``Memory (merge task)`` to 24
 
   * :bdg-primary:`Save` your changes, click :bdg-primary:`Run` and :bdg-primary:`Start Run for 1 block`
 
@@ -379,6 +367,8 @@ Step 8. 3D refinement
         - Click on the **Refinement** tab
 
       .. md-tab-item:: Refinement
+
+        - Specify the location of ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-reference-refinement-*_r01_02.bz2`
 
         - Set ``Last iteration`` to 4
 
@@ -414,7 +404,7 @@ Step 8. 3D refinement
 Step 9. Filter particles
 ------------------------
 
-.. nextpyp:: Identify duplicates and particles with low alignment scores (:fa:`stopwatch` 4 min)
+.. nextpyp:: Identify and remove duplicates and particles with low alignment scores (:fa:`stopwatch` 4 min)
   :collapsible: open
 
   * Click on ``Particles`` (output of the :bdg-secondary:`3D refinement` block) and select :bdg-primary:`Particle filtering`
@@ -425,42 +415,23 @@ Step 9. Filter particles
 
       .. md-tab-item:: Particle filtering
 
+        - Specify the location of ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_04.bz2`
+
         - Set ``Score threshold`` to 2.5
 
-        - Set ``Min distance between particles (A)`` to 10
+        - Set ``Min distance between particles (unbinned pixels/voxels)`` to 10
 
-        - Specify the location of ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-coarse-refinement-*_r01_04.par.bz2`
+        - Set ``Lowest tilt-angle (degrees)`` to -15
 
-        - Set ``Lowest tilt-angle (degrees)`` to -15.0
-
-        - Set ``Highest tilt-angle (degrees)`` to 15.0
+        - Set ``Highest tilt-angle (degrees)`` to 15
 
         - Check ``Generate reconstruction after filtering``
 
-  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. You can see how many particles were left after filtering by looking at the job logs.
-
-Step 10 (optional): Permanently remove bad particles
-----------------------------------------------------
-
-.. nextpyp:: Permanently remove bad particles to improve processing efficiency downstream (:fa:`stopwatch` 1 min)
-  :collapsible: open
-
-  * Edit the settings of the existing :bdg-secondary:`Particle filtering` block
-
-  * Go to the **Particle filtering** tab:
-
-    .. md-tab-set::
-
-      .. md-tab-item:: Particle filtering
-
         - Check ``Permanently remove particles``
 
-        - Uncheck ``Generate reconstruction after filtering``
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. You can see how many particles were left after filtering by looking at the job logs.
 
-  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to launch the job
-
-
-Step 11. Region-based local refinement (before masking)
+Step 10. Region-based local refinement (before masking)
 -------------------------------------------------------
 
 .. nextpyp:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 1 hr)
@@ -490,19 +461,17 @@ Step 11. Region-based local refinement (before masking)
 
         - Set ``Last tilt for refinement`` to 4
 
-        - Set ``Max resolution (A)`` to 6:5
+        - Set ``Max resolution (A)`` to 6.5
 
         - Click on the **Refinement** tab
 
       .. md-tab-item:: Refinement
 
-        - Select the location of the ``Initial parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-fine-refinement-*_r01_02.par.bz2` (select the file ``tomo-fine-refinement-*_r01_clean.par.bz2`` if bad particles were permanently removed in the previous step)
+        - Select the location of the ``Initial parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file ``tomo-fine-refinement-*_r02_clean.bz2``
 
         - Set ``Last iteration`` to 3
 
         - Set ``Number of regions`` to 8,8,2
-
-        - Set ``Particle translation range (A)`` to 20.0
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to run the job
 
@@ -512,13 +481,13 @@ Step 11. Region-based local refinement (before masking)
       :alt: Iter 3
 
 
-Step 12: Create shape mask
+Step 11: Create shape mask
 --------------------------
 
 .. nextpyp:: Use most recent reconstruction to create a shape mask (:fa:`stopwatch` <1 min)
   :collapsible: open
 
-  * Click on ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Masking`
+  * Click on ``Particles`` (output of the last :bdg-secondary:`3D refinement` block) and select :bdg-primary:`Masking`
 
   * Go to the **Masking** tab:
 
@@ -526,7 +495,7 @@ Step 12: Create shape mask
 
       .. md-tab-item:: Masking
 
-        - Select the ``Input map (*.mrc)`` by click on the icon :fa:`search` and selecting the file `tomo-coarse-refinement-*_r01_03.mrc`
+        - Select the ``Input map (*.mrc)`` by click on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_03.mrc`
 
         - Set ``Threshold for binarization`` to 0.45
 
@@ -542,13 +511,15 @@ Step 12: Create shape mask
 
     You may need to adjust the binarization threshold to obtain a mask that includes the protein density and excludes the background (a pre-calculated mask is provided with the raw data if you rather use that).
 
-Step 13: Region-based constrained refinement
+Step 12: Region-based constrained refinement
 --------------------------------------------
 
 .. nextpyp:: Constraints of the tilt-geometry are applied over local regions (:fa:`stopwatch` 2 hr)
   :collapsible: open
 
-  * Edit the settings of the existing :bdg-secondary:`3D refinement` block and go to the **Particle scoring function** tab:
+  * Click on ``Particles`` (output of the last :bdg-secondary:`3D refinement` block) and select :bdg-primary:`3D refinement`
+  
+  * Go to the **Particle scoring function** tab:
 
     .. md-tab-set::
 
@@ -556,19 +527,17 @@ Step 13: Region-based constrained refinement
 
         - Set ``Max resolution (A)`` to 6:5:5:4:3.5
 
-        - Click on the **Refinement** tab
-
         - Set ``Masking strategy`` to from file
         
         - Specify the location of the ``Shape mask`` produced in Step 11 by clicking on the icon :fa:`search`, navigating to the location of the :bdg-secondary:`Masking` block by copying the path we saved above, and selecting the file `frealign/maps/mask.mrc`
 
+        - Click on the **Refinement** tab
+
       .. md-tab-item:: Refinement
 
-        - Uncheck ``Resume refinement``
+        - Select the ``Input parameter file (*.bz2)`` by click on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_03.bz2`
 
-        - Set ``First iteration`` to 4
-
-        - Set ``Last iteration`` to 6
+        - Set ``Last iteration`` to 2
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to run the job
 
@@ -577,14 +546,14 @@ Step 13: Region-based constrained refinement
     .. figure:: ../images/tutorial_tomo_region_iter6.webp
       :alt: Iter 6
 
-Step 14: Particle-based CTF refinement
+Step 13: Particle-based CTF refinement
 --------------------------------------
 
 .. nextpyp:: Per-particle CTF refinement using most recent reconstruction (:fa:`stopwatch` 3 hr)
   :collapsible: open
 
-  * Click on the menu icon :fa:`bars` from the :bdg-secondary:`3D refinement` block and choose the :fa:`edit` Edit option
-
+  * Click on ``Particles`` (output of the last :bdg-secondary:`3D refinement` block) and select :bdg-primary:`3D refinement`
+  
   * Go to the **Particle scoring function** tab:
 
     .. md-tab-set::
@@ -595,11 +564,11 @@ Step 14: Particle-based CTF refinement
 
         - Set ``Max resolution (A)`` to 3.1
 
-        - Click on the **Constrained refinement** tab
+        - Click on the **Refinement** tab
 
-      .. md-tab-item:: Constrained refinement
+      .. md-tab-item:: Refinement
 
-        - Set ``Last iteration`` to 7
+        - Select the ``Input parameter file (*.bz2)`` by click on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_02.bz2`
 
         - Uncheck ``Refine tilt-geometry``
 
@@ -614,23 +583,17 @@ Step 14: Particle-based CTF refinement
     .. figure:: ../images/tutorial_tomo_ctf_iter7.webp
       :alt: Iter 7
 
-Step 15: Movie frame refinement
+Step 14: Movie frame refinement
 -------------------------------
 
 .. nextpyp:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 3 hr)
   :collapsible: open
 
-  * Click ``Particles`` (output of :bdg-secondary:`3D refinement` block) and select :bdg-primary:`Movie refinement`
+  * Click ``Particles`` (output of the last :bdg-secondary:`3D refinement` block) and select :bdg-primary:`Movie refinement`
 
-  * Go to the **Sample** tab:
+  * Go to the **Particle scoring function** tab:
 
     .. md-tab-set::
-
-      .. md-tab-item:: Sample
-
-        - Set ``Particle radius`` to 80
-
-        - Click on the **Particle scoring function** tab
 
       .. md-tab-item:: Particle scoring function
 
@@ -642,9 +605,7 @@ Step 15: Movie frame refinement
 
       .. md-tab-item:: Frame refinement
 
-        - Specify the ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-coarse-refinement-*_r01_07.par.bz2`
-
-        - Check ``Regularize translations``
+        - Specify the ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_02.bz2`
 
         - Set ``Spatial sigma`` to 200.0
 
@@ -655,7 +616,7 @@ Step 15: Movie frame refinement
     .. figure:: ../images/tutorial_tomo_movie_iter2.webp
       :alt: Iter 2
 
-Step 16: Refinement after movie frame refinement
+Step 15: Refinement after movie frame refinement
 ------------------------------------------------
 
 .. nextpyp:: Additional refinement using new frame alignment parameters (:fa:`stopwatch` 1 hr)
@@ -669,23 +630,23 @@ Step 16: Refinement after movie frame refinement
 
       .. md-tab-item:: Particle scoring function
 
-        - Set ``Max resolution (A)`` to 3.3
+        - Set ``Min number of tilts for refinement`` to 2
 
-        - Set ``Min number of projections for refinement`` to 2
+        - Set ``Max resolution (A)`` to 3.3
 
         - Click on the **Refinement** tab
 
       .. md-tab-item:: Refinement
 
-        - Specify the ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-movie-refinement-*_r01_02.par.bz2`
+        - Specify the ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-flexible-refinement-*_r01_02.bz2`
 
         - Check ``Refine tilt-geometry``
 
-        - Set ``Tilt-angle range (degrees)`` and ``Tilt-axis range (degrees)`` to 1.0
-
-        - Set ``Particle translation range (A)`` to 10.0
+        - Set ``Tilt-angle range (degrees)`` and ``Tilt-axis angle range (degrees)`` to 1.0
 
         - Check ``Refine particle alignments``
+
+        - Set ``Particle translation range (A)`` to 10.0
 
         - Set ``Particle rotation Phi range (degrees)``, ``Particle rotation Psi range (degrees)``, and ``Particle rotation Theta range (degrees)`` to 1.0
 
@@ -698,7 +659,7 @@ Step 16: Refinement after movie frame refinement
     .. figure:: ../images/tutorial_tomo_after_movie_iter3.webp
       :alt: Iter 3
 
-Step 17: Map sharpening
+Step 16: Map sharpening
 -----------------------
 
 .. nextpyp:: Apply B-factor weighting in frequency space (:fa:`stopwatch` <1 min)
