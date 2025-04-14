@@ -1061,8 +1061,11 @@ def particle_cleaning(parameters: dict):
         if parameters["clean_discard"]:
             film_col = p_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
             film_ids = np.unique(new_pardata[:, film_col])
-            clean_output_folder = str(parameter_folder_current)[:-3] + "_clean"
-            
+            if parameters["clean_check_reconstruction"]:
+                clean_output_folder = str(parameter_folder_current)[:-3] + "_02_clean"
+            else:
+                clean_output_folder = str(parameter_folder_current) + "_clean"
+
             if os.path.exists(clean_output_folder):
                 shutil.rmtree(clean_output_folder)
             
@@ -1134,7 +1137,10 @@ def particle_cleaning(parameters: dict):
         )
 
         if parameters["clean_discard"]:
-            clean_parameter_folder = Path(str(parameter_folder_current)[:-3] + "_clean")
+            if parameters["clean_check_reconstruction"]:
+                clean_parameter_folder = Path(str(parameter_folder_current)[:-3] + "_02_clean")
+            else:
+                clean_parameter_folder = Path(str(parameter_folder_current) + "_clean")
             if clean_parameter_folder.exists():
                 shutil.rmtree(clean_parameter_folder)
             os.mkdir(clean_parameter_folder)
