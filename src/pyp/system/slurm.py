@@ -588,7 +588,10 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
     jobname = "Iteration %d (split)" % parameters["refine_iter"] if Web.exists else "cspswarm"
     
     # submit jobs to batch system
-    if parameters["slurm_merge_only"]:
+    import glob
+    scratch_folder = swarm_folder.parents[0] / 'frealign' / 'scratch'
+    if parameters["slurm_merge_only"] and os.path.exists(scratch_folder) and len(glob.glob(str(scratch_folder / '*.bz2'))) > 0 and parameters["class_num"] == 1:
+        logger.warning(f"Found {len(glob.glob(str(scratch_folder / '*.bz2'))):,} refinement results from a previous run, attempting to resume!")
         id = ""
     else:
         if parameters["csp_parx_only"]:

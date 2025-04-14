@@ -875,9 +875,27 @@ def merge_check_err_and_resubmit(
 
     if len(movies_resubmit) > 0:
         
-        # raise error flag
-        Path(".cspswarm.error").touch()
-        raise Exception(f"{len(movies_resubmit)} jobs failed to run or reached the walltime. Stopping")
+        os.chdir("swarm")
+
+        if not os.path.exists(".cspswarm_retry"):
+            parameters["slurm_merge_only"] = False
+            slurm.launch_csp(micrograph_list=movies_resubmit,
+                            parameters=parameters,
+                            swarm_folder=Path().cwd(),
+                            )
+            logger.warning(f"Successfully re-submitted {len(movies_resubmit):,} failed job(s)")
+
+            # save flag to indicate failure
+            Path(".csp_current_fail").touch()
+            Path(".cspswarm_retry").touch()
+
+        else:
+            logger.error("Giving up retrying...")
+            os.remove(".cspswarm_retry")
+
+            # raise error flag
+            Path(".cspswarm.error").touch()
+            raise Exception(f"{len(movies_resubmit)} jobs failed to run or reached the walltime. Stopping")
     else:
         logger.info(
             "All series were successfully processed, start merging reconstructions"
@@ -1142,9 +1160,10 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
     mp = project_params.load_pyp_parameters("../..")
     fp = mp
 
+    not_retrying = True
     if not (fp["class_num"] > 1 and fp["refine_iter"] > 2):
         # cspswarm -> cspmerge
-        csp_class_merge(class_index=1, input_dir=input_dir)
+        not_retrying = csp_class_merge(class_index=1, input_dir=input_dir)
     else: 
         # cspswarm -> classmerge -> cspmerge
         if not classmerge_succeed(fp):
@@ -1247,7 +1266,8 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
                 local_run.run_shell_command(command, verbose=mp["slurm_verbose"])
 
     # remove the directory
-    shutil.rmtree(input_dir)
+    if not_retrying:
+        shutil.rmtree(input_dir)
 
     # go back to project directory
     os.chdir(project_dir)
@@ -1277,7 +1297,8 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
     # update iteration number
     maxiter = fp["refine_maxiter"]
-    fp["refine_iter"] = iteration + 1
+    if not_retrying:
+        fp["refine_iter"] = iteration + 1
     fp["refine_dataset"] = mp["data_set"]
     if "refine_skip" in fp.keys() and fp["refine_skip"] and fp["class_num"] > 1:
         fp["refine_skip"] = False
@@ -1576,6 +1597,10 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
             if csp_has_error(path_to_logs, micrographs):
                 return False
 
+            # exit loop if we are resuming from a failed run
+            if parameters['slurm_merge_only'] and classes == 1:
+                break
+
             time.sleep(INTERVAL)
         logger.info("Done live-merging intermediate reconstructions")
 
@@ -1626,7 +1651,7 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
         # result is incomplete after TIMEOUT -> need to resubmit failed cspswarm jobs
         if class_index == 1 and len(set(micrographs.keys()) - processed_micrographs) > 0:
             merge_check_err_and_resubmit(parameters, input_dir, micrographs, int(parameters["refine_iter"]))
-        return True
+        return False
     else:
         logger.info(f"Decompression of all micrographs/tilt-series is done, start merging reconstruction and parameter files")
 
@@ -1723,54 +1748,54 @@ def csp_class_merge(class_index: int, input_dir="scratch", ordering_file="orderi
         )
     )
 
-    if not collect_all_cspswarm:
-        raise Exception(f"One or more job(s) failed")
+    if collect_all_cspswarm:
 
-    if not fp["refine_parfile_compress"]:
-        # copy the mrc files and parfiles to scratch
-        with timer.Timer("Copy mrc, par to scratch", text = "Copy file to merge took: {}", logger=logger.info):
-            for file in glob.glob(input_dir + "/*mrc") + glob.glob(input_dir + "/*par"):
-                symlink_relative(file, os.path.join(local_frealign_scratch, os.path.basename(file)))
+        if not fp["refine_parfile_compress"]:
+            # copy the mrc files and parfiles to scratch
+            with timer.Timer("Copy mrc, par to scratch", text = "Copy file to merge took: {}", logger=logger.info):
+                for file in glob.glob(input_dir + "/*mrc") + glob.glob(input_dir + "/*par"):
+                    symlink_relative(file, os.path.join(local_frealign_scratch, os.path.basename(file)))
 
-    if "cc" not in metric and fp["refine_parfile_compress"]:
-        all_jobs = np.atleast_2d(np.array(all_jobs))
-    else:
-        all_jobs = np.atleast_2d(np.array(
-            [
-                i.split("_r01_")[0].split("_")
-                for i in glob.glob("*_r01_%02d.par" % iteration)
-            ],
-            dtype=int,
-        ))
-
-    # identify the different job IDs
-    slurm_job_ids = sorted(np.unique(all_jobs[:, 0]))
-    for job in slurm_job_ids:
-        # figure out number of empty slots
-        zero_indexes = [i for i in range(len(orderings)) if orderings[i] == ""]
-        # get the job array IDs for this job
-        array_ids = sorted(all_jobs[all_jobs[:, 0] == job][:, 1])
-        if len(zero_indexes) >= len(array_ids):
-            for id in array_ids:
-                orderings[zero_indexes[id - 1]] = str(job) + "_" + str(id)
+        if "cc" not in metric and fp["refine_parfile_compress"]:
+            all_jobs = np.atleast_2d(np.array(all_jobs))
         else:
-            message = "Number of missing jobs ({}) does not match the number of missing movies ({}).".format(
-                len(zero_indexes), len(array_ids)
-            )
-            raise Exception(message)
+            all_jobs = np.atleast_2d(np.array(
+                [
+                    i.split("_r01_")[0].split("_")
+                    for i in glob.glob("*_r01_%02d.par" % iteration)
+                ],
+                dtype=int,
+            ))
 
+        # identify the different job IDs
+        if all_jobs.size > 0:
+            slurm_job_ids = sorted(np.unique(all_jobs[:, 0]))
+            for job in slurm_job_ids:
+                # figure out number of empty slots
+                zero_indexes = [i for i in range(len(orderings)) if orderings[i] == ""]
+                # get the job array IDs for this job
+                array_ids = sorted(all_jobs[all_jobs[:, 0] == job][:, 1])
+                if len(zero_indexes) >= len(array_ids):
+                    for id in array_ids:
+                        orderings[zero_indexes[id - 1]] = str(job) + "_" + str(id)
+                else:
+                    message = "Number of missing jobs ({}) does not match the number of missing movies ({}).".format(
+                        len(zero_indexes), len(array_ids)
+                    )
+                    raise Exception(message)
 
-    with timer.Timer(
-        "Parallel run all reconstruction", text = "Run parallel reconstruction took: {}", logger=logger.info
-    ):
-        ref = class_index
-        pattern = "r%02d" % (ref)
-        dataset_name = fp["refine_dataset"] + "_%s" % pattern
+            with timer.Timer(
+                "Parallel run all reconstruction", text = "Run parallel reconstruction took: {}", logger=logger.info
+            ):
+                ref = class_index
+                pattern = "r%02d" % (ref)
+                dataset_name = fp["refine_dataset"] + "_%s" % pattern
 
-        run_mpi_reconstruction(ref, pattern, dataset_name, iteration, mp, fp, input_dir, orderings)
-
+                run_mpi_reconstruction(ref, pattern, dataset_name, iteration, mp, fp, input_dir, orderings)
 
     os.chdir(project_dir)
+    
+    return collect_all_cspswarm
 
 
 def classmerge_succeed(parameters: dict) -> bool: 
@@ -1826,5 +1851,13 @@ def classmerge_succeed(parameters: dict) -> bool:
             return True       
 
         time.sleep(INTERVAL)
+
+    # part of the classmerge jobs failed, resubmit classmerge & cspmerge (w/o cspswarm)
+    parameters["slurm_merge_only"] = True
+    
+    slurm.launch_csp(micrograph_list=[],
+                    parameters=parameters,
+                    swarm_folder=swarm_folder,
+                    )
 
     return False

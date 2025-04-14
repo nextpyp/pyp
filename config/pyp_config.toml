@@ -8977,6 +8977,13 @@ input = { type="slurmQueue", group="cpu" }
 # partiton settings need to be set in config.toml somehow, how could a user know what the partiton names are?
 hidden = true
 
+[tabs.slurm.merge_only]
+name = "Merge, Resume"
+description = "Run the Merge job before the Split job to resume failed runs"
+type = "bool"
+default = false
+advanced = true
+
 [tabs.slurm.merge_retries]
 name = "Merge, Number of retries"
 description = "Number of times to retry launching failed Split jobs"
@@ -9095,13 +9102,6 @@ hidden = true
 [tabs.slurm.profile]
 name = "Save profiling information"
 description = "Store diagram as pdf file"
-type = "bool"
-default = false
-hidden = true
-
-[tabs.slurm.merge_only]
-name = "Only run the merge job"
-description = "Only run the merge job"
 type = "bool"
 default = false
 hidden = true
