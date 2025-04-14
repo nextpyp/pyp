@@ -152,7 +152,7 @@ tabs = [ "particle", "extract", "metric", "csp_tomo_init", "reconstruct", "slurm
 
 [blocks.tomo_reference_refine]
 name = "TOMO Initial Refinement"
-description = "Align particles to external reference"
+description = "Align particles to an external reference"
 tabs = [ "particle", "extract", "metric", "csp_tomo_reference", "reconstruct", "slurm" ]
 
 [blocks.tomo_initial_reconstruct]
@@ -1765,7 +1765,7 @@ name = "Use only clean particles"
 description = "Only extract clean particles for processing"
 type = "bool"
 default = false
-hidden = [ "spr_coarse_refine", "spr_flexible_refine", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "stream_spa", "stream_tomo", "spr_map_clean", "tomo_map_clean"]
+hidden = [ "spr_coarse_refine", "spr_flexible_refine", "tomo_initial_refine", "tomo_initial_reconstruct", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after", "stream_spa", "stream_tomo", "spr_map_clean", "tomo_map_clean"]
 
 [tabs.extract.cls]
 name = "Clean only"
@@ -4153,12 +4153,6 @@ _name = "Reconstruction"
 _description = "Parameters used for 3D reconstruction"
 _hidden = [ "spr_map_clean", "tomo_map_clean" ]
 
-[tabs.reconstruct.apply_symmetry]
-name = "Apply symmetry"
-description = "Apply symmetry during reconstruction"
-type = "bool"
-default = true
-
 [tabs.reconstruct.optimal_cutoff]
 name = "Value of automatic threshold"
 description = "Store value of automatically determined threshold"
@@ -4171,8 +4165,14 @@ name = "Fraction of particles"
 description = "Use subset of particles for reconstruction (0=automatic,<1=percentage,1=all,>1=number of particles)"
 type = "str"
 default = "1"
-hidden = ["spr_fine_refine", "spr_flexible_refine", "tomo_initial_refine", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
+hidden = ["spr_fine_refine", "spr_flexible_refine", "tomo_initial_refine", "tomo_initial_reconstruct", "tomo_reference_refine", "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 copyToNewBlock = false
+
+[tabs.reconstruct.apply_symmetry]
+name = "Apply symmetry"
+description = "Apply symmetry during reconstruction"
+type = "bool"
+default = true
 
 [tabs.reconstruct.dose_weighting_enable]
 name = "Apply dose weighting"
@@ -4186,15 +4186,14 @@ description = "Compute global weights using the entire dataset for dose weightin
 type = "bool"
 default = false
 condition = { arg="dose_weighting_enable", value="true" }
-advanced = true
 
 [tabs.reconstruct.dose_weighting_weights]
 name = "External weights"
 description = "External weights for dose weighting (rather than weights inferred from current parfile)"
 type = "path"
 path = { type="files" }
+input = { type="txtfile" }
 condition = { arg="dose_weighting_enable", value="true" }
-advanced = true
 
 [tabs.reconstruct.dose_weighting_fraction]
 name = "Frame weight fraction"
@@ -4202,7 +4201,6 @@ description = "Using larger values contributes fewer frames to high-resolution, 
 type = "int"
 default = 4
 condition = { arg="dose_weighting_enable", value="true" }
-advanced = true
 
 [tabs.reconstruct.dose_weighting_transition]
 name = "Frame weight transition"
@@ -4210,7 +4208,6 @@ description = "Weight transition (for per-frame reconstruction)"
 type = "float"
 default = 0.75
 condition = { arg="dose_weighting_enable", value="true" }
-advanced = true
 
 [tabs.reconstruct.dose_weighting_multiply]
 name = "Multiply by number of frames"
@@ -4218,7 +4215,6 @@ description = "Multiply dose weighting parameters by the number of frames"
 type = "bool"
 default = true
 condition = { arg="dose_weighting_enable", value="true" }
-advanced = true
 
 [tabs.reconstruct.denoise_enable]
 name = "Apply denoising"
@@ -4720,14 +4716,14 @@ description = "De-novo 3D reconstruction"
 type = "bool"
 default = false
 copyToNewBlock = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
+hidden = [ "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "spr_map_clean", "tomo_map_clean" ]
 
 [tabs.csp.InitialResolution]
 name = "Starting resolution limit (A)"
 description = "Initial resolution used for ab-initio refinement"
 type = "float"
 default = 60.0
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
+hidden = [ "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.ResolutionLimit]
@@ -4735,7 +4731,7 @@ name = "Final resolution limit (A)"
 description = "Highest resolution used for ab-initio refinement"
 type = "float"
 default = 16.0
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
+hidden = [ "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.InitialSkip]
@@ -4762,7 +4758,7 @@ description = "Particles per tilt-series in each batch to use for ab-initio refi
 type = "int"
 default = 10
 copyToNewBlock = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
+hidden = [ "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.GridSearch]
@@ -4770,25 +4766,25 @@ name = "Grid search"
 description = "Use uniform grid search instead of random search"
 type = "bool"
 default = false
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
+hidden = [ "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 copyToNewBlock = false
 condition = { arg="abinitio", value="true" }
 
 [tabs.csp.AngleStep]
-name = "Rotation step (degrees)"
+name = "Particle rotation step (degrees)"
 description = "Step size to use for rotational search"
 type = "float"
 default = 20
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
+hidden = [ "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 copyToNewBlock = false
 condition = { arg="GridSearch", value="true" }
 
 [tabs.csp.ShiftStep]
-name = "Translation step (A)"
+name = "Particle translation step (A)"
 description = "Step size to use for translational search"
 type = "float"
 default = 6
-hidden = [ "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
+hidden = [ "spr_coarse_refine", "spr_fine_refine", "spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 copyToNewBlock = false
 condition = { arg="GridSearch", value="true" }
 
@@ -4836,7 +4832,6 @@ name = "Refine particle alignments"
 description = "Optimize sub-tomogram orientations and translations in 3D"
 type = "bool"
 default = false
-copyToNewBlock = false
 hidden = [ 'spr_coarse_refine', 'spr_flexible_refine', 'spr_map_clean' ]
 
 [tabs.csp.ToleranceParticlesPhi]
@@ -5336,7 +5331,7 @@ type = "float"
 default = 30.0
 
 [tabs.csp_tomo_init.AngleStep]
-name = "Rotation step (degrees)"
+name = "Particle rotation step (degrees)"
 description = "Angular step to use for rotational search"
 type = "float"
 default = 10.0
@@ -5349,7 +5344,7 @@ type = "float"
 default = 20.0
 
 [tabs.csp_tomo_init.ShiftStep]
-name = "Translation step (A)"
+name = "Particle translation step (A)"
 description = "Step size to use for translational search"
 type = "float"
 default = 5.0
@@ -5462,7 +5457,7 @@ type = "float"
 default = 30.0
 
 [tabs.csp_tomo_reference.AngleStep]
-name = "Rotation step (degrees)"
+name = "Particle rotation step (degrees)"
 description = "Angular step to use for rotational search"
 type = "float"
 default = 10.0
@@ -5475,7 +5470,7 @@ type = "float"
 default = 20.0
 
 [tabs.csp_tomo_reference.ShiftStep]
-name = "Translation step (A)"
+name = "Particle translation step (A)"
 description = "Step size to use for translational search"
 type = "float"
 default = 5.0
@@ -8493,6 +8488,15 @@ default = 0.0
 _name = "Particle filtering"
 _description = "Parameters for cleaning/filtering particles"
 
+[tabs.clean.parfile]
+name = "Input parameter file (*.bz2)"
+description = "Parfile used to compute average scores per particle"
+type = "path"
+path = { type="files" }
+input = { type="parfile" }
+required = true
+copyToNewBlock = false
+
 [tabs.clean.spr_auto]
 name = "Automatic score threshold"
 description = "Automatically determine score threshold based on bimodal distribution of scores"
@@ -8516,22 +8520,6 @@ description = "Distance cutoff to remove neighboring particles"
 type = "float"
 default = 0.0
 hidden = ["spr_fine_refine", "spr_coarse_refine"]
-copyToNewBlock = false
-
-[tabs.clean.parfile]
-name = "Input parameter file (*.bz2)"
-description = "Parfile used to compute average scores per particle"
-type = "path"
-path = { type="files" }
-input = { type="parfile" }
-required = true
-copyToNewBlock = false
-
-[tabs.clean.discard]
-name = "Permanently remove particles"
-description = "Permanently remove particles (WARNING: this cannot be undone!)"
-type = "bool"
-default = false
 copyToNewBlock = false
 
 [tabs.clean.export_clean]
@@ -8585,6 +8573,13 @@ copyToNewBlock = false
 [tabs.clean.check_reconstruction]
 name = "Generate reconstruction after filtering"
 description = "Calculate reconstruction using only clean particles"
+type = "bool"
+default = false
+copyToNewBlock = false
+
+[tabs.clean.discard]
+name = "Permanently remove particles"
+description = "Permanently remove particles (WARNING: this cannot be undone!)"
 type = "bool"
 default = false
 copyToNewBlock = false
