@@ -2343,7 +2343,7 @@ def csp_split(parameters, iteration):
                 os.makedirs(weights_folder)
 
             # compute global weights using enitre parfile
-            if parameters["dose_weighting_global"]:
+            if parameters["reconstruct_dose_weighting_global"]:
          
                 global_weight_file = str(weights_folder / "global_weight.txt")
 
@@ -2355,13 +2355,13 @@ def csp_split(parameters, iteration):
                 elif os.path.exists(project_params.resolve_path(parameters["refine_parfile"])) and ".par" in project_params.resolve_path(parameters["refine_parfile"]):
                     compute_global_weights_from_par(parfile=project_params.resolve_path(parameters["refine_parfile"]), weights_file=global_weight_file)
 
-                parameters["dose_weighting_weights"] = global_weight_file
+                parameters["reconstruct_dose_weighting_weights"] = global_weight_file
                 project_params.save_pyp_parameters(parameters=parameters, path=".")
 
-            elif "dose_weighting_weights" in parameters and parameters["dose_weighting_weights"] is not None and project_params.resolve_path(parameters["dose_weighting_weights"]) == "auto":
+            elif "reconstruct_dose_weighting_weights" in parameters and parameters["reconstruct_dose_weighting_weights"] is not None and project_params.resolve_path(parameters["reconstruct_dose_weighting_weights"]) == "auto":
                 weight_file = project_params.get_weight_from_projects(weight_folder=weights_folder, parameters=parameters)
                 if weight_file is not None:
-                    parameters["dose_weighting_weights"] = weight_file
+                    parameters["reconstruct_dose_weighting_weights"] = weight_file
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
 
 

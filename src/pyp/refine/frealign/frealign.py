@@ -840,13 +840,13 @@ def parse_arguments(skip=False):
     # XD: current options for frealignX
     empty_parameters.update([("score_weighting", "F"), ("dose_weighting", "F")])
     empty_parameters.update(
-        [("dose_weighting_multiply", "T"), ("per_particle_splitting", "T")]
+        [("reconstruct_dose_weighting_multiply", "T"), ("per_particle_splitting", "T")]
     )
     empty_parameters.update([("rotreg", "F"), ("transreg", "F"), ("saveplots", "F")])
     empty_parameters.update([("num_frames", "1")])
     empty_parameters.update([("merge_normalize", "T")])
-    empty_parameters.update([("dose_weighting_fraction", "8")])
-    empty_parameters.update([("dose_weighting_transition", ".75")])
+    empty_parameters.update([("reconstruct_dose_weighting_fraction", "8")])
+    empty_parameters.update([("reconstruct_dose_weighting_transition", ".75")])
     empty_parameters.update([("ref_par", "")])
     empty_parameters.update([("same_ref", "F")])
     empty_parameters.update([("spatial_sigma", "500"), ("time_sigma", "21")])
@@ -1733,7 +1733,7 @@ def split_reconstruction(
             dose_weighting = "yes"
 
             # if dose weighting is enabled, we will go into this block
-            weight_files = project_params.resolve_path(mp["dose_weighting_weights"]) if "dose_weighting_weights" in mp else ""
+            weight_files = project_params.resolve_path(mp["reconstruct_dose_weighting_weights"]) if "reconstruct_dose_weighting_weights" in mp else ""
             external_weight = "/scratch/not_provided"
 
             if ".txt" in weight_files:
@@ -1741,9 +1741,9 @@ def split_reconstruction(
                 files = [f for f in glob.glob(weight_files) if tag in f]
                 external_weight = files[0]
 
-            dose_weighting_multiply = "yes" if mp["dose_weighting_multiply"] else "no"
-            dose_weighting_fraction = str(fp["dose_weighting_fraction"])
-            dose_weighting_transition = str(fp["dose_weighting_transition"])
+            dose_weighting_multiply = "yes" if mp["reconstruct_dose_weighting_multiply"] else "no"
+            dose_weighting_fraction = str(fp["reconstruct_dose_weighting_fraction"])
+            dose_weighting_transition = str(fp["reconstruct_dose_weighting_transition"])
 
             dose_weighting = "\n".join([dose_weighting, 
                                         external_weight, 
