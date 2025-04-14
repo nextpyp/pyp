@@ -1256,7 +1256,7 @@ def split(parameters):
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
+                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
                 gres=parameters["slurm_gres"],
                 account=parameters.get("slurm_account"),
                 walltime=parameters["slurm_walltime"],
@@ -1278,7 +1278,7 @@ def split(parameters):
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
+                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
@@ -1297,7 +1297,7 @@ def split(parameters):
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
+                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
                 gres=parameters["slurm_gres"],
                 account=parameters.get("slurm_account"),
                 walltime=parameters["slurm_walltime"],
@@ -1318,7 +1318,7 @@ def split(parameters):
                 threads=parameters["slurm_merge_tasks"],
                 gres=parameters["slurm_merge_gres"],
                 account=parameters.get("slurm_merge_account"),
-                memory=parameters["slurm_merge_memory"],
+                memory=parameters["slurm_merge_tasks"]*parameters["slurm_merge_memory_per_task"],
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
                 csp_no_stacks=parameters["csp_no_stacks"],
@@ -4512,7 +4512,7 @@ if __name__ == "__main__":
 
                         # calculate number of random iterations based on range and step size if doing reference-based alignment
                         parameters['csp_NumberOfRandomIterations'] = int(2**4 * parameters.get("csp_tomo_reference_ToleranceParticlesPhi") * parameters.get("csp_tomo_reference_ToleranceParticlesPsi") * parameters.get("csp_tomo_reference_ToleranceParticlesTheta") * parameters.get("csp_tomo_reference_ToleranceParticlesShifts") / ( parameters.get("csp_tomo_reference_AngleStep") ** 3 ) / parameters.get("csp_tomo_reference_ShiftStep"))
-                        logger.warning(f"Number of random points based on search range and step size: {parameters.get('csp_NumberOfRandomIterations'):,}")
+                        logger.warning(f"Number of exhaustive score evaluations based on search range and step size: {parameters.get('csp_NumberOfRandomIterations'):,}")
                         
                         # transfer refinement parameters
                         for key in parameters_copy.keys():

@@ -456,7 +456,7 @@ def launch_preprocessing(args, autoprocess):
             queue=queue,
             scratch=0,
             threads=args["slurm_daemon_tasks"],
-            memory=args["slurm_daemon_memory"],
+            memory=args["slurm_daemon_tasks"]*args["slurm_daemon_memory_per_task"],
             gres=args["slurm_daemon_gres"],
             account=args.get("slurm_daemon_account"),
             walltime=args["slurm_daemon_walltime"],

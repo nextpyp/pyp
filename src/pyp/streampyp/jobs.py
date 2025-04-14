@@ -54,7 +54,7 @@ def calculate_effective_bundle_size(parameters,processes):
 
     # enforce max amount of memory
     all_memory_nodes = int(parameters["slurm_max_memory"])
-    memory = parameters["slurm_memory"]
+    memory = parameters["slurm_tasks"]*parameters["slurm_memory_per_task"]
     if all_memory_nodes > 0:
         simultaneous_tasks_by_memory = math.floor(all_memory_nodes / memory)
     else:
