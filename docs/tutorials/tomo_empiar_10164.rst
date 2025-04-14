@@ -673,7 +673,7 @@ Step 16: Map sharpening
 
       .. md-tab-item:: Post-processing
 
-        - Specify the ``First half map`` by clicking on the icon :fa:`search` and selecting the file `tomo-flexible-refinement-*_r01_half1.mrc` (output of the :bdg-secondary:`Movie refinement` block)
+        - Specify the ``First half map`` by clicking on the icon :fa:`search` and selecting the file `tomo-flexible-refinement-*_r01_half1.mrc` (output of the :bdg-secondary:`3D refinement (after movies)` block)
 
         - Set ``Threshold value`` to 0.35
 
