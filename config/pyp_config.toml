@@ -5175,7 +5175,6 @@ name = "Refine particle alignments"
 description = "Optimize sub-tomogram orientations and translations in 3D"
 type = "bool"
 default = false
-copyToNewBlock = false
 
 [tabs.csp_tomo_movie_after.ToleranceParticlesPhi]
 name = "Particle rotation Phi range (degrees)"
@@ -5581,7 +5580,6 @@ name = "Refine particle alignments"
 description = "Optimize sub-tomogram orientations and translations in 3D"
 type = "bool"
 default = false
-copyToNewBlock = false
 
 [tabs.csp_tomo_coarse.ToleranceParticlesPhi]
 name = "Particle rotation Phi range (degrees)"
