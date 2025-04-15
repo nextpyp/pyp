@@ -297,9 +297,9 @@ Step 7. Fully constrained refinement
 
         - Set ``Image binning`` to 1
 
-        - Click on the **Particle scoring metric** tab
+        - Click on the **Particle scoring function** tab
 
-      .. md-tab-item:: Particle scoring metric
+      .. md-tab-item:: Particle scoring function
 
         - Set ``Max resolution (A)`` to 18:14
 
@@ -364,11 +364,11 @@ Step 9. Region-based local refinement
 
   * Click on ``Particles`` (output of :bdg-secondary:`3D refinement` block) and select :bdg-primary:`3D refinement`
 
-  * Go to the **Particle scoring metric** tab:
+  * Go to the **Particle scoring function** tab:
 
     .. md-tab-set::
 
-      .. md-tab-item:: Particle scoring metric
+      .. md-tab-item:: Particle scoring function
 
         - Set ``First tilt for refinement`` to 18
 
@@ -402,11 +402,11 @@ Step 10: Particle-based CTF refinement
 
   * Click on ``Particles`` (output of :bdg-secondary:`3D refinement` block) and select :bdg-primary:`3D refinement`
 
-  * Go to the **Particle scoring metric** tab:
+  * Go to the **Particle scoring function** tab:
 
     .. md-tab-set::
 
-      .. md-tab-item:: Particle scoring metric
+      .. md-tab-item:: Particle scoring function
 
           - Set ``First tilt for refinement`` to 15
 
