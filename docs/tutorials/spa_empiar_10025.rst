@@ -145,8 +145,6 @@ Step 3: Pre-processing
 
         * Set ``Threads per task`` to 7
 
-        * Set ``Memory per task`` to 14
-
         * Set other runtime parameters as needed (see :doc:`Computing resources<../reference/computing>`)
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. You can monitor the status of the run using the **Jobs** panel
@@ -286,6 +284,8 @@ Step 5: Filter bad particles
 
         - Check ``Generate reconstruction after filtering``
 
+        - Check ``Permanently remove particles``
+
         - Click on the **Refinement** tab
 
       .. md-tab-item:: Refinement
@@ -294,38 +294,18 @@ Step 5: Filter bad particles
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to execute particle cleaning and produce a reconstruction with only the clean particles
 
-  * Click inside the :bdg-secondary:`Filter particles` block to look at the reconstruction after cleaning:
+  * Click inside the :bdg-secondary:`Particle filtering` block to look at the reconstruction after cleaning:
 
     .. figure:: ../images/tutorial_spa_cleaning_iter2.webp
       :alt: Iteration 2
 
-Step 6 Permanently remove bad particles
----------------------------------------
-
-.. nextpyp:: Permanently remove bad particles to improve efficiency of steps downstream (:fa:`stopwatch` <1 min)
-  :collapsible: open
-
-  * Edit the settings of the :bdg-secondary:`Particle filtering` block by clicking on the icon :fa:`bars` and selecting the :fa:`edit` Edit option
-
-  * Go to the **Particle filtering** tab
-
-    .. md-tab-set::
-
-      .. md-tab-item:: Particle filtering
-
-        - Check ``Permanently remove particles``
-
-        - Uncheck ``Generate reconstruction after filtering``
-
-  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to launch the job
-
-Step 7: Particle refinement
+Step 6: Particle refinement
 ---------------------------
 
 .. nextpyp:: Reconstruction and additional refinement using 2x binned particles (:fa:`stopwatch` 9 min)
   :collapsible: open
 
-  * Click on ``Particles`` (output of :bdg-secondary:`Filter particles` block) and select :bdg-primary:`Particle refinement`
+  * Click on ``Particles`` (output of :bdg-secondary:`Particle filtering` block) and select :bdg-primary:`Particle refinement`
 
     .. figure:: ../images/tutorial_spa_fine_dialog.webp
       :alt: File browser
@@ -367,7 +347,7 @@ Step 7: Particle refinement
 
       Use the navigation bar at the top left of the page to look at the results for different iterations
 
-Step 8: Create shape mask
+Step 7: Create shape mask
 -------------------------
 
 .. nextpyp:: Use most recent reconstruction to build a shape mask (:fa:`stopwatch` <1 min)
@@ -391,7 +371,7 @@ Step 8: Create shape mask
 
   * Click inside the :bdg-secondary:`Masking` block to inspect the results of masking
 
-Step 9: Local refinement
+Step 8: Local refinement
 ------------------------
 
 .. nextpyp:: Additional refinement iterations using 2x binned data (:fa:`stopwatch` 2 min)
@@ -416,8 +396,8 @@ Step 9: Local refinement
     .. figure:: ../images/tutorial_spa_fine_iter7.webp
       :alt: Iteration 7
 
-Step 10: Particle-based CTF refinement
---------------------------------------
+Step 9: Particle-based CTF refinement
+-------------------------------------
 
 .. nextpyp:: Per-particle CTF refinement using most recent reconstruction (:fa:`stopwatch` 9 min)
   :collapsible: open
@@ -445,7 +425,7 @@ Step 10: Particle-based CTF refinement
   * Click inside the :bdg-secondary:`Particle refinement` block to inspect the results
 
 
-Step 11: Movie frame refinement
+Step 10: Movie frame refinement
 -------------------------------
 
 .. nextpyp:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 8 min)
@@ -494,7 +474,7 @@ Step 11: Movie frame refinement
     .. figure:: ../images/tutorial_spa_movie_iter3.webp
       :alt: Iteration 3
 
-Step 12: Refinement after movie frame refinement
+Step 11: Refinement after movie frame refinement
 ------------------------------------------------
 
 .. nextpyp:: Additional refinement using new frame alignment parameters (:fa:`stopwatch` 8 min)
@@ -525,7 +505,7 @@ Step 12: Refinement after movie frame refinement
     .. figure:: ../images/tutorial_spa_final_map.webp
       :alt: Final map
 
-Step 13: Map sharpening
+Step 12: Map sharpening
 -----------------------
 
 .. nextpyp:: Apply B-bactor weighting in frequency space (:fa:`stopwatch` <1 min)
