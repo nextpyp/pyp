@@ -461,7 +461,7 @@ Step 10. Region-based local refinement (before masking)
 
         - Set ``Last tilt for refinement`` to 4
 
-        - Set ``Max resolution (A)`` to 6.5
+        - Set ``Max resolution (A)`` to 6:5
 
         - Click on the **Refinement** tab
 
@@ -525,7 +525,7 @@ Step 12: Region-based constrained refinement
 
       .. md-tab-item:: Particle scoring function
 
-        - Set ``Max resolution (A)`` to 6:5:5:4:3.5
+        - Set ``Max resolution (A)`` to 5:4:3.5
 
         - Set ``Masking strategy`` to from file
         
@@ -537,7 +537,7 @@ Step 12: Region-based constrained refinement
 
         - Select the ``Input parameter file (*.bz2)`` by click on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_03.bz2`
 
-        - Set ``Last iteration`` to 2
+        - Set ``Last iteration`` to 4
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to run the job
 
@@ -644,9 +644,9 @@ Step 15: Refinement after movie frame refinement
 
         - Set ``Tilt-angle range (degrees)`` and ``Tilt-axis angle range (degrees)`` to 1.0
 
-        - Check ``Refine particle alignments``
+        - Set ``Tilt-axis angle range (degrees)`` to 10.0        
 
-        - Set ``Particle translation range (A)`` to 10.0
+        - Check ``Refine particle alignments``
 
         - Set ``Particle rotation Phi range (degrees)``, ``Particle rotation Psi range (degrees)``, and ``Particle rotation Theta range (degrees)`` to 1.0
 
