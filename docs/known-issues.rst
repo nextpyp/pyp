@@ -2,7 +2,7 @@
 Getting help
 ============
 
-The best way to get help is using ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_. If your question hasn't been answered before, you can open a new discussion. When reporting a problem, please share the version of ``nextPYP`` you are using and the *entire* log of the process that produced the error. To do so, copy the text from ``nextgPYP``'s log window and paste it into Github using ``code formatting`` (please avoid uploading screenshots).
+The best way to get help is using ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_. If your question hasn't been answered before, you can open a `new discussion <https://github.com/orgs/nextpyp/discussions/new/choose>`_. When reporting a problem, please share the version of ``nextPYP`` you are using and the *entire* log of the process that produced the error. To do so, copy the text from ``nextgPYP``'s log window and paste it into Github using ``code formatting`` (please avoid uploading screenshots).
 
 Common problems
 ---------------

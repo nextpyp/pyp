@@ -84,6 +84,6 @@
    :maxdepth: 2
 
    about
-   references
    changelog
    license
+   references
