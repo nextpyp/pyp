@@ -72,11 +72,18 @@
    cli/tomo_import_export
 
 .. toctree::
-   :caption: About
+   :caption: Help
    :hidden:
    :maxdepth: 2
 
    known-issues
+   Installation<install/troubleshooting>
+
+.. toctree::
+   :caption: About
+   :hidden:
+   :maxdepth: 2
+
    about
    references
    changelog

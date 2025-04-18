@@ -2,6 +2,8 @@
 Team
 ====
 
+`nextPYP <https://nextpyp.app/>`_ is developed and maintained by the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_.
+
 Developers
 ----------
 

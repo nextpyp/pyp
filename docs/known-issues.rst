@@ -11,22 +11,16 @@ Visit GitHub's `discussion board <https://github.com/orgs/nextpyp/discussions>`_
 Common problems
 ---------------
 
-.. nextpyp:: Bad Request error or website doesn't load
+. nextpyp:: Information on Jobs panel does not update
     :collapsible: open
 
-    - **Problem**: Bad Request: Your browser sent a request that this server could not understand. Size of a request header field exceeds server limit.
-    - **Solution**: This can be caused by a browser incompatibility issue with Google Chrome and Safari. Try clearing up the cache or using the Mozilla Firefox browser instead.
-
-.. nextpyp:: Information on jobs panel does not update
-    :collapsible: open
-
-    - **Problem**: ``nextPYP`` streams information from SLURM through and HTTP-socket connection. If the connection is dropped, the information will not longer be updated on the web page. When this happens, the icon :fa:`plug` will appear at the top of the page.
+    - **Problem**: When a cluster is attached, ``nextPYP`` streams information from SLURM through and HTTP-socket connection. If the connection is dropped, the information will not longer be updated on the web page. When this happens, the icon :fa:`plug` will appear at the top of the page.
     - **Solution**: Click the icon :fa:`plug` and select :bdg-primary:`Reconnect`. The icon should then change into :fa:`wifi`, indicating that the connection has been reestablished.
 
 .. nextpyp:: Jobs run perpetually
     :collapsible: open
 
-    - **Problem**: The jobs panel shows that processes are running (spinning cogs) even after processing has finished.
+    - **Problem**: The Jobs panel shows that processes are running (spinning cogs) even after processing has finished.
     - **Solution**: Cancel the jobs using the red button :fa:`ban` in the jobs panel. If the problem persist, consult the :doc:`troubleshooting<../install/troubleshooting>` section and report any problems using the Github's `discussion board <https://github.com/orgs/nextpyp/discussions>`_.
 
 .. nextpyp:: No logs to highlight, job run is too old
@@ -45,10 +39,10 @@ Common problems
     :collapsible: open
 
     - **Problem**: Website components are missing, pages don't load properly, etc.
-    - **Solution**: This is usually indicative of an underlying problem. Reloading the page may correct the issue temporarily, but if the problem persist, consult the :doc:`troubleshooting<../install/troubleshooting>` section and report the problem using Github's `discussion board <https://github.com/orgs/nextpyp/discussions>`_.
+    - **Solution**: We are not sure what could cause this, but here are a few things you can try: 1) reload the page, 2) clear your browser's cache, 3) update your browser, or 4) try using a different browser.
 
 For problems with installation, please consult the :doc:`troubleshooting<../install/troubleshooting>` section.
 
 .. admonition:: Still need help?
 
-   You can search ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ or post a new question. When reporting a problem, please share the *entire* log of the process that produced the error. To do so, copy the text from the log and paste it into Github using code formatting (avoid uploading screenshots!).
+   You can search ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ or post a new question. When reporting a problem, please share the *entire* log of the process that produced the error. To do so, copy the text from the log and paste it into Github using ``code formatting`` (please avoid uploading screenshots).
