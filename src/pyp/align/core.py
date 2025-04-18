@@ -4782,7 +4782,8 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         Alignment transformation is saved unbinned.
         """
 
-    dim = int(mrc.readHeaderFromFile(name + ".st")["nx"])
+    mrc_header = mrc.readHeaderFromFile(name + ".st")
+    dim = int(max(mrc_header["nx"],mrc_header["ny"]))
     if dim > 8192:
         binning = 10
     elif dim >= 6144:
@@ -5421,6 +5422,14 @@ EOF
                 max_size_y = min(
                     tilt_series_size_y - 2 * tapper_size, 1280
                 )
+                
+            if max_size_x > tilt_series_size_x:
+                logger.warning(f"Patch size {max_size_x} in X is larger than the image size {tilt_series_size_x} in X. Setting patch size in X to {tilt_series_size_x}")
+                max_size_x = tilt_series_size_x
+
+            if max_size_y > tilt_series_size_y:
+                logger.warning(f"Patch size {max_size_y} in Y is larger than the image size {tilt_series_size_y} in Y. Setting patch size in Y to {tilt_series_size_y}")
+                max_size_y = tilt_series_size_y
 
             # patch tracking
             command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{4} -number {5},{6}".format(
@@ -5432,13 +5441,19 @@ EOF
                 parameters["tomo_ali_patches_x"],
                 parameters["tomo_ali_patches_y"],
             )
-            stream_shell_command(command, verbose=parameters["slurm_verbose"])
+            proc = stream_shell_command(command, verbose=parameters["slurm_verbose"])
+
+            if not os.path.exists("%s_patches.fid" % name):
+                raise Exception(proc.stdout.read())
 
             # Chop up contours
             command = "{0}/bin/imodchopconts -input {1}_patches.fid -output {1}.fid -overlap 4 -surfaces 1".format(
                 get_imod_path(), name
             )
-            run_shell_command(command)
+            proc = stream_shell_command(command, verbose=parameters["slurm_verbose"])
+
+            if not os.path.exists("%s.fid" % name):
+                raise Exception(proc.stdout.read())
 
             shutil.copy2("%s.fid" % name, "%s.fid.txt" % name)
 
