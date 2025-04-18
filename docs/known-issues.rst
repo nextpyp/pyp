@@ -1,17 +1,13 @@
-=======
-Support
-=======
-
+============
 Getting help
-------------
+============
 
-Visit GitHub's `discussion board <https://github.com/orgs/nextpyp/discussions>`_ to post questions and follow discussions
-
+The best way to get help is using ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_. If your question hasn't been answered before, you can open a new discussion. When reporting a problem, please share the version of ``nextPYP`` you are using and the *entire* log of the process that produced the error. To do so, copy the text from ``nextgPYP``'s log window and paste it into Github using ``code formatting`` (please avoid uploading screenshots).
 
 Common problems
 ---------------
 
-. nextpyp:: Information on Jobs panel does not update
+.. nextpyp:: Information on Jobs panel does not update
     :collapsible: open
 
     - **Problem**: When a cluster is attached, ``nextPYP`` streams information from SLURM through and HTTP-socket connection. If the connection is dropped, the information will not longer be updated on the web page. When this happens, the icon :fa:`plug` will appear at the top of the page.
@@ -45,4 +41,4 @@ For problems with installation, please consult the :doc:`troubleshooting<../inst
 
 .. admonition:: Still need help?
 
-   You can search ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ or post a new question. When reporting a problem, please share the *entire* log of the process that produced the error. To do so, copy the text from the log and paste it into Github using ``code formatting`` (please avoid uploading screenshots).
+   Search ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ or post a new question there.
