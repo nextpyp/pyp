@@ -5423,16 +5423,18 @@ EOF
                     tilt_series_size_y - 2 * tapper_size, 1280
                 )
                 
-            if max_size_x > tilt_series_size_x:
-                logger.warning(f"Patch size {max_size_x} in X is larger than the image size {tilt_series_size_x} in X. Setting patch size in X to {tilt_series_size_x}")
-                max_size_x = tilt_series_size_x
+            size_x = tilt_series_size_x - 2 * parameters["tomo_ali_pixels_trim_x"]
+            if max_size_x > size_x:
+                logger.warning(f"Patch width {max_size_x} is larger than effective image width {size_x}. Setting patch width to {size_x}")
+                max_size_x = size_x
 
-            if max_size_y > tilt_series_size_y:
-                logger.warning(f"Patch size {max_size_y} in Y is larger than the image size {tilt_series_size_y} in Y. Setting patch size in Y to {tilt_series_size_y}")
-                max_size_y = tilt_series_size_y
+            size_y = tilt_series_size_y - 2 * parameters["tomo_ali_pixels_trim_y"]
+            if max_size_y > size_y:
+                logger.warning(f"Patch height {max_size_y} is larger than effective image height {size_y}. Setting patch height to {size_y}")
+                max_size_y = size_y
 
             # patch tracking
-            command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{4} -number {5},{6}".format(
+            command = "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_patches.fid {2} -size {3},{4} -number {5},{6} -border {7},{8}".format(
                 get_imod_path(),
                 name,
                 tiltxcorr_options,
@@ -5440,6 +5442,8 @@ EOF
                 max_size_y,
                 parameters["tomo_ali_patches_x"],
                 parameters["tomo_ali_patches_y"],
+                parameters["tomo_ali_pixels_trim_x"],
+                parameters["tomo_ali_pixels_trim_y"],
             )
             proc = stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
@@ -5473,6 +5477,13 @@ EOF
             file = Path(f'{name}_tiltalignScript.txt')
             file.write_text(file.read_text().replace('RotOption\t3', 'RotOption\t-1'))
             file.write_text(file.read_text().replace('MagOption\t3', 'MagOption\t0'))
+            
+            if not parameters.get("tomo_ali_robust_fitting"):
+                # remove robust fitting
+                file.write_text(file.read_text().replace('RobustFitting', ''))
+            else:
+                # enable robust fitting and set factor
+                file.write_text(file.read_text() + '\nRobustFitting\nKFactorScaling\t%f' % parameters["tomo_ali_robust_fitting_factor"])
 
             # re-run tiltalign
             com = "{0} export PATH={1}/bin:$PATH; {1}/bin/tiltalign -param {2}_tiltalignScript.txt".format(
@@ -5511,7 +5522,13 @@ EOF
     elif parameters["tomo_ali_method"] == "imod_patch":
 
         # patch-based alignment
-
+        
+        extra_options = "WeightWholeTracks"
+        if parameters.get("tomo_ali_robust_fitting"):
+            extra_options += "\nRobustFitting"
+            if parameters.get("tomo_ali_robust_fitting_factor"):
+                extra_options += "\nKFactorScaling %f" % parameters["tomo_ali_robust_fitting_factor"]
+    
         # run tiltalign
         command = """
 %s export PATH=%s/bin:$PATH; %s/bin/tiltalign -StandardInput << EOF
@@ -5564,8 +5581,7 @@ LocalXStretchOption     0
 LocalXStretchDefaultGrouping    7
 LocalSkewOption 0
 LocalSkewDefaultGrouping        11
-RobustFitting
-WeightWholeTracks
+%s
 EOF
 """ % (
             legacy_imod_load_command(),
@@ -5582,6 +5598,7 @@ EOF
             rotation,
             name,
             name,
+            extra_options
         )
         output, error = run_shell_command(command,verbose=parameters["slurm_verbose"])
         if "ERROR: TILTALIGN" in output:
