@@ -202,8 +202,8 @@ IMOD
       www:  http://bio3d.colorado.edu/imod/index.html
       University of Colorado, Dept. of MCD Biology, 347 UCB, Boulder, CO 80309
 
-AreTomo2 and MotioCor3
-======================
+AreTomo2 and MotionCor3
+=======================
 
 .. code-block:: bash
 
