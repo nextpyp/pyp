@@ -1847,6 +1847,20 @@ type = "float"
 default = 0.0
 condition = { arg="method", value=["imod_gold","imod_patch"] }
 
+[tabs.tomo_ali.robust_fitting]
+name = "Robust fitting"
+description = "Do robust fitting by giving less or no weight to outliers"
+type = "bool"
+default = true
+condition = { arg="method", value=["imod_gold","imod_patch"] }
+
+[tabs.tomo_ali.robust_fitting_factor]
+name = "Tuning factor"
+description = "Factor that controls how many points are downweighted (smaller values downweight more points)"
+type = "float"
+default = 1.0
+condition = { arg="robust_fitting", value=true }
+
 [tabs.tomo_ali.fiducial]
 name = "Fiducial diameter (A)"
 description = "Diameter of gold fiducials"
@@ -1930,6 +1944,20 @@ description = "Size of patches in Y to track by correlation (0=auto)"
 type = "int"
 condition = { arg="method", value="imod_patch" }
 default = 0
+
+[tabs.tomo_ali.pixels_trim_x]
+name = "Trim pixels in X"
+description = "Pixels to trim off from X axis"
+type = "int"
+condition = { arg="method", value="imod_patch" }
+default = 186
+
+[tabs.tomo_ali.pixels_trim_y]
+name = "Trim pixels in Y"
+description = "Pixels to trim off from Y axis"
+type = "int"
+condition = { arg="method", value="imod_patch" }
+default = 192
 
 [tabs.tomo_ali.force]
 name = "Force re-calculation"
