@@ -32,23 +32,27 @@ Step 1: Prerequisites for installation
   If you don't have a service account ready already, and you only need it to work on the local machine,
   you can create one with:
 
-.. tab-set::
-  :sync-group: install_web_os
+  .. code-block:: bash
 
-  .. tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
-    :sync: rhel
+    sudo useradd --system --user-group nextpyp
+
+* **Lots of storage space**
+
+  Cryo-ET and Cryo-EM data requires large amounts of storage space -- on the order of terrabytes.
+  At the very least, you'll want a multi-terrabyte SSD mounted locally at your work station.
+  Or, on the other end of the spectrum, you may have a petabyte-sized storage array available as a
+  network-mounted folder. nextPYP does best with fast local storage, but it can use slower remote storage as well.
+  But if you configure nextPYP to store its data on a typically-sized 10s of gigabyte operating system partition,
+  you'll very quickly run out of space.
+
+  .. tip::
+
+    You can quickly see what storage devices your system has and how much space is available
+    by running the ``df`` command:
 
     .. code-block:: bash
 
-      sudo adduser --system --group nextpyp
-
-  .. tab-item:: Debian-based Linux (including Ubuntu)
-    :sync: debian
-
-    .. code-block:: bash
-
-      sudo adduser --system --user-group nextpyp
-
+      df -h
 
 * **Access to GPUs (optional)**
 
@@ -71,24 +75,6 @@ then vary by operating system:
 .. tab-set::
   :sync-group: install_web_os
 
-  .. tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
-    :sync: rhel
-
-    Before installing the packages, you will need first to enable the EPEL_ repository,
-    if it was not enabled already:
-
-    .. _EPEL: https://www.redhat.com/en/blog/whats-epel-and-how-do-i-use-it
-
-    .. code-block:: bash
-
-      sudo dnf install -y epel-release
-
-    Then you can install the packages:
-
-    .. code-block:: bash
-
-      sudo dnf install -y apptainer wget
-
   .. tab-item:: Debian-based Linux (including Ubuntu)
     :sync: debian
 
@@ -110,8 +96,83 @@ then vary by operating system:
 
       sudo dpkg -i apptainer_1.3.4_amd64.deb
 
+  .. tab-item:: RedHat-based Linux (including CentOS and Rocky Linux)
+    :sync: rhel
 
-Step 3: Download and run the installation script
+    Before installing the packages, you will need first to enable the EPEL_ repository,
+    if it was not enabled already:
+
+    .. _EPEL: https://www.redhat.com/en/blog/whats-epel-and-how-do-i-use-it
+
+    .. code-block:: bash
+
+      sudo dnf install -y epel-release
+
+    Then you can install the packages:
+
+    .. code-block:: bash
+
+      sudo dnf install -y apptainer wget
+
+
+Step 3: Pre-installation steps (conditional)
+--------------------------------------------
+
+.. important::
+
+  **Upgrading from v0.6.5 (or earlier) to v0.7.0 (or later) ?**
+
+  We made the installer a lot smarter starting with v0.7.0, but if you're upgrading from an older
+  version than that, there are few manual steps you'll have to do to catch up.
+
+  .. admonition:: Manual Steps
+    :collapsible:
+
+    .. tab-set::
+      :sync-group: install_web_user
+
+      .. tab-item:: I'm using a regular user account
+        :sync: user
+
+        No extra steps this time.
+
+      .. tab-item:: I'm using an administrator account
+        :sync: admin
+
+        #. Create a folder for shared executables
+
+           Starting with v0.7.0, nextPYP stores executable files that may need to be shared with cluster compute nodes
+           in a separate folder from the web server executables, which don't need to be shared with cluster compute nodes.
+
+           Before upgrading, you'll need to create a folder for these executable files and the configure the installer
+           to use it. This folder should be owned by ``root`` or an administrator account. It should **not** be owned or
+           be writable by the service account. The service account should have read-only access to these executable files.
+           The executable files are on the order of tens of gigabytes in size, so make sure your folder choice has enough
+           free space.
+
+           After you've created the folder and set the appropriate ownership and permissions, configure the installer
+           to use it during the upgrade by setting the ``PYP_SHARED_EXEC`` environment variable, for example:
+
+           .. code-block:: bash
+
+             PYP_SHARED_EXEC="/storage/nextPYP/sharedExec"
+
+        #. Create symlinks for local and shared data folders, if needed
+
+           If your ``local`` and ``shared`` folders exist directly inside of your installation folder, you can skip
+           this step.
+
+           But if your ``local`` or ``shared`` folders are anywhere else, you should create a symlink from those
+           locations to folders directly inside your installation folder. You can find the location of your ``local``
+           and ``shared`` folders by examining your ``config.toml`` file, in the ``web.localDir`` and ``web.sharedDir``
+           settings.
+
+           So, for example, if your ``local`` folder is at ``/network/nextPYP/local`` and your installation
+
+           TODO: WIP: finish me!
+
+
+Step 4: Download and run the installation script
 ------------------------------------------------
 
 .. tab-set::
@@ -120,7 +181,10 @@ Step 3: Download and run the installation script
   .. tab-item:: I'm using a regular user account
     :sync: user
 
-    First, create the folder where ``nextPYP`` will be installed. The location can be anywhere you have write access, for example, ``~/nextPYP`` works well:
+    First, create the folder where ``nextPYP`` will be installed.
+    The location can be anywhere you have write access and also has lots of free space available.
+    You'll probably want at least one terrabyte to start. Assuming you have a generous storage quota in
+    your home folder, try ``~/nextPYP``:
 
     .. code-block:: bash
 
@@ -134,7 +198,7 @@ Step 3: Download and run the installation script
 
       wget https://nextpyp.app/files/pyp/latest/install
 
-    Feel free to inspect the installation script. It's fairly simple. Once you're confident that
+    Feel free to inspect the installation script. It's meant to be fairly readable. Once you're confident that
     it does what you want, mark it executable:
 
     .. code-block:: bash
@@ -154,14 +218,19 @@ Step 3: Download and run the installation script
     First, create the folder where ``nextPYP`` will be installed. This folder should be on the local
     filesystem of the web server machine. Something like ``/opt/nextPYP`` works well.
 
+    This folder won't need huge amounts of free space, but you'll need at least a few hundred megabytes or so
+    for the executable files.
+
     .. warning::
 
       While you can install ``nextPYP`` to a networked folder, doing so often comes with performance penalties,
       since reading files from remote folders can be much slower than a local folder. For the best performance,
-      install ``nextPYP`` to folder in the web server's local filesystem.
+      install ``nextPYP`` to folder in the web server's local filesystem. A good choice is ``/opt`` which is
+      traditionally used in Linux for optional software.
 
     This folder should be owned by `root` or your administrator account.
-    The installation folder should *not* be owned by the service account, for security reasons.
+    The installation folder should *not* be owned (or be writatble by) by the service account,
+    for security reasons.
 
     Navigate to the folder in a shell session:
 
@@ -179,71 +248,135 @@ Step 3: Download and run the installation script
     .. note::
 
       Other versions can be installed by downloading an installation script by its version number.
-      If you wanted to specifically install version ``0.5.0``, you would download the installation script at
-      ``https://nextpyp.app/files/pyp/0.5.0/install``.
+      In the URL above, replace ``latest`` with the desired version number.
+      For example, if you wanted to specifically install version ``0.5.0``, you would download the
+      installation script at ``https://nextpyp.app/files/pyp/0.5.0/install``.
 
-    Feel free to inspect the installation script. It's fairly simple. Once you're confident that
+    Feel free to inspect the installation script. It's meant to be fairly readable. Once you're confident that
     it does what you want, mark it executable:
 
     .. code-block:: bash
 
       sudo chmod u+x install
 
-    The installation script has a few different options, configured as environment variables, to handle different
-    needs during installation.
-    In privileged installation, you'll need at least the ``PYP_USER`` option, and maybe some others too.
-    All of the options are described below.
+    The installation script has a few different settings, configured as environment variables, to handle different
+    needs during installation. Choose the scenario below that describes your computing hardware to
+    explain the settings you'll need for installation.
 
-    * ``PYP_USER``
-        The name of the service account. The service account should be an unprivileged user for security reasons.
+    .. tab-set::
+      :sync-group: install_web_hardware
 
-    * ``PYP_GROUP``
-        The group of the service account. By default, the installer will try using a group with the same name as the
-        account. If the installer fails with an error like: ``$username is not a valid group``, then you'll need to
-        set ``PYP_GROUP`` explicitly: eg, ``PYP_GROUP=services``
+      .. tab-item:: Desktop Workstation
+        :sync: workstation
 
-    * ``PYP_LOCAL``
-        If your web server has access to fast local storage that is different than the storage used by the operating
-        system (eg. NVMe SSDs mounted at ``/nvme``), this option will configure ``nextPYP`` to use it. Omitting this
-        option will use a location inside the install folder for local storage instead.
+        To install on a typical workstation, you'll need to set the ``PYP_USER`` and ``PYP_STORAGE`` settings.
 
-        To use the separate local folder, set ``PYP_LOCAL`` to the path of a folder that already exists and is owned
-        by the service account, eg, ``PYP_LOCAL="/nvme/nextPYP"``.
-        During installation, the installer will create the ``local`` sub-folder inside of the folder you chose.
-        During operation, the service account will need to be able to read and write from this sub-folder.
+        * ``PYP_USER``
+            The name of the service account that you created in the prerequisites section, probably ``nextpyp``.
 
-    If you're installing onto a compute cluster with a shared filesystem, you'll need both the ``PYP_SHARED_DATA`` and ``PYP_SHARED_EXEC`` options:
+        * ``PYP_STORAGE``
+            This folder will be used to hold all of nextPYP's data files and requires a lot of storage space.
+            Set this setting to a folder on storage device with at least a terrabyte of capacity.
+            Ideally, this storage device is a large-capacity SSD or hard drive that is attached directly to your
+            workstation and mounted in the local filesystem.
 
-    * ``PYP_SHARED_DATA``
-        This option configures the shared location for run-time data created by ``nextPYP``. This folder should be owned by the service account and configured for read and write access, eg. ``PYP_SHARED_DATA="/nfs/users/service_acct/nextPYP/data"``
+            This folder should exist, but it should be empty before installation. The installer will create
+            subfolders in this folder to hold different kinds of data.
 
-    * ``PYP_SHARED_EXEC``
-        This option configures the shared location for executables and configuration. This folder should be owned by an adminisrator account and *not* the service account and configured for read-only access by the service account, eg. ``PYP_SHARED_EXEC="/nfs/users/service_acct/nextPYP/exec"``
+            The folder path might look something like: ``/large-storage/nextpyp``.
 
-    Choose the options and values according to your needs and then send them as environment variables to the installer.
-    For example, if you were using only the service account option ``NEXT_PYP``, you would run the installer like this:
+            Finally, the folder should be owned by ``root``. If it doesn't exist already, you can create it with:
 
-    .. code-block:: bash
+            .. code-block:: bash
 
-      sudo PYP_USER="service_acct" ./install
+              sudo mkdir -p "/large-storage/nextpyp"
 
-    Or if you're doing a cluster installation, the install command might look like this:
+        Once you've decided what values to use for these settings, run the installer like this:
 
-    .. code-block:: bash
+        .. code-block:: bash
 
-      sudo PYP_USER="service_acct" PYP_SHARED_DATA="/nfs/nextPYP/data" PYP_SHARED_EXEC="/nfs/nextPYP/exec" ./install
+          sudo PYP_USER="service_acct" PYP_STORAGE="/large-storage/nextpyp" ./install
 
-    .. note::
+      .. tab-item:: Compute Cluster
+        :sync: cluster
 
-      Create any folders referenced by the installation options before running the installer.
-      The installer will not create these folders for you.
+        For a cluster installation, there are several required settings, and a few optional ones.
+        They're all described in detail below.
+
+        * ``PYP_USER`` (required)
+            The name of the service account. The service account should be an unprivileged user for security reasons.
+            This user should also have read and write access to any filesystems shared with the cluster.
+
+        * ``PYP_GROUP`` (optional)
+            The group of the service account. By default, the installer will try using a group with the same name as the
+            account. If the installer fails with an error like: ``$username is not a valid group``, then you'll need to
+            set ``PYP_GROUP`` explicitly: eg, ``PYP_GROUP=services``
+
+        * ``PYP_LOCAL`` (optional)
+            The local folder holds mainly the nextPYP database files, so it should be in fast local
+            storage. A storage device like an NVME or an SSD is ideal here.
+
+            Without this setting, the installer will place the local folder under the installation folder.
+            If the storage device serving your installation folder has at least a hundred gigabytes of space,
+            the default is probably fine.
+
+            If not, then you'll want to set this setting to a folder with more space.
+            In that case, set ``PYP_LOCAL`` to a folder that already exists and is owned
+            by the service account, eg, ``PYP_LOCAL="/nvme/nextPYP"``.
+
+        * ``PYP_SHARED_DATA`` (required)
+            This folder holds all the data that is shared between the web server and the compute nodes in the cluster.
+            Set this setting to a folder on your networked filesystem (e.g., NFS) that has lots of free space --
+            at least a few terrabytes. Over time, this folder can grow very large --
+            potentially tens or hundreds of terrabytes, or even more.
+
+            This folder should already exist and by owned by the service account,
+            eg, ``PYP_SHARED_DATA="/nfs/users/service_acct/nextPYP/data"``.
+
+        * ``PYP_SHARED_EXEC`` (required)
+            This folder holds executable files and configuration shared between the web server and the compute nodes.
+
+            This folder should already exist and be owned by an administrator account, *not* the service account.
+            The service account should have read-only access to this folder. For security, the service account must *not*
+            have write access to the executable and configuration files here.
+
+            Pick a folder on your networked filesystem that already exists and has at least a few tens of gigabytes
+            of space, eg, ``PYP_SHARED_EXEC="/nfs/nextPYP/exec"``. The executable files stored here are container images
+            which can get pretty big.
+
+        * ``PYP_SCRATCH`` (required)
+            This folder holds temporary data for computations on the compute nodes. It should be hosted on fast local
+            storage devices like NVME drives or SSDs *on each compute node, not networked storage*.
+            The web server has no need to access this folder.
+
+            This folder should have hundreds of gigabytes of free space.
+
+            .. warning::
+
+              On many systems, ``/tmp`` may not be large enough. If you want to use ``/tmp`` as scratch,
+              verify it has enough space first.
+
+            This folder should already exist and be writable by the service account,
+            eg, ``PYP_SCRATCH=/scratch/nextPYP``
+
+        Choose the settings according to your needs and then send them as environment variables to the installer.
+        For example, setting a couple of the settings for the installer would look like this:
+
+        .. code-block:: bash
+
+          sudo PYP_USER="service_acct" PYP_SHARED_DATA="/nfs/nextPYP/data" ./install
+
+        .. note::
+
+          Create any folders referenced by the installation settings before running the installer.
+          The installer will not create these folders for you.
 
 The install script will download the rest of the needed software components and set them up.
 Total download sizes are in the tens of gigabytes, so on a fast internet connection,
 the installation script would need at least a few minutes to finish.
 
 
-Step 4: Check installation results
+Step 5: Check installation results
 ----------------------------------
 
 .. tab-set::
@@ -355,36 +488,51 @@ in your browser now at http://localhost:8080.
   To enable remote access, head to `Next steps`_.
 
 
-Step 5 (recommended): Configure access to system resources
-----------------------------------------------------------
+Step 6: Configure your data folders
+-----------------------------------
 
-The installer created a configuration file for you called ``config.toml`` in your installation folder.
-This file is written in the TOML_ format.
+nextPYP uses `containerization`_ technology to help keep the install process as simple as we can make it,
+but that comes with some tradeoffs.
+One tradeoff is that since containerized apps operate inside of an isolated virtual filesystem,
+these apps can't see all of the files in your real filesystem by default.
+Meaning, nextPYP won't be able to see your Cryo-EM/ET data by default either.
+
+.. _containerization: https://en.wikipedia.org/wiki/Containerization_(computing)
+
+To get nextPYP to see your data, you'll have to "bind" your data path(s) into the container's filesystem.
+You can do this by adding your data folder paths to the nextPYP configuration file.
+
+The installer created a configuration file for you called ``config.toml`` and there's a symlink to it in
+your installation folder. The configuration file is written in a configuration language called TOML_.
+TOML is pretty similar to JSON, if that's familiar to you, but TOML is a bit nicer to use for this kind of thing.
 
 .. _TOML: https://toml.io/en/
 
-Configure how to access system resources by specifying the following parameters:
+To add (aka "bind") your data folders into nextPYP's container,
+edit the ``config.toml`` file with your favorite text editor.
+Under the ``[pyp]`` section of the configuration file, look for a line that looks like this:
 
-* ``pyp.scratch``
-    Directory for large (multi-GB) temporary files used during computation.
-    This location should have fast read/write speeds, ideally in local storage on the compute node.
-    This is set to the system temporary directory by default, which is usually a safe starting point.
-    But if you run out of space there, you can change this to a location with more space.
+  .. code-block:: toml
 
-* ``pyp.binds``
-    Since ``nextPYP`` runs inside an Apptainer container, by default, no files from outside
-    of the container will be visible. To make them visible, you have to explicitly bind the directories
-    containing those files into the container. Make sure those directories are also readable by the service account.
+    binds = []
 
-Here is an example of how to specify these options in the configuration file:
+In, TOML, ``[]`` is an empty array (or list), so by default the binds list is empty.
+To bind your data folder(s), add the paths (as strings) to the list. That might look something like this:
 
-.. code-block:: toml
+  .. code-block:: toml
 
-  [pyp]
-  scratch = '/scratch/nextPYP'
-  binds = [ '/nfs', '/cifs' ]
+    binds = ['/path/to/my/data']
 
-After making changes to your configuration file, restart the application:
+Or this:
+
+  .. code-block:: toml
+
+    binds = [
+      '/big-storage/cryo-data',
+      '/other-big-storage/cryo-data'
+    ]
+
+After making changes to your configuration file, restart the application to apply the changes:
 
 .. tab-set::
   :sync-group: install_web_user
@@ -404,8 +552,9 @@ After making changes to your configuration file, restart the application:
 
       sudo systemctl restart nextPYP
 
-There are many other configuration options supported beyond the ones described here.
-See the :doc:`full documentation for the configuration file<../reference/config>` for details.
+There are many other configuration options beyond the one described here.
+See the :doc:`full documentation for the configuration file<../reference/config>`
+to learn about all of the other configurable settings.
 
 
 Next steps
@@ -437,7 +586,7 @@ for the application, but you can enable other configurations using the linked in
 Upgrading to a new version
 --------------------------
 
-To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation:
+To upgrade to a new version, stop ``nextPYP``, download the new installer, run it, and then re-start ``nextPYP``.
 
 .. tab-set::
   :sync-group: install_web_user
@@ -471,22 +620,15 @@ To upgrade to a new version, stop ``nextPYP`` and simply re-run the installation
       # stop nextPYP
       sudo systemctl stop nextPYP
 
-      # stop the reverse proxy (only required if you configured remote access through untrusted networks)
-      sudo systemctl stop nextPYP-rprox
-
       # download the new version's installer
       sudo wget https://nextpyp.app/files/pyp/latest/install -O install
       sudo chmod u+x install
 
-      # re-run the installation
-      # (be sure to use the same installation options you used the first time)
-      sudo PYP_USER=nextpyp ./install
+      # run the new install script
+      # (no installer options are needed for an upgrade)
+      sudo ./install
 
-      # re-install the reverse proxy (only if you configured remote access through untrusted networks)
-      sudo chmod u+x install-rprox
-      sudo PYP_DOMAIN=myserver.myorganization.org ./install-rprox
-
-    After the upgrade is complete, the installer will start the ``nextPYP`` daemon for you.
+      # nextPYP should be running now (the installer starts the daemon for you)
 
 After this, you should be able to access the application the same way you did before the upgrade.
 
