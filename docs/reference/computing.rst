@@ -5,19 +5,19 @@ Compute resources
 ``nextPYP`` can be run in **standalone** or **cluster** mode. Standalone mode is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, an instance with access to an HPC cluster will enable significantly faster processing.
 
 .. tab-set::
-  :sync-group: install_web_user
+  :sync-group: running_mode
 
   .. tab-item:: Standalone mode
-    :sync: user
+    :sync: standalone
 
-    ``nextPYP`` autmatically detects what resources are installed locally (number of CPU cores and GPU cards) and allocates jobs accordingly.
+    ``nextPYP`` autmatically detects what resources are installed locally in the server (number of CPU cores and GPU cards) and allocates jobs accordingly.
 
   .. tab-item:: Cluster mode
-    :sync: user
+    :sync: cluster
 
-    Resources in this case are managed using the `SLURM <https://slurm.schedmd.com/>`_ scheduler. Typical resources include CPU threads, RAM memory, GPUs, and local scratch space.
+    In this mode, resources are managed by the `SLURM <https://slurm.schedmd.com/>`_ scheduler. Commonly managed resources include CPU threads, RAM, GPUs, and local scratch space.
 
-Resource allocation
+Resource management
 -------------------
 
 ``nextPYP`` uses three types of processes:
@@ -30,7 +30,10 @@ Most jobs in ``nextPYP`` consist of three phases: *Launch*, *Split* and *Merge*.
 
 Real time information about jobs is available in the `Jobs panel <../guide/overview.html#jobs-panel>`_.
 
-Each processing block in ``nextPYP`` includes a **Resources** tab where you can specify resources for each phase of a job.
+Resource allocation
+-------------------
+
+Each processing block in ``nextPYP`` includes a **Resources** tab where you can allocate resources for each phase of a job.
 
 .. figure:: ../images/tutorial_tomo_pre_process_jobs.webp
   :alt: Job submission options
@@ -61,7 +64,7 @@ The **Resources** tab is divided into three sections, one for each phase (*Launc
     **Default**: 1-00:00:00
 
   Split, Gres
-    List of Generic resources (Gres) to request for the split job. This option can be used to request specific resources available in your SLURM instance, for example, ``lscratch:500,shrd=64```, which requests 500 GB of local scratch space and 64 GB of shared memory. The ``lscratch`` resource is typically used for temporary storage, while the ``shrd`` resource is used for shared memory. To check the available resources in your SLURM instance, run the command ``sinfo -o "%100N  %30G"``. If you are unsure about this, please contact your system administrator.
+    List of Generic resources (Gres) to request for the split job. This option can be used to request specific resources available in your SLURM instance, for example, ``lscratch:500,shrd=64```, which requests 500 GB of local scratch space and 64 GB of shared memory. The ``lscratch`` resource is typically used for temporary storage, while the ``shrd`` resource is used for shared memory. To check the available resources in your SLURM instance, run the command: ``sinfo -o "%100N  %30G"``. If you are unsure about this, please contact your system administrator.
 
     **Default**: None
 
@@ -69,7 +72,7 @@ The **Resources** tab is divided into three sections, one for each phase (*Launc
   :collapsible: open
 
   Split, Threads
-    Number of threads used to process each micrograph or tilt-series.
+    Number of threads used to process a micrograph or tilt-series.
   
     **Default**: 1
     
@@ -79,12 +82,12 @@ The **Resources** tab is divided into three sections, one for each phase (*Launc
     **Default**: 0
   
   Split, Memory per thread (GB)
-    Amount of memory per thread requested for each split job.
+    Amount of memory per thread requested for each split task.
   
     **Default**: 4
     
   Split, Walltime (dd-hh:mm:ss)
-    Set a limit on the total run time for each split job. When the time limit is reached, SLURM will terminate the job.
+    Set a limit on the total run time for each split task. When the time limit is reached, SLURM will terminate the job.
 
     **Default**: 1-00:00:00
     
@@ -127,14 +130,14 @@ The **Resources** tab is divided into three sections, one for each phase (*Launc
 .. tip::
     To check the status of a job, go to the **Jobs** panel, click on the :fa:`file-alt text-primary` icon next to the job, and select the **Launch** tab.
 
-Using GPU resources
--------------------
+GPU resources
+-------------
 
 Although the core functionality of ``nextPYP`` operates exclusively on CPUs, certain operations do require GPU access. In most cases, users cannot choose between running jobs on CPUs or GPUs, this is determined by the specific requirements of each job. Only a few exceptions exist, and in those cases, a checkbox will be available to enable or disable GPU usage.
 
 List of programs and operations that require GPUs:
 
-- **Neural network-based particle picking**: Particle picking using neural networks (training and inference)
+- **Particle picking**: Neural network-based article picking (training and inference)
 - **MiLoPYP**: Cellular pattern mining and localization (training and inference)
 - **MotionCor3**: Motion correction of micrographs or tilt movies
 - **AreTomo2**: Tilt-series alignment and tomographic reconstruction
@@ -143,45 +146,44 @@ List of programs and operations that require GPUs:
 - **IsoNet**: Tomogram denoising using neural networks (training and inference)
 - **CryoCARE**: Tomogram denoising using neural networks (training and inference)
 - **Pytom-match-pick**: Particle picking using template matching
-- **tomoDRGN**: Continuous heterogeneity analysis using neural networks (training and inference)
+- **tomoDRGN**: Heterogeneity analysis using neural networks (training and inference)
 
 Jobs that use any of the above programs will be submitted to the SLURM scheduler using the ``--gres=gpu:1`` option. This means that one GPU will be requested for each job.
 
-Selecting specific GPUs
-^^^^^^^^^^^^^^^^^^^^^^^
+Specific GPUs
+^^^^^^^^^^^^^
 
 .. tab-set::
-  :sync-group: install_web_user
+  :sync-group: running_mode
 
   .. tab-item:: Standalone mode
-    :sync: user
+    :sync: standalone
 
     In this mode, there is usually only one type of GPU available, so specifying GPU types is unnecessary.
 
   .. tab-item:: Cluster mode
-    :sync: user
+    :sync: cluster
 
     To run a job on a specific GPU resource, users can set the ``Split, Gres`` parameter in the **Resources** tab of a block. For example, to use an H100 card, set ``Split, Gres`` to ``gpu:H100:1``. 
 
     .. note::
         
-        For this to work, your SLURM instance must have a generic resource (Gres) named ``H100`` defined. To check the available resources in your SLURM instance, run the command ``sinfo -o "%100N  %30G"``. If you are unsure about this, please contact your system administrator.
-    .
+        For this to work, your SLURM instance must have a generic resource (Gres) named ``H100`` defined. To check the available resources in your SLURM instance, run the command: ``sinfo -o "%100N  %30G"``. If you are unsure about this, please contact your system administrator.
 
-Using multiple GPUs
-^^^^^^^^^^^^^^^^^^^
+Multiple GPUs
+^^^^^^^^^^^^^
 
 Some of the programs listed above support multi-GPU execution. To enable this, set the ``Split, Gres`` option to ``gpu:n`` where ``n`` is the number of GPUs you want to request, for example, ``gpu:2``.
 
 .. tab-set::
-  :sync-group: install_web_user
+  :sync-group: running_mode
 
   .. tab-item:: Standalone mode
-    :sync: user
+    :sync: standalone
 
     In this mode, there is typically only type of GPU available, so the instructions above are sufficient.
 
   .. tab-item:: Cluster mode
-    :sync: user
+    :sync: cluster
 
     In this mode, users can choose specific resources by setting the ``Split, Gres`` parameter in the **Resources** tab of a block. For example, to use 2 H100 cards, set ``Split, Gres`` to ``gpu:H100:2``.
