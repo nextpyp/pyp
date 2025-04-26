@@ -47,6 +47,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_immaterial",
     "myst_parser",
+    "sphinx_new_tab_link"
 ]
 
 # MyST parser config options
