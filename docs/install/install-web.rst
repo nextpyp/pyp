@@ -38,8 +38,8 @@ Step 1: Prerequisites for installation
 
 * **Lots of storage space**
 
-  Cryo-ET and Cryo-EM data requires large amounts of storage space -- on the order of terrabytes.
-  At the very least, you'll want a multi-terrabyte SSD mounted locally at your work station.
+  Cryo-ET and Cryo-EM data requires large amounts of storage space -- on the order of terabytes.
+  At the very least, you'll want a multi-terabyte SSD mounted locally at your work station.
   Or, on the other end of the spectrum, you may have a petabyte-sized storage array available as a
   network-mounted folder. nextPYP does best with fast local storage, but it can use slower remote storage as well.
   But if you configure nextPYP to store its data on a typically-sized 10s of gigabyte operating system partition,
@@ -144,7 +144,7 @@ Step 3: Pre-installation steps (conditional)
            Starting with v0.7.0, nextPYP stores executable files that may need to be shared with cluster compute nodes
            in a separate folder from the web server executables, which don't need to be shared with cluster compute nodes.
 
-           Before upgrading, you'll need to create a folder for these executable files and the configure the installer
+           Before upgrading, you'll need to create a folder for these executable files and then configure the installer
            to use it. This folder should be owned by ``root`` or an administrator account. It should **not** be owned or
            be writable by the service account. The service account should have read-only access to these executable files.
            The executable files are on the order of tens of gigabytes in size, so make sure your folder choice has enough
@@ -183,7 +183,7 @@ Step 4: Download and run the installation script
 
     First, create the folder where ``nextPYP`` will be installed.
     The location can be anywhere you have write access and also has lots of free space available.
-    You'll probably want at least one terrabyte to start. Assuming you have a generous storage quota in
+    You'll probably want at least one terabyte to start. Assuming you have a generous storage quota in
     your home folder, try ``~/nextPYP``:
 
     .. code-block:: bash
@@ -225,7 +225,7 @@ Step 4: Download and run the installation script
 
       While you can install ``nextPYP`` to a networked folder, doing so often comes with performance penalties,
       since reading files from remote folders can be much slower than a local folder. For the best performance,
-      install ``nextPYP`` to folder in the web server's local filesystem. A good choice is ``/opt`` which is
+      install ``nextPYP`` to a folder in the web server's local filesystem. A good choice is ``/opt`` which is
       traditionally used in Linux for optional software.
 
     This folder should be owned by `root` or your administrator account.
@@ -276,7 +276,7 @@ Step 4: Download and run the installation script
 
         * ``PYP_STORAGE``
             This folder will be used to hold all of nextPYP's data files and requires a lot of storage space.
-            Set this setting to a folder on storage device with at least a terrabyte of capacity.
+            Set this setting to a folder on storage device with at least a terabyte of capacity.
             Ideally, this storage device is a large-capacity SSD or hard drive that is attached directly to your
             workstation and mounted in the local filesystem.
 
@@ -327,8 +327,8 @@ Step 4: Download and run the installation script
         * ``PYP_SHARED_DATA`` (required)
             This folder holds all the data that is shared between the web server and the compute nodes in the cluster.
             Set this setting to a folder on your networked filesystem (e.g., NFS) that has lots of free space --
-            at least a few terrabytes. Over time, this folder can grow very large --
-            potentially tens or hundreds of terrabytes, or even more.
+            at least a few terabytes. Over time, this folder can grow very large --
+            potentially tens or hundreds of terabytes, or even more.
 
             This folder should already exist and by owned by the service account,
             eg, ``PYP_SHARED_DATA="/nfs/users/service_acct/nextPYP/data"``.
@@ -514,23 +514,23 @@ Under the ``[pyp]`` section of the configuration file, look for a line that look
 
   .. code-block:: toml
 
-    binds = []
+  binds = []
 
 In, TOML, ``[]`` is an empty array (or list), so by default the binds list is empty.
 To bind your data folder(s), add the paths (as strings) to the list. That might look something like this:
 
   .. code-block:: toml
 
-    binds = ['/path/to/my/data']
+  binds = ['/path/to/my/data']
 
 Or this:
 
   .. code-block:: toml
 
-    binds = [
-      '/big-storage/cryo-data',
-      '/other-big-storage/cryo-data'
-    ]
+  binds = [
+    '/big-storage/cryo-data',
+    '/other-big-storage/cryo-data'
+  ]
 
 After making changes to your configuration file, restart the application to apply the changes:
 
@@ -552,7 +552,7 @@ After making changes to your configuration file, restart the application to appl
 
       sudo systemctl restart nextPYP
 
-There are many other configuration options beyond the one described here.
+There are many other configuration options beyond the ones described here.
 See the :doc:`full documentation for the configuration file<../reference/config>`
 to learn about all of the other configurable settings.
 
@@ -642,4 +642,4 @@ We've done our best to build an install process that's flexible enough to work i
 but sometimes things still might not work out perfectly.
 
 If you have questions, need clarification on any of the installation options, or are just looking for a little
-help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions>`_  board.
+help getting through the installation, visit the :doc:`Support<../known-issues>` page for a list of available support resources.

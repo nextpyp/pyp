@@ -6,25 +6,25 @@ Compute resources
 
 All operations in ``nextPYP`` are executed on a per-micrograph or per-tilt-series basis. As a consequence, compute resources are specified per micrograph/tilt-series (independent of the total number of micrographs/tilt-series in a dataset).
 
-Threads, tasks, and arrays
---------------------------
+Resource allocation
+-------------------
 
-There are three types of processes used in ``nextPYP``:
+``nextPYP`` uses three types of processes:
 
-- **Thread**: Single-threaded process running on one CPU core (or hyper-threaded core)
-- **Task**: Set of *threads* used to process a single micrograph or tilt-series
-- **Array**: Set of *tasks* used to process an entire dataset
+- **Thread**: A single-threaded process running on one CPU core (or hyper-threaded core)
+- **Task**: A set of *threads* that processes a single micrograph or tilt-series
+- **Array**: A set of *tasks* used to process an entire dataset
 
-Most jobs in ``nextPYP`` have a *Launch*, *Split* and *Merge* phases. The *Launch* phase is typically a lightweigth job used to initiate data processing. In the *Split* phase, multiple tasks are launched and executed in parallel (one task for each micrograph/tilt-series). During the *Merge* phase, information from the *Split* phase is condensed, for example, to produce a single 3D reconstruction from all micrographs or tilt-series in a dataset. Since each phase has different computational requirements, resources are allocated separately for each of them.
+Most jobs in ``nextPYP`` consist of three phases: *Launch*, *Split* and *Merge*. The *Launch* phase is typically a lightweigth job used to initiate data processing. In the *Split* phase, multiple tasks run in parallel (one for each micrograph/tilt-series). Finally,the *Merge* phase consolidates the results from the *Split* phase, such as combining intermediate data to generate a single 3D reconstruction. Each phase has distinct computational needs, so resources are allocated separately for each one.
 
-Real time information about jobs can be found in the `Jobs panel <../guide/overview.html#jobs-panel>`_.
+Real time information about jobs is available in the `Jobs panel <../guide/overview.html#jobs-panel>`_.
 
-Each processing block in ``nextPYP`` has a **Resources** tab that allows specifying resources for each job phase:
+Each processing block in ``nextPYP`` includes a **Resources** tab where you can specify resources for each phase of a job.
 
 .. figure:: ../images/tutorial_tomo_pre_process_jobs.webp
   :alt: Job submission options
 
-The **Resources** tab consists of three sections, one for each phase (*Launch*, *Split* and *Merge*):
+The **Resources** tab is divided into three sections, one for each phase (*Launch*, *Split* and *Merge*):
 
 .. comment:
    Looks like we're using sphinx-design for panels now?
@@ -34,89 +34,105 @@ The **Resources** tab consists of three sections, one for each phase (*Launch*, 
 .. nextpyp:: Launch task options
   :collapsible: open
 
-  Threads (launch task)
-    Number of threads used when launching jobs. Setting this parameter to ``0`` will allocate all cores available in a compute node.
+  Launch, Threads
+    Number of threads used when launching jobs.
 
     **Default**: 1
 
-  Memory (launch task)
-    Amount of memory requested for launching jobs (GB), Setting this value to ``0`` will tell SLURM to use all available memory in a node.
+  Launch, Memory per thread (GB)
+    Amount of memory per thread requested when launching jobs.
 
-    **Default**: 0
+    **Default**: 4
 
-  Walltime (launch task)
-    Exceeding this limit will cause SLURM to terminate the job.
+  Launch, Walltime (dd-hh:mm:ss)
+    Set a limit on the total run time when launching jobs. When the time limit is reached, SLURM will terminate the job.
 
-    **Default**: 2:00:00 (hh:mm:ss)
-
-  Partition (launch task)
-    Select SLURM partition from the drop down menu.
-
-    **Default**: Set by admin
+    **Default**: 1-00:00:00
 
 .. nextpyp:: Split task options
   :collapsible: open
 
-  Threads per task
-    Number of threads used to process each micrograph or tilt-series. Setting this parameter to ``0`` will allocate all cores available in a compute node to each task.
+  Split, threads
+    Number of threads used to process each micrograph or tilt-series.
   
     **Default**: 1
     
-  Max number of tasks
-    Maximum number of tasks to run simultaneously. This parameter controls the total number of tasks ``nextPYP`` should run for a particular job. Setting this number to ``0`` will not impose any limits beyond the ones set by SLURM. If a user is running multiple jobs, this setting can be used to manage the resources allocated to each job.
+  Split, Total threads
+    Maximum number of threads to run simultaneously. Setting it to ``0`` removes any limits, deferring entirely to SLURM’s scheduling. This option can help manage how resources are distributed between multiple ``nextPYP`` jobs. For example, if the number of threads is set to 7 and the total number of threads is set to 21, then 3 jobs will be run simultaneously, each using 7 threads. If the total number of threads is set to ``0``, then SLURM will determine how many jobs to run simultaneously based on the available resources and any account quotas.
 
     **Default**: 0
   
-  Memory per task
-    Amount of memory requested per task (GB), Setting this value to ``0`` will tell SLURM to use all available memory in a node.
+  Split, Memory per thread (GB)
+    Amount of memory per thread requested for each split job.
   
-    **Default**: 0 (uses all memory available)
+    **Default**: 4
     
-  Walltime per task
-    Walltime for each task. Exceeding this time limit will cause SLURM to terminate the jobs.
+  Split, Walltime (dd-hh:mm:ss)
+    Set a limit on the total run time for each split job. When the time limit is reached, SLURM will terminate the job.
 
-    **Default**: 2:00:00 (hh:mm:ss)  
+    **Default**: 1-00:00:00
     
-  Bundle size
-    Number of tasks to process as a bundle. Elements of a bundle are processed sequentially.
+  Split, Bundle size
+    Number of tasks to group into a bundle. Tasks within a bundle are processed one after the other, sequentially. For example, if there are 100 tasks and the bundle size is set to 10, then 10 jobs with 10 tasks each will be processed in parallel. This option can help manage how resources are distributed.
 
     **Default**:  1
-
-  CPU partition
-    Select SLURM partition from the drop down menu.
-        
-    **Default**: Set by admin
-
-  GPU partition
-    Select SLURM GPU partition from the drop down menu.
-        
-    **Default**: Set by admin
 
 .. nextpyp:: Merge task options
   :collapsible: open
 
-  Threads (merge task)
-    Number of threads used to execute the merge task. Setting this parameter to ``0`` will allocate all cores available in a compute node.
+  Merge, Threads
+    Number of threads used to run the merge task.
   
     **Default**: 1
 
-  Memory (merge task)
-    Amount of memory requested for the merge task (GB), Setting this value to ``0`` will tell SLURM to use all available memory in a node.
+  Merge, Memory per thread (GB)
+    Amount of memory per thread used to run the merge task.
 
-    **Default**: 0
+    **Default**: 4
 
-  Walltime (merge task)
-    Walltime for each task. Exceeding this limit will cause SLURM to terminate the job.
+  Merge, Walltime (dd-hh:mm:ss)
+    Set a limit on the total run time for the merge task. When the time limit is reached, SLURM will terminate the job.
 
-    **Default**: 2:00:00 (hh:mm:ss)
+    **Default**: 1-00:00:00
 
-  Partition (merge task)
-    Select SLURM partition from the drop down menu.
-        
-    **Default**: Set by admin
-
-.. note::
-    Users are responsible for ensuring that the combination of resources requested is available in the HPC environment where ``nextPYP`` is running.
+.. warning::
+    Users are responsible for ensuring that the requested combination of resources is available in the HPC environment where ``nextPYP`` is running. If the requested resource combination is unavailable, the job will be left in a ``PENDING`` state, potentially indefinitely. To fix this, users can cancel the job and resubmit it with a different combination of resources.
     
 .. tip::
-    To get information on the status of a job, go to the **Jobs** panel and click on the :fa:`file-alt text-primary` icon next to the job.
+    To check the status of a job, go to the **Jobs** panel, click on the :fa:`file-alt text-primary` icon next to the job, and select the **Launch** tab.
+
+Use of GPUs in ``nextPYP``
+--------------------------
+
+Although the core functionality of ``nextPYP`` operates exclusively on CPUs, certain operations do require GPU access. In most cases, users cannot choose between running jobs on CPUs or GPUs, this is determined by the specific requirements of each job. Only a few exceptions exist, and in those cases, a checkbox will be available to enable or disable GPU usage.
+
+List of programs and operations that require GPUs:
+
+- **Neural network-based particle picking**: Particle picking using neural networks (training and inference)
+- **MiLoPYP**: Cellular pattern mining and localization (training and inference)
+- **MotionCor3**: Motion correction of micrographs or tilt movies
+- **AreTomo2**: Tilt-series alignment and tomographic reconstruction
+- **Membrain-seg**: Tomogram segmentation using pre-trained neural networks
+- **Topaz**: Tomogram denoising using pre-trained neural networks
+- **IsoNet**: Tomogram denoising using neural networks (training and inference)
+- **CryoCARE**: Tomogram denoising using neural networks (training and inference)
+- **Pytom-match-pick**: Particle picking using template matching
+- **tomoDRGN**: Continuous heterogeneity analysis using neural networks (training and inference)
+
+Jobs that use any of the above programs will be submitted to the SLURM scheduler using the ``--gres=gpu:1`` option. This means that one GPU will be requested for each job.
+
+How to select specific GPU resources
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To run a job on specific GPU resources, users can set the ``Gres`` parameter in the **Resources** tab of a block. For example, to use an H100 card, set ``Gres`` to ``gpu:H100:1``. 
+
+.. note::
+    
+    For this to work, your SLURM instance must have a generic resource (Gres) named ``H100`` defined. If you are unsure about this, please contact your system administrator.
+    To check the available Gres in your SLURM instance, run the command ``sinfo -o "%100N  %30G"``.
+    .
+
+Use of multiple GPUs in ``nextPYP``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some of the programs listed above support multi-GPU execution. To enable this, set the ``Gres`` option to ``gpu:n`` where ``n`` is the number of GPUs you want to request, for example: ``gpu:2``. Or if you want to use a specific GPU type, set ``Gres`` to ``gpu:H100:2``.
