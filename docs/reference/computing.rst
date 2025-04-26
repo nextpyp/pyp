@@ -2,17 +2,17 @@
 Compute resources
 =================
 
-``nextPYP`` can be run in **standalone** or **cluster** mode. Standalone mode is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, an instance with access to an HPC cluster will enable significantly faster processing.
+``nextPYP`` can be run in a **Desktop workstation** or a **Compute cluster**. A Desktop workstation is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, a compute cluster will enable significantly faster processing.
 
 .. tab-set::
   :sync-group: running_mode
 
-  .. tab-item:: Standalone mode
+  .. tab-item:: Desktop workstation
     :sync: standalone
 
     ``nextPYP`` autmatically detects what resources are installed locally in the server (number of CPU cores and GPU cards) and allocates jobs accordingly.
 
-  .. tab-item:: Cluster mode
+  .. tab-item:: Compute cluster
     :sync: cluster
 
     In this mode, resources are managed by the `SLURM <https://slurm.schedmd.com/>`_ scheduler. Commonly managed resources include CPU threads, RAM, GPUs, and local scratch space.
@@ -156,12 +156,12 @@ Specific GPUs
 .. tab-set::
   :sync-group: running_mode
 
-  .. tab-item:: Standalone mode
+  .. tab-item:: Desktop workstation
     :sync: standalone
 
     In this mode, there is usually only one type of GPU available, so specifying GPU types is unnecessary.
 
-  .. tab-item:: Cluster mode
+  .. tab-item:: Compute cluster
     :sync: cluster
 
     To run a job on a specific GPU resource, users can set the ``Split, Gres`` parameter in the **Resources** tab of a block. For example, to use an H100 card, set ``Split, Gres`` to ``gpu:H100:1``. 
@@ -178,12 +178,12 @@ Some of the programs listed above support multi-GPU execution. To enable this, s
 .. tab-set::
   :sync-group: running_mode
 
-  .. tab-item:: Standalone mode
+  .. tab-item:: Desktop workstation
     :sync: standalone
 
     In this mode, there is typically only type of GPU available, so the instructions above are sufficient.
 
-  .. tab-item:: Cluster mode
+  .. tab-item:: Compute cluster
     :sync: cluster
 
     In this mode, users can choose specific resources by setting the ``Split, Gres`` parameter in the **Resources** tab of a block. For example, to use 2 H100 cards, set ``Split, Gres`` to ``gpu:H100:2``.

@@ -266,7 +266,7 @@ Step 4: Download and run the installation script
     .. tab-set::
       :sync-group: install_web_hardware
 
-      .. tab-item:: Desktop Workstation
+      .. tab-item:: Desktop workstation
         :sync: workstation
 
         To install on a typical workstation, you'll need to set the ``PYP_USER`` and ``PYP_STORAGE`` settings.
@@ -297,7 +297,7 @@ Step 4: Download and run the installation script
 
           sudo PYP_USER="service_acct" PYP_STORAGE="/large-storage/nextpyp" ./install
 
-      .. tab-item:: Compute Cluster
+      .. tab-item:: Compute cluster
         :sync: cluster
 
         For a cluster installation, there are several required settings, and a few optional ones.
@@ -512,25 +512,25 @@ To add (aka "bind") your data folders into nextPYP's container,
 edit the ``config.toml`` file with your favorite text editor.
 Under the ``[pyp]`` section of the configuration file, look for a line that looks like this:
 
-  .. code-block:: toml
+.. code-block:: toml
 
-  binds = []
+    binds = []
 
 In, TOML, ``[]`` is an empty array (or list), so by default the binds list is empty.
 To bind your data folder(s), add the paths (as strings) to the list. That might look something like this:
 
-  .. code-block:: toml
+.. code-block:: toml
 
-  binds = ['/path/to/my/data']
+    binds = ['/path/to/my/data']
 
 Or this:
 
-  .. code-block:: toml
+.. code-block:: toml
 
-  binds = [
-    '/big-storage/cryo-data',
-    '/other-big-storage/cryo-data'
-  ]
+    binds = [
+      '/big-storage/cryo-data',
+      '/other-big-storage/cryo-data'
+    ]
 
 After making changes to your configuration file, restart the application to apply the changes:
 
