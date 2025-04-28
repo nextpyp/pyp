@@ -2,7 +2,7 @@
 Compute resources
 =================
 
-``nextPYP`` can be run in a **Desktop workstation** or a **Compute cluster**. A Desktop workstation is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, a compute cluster will enable significantly faster processing.
+``nextPYP`` can be run on either a **Desktoprkstation** or a **Compute cluster**. A Desktop workstation is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, a compute cluster will enable significantly faster processing.
 
 .. tab-set::
   :sync-group: running_mode
@@ -10,7 +10,7 @@ Compute resources
   .. tab-item:: Desktop workstation
     :sync: standalone
 
-    ``nextPYP`` autmatically detects what resources are installed locally in the server (number of CPU cores and GPU cards) and allocates jobs accordingly.
+    ``nextPYP`` autmatically detects what resources are installed locally in the server (number of CPU cores and GPU cards) and allocates jobs accordingly. No additional configuration is needed.
 
   .. tab-item:: Compute cluster
     :sync: cluster
@@ -20,25 +20,25 @@ Compute resources
 Resource management
 -------------------
 
-``nextPYP`` uses three types of processes:
+The execution of most blocks in ``nextPYP`` involves three main phases:
+- **Launch** - typically a lightweigth job used to initiate data processing.
+- **Split** - multiple jobs that are executed in parallel (typically one job for each micrograph/tilt-series). 
+- **Merge** - a job that consolidates the results from the *Split* phase (such as combining intermediate data to generate a single 3D reconstruction). 
 
-- **Thread**: A single-threaded process running on one CPU core (or hyper-threaded core)
-- **Task**: A set of *threads* used to process a single micrograph or tilt-series
-- **Array**: A set of *tasks* used to process an entire dataset
+Because each phase has distinct computational requirements, resources (i.e., number of threads, memory, etc.) are specified independently for each phase.
 
-Most jobs in ``nextPYP`` consist of three phases: *Launch*, *Split* and *Merge*. The *Launch* phase is typically a lightweigth task used to initiate data processing. In the *Split* phase, multiple tasks run in parallel (typically one for each micrograph/tilt-series). Finally,the *Merge* phase is a task that consolidates the results from the *Split* phase, such as combining intermediate data to generate a single 3D reconstruction. Each phase has distinct computational needs, so resources are allocated separately for each one.
-
-Real time information about jobs is available in the `Jobs panel <../guide/overview.html#jobs-panel>`_.
+.. tip::
+    Real time information about jobs is available in the `Jobs panel <../guide/overview.html#jobs-panel>`_.
 
 Resource allocation
 -------------------
 
-Each processing block in ``nextPYP`` includes a **Resources** tab where you can allocate resources for each phase of a job.
+Each processing block in ``nextPYP`` includes a **Resources** tab where resources for each phase can be allocated.
 
 .. figure:: ../images/tutorial_tomo_pre_process_jobs.webp
   :alt: Job submission options
 
-The **Resources** tab is divided into three sections, one for each phase (*Launch*, *Split* and *Merge*):
+The **Resources** tab is divided into three sections, one for each phase:
 
 .. comment:
    Looks like we're using sphinx-design for panels now?
@@ -128,7 +128,7 @@ The **Resources** tab is divided into three sections, one for each phase (*Launc
     Users are responsible for ensuring that the requested combination of resources is available in the HPC environment where ``nextPYP`` is running. If the requested resource combination is unavailable, the job will be left in a ``PENDING`` state, potentially indefinitely. To fix this, users can cancel the job and resubmit it with a different combination of resources.
     
 .. tip::
-    To check the status of a job, go to the **Jobs** panel, click on the :fa:`file-alt text-primary` icon next to the job, and select the **Launch** tab.
+    To check the status of a job, go to the **Jobs** panel, click on the icon :fa:`file-alt text-primary` next to the job, and select the **Launch** tab.
 
 GPU resources
 -------------
@@ -150,7 +150,7 @@ List of programs and operations that require GPUs:
 
 Jobs that use any of the above programs will be submitted to the SLURM scheduler using the ``--gres=gpu:1`` option. This means that one GPU will be requested for each job.
 
-Specific GPUs
+Types of GPUs
 ^^^^^^^^^^^^^
 
 .. tab-set::
