@@ -3446,8 +3446,8 @@ _name = "Particle extraction"
 _description = "Sub-tomogram extraction parameters"
 
 [tabs.tomo_ext.fmt]
-name = "Sub-volume format"
-description = "Select format to extract sub-tomograms"
+name = "Sub-volume export format"
+description = "Format to extract sub-tomograms (only needed if processing outside nextPYP)"
 type = "enum"
 enum = { none="none", 3DAVG="3davg (do not invert contrast)", eman="eman (invert contrast)" }
 default = "none"
