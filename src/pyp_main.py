@@ -2054,6 +2054,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
     elif parameters.get("micromon_block") == "tomo-segmentation-closed" and ( parameters.get("tomo_pick_method") == "manual" or parameters.get("tomo_pick_method") == "import" ) or parameters.get("micromon_block") == "tomo-picking-closed" and parameters["tomo_vir_rad"] == 0:
         parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
+    elif parameters.get("micromon_block") == "tomo-picking-closed" and parameters.get("tomo_pick_method") == "manual":
+        parameters["tomo_pick_vir_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
 
     # particle detection and extraction
     virion_coordinates, spike_coordinates, virion_mode, spike_mode = detect_tomo.detect_and_extract_particles( 
