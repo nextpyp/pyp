@@ -56,7 +56,7 @@ def coordinates_to_model_file(coordinates,filename,radius=50):
         radius (int, optional): marker radius. Defaults to 0.
     """
     name = Path(filename).stem
-    numpy.savetxt("{}.box".format(name), coordinates.astype('int').astype('str'), fmt='%s', delimiter='\t')
+    numpy.savetxt("{}.box".format(name), coordinates.astype('float').astype('str'), fmt='%s', delimiter='\t')
 
     # convert to IMOD model
     command = f"{get_imod_path()}/bin/point2model -scat -sphere {radius} -values 1 -input {name}.box -output {name}.mod"

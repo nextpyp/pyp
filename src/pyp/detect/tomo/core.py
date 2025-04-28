@@ -1849,8 +1849,8 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         
         # convert virion (unbinned) coordinates to pyp's .vir format, if needed
         if coordinates.size > 0 and not os.path.exists(f"{name}.vir"):
-            pyp_coordinates = coordinates[:,[0,2,1,3]] / binning
-            pyp_coordinates[:,-1] /= parameters["tomo_vir_binn"]
+            pyp_coordinates = coordinates[:,[0,2,1,3]] / float(binning)
+            pyp_coordinates[:,-1] /= float(parameters["tomo_vir_binn"])
             imod.coordinates_to_model_file( pyp_coordinates, f"{name}.vir", radius=binned_virion_radius )
         
         if (
