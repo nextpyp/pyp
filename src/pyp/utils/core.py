@@ -45,7 +45,7 @@ def symlink_relative(target: Union[Path, str], destination: Union[Path, str]):
 def symlink_relative_pattern(pattern, destination):
     source = Path(pattern).parent
     wildcard = Path(pattern).name
-    command = f'cd {destination}; find {source}/ -name "{wildcard}" -exec ln -rsf {{}} . \;'
+    command = f'cd {destination}; find {source}/ -type f -name "{wildcard}" -exec ln -rsf {{}} . \;'
     subprocess.Popen(
             command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
         ).communicate()
