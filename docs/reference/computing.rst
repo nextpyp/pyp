@@ -149,42 +149,31 @@ List of programs and operations that require GPUs:
 - **Pytom-match-pick**: Particle picking using template matching
 - **tomoDRGN**: Heterogeneity analysis using neural networks (training and inference)
 
-Jobs that use any of the above programs will be submitted to the SLURM scheduler using the ``--gres=gpu:1`` option. This means that one GPU will be requested for each job.
-
-Types of GPUs
-^^^^^^^^^^^^^
 
 .. tab-set::
   :sync-group: running_mode
 
   .. tab-item:: Desktop workstation
-    :sync: standalone
+    :sync: workstation
 
-    In this mode, there is usually only one type of GPU available, so specifying GPU types is unnecessary.
+    Jobs that use any of the above programs will run using 1 GPU by default.
+    You don't need to set any additional parameters to enable GPUs for these jobs.
 
   .. tab-item:: Compute cluster
     :sync: cluster
 
-    To run a job on a specific GPU resource, users can set the ``Split, Gres`` parameter in the **Resources** tab of a block. For example, to use an H100 card, set ``Split, Gres`` to ``gpu:H100:1``. 
+    Jobs that use any of the above programs will be submitted to the SLURM scheduler using the ``--gres=gpu:1`` option. This means that one GPU will be requested for each job.
+
+    To run a job on a specific GPU resource, users can set the ``Split, Gres`` parameter in the **Resources** tab of a block. For example, to use an H100 card, set ``Split, Gres`` to ``gpu:H100:1``.
 
     .. note::
         
         For this to work, your SLURM instance must have a generic resource (Gres) named ``H100`` defined. To check the available resources in your SLURM instance, run the command: ``sinfo -o "%100N  %30G"``. If you are unsure about this, please contact your system administrator.
 
+
 Multiple GPUs
 ^^^^^^^^^^^^^
 
-Some of the programs listed above support multi-GPU execution. To enable this, set the ``Split, Gres`` option to ``gpu:n`` where ``n`` is the number of GPUs you want to request, for example, ``gpu:2``.
-
-.. tab-set::
-  :sync-group: running_mode
-
-  .. tab-item:: Desktop workstation
-    :sync: standalone
-
-    In this mode, there is typically only type of GPU available, so the instructions above are sufficient.
-
-  .. tab-item:: Compute cluster
-    :sync: cluster
-
-    In this mode, users can choose specific resources by setting the ``Split, Gres`` parameter in the **Resources** tab of a block. For example, to use 2 H100 cards, set ``Split, Gres`` to ``gpu:H100:2``.
+Some of the programs listed above (TODO: how to tell which ones?) support multi-GPU execution.
+To allocate more than one GPU for a job, set the ``Split, Gres`` option to ``gpu:n``
+where ``n`` is the number of GPUs you want to request, for example, ``gpu:2``.
