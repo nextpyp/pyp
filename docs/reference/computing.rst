@@ -177,3 +177,108 @@ Multiple GPUs
 Some of the programs listed above (TODO: how to tell which ones?) support multi-GPU execution.
 To allocate more than one GPU for a job, set the ``Split, Gres`` option to ``gpu:n``
 where ``n`` is the number of GPUs you want to request, for example, ``gpu:2``.
+
+
+Troubleshooting GPU issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _numgpus:
+
+How many GPUs are available to nextPYP in my workstation computer?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+``nextPYP`` can automatically detect available GPUs in your computer if they are NVidia Cuda-capable GPUs.
+Currently, no other GPU types (including AMD or Intel GPUs) are supported.
+
+To see how many GPUs were detected by ``nextPYP``, head to the administration page in your web browser.
+You can get there by clicking on your account name in the upper right corner of the page, and then clicking
+on the "Administration" link that appears on the next page.
+
+.. tip ::
+
+  You can also quickly get to the administration page by editing the URL in your browser's address bar.
+  Change everything including and after the first ``/`` character in the URL to ``/#/admin``.
+
+Once you're on the administration page, click on the "Standalone Jobs" tab.
+At the top of the following page is a "Resources" section that shows
+the available, used, and total number of GPUs.
+
+Alternatively, ``nextPYP`` prints GPU diagnostic information to the website log file during startup.
+Find the ``<local>/logs/micromon`` log file in your filesystem,
+where ``<local>`` is the ``web.localDir`` path defined in your ``config.toml`` file.
+A link to the ``config.toml`` file can be found in your installation folder.
+
+During startup, ``nextPYP`` will print the number of automatically-detected GPUs to the log file.
+Look for a section like this:
+
+.. code-block::
+
+  [standalone]
+       available cpus:  2
+     available memory:  6 GiB
+       available gpus:  1
+
+You can find the number of GPUs that were detected in the ``available gpus`` line in the log.
+
+
+Launched GPU jobs get stuck waiting for resources on my workstation computer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Does your GPU-enabled job get stuck waiting to start with the following reason:
+
+  The job is waiting for more resources to become available
+
+but you know no other jobs are using your GPUs? It's possible ``nextPYP`` failed to detect your GPUs correctly.
+
+``nextPYP`` should automatically detect your machine's NVidia GPUs and make them available for jobs,
+but sometimes this automatic detection can fail. For example, sometimes NVidia GPUs may not be detectable
+until we update our detection software to match NVidia's newest releases. If you have AMD or Intel GPUs though,
+those aren't currently supported by ``nextPYP``.
+
+:ref:`First, see how many GPUs nextPYP was able to detect.<numgpus>`
+
+If you know your machine has NVidia GPUs, but ``nextPYP`` only detected zero GPUs,
+then the GPUs could not automatically be detected by our software.
+
+To see what went wrong with automatic detection, you can look for errors in the website log file.
+Find the ``<local>/logs/micromon`` log file in your filesystem,
+where ``<local>`` is the ``web.localDir`` path defined in your ``config.toml`` file.
+A link to the ``config.toml`` file can be found in your installation folder.
+
+Try searching for a line in the log file like this one:
+
+  Failed to count CUDA GPUs, assuming no GPUs
+
+If you find that line in your log, it means ``nextPYP`` definitely failed to automatically detect your GPUs.
+There should also be a more detailed error message directly after this line in the log.
+Feel free to send us the detailed error message so we can tell what went wrong and hopefully fix the issue
+in a newer release of ``nextPYP``.
+
+The most common reason for detection failure at this step
+is your computer may have a newer NVidia driver that breaks compatibility with the older NVidia runtime libraries
+used by our detection software.
+
+Even though automatic detection failed, you can still configure your number of GPUs manually
+by editing the ``config.toml`` file. Under the ``[standalone]`` section, add a line that looks like this:
+
+.. code-block:: toml
+
+    availableGpus = 4
+
+If the ``comfig.toml`` file doesn't yet have a ``[standalone]`` section, add a new one to the bottom of the file.
+If the number of NVidia GPUs you have is 4, then you're all set.
+Otherwise, change the 4 to the number of NVidia GPUs you have.
+
+When you're done, the bottom of your ``config.toml`` file should look something like this:
+
+.. code-block:: toml
+
+  [standalone]
+  availableGpus = 4
+
+After making changes to your ``config.toml`` file, restart ``nextPYP`` to apply the changes.
+
+Then, :ref:`check the total number of GPUs available to nextPYP<numgpus>` again.
+If you see more tham one GPU there, then the next time you run a GPU-enabled job, it shouldn't
+get stuck waiting for resources anymore.
