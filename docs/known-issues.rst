@@ -7,13 +7,13 @@ The best way to get help is using ``nextPYP``'s `discussion board <https://githu
 Office hours
 ------------
 
-For interactive help, you can join the ``nextPYP`` team during our office hours held every Friday 4:00 to 5:00 PM (EST). You can join the zoom meeting using the following `link <https://duke.zoom.us/j/96587317585>`_.
+For interactive help, you can join the ``nextPYP`` team during our office hours held every Friday 4:00 to 5:00 PM (EST). You can join the zoom meeting using the following `link <https://duke.zoom.us/j/96587317585>`__.
 
 
 Discord server
 --------------
 
-You can also join the ``nextPYP`` community on Discord. The server is open to all users and developers of ``nextPYP``. You can join the server using the following `link <https://discord.gg/gM5sQPkb5x>`_.
+You can also join the ``nextPYP`` community on Discord. The server is open to all users and developers of ``nextPYP``. You can join the server using the following `link <https://discord.gg/gM5sQPkb5x>`__.
 
 Common problems
 ---------------
