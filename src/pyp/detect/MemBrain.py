@@ -93,7 +93,8 @@ def membrain_segmentation(parameters, input, local_output):
         store_p = "--no-store-probabilities"
 
     if parameters[tm + "_connected_map"]:
-        connected_map = f"--store-connected-components --connected-component-thres {parameters[tm + '_connected_thres']}"
+        connected_map = "--store-connected-components"
+        connected_map = ""
     else:
         connected_map = "--no-store-connected-components"
 
@@ -106,6 +107,48 @@ def membrain_segmentation(parameters, input, local_output):
 
     local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
+    if parameters[tm + "_connected_map"] != "none":
+
+        segmentation = glob.glob(local_output+'/*')[0]
+            
+        if False:
+            os.makedirs(f"{local_output}_components", exist_ok=True)
+            
+            connected_map = f"--connected-component-thres {parameters[tm + '_connected_thres']}"
+
+            command =f"{get_membrane_path()}membrain components --segmentation-path {segmentation} {connected_map} --out-folder {local_output}_components"
+
+            local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+            
+            output = glob.glob(local_output+'_components/*.mrc')[0]
+            shutil.move(output, segmentation)
+        
+        # create binary mask from binary segmentation volume
+        cmask = 255 * ( mrc.read(segmentation) > 0 ).astype('uint8')
+
+        # find all connected regions, calculate sizes, and ranking 
+        from skimage.measure import label
+        label_ids = label(cmask, connectivity=2)
+        sizes = np.bincount(label_ids.ravel())
+        indexes_by_size = np.argsort(sizes)[::-1]
+
+        clean = np.zeros_like(cmask, dtype='uint8')
+        if parameters["tomo_mem_connected_map"] == "number":
+            # keep max_number largest components after leaving out min_number largest components
+            logger.info(f"Keeping {parameters['tomo_mem_connected_max_number']} largest components after {parameters['tomo_mem_connected_min_number']}")
+            for i in range(1+parameters["tomo_mem_connected_min_number"],1+parameters["tomo_mem_connected_min_number"]+parameters["tomo_mem_connected_max_number"]):
+                clean[ label_ids == indexes_by_size[i] ] = 255
+        elif parameters["tomo_mem_connected_map"] == "size":
+            # remove objects smaller than threshold
+            logger.info(f"Removing areas smaller than {parameters['tomo_mem_connected_thres']}")
+            for i in range(1, len(sizes)):
+                if sizes[i] > parameters["tomo_mem_connected_thres"]:
+                    clean[ label_ids == i ] = 255
+        else:
+            clean = cmask
+    
+        # save result
+        mrc.write(clean, segmentation)
 
 def run_membrain(project_dir, name, parameters ):
 
@@ -114,14 +157,14 @@ def run_membrain(project_dir, name, parameters ):
         tomogram_source = project_params.resolve_path(parameters["data_parent"])
     else:
         tomogram_source = project_dir
-        logger.info("Using current project tomograms for isonet denoising")
+        logger.info("Using current project tomograms for segmentation")
 
     local_input = f"./{name}.rec"
 
     # copy the input tomogram to scratch space
     assert os.path.exists(local_input), f"{local_input} dose not exist, please run preprocessing first"
 
-    output = name + "_segmem.mrc"
+    output = name + "_seg.rec"
 
     if parameters["tomo_mem_preprocessing"]:
         rescaled, preprocessed = membrain_preprocessing(parameters, input=local_input)
@@ -145,7 +188,8 @@ def run_membrain(project_dir, name, parameters ):
     reconstruction = mrc.read(local_input)
     segmentation = mrc.read(output)
     max = np.max(reconstruction)
-    visualization = np.where( segmentation == 1, max, reconstruction )
-    mrc.write(visualization,output)
+    threshold = segmentation.max()
+    visualization = np.where( segmentation == threshold, max, reconstruction )
+    mrc.write(visualization,local_input)
 
-    return output
+    return local_input

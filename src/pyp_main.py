@@ -467,9 +467,9 @@ def parse_arguments(block):
             if (
                 not parameters["data_import"] 
                 and parameters["micromon_block"] != "tomo-denoising-eval" 
-                and parameters["micromon_block"] != "tomo-segmentation-open" 
                 and parameters["micromon_block"] != "tomo-picking-closed" 
                 and parameters["micromon_block"] != "tomo-segmentation-closed"
+                and parameters["micromon_block"] != "tomo-segmentation-open"
                 and parameters["micromon_block"] != "tomo-particles-eval"
                 and parameters["micromon_block"] != "tomo-picking"
             ):
@@ -2058,7 +2058,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         parameters["tomo_pick_vir_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
 
     # particle detection and extraction
-    virion_coordinates, spike_coordinates, virion_mode, spike_mode = detect_tomo.detect_and_extract_particles( 
+    virion_coordinates, spike_coordinates, virion_mode, spike_mode, surface_mode = detect_tomo.detect_and_extract_particles( 
         name,
         parameters,
         current_path,
@@ -2080,7 +2080,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             if parameters.get("slurm_verbose"):
                 logger.info(f"Virion coordinates = \n{virion_coordinates}")
 
-    if spike_mode:
+    if spike_mode or surface_mode:
         tilt_metadata["spike_coordinates"] = spike_coordinates
         logger.info(f"Total number of particles = {len(spike_coordinates):,}")
         if parameters.get("slurm_verbose"):
@@ -3658,7 +3658,7 @@ def tomoswarm_prologue():
     
     return args, name, project_path, working_path, parameters
     
-def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters):
+def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation=False ):
     """ Save resulting tomogram and update corresponding images and metadata
 
     Parameters
@@ -3678,16 +3678,21 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
     plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True, 2, parameters["slurm_verbose"] )
     
     # copy outputs to project folder
-    target = os.path.join( project_path, "mrc", name + ".rec" )
+    if segmentation:
+        target = os.path.join( project_path, "mrc", name + "_seg.rec" )
+    else:
+        target = os.path.join( project_path, "mrc", name + ".rec" )
+
     if os.path.exists(target):
         os.remove(target)
 
-        if parameters.get("tomo_rec_depth"):
-            logger.info("Converting tomogram to 16-bits")
-            command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
-            local_run.run_shell_command(command)
-        else:
-            shutil.copy2( new_reconstruction, target )
+    if parameters.get("tomo_rec_depth") and not segmentation:
+        logger.info("Converting tomogram to 16-bits")
+        command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
+        local_run.run_shell_command(command)
+    else:
+        shutil.copy2( name + "_seg.rec", target )
+
     for pattern in [ "_rec.webp", "_sides.webp", ".webp" ]:
         target = os.path.join( project_path, 'webp', name + pattern )
         if os.path.exists(target):
@@ -5130,7 +5135,7 @@ if __name__ == "__main__":
                 
                 new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
                 
-                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
 
                 logger.info("nextPYP (membrane segmentation) finished successfully")
             except:

@@ -399,6 +399,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
         "webp/{0}_raw.webp",
         "mrc/{0}.mrc",
         "mrc/{0}.rec",
+        "mrc/{0}_seg.rec",
         "next/{0}.next",
         "next/{0}_exclude_views.next",
         "next/virion_thresholds.next",

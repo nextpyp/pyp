@@ -2666,24 +2666,39 @@ default = false
 condition = { arg="method", value="membrain" }
 
 [tabs.tomo_mem.connected_map]
-name = "Connected components"
-description = "Compute connected components from segmentation"
-type = "bool"
-default = false
+name = "Filter connected components"
+description = "Filter segmentation by components"
+type = "enum"
+enum = { none="none", size="by size", number="by number" }
+default = "none"
 condition = { arg="method", value="membrain" }
 
 [tabs.tomo_mem.connected_thres]
-name = "Threshold"
+name = "Size threshold (binned voxels)"
 description = "Components smaller than this value will be removed"
 type = "int"
 default = 0
-condition = { arg="connected_map", value="true" }
+condition = { arg="connected_map", value="size" }
+
+[tabs.tomo_mem.connected_min_number]
+name = "Largest components to ignore"
+description = "Number of largest components to ignore"
+type = "int"
+default = 0
+condition = { arg="connected_map", value="number" }
+
+[tabs.tomo_mem.connected_max_number]
+name = "Components to keep"
+description = "Number of largest components to keep (after the ignored ones)"
+type = "int"
+default = 1
+condition = { arg="connected_map", value="number" }
 
 [tabs.tomo_mem.augmentation]
 name = "Test time augmentation"
 description = "Use 8-fold augmentation during testing"
 type = "bool"
-default = true
+default = false
 condition = { arg="method", value="membrain" }
 
 [tabs.tomo_mem.seg_thres]
