@@ -115,64 +115,7 @@ then vary by operating system:
       sudo dnf install -y apptainer wget
 
 
-Step 3: Pre-installation steps (conditional)
---------------------------------------------
-
-.. important::
-
-  **Upgrading from v0.6.5 (or earlier) to v0.7.0 (or later) ?**
-
-  We made the installer a lot smarter starting with v0.7.0, but if you're upgrading from an older
-  version than that, there are few manual steps you'll have to do to catch up.
-
-  .. admonition:: Manual Steps
-    :collapsible:
-
-    .. tab-set::
-      :sync-group: install_web_user
-
-      .. tab-item:: I'm using a regular user account
-        :sync: user
-
-        No extra steps this time.
-
-      .. tab-item:: I'm using an administrator account
-        :sync: admin
-
-        #. Create a folder for shared executables
-
-           Starting with v0.7.0, nextPYP stores executable files that may need to be shared with cluster compute nodes
-           in a separate folder from the web server executables, which don't need to be shared with cluster compute nodes.
-
-           Before upgrading, you'll need to create a folder for these executable files and then configure the installer
-           to use it. This folder should be owned by ``root`` or an administrator account. It should **not** be owned or
-           be writable by the service account. The service account should have read-only access to these executable files.
-           The executable files are on the order of tens of gigabytes in size, so make sure your folder choice has enough
-           free space.
-
-           After you've created the folder and set the appropriate ownership and permissions, configure the installer
-           to use it during the upgrade by setting the ``PYP_SHARED_EXEC`` environment variable, for example:
-
-           .. code-block:: bash
-
-             PYP_SHARED_EXEC="/storage/nextPYP/sharedExec"
-
-        #. Create symlinks for local and shared data folders, if needed
-
-           If your ``local`` and ``shared`` folders exist directly inside of your installation folder, you can skip
-           this step.
-
-           But if your ``local`` or ``shared`` folders are anywhere else, you should create a symlink from those
-           locations to folders directly inside your installation folder. You can find the location of your ``local``
-           and ``shared`` folders by examining your ``config.toml`` file, in the ``web.localDir`` and ``web.sharedDir``
-           settings.
-
-           So, for example, if your ``local`` folder is at ``/network/nextPYP/local`` and your installation
-
-           TODO: WIP: finish me!
-
-
-Step 4: Download and run the installation script
+Step 3: Download and run the installation script
 ------------------------------------------------
 
 .. tab-set::
@@ -376,7 +319,7 @@ Total download sizes are in the tens of gigabytes, so on a fast internet connect
 the installation script would need at least a few minutes to finish.
 
 
-Step 5: Check installation results
+Step 4: Check installation results
 ----------------------------------
 
 .. tab-set::
@@ -478,17 +421,17 @@ If you get errors instead of something similar to the responses above, then the 
 You can look for clues as to what went wrong by checking the various log files.
 See :doc:`troubleshooting<./troubleshooting>` for more details.
 
-If you're logged into the server locally (i.e., with a keyboard and a monitor), then you can visit the website
-in your browser now at http://localhost:8080.
+If you're logged into the server locally (e.g., with a keyboard and a monitor or some kind of
+remote desktop software like VNC), then you can visit the website in your browser now at http://localhost:8080.
 
 .. note::
 
   If you're logged into the server remotely over SSH, you won't be able to visit the website in your browser just yet.
   Remote network access to the website is disabled by default.
-  To enable remote access, head to `Next steps`_.
+  To enable remote access, head to `Next steps`_ after you've finished the rest of the numbered steps.
 
 
-Step 6: Configure your data folders
+Step 5: Configure your data folders
 -----------------------------------
 
 nextPYP uses `containerization`_ technology to help keep the install process as simple as we can make it,
@@ -566,9 +509,9 @@ for the application, but you can enable other configurations using the linked in
 
 * :doc:`Enable remote access<./enable-remote-access>`
 
-  If you're not logged into the server locally (i.e., with a keyboard and monitor), then you'll need
-  to enable remote access to use the website from the network. Follow these instructions to configure
-  remote network access.
+  If you're not logged into the server locally (e.g., with a keyboard and monitor or some kind of
+  remote desktop software like VNC), then you'll need to enable remote access to use the website from the network.
+  Follow these instructions to configure remote network access.
 
 * :doc:`Enable multiple users <./enable-login>`
 
@@ -583,8 +526,80 @@ for the application, but you can enable other configurations using the linked in
   you'll want to follow this step to connect ``nextPYP`` to your SLURM cluster.
 
 
+.. _upgrade:
+
 Upgrading to a new version
 --------------------------
+
+Step 1: Pre-installation steps (conditional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. important::
+
+  **Upgrading from v0.6.5 (or earlier) to v0.7.0 (or later) ?**
+
+  We made the installer a lot smarter starting with v0.7.0, but if you're upgrading from an older
+  version than that, there are few manual steps you'll have to do to catch up.
+
+  .. admonition:: Manual Steps
+    :collapsible:
+
+    .. tab-set::
+      :sync-group: install_web_user
+
+      .. tab-item:: I'm using a regular user account
+        :sync: user
+
+        No extra steps needed.
+
+      .. tab-item:: I'm using an administrator account
+        :sync: admin
+
+        #. Create a folder for shared executables
+
+           Starting with v0.7.0, nextPYP stores executable files that may need to be shared with cluster compute nodes
+           in a separate folder from the web server executables, which don't need to be shared with cluster compute nodes.
+
+           You'll need to do these steps manually even if you're not using a compute cluster, since the same folder
+           structure is also used for standalone workstation computers.
+
+           Before upgrading, you'll need to create a folder for these executable files and then configure the installer
+           to use it. This folder should be owned by ``root`` or an administrator account. It should **not** be owned or
+           be writable by the service account. The service account should have read-only access to these executable files.
+           The executable files are on the order of tens of gigabytes in size, so make sure your folder choice has enough
+           free space.
+
+           After you've created the folder and set the appropriate ownership and permissions, configure the installer
+           to use it during the upgrade by setting the ``PYP_SHARED_EXEC`` environment variable, for example:
+
+           .. code-block:: bash
+
+             PYP_SHARED_EXEC="/storage/nextPYP/sharedExec"
+
+        #. Create symlinks for local and shared data folders, if needed
+
+           If your ``local`` and ``shared`` folders exist directly inside of your installation folder, you can skip
+           this step.
+
+           But if your ``local`` or ``shared`` folders are anywhere else, you should create a symlink from those
+           locations to folders directly inside your installation folder. The resulting symlinks inside your installation
+           folder should be named ``local`` and ``shared`` respectively. You can find the location of your ``local``
+           and ``shared`` folders by examining your ``config.toml`` file, in the ``web.localDir`` and ``web.sharedDir``
+           settings.
+
+           So, for example, if your ``local`` folder is at ``/network/nextPYP/local`` and your installation folder is at
+           ``/opt/nextPYP``, then you'll make the symlink like this:
+
+           .. code-block:: bash
+
+             sudo ln -s "/network/nextPYP/local" "/opt/nextPYP/"
+
+           And then do the same thing for your shared folder. After both folders are symlinked, the installation script
+           can now auto-detect your existing folders.
+
+
+Step 2: Run the installation script
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To upgrade to a new version, stop ``nextPYP``, download the new installer, run it, and then re-start ``nextPYP``.
 
@@ -609,9 +624,6 @@ To upgrade to a new version, stop ``nextPYP``, download the new installer, run i
       # run the new installer to upgrade
       ./install
 
-      # re-start nextPYP
-      ./nextpyp start
-
   .. tab-item:: I'm using an administrator account
     :sync: admin
 
@@ -628,9 +640,69 @@ To upgrade to a new version, stop ``nextPYP``, download the new installer, run i
       # (no installer options are needed for an upgrade)
       sudo ./install
 
-      # nextPYP should be running now (the installer starts the daemon for you)
 
-After this, you should be able to access the application the same way you did before the upgrade.
+Step 3: Post-installation steps (conditional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As a general rule, the installer won't make any changes to your existing configuration file,
+or delete any potentially important files. So, some upgrades may require you to take
+these steps manually.
+
+If manual steps are needed after an upgrade, you'll see a message like the following in your console:
+
+  .. code-block::
+
+    ===============================================================================
+    |  BUT WAIT! There's still a bit more you need to do                          |
+    |-----------------------------------------------------------------------------|
+
+See below for more information about manual upgrade steps that are specific to each version of nextPYP.
+
+
+.. admonition:: Upgrading from v0.6.5 (or earlier) to v0.7.0 (or later) ?
+  :collapsible:
+
+  A rough outline of the steps you'll need to do are described below.
+
+  #. Delete the old container file
+  #. Remove the old container configuration from your ``config.toml`` file.
+  #. Add the new folder location for the shared executables folder to your ``config.toml`` file.
+
+  The installer's prompt will contain much more detailed information though, including the exact locations
+  of the relevant files, and full commands needed to do some of the tasks that you can copy into your terminal.
+
+
+Step 4: Start nextPYP again
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After the installer has finished, and you have completed any manual post-installation steps,
+start nextPYP again:
+
+.. tab-set::
+  :sync-group: install_web_user
+
+  .. tab-item:: I'm using a regular user account
+    :sync: user
+
+    .. code-block:: bash
+
+      ./nextpyp start
+
+  .. tab-item:: I'm using an administrator account
+    :sync: admin
+
+    If no post-installation steps were required, the installer should have already re-started nextPYP for you.
+    You can check the status of the nextPYP daemon with:
+
+    .. code-block:: bash
+
+      systemctl status nextPYP
+
+    If post-installation steps were required, after completing those steps, start nextPYP again with:
+
+    .. code-block:: bash
+
+      sudo systemctl start nextPYP
 
 
 Getting Help
