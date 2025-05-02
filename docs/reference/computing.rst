@@ -23,7 +23,7 @@ Resource management
 The execution of most blocks in ``nextPYP`` involves three main phases:
 
 - **Launch**: Typically a lightweigth job used to initiate data processing.
-- **Split**: M`ultiple jobs that are executed in parallel (typically one job for each micrograph/tilt-series). 
+- **Split**: Multiple jobs that are executed in parallel (typically one job for each micrograph/tilt-series). 
 - **Merge**: A job that consolidates the results from the *Split* phase (such as combining intermediate data to generate a single 3D reconstruction). 
 
 Because each phase has distinct computational requirements, resources (i.e., number of threads, memory, etc.) are specified independently for each phase.

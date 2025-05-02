@@ -36,13 +36,12 @@ Step 1: Prerequisites for installation
 
     sudo useradd --system --user-group nextpyp
 
-* **Lots of storage space**
+* **Storage space**
 
-  Cryo-ET and Cryo-EM data requires large amounts of storage space -- on the order of terabytes.
-  At the very least, you'll want a multi-terabyte SSD mounted locally at your work station.
-  Or, on the other end of the spectrum, you may have a petabyte-sized storage array available as a
-  network-mounted folder. nextPYP does best with fast local storage, but it can use slower remote storage as well.
-  But if you configure nextPYP to store its data on a typically-sized 10s of gigabyte operating system partition,
+  Cryo-ET and cryo-EM data requires significant amounts of storage space -- on the order of terabytes.
+  At the very least, you'll want to have access to a multi-terabyte partition (either an SSD mounted locally or a large capacity 
+  network-mounted share). nextPYP does best with fast local storage, but it can use slower remote storage as well.
+  If you configure nextPYP to store its data on a typically-sized 10s of gigabyte operating system partition,
   you'll very quickly run out of space.
 
   .. tip::
