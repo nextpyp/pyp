@@ -457,7 +457,7 @@ def parse_arguments(block):
             # always link indivdual files in the pkl/, csp/, and sva/ folders
             for folder in ["pkl", "csp", "sva"]:
                 os.makedirs(folder,exist_ok=True)
-                pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*")
+                pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.*")
                 number_of_files = len(glob.glob(pattern))
                 if number_of_files > 0:
                     logger.info(f"Linking {number_of_files:,} files to {folder}/ folder")
@@ -487,7 +487,7 @@ def parse_arguments(block):
                 folders = ["mrc", "webp"]
                 for f in folders:
                     os.makedirs(f,exist_ok=True)
-                    pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), f, "*")
+                    pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), f, "*.*")
                     number_of_files = len(glob.glob(pattern))
                     if number_of_files > 0:
                         logger.info(f"Linking {number_of_files:,} files to {f}/ folder")
