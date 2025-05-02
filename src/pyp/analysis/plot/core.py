@@ -1229,7 +1229,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     pngList = [
         png
         for png in os.listdir(".")
-        if png.startswith(output_pattern) and png.endswith(".png")
+        if png.startswith(Path(output_pattern).name) and png.endswith(".png")
     ]
     # pngList.sort(key=lambda x: int(x.replace(".png", "").split(".")[-1]))
     pngList.sort()
