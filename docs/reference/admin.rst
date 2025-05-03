@@ -2,13 +2,26 @@
 Administration
 ==============
 
-The admin page can be accessed through the url: ``https://nextpyp.myorganization.org/#/admin``
+You can access the administration page by clicking on your account name in the upper right corner of any page
+in ``nextPYP``, and then clicking on the "Administration" link that appears on the next page.
 
-.. nextpyp:: Use this page to create, edit, or delete `Groups` and `Users`
-    :collapsible: open
+The "Administration" link will only appear if your ``nextPYP`` user has been granted administrative privileges.
+If the link doesn't appear for you, you may need to ask your ``nextPYP`` administrator for help.
 
-    .. figure:: ../images/reference_admin.webp
-        :alt: Admin dashboard
+.. tip ::
+
+  You can also quickly get to the administration page by editing the URL in your browser's address bar.
+  Change everything including and after the first ``/`` character in the URL to ``/#/admin``.
+
+The admin page should look something like this:
+
+.. figure:: ../images/reference_admin.webp
+
+  The administration page
+
+Once there, you can use the administration tools to manage users groups, run diagnostic tools, and inspect
+jobs running on the system.
+
 
 Create a new Group
 ------------------

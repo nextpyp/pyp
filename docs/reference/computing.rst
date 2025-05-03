@@ -190,18 +190,9 @@ Troubleshooting GPU issues
   ``nextPYP`` can automatically detect available GPUs in your computer if they are NVidia Cuda-capable GPUs.
   Currently, no other GPU types (including AMD or Intel GPUs) are supported.
 
-  To see how many GPUs were detected by ``nextPYP``, head to the administration page in your web browser.
-  You can get there by clicking on your account name in the upper right corner of the page, and then clicking
-  on the "Administration" link that appears on the next page.
-
-  .. tip ::
-
-    You can also quickly get to the administration page by editing the URL in your browser's address bar.
-    Change everything including and after the first ``/`` character in the URL to ``/#/admin``.
-
-  Once you're on the administration page, click on the "Standalone Jobs" tab.
-  At the top of the following page is a "Resources" section that shows
-  the available, used, and total number of GPUs.
+  To see how many GPUs were detected by ``nextPYP``, head to the :doc:`administration page<../reference/admin>`
+  in your web browser and navigate to the "Standalone Jobs" tab. At the top of that tab is a "Resources" section
+  that shows the total number of GPUs detected, as well as how many are currently being used, or available for use.
 
   Alternatively, ``nextPYP`` prints GPU diagnostic information to the website log file during startup.
   Find the ``<local>/logs/micromon`` log file in your filesystem,
