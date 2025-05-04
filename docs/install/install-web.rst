@@ -649,11 +649,11 @@ these steps manually.
 
 If manual steps are needed after an upgrade, you'll see a message like the following in your console:
 
-  .. code-block::
+.. code-block::
 
-    ===============================================================================
-    |  BUT WAIT! There's still a bit more you need to do                          |
-    |-----------------------------------------------------------------------------|
+  ===============================================================================
+  |  BUT WAIT! There's still a bit more you need to do                          |
+  |-----------------------------------------------------------------------------|
 
 See below for more information about manual upgrade steps that are specific to each version of nextPYP.
 

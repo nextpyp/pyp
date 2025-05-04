@@ -2,18 +2,18 @@
 Getting help
 ============
 
-The best way to get help is using ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_. If your question hasn't been answered before, you can open a `new discussion <https://github.com/orgs/nextpyp/discussions/new/choose>`_. When reporting a problem, please share the version of ``nextPYP`` you are using and the *entire* log of the process that produced the error. To do so, copy the text from ``nextgPYP``'s log window and paste it into Github using ``code formatting`` (please avoid uploading screenshots).
+The best way to get help is using ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ on Github. If your question hasn't been answered before, you can open a `new discussion <https://github.com/orgs/nextpyp/discussions/new/choose>`_. When reporting a problem, please share the version of ``nextPYP`` you are using and the *entire* log of the process that produced the error. To do so, copy the text from ``nextgPYP``'s log window and paste it into Github using ``code formatting`` (please avoid uploading screenshots).
 
 Office hours
 ------------
 
-For interactive help, you can join the ``nextPYP`` team during our office hours held every Friday 4:00 to 5:00 PM (EST). You can join the zoom meeting using the following `link <https://duke.zoom.us/j/96587317585>`__.
+For interactive help, you can join the ``nextPYP`` team during our office hours held every Friday 4:00 to 5:00 PM (EST) using this `Zoom meeting<https://duke.zoom.us/j/96587317585>`__.
 
 
 Discord server
 --------------
 
-You can also join the ``nextPYP`` community on Discord. The server is open to all users and developers of ``nextPYP``. You can join the server using the following `link <https://discord.gg/gM5sQPkb5x>`__.
+You can also join the ``nextPYP`` community on Discord. The server is open to all users and developers of ``nextPYP``. Here is how to `join the Discord server <https://discord.gg/gM5sQPkb5x>`__.
 
 Common problems
 ---------------
@@ -48,8 +48,7 @@ Common problems
     - **Problem**: Website components are missing, pages don't load properly, etc.
     - **Solution**: We are not sure what could cause this, but here are a few things you can try: 1) reload the page, 2) clear your browser's cache, 3) update your browser, or 4) try using a different browser.
 
-For problems with installation, please consult the :doc:`troubleshooting<../install/troubleshooting>` section.
+Installation problems
+---------------------
 
-.. admonition:: Still need help?
-
-   Search ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ or post a new question there.
+Please consult the :doc:`troubleshooting<../install/troubleshooting>` section.

@@ -2,7 +2,7 @@
 Compute resources
 =================
 
-``nextPYP`` can be run on either a **Desktoprkstation** or a **Compute cluster**. A Desktop workstation is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, a compute cluster will enable significantly faster processing.
+``nextPYP`` can be run on either a **Desktop workstation** or a **Compute cluster**. A Desktop workstation is simpler to setup and can be used to process small to medium sized datasets. For most datasets, however, a compute cluster will enable significantly faster processing.
 
 .. tab-set::
   :sync-group: running_mode
@@ -46,7 +46,7 @@ The **Resources** tab is divided into three sections, one for each phase:
    The panels in sphinx-design seem to be a bit different than panels from our old lib, sphinx-panels.
    See: https://sphinx-design.readthedocs.io/en/pydata-theme/dropdowns.html
 
-.. nextpyp:: Launch task options
+.. nextpyp:: Launch task
   :collapsible: open
 
   Launch, Threads
@@ -69,7 +69,7 @@ The **Resources** tab is divided into three sections, one for each phase:
 
     **Default**: None
 
-.. nextpyp:: Split task options
+.. nextpyp:: Split task
   :collapsible: open
 
   Split, Threads
@@ -102,7 +102,7 @@ The **Resources** tab is divided into three sections, one for each phase:
 
     **Default**: None
 
-.. nextpyp:: Merge task options
+.. nextpyp:: Merge task
   :collapsible: open
 
   Merge, Threads

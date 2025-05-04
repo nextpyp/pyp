@@ -17,13 +17,13 @@ The admin page should look something like this:
 
 .. figure:: ../images/reference_admin.webp
 
-  The administration page
+  The administration page.
 
 Once there, you can use the administration tools to manage users groups, run diagnostic tools, and inspect
 jobs running on the system.
 
 
-Create a new Group
+Create a new group
 ------------------
 
 .. nextpyp:: To add a new group
@@ -34,11 +34,11 @@ Create a new Group
     - Specify a name for the group and click :bdg-primary:`Save`
 
     .. figure:: ../images/reference_admin_group.webp
-        :alt: Project dashboard
+        :alt: Project dashboard.
         :width: 350
 
 
-Create a new User
+Create a new user
 -----------------
 
 .. nextpyp:: To add a new user
@@ -53,7 +53,7 @@ Create a new User
     - Assign the user to a group(s) by checking the necessary boxes
 
     .. figure:: ../images/reference_admin_user.webp
-        :alt: Project dashboard
+        :alt: Project dashboard.
         :width: 350
 
 .. admonition:: Tips

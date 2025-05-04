@@ -115,7 +115,7 @@ Connecting a ``nextPYP`` user to an operating system user requires an administra
 
    .. figure:: ../images/user_processor_check_pass.webp
      :height: 400
-     :align: left
+     :align: center
 
      The edit user panel showing a successful ``user-processor`` executable check.
 
