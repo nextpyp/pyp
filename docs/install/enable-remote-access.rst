@@ -1,6 +1,6 @@
 
 ====================
-Enable Remote Access
+Enable remote access
 ====================
 
 The :doc:`base installation instructions <./install-web>` install a complete working application for people using
@@ -154,7 +154,7 @@ from the internet. If your operating system uses a different firewall, it will n
 the installation script, and you should manually configure it to allow HTTP and HTTPs traffic.
 
 
-Getting Help
+Getting help
 ------------
 
 Getting ``nextPYP`` installed and working correctly can be tricky sometimes,

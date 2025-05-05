@@ -29,7 +29,7 @@ The execution of most blocks in ``nextPYP`` involves three main phases:
 Because each phase has distinct computational requirements, resources (i.e., number of threads, memory, etc.) are specified independently for each phase.
 
 .. tip::
-    Real time information about jobs is available in the `Jobs panel <../guide/overview.html#jobs-panel>`_.
+    Real time information about jobs is available in the :doc:`Jobs panel<../guide/overview#jobs-panel>`.
 
 Resource allocation
 -------------------
@@ -174,7 +174,7 @@ List of programs and operations that require GPUs:
 Multiple GPUs
 ^^^^^^^^^^^^^
 
-Some of the programs listed above (TODO: how to tell which ones?) support multi-GPU execution.
+Some of the programs listed above (e.g., IsoNet) support multi-GPU execution.
 To allocate more than one GPU for a job, set the ``Split, Gres`` option to ``gpu:n``
 where ``n`` is the number of GPUs you want to request, for example, ``gpu:2``.
 

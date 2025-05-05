@@ -308,7 +308,7 @@ To facilitate navigation, jobs are grouped chronologically into ``Today``, ``Thi
 
 The arrows :fa:`angle-right` and :fa:`angle-down` are used to expand or collapse groups of jobs
 
-Most jobs in ``nextPYP`` have three phases: *Launch*, *Split* and *Merge*. See `Compute resources <../reference/computing.html#compute-resources>`_ for more details.
+Most jobs in ``nextPYP`` have three phases: *Launch*, *Split* and *Merge*. See :doc:`Compute resources<../reference/computing>` for more details.
 
 .. tip::
     - A summary of currently running jobs from all projects can be found at the bottom of the **Dashboard** :fa:`tachometer-alt` page

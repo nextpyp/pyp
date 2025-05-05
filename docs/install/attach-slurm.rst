@@ -1,6 +1,6 @@
 
 ======================
-Attach a SLURM Cluster
+Attach a SLURM cluster
 ======================
 
 The :doc:`base installation instructions <./install-web>` install a complete working application that does

@@ -143,7 +143,7 @@ Step 3: Pre-processing
 
       .. md-tab-item:: Resources
 
-        * Set ``Threads per task`` to 7
+        * Set ``Split, Threads`` to 7
 
         * Set other runtime parameters as needed (see :doc:`Computing resources<../reference/computing>`)
 

@@ -1,5 +1,5 @@
 =====================
-Enable Multiple Users
+Enable multiple users
 =====================
 
 The :doc:`base installation instructions <./install-web>` install a complete working application for
@@ -74,7 +74,7 @@ When a connected user runs a job in ``nextPYP``:
 * The files created by the job will be owned by the operating system user, rather than the service account.
 * The user's jobs will respect any resource quota system that your computing center may have in place for that user,
   like filesystem storage limits, or SLURM resource privileges.
-* File sharing between users will be controlled filesystem configuration, rather than ``nextPYP`` configuration,
+* File sharing between users will be controlled by the filesystem configuration, rather than ``nextPYP`` configuration,
   so it will be possible to prevent users from accessing each others files when browsing the filesystem directly.
 
 Connecting a ``nextPYP`` user to an operating system user requires an administrator to perform a couple steps:
@@ -133,7 +133,7 @@ Connecting a ``nextPYP`` user to an operating system user requires an administra
    take effect the next time that user creates a new project.
 
 
-Getting Help
+Getting help
 ------------
 
 Getting ``nextPYP`` installed and working correctly can be tricky sometimes,
@@ -142,4 +142,4 @@ We've done our best to build an install process that's flexible enough to work i
 but sometimes things still might not work out perfectly.
 
 If you have questions, need clarification on any of the installation options, or are just looking for a little
-help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions>`_ board.
+help getting through the installation, don't hesitate to reach out using one of the options listed in the :doc:`Getting help<../known-issues>` section.

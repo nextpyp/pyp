@@ -636,7 +636,8 @@ To upgrade to a new version, stop ``nextPYP``, download the new installer, run i
       sudo chmod u+x install
 
       # run the new install script
-      # (no installer options are needed for an upgrade)
+      # If upgrading from v0.6.5 or earlier, you will need to set the PYP_SHARED_EXEC variable, e.g.:
+      # sudo PYP_SHARED_EXEC="/storage/nextPYP/sharedExec" ./install
       sudo ./install
 
 

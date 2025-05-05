@@ -132,7 +132,7 @@ Step 3: Pre-processing
 
       .. md-tab-item:: Resources
 
-        - Set ``Threads per task`` to 11
+        - Set ``Split, Threads`` to 11
 
         - Set other runtime parameters as needed (see :doc:`Computing resources<../reference/computing>`)
 
@@ -242,7 +242,7 @@ Step 5: Reference-based refinement
 
         .. md-tab-item:: Resources
 
-          - Set ``Threads per task`` to the maximum allowable by your system
+          - Set ``Split, Threads`` to the maximum allowable by your system
 
     * :bdg-primary:`Save` your changes, click :bdg-primary:`Run` and :bdg-primary:`Start Run for 1 block`
 

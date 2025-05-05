@@ -7,9 +7,9 @@ This session shows how to use ``nextPYP`` to convert raw tilt-series from `EMPIA
 Datasets
 ========
 
-  #. Immature Gag protein from HIV-1 Virus-Like Particles (`EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_)
-  #. Ribosomes from whole *Mycoplasma pneumoniae* cells (`EMPIAR-10499 <https://www.ebi.ac.uk/empiar/EMPIAR-10499/>`_)
-  #. Ribosomes from FIB-SEM milled mouse eplithelial cells (`EMPIAR-10987 <https://www.ebi.ac.uk/empiar/EMPIAR-10987/>`_)
+#. Immature Gag protein from HIV-1 Virus-Like Particles (`EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_)
+#. Ribosomes from whole *Mycoplasma pneumoniae* cells (`EMPIAR-10499 <https://www.ebi.ac.uk/empiar/EMPIAR-10499/>`_)
+#. Ribosomes from FIB-SEM milled mouse eplithelial cells (`EMPIAR-10987 <https://www.ebi.ac.uk/empiar/EMPIAR-10987/>`_)
 
 Session 1: Pre-processing and particle picking
 ==============================================

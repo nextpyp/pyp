@@ -116,7 +116,7 @@ Step 2: Import raw tilt-series
 Step 3: Pre-processing
 ----------------------
 
-.. nextpyp:: Movie frame alignment, and CTF estimation (:fa:`stopwatch` 5 min)
+.. nextpyp:: Motion correction, CTF estimation, tilt-series alignment and reconstruction (:fa:`stopwatch` 5 min)
   :collapsible: open
 
   * Click on ``Tilt-series`` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
@@ -136,13 +136,13 @@ Step 3: Pre-processing
 
       .. md-tab-item:: CTF determination
 
-        - Set ``Max resolution`` to 5.0
+        - Set ``Max resolution (A)`` to 5. This will be the maximum resolution used to determine the CTF parameters for each tilt-series
 
         - Click on the **Resources** tab
 
       .. md-tab-item:: Resources
 
-        - Set ``Threads per task`` to 11
+        - Set ``Split, Threads`` to 11. This tells ``nextPYP`` to use 11 threads to process each tilt-series
 
         - Set other runtime parameters as needed (see :doc:`Computing resources<../reference/computing>`)
 
@@ -259,11 +259,11 @@ Step 6: Particle picking
 
         - Set ``Particle radius (A)`` to 50
 
-        - Set ``Detection method`` to uniform
+        - Set ``Detection method`` to uniform. This will select uniformaly distributed particles on the virion surfaces
 
         - Set ``Minimum distance between particles (voxels)`` to 8
 
-        - Set ``Size of equatorial band to restrict search (A)`` to 800
+        - Set ``Size of equatorial band to restrict search (A)`` to 800. Given that the virions are 1000 A in diameter, this setting limits the search to 80% of the surface area, avoiding particle selection from the top and bottom regions of the virions where the missing wedge effects are more pronounced
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
@@ -286,7 +286,9 @@ Step 7: Reference-based refinement
 
       .. md-tab-item:: Sample
 
-        - Set ``Molecular weight (kDa)`` to 300
+        Here, we define the parameters for the sample, which will be used by all subsequent blocks in the workflow
+
+        - Set ``Molecular weight (kDa)`` to 300. This value is used by cisTEM to estimate the volume occupied by the particle, based on a conversion factor of 810 Da/nm^3. The estimated volume is used to calculate the spectral signal-to-noise ratio (SSNR), which in turn is used to apply an optimal filter to enhance the reconstruction
 
         - Set ``Particle radius (A)`` to 150
 
@@ -296,6 +298,8 @@ Step 7: Reference-based refinement
 
       .. md-tab-item:: Particle extraction
 
+        For the initial reference-based refinement, particles will be extracted with 2x binning and a small box size, as only low-resolution information is needed at this stage
+
         - Set ``Box size (pixels)`` to 192
 
         - Set ``Image binning`` to 2
@@ -304,7 +308,7 @@ Step 7: Reference-based refinement
 
       .. md-tab-item:: Particle scoring function
 
-        - Set ``Last tilt for refinement`` to 10
+        - Set ``Last tilt for refinement`` to 10. This will use the first eleven tilts for refinement (numbering is from 0 to 10)
 
         - Set ``Max resolution (A)`` to 8.0
 
@@ -314,7 +318,7 @@ Step 7: Reference-based refinement
 
         - Specify the location of the ``Initial model (*.mrc)`` by clicking on the icon :fa:`search`, navigating to the folder where you downloaded the data for the tutorial, and selecting the file `EMPIAR-10164_init_ref.mrc`
 
-        - Set ``Particle rotation Psi range (degrees)`` and ``Particle rotation Theta range (degrees)`` to 10
+        - Set ``Particle rotation Psi range (degrees)`` and ``Particle rotation Theta range (degrees)`` to 10. This setting restricts the out-of-plane rotation of particles during refinement to a maximum of 10 degrees
 
         - Set ``Particle rotation step (degrees)`` to 2
 
@@ -336,9 +340,9 @@ Step 7: Reference-based refinement
 
       .. md-tab-item:: Resources
 
-        - Set ``Threads per task`` to the maximum allowable by your system
+        - Set ``Split, Threads`` to the maximum allowable by your system. Since this dataset has thousands of particles per tilt-series, this will allow for a faster processing time.
 
-        - Set ``Threads (merge task)`` to 6
+        - Set ``Merge, Threads`` to 6. This will use 6 threads to merge the intermediate results from each tilt-series. Since this is not a CPU-intensive task, using higher values may not be beneficial
 
   * :bdg-primary:`Save` your changes, click :bdg-primary:`Run` and :bdg-primary:`Start Run for 1 block`
 
@@ -351,7 +355,7 @@ Step 7: Reference-based refinement
 Step 8. 3D refinement
 ---------------------
 
-.. nextpyp:: Tilt-geometry parameters and particle poses are refined in this step (:fa:`stopwatch` 1.5 hr)
+.. nextpyp:: Tilt-geometry parameters and particle poses refinement (:fa:`stopwatch` 1.5 hr)
   :collapsible: open
 
   * Click on ``Particles`` (output of the :bdg-secondary:`Reference-based refinement` block) and select :bdg-primary:`3D refinement`
@@ -362,7 +366,7 @@ Step 8. 3D refinement
 
       .. md-tab-item:: Particle scoring function
 
-        - Set ``Max resolution (A)`` to 10:8:6 (this will use an 10A limit for the first iteration, 8A for the second, etc.)
+        - Set ``Max resolution (A)`` to 8:7:6. This will use information up to 8 A during the first refinement iteration, up to 7 A during the second, etc. This strategy is called frequency marching
 
         - Click on the **Refinement** tab
 
@@ -372,9 +376,9 @@ Step 8. 3D refinement
 
         - Set ``Last iteration`` to 4
 
-        - Check ``Refine tilt-geometry``
+        - Check ``Refine tilt-geometry``. This will enable refinement of the tilt-geometry parameters, including the tilt-axis angle and the tilt-angle for each image in the tilt-series
 
-        - Check ``Refine particle alignments``
+        - Check ``Refine particle alignments``. This will enable refinement of particle poses, including each particle’s 3D rotation and translation
 
         - Set ``Particle rotation Phi range (degrees)``, ``Particle rotation Psi range (degrees)`` and ``Particle rotation Theta range (degrees)`` to 20.0
 
@@ -417,17 +421,17 @@ Step 9. Filter particles
 
         - Specify the location of ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_04.bz2`
 
-        - Set ``Score threshold`` to 2.5
+        - Set ``Score threshold`` to 2.5. This will remove particles with a score lower than 2.5. The score is a measure of how well each particle fits the 3D reconstruction
 
-        - Set ``Min distance between particles (unbinned pixels/voxels)`` to 10
+        - Set ``Min distance between particles (unbinned pixels/voxels)`` to 10. This will remove particles that are closer than 10 pixels to each other. This is useful to remove duplicates
 
-        - Set ``Lowest tilt-angle (degrees)`` to -15
+        - Set ``Lowest tilt-angle (degrees)`` to -15. This will exclude projections with tilt angles below -15 degrees, as they contribute little high-resolution information to the reconstruction
 
-        - Set ``Highest tilt-angle (degrees)`` to 15
+        - Set ``Highest tilt-angle (degrees)`` to 15. This will exclude projections with tilt angles above 15 degrees, as they contribute little high-resolution information to the reconstruction
 
-        - Check ``Generate reconstruction after filtering``
+        - Check ``Generate reconstruction after filtering``. We will calculate a new reconstruction after filtering the particles to confirm that the filtering was successful
 
-        - Check ``Permanently remove particles``
+        - Check ``Permanently remove particles``. We will remove the particles from the dataset after filtering to save space and reduce processing time
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. You can see how many particles were left after filtering by looking at the job logs.
 
@@ -459,7 +463,7 @@ Step 10. Region-based local refinement (before masking)
 
       .. md-tab-item:: Particle scoring function
 
-        - Set ``Last tilt for refinement`` to 4
+        - Set ``Last tilt for refinement`` to 4. This will use the first five tilts for refinement (numbering is from 0 to 4)
 
         - Set ``Max resolution (A)`` to 6:5
 
@@ -471,7 +475,7 @@ Step 10. Region-based local refinement (before masking)
 
         - Set ``Last iteration`` to 3
 
-        - Set ``Number of regions`` to 8,8,2
+        - Set ``Number of regions`` to 8,8,2. This will divide the tomogram into 8x8x2 regions in x,y,z and refine the tilt-geometry parameters independently for each region
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to run the job
 
@@ -497,9 +501,9 @@ Step 11: Create shape mask
 
         - Select the ``Input map (*.mrc)`` by click on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_03.mrc`
 
-        - Set ``Threshold for binarization`` to 0.45
+        - Set ``Threshold for binarization`` to 0.45. This value may be different for you. Use the 3D viewer to visualize the map and adjust the threshold value accordingly
 
-        - Set ``Width of cosine edge (pixels)`` to 8
+        - Set ``Width of cosine edge (pixels)`` to 8. This will create a cosine edge of 8 pixels at the edges of the mask to avoid sharp transitions
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block` to run the job
 
@@ -509,7 +513,7 @@ Step 11: Create shape mask
 
   .. note::
 
-    You may need to adjust the binarization threshold to obtain a mask that includes the protein density and excludes the background (a pre-calculated mask is provided with the raw data if you rather use that).
+    A suitable binarization threshold should include the protein density while excluding the background. You may skip this step and use the pre-calculated mask provided with the raw data
 
 Step 12: Region-based constrained refinement
 --------------------------------------------
@@ -529,7 +533,7 @@ Step 12: Region-based constrained refinement
 
         - Set ``Masking strategy`` to from file
         
-        - Specify the location of the ``Shape mask`` produced in Step 11 by clicking on the icon :fa:`search`, navigating to the location of the :bdg-secondary:`Masking` block by copying the path we saved above, and selecting the file `frealign/maps/mask.mrc`
+        - Specify the location of the ``Shape mask`` produced in Step 11 by clicking on the icon :fa:`search`, navigating to the location of the :bdg-secondary:`Masking` block by copying the path we saved above, and selecting the file `frealign/maps/mask.mrc` (you may also use the pre-calculated mask provided with the raw data if you skipped the previous step)
 
         - Click on the **Refinement** tab
 
@@ -570,11 +574,11 @@ Step 13: Particle-based CTF refinement
 
         - Select the ``Input parameter file (*.bz2)`` by click on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_02.bz2`
 
-        - Uncheck ``Refine tilt-geometry``
+        - Uncheck ``Refine tilt-geometry``. This will disable refinement of the tilt-geometry parameters
 
-        - Uncheck ``Refine particle alignments``
+        - Uncheck ``Refine particle alignments``. This will disable refinement of particle poses
 
-        - Check ``Refine CTF per-particle``
+        - Check ``Refine CTF per-particle``. This will enable per-particle CTF refinement. While it's possible to refine CTF parameters, tilt geometry, and particle poses simultaneously, this is not recommended, as it may increase the risk of overfitting.
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -607,7 +611,7 @@ Step 14: Movie frame refinement
 
         - Specify the ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_02.bz2`
 
-        - Set ``Spatial sigma`` to 200.0
+        - Set ``Spatial sigma (unbinned pixels/voxels)`` to 200.0. This ensures that the motion trajectories of neighboring particles within a 200-pixel radius are correlated
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -632,7 +636,7 @@ Step 15: Refinement after movie frame refinement
 
         - Set ``Min number of tilts for refinement`` to 2
 
-        - Set ``Max resolution (A)`` to 3.3
+        - Set ``Max resolution (A)`` to 3.2
 
         - Click on the **Refinement** tab
 
@@ -675,11 +679,11 @@ Step 16: Map sharpening
 
         - Specify the ``First half map`` by clicking on the icon :fa:`search` and selecting the file `tomo-flexible-refinement-*_r01_half1.mrc` (output of the :bdg-secondary:`3D refinement (after movies)` block)
 
-        - Set ``Threshold value`` to 0.35
+        - Set ``Threshold value`` to 0.35. This value will be used to calculate the shape mask for the map. The threshold value should be adjusted to include the protein density while excluding the background
 
-        - Set ``B-factor method`` to adhoc
+        - Set ``B-factor method`` to adhoc. This will allow us to set the B-factor value manually
 
-        - Set ``Adhoc value (A^2)`` to -25
+        - Set ``Adhoc value (A^2)`` to -25. This value may vary for you—more negative values will apply stronger sharpening. Use the 3D viewer to visualize the map and adjust the B-factor value as needed
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
