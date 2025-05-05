@@ -286,8 +286,6 @@ Step 7: Reference-based refinement
 
       .. md-tab-item:: Sample
 
-        Here, we define the parameters for the sample, which will be used by all subsequent blocks in the workflow
-
         - Set ``Molecular weight (kDa)`` to 300. This value is used by cisTEM to estimate the volume occupied by the particle, based on a conversion factor of 810 Da/nm^3. The estimated volume is used to calculate the spectral signal-to-noise ratio (SSNR), which in turn is used to apply an optimal filter to enhance the reconstruction
 
         - Set ``Particle radius (A)`` to 150
@@ -298,17 +296,15 @@ Step 7: Reference-based refinement
 
       .. md-tab-item:: Particle extraction
 
-        For the initial reference-based refinement, particles will be extracted with 2x binning and a small box size, as only low-resolution information is needed at this stage
-
         - Set ``Box size (pixels)`` to 192
 
-        - Set ``Image binning`` to 2
+        - Set ``Image binning`` to 2. Particles will be extracted at 2x binning, as only low-resolution information is needed at this stage
 
         - Click on the **Particle scoring function** tab
 
       .. md-tab-item:: Particle scoring function
 
-        - Set ``Last tilt for refinement`` to 10. This will use the first eleven tilts for refinement (numbering is from 0 to 10)
+        - Set ``Last tilt for refinement`` to 10. This will use the first eleven tilts for refinement (numbering is 0-based)
 
         - Set ``Max resolution (A)`` to 8.0
 
@@ -366,7 +362,7 @@ Step 8. 3D refinement
 
       .. md-tab-item:: Particle scoring function
 
-        - Set ``Max resolution (A)`` to 8:7:6. This will use information up to 8 A during the first refinement iteration, up to 7 A during the second, etc. This strategy is called frequency marching
+        - Set ``Max resolution (A)`` to 8:7:6. This will use information up to 8 A during the first refinement iteration, up to 7 A during the second, etc.
 
         - Click on the **Refinement** tab
 
@@ -376,9 +372,9 @@ Step 8. 3D refinement
 
         - Set ``Last iteration`` to 4
 
-        - Check ``Refine tilt-geometry``. This will enable refinement of the tilt-geometry parameters, including the tilt-axis angle and the tilt-angle for each image in the tilt-series
+        - Check ``Refine tilt-geometry`` to enable refinement of the tilt-axis angle and tilt-angle of each tilt-series projection
 
-        - Check ``Refine particle alignments``. This will enable refinement of particle poses, including each particle’s 3D rotation and translation
+        - Check ``Refine particle alignments`` to enable refinement of each particle’s 3D rotation and translation
 
         - Set ``Particle rotation Phi range (degrees)``, ``Particle rotation Psi range (degrees)`` and ``Particle rotation Theta range (degrees)`` to 20.0
 
@@ -421,17 +417,17 @@ Step 9. Filter particles
 
         - Specify the location of ``Input parameter file (*.bz2)`` by clicking on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_04.bz2`
 
-        - Set ``Score threshold`` to 2.5. This will remove particles with a score lower than 2.5. The score is a measure of how well each particle fits the 3D reconstruction
+        - Set ``Score threshold`` to 2.5. This will remove particles with scores lower than 2.5 (scores measure the fit between particles and the 3D reconstruction)
 
-        - Set ``Min distance between particles (unbinned pixels/voxels)`` to 10. This will remove particles that are closer than 10 pixels to each other. This is useful to remove duplicates
+        - Set ``Min distance between particles (unbinned pixels/voxels)`` to 10. This will remove duplicate particles that are closer than 10 pixels to each other
 
-        - Set ``Lowest tilt-angle (degrees)`` to -15. This will exclude projections with tilt angles below -15 degrees, as they contribute little high-resolution information to the reconstruction
+        - Set ``Lowest tilt-angle (degrees)`` to -15. This will exclude projections below -15 degrees, as they contribute little high-resolution information to the reconstruction
 
-        - Set ``Highest tilt-angle (degrees)`` to 15. This will exclude projections with tilt angles above 15 degrees, as they contribute little high-resolution information to the reconstruction
+        - Set ``Highest tilt-angle (degrees)`` to 15. This will exclude projections above 15 degrees, as they contribute little high-resolution information to the reconstruction
 
-        - Check ``Generate reconstruction after filtering``. We will calculate a new reconstruction after filtering the particles to confirm that the filtering was successful
+        - Check ``Generate reconstruction after filtering``. This will calculate a new reconstruction after filtering the particles to confirm that the filtering was successful
 
-        - Check ``Permanently remove particles``. We will remove the particles from the dataset after filtering to save space and reduce processing time
+        - Check ``Permanently remove particles``. This will remove the particles from the dataset after filtering to save space and reduce processing time
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. You can see how many particles were left after filtering by looking at the job logs.
 
@@ -463,7 +459,7 @@ Step 10. Region-based local refinement (before masking)
 
       .. md-tab-item:: Particle scoring function
 
-        - Set ``Last tilt for refinement`` to 4. This will use the first five tilts for refinement (numbering is from 0 to 4)
+        - Set ``Last tilt for refinement`` to 4. This will use the first five tilts for refinement (numbering is 0-based)
 
         - Set ``Max resolution (A)`` to 6:5
 
@@ -574,11 +570,11 @@ Step 13: Particle-based CTF refinement
 
         - Select the ``Input parameter file (*.bz2)`` by click on the icon :fa:`search` and selecting the file `tomo-new-coarse-refinement-*_r01_02.bz2`
 
-        - Uncheck ``Refine tilt-geometry``. This will disable refinement of the tilt-geometry parameters
+        - Uncheck ``Refine tilt-geometry`` to disable refinement of the tilt-geometry parameters
 
-        - Uncheck ``Refine particle alignments``. This will disable refinement of particle poses
+        - Uncheck ``Refine particle alignments`` to disable refinement of particle poses
 
-        - Check ``Refine CTF per-particle``. This will enable per-particle CTF refinement. While it's possible to refine CTF parameters, tilt geometry, and particle poses simultaneously, this is not recommended, as it may increase the risk of overfitting.
+        - Check ``Refine CTF per-particle`` to enable per-particle CTF refinement. While it's possible to refine CTF parameters, tilt geometry, and particle poses simultaneously, this is not recommended, as it may increase the risk of overfitting.
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
