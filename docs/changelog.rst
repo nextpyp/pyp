@@ -10,37 +10,37 @@ v0.7.0
    
    :fa:`star` **New features**
    
-   - New blocks for running :doc:`molecular pattern mining and particle localization<guide/milopyp>` (MiLoPYP) as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_,including visualization of class labels and UMAP embeddings, with detected particle locations passed to downstream 3D refinement blocks.
+   - New blocks for running :doc:`MiLoPYP<guide/milopyp>` as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_, including visualization of class labels and UMAP embeddings, with detected particles passed to downstream 3D refinement blocks.
 
-   - New block architecture, with dedicated training and evaluation blocks, streamlines neural network workflows, offering greater flexibility and real-time visualization of loss functions and results from denoising, particle picking, and heterogeneity analysis.
+   - New block architecture, with dedicated training and evaluation blocks, streamlines neural network (NN) workflows, offering greater flexibility and real-time visualization of loss functions and results from NN-based operations.
 
    - A new suite of tomography particle picking blocks provides an intuitive, standalone workflow with support for size-based, template matching, geometry-based, manual, and imported particle picking.
   
-   - Simplified block architecture streamlines all refinement and classification tasks, including reference-based and ab-initio refinement, tilt-geometry and CTF refinement, motion correction, and heterogeneity analysis. The legacy architecture remains available for older projects.
+   - A simplified block architecture streamlines 3D refinement and classification, improving usability, while the legacy version remains available for older projects.
 
    - 3D particle picking via GPU-accelerated template search is supported through integration with `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_, with automatic transfer of particle orientations to downstream refinement blocks.
 
-   - Size-based particle picking, as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_, enables fast detection using only the particle radius, with automatic masking of artifacts and contamination.
+   - Size-based particle picking, as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_, enables fast partile detection in 3D using only the particle radius, with automatic masking of artifacts and contamination.
 
    - 3D tomogram segmentation with `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ (evaluation only) enables rapid segmentation of tomograms using a pre-trained model.
 
-   - Tomogram denoising with `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ supports training and evaluation, with automatic half-tomogram generation and visualization of loss and denoised results.
+   - Tomogram denoising with `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ supports training and evaluation, with automatic half-tomogram generation and visualization of loss functions and denoised results.
 
-   - Tomogram denosing with `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ supports training and evaluation, with real-time monitoring of loss and feeding of results into downstream blocks such as particle picking or segmentation.
+   - Tomogram denosing with `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ supports training and evaluation, with real-time monitoring of results and feeding of denoised tomograms into downstream blocks such as particle picking or segmentation.
 
-   - New blocks for continuous heterogeneity analysis using `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_ stream training metrics and outputs in real-time, allowing visualization of UMAP, PCA embeddings, cluster centroids, and 3D volumes.
+   - New blocks for continuous heterogeneity analysis using `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_, streaming training metrics and outputs in real-time, and visualization of UMAP, PCA embeddings, cluster centroids, and 3D volumes.
 
-   - Beta: New ab-initio refinement strategy enables de novo structure determination through iterative alignment of random particle subsets, with optional shape masking and multi-class refinement for heterogeneous datasets.
+   - New ab-initio refinement strategy enables de novo structure determination through iterative alignment of random particle subsets, with optional shape masking and multi-class refinement for heterogeneous datasets (beta).
 
    - Beam-tilt refinement and correction as implemented in cisTEM is now available in nextPYP, allowing users to improve the resolution of reconstructions.
 
    - Standalone mode is now also supported in the :doc:`command line interface (CLI)<cli/installation>`, allowing users to run it on a desktop or local computer without a cluster or web server.
 
-   - nextPYP users can now be mapped to OS users, allowing job processes to run under individual OS accounts, ensuring compliance with resource policies and filesystem-controlled file access.
+   - nextPYP users can now be mapped to Operating System (OS) users, allowing job processes to run under individual OS accounts, ensuring compliance with resource policies and filesystem-controlled file access.
 
    - A new system of :doc:`SLURM cluster templates<reference/templates>` offers greater flexibility in job submission, allowing customization to fit various cluster environments and scheduler configurations.
 
-   - Import tilt-series alignments from external programs in IMOD format using \*.xf and \*.tlt files, useful for challenging datasets that are hard to align automatically.
+   - Import tilt-series alignments from external programs in IMOD format using \*.xf and \*.tlt files, useful for processing challenging datasets that are hard to align automatically.
 
    - Export clean 3D particle coordinates in IMOD format (sva/\*.spk files) from any refinement or classification block for use in other programs.
 
@@ -48,15 +48,15 @@ v0.7.0
 
    - Refinement metadata is now stored in cisTEM's binary format, enabling up to 2x faster refinement and classification, with smaller, quicker-to-read files. The previous format is still available for legacy projects.
 
-   - Automatic density-based masking is now available during 3D refinement, applying an adaptive shape mask to the reference map at each iteration to improve reconstruction quality.
+   - Automatic density-based masking is now available during 3D refinement, applying an adaptive shape mask to the reference map at each refinement iteration to improve reconstruction quality.
 
-   - An option to save `*.mrc`` files in 16-bit precision has been added, offering up to 50% storage savings (enabled by default), reducing storage needs for large datasets.
+   - An option to save `*.mrc` files in 16-bit precision has been added, offering up to 50% storage savings (enabled by default), reducing storage needs for large datasets.
  
    - The "Only" option in the Jobs menu lets you quickly select and run individual blocks with a single click, simplifying workflows in projects with many blocks.
 
    - In addition to Relion 4, nextPYP now supports importing Relion 5 tomography projects, allowing users to take advantage of new features while continuing to use other packages.
 
-   - A new documentation theme offers expanded tutorials, user guides, and setup instructions, including detailed installation steps for clusters and workstations, along with comprehensive coverage of new features and cryo-ET workflows.
+   - New documentation offers expanded tutorials, user guides, and setup instructions, including detailed installation steps for clusters and workstations, and comprehensive coverage of new features and cryo-ET workflows.
 
    :fa:`plus-square` **Improvements**
 
