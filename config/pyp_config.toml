@@ -4925,8 +4925,8 @@ condition = { arg="frame_refinement", value="true" }
 hidden = [ 'spr_coarse_refine', 'tomo_initial_refine', "tomo_reference_refine", 'tomo_coarse_refine', 'spr_map_clean' ]
 
 [tabs.csp.spatial_sigma]
-name = "Spatial sigma"
-description = "Sigma to use for spatial regularization (pixels/voxels)"
+name = "Spatial sigma (unbinned pixels/voxels)"
+description = "Sigma to use for spatial regularization"
 type = "float"
 default = 500.0
 condition = { arg="transreg", value="true" }
