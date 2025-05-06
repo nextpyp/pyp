@@ -337,8 +337,8 @@ if __name__ == "__main__":
                     - set(global_indexes_to_remove)
                 )
 
-            logger.info("Particles to remove = %i", len(global_indexes_to_remove))
-            logger.info("Particles to keep = %i", len(global_indexes_to_keep))
+            logger.info(f"Particles to remove = {len(global_indexes_to_remove):,}")
+            logger.info(f"Particles to keep = {len(global_indexes_to_keep):,}")
 
             if not args.debug:
 

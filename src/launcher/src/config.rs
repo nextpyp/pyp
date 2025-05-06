@@ -140,6 +140,20 @@ impl<'a> ConfigSectionReader<'a> {
 		}
 	}
 
+	pub fn get_optional_existing_folder(&self, key: &'static str) -> Result<Option<PathBuf>,LauncherError> {
+		match self.get_optional_str(key)? {
+			None => Ok(None),
+			Some(val) => {
+				let path = truncate_path_vars(Path::new(val));
+				if path.is_dir() {
+					Ok(Some(path))
+				} else {
+					Ok(None)
+				}
+			}
+		}
+	}
+
 	pub fn _get_folder(&self, key: &'static str) -> Result<PathBuf,LauncherError> {
 		Ok(self.get_optional_folder(key)?
 			.ok_or_else(|| LauncherError::ConfigValueNotFound {

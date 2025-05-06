@@ -62,7 +62,7 @@ if __name__ == "__main__":
     memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else ""
 
     logger.info(
-        "Job (v{}) launching on {} using {} task(s) {}".format(
+        "Running nextPYP v{} on {} using {} task(s) {}".format(
         version, socket.gethostname(), mpi_tasks, memory
         )
     )
@@ -326,7 +326,7 @@ if __name__ == "__main__":
                     scaling = model_pixel_size / actual_pixel
                     logger.warning(f"Rescaling initial model {initial_model} to {scaling} A per pixel")
                     new_size = int(mparameters["extract_box"])
-                    command = f"{get_imod_path()}/bin/matchvol -size {new_size},{new_size},{new_size} -3dxform {scaling},0,0,0,0,{scaling},0,0,0,0,{scaling},0 '{initial_model}' {frealign_initial_model}; rm {frealign_initial_model}~"
+                    command = f"{get_imod_path()}/bin/matchvol -size {new_size},{new_size},{new_size} -3dxform {scaling},0,0,0,0,{scaling},0,0,0,0,{scaling},0 '{initial_model}' {frealign_initial_model}; rm -f {frealign_initial_model}~"
                     local_run.run_shell_command(command=command,verbose=mparameters["slurm_verbose"])
 
                 else:

@@ -2,104 +2,116 @@
 Import/export projects
 ######################
 
-This tutorial shows how to import and export single-particle and tomography projects. ``nextPYP`` supports importing **Sessions**, **CLI projects**, or `Relion 4.0 <https://relion.readthedocs.io/en/release-4.0/>`_ projects. We will demonstrate how to import/export data to and from Relion (the other options work similarly).
+This tutorial shows how to import and export single-particle and tomography projects. ``nextPYP`` supports importing projects from existing **Sessions**, **Projects**, `Relion 4.0 <https://relion.readthedocs.io/en/release-4.0/>`_, or `Relion 5.0 <https://relion.readthedocs.io/en/release-5.0/>`_ projects. We will demonstrate how to import/export data to and from Relion (the other options work similarly).
 
-1. Import single-particle projects
-==================================
+Import single-particle
+======================
 
-* Create or navigate to an existing single-particle project, click :badge:`Import Data,badge-primary` and select :badge:`Single-particle (from Star),badge-primary`
+.. nextpyp:: Import single-particle project from \*.star files
+  :collapsible: open  
 
-* Go to the **Import parameters** tab:
+  * Create or navigate to an existing single-particle project, click :bdg-primary:`Import Data` and select :bdg-primary:`Single-particle (from Star)`
 
-  .. tabbed:: Import parameters
+  * Go to the **Import parameters** tab:
 
-    - Set the location of the ``Relion refinement star file`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+    .. md-tab-set::
 
-    - Set the location of the ``Relion motioncorr star file`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+      .. md-tab-item:: Import parameters
 
-    - Set the location of the ``Relion project path`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+        - Set the location of the ``Relion refinement star file`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-    * Go to the **Raw data** tab:
+        - Set the location of the ``Relion motioncorr star file`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-  .. tabbed:: Raw data
+        - Set the location of the ``Relion project path`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-    - Set the ``Location`` of the raw data by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+        * Go to the **Raw data** tab:
 
-    - Click on the **Microscope parameters** tab
+      .. md-tab-item:: Raw data
 
-  .. tabbed:: Microscope parameters
+        - Set the ``Location`` of the raw data by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-    - Set ``Pixel size (A)``
+        - Click on the **Microscope parameters** tab
 
-    - Set ``Acceleration voltage (kV)``
+      .. md-tab-item:: Microscope parameters
 
-    * (optional) Set parameters in other tabs
+        - Set ``Pixel size (A)``
 
-* Click :badge:`Save,badge-primary` and the new block will appear on the project page
+        - Set ``Acceleration voltage (kV)``
 
-* Click :badge:`Run,badge-primary` followed by :badge:`Start Run for 1 block,badge-primary` to launch the import process
+        * (optional) Set parameters in other tabs as needed
 
-* Click inside the block to inspect the results
+  * Click :bdg-primary:`Save` and a new :bdg-secondary:`Single Particle (from star)` block will appear on the project page
 
+  * Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the import process
 
-2. Import tomography projects
-=============================
-
-* Create or navigate to an existing tomography project, click :badge:`Import Data,badge-primary` and select :badge:`Tomography (from Star),badge-primary`
-
-* Go to the **Import parameters** tab:
-
-  .. tabbed:: Import parameters
-
-    - Set the location of the ``Relion refinement star file`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
-
-    - Set the location of the ``Relion tomogram star file`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
-
-    - Set the location of the ``Relion project path`` by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
-
-    * Go to the **Raw data** tab:
-
-  .. tabbed:: Raw data
-
-    - Set the ``Location`` of the raw data by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
-
-    - Click on the **Microscope parameters** tab
-
-  .. tabbed:: Microscope parameters
-
-    - Set ``Pixel size (A)``
-
-    - Set ``Acceleration voltage (kV)``
-
-    - Set ``Tilt-axis angle (degrees)``
-
-    * (optional) Set parameters in other tabs
-
-* Click :badge:`Save,badge-primary` and the new block will appear on the project page
-
-* Click :badge:`Run,badge-primary` followed by :badge:`Start Run for 1 block,badge-primary` to launch the import process
-
-* Click inside the block to inspect the results
+  * Click inside the :bdg-secondary:`Single Particle (from star)` block to inspect the results
 
 
-3. Export single-particle/tomography projects
-=============================================
+Import tomography
+=================
 
-* Choose an existing :badge:`Particle refinement,badge-primary` block, click on the menu icon :fa:`bars, text-primary` and select the :fa:`edit, text-primary` Edit option
+.. nextpyp:: Import tomography project from \*.star files
+  :collapsible: open  
 
-* Go to the **Export** tab:
+  * Create or navigate to an existing tomography project, click :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Star)`
 
-  - Check ``Export metadata``
+  * Go to the **Import parameters** tab:
 
-  - Set the location of the ``Input parfile`` you want to export by clicking on the icon :fa:`search,text-primary` and browsing to the corresponding directory
+    .. md-tab-set::
 
-* Click :badge:`Save,badge-primary`
+      .. md-tab-item:: Import parameters
 
-* Click :badge:`Run,badge-primary` followed by :badge:`Start Run for 1 block,badge-primary` to launch the export process
+        - Set the location of the ``Relion refinement star file`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-Once the job ends, the results will appear in the specified folder and will be ready to import into other packages. For a tomography project example, you can use `Relion's Import Coordinates <https://relion.readthedocs.io/en/release-4.0/STA_tutorial/ImportCoords.html>`_ procedure
+        - Set the location of the ``Relion tomogram star file`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-.. seealso::
+        - Set the location of the ``Relion project path`` by clicking on the icon :fa:`search` and browsing to the corresponding directory
 
-    * :doc:`CLI single-particle import/export<../reference/cli/spa_import_export>`
-    * :doc:`CLI tomography import/export<../reference/cli/tomo_import_export>`
+        * Go to the **Raw data** tab:
+
+      .. md-tab-item:: Raw data
+
+        - Set the ``Location`` of the raw data by clicking on the icon :fa:`search` and browsing to the corresponding directory
+
+        - Click on the **Microscope parameters** tab
+
+      .. md-tab-item:: Microscope parameters
+
+        - Set ``Pixel size (A)``
+
+        - Set ``Acceleration voltage (kV)``
+
+        - Set ``Tilt-axis angle (degrees)``
+
+        * (optional) Set parameters in other tabs as needed
+
+  * Click :bdg-primary:`Save` and the new :bdg-secondary:`Tomography (from star)` block will appear on the project page
+
+  * Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the import process
+
+  * Click inside the :bdg-secondary:`Tomography (from star)` block to inspect the results
+
+
+Export refinements
+==================
+
+.. nextpyp:: Export 3D refinements in \*.star format
+  :collapsible: open
+
+  * Choose an existing :bdg-primary:`Particle refinement` block, click on the menu icon :fa:`bars`, and select the :fa:`edit` Edit option
+
+  * Go to the **Export** tab:
+
+    .. md-tab-set::
+
+      .. md-tab-item:: Export
+  
+        - Check ``Export metadata``
+
+        - Set the location of the ``Input parfile`` to export by clicking on the icon :fa:`search` and browsing to the desired directory
+
+  * Click :bdg-primary:`Save`
+
+  * Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the export process
+
+  Once the job ends, the results will appear in the specified folder and will be ready to import into other packages. For a tomography project, for example, you can use `Relion's Import Coordinates <https://relion.readthedocs.io/en/release-4.0/STA_tutorial/ImportCoords.html>`_ procedure to import the data

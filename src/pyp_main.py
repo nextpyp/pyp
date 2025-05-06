@@ -31,6 +31,7 @@ import json
 import pickle
 import re
 import toml
+from tqdm import tqdm
 from pathlib import Path
 from uuid import uuid4
 import numpy as np
@@ -46,9 +47,9 @@ from pyp.analysis.image import (
 )
 from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
-from pyp.analysis.scores import clean_particles_tomo, score_particles_fromparx, particle_cleaning
+from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
-from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required
+from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools, MemBrain 
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
@@ -66,14 +67,20 @@ from pyp.inout.metadata import (
     get_image_particle_index,
     get_particles_tilt_index,
     compute_global_weights,
+    compute_global_weights_from_par,
+    cistem_star_file,
+    global_par2cistem,
 )
 from pyp.postprocess.pyp_fsc import fsc_cutoff
 from pyp.refine.csp import particle_cspt
+from pyp.refine.heterogeneity import cryoDRGN, tomoDRGN
 from pyp.refine.eman import eman
 from pyp.refine.frealign import frealign
 from pyp.refine.relion import relion
 from pyp.stream import pyp_daemon
+from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
 from pyp.streampyp.web import Web
+from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, mpi, project_params, set_up, slurm, user_comm
 from pyp.system.db_comm import (
     load_config_files,
@@ -95,17 +102,18 @@ from pyp.system.set_up import prepare_frealign_dir
 from pyp.system.singularity import (
     get_mpirun_command,
     get_pyp_configuration,
+    standalone_mode,
     run_pyp,
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_multirun_path, get_parameter_files_path, get_gpu_queue
+from pyp.system.utils import get_imod_path, get_topaz_path, get_multirun_path, get_parameter_files_path, get_gpu_queue
 from pyp.system.wrapper_functions import (
     avgstack,
     replace_sections,
     write_current_particle,
 )
-from pyp.utils import timer, movie2regex, symlink_relative
+from pyp.utils import timer, movie2regex, symlink_relative, symlink_relative_pattern
 
 __author__ = "Alberto Bartesaghi"
 __maintainer__ = "Alberto Bartesaghi"
@@ -158,70 +166,261 @@ def spr_swarm_check_error(parameters, name):
     return False
 
 
+def create_links_to_files_spr(files,parameters):
+
+    [ symlink_relative(file, os.path.join("raw", os.path.basename(file))) for file in files ]
+
+
+def create_links_to_files(files,parameters):
+
+    # check for duplicates
+    for file in files:
+        if os.path.exists("raw/" + os.path.basename(file)):
+            time_stamp = time.strftime(
+                "%Y%m%d_%H%M", time.gmtime(os.path.getmtime(file))
+            )
+            target = (
+                os.path.splitext(os.path.basename(file))[0]
+                + "_"
+                + time_stamp
+                + os.path.splitext(os.path.basename(file))[1]
+            )
+        else:
+            target = os.path.basename(file)
+        symlink_relative(file, os.path.join("raw", target))
+
+        # copy all necessary metadata as well
+        name = Path(target).stem
+        mfiles = dict()
+        mfiles["raw"] = ".xml .rawtlt .order"
+        if "data_retrieve" in parameters.keys() and parameters["data_retrieve"]:
+            if "movie_ali" in parameters and not parameters["movie_ali"]:
+                mfiles["ali"] = ".xf .tlt .fid.txt _tiltalignScript.txt"
+                mfiles["ctf"] = ".def .param .ctf _CTFprof.txt _avgrot.txt"
+            mfiles["box"] = ".box .boxx"
+            mfiles["log"] = "_RAPTOR.log"
+            mfiles["csp"] = "_boxes3d.txt"
+            mfiles["mod"] = ".spk _xray.mod _gold3d.mod _boxes.mod"
+        # mfiles["tomo"] = ".rec _bin.ali _bin.mrc"
+        for d in mfiles.keys():
+            if not os.path.exists(d):
+                os.mkdir(d)
+            for f in mfiles[d].split():
+                if d == "raw":
+                    source = os.path.join(
+                        Path(file).parents[0],
+                        name + f,
+                    )
+                else:
+                    source = os.path.join(
+                        Path(file).parents[0],
+                        d,
+                        name + f,
+                    )
+                destination = d + "/" + name + f
+                if os.path.isfile(source) and not os.path.exists(destination):
+                    if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
+                        logger.info("Retrieving " + source)
+                    shutil.copy2(source, destination)
+
+            # separately transfer .xml, .order and .rawtlt files when using movies
+            for ext in mfiles["raw"].split():
+                if len(glob.glob(f"raw/*{ext}")) == 0:
+                    sources = glob.glob(f"{os.path.join(Path(file).parents[0],'*'+ext)}")
+                    for source in sources:
+                        destination = "raw/" + Path(source).name
+                        if os.path.isfile(source) and not os.path.exists(destination):
+                            shutil.copy2(source, destination)
+
+def check_and_update_parameters(parent_parameters, parameters_existing):
+    """Check consistency between current block and parent block parameters and reset force flags 
+
+    Args:
+        parent_parameters (_type_): current block parameters
+        parameters_existing (_type_): upstream block parameters
+
+    Returns:
+        _type_: _description_
+    """
+    # detect errors
+    if parent_parameters["data_import"]:
+        if parent_parameters["micromon_block"] == "sp-import" and parameters_existing["data_mode"] != "spr":
+            raise Exception(f"Cannot import tomography project as single-particle project")
+        elif parent_parameters["micromon_block"] == "tomo-import" and parameters_existing["data_mode"] != "tomo":
+            raise Exception(f"Cannot import single-particle project as tomography project")
+
+    # if importing an spr session, reset all the "force" flags
+    if parent_parameters["micromon_block"] == "sp-session":
+        if parent_parameters["data_mode"] != "spr":
+            raise Exception(f"Cannot import tomography session as single-particle session")
+        parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['detect_force'] = False
+
+    # if importing a tomo session, reset all the "force" flags
+    if parent_parameters["micromon_block"] == "tomo-session":
+        if parent_parameters["data_mode"] != "tomo":
+            raise Exception(f"Cannot import single-particle session as tomography session")
+        parameters_existing['movie_force'] = parameters_existing['ctf_force'] = parameters_existing['tomo_ali_force'] = parameters_existing['tomo_rec_force'] = parameters_existing['detect_force'] = parameters_existing['tomo_vir_force'] = False
+
+    return parameters_existing
+
 def parse_arguments(block):
 
-    # load existing parameters or from data_parent
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-data_parent", "--data_parent")
-    parser.add_argument("-data_mode", "--data_mode")
-    parser.add_argument("-data_import", "--data_import",action="store_true",default=False)
-    parser.add_argument("-csp_no_stacks", "--csp_no_stacks",action="store_true",default=False)
-    args, unknown = parser.parse_known_args()
-    parent_parameters = vars(args)
+    # read params from a params file instead of the CLI, if needed
+    params_file_path = get_params_file_path()
+    if params_file_path is not None:
 
-    # check if parent project is valid
-    valid_parent = "data_parent" in parent_parameters.keys() and parent_parameters["data_parent"] is not None and os.path.exists(project_params.resolve_path(parent_parameters["data_parent"]))
-    need_new_project = len(glob.glob("raw/*")) == 0 or project_params.load_parameters() == 0 or parent_parameters["data_import"] or "postproc" in os.environ
-    if valid_parent and need_new_project:
-        # copy parameter file from parent
-        parameters_existing = project_params.load_parameters(
-            project_params.resolve_path(parent_parameters["data_parent"])
-        )
-        # reset these parameters
-        if parameters_existing:
+        parameters_existing = project_params.load_parameters()
+        config = ParamsConfig.from_file()
+        parameters = parent_parameters = parse_params_from_file(config, params_file_path)
 
-            # read specification file
-            import toml
-            specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+        # parse -csp_no_stacks option separately since this one is hardcoded in the csp command
+        dummy_parser = argparse.ArgumentParser(add_help=False)
+        dummy_parser.add_argument("-csp_no_stacks", "--csp_no_stacks",action="store_true",default=False)
+        args, unknown = dummy_parser.parse_known_args()
+        dummy_parameters = vars(args)
+        parameters['csp_no_stacks'] = parent_parameters['csp_no_stacks'] = dummy_parameters['csp_no_stacks']
 
-            # figure out which parameters need to be reset to their default values
-            for t in specifications["tabs"].keys():
-                if not t.startswith("_"):
-                    for p in specifications["tabs"][t].keys():
-                        if "copyToNewBlock" in specifications["tabs"][t][p] and not specifications["tabs"][t][p]["copyToNewBlock"]:
-                            if "default" in specifications["tabs"][t][p]:
-                                parameters_existing[f"{t}_{p}"] = specifications["tabs"][t][p]["default"]
-                            elif f"{t}_{p}" in parameters_existing:
-                                del parameters_existing[f"{t}_{p}"]
+        # keep track of iteration number since website doesn't know about this parameter
+        if parameters_existing and "refine_iter" in parameters_existing:
+            parameters["refine_iter"] = parameters_existing.get("refine_iter")
+            
+        # handle data import case separately
+        if parameters.get("data_parent"):
+            data_parent = project_params.resolve_path(parameters.get("data_parent"))
+            if os.path.exists(data_parent) and parameters_existing == 0:
+                parameters_existing = project_params.load_parameters(data_parent)
+
+            if parameters.get("data_import"):
+                stream_compress = parameters_existing.get("stream_compress")
+                if stream_compress and stream_compress != "none" and parameters_existing.get("data_path"):
+                    data_path = Path(project_params.resolve_path(parameters_existing["data_path"]))
+                    if parameters_existing.get('movie_pattern'):
+                        parameters_existing['movie_pattern'] = parameters_existing['movie_pattern'].replace( data_path.suffix, '.' + stream_compress )
+                    parameters_existing['data_path'] = os.path.join( data_parent, "raw", '*.' + stream_compress )
+                parameters_existing = check_and_update_parameters(parameters, parameters_existing)
+                
+                parameters_existing["data_parent"] = data_parent
+                if "data_import" in parameters:
+                    parameters_existing["data_import"] = parameters["data_import"]
+                if "micromon_block" in parameters:
+                    parameters_existing["micromon_block"] = parameters["micromon_block"]
+
+                parameters = project_params.parse_parameters(parameters_existing, block, parameters_existing["data_mode"] ) 
+            
+            elif parameters_existing and 'micromon_block' in parameters_existing and parameters_existing['micromon_block'].endswith("-session"):
+
+                parameters = project_params.inherit_from_parent(parameters_existing, params_file_path )
+                parameters['csp_no_stacks'] = dummy_parameters['csp_no_stacks']
+
+            if parameters_existing:
+                if "data_set" in parameters_existing:
+                    parent_dataset = parameters_existing.get("data_set")
+            else:
+                parent_dataset = parameters["data_set"]
+            
+            if parameters_existing:
+                # transfer hidden parameters
+
+                if "data_mode" in parameters_existing:
+                    parameters["data_mode"] = parameters_existing["data_mode"]
+                if "extract_cls" in parameters_existing:
+                    parameters["extract_cls"] = parameters_existing["extract_cls"]
+                
+                if "movie_force" in parameters_existing:
+                    parameters["movie_force"] = parameters_existing.get("movie_force")
+                if "detect_force" in parameters_existing:
+                    parameters["detect_force"] = parameters_existing.get("detect_force")
+                if "ctf_force" in parameters_existing:
+                    parameters["ctf_force"] = parameters_existing.get("ctf_force")
+                if "tomo_ali_force" in parameters_existing:
+                    parameters["tomo_ali_force"] = parameters_existing.get("tomo_ali_force")
+                if "tomo_rec_force" in parameters_existing:
+                    parameters["tomo_rec_force"] = parameters_existing.get("tomo_rec_force") 
+                if "tomo_vir_force" in parameters_existing:
+                    parameters["tomo_vir_force"] = parameters_existing.get("tomo_vir_force")
+                if "tomo_srf_force" in parameters_existing:
+                    parameters["tomo_srf_force"] = parameters_existing.get("tomo_srf_force")
+
+        else:
+            
+            parent_dataset = parameters.get("data_set")
+
+        # always set dataset and refinement name based on current folder name
+        parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
+        data_mode = parameters.get("data_mode")
 
     else:
-        parameters_existing = project_params.load_parameters()
 
-    # parse parameters
-    try:
-        if parameters_existing != 0:
-            data_mode = parameters_existing["data_mode"]
-        elif parent_parameters != 0:
-            data_mode = parent_parameters["data_mode"]
-        if data_mode is None:
-            data_mode = "spr"
-        parameters = project_params.parse_parameters(parameters_existing, block, data_mode )
-    except:
-        type, value, traceback = sys.exc_info()
-        if type == SystemExit:
-            # argparse throws this error when user input is incorrect
-            # it's safe to ignore these errors
-            pass
+        # load existing parameters or from data_parent
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("-data_parent", "--data_parent")
+        parser.add_argument("-data_mode", "--data_mode")
+        parser.add_argument("-data_import", "--data_import",action="store_true",default=False)
+        parser.add_argument("-csp_no_stacks", "--csp_no_stacks",action="store_true",default=False)
+        parser.add_argument("-micromon_block", "--micromon_block")
+        args, unknown = parser.parse_known_args()
+        parent_parameters = vars(args)
+
+        # check if parent project is valid
+        valid_parent = "data_parent" in parent_parameters.keys() and parent_parameters["data_parent"] is not None and os.path.exists(project_params.resolve_path(parent_parameters["data_parent"]))
+        need_new_project = len(glob.glob("raw/*")) == 0 or project_params.load_parameters() == 0 or parent_parameters["data_import"] or "postproc" in os.environ
+        if valid_parent and need_new_project:
+            # copy parameter file from parent
+            parameters_existing = project_params.load_parameters(
+                project_params.resolve_path(parent_parameters["data_parent"])
+            )
+            # reset these parameters
+            if parameters_existing:
+
+                # read specification file
+                import toml
+                specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+
+                # figure out which parameters need to be reset to their default values
+                for t in specifications["tabs"].keys():
+                    if not t.startswith("_"):
+                        for p in specifications["tabs"][t].keys():
+                            if "copyToNewBlock" in specifications["tabs"][t][p] and not specifications["tabs"][t][p]["copyToNewBlock"]:
+                                if "default" in specifications["tabs"][t][p]:
+                                    parameters_existing[f"{t}_{p}"] = specifications["tabs"][t][p]["default"]
+                                elif f"{t}_{p}" in parameters_existing:
+                                    del parameters_existing[f"{t}_{p}"]
+
+                parameters_existing = check_and_update_parameters(parent_parameters, parameters_existing)
+
         else:
-            # but show other kinds of exceptions, those are usually bugs
-            sys.__excepthook__(type, value, traceback)
-        return 0
+            parameters_existing = project_params.load_parameters()
 
-    # default to current directory if not provided
-    parent_dataset = parameters["data_set"]
+        # parse parameters
+        try:
+            if parameters_existing != 0:
+                data_mode = parameters_existing["data_mode"]
+            elif parent_parameters != 0:
+                data_mode = parent_parameters["data_mode"]
+            if data_mode is None:
+                data_mode = "spr"
+            parameters = project_params.parse_parameters(parameters_existing, block, data_mode )
+        except:
+            type, value, traceback = sys.exc_info()
+            if type == SystemExit:
+                # argparse throws this error when user input is incorrect
+                # it's safe to ignore these errors
+                pass
+            else:
+                # but show other kinds of exceptions, those are usually bugs
+                sys.__excepthook__(type, value, traceback)
+            return 0
+
+        # default to current directory if not provided
+        parent_dataset = parameters["data_set"]
 
     if parameters["data_set"] == None or parent_parameters["data_parent"] is not None:
         parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
+        # rename .micrographs and .films files, if project was copied
+        if parent_dataset and os.path.exists( parent_dataset + ".micrographs"):
+            shutil.move( parent_dataset + ".micrographs", parameters["data_set"] + ".micrographs")
+        if parent_dataset and os.path.exists( parent_dataset + ".films"):
+            shutil.move( parent_dataset + ".films", parameters["data_set"] + ".films")
 
     # set slurm queues to default values if not provided
     if "slurm_queue" not in parameters.keys():
@@ -245,41 +444,54 @@ def parse_arguments(block):
         raise Exception("Must specify non-zero virion radius (-tomo_vir_rad)")
 
     # initialize if no images are present
-    if not len(glob.glob("raw/*")) and block != "export_session":
-        if parameters["data_parent"] != None and not parameters["data_parent"] == ".":
+    if len(glob.glob("raw/*")) == 0 and block != "export_session" and "pypgain" not in os.environ:
+        if parameters["data_parent"] != None and not parameters["data_parent"] == "." and '-preprocessing' not in parameters["micromon_block"]:
 
-            # link all necessary metadata directories
-            if not parameters["data_import"]:
-                folders = ["raw", "sva", "mrc", "webp"]
+            # always link the raw/ data folder
+            folders = ["raw"]
+            for f in folders:
+                source = os.path.join(parameters["data_parent"], f)
+                if os.path.exists(source):
+                    symlink_relative(source, f)
+
+            # always link indivdual files in the pkl/, csp/, and sva/ folders
+            for folder in ["pkl", "csp", "sva"]:
+                os.makedirs(folder,exist_ok=True)
+                pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.*")
+                number_of_files = len(glob.glob(pattern))
+                if number_of_files > 0:
+                    logger.info(f"Linking {number_of_files:,} files to {folder}/ folder")
+                    symlink_relative_pattern(pattern,os.path.join(os.getcwd(),folder))
+
+            # link mrc/ and webp/ folders for blocks that don't change files in these folders
+            if (
+                not parameters["data_import"] 
+                and parameters["micromon_block"] != "tomo-denoising-eval" 
+                and parameters["micromon_block"] != "tomo-picking-closed" 
+                and parameters["micromon_block"] != "tomo-segmentation-closed"
+                and parameters["micromon_block"] != "tomo-segmentation-open"
+                and parameters["micromon_block"] != "tomo-particles-eval"
+                and parameters["micromon_block"] != "tomo-picking"
+            ):
+                folders = ["mrc", "webp"]
                 for f in folders:
                     source = os.path.join(parameters["data_parent"], f)
                     if os.path.exists(source):
                         symlink_relative(source, f)
 
                 # create empty log folder
-                os.makedirs("log")
+                os.makedirs("log", exist_ok=True)
 
-                # link individual files
-                for folder in ["pkl", "csp"]:
-                    os.makedirs(folder)
-                    files = glob.glob(os.path.join(parameters["data_parent"], folder, "*"))
-                    if folder == "csp":
-                        exclude_file = ["micrograph_particle.index", "particle_tilt.index"]
-                        files = [f for f in files if f not in exclude_file]
-                    for source in files:             
-                        destination = os.path.join(os.getcwd(), os.path.relpath(source,parameters["data_parent"]))
-                        symlink_relative(source, destination)
             else:
                 # create new folders and links to individual files
-                folders = ["raw", "mrc", "webp", "sva", "pkl"]
+                folders = ["mrc", "webp"]
                 for f in folders:
-                    os.makedirs(f)
-                    files = glob.glob(
-                        os.path.join(parameters["data_parent"], f, "*")
-                    )
-                    for source in files:
-                        destination = os.path.relpath(source, parameters["data_parent"])
-                        symlink_relative(source, destination)
+                    os.makedirs(f,exist_ok=True)
+                    pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), f, "*.*")
+                    number_of_files = len(glob.glob(pattern))
+                    if number_of_files > 0:
+                        logger.info(f"Linking {number_of_files:,} files to {f}/ folder")
+                        symlink_relative_pattern(pattern,os.path.join(os.getcwd(),f))
 
             # link micrographs and films
             dataset = os.path.split(os.getcwd())[-1]
@@ -293,10 +505,11 @@ def parse_arguments(block):
                 reinitialize = True
             else:
                 for e in extensions:
-                    source = os.path.join(parameters["data_parent"], parent_dataset + e)
-                    target = dataset + e
-                    if not os.path.exists(target) and os.path.exists(source):
-                        symlink_relative(source, target)
+                    if parameters.get("data_parent") and parent_dataset:
+                        source = os.path.join(parameters["data_parent"], parent_dataset + e)
+                        target = dataset + e
+                        if not os.path.exists(target) and os.path.exists(source):
+                            symlink_relative(source, target)
 
             # copy configuration files
             files = [".pyp_config.toml"]
@@ -306,18 +519,19 @@ def parse_arguments(block):
 
             # use default par file from block upstream if none specified
             if os.path.exists(micrographs) and (
+                (
                 not "refine_parfile" in parameters.keys()
                 or parameters["refine_parfile"] is None
                 or project_params.resolve_path(parameters["refine_parfile"]) == "auto"
                 or not Path(
                     project_params.resolve_path(parameters["refine_parfile"])
-                ).exists
-                or not "refine_parfile_tomo" in parameters.keys()
+                ).exists) and (
+                not "refine_parfile_tomo" in parameters.keys()
                 or parameters["refine_parfile_tomo"] is None
                 or project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto"
                 or not Path(
                     project_params.resolve_path(parameters["refine_parfile_tomo"])
-                ).exists
+                ).exists )
                 or reinitialize
             ):
                 # if not using all micrographs, we need to generate new .par file
@@ -340,14 +554,20 @@ def parse_arguments(block):
                         parent_project_name + "_r01_02.par.bz2",
                     )
                     # find out what is the most recent parameter file
-                    reference_par_file = sorted(glob.glob(os.path.join(parent_parameters["data_parent"],"frealign","maps","*_r01_??.par*") ))
+                    potential_file_patterns = ["*_r01_??.bz2", "*_r01_??", "*_r01_clean.bz2", "*_r01_??_clean.bz2"]
+                    potential_parameter_files = [Path(parent_parameters["data_parent"], "frealign", "maps").glob(pattern) for pattern in potential_file_patterns]
+                    potential_parameter_files = [str(file) for files in potential_parameter_files for file in files]
+                    reference_par_file = sorted(potential_parameter_files)
+
                     if len(reference_par_file) > 0:
                         reference_par_file = reference_par_file[-1]
-                        reference_model_file = reference_par_file.replace(".bz2","").replace(".par",".mrc")
+                        reference_model_file = reference_par_file.replace(".bz2","") + ".mrc"
                     elif data_mode == "tomo":
-                        reference_par_file = sorted(glob.glob( os.path.join(parent_parameters["data_parent"],"frealign","tomo-preprocessing-*.txt") ))
+                        reference_par_file = sorted(glob.glob( os.path.join(parent_parameters["data_parent"],"frealign","tomo-*_volumes.txt") ))
                         if len(reference_par_file) > 0:
                             reference_par_file = reference_par_file[-1]
+                        else:
+                            reference_par_file = ""
                         reference_model_file = ""
                     else:
                         reference_par_file = ""
@@ -419,61 +639,19 @@ def parse_arguments(block):
             # remove gain reference from list
             [files.remove(file) for file in files if "Gain" in file]
 
-            logger.info(
-                "{0} found {1} files to link into raw folder".format(
-                    project_params.resolve_path(parameters["data_path"]), len(files)
-                )
-            )
-            for file in files:
-                # check for duplicates
-                if os.path.exists("raw/" + os.path.basename(file)):
-                    time_stamp = time.strftime(
-                        "%Y%m%d_%H%M", time.gmtime(os.path.getmtime(file))
-                    )
-                    target = (
-                        os.path.splitext(os.path.basename(file))[0]
-                        + "_"
-                        + time_stamp
-                        + os.path.splitext(os.path.basename(file))[1]
-                    )
-                else:
-                    target = os.path.basename(file)
-                symlink_relative(file, os.path.join("raw", target))
+            logger.info(f"{project_params.resolve_path(parameters['data_path'])} found {len(files):,} file(s) to link into raw/ folder")
 
-                # copy all necessary metadata as well
-                name = Path(target).stem
-                mfiles = dict()
-                mfiles["raw"] = ".xml .rawtlt .order"
-                if "data_retrieve" in parameters.keys() and parameters["data_retrieve"]:
-                    if "movie_ali" in parameters and not parameters["movie_ali"]:
-                        mfiles["ali"] = ".xf .tlt .fid.txt _tiltalignScript.txt"
-                        mfiles["ctf"] = ".def .param .ctf _CTFprof.txt _avgrot.txt"
-                    mfiles["box"] = ".box .boxx"
-                    mfiles["log"] = "_RAPTOR.log"
-                    mfiles["csp"] = "_boxes3d.txt"
-                    mfiles["mod"] = ".spk _xray.mod _gold3d.mod _boxes.mod"
-                # mfiles["tomo"] = ".rec _bin.ali _bin.mrc"
-                for d in mfiles.keys():
-                    if not os.path.exists(d):
-                        os.mkdir(d)
-                    for f in mfiles[d].split():
-                        if d == "raw":
-                            source = os.path.join(
-                                Path(file).parents[0],
-                                name + f,
-                            )
-                        else:
-                            source = os.path.join(
-                                Path(file).parents[0],
-                                d,
-                                name + f,
-                            )
-                        destination = d + "/" + name + f
-                        if os.path.isfile(source) and not os.path.exists(destination):
-                            if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
-                                logger.info("Retrieving " + source)
-                            shutil.copy2(source, destination)
-
+            # create relative symlinks in raw/ folder
+            raw_path = Path(project_params.resolve_path(parameters['data_path']))
+            for ext in [ raw_path.name, raw_path.stem+'.order', raw_path.stem+'.rawtlt', raw_path.stem+'.xml' ]: 
+                path = os.path.join(raw_path.parent,ext)
+                number_of_files = len(glob.glob(path))
+                if number_of_files:
+                    logger.info(f"Linking {number_of_files:,} files into raw/*{Path(ext).suffix}")
+                    symlink_relative_pattern(path,os.path.join(os.getcwd(),"raw"))                    
+                if parameters.get("data_mode") == "spr":
+                    break
+            
             ctffile = "ctf/" + os.path.splitext(os.path.basename(files[0]))[0] + ".ctf"
             if os.path.isfile(ctffile):
                 ctf = np.loadtxt(ctffile)
@@ -496,6 +674,9 @@ def parse_arguments(block):
     if "class_num" in parameters.keys() and parameters["class_num"] > 1 or "tomo" in parameters["data_mode"]:
         parameters["refine_metric"] = "new"
 
+    # ensure backwards compatibility                
+    parameters = sync_parameters(parameters=parameters)
+                
     # enable _force depending on parameter changes
     if parameters_existing != 0 and block == "pre_process":
         parameters = project_params.parameter_force_check(parameters_existing, parameters)
@@ -523,46 +704,83 @@ def spr_merge(parameters, check_for_missing_files=True):
         data_set = None
     micrographs = "{}.micrographs".format(data_set)
     with open(micrographs) as f:
-        input_all_list = [line.strip() for line in f]
+        input_all_list = [line.strip() for line in f if line.strip()]
 
     if os.path.exists(micrographs + "_missing"):
         micrographs += "_missing"
         with open(micrographs) as f:
-            inputlist = [line.strip() for line in f]
+            inputlist = [line.strip() for line in f if line.strip()]
     else:
         inputlist = input_all_list
 
+    retries = 0
+    retry_flag = "{}.retries".format(data_set)
+    if os.path.exists(retry_flag):
+        with open(retry_flag) as f:
+            retries = int(f.read())
+    
+    # increment retry counter
+    retries += 1
+    
     # check if all processes ended successfully
     if check_for_missing_files:
         missing_files = project_params.get_missing_files(parameters, inputlist)
 
         if len(missing_files) > 0:
-            if micrographs.endswith("_missing"):
-                # missing files remaining after retrying
-                try:
-                    os.remove(micrographs)
-                    logger.warning("Detected errors even after retrying. Stopping.")
-                except:
-                    pass
-
+            if retries > parameters.get("slurm_merge_retries"):
+                if Web.exists:
+                    Web().failed()
+                if micrographs.endswith("_missing"):
+                    # missing files remaining after retrying
+                    try:
+                        os.remove(micrographs)
+                    except:
+                        pass
+                if os.path.exists(retry_flag):
+                    try:
+                        os.remove(retry_flag)
+                    except:
+                        pass
+                raise Exception("Reached maximum number of retries. Please check for errors in the logs")
             else:
                 logger.warning(
-                    "{0} jobs failed, attempting to re-submit".format(
-                        len(missing_files)
+                    "{0} job(s) failed, attempt {1} of {2} to re-submit jobs".format(
+                        len(missing_files), retries, parameters.get("slurm_merge_retries")
                     )
                 )
-                micrographs_file = micrographs + "_missing"
+                if micrographs.endswith("_missing"):
+                    micrographs_file = micrographs
+                else:
+                    micrographs_file = micrographs + "_missing"
                 with open(micrographs_file, "w") as f:
                     f.write("\n".join([m for m in missing_files]))
+
+                # save retry counter
+                with open(retry_flag,'w') as f:
+                    f.write(str(retries))
+
                 # re-submit only jobs that failed
                 split(parameters)
                 return
+        else:
+            if micrographs.endswith("_missing"):
+                # remove the missing file list 
+                try:
+                    os.remove(micrographs)
+                except:
+                    pass
+            if os.path.exists(retry_flag):
+                try:
+                    os.remove(retry_flag)
+                except:
+                    pass
+            logger.info("All jobs finished successfully")
 
-    logger.info(f"Total number of micrographs = {len(input_all_list)}")
+    logger.info(f"Total number of micrograph(s) = {len(input_all_list):,}")
 
     inputlist = get_new_input_list(parameters, input_all_list)
 
-    logger.info(f"Number of micrographs used = {len(inputlist)}")
+    logger.info(f"Number of micrographs used = {len(inputlist):,}")
 
     # save final micrograph list (excluding micrographs with no boxes)
     if len(inputlist) > 0:
@@ -617,7 +835,7 @@ def spr_merge(parameters, check_for_missing_files=True):
         clean_list = inputlist
 
     pool = multiprocessing.Pool()
-    if "detect_rad" in parameters and parameters["detect_rad"] > 0:
+    if "detect_rad" in parameters and parameters["detect_rad"] and parameters["detect_rad"] > 0:
 
         # update/compute global frame weights
         # pool.apply_async( generateGlobalFrameWeights, args=( parameters['data_set'] ) )
@@ -717,79 +935,15 @@ def spr_merge(parameters, check_for_missing_files=True):
                 path = os.path.join(os.getcwd(), "frealign", "scratch")
                 particle_cspt.run_merge(path)
 
+def generate_list_of_all_subvolumes(parameters):
+    """Generate list of sub-volumes for sub-volume averaging
 
-def tomo_merge(parameters, check_for_missing_files=True):
-    """Compiles multiple out files from TOMO swarm function.
+    Args:
+        parameters (dict): pyp parameters
 
-    Parameters
-    ----------
-    parameters : dict
-        Main configurations taken from .pyp_config
+    Returns:
+        _type_: _description_
     """
-
-    try:
-        data_set = parameters["data_set"]
-    except KeyError:
-        data_set = None
-    micrographs = "{}.micrographs".format(data_set)
-    with open(micrographs) as f:
-        input_all_list = [line.strip() for line in f]
-
-    if os.path.exists(micrographs + "_missing"):
-        micrographs += "_missing"
-        with open(micrographs) as f:
-            inputlist = [line.strip() for line in f]
-    else:
-        inputlist = input_all_list
-
-    # check if all processes ended successfully
-    if check_for_missing_files:
-        missing_files = project_params.get_missing_files(parameters, inputlist)
-
-        if len(missing_files) > 0:
-            if micrographs.endswith("_missing"):
-                # missing files remaining after retrying
-                try:
-                    os.remove(micrographs)
-                    logger.error("Second attempt failed, stopping. Please check for errors in the logs.")
-                    raise
-                except:
-                    pass
-            else:
-                logger.warning(
-                    "{0} jobs failed, attempting to re-submit".format(
-                        len(missing_files)
-                    )
-                )
-                micrographs_file = micrographs + "_missing"
-                with open(micrographs_file, "w") as f:
-                    f.write("\n".join([m for m in missing_files]))
-                # re-submit only jobs that failed
-                split(parameters)
-                return
-        else:
-            if micrographs.endswith("_missing"):
-                # remove the missing file list 
-                try:
-                    os.remove(micrographs)
-                    logger.warning("Image(s) that failed last time succeeded in new job(s), deleting missing file list ")
-                except:
-                    pass
-
-    # save final micrograph list (excluding micrographs with no boxes)
-    inputlist = get_new_input_list(parameters, input_all_list)
-
-    if len(inputlist) > 0: 
-        films = parameters["data_set"] + ".films"
-        if Path(films).is_symlink():
-            os.remove(films)
-        with open(films, "w") as f:
-            f.write("\n".join(inputlist))
-            f.close()
-    else:
-        inputlist = input_all_list
-        raise Exception("Either all tilt-series failed or no particles were found, stopping")
-
     if detect.tomo_spk_is_required(parameters) > 0:
         # produce .txt file for 3DAVG
         timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
@@ -811,13 +965,17 @@ def tomo_merge(parameters, check_for_missing_files=True):
             for volume in [
                 line
                 for line in open(file).read().split("\n")
-                if "number" not in line and line != ""
+                if not line.startswith("number") and line != ""
             ]:
                 vector = volume.split("\t")
                 # print vector
                 vector[0] = str(count)
                 # randomize phi angle in +/- 180
-                if parameters["tomo_vir_detect_rand"] and parameters["tomo_spk_rand"]:
+                if  ( 
+                     parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
+                     or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
+                     or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]
+                ) and not parameters.get("tomo_pick_method") == "pytom":
                     vector[10] = "%.4f" % (360 * (random.random() - 0.5))
                 vector[-1] = os.getcwd() + "/sva/" + vector[-1]
                 f.write("\t".join([v for v in vector]) + "\n")
@@ -839,12 +997,118 @@ def tomo_merge(parameters, check_for_missing_files=True):
                 except OSError:
                     logger.exception("Error while deleting files.")
 
-        # create link(s) for compatibility with 3DAVG
+        # create link(s) for compatibility with 3DAVG (only if extracting sub)
         volumes_file = "frealign/{0}_original_volumes.txt".format(parameters["data_set"])
-        if os.path.lexists(volumes_file):
+        if os.path.exists(volumes_file):
             os.remove(volumes_file)
-        symlink_relative(os.path.join(os.getcwd(), new_volumes_file), volumes_file)
+        shutil.move(os.path.join(os.getcwd(), new_volumes_file), volumes_file)
+        return volumes_file
+    else:
+        return None
 
+def tomo_merge(parameters, check_for_missing_files=True):
+    """Compiles multiple out files from TOMO swarm function.
+
+    Parameters
+    ----------
+    parameters : dict
+        Main configurations taken from .pyp_config
+    """
+
+    try:
+        data_set = parameters["data_set"]
+    except KeyError:
+        data_set = None
+    micrographs = "{}.micrographs".format(data_set)
+    with open(micrographs) as f:
+        input_all_list = [line.strip() for line in f if line.strip()]
+
+    if os.path.exists(micrographs + "_missing"):
+        micrographs += "_missing"
+        with open(micrographs) as f:
+            inputlist = [line.strip() for line in f if line.strip()]
+    else:
+        inputlist = input_all_list
+
+    retries = 0
+    retry_flag = "{}.retries".format(data_set)
+    if os.path.exists(retry_flag):
+        with open(retry_flag) as f:
+            retries = int(f.read())
+    
+    # increment retry counter
+    retries += 1
+    
+    # check if all processes ended successfully
+    if check_for_missing_files:
+        missing_files = project_params.get_missing_files(parameters, inputlist)
+
+        if len(missing_files) > 0:
+            if retries > parameters.get("slurm_merge_retries"):
+                if Web.exists:
+                    Web().failed()
+                if micrographs.endswith("_missing"):
+                    # missing files remaining after retrying
+                    try:
+                        os.remove(micrographs)
+                    except:
+                        pass
+                if os.path.exists(retry_flag):
+                    try:
+                        os.remove(retry_flag)
+                    except:
+                        pass
+                logger.error("Reached maximum number of retries. Not all tilt-series were processed successfully.")
+            else:
+                logger.warning(
+                    "{0} job(s) failed, attempt {1} of {2} to re-submit jobs".format(
+                        len(missing_files), retries, parameters.get("slurm_merge_retries")
+                    )
+                )
+                if micrographs.endswith("_missing"):
+                    micrographs_file = micrographs
+                else:
+                    micrographs_file = micrographs + "_missing"
+                with open(micrographs_file, "w") as f:
+                    f.write("\n".join([m for m in missing_files]))
+
+                # save retry counter
+                with open(retry_flag,'w') as f:
+                    f.write(str(retries))
+
+                # re-submit only jobs that failed
+                split(parameters)
+                return
+        else:
+            if micrographs.endswith("_missing"):
+                # remove the missing file list 
+                try:
+                    os.remove(micrographs)
+                except:
+                    pass
+            if os.path.exists(retry_flag):
+                try:
+                    os.remove(retry_flag)
+                except:
+                    pass
+            logger.info("All jobs finished successfully")
+
+    # save final micrograph list (excluding micrographs with no boxes)
+    inputlist = get_new_input_list(parameters, input_all_list)
+
+    if len(inputlist) > 0: 
+        films = parameters["data_set"] + ".films"
+        if Path(films).is_symlink():
+            os.remove(films)
+        with open(films, "w") as f:
+            f.write("\n".join(inputlist))
+            f.close()
+    else:
+        inputlist = input_all_list
+        if parameters["tomo_vir_method"] != "manual" and parameters["tomo_pick_method"] != "manual" and parameters["micromon_block"] != "tomo-segmentation-closed":
+            raise Exception("Either all tilt-series failed or no particles were found, stopping")
+
+    generate_list_of_all_subvolumes(parameters)
 
     if not Web.exists:
         # compile "database"
@@ -896,7 +1160,28 @@ def split(parameters):
     # launch pre-processing
     if not os.path.isfile("frealign/mpirun.mynodes"):
 
-        swarm_file, gpu = slurm.create_pyp_swarm_file(parameters, files, timestamp)
+        cryocare_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-eval"
+        isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
+        membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain" and parameters["micromon_block"] == "tomo-segmentation-open"
+        topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising-eval"
+
+        if cryocare_predict:
+            run_mode = "cryocare"
+            job_type = "cryocareswarm"
+        elif isonet_predict:
+            run_mode = "isonet"
+            job_type = "isonetswarm"
+        elif membrain:
+            run_mode = "membrain"
+            job_type = "membrainswarm"
+        elif topaz:
+            run_mode = "topaz"
+            job_type = "topazswarm"
+        else:
+            run_mode = parameters["data_mode"]
+            job_type = parameters["data_mode"] + "swarm"
+
+        swarm_file, gpu = slurm.create_pyp_swarm_file(parameters, files, timestamp, run_mode)
 
         config = get_pyp_configuration()
 
@@ -905,44 +1190,101 @@ def split(parameters):
             try:
                 parameters["slurm_queue"] = config["slurm"]["queues"][0]
             except:
-                logger.warning("No CPU partitions configured for this instance?")
+                if not Web.exists and not standalone_mode():
+                    logger.warning("No CPU partitions configured for this instance?")
                 parameters["slurm_queue"] = ""
                 pass
 
-        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" )
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
+        tomo_train = parameters["data_mode"] == "tomo" and ( parameters["micromon_block"] == "tomo-particles-train" or parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" and parameters["tomo_vir_method"] == "none" )
+        milo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo-train"
+        milo_eval = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo"
+        isonet_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-train" 
+        cryocare_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-train" 
+        heterogeneity = "drgn" in parameters.get("micromon_block")
 
-        if gpu or tomo_train or spr_train:
+        if gpu:
             # try to get the gpu partition
             partition_name = get_gpu_queue(parameters)
             job_name = "Split (gpu)"
+            gpu = True
         else:
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
 
-        if ( tomo_train or spr_train ):
-            if os.path.exists(os.path.join("train","current_list.txt")):
-                train_swarm_file = slurm.create_train_swarm_file(parameters, timestamp)
+        if ( tomo_train or spr_train or isonet_train or cryocare_train or heterogeneity or milo_train ):
 
-                # submit swarm jobs
-                id_train = slurm.submit_jobs(
-                    "swarm",
-                    train_swarm_file,
-                    jobtype="milotrain" if "tomo_spk_method" in parameters and parameters["tomo_spk_method"] == "milo-train" else parameters["data_mode"] + "train",
-                    jobname="Train (gpu)",
-                    queue=partition_name,
-                    scratch=0,
-                    threads=parameters["slurm_tasks"],
-                    memory=parameters["slurm_memory"],
-                    gres=parameters["slurm_gres"],
-                    account=parameters.get("slurm_account"),
-                    walltime=parameters["slurm_walltime"],
-                    tasks_per_arr=parameters["slurm_bundle_size"],
-                    csp_no_stacks=parameters["csp_no_stacks"],
-                    use_gpu=gpu,
-                ).strip()
+            if not heterogeneity:
+                # operate on all files in the .micrographs list since this is now a standalone block
+                if os.path.exists( micrographs + "_subset" ):
+                    shutil.copy2( micrographs + "_subset", os.path.join("train","current_list.txt") )
+                else:
+                    shutil.copy2( micrographs, os.path.join("train","current_list.txt") )                    
+                
+                if os.path.exists(os.path.join("train","current_list.txt")):
+
+                    if milo_train:
+                        train_type = "milo"
+                        train_jobtype = "milotrain"
+                    elif isonet_train:
+                        train_type = "isonet"
+                        train_jobtype = "isonettrain"
+                    elif cryocare_train:
+                        train_type = "cryocare"
+                        train_jobtype = "cryocaretrain"
+                    else:
+                        train_type = parameters["data_mode"]
+                        train_jobtype = parameters["data_mode"] + "train"
+                else:
+                    raise Exception("Please select a list of coordinates for training")
+
+            elif "drgn-train" in parameters["micromon_block"]:
+                train_type = "heterogeneity"
+                train_jobtype = "heterogeneitytrain"
             else:
-                raise Exception("Please select a list of coordinates for training")
+                train_type = "heterogeneity"
+                train_jobtype = "heterogeneityeval"
+            
+            train_swarm_file = slurm.create_train_swarm_file(timestamp, train_type=train_type, train_jobtype=train_jobtype)
+
+            # submit swarm jobs
+            id_train = slurm.submit_jobs(
+                "swarm",
+                train_swarm_file,
+                jobtype=train_jobtype,
+                jobname="Train (gpu)",
+                queue=partition_name,
+                scratch=0,
+                threads=parameters["slurm_tasks"],
+                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+                gres=parameters["slurm_gres"],
+                account=parameters.get("slurm_account"),
+                walltime=parameters["slurm_walltime"],
+                tasks_per_arr=parameters["slurm_bundle_size"],
+                csp_no_stacks=parameters["csp_no_stacks"],
+                use_gpu=gpu,
+            ).strip()
+
+            
+        elif milo_eval:
+            milo_swarm_file = slurm.create_milo_swarm_file(parameters, timestamp)
+
+            # submit swarm jobs
+            id_train = slurm.submit_jobs(
+                "swarm",
+                milo_swarm_file,
+                jobtype="miloeval",
+                jobname="Milo-eval (gpu)",
+                queue=partition_name,
+                scratch=0,
+                threads=parameters["slurm_tasks"],
+                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+                walltime=parameters["slurm_walltime"],
+                tasks_per_arr=parameters["slurm_bundle_size"],
+                csp_no_stacks=parameters["csp_no_stacks"],
+                use_gpu=gpu,
+            ).strip()
+
         else:
             id_train = ""
 
@@ -950,12 +1292,12 @@ def split(parameters):
             id = slurm.submit_jobs(
                 "swarm",
                 swarm_file,
-                jobtype=parameters["data_mode"] + "swarm",
+                jobtype=job_type,
                 jobname=job_name,
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
+                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
                 gres=parameters["slurm_gres"],
                 account=parameters.get("slurm_account"),
                 walltime=parameters["slurm_walltime"],
@@ -964,7 +1306,7 @@ def split(parameters):
                 csp_no_stacks=parameters["csp_no_stacks"],
                 use_gpu=gpu,
             ).strip()
-
+            
             # submit merge job dependent on swarm jobs
             slurm.submit_jobs(
                 "swarm",
@@ -976,7 +1318,7 @@ def split(parameters):
                 threads=parameters["slurm_merge_tasks"],
                 gres=parameters["slurm_merge_gres"],
                 account=parameters.get("slurm_merge_account"),
-                memory=parameters["slurm_merge_memory"],
+                memory=parameters["slurm_merge_tasks"]*parameters["slurm_merge_memory_per_task"],
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
                 csp_no_stacks=parameters["csp_no_stacks"],
@@ -1083,11 +1425,20 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
         dataset = parameters["data_set"]
     elif "stream_session_name" in parameters:
         dataset = parameters["stream_session_name"]
+    elif os.path.exists(project_path):
+        dataset = os.path.split(project_path)[-1]
     else:
         raise Exception("Unknown dataset or session name")
     load_config_files(dataset, current_path, working_path)
     if not skip:
         load_spr_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
+
+        # convert frame average to 32-bits
+        if parameters.get("movie_depth") and os.path.exists(name+".avg"):
+            command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
+                get_imod_path(), name + ".avg"
+            )
+            local_run.run_shell_command(command)
 
         # unpack pkl file
         metadata = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=True)
@@ -1175,7 +1526,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
                     if os.path.exists(gain_reference_file):
                         shutil.copy2(gain_reference_file, os.getcwd())
                 logger.info("Aligning frames using: " + parameters['movie_ali'])
-                aligned_average = align.align_movie_super(
+                aligned_average = align.align_movie_frames(
                     parameters, name, extension
                 )
 
@@ -1265,7 +1616,14 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
 
     # save average as mrc file
     if not os.path.exists(name + ".mrc") or not os.path.samefile(name + ".avg", name + ".mrc"):
-        shutil.copy2(name + ".avg", name + ".mrc")
+        if parameters.get("movie_depth"):
+            logger.info("Converting average to 16-bits")
+            command = "{0}/bin/newstack -mode 12 {1}.avg {1}.mrc && rm -f {1}.mrc~".format(
+                get_imod_path(), name
+            )
+            local_run.run_shell_command(command)
+        else:
+            shutil.copy2(name + ".avg", name + ".mrc")
     else:
         logger.info("The average and the output are the same file, this is probably because the raw data has no frames")
 
@@ -1335,7 +1693,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     os.chdir(project_path)
 
     parameters = project_params.load_pyp_parameters()
-    
+ 
     # get file name
     name = os.path.basename(filename)
 
@@ -1358,18 +1716,28 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     with open("project_folder.txt", "w") as f:
         f.write(project_params.resolve_path(current_path))
 
-    t = timer.Timer(text="Loading results took: {}", logger=logger.info)
+    t = timer.Timer(text="Retrieving files took: {}", logger=logger.info)
     t.start()
     # retrieve available results
     if "data_set" in parameters:
         dataset = parameters["data_set"]
     elif "stream_session_name" in parameters:
         dataset = parameters["stream_session_name"]
+    elif os.path.exists(project_path):
+        dataset = os.path.split(project_path)[-1]
     else:
         raise Exception("Unknown dataset or session name")
     load_config_files(dataset, current_path, working_path)
     if not skip:
         load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
+
+        if parameters.get("tomo_rec_depth"):
+            if os.path.exists(name + ".rec"):
+                logger.info("Converting tomogram to 32-bits")
+                command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
+                    get_imod_path(), name + ".rec"
+                )
+                local_run.run_shell_command(command)
 
         if parameters["tomo_vir_method"] != "none" and os.path.exists("virion_thresholds.next") and os.stat("virion_thresholds.next").st_size > 0:
             # virion exlusion input from website
@@ -1410,21 +1778,31 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             metadata_object.meta2PYP(path=working_path,data_path=os.path.join(current_path,"raw/"))
 
         # convert nextpyp coordinates to imod model
+        new_angles = np.array([])
         if os.path.exists(f"{name}_exclude_views.next"):
-            # convert next file to imod model
-            com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
-            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-            # detect if there were changes in the excluded tilts
-            if metadata and 'exclude' in metadata:
+            if os.path.getsize(f"{name}_exclude_views.next") > 0:
+                # convert next file to imod model
+                com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
+                local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
                 new_angles = np.sort(np.loadtxt(f'{name}_exclude_views.next',ndmin=2)).astype('int')[:,2]+1
-                angles = np.sort(metadata.get('exclude').to_numpy()[:,1].astype('int') + 1)
-                if not np.array_equal(angles, np.sort(new_angles)):
-                    logger.warning("Excluded tilts have changed, will re-calculate reconstrucion")
-                    parameters["tomo_rec_force"] = True
-            else:
-                logger.warning("Excluded tilts, will re-calculate reconstrucion")
-                parameters["tomo_rec_force"] = True
+            elif os.path.exists(f"{name}_exclude_views.mod"):
+                os.remove(f"{name}_exclude_views.mod")
+
+        # detect if there were changes in the excluded tilts
+        if metadata and 'exclude' in metadata:
+            angles = np.sort(metadata.get('exclude').to_numpy()[:,1].astype('int') + 1)
+        else:
+            angles = np.array([])
+            
+        if not np.array_equal(angles, np.sort(new_angles)) and "preprocessing" in parameters.get("micromon_block"):
+            logger.warning("Excluded tilts have changed, tilt-series will be re-processed")
+            parameters["tomo_rec_force"] = True
+            parameters["tomo_ali_force"] = True
+            parameters["ctf_force"] = True
+            if "ali" in metadata.keys():
+                del metadata["ali"]
+            if "tlt" in metadata.keys():
+                del metadata["tlt"]
 
     else:
         logger.info("Ignoring existing results")
@@ -1474,25 +1852,13 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # remove x-rays
     if 'movie_no_frames' in parameters and parameters['movie_no_frames'] and "gain_remove_hot_pixels" in parameters and parameters["gain_remove_hot_pixels"]:
-        t = timer.Timer(text="Removing hot pixels took: {}", logger=logger.info)
-        t.start()
         preprocess.remove_xrays_from_file(name,parameters['slurm_verbose'])
-        t.stop()
     else:
         os.symlink(name + ".mrc", name + ".st")
 
     parameters = ctf_utils.update_pyp_scope_params(
         parameters, scope_pixel, scope_voltage, scope_mag, save=False
     )
-
-    # actual stack sizes
-    originalx = x
-    originaly = y
-    originalz = z
-    headers = mrc.readHeaderFromFile(name + ".mrc")
-    x = int(headers["nx"])
-    y = int(headers["ny"])
-    z = int(headers["nz"])
 
     # binned reconstruction
     binning = parameters["tomo_rec_binning"]
@@ -1503,24 +1869,52 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     else:
         zfact = ""
 
-    mpi_funcs, mpi_args = [ ], [ ]
+    # determine excluded views from user input
+    exclude_views = merge.do_exclude_views(name)
+    if len(exclude_views) > 0:
+        logger.warning(f"The following tilts will be excluded: {exclude_views.split(' ')[-1]}")
 
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
         logger.info("Using existing tilt-series alignments")
+        additional_exclude_views = exclude_views
     else:
-        mpi_funcs.append(align.align_tilt_series)
-        mpi_args.append( [(name, parameters, tilt_axis)] )
+        additional_exclude_views = align.align_tilt_series(name,parameters=parameters,rotation=tilt_axis,excluded_views=exclude_views)
 
-        t = timer.Timer(text="Tilt-series alignment + convert to tif took: {}", logger=logger.info)
-        t.start()
-        if len(mpi_funcs) > 0:
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
-        t.stop()
-
+    # save newly excluded views to .mod file, if needed
+    if len(exclude_views) != len(additional_exclude_views):
+        
+        # get excluded indexes from string containing -EXCLUDELIST2 option
+        exclude_views_indexes = sorted(list(map(int,additional_exclude_views.split(" ")[1].split(','))))
+        
+        # re-format indexes into 2D matrix (same format as one used by the website)
+        exclude_views_coordinates = np.zeros((len(exclude_views_indexes),3),dtype=int)
+        
+        # indexes start at 0, so we substract 1
+        exclude_views_coordinates[:,-1] = np.array(exclude_views_indexes) - 1
+        
+        # save matrix into temporary file so we can convert indexes to .imod model
+        np.savetxt(name+"_exclude_views.next", exclude_views_coordinates)
+        com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
+        local_run.run_shell_command(com)
+        os.remove(name+"_exclude_views.next")
+        
+        # use new list of excluded views from now on
+        exclude_views = additional_exclude_views
+    
     # generate full-size aligned tiltseries only if we do not yet have binned tomogram OR 
     # we need .ali for either sub-volume or virion extraction
-    tilt_metadata["tilt_axis_angle"] = get_tilt_axis_angle(name, parameters)
+    tilt_metadata["tilt_axis_angle"] = get_tilt_axis_angle(name)
+    logger.info(f"Detected tilt-axis angle = {tilt_metadata['tilt_axis_angle']}")
+
+    # Resize aligned tilt-seres depending on tilt-axis orientation
+    if tilt_metadata["tilt_axis_angle"] % 180 > 45 and tilt_metadata["tilt_axis_angle"] % 180 < 135 and not parameters.get("tomo_ali_square"):
+        x, y = y, x
+        logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
+
+    # force generation of aligned tilt-series for sessions since we aren't using the force parameters in this case
+    parameters["detect_force"] = preprocess.need_recalculation_for_sessions(name,parameters)
+    
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
         parameters["tomo_vir_force"] or \
@@ -1531,7 +1925,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
         t = timer.Timer(text="Apply alignment to tiltseries took: {}", logger=logger.info)
         t.start()
-        generate_aligned_tiltseries(name, parameters, tilt_metadata)
+        generate_aligned_tiltseries(name, parameters, x, y)
         t.stop()
 
     # Refined tilt angles
@@ -1544,12 +1938,9 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         [ os.remove(f) for f in glob.glob( os.path.join(current_path, name + "_vir????_cut.txt") ) ]
         logger.info("Excluded virions list from mod file:")
         logger.info(exclude_virions)
-    exclude_views = merge.do_exclude_views(name, tilt_angles)
 
     # Reconstruction options # -RADIAL 0.125,0.15, -RADIAL 0.25,0.15 (autoem2), 0.35,0.05 (less stringent)
-    tilt_options = "-MODE 2 -OFFSET 0.00 -PERPENDICULAR -RADIAL {0},{1} -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {2}".format(
-        parameters["tomo_rec_lpradial_cutoff"], parameters["tomo_rec_lpradial_falloff"], exclude_views
-    )
+    tilt_options = merge.get_tilt_options(parameters,exclude_views)
 
     # Run the following steps in parallel
     # 1. per-tilt CTF estimation
@@ -1560,7 +1951,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     need_recalculation = parameters["tomo_rec_force"]
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
-        mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options)] )
+        mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options, need_recalculation)] )
 
     ctffind_tilt = False
     if ctf_mod.is_required_3d(parameters):
@@ -1575,81 +1966,55 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 mpi_funcs.append(ctf_mod.ctffind_tilt_multiprocessing)
                 mpi_args.append(ctffind_tilt_args)
 
-            # write global ctf file
-            ctf[6] = originalx
-            ctf[7] = originaly
-            ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
-            ctf[11] = parameters['tomo_rec_binning']
-            np.savetxt("{}.ctf".format(name), ctf)
+        # write global ctf file
+        ctf[6] = x
+        ctf[7] = y
+        ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
+        ctf[11] = parameters['tomo_rec_binning']
+        np.savetxt("{}.ctf".format(name), ctf)
 
     if len(mpi_funcs) > 0:
         t = timer.Timer(text="Tomogram reconstruction + ctffind tilt took: {}", logger=logger.info)
         t.start()
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
         t.stop()
 
     if ctffind_tilt:
+        if parameters["ctf_tilt_axis_known"]:
+            input_tilt_axis = parameters["ctf_tilt_axis"]
+        else:
+            input_tilt_axis = parameters["scope_tilt_axis"]
         ctf_mod.detect_handedness_tilt_range(name=name,
+                                             input_tilt_axis=input_tilt_axis,
                                              tilt_angles=tilt_angles, 
                                              lower_tilt=parameters["ctf_handedness_mintilt"], 
-                                             upper_tilt=parameters["ctf_handedness_maxtilt"],)
+                                             upper_tilt=parameters["ctf_handedness_maxtilt"],
+                                             ctffind4=parameters.get("ctf_method") == "ctffind4")
 
 
     # package CTF metadata into dictionary
     ctf_profiles = {}
     ctf_values = {}
+    all_defocus = []
     for index in range(len(tilt_angles)):
         profile_file = "%s_%04d_ctffind4_avrot.txt" % ( name, index )
         if os.path.exists(profile_file):
-            ctf_profiles[index] = np.loadtxt( profile_file, comments="#")
+            ctf_profiles[index] = np.nan_to_num(np.loadtxt( profile_file, comments="#"))
         values_file = "%s_%04d.txt" % ( name, index )
         if os.path.exists(values_file):
             ctf_values[index] = np.loadtxt( values_file, comments="#")
+            all_defocus.append(ctf_values[index][1])
+            all_defocus.append(ctf_values[index][2])
+    median_defocus = str(np.median(np.array(all_defocus)))
+    with open(name+"_mean_defocus.txt",'w') as outf:
+        outf.write(median_defocus)
     tilt_metadata["ctf_values"] = ctf_values
     tilt_metadata["ctf_profiles"] = ctf_profiles
 
     # erase fiducials if needed
-    if parameters["tomo_ali_method"] == "imod_gold":
-        gold_mod = "f{name}_gold.mod"
+    if need_recalculation:
 
-        if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
-            # create binned aligned stack
-            if not os.path.exists(f'{name}_bin.ali'):
-                command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
-                    get_imod_path(), name, binning
-                )
-                local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
-
-            detect.detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
-
-        if parameters["tomo_rec_erase_fiducials"] and ( not os.path.exists(name+"_rec.webp") or parameters["tomo_rec_force"] ):
-
-            # save projected gold coordinates as txt file
-            com = f"{get_imod_path()}/bin/model2point {name}_gold.mod {name}_gold_ccderaser.txt"
-            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-            # calculate unbinned tilt-series coordinates
-            gold_coordinates = np.loadtxt(name + "_gold_ccderaser.txt",ndmin=2)
-            gold_coordinates[:,:2] *= binning
-            np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
-
-            # convert back to imod model using one point per contour
-            com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
-            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-            # erase gold on (unbinned) aligned tilt-series
-            erase_factor = parameters["tomo_rec_erase_factor"]
-            com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali -model {name}_gold_ccderaser.mod -expand 5 -order 0 -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose"
-            local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-
-            try:
-                os.remove(name + "_gold_ccderaser.txt")
-                os.remove(name + "_gold_ccderaser.mod")
-            except:
-                pass
-
-            # re-calculate reconstruction using gold-erased tilt-series
-            merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
+        preprocess.erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y)
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
@@ -1659,8 +2024,41 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     t.start()
     # remove environment LD_LIBRARY_PATH conflicts
 
+    if parameters.get("micromon_block") == "tomo-particles-eval":
+        if os.path.exists(name+".spk"):
+            os.remove(name+".spk")
+        parameters["tomo_spk_method"] = "pyp-eval"
+
+    # virion segmentation and surface-constrained particle picking
+    if parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
+        
+        # use spike radius as virion radius
+        if (
+            parameters.get("micromon_block") == "tomo-picking-closed"
+        ):
+            parameters["tomo_spk_rad"] = parameters["tomo_srf_detect_rad"]
+        
+        elif (
+            parameters.get("micromon_block") == "tomo-segmentation-closed" 
+            and parameters["tomo_spk_rad"] == 0
+        ):
+            parameters["tomo_spk_rad"] = parameters["tomo_srf_detect_rad"]
+
+    # map new to old parameters during virion detection
+    if parameters.get("micromon_block") == "tomo-picking":
+        parameters["tomo_spk_method"] = parameters["tomo_pick_method"]
+        # use spike radius as virion radius
+        if parameters.get("tomo_pick_method") == "virions":
+            parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_vir_rad"]
+        elif parameters.get("tomo_pick_method") == "manual":
+            parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
+    elif parameters.get("micromon_block") == "tomo-segmentation-closed" and ( parameters.get("tomo_pick_method") == "manual" or parameters.get("tomo_pick_method") == "import" ) or parameters.get("micromon_block") == "tomo-picking-closed" and parameters["tomo_vir_rad"] == 0:
+        parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
+    elif parameters.get("micromon_block") == "tomo-picking-closed" and parameters.get("tomo_pick_method") == "manual":
+        parameters["tomo_pick_vir_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
+
     # particle detection and extraction
-    virion_coordinates, spike_coordinates = detect_tomo.detect_and_extract_particles( 
+    virion_coordinates, spike_coordinates, virion_mode, spike_mode, surface_mode = detect_tomo.detect_and_extract_particles( 
         name,
         parameters,
         current_path,
@@ -1674,11 +2072,19 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     if (
         "tomo_vir_force" in parameters and parameters["tomo_vir_force"]
-        or metadata is None or metadata is not None and "vir" not in metadata or parameters["data_import"]
+        or metadata is None or metadata is not None and "vir" not in metadata or parameters["data_import"] or parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed"
     ):
-        tilt_metadata["virion_coordinates"] = virion_coordinates
+        if virion_mode:
+            tilt_metadata["virion_coordinates"] = virion_coordinates
+            logger.info(f"Total number of virions = {len(virion_coordinates):,}")
+            if parameters.get("slurm_verbose"):
+                logger.info(f"Virion coordinates = \n{virion_coordinates}")
 
-    tilt_metadata["spike_coordinates"] = spike_coordinates
+    if spike_mode or surface_mode:
+        tilt_metadata["spike_coordinates"] = spike_coordinates
+        logger.info(f"Total number of particles = {len(spike_coordinates):,}")
+        if parameters.get("slurm_verbose"):
+            logger.info(f"Particle coordinates = \n{spike_coordinates}")
 
     mpi_funcs, mpi_args = [ ], [ ]
     if ctffind_tilt:
@@ -1693,7 +2099,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.tomo_slicer_gif)
         mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True, 2, parameters["slurm_verbose"])] )
 
-    if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp"):
+    if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp") or parameters["tomo_ali_force"]:
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.mrc', name + "_raw.webp")] )
 
@@ -1720,6 +2126,27 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if os.path.exists(f"{name}.raw.mrc"):
             os.remove(f"{name}.mrc")
             os.rename(f"{name}.raw.mrc", f"{name}.mrc") 
+
+        # do not save .mrc and .rec if in tomo-picking and segmentation blocks
+        if parameters.get("micromon_block") == "tomo-picking" or parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
+            os.remove(f"{name}.mrc")
+            os.remove(f"{name}.rec")
+    
+        commands = []
+        if "preprocessing" in parameters.get("micromon_block"):
+            if parameters.get("movie_depth"):
+                logger.info("Converting tilt-series to 16-bits")
+                command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
+                    get_imod_path(), name + ".mrc"
+                )
+                commands.append(command)
+            if parameters.get("tomo_rec_depth"):
+                logger.info("Converting tomogram to 16-bits")
+                command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
+                    get_imod_path(), name + ".rec"
+                )
+                commands.append(command)
+            mpi.submit_jobs_to_workers(commands,os.getcwd())
 
         with open( f"{name}.pickle", 'wb') as f:
             pickle.dump(tilt_metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -1800,7 +2227,7 @@ def csp_split(parameters, iteration):
             line.strip() for line in f
         ]
     workdir = os.getcwd()
-
+    
     # cleanup any previous runs
     if not parameters["slurm_merge_only"]:
         try:
@@ -1810,82 +2237,147 @@ def csp_split(parameters, iteration):
 
     # clean-up csp logs and webp files
     path_to_logs = Path(os.getcwd(), "log")
-    [os.remove(path_to_logs / f) for f in os.listdir(path_to_logs) if f.endswith("_csp.log")]
+    if path_to_logs.exists():
+        [os.remove(path_to_logs / f) for f in os.listdir(path_to_logs) if f.endswith("_csp.log")]
     path_to_webps = Path(os.getcwd(), "frealign")
-    [os.remove(path_to_webps / f) for f in os.listdir(path_to_webps) if f.endswith("_weights_local.webp")]
+    if path_to_webps.exists():
+        [os.remove(path_to_webps / f) for f in os.listdir(path_to_webps) if f.endswith("_weights_local.webp")]
 
-    classes = int(project_params.param(parameters["class_num"], iteration))
+    is_spr = "spr" in parameters["data_mode"]
+    
     dataset = parameters["data_set"]
     use_frames = "local" in parameters["extract_fmt"].lower()
-    # collect FREALIGN statistics
+    current_dir = Path().cwd()
+    
+    if iteration == 2:
+        classes = 1
+    else:
+        classes = int(project_params.param(parameters["class_num"], iteration))
+
     for ref in range(classes):
-        name = "%s_r%02d" % (dataset, ref + 1)
-        compressed_par = Path(os.getcwd(), "frealign", "maps", f"{name}_{iteration-1:02d}.par.bz2")
+        
+        if classes > 1:
+            logger.info(f"## Initializing class {ref+1} of {classes} ##")
+        
+        name = f"{dataset}_r{ref+1:02d}"
 
-        parfile = None
-        if compressed_par.exists():
-            decompressed_par = frealign_parfile.Parameters.decompress_parameter_file(str(compressed_par), parameters["slurm_tasks"])
-            parfile = decompressed_par
-            if classes > 1:
-                shutil.copy2(parfile, Path(compressed_par.parent, os.path.basename(parfile)))
+        # Decompress parameter file if needed, and put them to the frealign/maps
+        # so that csp_swarm() can get the corresponding parameter file 
+        # parmaeter file can be specified in "refine_parfile" parameter or from the previous iteration in frealign/maps
 
-        elif "refine_parfile" in parameters and parameters["refine_parfile"] != None and os.path.exists(project_params.resolve_path(parameters["refine_parfile"])) and ".par" in project_params.resolve_path(parameters["refine_parfile"]):
-            refine_parfile = frealign_parfile.Parameters.decompress_parameter_file(project_params.resolve_path(parameters["refine_parfile"]), parameters["slurm_tasks"])
-            parfile = refine_parfile
+        # decompress the file if needed
+        parameter_file_folder = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}.bz2"
+        decompressed_parameter_file_folder = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}"
 
-        if use_frames and ref == 0 or iteration == 2:
-            try:
-                os.unlink("./csp/micrograph_particle.index")
-            except:
+        if iteration == 2:
+            # if we have txt
+            if ("refine_parfile_tomo" in parameters) and (parameters["refine_parfile_tomo"]) and (Path(project_params.resolve_path(parameters["refine_parfile_tomo"])).exists()):
+                # only copy the path to txt file when first time running csp
+                if "refine_parfile" not in parameters or not parameters["refine_parfile"] or not Path(project_params.resolve_path(parameters["refine_parfile"])).exists():
+                    parameters["refine_parfile"] = parameters["refine_parfile_tomo"]
+
+            # from the external parameter file (.txt or .bz2)
+            # we only move .bz2 to frealign/maps
+            if "refine_parfile" in parameters and parameters["refine_parfile"] is not None:
+                external_parameter_file = Path(project_params.resolve_path(parameters["refine_parfile"]))
+                assert external_parameter_file.exists(), f"{external_parameter_file} does not exist."
+            else:
+                external_parameter_file = ""
+
+            if str(external_parameter_file).endswith(".bz2") and ".par" not in str(external_parameter_file):
+                # if the file is already here
+                if Path(str(external_parameter_file).replace(".bz2", "")).resolve() == decompressed_parameter_file_folder.resolve(): continue
+                
+                frealign_parfile.Parameters.decompress_parameter_file_and_move(file=external_parameter_file, 
+                                                                               new_file=decompressed_parameter_file_folder, 
+                                                                               micrograph_list=[f"{f}_r{ref+1:02d}" for f in files],
+                                                                               threads=parameters["slurm_tasks"])
+            elif os.path.isdir(external_parameter_file):
+                # if the file is already here
+                if external_parameter_file.resolve() == decompressed_parameter_file_folder.resolve(): continue
+                
+                # if it is already a folder
+                if decompressed_parameter_file_folder.exists():
+                    shutil.rmtree(decompressed_parameter_file_folder)
+                shutil.copytree(external_parameter_file, decompressed_parameter_file_folder)
+
+            elif is_spr or str(external_parameter_file).endswith(".txt"):
+                # single-particle does not need a txt file like tomo to start the refinement
+                # However, if not provided, it will re-produce a new set of parameter files
                 pass
-        if not os.path.isfile("./csp/micrograph_particle.index") and ( (iteration > 2 and ref == 0) or (iteration == 2 and parfile != None)):
-            get_image_particle_index(parameters, parfile, path="./csp")
 
+            elif ".par.bz2" in str(external_parameter_file):
+                decompressed_parfile = str(external_parameter_file).replace(".bz2", "")
+                parameters["refine_parfile"] = decompressed_parfile
+                os.chdir(external_parameter_file.parent)
+                frealign_parfile.Parameters.decompress_file(str(external_parameter_file), threads=parameters["slurm_tasks"])
+                os.chdir(current_dir)
+                project_params.save_pyp_parameters(parameters=parameters, path=".")
+            else:
+                raise Exception("An initial particle orientation (txt file from pre-processing or bz2 file from particle refinement) is required.")
 
-        if parameters["dose_weighting_enable"] and ref == 0:
+        else:
+            if parameter_file_folder.exists():
+                # from the previous iteration
+                frealign_parfile.Parameters.decompress_parameter_file_and_move(file=parameter_file_folder, 
+                                                                            new_file=decompressed_parameter_file_folder, 
+                                                                            micrograph_list=[f"{f}_r{ref+1:02d}" for f in files],
+                                                                            threads=parameters["slurm_tasks"])
+                
+            elif decompressed_parameter_file_folder.exists():
+                pass
+            else:
+                old_parfile = current_dir / "frealign" / "maps" / f"{name}_{iteration-1:02d}.par.bz2"
+                if old_parfile.exists():
+                    decompressed_parfile = str(old_parfile).replace(".bz2", "")
+                    parameters["refine_parfile"] = decompressed_parfile
+                    os.chdir("./frealign/maps")
+                    frealign_parfile.Parameters.decompress_file(str(old_parfile), threads=parameters["slurm_tasks"])
+                    global_par2cistem(decompressed_parfile, parameters)
+                    os.chdir(current_dir)
+                    project_params.save_pyp_parameters(parameters=parameters, path=".")
 
+        if parameters["reconstruct_dose_weighting_enable"] and ref == 0:
+     
             # create weights folder for storing weights.txt
             weights_folder = Path.cwd() / "frealign" / "weights"
             if not weights_folder.exists():
                 os.makedirs(weights_folder)
 
             # compute global weights using enitre parfile
-            if parameters["dose_weighting_global"] and parfile != None:
-
+            if parameters["reconstruct_dose_weighting_global"]:
+         
                 global_weight_file = str(weights_folder / "global_weight.txt")
-                compute_global_weights(parfile=parfile, weights_file=global_weight_file)
 
-                parameters["dose_weighting_weights"] = global_weight_file
+                if decompressed_parameter_file_folder.exists():
+                    ref_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r01.cistem" ) for file in files ]
+                    merged_all_parameters = cistem_star_file.Parameters.merge(ref_files, input_extended_files=[])
+                    par_data = merged_all_parameters.get_data()
+                    compute_global_weights(par_data=par_data, weights_file=global_weight_file)
+                elif os.path.exists(project_params.resolve_path(parameters["refine_parfile"])) and ".par" in project_params.resolve_path(parameters["refine_parfile"]):
+                    compute_global_weights_from_par(parfile=project_params.resolve_path(parameters["refine_parfile"]), weights_file=global_weight_file)
+
+                parameters["reconstruct_dose_weighting_weights"] = global_weight_file
                 project_params.save_pyp_parameters(parameters=parameters, path=".")
 
-            elif "dose_weighting_weights" in parameters and parameters["dose_weighting_weights"] is not None and project_params.resolve_path(parameters["dose_weighting_weights"]) == "auto":
+            elif "reconstruct_dose_weighting_weights" in parameters and parameters["reconstruct_dose_weighting_weights"] is not None and project_params.resolve_path(parameters["reconstruct_dose_weighting_weights"]) == "auto":
                 weight_file = project_params.get_weight_from_projects(weight_folder=weights_folder, parameters=parameters)
                 if weight_file is not None:
-                    parameters["dose_weighting_weights"] = weight_file
+                    parameters["reconstruct_dose_weighting_weights"] = weight_file
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
 
-        if (classes > 1
-        and iteration > 2
-        and not os.path.isfile("./csp/particle_tilt.index")
-        and "tomo" in parameters["data_mode"]
-        and ref == 0
-        ):
-            get_particles_tilt_index(parfile, path="./csp")
 
-        previous = "frealign/maps/%s_%02d.par" % (name, iteration - 1)
-        current = "%s_%02d" % (name, iteration)
         raw_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt_raw"
         smooth_stats_file = f"frealign/maps/{name}_{(iteration-1):02d}_statistics.txt"
 
         # smooth part FSC curves
-        if project_params.param(parameters["refine_metric"], iteration) == "new" and parameters["refine_fssnr"]:
-
-            plot_name = "frealign/maps/" + current + "_snr.png"
+        if parameters["refine_fssnr"]:
+            plot_name = "frealign/maps/" + name + "_snr.png"
 
             if not os.path.exists(raw_stats_file) and os.path.exists(smooth_stats_file):
-                postprocess.smooth_part_fsc(smooth_stats_file, plot_name)
+                postprocess.tanh_part_fsc(smooth_stats_file, plot_name)
             elif os.path.exists(raw_stats_file):
-                postprocess.smooth_part_fsc(raw_stats_file, plot_name)
+                postprocess.tanh_part_fsc(raw_stats_file, plot_name)
 
     if classes > 1 and iteration > 2:
 
@@ -1900,31 +2392,64 @@ def csp_split(parameters, iteration):
             )
             or force_init
         ):
+            decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{dataset}_r01_{iteration-1:02d}")
             use_frame = "local" in parameters["extract_fmt"]
             is_tomo = "tomo" in parameters["data_mode"]
             classification_initialization(
-            parameters, dataset, classes, iteration, use_frame = use_frame, is_tomo = is_tomo, references_only=False
+            dataset, classes, iteration, decompressed_parameter_file_folder, files, use_frame = use_frame, is_tomo = is_tomo
         )
             # skip occupancy calculation twice
             parameters["refine_skip"] = True
             parameters["class_force_init"] = False
             project_params.save_pyp_parameters(parameters=parameters, path="..")
         else:
-
+            parameter_folders = decompressed_parameter_file_folder.parent.as_posix()
             occupancy_extended(
-                parameters, dataset, iteration - 1, classes, path="maps", is_frealignx=False, local=False
+                parameters, dataset, classes, files, parameter_folders, local=False
             )
 
         os.chdir("..")
 
     # get the statistics for refine3d and reconstruct3d
-    if classes > 1 and iteration > 2:
+    # TODO this part be a function
+    if iteration > 2:
+
         for ref in range(classes):
+            
             name = "%s_r%02d" % (dataset, ref + 1)
-            # previous = "frealign/maps/%s_%02d.par" % (name, iteration - 1)
-            previous = os.path.join("frealign", "maps" , "%s_%02d.par" % (name, iteration - 1))
-            par_stat = "frealign/maps/parfile_constrain_r%02d.txt" % (ref + 1)
-            get_statistics_from_par(previous, par_stat)
+            
+            decompressed_parameter_file_folder = os.path.join(current_dir, "frealign", "maps", f"{name}_{iteration-1:02d}")
+            stat_file = os.path.join(decompressed_parameter_file_folder, name + "_stat.cistem")
+            if not os.path.exists(stat_file):
+                # read all images parameters for statistices 
+                class_files = [ os.path.join(decompressed_parameter_file_folder, file + "_r%02d.cistem" % (ref + 1) ) for file in files ]
+                merged_all_parameters = cistem_star_file.Parameters.merge(class_files, input_extended_files=[])
+                
+                projection_parameters = merged_all_parameters.get_data()
+                stat_array_mean = np.mean(projection_parameters, axis=0)
+                stat_array_var = np.var(projection_parameters, axis=0)
+                
+                # only projecton parameters here
+                stat = cistem_star_file.Parameters()
+                stat.set_data(np.vstack((stat_array_mean, stat_array_var)))
+                stat.to_binary( stat_file )
+
+    # ab initio 
+    if "csp_abinitio" in parameters.keys() and parameters["csp_abinitio"]:
+        if parameters["refine_maxiter"] > parameters["refine_first_iter"]:
+            logger.info('Doing ab-initio refinement')
+            ab_initio(parameters)    
+        else:
+            raise Exception("Ab-initio refinement requires more than one iteration")
+    elif parameters["csp_automask"] and iter > 3 and classes == 1:
+        logger.info('Doing auto masking')
+        dataset = parameters["data_set"]
+        # Auto masking the cisTEM way 
+        current_ref = os.path.join(os.getcwd(), "frealign", "maps", "%s_r%02d_%02d.mrc" % (dataset, ref + 1, iter - 1) )
+        voxel_size = float(parameters["scope_pixel"] * parameters["data_bin"] * parameters["extract_bin"])
+        radius = parameters["particle_rad"]
+        mask_file = mrc.auto_masking(current_ref, voxel_size, radius)
+        parameters["refine_maskth"] = mask_file
 
     os.makedirs("swarm", exist_ok=True)
     os.chdir("swarm")
@@ -1937,48 +2462,20 @@ def csp_split(parameters, iteration):
     os.chdir(workdir)
 
 
-@timer.Timer(
-    "csp_extract_frames", text="Particle extraction took: {}", logger=logger.info
-)
 def csp_extract_frames(
-    allboxes,
     allparxs,
     parameters,
     filename,
     imagefile,
-    parxfile,
     stackfile,
     working_path,
     current_path,
 ):
-
-    totalboxes = len(allboxes)
+    particles = 0
+    totalboxes = allparxs[0].get_num_rows()
     iteration = parameters["refine_iter"]
     metric = project_params.param(parameters["refine_metric"], iteration)
     if totalboxes > 0:
-         # write .parx file for each class
-        if type(allparxs[0]) == np.ndarray:
-            par_col = allparxs[0].shape[1]
-            if par_col > 15:
-                if par_col < 45:
-                    metricfmt = "new"
-                    format = frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
-                else:
-                    metricfmt = "frealignx"
-                    format = frealign_parfile.EXTENDED_FREALIGNX_PAR_STRING_TEMPLATE_WO_NO
-            else:
-                format = frealign_parfile.NEW_PAR_STRING_TEMPLATE_WO_NO
-            with timer.Timer(
-                "write_allparx", text = "Writing parx file from allparxs took: {}", logger=logger.info
-            ):
-                for current_class in range(len(allparxs)):
-                    parfilename = parxfile.replace("_r01", "_r%02d" % (current_class + 1))
-                    np.savetxt(parfilename.replace(".parx", ""), allparxs[current_class], fmt=format)
-        else:
-            for current_class in range(len(allparxs)):
-                parfilename = parxfile.replace("_r01", "_r%02d" % (current_class + 1))
-                with open(parfilename.replace(".parx", ""), "w") as f:
-                    f.writelines("%s\n" % item for item in allparxs[current_class])
 
         if not parameters["csp_parx_only"]:
 
@@ -2046,7 +2543,7 @@ def csp_extract_frames(
                     t = timer.Timer(text="Convert tif to mrc took: {}", logger=logger.info)
                     t.start()
 
-                    command = "{0}/bin/tif2mrc {1}.tif {1}.mrc; rm {1}.tif".format(
+                    command = "{0}/bin/tif2mrc {1}.tif {1}.mrc; rm -f {1}.tif".format(
                         get_imod_path(), filename
                     )
                     local_run.run_shell_command(command)
@@ -2073,7 +2570,7 @@ def csp_extract_frames(
                 particles = extract.extract_particles(
                     raw_image,
                     stackfile,
-                    allboxes,
+                    allparxs,
                     parameters["particle_rad"] * float(parameters["data_bin"]),
                     parameters["extract_box"],
                     parameters["extract_bin"],
@@ -2087,192 +2584,25 @@ def csp_extract_frames(
                     use_frames=use_frames,
                 )
 
-                # remove original image to save space
-                """
-                if use_frames:
-                    [
-                        os.remove(f)
-                        for frame in raw_image
-                        for f in glob.glob(frame + "*")
-                    ]
-                    [
-                        os.remove(f)
-                        for frame in raw_image
-                        for f in glob.glob("frealign/" + frame + "*")
-                    ]
-                else:
-                    [os.remove(f) for f in glob.glob(raw_image + "*")]
-                    [os.remove(f) for f in glob.glob("frealign/" + raw_image + "*")]
-                """
-                if True:  # "tomo" in parameters["data_mode"]:
-                    actual_number_of_particles = particles
-                else:
-                    actual_number_of_particles = mrc.readHeaderFromFile(stackfile)["nz"]
-
                 # check if all particles extracted correctly
-                if totalboxes != actual_number_of_particles:
+                if totalboxes != particles:
                     logger.error(
                         "Only {0} particles extracted from requested {1}".format(
-                            actual_number_of_particles, totalboxes
+                            particles, totalboxes
                         )
+                    )
+                elif is_tomo or use_frames:
+                    logger.info(
+                        f"Total number of particle projections to be extracted = {totalboxes:,}"
                     )
                 else:
                     logger.info(
-                        f"Total number of particle frames extracted: {totalboxes:,}"
+                        f"Total number of particle projections extracted = {totalboxes:,}"
                     )
-
-                # fix empty particles
-                # logger.info("Detecting empty particles")
-                # temp_stack = filename + "_temp_stack.mrc"
-                # fix_empty_particles(stackfile, actual_number_of_particles, temp_stack)
-
-                imod_path = get_imod_path()
-
-                # create individual per-particle, per-micrograph stacks
-                if (
-                    False
-                    and "frealign" in parameters["extract_fmt"].lower()
-                    and "tomo" in parameters["data_mode"].lower()
-                ):
-
-                    root_stack = os.path.join(
-                        working_path,
-                        "frealign",
-                        "data",
-                        parameters["data_set"] + "_frames_T%04d" % (film),
-                    )
-
-                    # convert metadata to numpy array
-                    allparxs_array = np.genfromtxt(allparxs[0])
-
-                    # get the particle indexes
-                    local_particle = np.unique(allparxs_array[:, 15].astype("int"))
-
-                    num_particles = len(local_particle)
-
-                    logger.info("Found {} particles.".format(num_particles))
-
-                    command_list = []
-
-                    # template to use for naming the per-particle stacks
-                    root_particle_stack = root_stack + "_P??????_stack.mrc"
-
-                    for particle in local_particle:
-
-                        # find all lines corresponding to current particle
-                        indexes = np.argwhere(allparxs_array[:, 15] == particle)
-
-                        # name of output stack
-                        particle_stack = root_particle_stack.replace(
-                            "??????", "%06d" % particle
-                        )
-
-                        # format slice numbers for extraction with newstack
-                        if len(indexes) == 1:
-
-                            sections = str(indexes.squeeze())
-
-                            # newstack command
-                            command = "{0}/bin/newstack {1} {2} -secs {3}".format(
-                                get_imod_path(), stackfile, particle_stack, sections
-                            )
-
-                            command_list.append(command)
-
-                        else:
-                            # work around newstack's -secs limitation
-                            chunk_size = 50
-                            list = indexes.astype("str").squeeze().tolist()
-                            chunks = [
-                                list[i : i + chunk_size]
-                                for i in range(0, len(list), chunk_size)
-                            ]
-                            split_sections = ""
-                            for chunk in chunks:
-                                split_sections += " -secs " + ",".join(chunk)
-
-                            # newstack command
-                            command = "{0}/bin/newstack {1} {2} {3}".format(
-                                get_imod_path(),
-                                stackfile,
-                                split_sections,
-                                particle_stack,
-                            )
-
-                            command_list.append(command)
-
-                    local_frames = np.unique(allparxs_array[:, 18].astype("int"))
-
-                    logger.info("Found {} micrographs.".format(len(local_frames)))
-
-                    # template to use for naming the per-micrograph stacks
-                    root_micrograph_stack = root_stack + "_M??????_stack.mrc"
-
-                    for frame in local_frames:
-
-                        # find all lines corresponding to current micrograph
-                        indexes = np.argwhere(allparxs_array[:, 18] == frame)
-
-                        # name of output stack
-                        name = root_micrograph_stack.replace("??????", "%06d" % frame)
-
-                        # work around newstack's -secs limitation
-                        chunk_size = 50
-                        list = indexes.astype("str").squeeze().tolist()
-                        chunks = [
-                            list[i : i + chunk_size]
-                            for i in range(0, len(list), chunk_size)
-                        ]
-                        split_sections = ""
-                        for chunk in chunks:
-                            split_sections += " -secs " + ",".join(chunk)
-
-                        # newstack command
-                        command = "{0}/bin/newstack {1} {2} {3}".format(
-                            get_imod_path(), stackfile, split_sections, name
-                        )
-
-                        command_list.append(command)
-
-                    cpus = int(parameters["slurm_tasks"])
-
-                    logger.info(
-                        "Writing {} per-particle, per-micrograph stacks using {} cores".format(
-                            len(command_list), cpus - 1
-                        )
-                    )
-
-                    # run multirun on list of commands
-                    mpi.submit_jobs_to_workers(command_list, os.getcwd())
-
-                elif "relion" in parameters["extract_fmt"].lower():
-                    # write one stack per micrograph
-                    mrc.write(
-                        -particles,
-                        current_path + "/" + "relion/" + filename + "_stack.mrcs",
-                    )
-
-                os.chdir(current_path)
-
-                if not parameters["csp_stacks"]:
-                    # clear up space
-                    # shutil.rmtree(working_path)
-
-                    # only remove unnecesary files
-                    [os.remove(f) for f in glob.glob(filename + ".*")]
-                else:
-                    [
-                        shutil.copy2(f, os.path.join(current_path, "frealign", "data"))
-                        for f in glob.glob(
-                            os.path.join(
-                                working_path, "frealign", "data", "*_P??????_stack.mrc"
-                            )
-                        )
-                    ]
             else:
                 logger.info("{}.films does not exist".format(parameters["data_set"]))
 
-            return actual_number_of_particles
+            return particles
 
 
 @timer.Timer(
@@ -2297,11 +2627,6 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
 
     dataset = parameters["data_set"]
 
-    # remove _local.allboxes automatically
-    local_allboxes = Path(current_path, "csp", f"{filename}_local.allboxes")
-    if iteration == 2 and use_frames and local_allboxes.exists() and not local_allboxes.is_symlink():
-        os.remove(local_allboxes)
-
     # setup frealign enviroment in local scratch
     working_path = os.path.join(os.environ["PYP_SCRATCH"], filename)
     shutil.rmtree(working_path, ignore_errors=True)
@@ -2320,14 +2645,15 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
                         current_path,
                         "frealign",
                         "maps",
-                        "statistics_r%02d.txt" % (ref + 1),
+                        f"{dataset}_r{(ref + 1):02d}_{(iteration - 1):02d}_statistics.txt",
                     ),
-                    os.path.join(local_frealign_folder, "scratch"),
+                    os.path.join(local_frealign_folder, "scratch", "statistics_r%02d.txt" % (ref + 1)),
                 )
             except:
-                logger.warning(
-                    "Could not find frealign statistics file in maps folder"
-                )
+                if ref == 0:
+                    logger.warning(
+                        "Could not find frealign statistics file in maps/ folder"
+                    )
                 pass
 
     os.chdir(current_path)
@@ -2336,6 +2662,13 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
     t.start()
     if not skip:
         load_csp_results(filename, parameters, Path(current_path), Path(working_path), verbose=parameters["slurm_verbose"])
+
+        # convert data to 32-bits
+        if parameters.get("movie_depth") and os.path.exists(filename + ".mrc"):
+            command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
+                get_imod_path(), filename + ".mrc"
+            )
+            local_run.run_shell_command(command)
 
     metafile = os.path.join(working_path, filename + ".pkl")
     frame_list = []
@@ -2352,30 +2685,14 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
             os.chdir(current_path)
         except:
             logger.warning("Unable to retrieve metadata")
-
-    statistic_file = glob.glob(
-            current_path + "/frealign/" + "maps/" + f"{dataset}_r01_{(iteration-1):02d}_statistics.txt"
-    )
-    for statics in statistic_file:
-        try:
-            shutil.copy2(
-                statics, os.path.join(local_frealign_folder, "scratch"),
-            )
-            logger.info("Copying frealign statistics to local scratch")
-        except:
-            logger.warning(
-                "Cannot find frealign statistics file in scratch folder, skipping"
-            )
-            pass
-
+    
     if is_tomo:
         if use_frames:
 
             if len(frame_list) > 0:
                 imagefile = frame_list
             else:
-                logger.error("Either data do not have frames or pre-processing was incomplate. ")
-                raise Exception("Frames not found.")
+                raise Exception("Data does not have frames or pre-processing was incomplete")
 
         elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
             imagefile = "mrc/" + filename
@@ -2383,7 +2700,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         elif os.path.exists(os.path.join("raw", filename + ".mrc")):
             imagefile = "raw/" + filename
         else:
-            raise Exception("Image not found")
+            raise Exception(f"Image {filename}.mrc not found")
     elif use_frames:
         imagefile = "raw/" + filename
 
@@ -2392,7 +2709,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         parameters["gain_reference"] = None
 
     # extract/retrieve particle coordinates
-    [allboxes, allparxs] = csp_extract_coordinates(
+    allparxs = csp_extract_coordinates(
         filename,
         parameters,
         working_path,
@@ -2402,51 +2719,66 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         use_frames=use_frames,
         use_existing_frame_alignments=True,
     )
+    
+    # if the project directory file is not written
+    project_dir_file = os.path.join(os.environ["PYP_SCRATCH"], "project_dir.txt")
+    if not os.path.exists(project_dir_file):
+        with open(project_dir_file, "w") as f:
+            f.write(str(current_path))
 
-    parxfile = os.path.join(
-        working_path, "frealign", "maps", filename + "_r01_%02d.parx" % (iteration - 1)
-    )
-    stackfile = os.path.join(working_path, "frealign", filename + "_stack.mrc")
+    if len(allparxs) > 0:
 
-    os.chdir(current_path)
+        stackfile = os.path.join(working_path, "frealign", filename + "_stack.mrc")
 
-    # save copy of all boxes
-    allboxes_saved = allboxes.copy()
+        os.chdir(current_path)
 
-    # extract paticle frames and write parameter and stack files:
-    # 1) parxfile's: working_path/frealign/maps/filename_r??_??.parx
-    # 2) stackfile: working_path/filename_stack.mrc
-    actual_number_of_frames = csp_extract_frames(
-        allboxes,
-        allparxs,
-        parameters,
-        filename,
-        imagefile,
-        parxfile,
-        stackfile,
-        working_path,
-        current_path,
-    )
+        # extract paticle frames and write parameter and stack files:
+        # 1) parxfile's: working_path/frealign/maps/filename_r??_??.parx
+        # 2) stackfile: working_path/filename_stack.mrc
 
-    # refinement
-    # outputs: working_path/frealign/maps/filename_r??_??.parx
-    align.csp_refinement(
-        parameters,
-        filename,
-        current_path,
-        working_path,
-        use_frames,
-        parxfile,
-        iteration,
-    )
+        # show dedicated timer for spr
+        if not is_tomo and not use_frames:
+            t = timer.Timer(text="Projection extraction took: {}", logger=logger.info)
+            t.start()
 
-    # save results
-    if not debug:
-        save_csp_results(
-            filename, parameters, current_path, verbose=parameters["slurm_verbose"]
+        actual_number_of_frames = csp_extract_frames(
+            allparxs,
+            parameters,
+            filename,
+            imagefile,
+            stackfile,
+            working_path,
+            current_path,
         )
-        save_refinement_to_website(filename, iteration, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
 
+        if not is_tomo and not use_frames:
+            t.stop()
+
+        # refinement
+        # outputs: working_path/frealign/maps/filename_r??_??.parx
+        align.csp_refinement(
+            parameters,
+            filename,
+            current_path,
+            working_path,
+            use_frames,
+            allparxs, 
+            iteration,
+        )
+
+        # save results
+        if not debug:
+            save_csp_results(
+                filename, parameters, current_path, verbose=parameters["slurm_verbose"]
+            )
+            if "tomo" in parameters["data_mode"] or parameters["extract_fmt"] == "frealign_local":
+                save_refinement_to_website(filename, iteration, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
+        
+    else:
+        
+        # save configuration file neeed by csp_local_merge
+        project_params.save_pyp_parameters(parameters, Path(working_path).parent )
+        
     # clean-up unnecesary files
     try:
         [
@@ -3138,6 +3470,82 @@ def cryolo_3d(
     shutil.rmtree("filtered_tmp")
     os.chdir("..")
 
+
+def ab_initio(parameters):
+    # initilization of ab inito parameters
+    iter = parameters["refine_iter"]
+    running_particles = iter * int(parameters["csp_RandomParticles"])
+    if iter == 2:
+        all_iters = parameters["refine_maxiter"] - parameters["refine_iter"]
+        # the highest resolution limit for ab inito is 16
+        low_limit = parameters["csp_InitialResolution"]
+        high_limit =  parameters["csp_ResolutionLimit"]
+        res_range = low_limit - high_limit
+        if res_range < 0:
+            raise Exception("Initial resolution limit must be lower than final used resolution")
+        else:
+            step = round(res_range / all_iters, 2)
+            res_limit = [f"{(low_limit - i * step):.1f}" for i in np.arange(all_iters + 1)]
+            parameters["metric_rhref"] = parameters["refine_rhref"] = ":".join(res_limit)
+            parameters["reconstruct_cutoff"] = "0.1"
+            parameters["refine_skip"] = True
+            parameters["refine_bsc"] = "0.0"
+            parameters["csp_refine_particles"] = False
+            parameters["refine_score_weighting"] = False
+
+    else:
+        parameters["reconstruct_cutoff"] = "1"
+        if iter == 3:
+            parameters["csp_refine_particles"] = True
+            parameters["csp_tomo_init_InitialSkip"] = True
+            parameters["csp_tomo_init_GridSearch"] = True
+            parameters["csp_tomo_init_AngleStep"] = 36
+            parameters["csp_tomo_init_ShiftStep"] = 20
+            parameters["reconstruct_minscore"] = 1
+            parameters["reconstruct_maxscore"] = 50
+        else:
+            parameters["csp_tomo_init_InitialSkip"] = False
+        
+        if parameters["metric_masking_method"] == "auto" and iter > 3:
+            classes = int(project_params.param(parameters["csp_tomo_init_num"], iter))
+            dataset = parameters["data_set"]
+            # Auto masking the cisTEM way
+            # TODO: Do we really need a mask for each class if we are saving into the same refine_maskth parameter? 
+            for ref in range(classes):
+                current_ref = os.path.join(os.getcwd(), "frealign", "maps", "%s_r%02d_%02d.mrc" % (dataset, ref + 1, iter - 1) )
+                voxel_size = float(parameters["scope_pixel"] * parameters["data_bin"] * parameters["extract_bin"])
+                radius = parameters["particle_rad"]
+                mask_file = mrc.auto_masking(current_ref, voxel_size, radius)
+                parameters["metric_maskth"] = mask_file
+
+        if running_particles > 500:
+            parameters["csp_tomo_init_ToleranceParticlesShifts"] = 30
+            parameters["reconstruct_cutoff"] = "0"
+            parameters["csp_tomo_init_ShiftStep"] = 10
+            parameters["csp_tomo_init_AngleStep"] = 30
+            parameters["refine_bsc"] = "2.0"
+            parameters["metric_score_weighting"] = True
+            # start to re-evaluate the score
+            parameters["refine_skip"] = False
+
+        if iter == 80:
+            parameters["csp_tomo_init_ToleranceParticlesShifts"] = 6
+            parameters["csp_tomo_init_ShiftStep"] = 6
+            parameters["csp_tomo_init_AngleStep"] = 20
+            parameters["csp_tomo_init_RandomParticles"] += 30
+            parameters["refine_bsc"] = "2.0"
+           
+            # start to re-evaluate the score
+            parameters["refine_skip"] = False
+
+        elif iter == 140:
+            parameters["csp_tomo_init_ToleranceParticlesShifts"] = 0
+            parameters["csp_tomo_init_AngleStep"] = 10
+            parameters["csp_tomo_init_RandomParticles"] += 30
+    
+    project_params.save_parameters(parameters)
+
+
 def enable_profiler(parameters=None,path=None):
     if parameters == None:
         parameters = project_params.load_parameters(path)
@@ -3202,6 +3610,339 @@ def clear_scratch(scratch,timeout=60):
                     except:
                         pass
 
+def tomoswarm_prologue():
+    """ Setup enviroment for running tasks that take a tomogram and produce another tomogram
+
+    Returns
+    -------
+    args
+        Command line arguments
+    name
+        Name of tilt-series
+    project_path
+        Project directory
+    working_path
+        Local scratch directory
+    """   
+     
+    # clear local scratch and report free space
+    clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+    # figure out project and working directories
+    project_path = Path.cwd().parents[0]
+
+    # retrieve command line arguments
+    args = project_params.parse_arguments("tomoswarm")
+    name = os.path.basename(args.file)
+
+    # read pyp parameters
+    parameters = project_params.load_pyp_parameters(project_path)
+
+    working_path = Path(os.environ["PYP_SCRATCH"]) / name
+    os.makedirs( working_path, exist_ok=True)
+
+    # move to working directory
+    os.chdir(working_path)
+    
+    rec = os.path.join(project_path, "mrc", name + ".rec")
+    if os.path.exists(rec):
+        if parameters.get("tomo_rec_depth"):
+            logger.info("Converting tomogram to 32-bits")
+            command = "{0}/bin/newstack -mode 2 {1} {2} && rm -f {1}~".format(
+                get_imod_path(), rec, name + ".rec"
+            )
+            local_run.run_shell_command(command)
+        else:
+            shutil.copy2(rec,working_path)
+    
+    return args, name, project_path, working_path, parameters
+    
+def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation=False ):
+    """ Save resulting tomogram and update corresponding images and metadata
+
+    Parameters
+    ----------
+    new_reconstruction
+        Name of new reconstruction
+    name
+        Name of tilt-series
+    project_path
+        Project directory
+    output
+        Location to save the result in the project folder
+    parameters :
+        pyp parameters
+    """    
+    # generate webp files for visualization
+    plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True, 2, parameters["slurm_verbose"] )
+    
+    # copy outputs to project folder
+    if segmentation:
+        target = os.path.join( project_path, "mrc", name + "_seg.rec" )
+    else:
+        target = os.path.join( project_path, "mrc", name + ".rec" )
+
+    if os.path.exists(target):
+        os.remove(target)
+
+    if parameters.get("tomo_rec_depth") and not segmentation:
+        logger.info("Converting tomogram to 16-bits")
+        command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
+        local_run.run_shell_command(command)
+    else:
+        shutil.copy2( name + "_seg.rec", target )
+
+    for pattern in [ "_rec.webp", "_sides.webp", ".webp" ]:
+        target = os.path.join( project_path, 'webp', name + pattern )
+        if os.path.exists(target):
+            os.remove(target)
+            shutil.copy2( name + pattern, target )
+
+    # read metadata from pickle file
+    metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
+    
+    # dump files to local scratch
+    metadata_object.meta2PYP( path=working_path, data_path=os.path.join(project_path, "raw/"))
+    [ os.remove(i) for i in glob.glob(f"{name}*.*") if Path(i).suffix != ".ctf" ]
+
+    # read metadata from pickle file and sent to website
+    import pandas as pd
+    tilt_metadata = pd.read_pickle(f"{os.path.join(project_path,'pkl',name)}.pkl")
+    save_tiltseries_to_website(name, tilt_metadata['web'])
+
+# update particle metadata
+def update_metadata_coordinates(parameters):
+    """Update metadata files based on manual coordinate files generated by nextPYP
+
+    Args:
+        parameters (dict): pyp parameters
+    """
+    micrographs_file = f"{parameters.get('data_set')}.micrographs"
+    micrograph_list = [line.strip() for line in open(micrographs_file, "r")]
+
+    # detect all .next files in next/
+    next_files = [Path(f).stem for f in glob.glob(os.path.join("next", "*.next")) if Path(f).name != "virion_thresholds.next"]
+
+    total_virions = 0
+    for tilt_series_name in micrograph_list:
+        
+        # retrieve metadata from pkl file
+        pkl_file = os.path.join("pkl", tilt_series_name + ".pkl")
+        metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+        
+        # clear virion/spike coordinates, if any
+        metadata.data.pop("box", None)
+        metadata.data.pop("vir", None)
+
+        # remove original pkl file to allow saving of modified metadata
+        try:
+            os.remove(pkl_file)
+            [os.remove(f) for f in glob.glob(os.path.join("sva","*_vir????.txt"))]
+        except:
+            pass
+
+        # retrieve tilt-series name and add to list
+        if tilt_series_name in next_files:
+    
+            # read unbinned coordinates from website
+            next_file = os.path.join("next",tilt_series_name+".next")
+            coordinates = np.loadtxt(next_file,ndmin=2)
+
+            if coordinates.size > 0:                
+
+                if parameters.get("slurm_verbose"):
+                    logger.info(f"Reading {coordinates.shape[0]:,} particle coordinates from {next_file}")
+
+                # convert to binned coordinates
+                coordinates /= parameters.get("tomo_rec_binning")
+                
+                # swap y and z                
+                coordinates[:,-1] /= parameters.get("tomo_vir_binn")
+
+                # add manual coordinates to metadata
+                header = metadata.files["box"]["header"]
+                import pandas as pd
+                df = pd.DataFrame(coordinates, columns=header)
+                metadata.updateData({'vir':df})
+
+                total_virions += coordinates.shape[0]
+
+            # clean up
+            os.remove(next_file)
+
+        # save metadata to pkl file
+        metadata.write()        
+
+    logger.info(f"Detected a total of {total_virions:,} manually picked virions")
+                
+def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
+
+    micrographs_file = f"{os.path.join(project_path, parameters.get('data_set'))}.micrographs"
+    micrograph_list = [line.strip() for line in open(micrographs_file, "r") if line.strip()]
+
+    # keep track of used tilt-series
+    films_list = []
+    
+    # detect all .next files in next/
+    next_files = [Path(f).stem for f in glob.glob( os.path.join(project_path,"next", "*.next")) if Path(f).name != "virion_thresholds.next"]
+
+    logger.warning(f"Updating metadata and reordering micrograph/tilt-series list")
+    with tqdm(desc="Progress", total=len(micrograph_list), file=TQDMLogger()) as pbar:
+        for tilt_series_name in micrograph_list:
+            
+            # retrieve metadata from pkl file
+            pkl_file = os.path.join(project_path,"pkl", tilt_series_name + ".pkl")
+            metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+            
+            # clear virion/spike coordinates, if any
+            metadata.data.pop("box", None)
+            metadata.data.pop("vir", None)
+
+            # remove original pkl file to allow saving of modified metadata
+            try:
+                os.remove(pkl_file)
+                [os.remove(f) for f in glob.glob(os.path.join("sva","*_vir????.txt"))]
+            except:
+                pass
+
+            # go to working directory
+            os.chdir(working_path)
+
+            # retrieve tilt-series name and add to list
+            if tilt_series_name in next_files:
+        
+                # read unbinned coordinates from website
+                next_file = os.path.join(project_path,"next",tilt_series_name+".next")
+                coordinates = np.loadtxt(next_file,ndmin=2)
+
+                if len(coordinates) > 0:
+                    # add to list of used tilt-series
+                    films_list.append(tilt_series_name)
+                    
+                    # convert to binned coordinates
+                    coordinates /= parameters.get("tomo_rec_binning")
+                    
+                    # swap y and z                
+                    coordinates = coordinates.copy()[:,[0,2,1,3]]
+
+                    # add manual coordinates to metadata
+                    header = metadata.files["box"]["header"]
+                    import pandas as pd
+                    df = pd.DataFrame(coordinates, columns=header)
+                    metadata.updateData({'box':df})
+
+                    # dump to local scratch                
+                    metadata.meta2PYP(path=working_path, data_path=os.path.join(project_path, "raw/"))
+                                
+                    # clean up
+                    os.remove(next_file)
+
+                # Identify manually ignored views
+                excluded_views = []
+                if "exclude" in metadata.data:
+                    [ excluded_views.append(f + 1) for f in metadata.data["exclude"].to_numpy()[:,-1] ]
+
+                # create link to tomogram in local scratch
+                reconstruction_file = os.path.join( project_path,"mrc", tilt_series_name + ".rec" )
+                if os.path.exists(reconstruction_file):
+                    os.symlink( reconstruction_file, Path(reconstruction_file).name )
+
+                mrc_file = os.path.join( project_path,"mrc", tilt_series_name + ".mrc")
+                if os.path.exists(mrc_file):
+                    x, y, _ = get_image_dimensions(mrc_file)
+                else:
+                    raise Exception(f"Cannot find raw tilt-series {mrc_file} to extract dimentions")
+
+                # create txt files
+                detect_tomo.extract_spk_direct(
+                    parameters=parameters, 
+                    name=tilt_series_name, 
+                    x=x,
+                    y=y,
+                    binning=parameters.get("tomo_rec_binning"), 
+                    zfact="", 
+                    tilt_angles=metadata.data["tlt"].to_numpy(),
+                    tilt_options="-MODE 2 -OFFSET 0.00 -PERPENDICULAR -RADIAL {0},{1} -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {2}".format(parameters["tomo_rec_lpradial_cutoff"], parameters["tomo_rec_lpradial_falloff"], excluded_views)
+                )
+                
+                # save txt files to sva/
+                txt_files = glob.glob("*_vir????.txt")
+                for txt_file in txt_files:
+                    shutil.copy2( txt_file, os.path.join(project_path, "sva", txt_file))
+
+            # save metadata to pkl file
+            metadata.write()
+            pbar.update(1)
+        
+    # go back to project directory
+    os.chdir(project_path)
+    
+    # create frealign directory, if needed
+    os.makedirs('frealign',exist_ok=True)
+
+    # set particle radius based on vir information, if needed
+    if parameters["tomo_spk_rad"] == 0 and parameters["tomo_vir_rad"] > 0:
+        parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"]
+    
+    # generate *_volumes.txt file
+    generate_list_of_all_subvolumes(parameters)
+
+    # save sorted final micrograph list (excluding micrographs with no boxes)
+    inputlist = get_new_input_list(parameters, films_list)
+
+    if len(inputlist) > 0:
+        films = parameters["data_set"] + ".films"
+        if Path(films).is_symlink():
+            os.remove(films)
+        with open(films, "w") as f:
+            f.write("\n".join(inputlist))
+            f.close()
+
+def sync_parameters(parameters):
+    
+    # read specification file to figure out default parameters
+    import toml
+    specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+
+    # copy tomo_pick_vir to tomo_vir and tomo_spk_vir
+    if parameters["micromon_block"] != "tomo-preprocessing" and parameters["micromon_block"] != "" and parameters["micromon_block"] != "tomo-pure-preprocessing":
+        new_parameters = parameters.copy()
+        for k in parameters.keys():
+            if k.startswith("tomo_pick_vir_"):
+                default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
+                if parameters[k] != default:
+                    if parameters.get("slurm_verbose"):
+                        logger.info(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                    new_parameters[k.replace("tomo_pick_vir_","tomo_vir_")] = parameters[k]
+            # map particle picking methods
+            elif k == "tomo_pick_method":
+                if parameters[k] != "virions":
+                    new_parameters["tomo_spk_method"] = parameters[k]
+            # copy tomo_pick_ to tomo_spk
+            elif k.startswith("tomo_pick_"):
+                default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
+                if parameters[k] != default and not k.endswith('_method'):
+                    if parameters.get("slurm_verbose"):
+                        logger.info(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
+                    new_parameters[k.replace("tomo_pick_","tomo_spk_")] = parameters[k]
+            # copy tomo_srf parameters to tomo_vir
+            if k.startswith("tomo_srf_"):
+                default = specifications.get("tabs").get("tomo_srf").get(k.replace("tomo_srf_","")).get("default")
+                if parameters[k] != default:
+                    if parameters.get("slurm_verbose"):
+                        logger.info(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                    new_parameters[k.replace("tomo_srf_","tomo_vir_")] = parameters[k]
+            if k.startswith("tomo_sphere_"):
+                default = specifications.get("tabs").get("tomo_sphere").get(k.replace("tomo_sphere_","")).get("default")
+                if parameters[k] != default:
+                    if parameters.get("slurm_verbose"):
+                        logger.info(f"Replacing {k.replace('tomo_sphere_','tomo_vir_seg_')} <- {k} with value {parameters[k]}")
+                    new_parameters[k.replace("tomo_sphere_","tomo_vir_seg_")] = parameters[k]
+
+        parameters = new_parameters.copy()
+    return parameters
+    
 if __name__ == "__main__":
 
     try:
@@ -3213,6 +3954,9 @@ if __name__ == "__main__":
             jobid = f"{os.environ['SLURM_ARRAY_JOB_ID']}_{os.environ['SLURM_ARRAY_TASK_ID']}"
         elif "SLURM_JOB_ID" in os.environ:
             jobid = os.environ["SLURM_JOB_ID"]
+        else:
+            jobid = f"{random.randint(100000000,999999999)}_1"
+            os.environ["SLURM_JOB_ID"] = jobid
 
         # initialize various parameters
         if not "PYP_DIR" in os.environ:
@@ -3220,17 +3964,17 @@ if __name__ == "__main__":
 
         # retrieve version number
         version = toml.load(os.path.join(os.environ['PYP_DIR'],"nextpyp.toml"))['version']
-        memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else ""
+        memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else "?"
 
         if jobid is None:
             logger.info(
-                "Job (v{}) launching on {} using {} task(s) {}".format(
+                "Running nextPYP v{} on {} using {} task(s) {}".format(
                 version, socket.gethostname(), mpi_tasks, memory
                 )
             )
         else:
             logger.info(
-                f"nextPYP v{version} launching job {jobid} on {socket.gethostname()} using {mpi_tasks} task(s) {memory}"
+                f"Job {jobid} running nextPYP v{version} on {socket.gethostname()} using {mpi_tasks} task(s) {memory}"
             )
 
         config = get_pyp_configuration()
@@ -3249,14 +3993,8 @@ if __name__ == "__main__":
         os.environ["OPENBLAS_NUM_THREADS"] = "1"
         os.environ["PBS_O_WORKDIR"] = os.getcwd()
 
-        if "SLURM_ARRAY_JOB_ID" in os.environ:
-            subdir = f'{os.environ["SLURM_ARRAY_JOB_ID"]}_{os.environ["SLURM_ARRAY_TASK_ID"]}'
-        elif "SLURM_JOB_ID" in os.environ:
-            subdir = os.environ["SLURM_JOB_ID"]
-        else:
-            subdir = ""
         os.environ["PYP_SCRATCH"] = str(
-            Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"] / subdir
+            Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"] / jobid
         )
         if not os.path.exists(os.environ["PYP_SCRATCH"]):
             try:
@@ -3284,6 +4022,8 @@ if __name__ == "__main__":
         else:
             os.environ["PYTHONPATH"] = os.environ["PYTHONDIR"]
 
+        # configure IMOD not to save backup files
+        os.environ["IMOD_NO_IMAGE_BACKUP"] = "1"
 
         current_directory = os.getcwd()
         job_name = None
@@ -3326,7 +4066,10 @@ if __name__ == "__main__":
                     data_dir = output_dir
                 else:
                     data_dir = config["stream"]["target"]
-                session_dir = os.path.join(data_dir, args["stream_session_group"], args["stream_session_name"])
+                if args.get("stream_session_group") != None and args.get("stream_session_name") != None:
+                    session_dir = os.path.join(data_dir, args["stream_session_group"], args["stream_session_name"])
+                else:
+                    session_dir = data_dir
                 data_path = Path(project_params.resolve_path(args["data_path"]))
                 args['movie_pattern'] = args['movie_pattern'].replace( data_path.suffix, '.' + args['stream_compress'] )
                 project_params.save_pyp_parameters(args,session_dir)
@@ -3370,17 +4113,10 @@ if __name__ == "__main__":
                 parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = False
                 project_params.save_pyp_parameters(parameters)
 
-                if parameters.get("slurm_verbose"):
-                    spa_Tlog.update(timer.Timer.timers)
-                    spa_Tlog = {k:v for k, v in spa_Tlog.items() if v}
-                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_sprmerge.json"
-                    with open(json_file, 'w') as fp:
-                        json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
-
-                logger.info("PYP (sprmerge) finished successfully")
+                logger.info("nextPYP (sprmerge) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (sprmerge) failed")
+                logger.error("nextPYP (sprmerge) failed")
                 pass
         # swarm
         elif "sprswarm" in os.environ:
@@ -3406,21 +4142,16 @@ if __name__ == "__main__":
 
                 spr_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
-                # spa_Tlog.update(timer.Timer.timers)
-                # spa_Tlog = {k:v for k, v in spa_Tlog.items() if v}
-                # json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_sprswarm.json"
-                # with open(json_file, 'w') as fp:
-                #    json.dump(spa_Tlog, fp, indent=4,separators=(',', ': '))
-
-                logger.info("PYP (sprswarm) finished successfully")
+                logger.info("nextPYP (sprswarm) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (sprswarm) failed")
+                logger.error("nextPYP (sprswarm) failed")
                 pass
 
             # we are done, clear local scratch
-            if os.path.exists(os.environ["PYP_SCRATCH"]):
-                shutil.rmtree(os.environ["PYP_SCRATCH"])
+            local_scratch = os.path.join(os.environ["PYP_SCRATCH"],os.path.basename(args.file))
+            if os.path.exists(local_scratch) and not args.keep:
+                shutil.rmtree(local_scratch)
 
         # swarm
         elif "tomoswarm" in os.environ:
@@ -3439,15 +4170,16 @@ if __name__ == "__main__":
 
                 tomo_swarm(args.path, args.file, args.debug, args.keep, args.skip)
 
-                logger.info("PYP (tomoswarm) finished successfully")
+                logger.info("nextPYP (tomoswarm) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (tomoswarm) failed")
+                logger.error("nextPYP (tomoswarm) failed")
                 pass
 
             # we are done, clear local scratch
-            if os.path.exists(os.environ["PYP_SCRATCH"]):
-                shutil.rmtree(os.environ["PYP_SCRATCH"])
+            local_scratch = os.path.join(os.environ["PYP_SCRATCH"],os.path.basename(args.file))
+            if os.path.exists(local_scratch) and not args.keep:
+                shutil.rmtree(local_scratch)
 
         elif "tomomerge" in os.environ:
 
@@ -3465,14 +4197,19 @@ if __name__ == "__main__":
                 os.chdir(os.pardir)
 
                 parameters = project_params.load_pyp_parameters()
-                tomo_merge(parameters)
+                try:
+                    tomo_merge(parameters)
+                except:
+                    if Web.exists:
+                        Web().failed()
+                    pass
                 # reset all flags for re-calculation
                 parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
                 project_params.save_pyp_parameters(parameters)
-                logger.info("PYP (tomomerge) finished successfully")
+                logger.info("nextPYP (tomomerge) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (tomomerge) failed")
+                logger.error("nextPYP (tomomerge) failed")
                 pass
 
         elif "tomoedit" in os.environ:
@@ -3546,20 +4283,35 @@ if __name__ == "__main__":
                         path="./pkl"
                         )
 
-                        starfile = project_params.resolve_path(parameters["import_refine_star"])
+                        refine_star_file = project_params.resolve_path(parameters["import_refine_star"])
 
                         rln_path = project_params.resolve_path(parameters["import_relion_path"])
 
                         if "spr" in mode:
                             if "import_motion_star" in parameters and parameters["import_motion_star"] is not None:
-                                motionstar = project_params.resolve_path(parameters["import_motion_star"])
+                                motion_star_file = project_params.resolve_path(parameters["import_motion_star"])
                             else:
-                                motionstar = ""
-                            new_imagelist = globalmeta.SpaStar2meta(starfile, motionstar, rln_path=rln_path, linkavg=True)
-
+                                motion_star_file = None
+                            new_imagelist, parameters = globalmeta.SpaStar2meta(refine_star_file, motion_star_file, rln_path=rln_path, linkavg=True, parameters=parameters)
                         else:
-                            tomostar = project_params.resolve_path(parameters["import_tomo_star"])
-                            new_imagelist = globalmeta.TomoStar2meta(tomostar, starfile, rln_path=rln_path)
+                            tomo_star_file = project_params.resolve_path(parameters["import_tomo_star"])
+                            if "import_tomo_motion_star" in parameters and parameters["import_tomo_motion_star"] is not None:
+                                motion_star_file = project_params.resolve_path(parameters["import_tomo_motion_star"])
+                            else:
+                                motion_star_file = None
+                            if parameters["import_tomo_star_version"] == "version4":
+                                new_imagelist, parameters = globalmeta.TomoStar2meta(tomo_star_file, refine_star_file, rln_path=rln_path, parameters=parameters)
+                            elif parameters["import_tomo_star_version"] == "version5":
+                                tilt_series_star_file = project_params.resolve_path(parameters["import_tilt_series_star"])
+                                new_imagelist, parameters = globalmeta.TomoStar2metaV5(
+                                    tomo_star_file=tomo_star_file, 
+                                    tilt_series_star_file=tilt_series_star_file, 
+                                    refine_star_file=refine_star_file,
+                                    motion_star_file=motion_star_file,
+                                    rln_path=rln_path,
+                                    parameters=parameters)
+                            else:
+                                raise Exception(f"Unknown version of relion: {parameters['import_tomo_star_version']}")
 
                         # write new film file to PYP
                         filmname = dataset + ".films"
@@ -3569,18 +4321,21 @@ if __name__ == "__main__":
                         shutil.copy2(filmname, micrographs)
 
                         if "spr" in mode:
-                            mag = parameters["scope_mag"]
-                            globalmeta.star2par(starfile, mag=mag, path="frealign/")
-                        else:
-                            # update handedness
-                            parameters["csp_ctf_handedness"] = True if globalmeta.micrograph_global["ctf_hand"].values[0] == -1.0 else False
-                            project_params.save_parameters(parameters)
+                            # mag = parameters["scope_mag"]
+                            globalmeta.star2par(refine_star_file, new_imagelist, path="frealign/maps")
+
+                        project_params.save_parameters(parameters)
 
                         globalmeta.WritePickle(path="./pkl")
 
                         # generate image for display
                         binning = 8
-                        input_file = glob.glob("mrc/*.*")[0]
+                        if len(glob.glob("mrc/*.*")) > 0:
+                            input_file = glob.glob("mrc/*.*")[0]
+                        elif len(glob.glob("raw/*.*")) > 0:
+                            input_file = glob.glob("raw/*.*")[0]
+                        else:
+                            raise Exception("Cannot find images to create thumbnail")
                         output_file = os.path.join( os.environ["PYP_SCRATCH"], Path(input_file).name )
                         x, y, slices = get_image_dimensions(input_file)
                         if y > x:
@@ -3590,17 +4345,17 @@ if __name__ == "__main__":
                         slice = math.floor( slices / 2 )
                         com = f"{get_imod_path()}/bin/newstack {input_file} {output_file} -bin {binning} -float 2 -secs {slice} {rotate}"
                         local_run.run_shell_command(com)
-                        com = f"{get_imod_path()}/bin/mrc2tif -j {output_file} gain_corrected.jpg"
+                        com = f"{get_imod_path()}/bin/mrc2tif -j -q 100 {output_file} gain_corrected.jpg"
                         local_run.run_shell_command(com)
                         contrast_stretch("gain_corrected.jpg")
 
                         img2webp("gain_corrected.jpg","gain_corrected.webp")
                         os.remove("gain_corrected.jpg")
 
-                logger.info("PYP (import_star) finished successfully")
+                logger.info("nextPYP (import_star) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (import_star) failed")
+                logger.error("nextPYP (import_star) failed")
                 pass
 
         elif "export_session" in os.environ:
@@ -3619,8 +4374,9 @@ if __name__ == "__main__":
                     session_parameters = project_params.load_pyp_parameters(session_path)
                     data_set = session_parameters["data_set"]
 
-                    micrographs = "{}.micrographs".format(data_set)
-                    micrograph_list = [line.strip() for line in open(micrographs, "r")]
+                    # find .micrographs file in export directory
+                    micrographs = glob.glob("*.micrographs")[0]
+                    micrograph_list = [line.strip() for line in open(micrographs, "r") if line.strip()]
 
                     os.chdir(session_path)
                     pickle_files = glob.glob(os.path.join("pkl", "*.pkl"))
@@ -3650,11 +4406,11 @@ if __name__ == "__main__":
                         coords = False
                     globalmeta.weak_meta2Star(imagelist, output, session_path, coords=coords)
 
-                logger.info("PYP (export_session) finished successfully")
+                logger.info("nextPYP (export_session) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (export_session) failed")
+                logger.error("nextPYP (export_session) failed")
                 pass
 
         elif "export_star" in os.environ:
@@ -3676,7 +4432,7 @@ if __name__ == "__main__":
                             micrographs[line.strip()] = index
                             index += 1
 
-                    parfile = "frealign/maps/" + parameters["data_set"] + "_r01" + "_%02d.par" % iteration
+                    parfiles = "frealign/maps/" + parameters["data_set"] + "_r01" + "_%02d.bz2" % iteration
                     imagelist = list(micrographs.keys())
 
                     globalmeta = pyp_metadata.GlobalMetadata(
@@ -3685,16 +4441,16 @@ if __name__ == "__main__":
                         imagelist=imagelist,
                         mode=mode,
                         getpickle=True,
-                        parfile=parfile,
+                        parfile=parfiles,
                         path="./pkl"
                         )
                     select = parameters["extract_cls"]
                     globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
 
-                logger.info("PYP (export_star) finished successfully")
+                logger.info("nextPYP (export_star) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (export_star) failed")
+                logger.error("nextPYP (export_star) failed")
                 pass
 
         elif "csp" in os.environ:
@@ -3705,80 +4461,251 @@ if __name__ == "__main__":
                 parameters = parse_arguments("refine")
  
                 if parameters != 0:
-                    if parameters["export_enable"]:
 
-                        mode = parameters["data_mode"].lower()
-                        iteration = parameters["refine_iter"]
-                        micrographs = {}
-                        all_micrographs_file = parameters["data_set"] + ".films"
-                        with open(all_micrographs_file) as f:
-                            index = 0
-                            for line in f.readlines():
-                                micrographs[line.strip()] = index
-                                index += 1
+                    if "particle_rad" not in parameters.keys() and not "import_mode" in parameters.keys() or parameters["extract_box"] == 0:
+                        logger.error("You need to pick particles before running refinement")
+                        sys.exit()
 
-                        par_input = project_params.resolve_path(parameters["export_parfile"])
+                    # Manage csp parameters from the multiple refinement blocks
+                    parameters_copy = parameters.copy()
+                    
+                    # ab-initio
+                    if parameters.get("micromon_block") == "tomo-initial-refinement":
+    
+                        # transfer iteration parameters
+                        parameters['refine_resume'] = parameters['csp_tomo_init_resume']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_init_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_init_first_iter']
+                        
+                        # transfer classification parameters
+                        parameters['class_num'] = parameters['csp_tomo_init_num']
+                        parameters['class_rhcls'] = parameters['csp_tomo_init_rhcls']
+                        
+                        # enable ab-initio mode
+                        parameters["csp_abinitio"] = True
+                        
+                        # transfer refinement parameters
+                        for key in parameters_copy.keys():
+                            if key.startswith("csp_tomo_init_"):
+                                new_key = key.replace("csp_tomo_init_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+                        
+                        # transfer ctf handedness parameters
+                        parameters["csp_ctf_handedness"] = parameters["extract_ctf_handedness"]
 
-                        if not os.path.exists(par_input):
-                            try:
-                                par_input = os.path.join(os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01_%02d" % parameters["refine_iter"] + ".par.bz2")
-                                logger.info(f"Using parfile {par_input} as template for alignment")
-                            except:
-                                logger.error("Can find any available parfile to read alignment")
-
-                        if par_input.endswith(".par"):
-                            parfile = par_input
-                        elif par_input.endswith(".bz2"):
-                            parfile = frealign_parfile.Parameters.decompress_parameter_file(par_input, parameters["slurm_tasks"])
+                        # create inital model if needed
+                        if parameters.get("refine_iter") == 2:
+                            boxsize = parameters.get('extract_box')
+                            A = np.ones([boxsize, boxsize, boxsize], dtype=np.float32)
+                            dummy_reference = os.path.join( os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01" + "_01.mrc" )
+                            os.makedirs(Path(dummy_reference).parents[0], exist_ok=True)
+                            mrc.write(A, dummy_reference)
+                            parameters["refine_model"] = dummy_reference
                         else:
-                            logger.error("Can't recognize the parfile")
-                            sys.exit()
+                            parameters["refine_model"] = os.path.join( os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01" + "_%02d.mrc" % ( parameters.get("refine_iter") - 1 ) )
+                        assert os.path.exists(parameters["refine_model"]), f"Could not find reference file {parameters['refine_model']}!"
+                        
+                        # resolve parameter file (*.txt from parent block)
+                        parfile, _ = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+                        assert os.path.exists(project_params.resolve_path(parfile)), f"Could not find metadata file!"
+                        parameters["refine_parfile_tomo"] = parfile
+                    
+                    # reference-based
+                    elif parameters.get("micromon_block") == "tomo-reference-refinement":
+ 
+                        # always do a single interation
+                        parameters["refine_iter"] = parameters["refine_maxiter"] = 2
 
-                        imagelist = list(micrographs.keys())
+                        # calculate number of random iterations based on range and step size if doing reference-based alignment
+                        parameters['csp_NumberOfRandomIterations'] = int(2**4 * parameters.get("csp_tomo_reference_ToleranceParticlesPhi") * parameters.get("csp_tomo_reference_ToleranceParticlesPsi") * parameters.get("csp_tomo_reference_ToleranceParticlesTheta") * parameters.get("csp_tomo_reference_ToleranceParticlesShifts") / ( parameters.get("csp_tomo_reference_AngleStep") ** 3 ) / parameters.get("csp_tomo_reference_ShiftStep"))
+                        logger.warning(f"Number of exhaustive score evaluations based on search range and step size: {parameters.get('csp_NumberOfRandomIterations'):,}")
+                        
+                        # transfer refinement parameters
+                        for key in parameters_copy.keys():
+                            if key.startswith("csp_tomo_reference_"):
+                                new_key = key.replace("csp_tomo_reference_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+                        
+                        # transfer ctf handedness parameters
+                        parameters["csp_ctf_handedness"] = parameters["extract_ctf_handedness"]
+                        parameters["csp_refine_particles"] = True
+                        parameters["csp_refine_micrographs"] = False
+                        parameters["csp_refine_ctf"] = False
 
-                        globalmeta = pyp_metadata.GlobalMetadata(
-                            parameters["data_set"],
-                            parameters,
-                            imagelist=imagelist,
-                            mode=mode,
-                            getpickle=True,
-                            parfile=parfile,
-                            path="./pkl"
-                            )
+                        # resolve initial model
+                        assert parameters.get("csp_tomo_reference_model") and os.path.exists(project_params.resolve_path(parameters.get("csp_tomo_reference_model"))), f"Reference is missing!"
+                        parameters["refine_model"] = parameters.get("csp_tomo_reference_model")
+                        
+                        # resolve parameter file (*.txt from parent block)
+                        parfile, _ = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+                        assert os.path.exists(project_params.resolve_path(parfile)), f"Could not find metadata file!"
+                        parameters["refine_parfile_tomo"] = parfile
 
-                        select = parameters["extract_cls"]
-                        globalmeta.meta2Star(parameters["data_set"] + ".star", imagelist, select=select, stack="stack.mrc", parfile=parfile)
+                    # reference-free
+                    elif parameters.get("micromon_block") == "tomo-initial-reconstruct":
 
-                        logger.info("PYP (export_star) finished successfully")
+                        # always do a single interation
+                        parameters["refine_iter"] = parameters["refine_maxiter"] = 2
 
+                        # transfer refinement parameters
+                        for key in parameters_copy.keys():
+                            new_key = key.replace("csp_tomo_free_","csp_")
+                            if new_key in parameters:
+                                parameters[new_key] = parameters_copy.get(key)
+                        
+                        # transfer ctf handedness parameters
+                        parameters["csp_ctf_handedness"] = parameters["extract_ctf_handedness"]
+
+                        # create inital model
+                        boxsize = parameters.get('extract_box')
+                        A = np.ones([boxsize, boxsize, boxsize], dtype=np.float32)
+                        dummy_reference = os.path.join( os.getcwd(), "frealign", "maps", parameters["data_set"] + "_r01" + "_01.mrc" )
+                        os.makedirs(Path(dummy_reference).parents[0], exist_ok=True)
+                        mrc.write(A, dummy_reference)
+                        parameters["refine_model"] = dummy_reference
+                        
+                        # resolve parameter file
+                        if parameters.get("csp_tomo_free_format") == "bz2":
+                            assert parameters["csp_tomo_free_parfile"], f"Metadata file is missing!"
+                            parameters["refine_parfile"] = project_params.resolve_path(parameters["csp_tomo_free_parfile"])
+                        elif parameters.get("csp_tomo_free_format") == "txt":
+                            parameters["refine_parfile_tomo"] = project_params.resolve_path(parameters.get("csp_tomo_free_parfile_tomo"))
+                            assert os.path.exists(parameters["refine_parfile_tomo"]), f"Metadata file is missing!"
+                        else:
+                            # find *.txt file from parent block
+                            parfile, _ = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
+                            parameters["refine_parfile_tomo"] = project_params.resolve_path(parfile)
+                            assert os.path.exists(parameters["refine_parfile_tomo"]), f"Metadata file is missing!"
+                            
+                    elif parameters.get("micromon_block") == "tomo-new-coarse-refinement":
+
+                        for key in parameters_copy.keys():
+                            if key.startswith("csp_tomo_coarse_"):
+                                new_key = key.replace("csp_tomo_coarse_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+                        parameters["refine_model"] = parameters["csp_tomo_coarse_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+                        parameters["refine_parfile"] = parameters["csp_tomo_coarse_parfile"]
+
+                        # transfer iteration parameters
+                        if not parameters.get('csp_tomo_coarse_resume'):
+                            parameters['refine_iter'] = parameters['csp_tomo_coarse_first_iter']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_coarse_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_coarse_first_iter']
+
+                    elif parameters.get("micromon_block") == "tomo-new-coarse-classification":
+                        for key in parameters_copy.keys():
+                            if key.startswith("csp_tomo_classification_"):
+                                new_key = key.replace("csp_tomo_classification_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+
+                        # transfer classification parameters                    
+                        parameters['class_num'] = parameters['csp_tomo_classification_num']
+                        parameters['class_rhcls'] = parameters['csp_tomo_classification_rhcls']
+                        parameters['class_force_init'] = parameters['csp_tomo_classification_force_init']
+                        parameters['class_bin'] = parameters['csp_tomo_classification_bin']
+                        parameters['class_refineeulers'] = parameters['csp_tomo_classification_refineeulers']
+                        parameters['class_refineshifts'] = parameters['csp_tomo_classification_refineshifts']
+                        parameters['class_focusmask'] = parameters['csp_tomo_classification_focusmask']
+                        # parameters['class_refine_poses'] = parameters['csp_tomo_classification_refine_poses']
+                        
+                        # transfer iteration parameters
+                        if not parameters.get('csp_tomo_classification_resume'):
+                            parameters['refine_iter'] = parameters['csp_tomo_classification_first_iter']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_classification_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_classification_first_iter']
+                        
+                        assert parameters.get("csp_tomo_classification_parfile"), f"An input parameter file (*.bz2) is required"
+                        parameters["refine_parfile"] = parameters["csp_tomo_classification_parfile"]
+                        parameters["refine_model"] = parameters["csp_tomo_classification_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+
+                    elif parameters.get("micromon_block") == "tomo-flexible-refinement":
+                        for key in parameters_copy.keys(): 
+                            if key.startswith("csp_tomo_movie_"):
+                                new_key = key.replace("csp_tomo_movie_","csp_")
+                                if new_key in parameters:
+                                    parameters[new_key] = parameters_copy.get(key)
+
+                        assert parameters.get("csp_tomo_movie_parfile"), f"An input parameter file (*.bz2) is required"
+                        parameters["refine_parfile"] = parameters["csp_tomo_movie_parfile"]
+                        parameters["refine_model"] = parameters["csp_tomo_movie_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+
+                        # transfer iteration parameters
+                        if not parameters.get('csp_tomo_movie_resume'):
+                            parameters['refine_iter'] = parameters['csp_tomo_movie_first_iter']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_movie_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_movie_first_iter']
+
+                        # turn on frame refinement and everything else off
+                        parameters['csp_refine_micrographs'] = False
+                        parameters['csp_refine_particles'] = False
+                        parameters['csp_refine_ctf'] = False
+                        parameters['csp_frame_refinement'] = True
+
+                    elif parameters.get("micromon_block") == "tomo-flexible-refinement-after":
+                        for key in parameters_copy.keys(): 
+                            if key.startswith("csp_tomo_movie_after_"):
+                                parameters[key.replace("csp_tomo_movie_after_","csp_")] = parameters_copy.get(key)
+                        parameters["refine_parfile"] = parameters["csp_tomo_movie_after_parfile"]
+                        parameters["refine_model"] = parameters["csp_tomo_movie_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+                    
+                        # transfer iteration parameters
+                        if not parameters.get('csp_tomo_movie_after_resume'):
+                            parameters['refine_iter'] = parameters['csp_tomo_movie_after_first_iter']
+                        parameters['refine_maxiter'] = parameters['csp_tomo_movie_after_maxiter']
+                        parameters['refine_first_iter'] = parameters['csp_tomo_movie_after_first_iter']
+                        
+                        # turn off frame refinement
+                        parameters['csp_frame_refinement'] = False
+                        
+                    # transfer metric parameters from new tomo pipeline to old one
+                    if parameters.get("data_mode") == "tomo" and parameters.get("micromon_block") != "tomo_coarse_refinement":
+                        for key in parameters_copy.keys():
+                            if key.startswith("metric_"):
+                                if key.replace("metric_","refine_") in parameters:
+                                    parameters[key.replace("metric_","refine_")] = parameters_copy.get(key)
+                                elif key.replace("metric_","csp_") in parameters:
+                                    parameters[key.replace("metric_","csp_")] = parameters_copy.get(key)
+                                elif key == "metric_masking_method":
+                                    if parameters.get(key) == "auto":
+                                        parameters["csp_automask"] = True
+                                    elif parameters.get(key) == "file":
+                                        assert os.path.exists(project_params.resolve_path(parameters.get("metric_maskth"))), f"Mask file {parameters.get('metric_maskth')} does not exist"
+                                        parameters["refine_maskth"] = project_params.resolve_path(parameters_copy.get("metric_maskth"))
+
+                    if not parameters["refine_resume"]:
+                        parameters["refine_iter"] = parameters["refine_first_iter"]
+
+                    # normal csp procedure
+                    iteration = parameters["refine_iter"]
+                    if iteration < 2:
+                        iteration = parameters["refine_iter"] = 2
+
+                    if parameters["data_mode"] == "spr":
+                        set_up.prepare_spr_dir()
                     else:
-                        if "particle_rad" not in parameters.keys() and not "import_mode" in parameters.keys() or parameters["extract_box"] == 0:
-                            logger.error("You need to pick particles before running refinement")
-                            sys.exit()
+                        set_up.prepare_tomo_dir()
 
-                        if not parameters["refine_resume"]:
-                            parameters["refine_iter"] = parameters["refine_first_iter"]
+                    # prepare directory structure
+                    folders = [
+                        "frealign",
+                        "frealign/maps",
+                        "frealign/log",
+                    ]
+                    null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
 
-                        # normal csp procedure
-                        iteration = parameters["refine_iter"]
-                        if iteration < 2:
-                            iteration = parameters["refine_iter"] = 2
-                        project_params.save_parameters(parameters)
+                    if parameters["refine_iter"] == 2:
 
-                        if parameters["data_mode"] == "spr":
-                            set_up.prepare_spr_dir()
-                        else:
-                            set_up.prepare_tomo_dir()
-
-                        # prepare directory structure
-                        folders = [
-                            "frealign",
-                            "frealign/maps",
-                            "frealign/log",
-                        ]
-                        null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
-
-                        if parameters["refine_iter"] == 2:
+                        # if using particles from manual picking, we need to populate the metadata manually
+                        if parameters.get("data_parent"):
+                            parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
+                            if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking":
+                                update_metadata_coordinates_and_merge(project_path=os.getcwd(),working_path=os.environ["PYP_SCRATCH"],parameters=parameters)
+                                # set the volumes files we just calculated as reference
+                                parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
 
                             latest_parfile, latest_reference = None, None
                             # data_parent is None if running CLI
@@ -3788,58 +4715,68 @@ if __name__ == "__main__":
                             parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
 
                             # NOTE: spr does not really require a parfile first time we run csp
-                            if parameters["refine_parfile"] is not None:
+                            if "refine_parfile" in parameters and parameters["refine_parfile"] is not None:
                                 parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
+                            elif "refine_parfile_tomo" in parameters and parameters["refine_parfile_tomo"] is not None:
+                                parameters["refine_parfile_tomo"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile_tomo"]) == "auto" else parameters["refine_parfile_tomo"]
+                                
+                    else:
+                            latest_parfile, latest_reference = project_params.get_latest_refinement_reference(os.getcwd(), parameters["refine_parfile_compress"])
+                            parameters["refine_model"] = latest_reference if project_params.resolve_path(parameters["refine_model"]) == "auto" else parameters["refine_model"]
+                            parameters["refine_parfile"] = latest_parfile if project_params.resolve_path(parameters["refine_parfile"]) == "auto" else parameters["refine_parfile"]
+                        
+                    # ensure backwards compatibility
+                    parameters = sync_parameters(parameters=parameters)
 
-                            project_params.save_parameters(parameters)
+                    project_params.save_parameters(parameters)
 
-                        if (
-                            parameters["refine_model"] is None
-                            or not Path(project_params.resolve_path(parameters["refine_model"])).exists() 
+                    if (
+                        parameters["refine_model"] is None
+                        or not Path(project_params.resolve_path(parameters["refine_model"])).exists() 
+                    ):
+                        logger.error(
+                            f"Reference {parameters['refine_model']} does not exist"
+                        )
+                    else:
+                        try:
+                            data_set = parameters["data_set"]
+                        except KeyError:
+                            data_set = None
+
+                        parxfile = f"frealign/{data_set}_frames_01.parx"
+                        stackfile = f"frealign/{data_set}_frames_stack.mrc"
+
+                        # resize reference and copy to frealign/maps
+                        reference = (
+                            "frealign/maps/" + parameters["data_set"] + "_r01_01.mrc"
+                        )
+                        if parameters["refine_iter"] == 2:
+                            initial_model = project_params.resolve_path(
+                                parameters["refine_model"]
+                            )
+                            preprocess.resize_initial_model(
+                                parameters, initial_model, reference
+                            )
+
+                        films_csp = f"{data_set}.films_csp"
+                        if os.path.exists(films_csp):
+                            os.remove(films_csp)
+                        if not os.path.isfile(stackfile) or not os.path.isfile(
+                            parxfile
                         ):
-                            logger.error(
-                                f"Reference {parameters['refine_model']} does not exist"
-                            )
+                            csp_split(parameters, iteration)
                         else:
-                            try:
-                                data_set = parameters["data_set"]
-                            except KeyError:
-                                data_set = None
-
-                            parxfile = f"frealign/{data_set}_frames_01.parx"
-                            stackfile = f"frealign/{data_set}_frames_stack.mrc"
-
-                            # resize reference and copy to frealign/maps
-                            reference = (
-                                "frealign/maps/" + parameters["data_set"] + "_r01_01.mrc"
+                            logger.warning(
+                                "CSPT files already exist. Please delete if you want to re-create them."
                             )
-                            if parameters["refine_iter"] == 2:
-                                initial_model = project_params.resolve_path(
-                                    parameters["refine_model"]
-                                )
-                                preprocess.resize_initial_model(
-                                    parameters, initial_model, reference
-                                )
+                            logger.info("\t %s", parxfile)
+                            logger.info("\t %s", stackfile)
 
-                            films_csp = f"{data_set}.films_csp"
-                            if os.path.exists(films_csp):
-                                os.remove(films_csp)
-                            if not os.path.isfile(stackfile) or not os.path.isfile(
-                                parxfile
-                            ):
-                                csp_split(parameters, iteration)
-                            else:
-                                logger.warning(
-                                    "CSPT files already exist. Please delete if you want to re-create them."
-                                )
-                                logger.info("\t %s", parxfile)
-                                logger.info("\t %s", stackfile)
-
-                        logger.info("PYP (csp) finished successfully")
+                    logger.info("nextPYP (csp) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (csp) failed")
+                logger.error("nextPYP (csp) failed")
                 pass
 
         elif "cspswarm" in os.environ:
@@ -3868,19 +4805,12 @@ if __name__ == "__main__":
 
                 csp_swarm(args.file, parameters, int(args.iter), args.skip, args.debug)
 
-                if parameters.get("slurm_verbose"):
-                    csp_Tlog.update(timer.Timer.timers)
-                    csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
-                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspswarm.json"
-                    with open(json_file, 'w') as fp:
-                        json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
-
                 # disable_profiler(pr)
-                logger.info("PYP (cspswarm) finished successfully")
+                logger.info("nextPYP (cspswarm) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (cspswarm) failed")
+                logger.error("nextPYP (cspswarm) failed")
                 pass
 
         elif "classmerge" in os.environ:
@@ -3891,10 +4821,10 @@ if __name__ == "__main__":
                 args = project_params.parse_arguments("classmerge")
                 path = os.path.join(os.getcwd(), "..", "frealign", "scratch")
                 particle_cspt.csp_class_merge(class_index=args.classId, input_dir=path)
-                logger.info("PYP (classmerge) finished successfully")
+                logger.info("nextPYP (classmerge) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (classmerge) failed")
+                logger.error("nextPYP (classmerge) failed")
                 pass
 
         elif "cspmerge" in os.environ:
@@ -3910,23 +4840,16 @@ if __name__ == "__main__":
 
                 csp_merge(parameters)
 
-                if parameters.get("slurm_verbose"):
-                    csp_Tlog.update(timer.Timer.timers)
-                    csp_Tlog = {k:v for k, v in csp_Tlog.items() if v}
-                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_cspmerge.json"
-                    with open(json_file, 'w') as fp:
-                        json.dump(csp_Tlog, fp, indent=4,separators=(',', ': '))
-
                 # clean up local scratch
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
                     shutil.rmtree(os.environ["PYP_SCRATCH"])
                     logger.info("Deleted temporary files from " + os.environ["PYP_SCRATCH"])
 
-                logger.info("PYP (cspmerge) finished successfully")
+                logger.info("nextPYP (cspmerge) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (cspmerge) failed")
+                logger.error("nextPYP (cspmerge) failed")
                 pass
 
         elif "csp_local_merge" in os.environ:
@@ -3955,24 +4878,16 @@ if __name__ == "__main__":
                     args.save_stacks,
                 )
 
-                # for time
-                if parameters.get("slurm_verbose"):
-                    cspm_Tlog.update(timer.Timer.timers)
-                    cspm_Tlog = {k:v for k, v in cspm_Tlog.items() if v}
-                    json_file = cwd + "/mpi_%d" % parameters["slurm_tasks"] + "_csp_local_merge.json"
-                    with open(json_file, 'w') as fp:
-                        json.dump(cspm_Tlog, fp, indent=4,separators=(',', ': '))
-
-                logger.info("PYP (csp_local_merge) finished successfully")
+                logger.info("nextPYP (csp_local_merge) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (csp_local_merge) failed")
+                logger.error("nextPYP (csp_local_merge) failed")
                 pass
 
             # clean up local scratch
             if os.path.exists(local_scratch):
-                shutil.rmtree(local_scratch)
+                # shutil.rmtree(local_scratch)
                 logger.info("Deleted temporary files from " + local_scratch)
 
         # cryolo_picking tomo
@@ -4059,10 +4974,10 @@ if __name__ == "__main__":
                     topaz.sprtrain(args)
                 else:
                     joint.sprtrain(args)
-                logger.info("PYP (sprtrain) finished successfully")
+                logger.info("nextPYP (sprtrain) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (sprtrain) failed")
+                logger.error("nextPYP (sprtrain) failed")
                 pass
         elif "tomotrain" in os.environ:
             del os.environ["tomotrain"]
@@ -4075,11 +4990,345 @@ if __name__ == "__main__":
                 get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
                 joint.tomotrain(args)
-                logger.info("PYP (tomotrain) finished successfully")
+                logger.info("nextPYP (tomotrain) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (tomotrain) failed")
+                logger.error("nextPYP (tomotrain) failed")
                 pass
+
+        elif "milotrain" in os.environ:
+            del os.environ["milotrain"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                args = project_params.load_pyp_parameters()
+                joint.milotrain(args)
+                logger.info("nextPYP (milotrain) finished successfully")
+            except:
+                trackback()
+                logger.error("nextPYP (milotrain) failed")
+                pass
+        
+        elif "miloeval" in os.environ:
+            del os.environ["miloeval"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                args = project_params.load_pyp_parameters()
+                joint.miloeval(args)
+                logger.info("nextPYP (miloeval) finished successfully")
+            except:
+                trackback()
+                logger.error("nextPYP (miloeval) failed")
+                pass
+        
+        elif "cryocaretrain" in os.environ:
+            del os.environ["cryocaretrain"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                parameters = project_params.load_pyp_parameters()
+                project_path = Path.cwd()
+                output = os.path.join(project_path, "train")
+                
+                micrographs = "{}.micrographs".format(parameters.get("data_set"))
+                micrograph_list = [line.strip() for line in open(micrographs, "r") if line.strip()]
+
+                working_path = Path(os.environ["PYP_SCRATCH"])
+                shutil.rmtree(working_path, "True")
+                working_path.mkdir(parents=True, exist_ok=True)
+                os.chdir(working_path)
+
+                # generate half-tomograms and save to train/ folder, if needed
+                for name in micrograph_list:
+                    first_half = os.path.join(project_path,"train",name+"_half1.rec")
+                    second_half = first_half.replace("_half1.rec","_half2.rec")
+                    if not os.path.exists(first_half) or not os.path.exists(second_half):
+                        logger.info(f"## Generating half-tomograms for {name} ##")
+                        cryocare.tomo_swarm_halves( name, project_path, working_path, parameters)
+                
+                cryocare.cryocare_train(project_path, output=output, parameters=parameters)
+                logger.info("nextPYP (cryocare train) finished successfully")
+
+                # we are done, clear local scratch
+                if os.path.exists(os.environ["PYP_SCRATCH"]):
+                    shutil.rmtree(os.environ["PYP_SCRATCH"])
+
+            except:
+                trackback()
+                logger.error("nextPYP (cryocare train) failed")
+                pass
+
+        elif "cryocareswarm" in os.environ:
+            del os.environ["cryocareswarm"]
+            try:
+
+                args, name, project_path, working_path, parameters = tomoswarm_prologue()
+
+                new_reconstruction = cryocare.cryocare_predict( working_path, project_path, name, parameters)
+
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
+
+                logger.info("nextPYP (cryocare) finished successfully")
+            except:
+                trackback()
+                logger.error("nextPYP (cryocare) failed")
+                pass
+
+            # we are done, clear local scratch
+            if os.path.exists(os.environ["PYP_SCRATCH"]):
+                shutil.rmtree(os.environ["PYP_SCRATCH"])
+
+        elif "isonettrain" in os.environ:
+            del os.environ["isonettrain"]
+            try:
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                parameters = project_params.load_pyp_parameters()
+                project_dir = os.getcwd()
+                output = os.path.join(project_dir, "train")
+                isonet_tools.isonet_train(project_dir, output=output, parameters=parameters)
+                logger.info("nextPYP (isonet train) finished successfully")
+
+                # we are done, clear local scratch
+                if os.path.exists(os.environ["PYP_SCRATCH"]):
+                    shutil.rmtree(os.environ["PYP_SCRATCH"])
+
+            except:
+                trackback()
+                logger.error("nextPYP (isonet train) failed")
+                pass
+        
+        elif "isonetswarm" in os.environ:
+            del os.environ["isonetswarm"]
+            try:
+
+                args, name, project_path, working_path, parameters = tomoswarm_prologue()
+
+                new_reconstruction = isonet_tools.isonet_predict( name, project_path, parameters)
+
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
+
+                logger.info("nextPYP (isonet predict) finished successfully")
+            except:
+                trackback()
+                logger.error("nextPYP (isonet predict) failed")
+                pass
+        
+        elif "membrainswarm" in os.environ:
+            del os.environ["membrainswarm"]
+            try:
+
+                args, name, project_path, working_path, parameters = tomoswarm_prologue()
+                
+                new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
+                
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
+
+                logger.info("nextPYP (membrane segmentation) finished successfully")
+            except:
+                trackback()
+                logger.error("nextPYP (membrane segmentation) failed")
+                pass
+        
+        elif "topazswarm" in os.environ:
+            del os.environ["topazswarm"]
+            try:
+
+                args, name, project_path, working_path, parameters = tomoswarm_prologue()
+
+                if "data_set" in parameters:
+                    dataset = parameters["data_set"]
+                else:
+                    raise Exception("Unknown dataset or session name")
+
+                # always use "raw" input .rec file from parent block
+                raw_rec_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc"
+                denoised_rec_location = project_path / "mrc"
+
+                """
+                usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
+                            [-a EVEN_TRAIN_PATH] [-b ODD_TRAIN_PATH] [--N-train N_TRAIN]
+                            [--N-test N_TEST] [-c CROP]
+                            [--base-kernel-width BASE_KERNEL_WIDTH]
+                            [--optim {adam,adagrad,sgd}] [--lr LR] [--criteria {L1,L2}]
+                            [--momentum MOMENTUM] [--batch-size BATCH_SIZE]
+                            [--num-epochs NUM_EPOCHS] [-w WEIGHT_DECAY]
+                            [--save-interval SAVE_INTERVAL] [--save-prefix SAVE_PREFIX]
+                            [--num-workers NUM_WORKERS] [-j NUM_THREADS] [-g GAUSSIAN]
+                            [-s PATCH_SIZE] [-p PATCH_PADDING] [-d DEVICE]
+                            [volumes ...]
+                """
+
+                # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
+                import torch
+                if torch.cuda.is_available():
+                    devices = 0
+                else:
+                    devices = -1
+
+                time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
+
+                logger.info("Denoising tomogram using: Topaz")
+                command = f"{get_topaz_path()}/topaz denoise3d \
+{raw_rec_location / name}.rec \
+--model {parameters['tomo_denoise_topaz_model']} \
+--device {devices} \
+--gaussian {parameters['tomo_denoise_topaz_gaussian']} \
+--patch-size {parameters['tomo_denoise_topaz_patch_size']} \
+--patch-padding {parameters['tomo_denoise_topaz_patch_padding']} \
+--output {working_path} \
+2>&1 | tee {time_stamp}_topaz_denoise3d.log"
+
+                local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+
+                tomoswarm_epilogue( name + ".rec", name, project_path, working_path, parameters)
+
+                logger.info("nextPYP (topaz denoising) finished successfully")
+            except:
+                trackback()
+                logger.error("nextPYP (topaz denoising) failed")
+                pass
+        
+        elif "heterogeneitytrain" in os.environ:
+            del os.environ["heterogeneitytrain"]
+            try:
+                parameters = parse_arguments("pre_process")
+
+                if "drgn" in parameters.get("micromon_block"):
+
+                    if parameters["data_mode"] == "spr":
+                        if parameters.get("heterogeneity_method") == "tomoDRGN":
+                            raise Exception("tomoDRGN only works for tomography")                            
+                        set_up.prepare_spr_dir()
+                    else:
+                        set_up.prepare_tomo_dir()
+
+                    # prepare directory structure
+                    folders = [
+                        "frealign"
+                    ]
+                    null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
+
+                    if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
+                        input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
+                        parameters["tomodrgn_vae_train_input_star"] = input_star
+                        project_params.save_parameters(parameters)
+                    if "data_parent" in parameters and parameters["data_parent"] is not None: 
+                        input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
+                        input = Path(os.getcwd()) / "frealign" / "stacks" 
+                        if not input.exists() and input_source.exists():               
+                            os.symlink( input_source, input ) 
+                    elif parameters.get("tomodrgn_vae_train_input_star") and os.path.exists( project_params.resolve_path(parameters["tomodrgn_vae_train_input_star"]) ):
+                        input_source = Path(parameters['tomodrgn_vae_train_input_star']).parent
+                        input = Path(os.getcwd()) / "frealign" / "stacks" 
+                        # check particle stacks
+                        assert len(glob.glob(str(input_source) + "/*.mrc")) > 0, "Can not find any particle stacks from input folder.\n \
+                            Please include particles stacks in the same path of the input star file. "
+                        if not input.exists():               
+                            os.symlink( input_source, input ) 
+                    else:
+                        logger.info("Taking current project stacks as input to cryoDRGN")
+
+                    # clear local scratch and report free space
+                    clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                    project_dir = os.getcwd()
+
+                    if parameters["heterogeneity_method"] == "cryoDRGN":
+                        cryoDRGN.run_cryodrgn_train(project_dir, parameters=parameters)
+                    
+                    elif parameters["heterogeneity_method"] == "tomoDRGN":
+                        tomoDRGN.run_tomodrgn_train(project_dir, parameters=parameters)
+                    
+                    else:
+                        raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
+
+                    logger.info("nextPYP (DRGN train) finished successfully")
+                else:
+                    raise Exception("No heterogeneity analysis methods selected?")
+
+            except:
+                trackback()
+                logger.error("nextPYP (heterogeneity analysis) failed")
+                pass
+
+        elif "heterogeneityeval" in os.environ:
+            del os.environ["heterogeneityeval"]
+            try:
+                parameters = parse_arguments("pre_process")
+
+                if "drgn" in parameters.get("micromon_block"):
+
+                    if parameters["data_mode"] == "spr":
+                        if parameters.get("heterogeneity_method") == "tomoDRGN":
+                            raise Exception("tomoDRGN only works for tomography")                            
+                        set_up.prepare_spr_dir()
+                    else:
+                        set_up.prepare_tomo_dir()
+
+                    # prepare directory structure
+                    folders = [
+                        "frealign"
+                    ]
+                    null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
+                    if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
+                        parent_parameters = project_params.load_pyp_parameters(os.path.join( project_params.resolve_path(parameters.get("data_parent"))))
+                        input_star = sorted(glob.glob( os.path.join( parent_parameters.get("data_parent"), "relion", "stacks", "*_particles.star" )))[-1]
+                        parameters["tomodrgn_vae_train_input_star"] = input_star
+                        project_params.save_parameters(parameters)
+                    if "data_parent" in parameters and parameters["data_parent"] is not None: 
+                        input_source = Path(parameters['data_parent']) / "frealign" / "stacks"
+                        input = Path(os.getcwd()) / "frealign" / "stacks" 
+                        if not input.exists() and input_source.exists():               
+                            os.symlink( input_source, input ) 
+                    elif parameters.get("tomodrgn_vae_train_input_star") and os.path.exists( project_params.resolve_path(parameters["tomodrgn_vae_train_input_star"]) ):
+                        input_source = Path(parameters['tomodrgn_vae_train_input_star']).parent
+                        input = Path(os.getcwd()) / "frealign" / "stacks" 
+                        # check particle stacks
+                        assert len(glob.glob(str(input_source) + "/*.mrc")) > 0, "Can not find any particle stacks from input folder.\n \
+                            Please include particles stacks in the same path of the input star file. "
+                        if not input.exists():               
+                            os.symlink( input_source, input ) 
+                    else:
+                        logger.info("Taking current project stacks as input to cryoDRGN")
+
+                    # clear local scratch and report free space
+                    clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                    project_dir = os.getcwd()
+
+                    if parameters["heterogeneity_method"] == "cryoDRGN":
+                        cryoDRGN.run_cryodrgn_eval(project_dir, parameters=parameters)
+
+                    elif parameters["heterogeneity_method"] == "tomoDRGN":
+                        tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
+                    else:
+                        raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
+
+                    logger.info("nextPYP (DRGN eval) finished successfully")
+                else:
+                    raise Exception("No heterogeneity analysis methods selected?")
+
+            except:
+                trackback()
+                logger.error("nextPYP (DRGN eval) failed")
+                pass
+
         # check gain reference
         elif "pypgain" in os.environ:
 
@@ -4095,19 +5344,19 @@ if __name__ == "__main__":
 
                     if len(all_files) > 0:
                         image_file = all_files[np.random.randint(0,high=len(all_files))]
-                        logger.info("Selecting image for preview: " + image_file)
+                        logger.info("Previewing randomly selected file: " + image_file)
 
                         x, y, z = get_image_dimensions(image_file)
-                        logger.info(f"Image dimensions are {x} x {y} ({z} frames/tilts)")
+                        logger.info(f"Image dimensions are {x:,} x {y:,} ({z:,} frames/tilts)")
 
                         output_file = "gain_corrected_image.mrc"
                         align.sum_gain_correct_frames(image_file, output_file, parameters)
 
                         x, y, z = get_image_dimensions(output_file)
                         binning = int(math.floor(x / 768))
-                        com = f"{get_imod_path()}/bin/newstack {output_file} {output_file} -bin {binning} -float 2"
+                        com = f"{get_imod_path()}/bin/newstack {output_file} {output_file}~ -bin {binning} -float 2 && mv {output_file}~ {output_file}"
                         local_run.run_shell_command(com)
-                        com = f"{get_imod_path()}/bin/mrc2tif -j {output_file} gain_corrected.jpg"
+                        com = f"{get_imod_path()}/bin/mrc2tif -j -q 100 {output_file} gain_corrected.jpg"
                         local_run.run_shell_command(com)
                         contrast_stretch("gain_corrected.jpg")
 
@@ -4120,10 +5369,13 @@ if __name__ == "__main__":
                         # remove previously cached image
                         if os.path.exists("www/image.small.jpg"):
                             os.remove("www/image.small.jpg")
-                logger.info("PYP (pypgain) finished successfully")
+                            
+                        project_params.save_parameters(parameters,website=False)
+                        
+                logger.info("nextPYP (pypgain) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (pypgain) failed")
+                logger.error("nextPYP (pypgain) failed")
                 pass
 
         elif "clean" in os.environ:
@@ -4143,34 +5395,48 @@ if __name__ == "__main__":
                 os.chdir("..")
 
                 if project_params.resolve_path(parameters["clean_parfile"]) == "auto":
-                    reference_par_file = sorted(glob.glob( os.path.join(parameters["data_parent"],"frealign","maps","*_r01*.par*") ))
+                    reference_par_file = sorted(glob.glob( os.path.join(parameters["data_parent"],"frealign","maps","*_r01_??.bz2")) +\
+                                                glob.glob( os.path.join(parameters["data_parent"],"frealign","maps","*_r01_??") ))
                     if len(reference_par_file) > 0:
                         parameters["clean_parfile"] = reference_par_file[-1]
                         parameters["refine_parfile"] = reference_par_file[-1]
-                        parameters["refine_model"] = reference_par_file[-1].replace(".bz2","").replace(".par",".mrc")
+                        parameters["refine_model"] = reference_par_file[-1].replace(".bz2","") + ".mrc"
 
-                if parameters["clean_discard"]:
-                    parfile_occ_zero = Path(os.getcwd(), "frealign", "maps", f"{parameters['data_set']}_r01_02.par.bz2")
-                    parameters["clean_parfile"] = parfile_occ_zero if parfile_occ_zero.exists() else parameters["clean_parfile"]
+                if parameters.get("micromon_block") == "tomo-drgn-filter":
+                    # run filter_star
+                    project_dir = os.getcwd()
+                    parent_project_dir = parameters["data_parent"]
+                    if "tomodrgn_vae_train_input_star" in parameters:
+                        if parameters.get("tomodrgn_vae_train_input_star") == "auto":
+                            parent_parameters = project_params.load_pyp_parameters(os.path.join( project_params.resolve_path(parameters.get("data_parent"))))
+                            # input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
+                            input_star = parent_parameters["tomodrgn_vae_train_input_star"]
+                            parameters["tomodrgn_vae_train_input_star"] = input_star
+                        else:
+                            input_star = parameters["tomodrgn_vae_train_input_star"]
+                    
+                    filtered_star_file = os.path.join(project_dir, "train", "filtered_star_file.star")
+                    tomoDRGN.filtering_with_labels(args=parameters, input_star=input_star, filtered_star_file=filtered_star_file, parent_project_dir=parent_project_dir)
+                else:
+                    assert (Path(parameters.get("clean_parfile")).exists()), f"{parameters.get('clean_parfile')} does not exist"
 
-                assert (Path(parameters["clean_parfile"]).exists()), f"{parameters['clean_parfile']} does not exist"
+                    # copy reconstruction to current frealign/maps
+                    filename_init = parameters["data_set"] + "_r01_01"
+                    parfile = project_params.resolve_path(parameters["clean_parfile"])
+                    reference = parfile.replace(".bz2",".mrc")
+                    if os.path.exists(reference):
+                        shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
 
-                # copy reconstruction to current frealign/maps
-                filename_init = parameters["data_set"] + "_r01_01"
-                parfile = project_params.resolve_path(parameters["clean_parfile"])
-                reference = parfile.replace(".par.bz2", ".mrc").replace(".par", ".mrc")
-                if os.path.exists(reference):
-                    shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
-
-                # do the actual cleaning
-                parameters = particle_cleaning(parameters)
+                    # do the actual cleaning
+                    parameters = particle_cleaning(parameters)
 
                 # automatically run reconstruction using clean particles without any refinement 
                 # use clean_parfile as refine_parfile
                 parameters["refine_skip"] = True
                 if not parameters["clean_class_selection"]:
                     parameters["refine_parfile"] = project_params.resolve_path(parameters["clean_parfile"])
-
+                    parameters["refine_model"] = parameters["refine_parfile"].replace("*.bz2",".mrc")
+                
                 parameters["csp_refine_particles"] = False
                 parameters["csp_refine_micrographs"] = False
                 parameters["csp_refine_ctf"] = False
@@ -4178,13 +5444,12 @@ if __name__ == "__main__":
                 parameters["refine_iter"] = 2
                 parameters["refine_first_iter"] = 2
                 parameters["refine_maxiter"] = 2
-
                 parameters["class_num"] = 1
 
                 project_params.save_parameters(parameters)
 
                 # run csp only if user wants to
-                if parameters["clean_check_reconstruction"] and not parameters["clean_discard"]:
+                if parameters["clean_check_reconstruction"]:
                     csp_split(parameters, parameters["refine_iter"])
                 else:
                     with open("{}.films".format(parameters["data_set"])) as f:
@@ -4192,12 +5457,12 @@ if __name__ == "__main__":
                             line.strip() for line in f
                         ]
                         for filename in files:
-                            save_refinement_to_website(filename, parameters["refine_iter"], 'slurm_verbose' in parameters and parameters['slurm_verbose'])
+                            save_refinement_to_website(filename, parameters["refine_iter"], verbose=False)
 
-                logger.info("PYP (particle filtering) finished successfully")
+                logger.info("nextPYP (particle filtering) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (particle filtering) failed")
+                logger.error("nextPYP (particle filtering) failed")
                 pass
 
         elif "mask" in os.environ:
@@ -4265,10 +5530,10 @@ if __name__ == "__main__":
 
                 fsc = np.random.rand(10,1)
                 save_reconstruction_to_website( name=Path(masked_map).stem, fsc=fsc, plots=output, metadata=metadata )
-                logger.info("PYP (mask) finished successfully")
+                logger.info("nextPYP (mask) finished successfully")
             except:
                 trackback()
-                logger.error("PYP (mask generation) failed")
+                logger.error("nextPYP (mask generation) failed")
                 pass
 
         elif "postprocessing" in os.environ:
@@ -4317,32 +5582,32 @@ if __name__ == "__main__":
 
                 half2 = half1.replace('half1', 'half2')
 
-                if "sharpen_mask" in parameters and parameters["sharpen_mask"] != None and \
+                mask = automask = ""
+                if parameters.get("sharpen_masking_method") == "external" and parameters.get("sharpen_mask") != None and \
                     (project_params.resolve_path(parameters["sharpen_mask"]) == "auto" or os.path.isfile(project_params.resolve_path(parameters["sharpen_mask"]))):
                     mask_file = project_params.resolve_path(parameters["sharpen_mask"])
                     if mask_file == "auto":
                         os.chdir(current_path)
                         mask_file = project_params.get_mask_from_projects()
                         os.chdir(working_path)
-
                     mask = "--mask %s " % mask_file
-                    automask = ""
-                else:
-                    mask = ""
+                elif parameters.get("sharpen_masking_method") == "auto":
                     automask_lp = parameters["sharpen_automask_lp"]
 
-                    if parameters["sharpen_automask_threshold"] > 0:
+                    if parameters["sharpen_masking_threshold_method"] == "intensity":
                         automask_threshold = "--automask_threshold %.2f " % parameters["sharpen_automask_threshold"]
                         automask_fraction = ""
                         automask_sigma = ""
-                    elif parameters["sharpen_automask_fraction"] > 0:
+                    elif parameters["sharpen_masking_threshold_method"] == "volume":
                         automask_threshold = ""
                         automask_fraction = "--automask_fraction %.2f " % parameters["sharpen_automask_fraction"]
                         automask_sigma = ""
-                    else:
+                    elif parameters["sharpen_masking_threshold_method"] == "sigma":
                         automask_threshold = ""
                         automask_fraction = ""
                         automask_sigma = "--automask_sigma %.1f " % parameters["sharpen_automask_sigma"]
+                    else:
+                        automask_threshold = automask_fraction = automask_sigma = ""
 
                     automask = f"--automask --automask_input 0 --automask_lp {automask_lp} " +  f"{automask_threshold}{automask_fraction}{automask_sigma}"
 
@@ -4365,19 +5630,20 @@ if __name__ == "__main__":
                     apply_fsc2 = ""
                 fsc = f"{skip_fsc_weighting} {apply_fsc2}"
 
-                if parameters["sharpen_adhoc_bfac"] is not None:
+                if parameters["sharpen_bfactor_method"] == "adhoc":
                     auto_bfac = ""
                     adhoc_bfac = "--adhoc_bfac %i " % parameters["sharpen_adhoc_bfac"]
-                else:
-                    auto_bfac = "--auto_bfac %s " %  parameters["sharpen_auto_bfac"]
+                elif parameters["sharpen_bfactor_method"] == "auto":
+                    auto_bfac = "--auto_bfac %s,%s " %  (parameters["sharpen_auto_bfac_low"],parameters["sharpen_auto_bfac_high"])
                     adhoc_bfac = ""
+                else:
+                    auto_bfac = adhoc_bfac = ""
                 bfac = f"{auto_bfac}{adhoc_bfac}"
 
-                if parameters["sharpen_randomize_below_fsc"] < 1:
+                randomize_below_fsc = randomize_beyond = ""
+                if parameters["sharpen_randomize_method"] == "fsc":
                     randomize_below_fsc = "--randomize_below_fsc %.2f " % parameters["sharpen_randomize_below_fsc"]
-                    randomize_beyond = ""
-                else:
-                    randomize_below_fsc = ""
+                elif parameters["sharpen_randomize_method"] == "resolution":
                     randomize_beyond = "--randomize_beyond %.2f " % parameters["sharpen_randomize_beyond"]
                 randomize_phase = f"{randomize_below_fsc}{randomize_beyond} " 
 
@@ -4404,11 +5670,11 @@ if __name__ == "__main__":
                     refine_res_lim = ""
 
                 comm_exe = os.environ["PYP_DIR"] + "/external/postprocessing/postprocessing.py "
-                basic = f"'{half1}' '{half2}' '{mask}' --angpix {pixel_size} --out '{output}' {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
+                basic = f"{half1} {half2} {mask} --angpix {pixel_size} --out {output} {flip_x}{flip_y}{flip_z}{mtf}{refine_res_lim}--xml "
                 comm = comm_exe + basic + bfac + filter + fsc + automask + randomize_phase
-                local_run.run_shell_command(comm, verbose=False)
+                local_run.run_shell_command(comm, verbose=parameters["slurm_verbose"])
                 if not os.path.exists(output_map):
-                    raise Exception("Does the postprocessing block have enough RAM assigned (launch task)?")
+                    raise Exception("Post-processing failed to run")
 
                 # produce map slices
                 radius = (
@@ -4512,11 +5778,11 @@ EOF
 
                 shutil.rmtree(working_path)
 
-                logger.info("PYP (postprocessing) finished successfully")
+                logger.info("nextPYP (postprocessing) finished successfully")
 
             except:
                 trackback()
-                logger.error("PYP (postprocessing) failed")
+                logger.error("nextPYP (postprocessing) failed")
                 pass
 
         # class selection
@@ -4566,6 +5832,20 @@ EOF
                 if "extract_cls" not in parameters.keys():
                     parameters["extract_cls"] = 0
 
+                # set particle radius based on bbox size                
+                if parameters.get("micromon_block") == "tomo-particles-eval":
+                    if parameters.get("detect_nn3d_rad") > 0:
+                        parameters["tomo_spk_rad"] = parameters["tomo_pick_rad"] = parameters["tomo_vir_rad"] =parameters.get("detect_nn3d_rad")
+                    elif parameters.get("tomo_spk_rad") == 0:
+                        parameters["tomo_spk_rad"] = parameters["tomo_pick_rad"] = parameters["tomo_vir_rad"] = parameters["detect_nn3d_bbox"] * parameters["data_bin"] * parameters["tomo_rec_binning"] * parameters["scope_pixel"]
+
+
+                # if using particles from manual picking, we need to populate the metadata manually
+                if parameters.get("data_parent"):
+                    parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
+                    if parent_parameters and len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking" and parameters.get("micromon_block") == "tomo-segmentation-closed" and parameters.get("tomo_pick_method") == "manual":
+                        update_metadata_coordinates(parameters=parameters)
+
                 # save configuration
                 project_params.save_parameters(parameters)
 
@@ -4575,17 +5855,7 @@ EOF
                 if os.path.exists(os.environ["PYP_SCRATCH"]):
                     shutil.rmtree(os.environ["PYP_SCRATCH"])
 
-                logger.info("PYP (launch) finished successfully")
-
-        if Path(current_directory).name == "swarm":
-            folder = Path(current_directory).parents[0]
-        else:
-            folder = current_directory
-        parameters = project_params.load_parameters(folder)
-        if job_name and parameters.get("slurm_verbose"):
-            timers = timer.Timer().timers
-            with open(Path(folder) / "swarm" / f"{job_name}.json", "w") as f:
-                f.write(json.dumps(timers, indent=2))
+                logger.info("nextPYP (launch) finished successfully")
 
     except:
         trackback()

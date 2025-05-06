@@ -1,0 +1,5 @@
+graft bin
+graft config
+graft singularity
+include pyp.sif
+prune external

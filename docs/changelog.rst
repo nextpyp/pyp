@@ -2,238 +2,392 @@
 Changelog
 =========
 
-**Legend**: :fa:`star,text-success` New feature, :fa:`plus-square,text-primary` Improvement, :fa:`bug,text-danger` Bug fix
+v0.7.0
+------
 
-v0.6.5 (4/6/2024)
-******************
+.. nextpyp:: Released 5/5/2025
+   :collapsible: open
+   
+   :fa:`star` **New features**
+   
+   - New blocks for running :doc:`MiLoPYP<guide/milopyp>` as described in `Huang et al., 2024 <https://www.nature.com/articles/s41592-024-02403-6>`_, including visualization of class labels and UMAP embeddings, with detected particles passed to downstream 3D refinement blocks.
 
-   :fa:`plus-square,text-primary` Update format of logger messages to more clearly show the nextPYP version and resources assigned to each job.
+   - New block architecture, with dedicated training and evaluation blocks, streamlines neural network (NN) workflows, offering greater flexibility and real-time visualization of loss functions and results from NN-based operations.
 
-   :fa:`plus-square,text-primary` Use same tilt-axis angle convention for aligning tilt-series using IMOD and AreTomo2.
+   - A new suite of tomography particle picking blocks provides an intuitive, standalone workflow with support for size-based, template matching, geometry-based, manual, and imported particle picking.
+  
+   - A simplified block architecture streamlines 3D refinement and classification, improving usability, while the legacy version remains available for older projects.
 
-   :fa:`bug,text-danger` Prevent error during tilt-series alignment with AreTomo2 when number of patches = 1.
+   - 3D particle picking via GPU-accelerated template search is supported through integration with `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_, with automatic transfer of particle orientations to downstream refinement blocks.
 
-   :fa:`bug,text-danger` Fix bug in command line interface that ocurred when launching constrained refinement.
+   - Size-based particle picking, as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_, enables fast partile detection in 3D using only the particle radius, with automatic masking of artifacts and contamination.
 
-   :fa:`bug,text-danger` Fix bug that was causing the server startup routines to be called during the CLI processing of the configuration file.
+   - 3D tomogram segmentation with `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ (evaluation only) enables rapid segmentation of tomograms using a pre-trained model.
 
-   :fa:`bug,text-danger` Fix bug that ocurred when retrieving metadata from mdoc files.
+   - Tomogram denoising with `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_ supports training and evaluation, with automatic half-tomogram generation and visualization of loss functions and denoised results.
 
-   :fa:`bug,text-danger` Fix bug when trying to retrieve tilt-series metadata from failed runs.
+   - Tomogram denosing with `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ supports training and evaluation, with real-time monitoring of results and feeding of denoised tomograms into downstream blocks such as particle picking or segmentation.
 
-   :fa:`bug,text-danger` Fix conflicts with library paths when running external executables.
+   - New blocks for continuous heterogeneity analysis using `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_, streaming training metrics and outputs in real-time, and visualization of UMAP, PCA embeddings, cluster centroids, and 3D volumes.
 
-v0.6.4 (3/24/2024)
-******************
+   - New ab-initio refinement strategy enables de novo structure determination through iterative alignment of random particle subsets, with optional shape masking and multi-class refinement for heterogeneous datasets (beta).
 
-   :fa:`plus-square,text-primary` Implement mechanism to isolate logs from failed jobs in the Logs tab.
+   - Beam-tilt refinement and correction as implemented in cisTEM is now available in nextPYP, allowing users to improve the resolution of reconstructions.
 
-   :fa:`plus-square,text-primary` Add support for project names with special characters.
+   - Standalone mode is now also supported in the :doc:`command line interface (CLI)<cli/installation>`, allowing users to run it on a desktop or local computer without a cluster or web server.
 
-   :fa:`plus-square,text-primary` Remove many commonly used parameters from the advanced category.
+   - nextPYP users can now be mapped to Operating System (OS) users, allowing job processes to run under individual OS accounts, ensuring compliance with resource policies and filesystem-controlled file access.
 
-   :fa:`plus-square,text-primary` Add progress bars during export of metadata to .star format.
+   - A new system of :doc:`SLURM cluster templates<reference/templates>` offers greater flexibility in job submission, allowing customization to fit various cluster environments and scheduler configurations.
 
-   :fa:`plus-square,text-primary` Allow export of particle coordinates from streaming sessions.
+   - Import tilt-series alignments from external programs in IMOD format using \*.xf and \*.tlt files, useful for processing challenging datasets that are hard to align automatically.
 
-   :fa:`plus-square,text-primary` Check that .order files have the same number of entries as images in the tilt-series.
+   - Export clean 3D particle coordinates in IMOD format (sva/\*.spk files) from any refinement or classification block for use in other programs.
 
-   :fa:`bug,text-danger` Fix bugs when reading metadata from *.mdoc files.
+   - New option lets users export particle stacks for compatibility with external programs, despite nextPYP workflows not saving them to optimize storage.
 
-   :fa:`bug,text-danger` Prevent dragging of multiple connections from block outputs in project view.
+   - Refinement metadata is now stored in cisTEM's binary format, enabling up to 2x faster refinement and classification, with smaller, quicker-to-read files. The previous format is still available for legacy projects.
 
-   :fa:`bug,text-danger` Fix bug when managing GPU resources in standalone mode.
+   - Automatic density-based masking is now available during 3D refinement, applying an adaptive shape mask to the reference map at each refinement iteration to improve reconstruction quality.
 
-   :fa:`bug,text-danger` Fix bug when using grouping of frames during movie processing.
+   - An option to save `*.mrc` files in 16-bit precision has been added, offering up to 50% storage savings (enabled by default), reducing storage needs for large datasets.
+ 
+   - The "Only" option in the Jobs menu lets you quickly select and run individual blocks with a single click, simplifying workflows in projects with many blocks.
 
-   :fa:`bug,text-danger` Fix bug in single-particle pipeline during hot pixel removal.
+   - In addition to Relion 4, nextPYP now supports importing Relion 5 tomography projects, allowing users to take advantage of new features while continuing to use other packages.
 
-   :fa:`bug,text-danger` Fix bug in Table view that caused content to overlap when resizing columns.
+   - New documentation offers expanded tutorials, user guides, and setup instructions, including detailed installation steps for clusters and workstations, and comprehensive coverage of new features and cryo-ET workflows.
 
-   :fa:`bug,text-danger` Always export metadata in .star format to current project directory (user specified location is no longer supported).
+   :fa:`plus-square` **Improvements**
 
-v0.6.3 (3/01/2024)
-******************
+   - Improved efficiency and robustness for handling large single-particle and tomography datasets, with optimizations in data handling, processing speed, and memory management.
 
-   :fa:`plus-square,text-primary` Allow import of clean particles obtained after 3D classification into pre-processing block.
+   - IMOD tilt-series alignment and reconstruction now provide enhanced control with additional parameters, offering users more flexibility to customize settings for their specific datasets.
 
-   :fa:`plus-square,text-primary` Stop saving unnecessary metadata files during constrained refinement.
+   - The ``Show advanced options`` checkbox now applies globally, ensuring consistency across all dialog forms and remembering the setting for improved convenience.
 
-   :fa:`plus-square,text-primary` Implement particle list picker that was missing from some import blocks.
+   - Reshaping image options have been moved from the **Reconstruction** tab to the **Tilt-series alignment** tab, streamlining the workflow and making the settings more intuitive.
 
-   :fa:`plus-square,text-primary` Implement parameter groups in UI to better handle conditional parameters.
+   - Users can specify how many times nextPYP should retry failed SLURM jobs, ensuring successful completion of runs even during temporary issues.
 
-   :fa:`plus-square,text-primary` Add links to download tomograms and metadata for ArtiaX plugin.
+   - Improved handling of micrographs/tilt-series that have few or no particles after filtering.
 
-   :fa:`plus-square,text-primary` Provide more granular information when determining handedness of tilt-series.
+   - Report the residual error of IMOD's fiducial model during tilt-series alignment, providing a measure of alignment quality to help users assess accuracy.
 
-   :fa:`plus-square,text-primary` Allow users to control the timeout for deleting the scratch folder of zombie jobs.
+   - Improved handling of tilt-series from rectangular detectors, with automatic rotation to ensure correct orientation and efficient processing throughout the workflow.
 
-   :fa:`plus-square,text-primary` Add new parameter to control size of patches during patch-tracking to prevent tiltxcorr errors.
+   :fa:`bug` **Bug fixes**
+   
+   - Fixed a bug in the navigation bar of refinement blocks that occurred when multiple classes were used.
 
-   :fa:`plus-square,text-primary` Upgrade program versions to MotionCor3 1.1.1 and AreTomo2 1.1.2.
+   - Fixed a bug related to applying IMOD anisotropic diffusion denoising during the refinement process.
 
-   :fa:`plus-square,text-primary` Allow use of environment variables when specifying the local scratch directory.
+   - Fixed a bug that prevented launch task parameters from being applied when starting sessions.
 
-   :fa:`bug,text-danger` Hide the export tab from particle filtering blocks for tomography projects.
+   - Fixed a bug that caused incorrect binning to be applied during manual virion picking.
 
-   :fa:`bug,text-danger` Fix bug that ocurred when skipping frame alignment during movie processing.
+   - Fixed a bug that prevented tomogram dimensions and binning from updating correctly.
 
-   :fa:`bug,text-danger` Fix bug in function used to export sessions to .star format.
+   - Fixed a bug that prevented tomograms from being recalculated in AreTomo when reconstruction parameters were modified.
 
-   :fa:`bug,text-danger` Fix bug in tomography sessions that ocurred when using size-based particle picking.
+   - Various bug fixes and performance improvements.
 
-   :fa:`bug,text-danger` Fix bug when exporting metadata in star format that saved the files to the incorrect folder.
+v0.6.5
+------
+.. nextpyp:: Released 4/6/2024
+   :collapsible: open
 
-   :fa:`bug,text-danger` Fix bug when setting number of patches when running AreTomo2.
+   :fa:`plus-square` **Improvements**
 
-   :fa:`bug,text-danger` Fix inconsistencies in the determination of parameter changes between consecutive runs.
+   - Update format of logger messages to more clearly show the nextPYP version and resources assigned to each job.
 
-   :fa:`bug,text-danger` Stop trying to launch external programs for sub-tomogram averaging after particle extraction.
+   - Use same tilt-axis angle convention for aligning tilt-series using IMOD and AreTomo2.
 
-   :fa:`bug,text-danger` Fix issue with missing metadata entries during tilt-series re-processing.
+   :fa:`bug` **Bug fixes**
 
-   :fa:`bug,text-danger` Correctly discard particles that are too close to gold fiducials.
+   - Prevent error during tilt-series alignment with AreTomo2 when number of patches = 1.
 
-   :fa:`bug,text-danger` Fix issue with management of virion selection thresholds that affected geometric particle picking.
+   - Fix bug in command line interface that ocurred when launching constrained refinement.
 
-   :fa:`bug,text-danger` Fix bug when creating montages that ocurred when particle radius was equal to half the box size.
+   - Fix bug that was causing the server startup routines to be called during the CLI processing of the configuration file.
 
-   :fa:`bug,text-danger` Fix bug when re-running pre-processing after virion selection.
+   - Fix bug that ocurred when retrieving metadata from mdoc files.
 
-   :fa:`bug,text-danger` Fix bug with links used to download maps for older iterations.
+   - Fix bug when trying to retrieve tilt-series metadata from failed runs.
 
-v0.6.2 (2/01/2024)
-******************
+   - Fix conflicts with library paths when running external executables.
 
-   :fa:`plus-square,text-primary` Expose additional parameters for frame alignment when using MotionCor3.
+v0.6.4
+------
+.. nextpyp:: Released 3/24/2024
+   :collapsible: open
 
-   :fa:`plus-square,text-primary` Remove unnecessary tabs from tomography refinement blocks.
+   :fa:`plus-square` **Improvements**
 
-   :fa:`plus-square,text-primary` Display slurm job launch information in the logs window.
+   - Implement mechanism to isolate logs from failed jobs in the Logs tab.
 
-   :fa:`plus-square,text-primary` Allow users to specify resources for the launch task on the Sessions side.
+   - Add support for project names with special characters.
 
-   :fa:`bug,text-danger` Fix bugs in parameter definitions when running movie frame alignment.
+   - Remove many commonly used parameters from the advanced category.
 
-   :fa:`bug,text-danger` Fix bugs in the management of slurm's GRES options when submitting jobs to the scheduler.
+   - Add progress bars during export of metadata to .star format.
 
-   :fa:`bug,text-danger` Fix bug with movie drifts being deleted from the database when tilt-series were re-processed.
+   - Allow export of particle coordinates from streaming sessions.
 
-v0.6.1 (1/30/2024)
-******************
+   - Check that .order files have the same number of entries as images in the tilt-series.
 
-   :fa:`star,text-success` Produce metadata for 3D visualization using `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_ for all refinement blocks. See the :doc:`user guide<guide/chimerax_artiax>` for details.
+   :fa:`bug` **Bug fixes**
 
-   :fa:`star,text-success` Enable dose weighting and magnification correction options during frame alignment and averaging.
+   - Fix bugs when reading metadata from \*.mdoc files.
 
-   :fa:`star,text-success` Allow specification of SLURM account for all job types to improve portability.
+   - Prevent dragging of multiple connections from block outputs in project view.
 
-   :fa:`plus-square,text-primary` Expose full set of options when using MotionCor3 for frame alignment.
+   - Fix bug when managing GPU resources in standalone mode.
 
-   :fa:`plus-square,text-primary` Allow specification of GPU resources using Gres option to allow selection of specific types of graphics cards, e.g., gpu:A100:1.
+   - Fix bug when using grouping of frames during movie processing.
 
-   :fa:`plus-square,text-primary` Add support for multiple date formats when reading metadata from .mdoc files.
+   - Fix bug in single-particle pipeline during hot pixel removal.
 
-   :fa:`plus-square,text-primary` Add support for .gain reference files and automatically resize corresponding .eer movies in data import blocks.
+   - Fix bug in Table view that caused content to overlap when resizing columns.
 
-   :fa:`bug,text-danger` Fix issue when handling *.tif files that have a *.tiff extension.
+   - Always export metadata in .star format to current project directory (user specified location is no longer supported).
 
-   :fa:`bug,text-danger` Fix issue with multiprocessing library when using NFS mounts as local scratch.
+v0.6.3
+------
+.. nextpyp:: Released 3/01/2024
+   :collapsible: open
 
-   :fa:`bug,text-danger` Fix bug in single-particle sessions when using unbinned images for 2D classification.
+   :fa:`plus-square` **Improvements**
 
-   :fa:`bug,text-danger` Fix bug when picking particles using neural network-based approach on non-square tomograms.
+   - Allow import of clean particles obtained after 3D classification into pre-processing block.
 
-   :fa:`bug,text-danger` Fix bug that prevented GPU jobs from running because the jobs were sent to the CPU queue.
+   - Stop saving unnecessary metadata files during constrained refinement.
 
-v0.6.0 (1/21/2024)
-*******************
+   - Implement particle list picker that was missing from some import blocks.
 
-   :fa:`star,text-success` Allow use of `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ for movie frame alignment (GPU required).
+   - Implement parameter groups in UI to better handle conditional parameters.
 
-   :fa:`star,text-success` Allow use of `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_ for tilt-series alignment and reconstruction (GPU required).
+   - Add links to download tomograms and metadata for ArtiaX plugin.
 
-   :fa:`star,text-success` Allow use of `Topaz <https://github.com/tbepler/topaz>`_ for 2D particle picking and 3D denoising (GPU recommended).
+   - Provide more granular information when determining handedness of tilt-series.
 
-   :fa:`star,text-success` Produce .bild files after each refinement iteration for 3D visualization in Chimera/ChimeraX.
+   - Allow users to control the timeout for deleting the scratch folder of zombie jobs.
 
-   :fa:`star,text-success` Automatic determination of CTF handedness during pre-processing of tilt-series.
+   - Add new parameter to control size of patches during patch-tracking to prevent tiltxcorr errors.
 
-   :fa:`plus-square,text-primary` Allow mix-and-match of IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
+   - Upgrade program versions to MotionCor3 1.1.1 and AreTomo2 1.1.2.
 
-   :fa:`plus-square,text-primary` Automatically submit jobs to a GPU partition when running tasks that require GPU acceleration.
+   - Allow use of environment variables when specifying the local scratch directory.
 
-   :fa:`plus-square,text-primary` Display version number and amount of allocated memory at the beginning of every job.
+   :fa:`bug` **Bug fixes**
 
-   :fa:`plus-square,text-primary` Change default memory allocation for launch task to 4GB and add Resources tab to all data import blocks.
+   - Hide the export tab from particle filtering blocks for tomography projects.
 
-   :fa:`plus-square,text-primary` Simplify Resources tab by hiding unnecessary parameters depending on the block type.
+   - Fix bug that ocurred when skipping frame alignment during movie processing.
 
-   :fa:`plus-square,text-primary` Implement GPU resource management policies for slurm and standalone modes.
+   - Fix bug in function used to export sessions to .star format.
 
-   :fa:`plus-square,text-primary` Show per-particle score distribution for all tomography refinement blocks and improve plot layout.
+   - Fix bug in tomography sessions that ocurred when using size-based particle picking.
 
-   :fa:`plus-square,text-primary` Allow use of slurm's GRES (generic resource scheduling) when submitting jobs to a cluster.
+   - Fix bug when exporting metadata in star format that saved the files to the incorrect folder.
 
-   :fa:`bug,text-danger` Fix OOM error when running constrained refinement using a single thread.
+   - Fix bug when setting number of patches when running AreTomo2.
 
-   :fa:`bug,text-danger` Fix error in particle filtering blocks when no particles are left in a given micrograph/tilt-series.
+   - Fix inconsistencies in the determination of parameter changes between consecutive runs.
 
-   :fa:`bug,text-danger` Fix issue in tomography sessions when .mdoc files are not used to import metadata.
+   - Stop trying to launch external programs for sub-tomogram averaging after particle extraction.
 
-   :fa:`bug,text-danger` Fix bug when exporting sub-tomograms for use in external programs.
+   - Fix issue with missing metadata entries during tilt-series re-processing.
 
-   :fa:`bug,text-danger` Update systemd script to improve robustness during program restart.
+   - Correctly discard particles that are too close to gold fiducials.
 
-   :fa:`bug,text-danger` Fix issues with cancellation of jobs in standalone mode.
+   - Fix issue with management of virion selection thresholds that affected geometric particle picking.
 
-   :fa:`bug,text-danger` Fix discrepancy with gain reference rotation/flips between data import and pre-processing blocks.
+   - Fix bug when creating montages that ocurred when particle radius was equal to half the box size.
 
-v0.5.3 (11/25/2023)
-*******************
+   - Fix bug when re-running pre-processing after virion selection.
 
-   :fa:`star,text-success` Implement interactive measuring tool for micrographs and tomograms.
+   - Fix bug with links used to download maps for older iterations.
 
-   :fa:`star,text-success` Allow multiple sessions when user login mode is enabled.
+v0.6.2
+-------
+.. nextpyp:: Released 2/01/2024
+   :collapsible: open
 
-   :fa:`plus-square,text-primary` Sort classes in increasing order in Class View panel.
+   :fa:`plus-square` **Improvements**
 
-   :fa:`bug,text-danger` Fix issues when limiting total number of tasks in slurm scheduler.
+   - Expose additional parameters for frame alignment when using MotionCor3.
 
-v0.5.2 (11/18/2023)
-*******************
+   - Remove unnecessary tabs from tomography refinement blocks.
 
-   :fa:`star,text-success` Add support for PACEtomo tilt-series in streaming Sessions.
+   - Display slurm job launch information in the logs window.
 
-   :fa:`plus-square,text-primary` Parallelize reconstruction step during 3D classification for faster speeds.
+   - Allow users to specify resources for the launch task on the Sessions side.
 
-   :fa:`plus-square,text-primary` Add new options to flip maps in post-processing block.
+   :fa:`bug` **Bug fixes**
 
-   :fa:`plus-square,text-primary` Simplify installation instructions and setup process.
+   - Fix bugs in parameter definitions when running movie frame alignment.
 
-   :fa:`bug,text-danger` Fix issue with location of executables for neural network-based particle picking.
+   - Fix bugs in the management of slurm's GRES options when submitting jobs to the scheduler.
 
-   :fa:`bug,text-danger` Fix issue with re-calculation of binned tomograms when reconstruction parameters change.
+   - Fix bug with movie drifts being deleted from the database when tilt-series were re-processed.
 
-   :fa:`bug,text-danger` Fix issue with re-calculation of particle coordinates when no particles were found.
+v0.6.1
+------
+.. nextpyp:: Released 1/30/2024
+   :collapsible: open
 
-   :fa:`bug,text-danger` Correctly display particle size in tomography pre-processing block statistics.
+   :fa:`star` **New features**
 
-v0.5.1 (11/04/2023)
-*******************
+   - Produce metadata for 3D visualization using `ArtiaX <https://github.com/FrangakisLab/ArtiaX>`_ for all refinement blocks. See the :doc:`user guide<guide/chimerax_artiax>` for details.
 
-   :fa:`star,text-success` Import frame tilt-series data using mdoc files produced by PACEtomo.
+   - Enable dose weighting and magnification correction options during frame alignment and averaging.
 
-   :fa:`plus-square,text-primary` Allow typing iteration number in navigation bar for refinement blocks.
+   - Allow specification of SLURM account for all job types to improve portability.
 
-   :fa:`plus-square,text-primary` Show refinement/bundle IDs in ``Per-particle Score`` and ``Exposure Weights`` tabs for refinement blocks.
+   :fa:`plus-square` **Improvements**
 
-   :fa:`bug,text-danger` Fix issue with display of tomograms with arbitrary thickness.
+   - Expose full set of options when using MotionCor3 for frame alignment.
 
-   :fa:`bug,text-danger` Fix broken CLI commands and update CLI tutorials.
+   - Allow specification of GPU resources using Gres option to allow selection of specific types of graphics cards, e.g., gpu:A100:1.
 
-v0.5.0 (10/26/2023)
-*******************
+   - Add support for multiple date formats when reading metadata from .mdoc files.
 
-   This was the first release of nextPYP.
+   - Add support for .gain reference files and automatically resize corresponding .eer movies in data import blocks.
+
+   :fa:`bug` **Bug fixes**
+
+   - Fix issue when handling \*.tif files that have a \*.tiff extension.
+
+   - Fix issue with multiprocessing library when using NFS mounts as local scratch.
+
+   - Fix bug in single-particle sessions when using unbinned images for 2D classification.
+
+   - Fix bug when picking particles using neural network-based approach on non-square tomograms.
+
+   - Fix bug that prevented GPU jobs from running because the jobs were sent to the CPU queue.
+
+v0.6.0
+------
+.. nextpyp:: Released 1/21/2024
+   :collapsible: open
+
+   :fa:`star` **New features**
+
+   - Allow use of `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ for movie frame alignment (GPU required).
+
+   - Allow use of `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_ for tilt-series alignment and reconstruction (GPU required).
+
+   - Allow use of `Topaz <https://github.com/tbepler/topaz>`_ for 2D particle picking and 3D denoising (GPU recommended).
+
+   - Produce .bild files after each refinement iteration for 3D visualization in Chimera/ChimeraX.
+
+   - Automatic determination of CTF handedness during pre-processing of tilt-series.
+
+   :fa:`plus-square` **Improvements**
+
+   - Allow mix-and-match of IMOD and AreTomo2 for tilt-series alignment and tomogram reconstruction.
+
+   - Automatically submit jobs to a GPU partition when running tasks that require GPU acceleration.
+
+   - Display version number and amount of allocated memory at the beginning of every job.
+
+   - Change default memory allocation for launch task to 4GB and add Resources tab to all data import blocks.
+
+   - Simplify Resources tab by hiding unnecessary parameters depending on the block type.
+
+   - Implement GPU resource management policies for slurm and standalone modes.
+
+   - Show per-particle score distribution for all tomography refinement blocks and improve plot layout.
+
+   - Allow use of slurm's GRES (generic resource scheduling) when submitting jobs to a cluster.
+
+   :fa:`bug` **Bug fixes**
+
+   - Fix OOM error when running constrained refinement using a single thread.
+
+   - Fix error in particle filtering blocks when no particles are left in a given micrograph/tilt-series.
+
+   - Fix issue in tomography sessions when .mdoc files are not used to import metadata.
+
+   - Fix bug when exporting sub-tomograms for use in external programs.
+
+   - Update systemd script to improve robustness during program restart.
+
+   - Fix issues with cancellation of jobs in standalone mode.
+
+   - Fix discrepancy with gain reference rotation/flips between data import and pre-processing blocks.
+
+v0.5.3
+------
+.. nextpyp:: Released 11/25/2023
+   :collapsible: open
+
+   :fa:`star` **New features**
+
+   - Implement interactive measuring tool for micrographs and tomograms.
+
+   - Allow multiple sessions when user login mode is enabled.
+
+   :fa:`plus-square` **Improvements**
+
+   - Sort classes in increasing order in Class View panel.
+
+   :fa:`bug` **Bug fixes**
+
+   - Fix issues when limiting total number of tasks in slurm scheduler.
+
+v0.5.2
+------
+.. nextpyp:: Released 11/18/2023
+   :collapsible: open
+
+   :fa:`star` **New features**
+
+   - Add support for PACEtomo tilt-series in streaming Sessions.
+
+   :fa:`plus-square` **Improvements**
+
+   - Parallelize reconstruction step during 3D classification for faster speeds.
+
+   - Add new options to flip maps in post-processing block.
+
+   - Simplify installation instructions and setup process.
+
+   :fa:`bug` **Bug fixes**
+
+   - Fix issue with location of executables for neural network-based particle picking.
+
+   - Fix issue with re-calculation of binned tomograms when reconstruction parameters change.
+
+   - Fix issue with re-calculation of particle coordinates when no particles were found.
+
+   - Correctly display particle size in tomography pre-processing block statistics.
+
+v0.5.1
+------
+.. nextpyp:: Released 11/04/2023
+   :collapsible: open
+
+   :fa:`star` **New features**
+
+   - Import frame tilt-series data using mdoc files produced by PACEtomo.
+
+   :fa:`plus-square` **Improvements**
+
+   - Allow typing iteration number in navigation bar for refinement blocks.
+
+   - Show refinement/bundle IDs in ``Per-particle Score`` and ``Exposure Weights`` tabs for refinement blocks.
+
+   :fa:`bug` **Bug fixes**
+
+   - Fix issue with display of tomograms with arbitrary thickness.
+
+   - Fix broken CLI commands and update CLI tutorials.
+
+v0.5.0
+------
+.. nextpyp:: Released 10/26/2023
+   :collapsible: open
+
+   - This was the first release of nextPYP.

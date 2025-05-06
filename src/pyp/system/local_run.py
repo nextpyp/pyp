@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import socket
 import subprocess
+import time
 from pathlib import Path
 
 from pyp.system.logging import initialize_pyp_logger
@@ -67,10 +68,120 @@ def run_shell_command(command, verbose=False):
         command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
     ).communicate()
     if verbose and len(output) > 0:
-        logger.info("\n".join([s for s in output.split("\n") if s]))
-    if len(error) > 0 and "BZIP2" not in error and "no version information available" not in error and "Format: lossy" not in error and "p_observed" not in error and "it/s" not in error and "sleeping and retrying" not in error and "TIFFReadDirectory: Warning" not in error:
+        logger.info("\n".join([s for s in output.split("\n") if "your model does not fully load the pre-trained weight" not in s]))
+    if len(error) > 0 and "BZIP2" not in error and "no version information available" not in error and "Format: lossy" not in error and "p_observed" not in error and "it/s" not in error and "sleeping and retrying" not in error and "TIFFReadDirectory: Warning" not in error and "Found device" not in error and "your model does not fully load the pre-trained weight" not in error and "We recommend you start setting" not in error:
         logger.error(error)
     return output, error
+
+
+def stream_shell_command(command, verbose=False, log=lambda line: logger.info(line), observer=lambda line: True):
+    """
+    Run a command in a sub-shell and stream the results into the logger.
+    Lines sent to argument functions (log, observer) will not include training newline characters.
+    This function will block until the command is complete, then return the Popen instance for the subprocess.
+
+    Example
+    -------
+    proc = stream_shell_command('ls')
+    if proc.returncode == 0:
+        print('success!')
+    elif proc.returncode < 0:
+        print(f'command was terminated by signal: {-proc.returncode}')
+    else
+        print(f'command failed: {proc.returncode}')
+
+    Parameters
+    ----------
+    command : str
+        The shell command
+        WARNING: This function will perform no sanitization of the command before sending it to the shell,
+                 so it is the responsibility of the caller to ensure the command is safe to run.
+                 See: https://docs.python.org/3/library/subprocess.html#security-considerations
+    verbose : bool
+        True to log the command before running it
+    log : (str): None
+        Logging function to use.
+        Optional, defaults to the usual logger.
+    observer : (str): Optional[bool]
+        A lambda function that is called on each line of output.
+        Return False to terminate the command, or True to allow it to continue.
+
+    Returns
+    -------
+    the subprocess : Popen
+
+    """
+
+    if verbose:
+        logger.info(command)
+
+    # start the shell subprocess
+    proc = subprocess.Popen(
+        command,
+        shell=True,
+        text=True,
+        bufsize=1, # make Popen buffer the pipes and do line segmentation for us
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    # turn on non-blocking mode for the process' output pipes,
+    # so we can handle the pipes from a single thread,
+    # otherwise we'll deadlock if the pipe buffer fills up
+    os.set_blocking(proc.stderr.fileno(), False)
+    os.set_blocking(proc.stdout.fileno(), False)
+
+    def read_pipe(pipe):
+
+        while not pipe.closed:
+
+            # read the next line from the pipe, if any
+            line = pipe.readline()
+            if len(line) <= 0 or "your model does not fully load the pre-trained weight" in line or line.startswith("\x08") or len(line.rstrip("\n")) <= 0 or line.rstrip("\n").isspace():
+                break
+
+            # the line includes the trailing newline, so strip that off
+            line = line.rstrip('\n')
+
+            log(line)
+
+            # should we stop?
+            if observer(line) is False:
+                return False
+
+        # we read the lines (if any) successfully: keep reading
+        return True
+
+    # read loop: read the stdout,stderr from the process without causing any deadlocks
+    while True:
+
+        keep_reading = read_pipe(proc.stderr) and read_pipe(proc.stdout)
+
+        if proc.stderr.closed or proc.stdout.closed:
+            # both pipes closed: nothing left to read
+            # NOTE: subprocess.Popen() doesn't seem to close these pipes when the subprocess ends,
+            #       so this block may never actually run?
+            break
+        elif proc.poll() is not None:
+            # process exited: stop reading
+            # NOTE: we already read the buffers this iteration,
+            #       so breaking the loop now shouldn't drop any lines ... right?
+            break
+
+        if not keep_reading:
+            # decided to abort reading: terminate the process
+            proc.terminate()
+            # TODO: if that doesn't work, wait a bit and try kill() ?
+            break
+
+        # sleep a bit before trying again, so we don't spin-wait and tie up the CPU core
+        time.sleep(0.2)
+        # NOTE: Python may have some kind of select/await mechanism we could use here to get rid of the sleep,
+        #       but that's probably more complication than we need right now =)
+
+    # finally, wait on the process to grab the return code
+    proc.wait()
+    return proc
 
 
 def create_initial_multirun_file(
@@ -199,7 +310,7 @@ def num_particles_per_core(particles: int, tilts: int, frames: int, boxsize: int
 
 
 def create_csp_split_commands(
-    csp_command, parxfile, mode, cores, name, merged_stack, ptlind_list, scanord_list, frame_list, parameters, use_frames=False, cutoff=0
+    csp_command, parameter_file, mode, cores, name, merged_stack, ptlind_list, scanord_list, frame_list, parameters, use_frames=False, cutoff=0
 ):
 
     """Within frealign_rec, create rec split file"""
@@ -218,8 +329,9 @@ def create_csp_split_commands(
     else:
         images = os.path.join("frealign", "%s.mrc" % (name))
 
+
     # Patch-based csp refinement - parfile is splitted into pieces 
-    if isinstance(parxfile, list):
+    if isinstance(parameter_file, list):
         
         refine_frames = '1' if not use_frames or (use_frames and parameters["csp_frame_refinement"]) else '0'
 
@@ -228,10 +340,11 @@ def create_csp_split_commands(
         if mode == 2:
             mode = 5
         
-        # data structure of each element in variable "parxfile" is ( name_of_sub_parfile: string, particle_indexes: ndarray, scanord_indexes: ndarray )
-        for core, region in enumerate(parxfile[::-1]):
-                
+        for core, region in enumerate(parameter_file[::-1]):
+            
             stack = merged_stack
+            split_parameter_file = region[0]
+            extended_parameter_file = split_parameter_file.replace(".cistem", "_extended.cistem")
 
             # Micrograph patch-based refinement 
             if mode == 3 or mode == 6 or mode == 4:
@@ -253,17 +366,16 @@ def create_csp_split_commands(
                         micrograph_first_index,
                         micrograph_last_index,
                     ) if core == 0 else "/dev/null"
-                    
                     commands.append(
                         "{0} {1} {2} {3} {4} {5} {6} {7} {8} > {9}".format(
                             csp_command,
-                            region[0].replace("frealign/maps/", ""),
+                            split_parameter_file,
+                            extended_parameter_file,
                             patch_micrograph_mode,
                             micrograph_first_index,
                             micrograph_last_index,
                             refine_frames,
                             images,
-                            name + frame_tag + ".allboxes",
                             stack,
                             logfile,
                         )
@@ -282,17 +394,16 @@ def create_csp_split_commands(
                         particle_first_index,
                         particle_last_index,
                     ) if core == 0 else "/dev/null"
-                    
                     commands.append(
                         "{0} {1} {2} {3} {4} {5} {6} {7} {8} > {9}".format(
                             csp_command,
-                            region[0].replace("frealign/maps/", ""),
+                            split_parameter_file,
+                            extended_parameter_file,
                             mode,
                             particle_first_index,
                             particle_last_index,
-                            refine_frames, 
+                            refine_frames,
                             images,
-                            name + frame_tag + ".allboxes",
                             stack,
                             logfile,
                         )
@@ -301,6 +412,7 @@ def create_csp_split_commands(
     # Global refinement 
     else:
         extract_frame = 1
+        extended_parameter_file = parameter_file.replace(".cistem", "_extended.cistem")
 
         if mode == 2 or mode == -2:
             # refine particle parameters & particle extraction 
@@ -312,7 +424,7 @@ def create_csp_split_commands(
                                                 boxsize=parameters["extract_box"], 
                                                 images=images,
                                                 cores=cores, 
-                                                memory=parameters["slurm_memory"] 
+                                                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"]
                                                 )
             increment = 1 if (use_frames and mode == 5) else increment
             list_to_iterate = ptlind_list
@@ -335,8 +447,8 @@ def create_csp_split_commands(
         for first_index in range(0, max_index+1, increment):
             last_index = min(first_index+increment-1, max_index)
             
-            first = list_to_iterate[first_index]
-            last = list_to_iterate[last_index]
+            first = int(list_to_iterate[first_index])
+            last = int(list_to_iterate[last_index])
 
             logfile = "%s_csp_%06d_%06d.log" % (name, first, last) if first == 0 else "/dev/null"
             
@@ -344,20 +456,20 @@ def create_csp_split_commands(
             commands.append(
                 "{0} {1} {2} {3} {4} {5} {6} {7} {8} > {9}".format(
                     csp_command,
-                    parxfile.replace("frealign/maps/", ""),
+                    parameter_file,
+                    extended_parameter_file,
                     mode,
                     first,
                     last,
                     extract_frame,
                     images,
-                    name + frame_tag + ".allboxes",
                     stack,
                     logfile,
                 )
             )
             movie_list.append("frealign/%s_stack_%04d_%04d.mrc" % (name, first, last))
             count += 1
-
+            
     return commands, count, movie_list
 
 @timer.Timer(
@@ -408,13 +520,16 @@ def create_split_commands(
         last = min(first + increment, frames)
 
         ranger = "%07d_%07d" % (first, last)
-        if fp["refine_debug"] or first == 1:
-            logfile = "%s_msearch_n.log_%s" % (name, ranger)
-        else:
-            logfile = "/dev/null"
+
 
         from pyp.system import project_params
         if "refine3d" in step:
+
+            if fp["refine_debug"] or first == 1:
+                logfile = "%s_msearch_n.log_%s" % (name, ranger)
+            else:
+                logfile = "/dev/null"
+
             command = frealign.mrefine_version(
                 mp,
                 first,
@@ -426,8 +541,29 @@ def create_split_commands(
                 ranger,
                 logfile,
                 scratch,
-                project_params.param(mp["refine_metric"], iteration),
+                refine_beam_tilt=False,
             )
+        elif "refine_ctf" in step:
+
+            if fp["refine_debug"] or first == 1:
+                logfile = "%s_msearch_ctf_n.log_%s" % (name, ranger)
+            else:
+                logfile = "/dev/null"
+
+            command = frealign.mrefine_version(
+                mp,
+                first,
+                last,
+                iteration,
+                ref,
+                current_path,
+                name,
+                ranger,
+                logfile,
+                scratch,
+                refine_beam_tilt=True,
+            )
+
         elif "reconstruct3d" in step:
             command = frealign.split_reconstruction(
                 mp,

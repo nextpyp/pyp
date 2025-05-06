@@ -16,7 +16,7 @@ Option 1: Access within a trusted private network only
 Choose this option if your server is not reachable from the internet,
 and you'd like to access it from the local private network.
 
-.. warn::
+.. warning::
 
     If you follow these instructions, but your server *is* reachable from the public
     internet, this configuration will leave your system in an insecure state and at higher
@@ -37,9 +37,21 @@ This configuration tells the application HTTP server to bind to all available ne
 
 After making changes to your configuration file, restart the application:
 
-.. code-block:: bash
+.. md-tab-set::
 
-  sudo systemctl restart nextPYP
+  .. md-tab-item:: I'm using a regular user account
+
+    .. code-block:: bash
+
+        ./nextpyp stop
+        ./nextpyp start
+
+
+  .. md-tab-item:: I'm using an administrator account
+
+    .. code-block:: bash
+
+        sudo systemctl restart nextPYP
 
 To visit the website for your installation, open http://hostname:8080 in your web browser, where
 ``hostname`` is the network name of your server machine. The raw IP address will work here too,
@@ -60,6 +72,9 @@ Prerequisites
 
 * Domain name
     Accessing the app website from an untrusted network requires your server to have a domain name, e.g., ``myserver.myorganization.org``. This method of allowing remote access will not work with raw IP addresses.
+
+* Administrator account
+    Installing an HTTP reverse proxy server requires ``root`` access on the web server machine.
 
 
 Instructions
@@ -96,14 +111,14 @@ Assuming fast download speeds, the installation script should finish in a few mi
 Check installation results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Among other things, the installer created a `systemd` deamon named ``nextPYP-rprox`` to start and stop the
+Among other things, the installer created a ``systemd`` deamon named ``nextPYP-rprox`` to start and stop the
 reverse proxy automatically. The daemon should be running now. Check it with:
 
 .. code-block:: bash
 
   sudo systemctl status nextPYP-rprox
 
-If all went well, you should be greeted with a response similar to the following.
+If all went well, you should be greeted with a response similar to the following:
 
 .. code-block::
 
@@ -137,3 +152,15 @@ Firewall configuration
 The installation script will attempt to configure ``firewalld`` to allow HTTP and HTTPs traffic
 from the internet. If your operating system uses a different firewall, it will not be configured by
 the installation script, and you should manually configure it to allow HTTP and HTTPs traffic.
+
+
+Getting help
+------------
+
+Getting ``nextPYP`` installed and working correctly can be tricky sometimes,
+especially since everyone's needs are just a little different.
+We've done our best to build an install process that's flexible enough to work in many different environments,
+but sometimes things still might not work out perfectly.
+
+If you have questions, need clarification on any of the installation options, or are just looking for a little
+help getting through the installation, don't hesitate to reach out on our `GitHub discussions <https://github.com/orgs/nextpyp/discussions>`_ board.

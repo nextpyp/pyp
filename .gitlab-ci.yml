@@ -1,4 +1,4 @@
-image: python:3.8.8
+image: python:3.11
 
 # container:
 #   tags:
@@ -16,12 +16,11 @@ image: python:3.8.8
 
 docs:
   script:
-    - pip install -r docs/requirements_docs.txt
-    - sphinx-apidoc src/ -f -o docs/
+    - python3 -m pip install --upgrade build
+    - pip install -r docs/requirements_docs_minimal.txt
+    # - sphinx-apidoc src/ -f -o docs/
     - cd docs/
     - sphinx-build -d _build/doctrees . _build/html
-    - rm _build/html/index.html
-    - cp _build/html/introduction.html _build/html/index.html
     - cd ..
     - mv docs/_build/html public
   artifacts:
@@ -31,5 +30,6 @@ docs:
     # only run this CI pipeline on master
     refs:
       - master
+      - immaterial-docs
     #changes:
     #  - docs/**/*

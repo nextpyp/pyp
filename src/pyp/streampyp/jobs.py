@@ -1,17 +1,15 @@
-import json
 import math
 import os
-import subprocess
+import multiprocessing
 from pathlib import Path
-
-from genericpath import exists
 
 from pyp.streampyp.web import Web
 from pyp.system import project_params, slurm
-from pyp.system.local_run import run_shell_command
+from pyp.system.local_run import run_shell_command, stream_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.singularity import get_pyp_configuration, run_pyp, run_slurm, run_ssh
-from pyp.utils import get_relative_path, symlink_force
+from pyp.system.singularity import get_pyp_configuration, standalone_mode, run_pyp, run_slurm, run_ssh
+from pyp.utils import get_relative_path
+from pyp.system.mpi import submit_jobs_to_workers
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -33,6 +31,39 @@ def get_gres_option(use_gpu,gres):
     if not Web.exists and len(gpu_gres) > 0:
         gpu_gres = "--gres=" + gpu_gres
     return gpu_gres
+
+def calculate_effective_bundle_size(parameters,processes):
+    """Calculate effective bundle size taking into account any specified resource limits
+
+    Args:
+        parameters (dict): pyp parameters
+        processes (int): total number of processes
+
+    Returns:
+        int: size of bundle
+    """    
+    
+    net_processes = math.ceil( float(processes) / parameters["slurm_bundle_size"])
+    
+    all_cpu_nodes = int(parameters["slurm_max_cpus"])
+    threads = int(parameters["slurm_tasks"])
+    if all_cpu_nodes > 0:
+        simultaneous_tasks_by_cpus = math.floor(all_cpu_nodes / threads )
+    else:
+        simultaneous_tasks_by_cpus = net_processes
+
+    # enforce max amount of memory
+    all_memory_nodes = int(parameters["slurm_max_memory"])
+    memory = parameters["slurm_tasks"]*parameters["slurm_memory_per_task"]
+    if all_memory_nodes > 0:
+        simultaneous_tasks_by_memory = math.floor(all_memory_nodes / memory)
+    else:
+        simultaneous_tasks_by_memory = net_processes
+
+    # keep the most limiting of the two
+    slurm_bundle_size = min( simultaneous_tasks_by_cpus, simultaneous_tasks_by_memory )
+    
+    return slurm_bundle_size, net_processes    
 
 def submit_commands(
     submit_dir,
@@ -68,16 +99,25 @@ def submit_commands(
         logger.error(message)
         raise Exception(message)
 
-    if "sess_" in jobtype:
-        task_file = command_file
-    else:
-        task_file = os.path.join(os.getcwd(), submit_dir, command_file)
-
     with open(os.path.join(submit_dir, command_file)) as f:
         commands = [line.replace("\n", "") for line in f if len(line) > 0]
 
     # count the number of commands, assign to processes
     processes = len(commands)
+
+    # limit bundle size to number of nodes
+    if os.path.exists(".pyp_config.toml"):
+        par_dir = "."
+    elif os.path.exists("../.pyp_config.toml"):
+        par_dir = ".."
+    elif os.path.exists("../../.pyp_config.toml"):
+        par_dir = "../.."
+    else:
+        raise Exception("can't find .pyp_config.toml")
+
+    # calculate effective bundle size
+    parameters = project_params.load_parameters(par_dir)
+    slurm_bundle_size, net_processes = calculate_effective_bundle_size(parameters,processes)
 
     # only perform the following when tasks_per_arr > 1
     if "sess_" in jobtype:
@@ -87,6 +127,14 @@ def submit_commands(
             % command_file,
         ]
     else:
+
+        config = get_pyp_configuration()
+        scratch_config = config["pyp"]["scratch"]
+        if "$" in scratch_config:
+            os.environ["PYP_SCRATCH"] = os.path.expandvars(config["pyp"]["scratch"])
+        else:
+            os.environ["PYP_SCRATCH"] = scratch_config
+        os.environ["PYP_SCRATCH"] = str(Path(os.environ["PYP_SCRATCH"]) / os.environ["USER"])
 
         cmdlist = [
             "export OPENBLAS_NUM_THREADS=1\n",
@@ -127,46 +175,24 @@ done
         if csp_no_stacks and "classmerge" not in jobtype:
             cmdlist.append("unset %s \n" % jobtype)
             cmdlist.append(
-                "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path '{1}/$OUTPUT_BASENAME'\n".format(
+                "export csp_local_merge=csp_local_merge; {0} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename $OUTPUT_BASENAME --path {1}/$OUTPUT_BASENAME\n".format(
                     run_pyp(command="pyp", script=True, cpus=threads),
                     Path(os.environ["PYP_SCRATCH"]),
                 ),
             )
 
-    # limit bundle size to number of nodes
-    if os.path.exists(".pyp_config.toml"):
-        par_dir = "."
-    elif os.path.exists("../.pyp_config.toml"):
-        par_dir = ".."
-    elif os.path.exists("../../.pyp_config.toml"):
-        par_dir = "../.."
+    if slurm_bundle_size > 1 and net_processes > slurm_bundle_size:
+        if Web.exists:
+            bundle = int(slurm_bundle_size)
+        else:
+            bundle = "%" + str(int(slurm_bundle_size))
     else:
-        raise Exception("can't find .pyp_config.toml")
-
-    # enforce max number of threads
-    all_cpu_nodes = int(project_params.load_parameters(par_dir)["slurm_max_cpus"])
-    bundle_size = all_cpu_nodes / threads
-
-    # enforce max amount of memory
-    all_memory_nodes = int(project_params.load_parameters(par_dir)["slurm_max_memory"])
-    bundle_by_memory = all_memory_nodes / memory
-
-    # keep the most limiting of the two
-    bundle_size = min( bundle_size, bundle_by_memory )
-
-    net_processes = int(math.ceil(float(processes) / tasks_per_arr))
-    if bundle_size > 0 and net_processes < bundle_size:
         if Web.exists:
             bundle = None
         else:
             bundle = ""
-    else:
-        if Web.exists:
-            bundle = int(bundle_size)
-        else:
-            bundle = "%" + str(int(bundle_size))
 
-    if Web.exists:
+    if Web.exists or standalone_mode():
 
         # convert dependencies into a list
         if dependencies == "":
@@ -184,12 +210,24 @@ done
             else:
                 # echo In normal slurm mode
                 output_basename = "${SLURM_JOB_ID}_1"
+                
+            # handle the standalone case separately since we don't have SLURM env variables in this case
+            if standalone_mode():
+                output_basename = f"{os.environ['SLURM_JOB_ID']}"
 
-            scratch = Path(os.environ["PYP_SCRATCH"]).parent
+            scratch = Path(os.environ["PYP_SCRATCH"])
             csp_local_merge_command = f"export OPENBLAS_NUM_THREADS=1; unset {jobtype}; export csp_local_merge=csp_local_merge; {run_pyp(command='pyp', script=True, cpus=threads)} --stacks_files stacks.txt --par_files pars.txt --ordering_file ordering.txt --project_path_file project_dir.txt --output_basename {output_basename} --path '{scratch}/{output_basename}'"
 
         cmdgrid = [[]]
         job_counter = array_counter = array_job_counter = 0
+        
+        # manually manage resources when in standalone mode so we don't overload the server
+        if Web.exists:
+            cpus = ""
+        elif standalone_mode():
+            tasks_per_arr = max( parameters["slurm_bundle_size"], math.floor(processes*parameters["slurm_tasks"]/multiprocessing.cpu_count()) )
+            cpus = f"export SLURM_CPUS_PER_TASK={parameters['slurm_tasks']}; SLURM_NTASKS={parameters['slurm_tasks']}; export OMP_NUM_THREADS={parameters['slurm_tasks']}; export MKL_NUM_THREADS={parameters['slurm_tasks']}; "
+
         while job_counter < processes:
             if array_job_counter < tasks_per_arr:
                 array_job_counter += 1
@@ -197,11 +235,18 @@ done
                 array_job_counter = 1
                 array_counter += 1
                 cmdgrid.append([])
-            cmdgrid[array_counter].append(
-                '/bin/bash -c "' + commands[job_counter] + '"'
-            )
+            if Web.exists:
+                cmdgrid[array_counter].append(
+                    '/bin/bash -c "' + cpus + commands[job_counter] + '"'
+                )
+            elif standalone_mode():
+                cmdgrid[array_counter].append(
+                    '/bin/bash -c "' + cpus + commands[job_counter].replace('/opt/pyp/bin/run/pyp','python -u /opt/pyp/src/pyp_main.py') + '"'
+                )
             job_counter += 1
-        if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:
+
+        # do not run csp_local_merge as last command when in standalone mode since we only need to run one instance
+        if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0 and Web.exists:
             for batch in cmdgrid:
                 batch.append('/bin/bash -c "' + csp_local_merge_command + '"')
 
@@ -210,27 +255,40 @@ done
         if threads > 1:
             mpi = {"oversubscribe": True, "cpus": threads}
 
-        # launch job via streampyp
-        if len(csp_local_merge_command) == 0:
-            return Web().slurm_sbatch(
-                web_name=jobname,
-                cluster_name="pyp_"+jobtype,
-                commands=Web.CommandsScript(cmdlist, processes, bundle),
-                dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
-                deps=dependencies,
-                mpi=mpi,
-            )
+        if Web.exists:
+            
+            # launch job via streampyp
+            if len(csp_local_merge_command) == 0:
+                return Web().slurm_sbatch(
+                    web_name=jobname,
+                    cluster_name="pyp_"+jobtype,
+                    commands=Web.CommandsScript(cmdlist, processes, bundle),
+                    dir=_absolutize_path(submit_dir),
+                    args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
+                    deps=dependencies,
+                    mpi=mpi,
+                )
+            else:
+                return Web().slurm_sbatch(
+                    web_name=jobname,
+                    cluster_name="pyp_"+jobtype,
+                    commands=Web.CommandsGrid(cmdgrid, bundle),
+                    dir=_absolutize_path(submit_dir),
+                    args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
+                    deps=dependencies,
+                    mpi=mpi,
+                )
         else:
-            return Web().slurm_sbatch(
-                web_name=jobname,
-                cluster_name="pyp_"+jobtype,
-                commands=Web.CommandsGrid(cmdgrid, bundle),
-                dir=_absolutize_path(submit_dir),
-                args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
-                deps=dependencies,
-                mpi=mpi,
-            )
+            # standalone mode
+            commands = []
+            for batch in cmdgrid:
+                commands.append( "; ".join(batch) )
+            submit_jobs_to_workers(commands, working_path=submit_dir)
+            
+            # run only one instance of csp_local_merge once all cspswarm processes finish
+            if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:
+                stream_shell_command('/bin/bash -c "' + csp_local_merge_command.replace('/opt/pyp/bin/run/pyp','python -u /opt/pyp/src/pyp_main.py') + '"')
+            return "standalone"
     else:
 
         if "sess_" in jobtype:
@@ -250,25 +308,6 @@ done
             f.write("#SBATCH --open-mode=append\n")
             f.write(f"#SBATCH --output='{submit_dir}/slurm-%A.out'\n")
             f.write("cd '%s'\n" % (submit_dir))
-
-            if False and "gres=gpu" in queue:
-                f.write("""
-available_devs=""
-for devidx in $(seq 0 15);
-do
-    string=$(nvidia-smi -i $devidx --query-compute-apps=pid --format=csv,noheader)
-    if ! [[ $string = *"No devices were found"* ]]; then
-	 if [[ -z "$available_devs" ]] ; then
-            available_devs=$devidx
-        else
-            available_devs=$available_devs,$devidx
-        fi
-    fi
-done
-export CUDA_VISIBLE_DEVICES=$available_devs
-
-"""
-            )
 
             for line in cmdlist:
                 f.write(line)
@@ -309,16 +348,14 @@ export CUDA_VISIBLE_DEVICES=$available_devs
 
 def get_slurm_args( queue, threads, walltime, memory, jobname, gres = None, account = None):
     args = [
-        ("--partition=%s" % queue) if queue != '' else '',
         "--cpus-per-task=%d" % threads,
         "--time=%s" % walltime,
         "--mem=%sG" % memory,
-        "--job-name='%s'" % jobname,
     ]
     if gres != "" and gres != None:
-        args.append("--gres=%s" % json.dumps(gres))
+        args.append("--gres=%s" % gres)
     if account != "" and account != None:
-        args.append("--account=%s" % json.dumps(account))
+        args.append("--account=%s" % account)
     return args
 
 def submit_script(
@@ -356,35 +393,43 @@ def submit_script(
 
     # make sure the script path starts with a / or ./
     cmd = command_file
-    if not cmd.startswith("/"):
+    if not cmd.startswith("/") and not cmd.startswith('mkdir'):
         cmd = "./%s" % cmd
     if os.path.exists(cmd):
         cmd = "'%s'" % cmd
 
-    if Web.exists:
+    if Web.exists or standalone_mode():
 
         # add MPI settings if needed
         mpi = None
         if threads > 1:
             mpi = {"oversubscribe": True, "cpus": threads}
 
-        # convert dependencies into a list
-        if dependencies == "":
-            dependencies = []
-        else:
-            dependencies = dependencies.split(",")
+        if Web.exists:
+            # convert dependencies into a list
+            if dependencies == "":
+                dependencies = []
+            else:
+                dependencies = dependencies.split(",")
 
-        # launch job via streampyp
-        return Web().slurm_sbatch(
-            web_name=jobname,
-            cluster_name="pyp_"+jobtype,
-            commands=Web.CommandsScript([cmd]),
-            dir=_absolutize_path(submit_dir),
-            env=[(jobtype, jobtype)],
-            args=get_slurm_args( queue, threads, walltime, memory, jobname, get_gres_option(use_gpu,gres), account),
-            deps=dependencies,
-            mpi=mpi,
-        )
+            # launch job via streampyp
+            return Web().slurm_sbatch(
+                web_name=jobname,
+                cluster_name="pyp_"+jobtype,
+                commands=Web.CommandsScript([cmd]),
+                dir=_absolutize_path(submit_dir),
+                env=[(jobtype, jobtype)],
+                args=get_slurm_args( queue, threads, walltime, memory, jobname, get_gres_option(use_gpu,gres), account),
+                deps=dependencies,
+                mpi=mpi,
+            )
+            
+        elif standalone_mode():
+            cpus = f"export SLURM_CPUS_PER_TASK={threads}; SLURM_NTASKS={threads}; export OMP_NUM_THREADS={threads}; export MKL_NUM_THREADS={threads}; "
+            new_cmd = cmd.replace("'/opt/pyp/bin/run/pyp'","python -u /opt/pyp/src/pyp_main.py")
+            command = '/bin/bash -c "' + cpus + f"export {jobtype}={jobtype}; cd {submit_dir}; {new_cmd}" + '"'
+            stream_shell_command(command,verbose=True)
+            return "standalone"
 
     else:
 

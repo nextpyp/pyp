@@ -27,26 +27,20 @@ any special setup other than copying the launcher executable onto the filesystem
 To build the launcher, run the following command:
 
 ```shell
-RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --target x86_64-unknown-linux-gnu
+cargo build --release
 ```
 
-The executable will appear at `target/x86_64-unknown-linux-gnu/release/launcher`.
+The executable will appear at `target/release/launcher`.
 
-**NOTE**: We have to put the `rustc` compile flags in the environment variable
-for now (because `.cargo/config.toml` only applies to the current crate,
-not any dependency crates), but we could someday move them into `Cargo.toml`
-after `cargo` moves the `profile-rustflags` feature to the stable branch.
-See https://github.com/rust-lang/cargo/issues/10271 for the tracking issue.
-After that, the build command could just be `cargo build --release`.
-
-**NOTE**: The explicit compilation target (eg `x86_64-unknown-linux-gnu`)
-is needed to work around an issue where we want to compile the final binary
-with purely static linking, but we want to compile the proc macro
-(used by the `thiserror` crate) on the host with regular settings.
-Specifying a target explicitly puts `cargo`/`rustc` into cross-compilation
-mode with handles compiling proc macros correctly. See the Rust GitHub issue
-for more details:
-https://github.com/rust-lang/rust/issues/78210
+**NOTE**: While this will build a working executable for your system,
+building an executable that will work on other systems takes some extra work.
+The strategy here is to dynamically link against the oldest GNU libc
+we can find. The sibling `next` project has a CentOS 7 container
+for building Rust applications against a very old GNU libc.
+Run the Gradle task `vmBuildPypLauncher` to build inside the
+container (inside the dev VM) and then look for the built executable
+in the `build/pypLauncher/release` folder. That executable should run on any relatively
+modern linux distribution.
 
 
 ## Testing

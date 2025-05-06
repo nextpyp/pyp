@@ -1,0 +1,392 @@
+Bootstrap: docker
+From: mambaorg/micromamba
+IncludeCmd: no
+
+%help
+	TODO
+
+%files
+
+	bin/* /opt/pyp/bin/
+	config/ /opt/pyp
+	src/ /opt/pyp
+	LICENSE  /opt/pyp
+	nextpyp.toml /opt/pyp
+ 	pyproject.toml /opt/pyp
+	README.rst /opt/pyp
+	tests/ /opt/pyp
+	external/ /opt/pyp
+	../AreTomo2/ /opt/pyp/external
+	# ../AreTomo3/ /opt/pyp/external
+	../MotionCor3/ /opt/pyp/external
+
+%environment
+
+	# this needs to be set here because it's the first thing pyp does, even before initializing env vars
+	export PYP_DIR=/opt/pyp
+
+	# somehow, after all that installation trouble, conda *STILL* doesn't manage to make the packages available to python
+	# probably because we don't have any way to "activate" the conda environment inside the container
+	# so we'll have to do it manually... sigh
+	export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/opt/conda/envs/pyp/lib:$LD_LIBRARY_PATH
+	export PATH=$PYP_DIR/bin:/opt/conda/envs/pyp/bin:$PATH
+	export PYTHONPATH=/opt/pyp/src
+	export IMOD_DIR=/opt/IMOD
+	export PATH=$PATH:$IMOD_DIR/bin
+	export PATH=$PATH:/opt/potrace-1.16.linux-x86_64
+
+%post
+	# remove .git directory to save space
+	rm -rf /opt/pyp/.git
+	# install packages required by ETTK
+	apt-get -y update
+	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file wget git
+
+	# trick IMOD into believing we have version 5 of libtiff
+	ln -s /usr/lib/x86_64-linux-gnu/libtiff.so.6 /usr/lib/x86_64-linux-gnu/libtiff.so.5
+
+	# increase ImageMagick resource limits
+	sed -i -E 's/name="disk" value=".+"/name="disk" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="memory" value=".+"/name="memory" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="width" value=".+"/name="width" value="64KP"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="height" value=".+"/name="heigth" value="64KP"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="map" value=".+"/name="map" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="area" value=".+"/name="area" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
+
+	dpkg --configure -a
+ 
+	# install pbzip2 from source
+        NAME=pbzip2-1.1.13
+        TARFILE=${NAME}.tar.gz
+        wget https://launchpad.net/pbzip2/1.1/1.1.13/+download/$TARFILE
+        tar xvfz $TARFILE
+        cd $NAME
+        make
+        make install
+        make clean
+	cd -
+        rm -rf $NAME
+	rm $TARFILE
+	
+	# NOTE: the shell here is apparently /bin/sh = dash
+
+	# make in/out folders we can mount to
+	mkdir /var/batch
+	mkdir /var/data
+	mkdir /var/users
+	mkdir /var/out
+	mkdir /var/scratch
+
+	# load external packages
+	cd /opt/pyp/external
+	git clone https://github.com/nextpyp/spr_pick.git --depth 1
+	rm -rf spr_pick/.git
+	git clone https://github.com/nextpyp/cet_pick.git --depth 1
+	rm -rf cet_pick/.git
+	git clone https://github.com/nextpyp/postprocessing.git --depth 1
+	rm -rf postprocessing/.git
+	cd -
+
+	apt-get -y install software-properties-common
+	
+	# install IMOD (legacy version without 16-bit support)
+	IMOD_FILE=imod_4.11.24_RHEL7-64_CUDA8.0.sh
+	wget --no-check-certificate https://bio3d.colorado.edu/imod/AMD64-RHEL5/${IMOD_FILE}
+	# IMOD_FILE=imod_4.12.62_RHEL8-64_CUDA12.0.sh
+	# wget --no-check-certificate https://bio3d.colorado.edu/ftp/latestIMOD/RHEL8-64_CUDA12.0/${IMOD_FILE}
+	sh ${IMOD_FILE} -yes -skip -name IMOD -dir /opt -name IMOD_4.11.24
+	rm -rf ${IMOD_FILE}
+	
+	# Newer version of IMOD with 16-bit support
+	IMOD_FILE=imod_5.1.0_RHEL8-64_CUDA12.0.sh
+	wget --no-check-certificate https://bio3d.colorado.edu/imod/AMD64-RHEL5/${IMOD_FILE}
+	sh ${IMOD_FILE} -yes -skip -name IMOD -dir /opt
+	rm -rf ${IMOD_FILE}
+
+	# install CUDA-12.5
+	CUDA_HOME=/usr/local/cuda-12.5
+	wget https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/cuda-keyring_1.1-1_all.deb
+	dpkg -i cuda-keyring_1.1-1_all.deb
+	add-apt-repository contrib
+	apt-get update
+	apt-get -y install cuda-toolkit-12-5
+	apt-get -y install libcudnn8
+	apt-get -y install libcu++-dev
+
+	# add symlink to cuda library needed by MotionCor3 and AreTomo
+	ln -s /usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs/libcuda.so /usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs/libcuda.so.1
+
+	# load AreTomo2
+	cd /opt/pyp/external/AreTomo2
+	# git clone https://github.com/czimaginginstitute/AreTomo2.git --depth 1
+	# cd AreTomo2
+	rm -rf .git/
+	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	cd -
+
+	# cd /opt/pyp/external/AreTomo3
+	# git clone https://github.com/czimaginginstitute/AreTomo3.git --depth 1
+	# cd AreTomo3
+	# rm -rf .git/
+	# make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	# cd -
+
+	# git clone https://github.com/czimaginginstitute/MotionCor3.git --depth 1
+	# cd MotionCor3
+	cd /opt/pyp/external/MotionCor3
+	# git clone https://github.com/czimaginginstitute/AreTomo2.git
+	rm -rf .git/
+	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	cd -
+
+	# Conda is apparently a terrible package manager and
+	# totally fails to install 2 packages (two!!) in less than 30 minutes! (didn't try waiting longer...)
+	# Might be because conda is SUPER DUPER picky about its environment.
+	# Looks like we need to run the conda commands inside a special bash environment using 'conda run'.
+	# Thanks to this blog post for finally helping me figure this out:
+	# https://pythonspeed.com/articles/activate-conda-dockerfile/
+
+	# write the conda script
+cat << EOF > /root/pyp.sh
+
+	# just for posterity ...
+	micromamba --version
+
+	# install the python packages we need
+
+	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr htop
+	micromamba install -c conda-forge matplotlib 
+	micromamba install -c conda-forge pandas
+	micromamba install -c conda-forge conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses
+	micromamba install -c conda-forge colored-traceback
+	micromamba update numpy
+	# micromamba install -c conda-forge -c tbepler topaz
+	
+	micromamba install -c conda-forge faiss-gpu
+	micromamba update libstdcxx-ng
+	micromamba clean --all -y
+
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/pyp -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack	
+EOF
+
+	# need to create a new environment for conda to actually install anything without failing, see:
+	# https://github.com/conda/conda/issues/9367#issuecomment-558863143
+	# alas, we can't actually "activate" this environment, because conda fails saying the envrionment is unsupported
+	#micromamba update mamba
+	micromamba create --name pyp python=3.8 -c conda-forge
+
+	# run the conda script in the pyp environment
+	# tragically conda buffers stdout and stderr, which is basically terrible
+	# so try to redirect them somewhere we'll see them sooner
+	# like the stdout of *this* script: /proc/$$/fd/1
+	chmod +x /root/pyp.sh
+	micromamba run -n pyp /bin/bash -c "/root/pyp.sh > /proc/$$/fd/1 2>&1"
+	export PATH=/opt/conda/envs/pyp/bin:$PATH
+
+	# make fontconfig cache persistent to prevent the infamous warning: "Fontconfig error: No writable cache directories"
+	fc-cache
+	
+	# Topaz
+	cd /opt/pyp/external
+        git clone https://github.com/tbepler/topaz.git
+        cd topaz
+        git checkout v0.2.5
+        pip install .
+        rm -rf .git/
+	cd -
+
+	# do all the pip installs (on the base environment?)
+	pip install torch==2.2.0 torchvision==0.17.0 tensorboard h5py imagesize tqdm
+	pip install torchio==0.18.92
+	pip install healpy
+	pip install phoenix==0.9.1
+	pip install dataset==1.6.2 
+	pip install Pillow==10.0.1 
+	pip install pyarrow==11.0.0 
+	pip install scikit_network==0.28.2
+	pip install mrcfile pytorch_metric_learning progress nptyping==2.5.0 umap_learn==0.5.3
+	pip install nibabel
+	pip install numba
+	pip install gputil
+	pip install dipy
+	pip install bm4d
+	pip install filelock
+
+	# Install pytom-match-pick
+cat << EOF > /root/pytom.sh
+
+	# install the python packages we need
+
+	python -m pip install pytom-match-pick==0.8.0
+	python -m pip install matplotlib seaborn
+
+	micromamba clean --all -y
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/pytom -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name pytom "python=3" -c conda-forge cupy cuda-version=11.8
+
+	# run the conda script in the new environment
+	chmod +x /root/pytom.sh
+	micromamba run -n pytom /bin/bash -c "/root/pytom.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/pytom.sh
+
+	# Install tomoDRGN
+cat << EOF > /root/tomodrgn.sh
+
+	# install the python packages we need
+
+	micromamba install "pytorch-gpu>=1.11.0" "cudatoolkit>=11.0" -c pytorch
+	micromamba install -c conda-forge pandas seaborn scikit-learn encodings
+	micromamba install umap-learn notebook -c conda-forge
+	pip install "ipyvolume>=0.6.0" "pythreejs>=2.4.2" ipython_genutils
+
+	# Clone source code and install
+	# git clone https://github.com/bpowell122/tomodrgn.git
+	# use custom version
+	cd /opt/pyp/external/
+	git clone --depth=1 https://github.com/bpowell122/tomodrgn.git
+	cd tomodrgn
+	pip install .
+	rm -rf .git/
+
+	micromamba clean --all -y
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/tomodrgn -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name tomodrgn "python=3.10" -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/tomodrgn.sh
+	micromamba run -n tomodrgn /bin/bash -c "/root/tomodrgn.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/tomodrgn.sh
+
+	rm -rf /opt/pyp/external/tomoDRGN/.git
+
+	# Install cryoCARE
+cat << EOF > /root/cryocare.sh
+
+	# install the python packages we need
+	micromamba install -c conda-forge cuda-toolkit
+	
+	pip install tensorflow-gpu==2.4.0
+	pip install tifffile==2019.7.26
+	pip install cryoCARE
+
+	micromamba clean --all -y
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/cryocare -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name cryocare python=3.8 cudatoolkit=11.0 cudnn=8.0 -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/cryocare.sh
+	micromamba run -n cryocare /bin/bash -c "/root/cryocare.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/cryocare.sh
+
+	# Install cryoDRGN
+cat << EOF > /root/cryodrgn.sh
+
+	# install the python packages we need
+
+	pip install cryodrgn
+
+	micromamba clean --all -y
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/cryodrgn -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name cryodrgn python=3.9 -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/cryodrgn.sh
+	micromamba run -n cryodrgn /bin/bash -c "/root/cryodrgn.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/cryodrgn.sh
+
+	# Install membrain
+cat << EOF > /root/membrain.sh
+
+	# install the python packages we need
+
+	pip install membrain-seg
+
+	micromamba clean --all -y
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/membrain -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name membrain python=3.9 -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/membrain.sh
+	micromamba run -n membrain /bin/bash -c "/root/membrain.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/membrain.sh
+
+	# Install IsoNet
+cat << EOF > /root/isonet.sh
+
+	# install the python packages we need
+
+	git clone --depth=1 https://github.com/IsoNet-cryoET/IsoNet.git
+	cd IsoNet
+	rm -rf .git
+
+	pip install tensorflow-gpu==2.10.0
+	pip install nvidia-tensorrt
+	pip install -r requirements.txt
+	pip install --upgrade numpy==1.23.4
+
+	micromamba clean --all -y
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/isonet -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name isonet python=3.9 cudatoolkit=11.2 cudnn=8.1 -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/isonet.sh
+	micromamba run -n isonet /bin/bash -c "/root/isonet.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/isonet.sh
+
+        ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer_plugin.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer_plugin.so.7
+        ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.7
+
+	# Install WarpTools
+	#micromamba create --name warp warp=2.0.0 -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
+	#micromamba update warp -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
+	#micromamba clean --all -y
+	
+	#rm -rf /tmp/env.tar
+	#conda-pack -p /opt/conda/envs/warp -o /tmp/env.tar && \
+	#	mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+	#	rm /tmp/env.tar
+	#/venv/bin/conda-unpack
+
+%startscript
+
+%apprun binds

@@ -1,70 +1,23 @@
 nextPYP: a scalable platform for cryo-EM/ET image analysis
 ----------------------------------------------------------
 
-`nextPYP <https://nextpyp.app/>`_ is a comprehensive platform for single-particle cryo-EM/ET image analysis developed and maintained by the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_ at `Duke University <http://www.duke.edu>`_.
+`nextPYP <https://nextpyp.app/>`_ is a package for single-particle cryo-EM/ET image analysis developed and maintained by the `Bartesaghi Lab <http://cryoem.cs.duke.edu>`_.
+
+By combining established tools in the field with `methods developed in-house <https://cryoem.cs.duke.edu/research/methods/>`_, ``nextPYP`` produces state-of-the-art results while being user-friendly and scalable to large datasets.
 
 Main features
 -------------
-- Portable, easy-to-use, fully featured web-based GUI
-- On-the-fly data pre-processing (single-particle and tomography)
-- End-to-end pipeline for high-resolution structure determination (single-particle and tomography)
-- 2D/3D particle picking using size-based, geometry-based and neural network-based approaches
-- Scalable, small storage footprint (no need to save full size tomograms, sub-volumes, or particle stacks)
-- Multi-mode constrained refinement and constrained classification for heterogeneity analysis
-- Particle-based CTF refinement, movie frame refinement and self-tuning exposure weighting
-- Import/export metadata in .star format to interface with external programs
+- **Ease-of-use**: user-friendly, fully-featured web-based GUI with intuitive block-based architecture
+- **End-to-end**: convert raw cryo-EM/ET data into high-resolution structures using a single application
+- **Particle picking suite**: cellular pattern mining and suite of particle picking tools in 2D and 3D
+- **High-resolution**: advanced 3D refinement and classification tools achieve state-of-the-art results
+- **Scalability**: small storage footprint and distributed computing allows analysis of large datasets
+- **On-the-fly processing**: real-time analysis of micrographs and tilt-series during data acquisition
+- **Portability and compatibility**: easy to install and configure, interoperable with external packages
 
-Select from the following options:
+See the :doc:`Changelog<changelog>` for the **latest features**.
 
-.. panels::
-   :body: bg-primary text-centered text-white font-weight-bold
+Citing ``nextPYP``
+------------------
 
-   :fa:`cog fa-4x text-white`
-
-   +++
-
-   .. link-button:: install/install-web
-      :type: ref
-      :text: Installation
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`book-open fa-4x text-white`
-
-   +++
-
-   .. link-button:: tutorials
-      :type: ref
-      :text: Tutorials
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`user fa-4x text-white`
-
-   +++
-
-   .. link-button:: guide
-      :type: ref
-      :text: User guide
-      :classes: btn-outline-primary btn-block stretched-link
-
-   ---
-
-   :fa:`info fa-4x text-white`
-
-   +++
-
-   .. link-button:: about
-      :type: ref
-      :text: About
-      :classes: btn-outline-primary btn-block stretched-link
-
-.. admonition:: Need help?
-
-   Visit ``nextPYP``'s `discussion board <https://github.com/orgs/nextpyp/discussions>`_ to post questions and follow discussions
-
-.. admonition:: Citing ``nextPYP``
-
-  Liu, HF., Zhou, Y., Huang, Q., Piland, J., Jin, W., Mandel, J., Du, X., Martin, J., Bartesaghi, A., `nextPYP: a comprehensive and scalable platform for characterizing protein variability in-situ using single-particle cryo-electron tomography <https://www.nature.com/articles/s41592-023-02045-0>`_. Nature Methods, 20:1909–1919 (2023).
+Liu, HF., Zhou, Y., Huang, Q., Piland, J., Jin, W., Mandel, J., Du, X., Martin, J., Bartesaghi, A., `nextPYP: a comprehensive and scalable platform for characterizing protein variability in-situ using single-particle cryo-electron tomography <https://www.nature.com/articles/s41592-023-02045-0>`_. Nat Meth, 20:1909–1919 (2023).

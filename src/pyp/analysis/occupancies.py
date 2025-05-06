@@ -1,45 +1,37 @@
-import math
 import os
 import shutil
 import sys
-from pathlib import Path
 from statistics import mean
-
+from tqdm import tqdm
 import numpy as np
-import pandas as pd
+
 from pyp.analysis import statistics
-from pyp.inout.metadata import frealign_parfile
+from pyp.inout.metadata import frealign_parfile, cistem_star_file
 from pyp.system import local_run, project_params
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths
 from pyp.utils import get_relative_path, symlink_force
 from pyp.utils import timer
 from pyp.inout.metadata import get_particles_tilt_index
+from pyp.streampyp.logging import TQDMLogger
+
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 
-def get_occupancy_columns(par_col):
-    if  par_col > 45:
-        film_col = 7
-        occ_col = 12
-        logp_col = 13
-        sigma_col = 14
-        score_col = 15
-        ptl_col = 17
-        tltan_col = 18
-        scanord_col = 20
-    else:
-        film_col = 7
-        occ_col = 11
-        logp_col = 12
-        sigma_col = 13
-        score_col = 14
-        ptl_col = 16
-        tltan_col = 17
-        scanord_col = 19
+def get_occupancy_columns():
 
-    return film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, tltan_col, scanord_col
+    prj_obj = cistem_star_file.Parameters()
+
+    film_col = prj_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+    occ_col = prj_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
+    logp_col = prj_obj.get_index_of_column(cistem_star_file.LOGP)
+    sigma_col = prj_obj.get_index_of_column(cistem_star_file.SIGMA)
+    score_col = prj_obj.get_index_of_column(cistem_star_file.SCORE)
+    ptl_col = prj_obj.get_index_of_column(cistem_star_file.PIND)
+    scanord_col = prj_obj.get_index_of_column(cistem_star_file.TIND)
+
+    return film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, scanord_col
 
 
 def occupancies(fparameters, iteration, nclass, path="."):
@@ -76,26 +68,17 @@ def occupancies(fparameters, iteration, nclass, path="."):
 
 
 @timer.Timer(
-    "occ_function", text="OCC calculation took: {}", logger=logger.info
+    "occ_function", text="Occupancy calculations took: {}", logger=logger.info
 )
-def occupancy_extended(parameters, dataset, iteration, nclasses, path=".", is_frealignx=False, local=False):
+def occupancy_extended(parameters, dataset, nclasses, image_list=None, parameter_file_folders=".", local=False):
     """Compute occupancies based on LogP values with extended par file."""
-    # dataset = fparameters["dataset"]
-
-    metric = project_params.param(parameters["refine_metric"], iteration)
-    # film_col, occ_col, logp_col, sigma_col, ptl_col, tltan_col = get_occupancy_columns(metric)
 
     # load the par files from all the classes and calculate average occupancies
     parx = []
+    all_extended_list = []
     class_average_occ = []
     occupancy_change_multiplier = 1
-    
-    is_parx = True
-
-    if is_frealignx:
-        col_num = 46
-    else:
-        col_num = 45
+ 
     (
         film_col,
         occ_col,
@@ -103,74 +86,73 @@ def occupancy_extended(parameters, dataset, iteration, nclasses, path=".", is_fr
         sigma_col,
         score_col,
         ptl_col,
-        tltan_col,
         scanord_col, 
-    ) = get_occupancy_columns(col_num)
+    ) = get_occupancy_columns()
+
     # info needed only
-   
-    newptl_col = 0
+    newfilm_col = 0
     newocc_col = 1
     newlogp_col = 2
     newsigma_col = 3
     newscore_col = 4
-    newtltan_col = 5
+    newptlind_col = 5
     newscanord_col = 6
     
+    iteration = parameters["refine_iter"] 
     if not local:
-        index_file = "../csp/particle_tilt.index"
         with timer.Timer(
-        "read par for occ", text = "OCC Read par took: {}", logger=logger.info
+        "read par for occ", text = "Reading occupancies took: {}", logger=logger.info
         ):
             for k in range(nclasses):
-                logger.debug("Processing class {}".format(k + 1))
-                parxfile = "%s/%s_r%02d_%02d.par" % (path, dataset, k + 1, iteration)
-                headerline = frealign_parfile.EXTENDED_NEW_PAR_HEADER[2].strip("\n").split()
-                column_names = np.array(headerline[1:])
-                select_data = pd.read_csv(
-                    parxfile, 
-                    comment='C', 
-                    delim_whitespace=True, 
-                    names=column_names, 
-                    usecols=['NO', 'OCC', 'LOGP','SIGMA', 'SCORE', 'TILTAN', 'SCANOR'],
-                    )
-                parx.append(select_data.to_numpy())
+                class_k = k + 1
+                decompressed_parameter_file_folder = os.path.join(parameter_file_folders, dataset + "_r%02d_%02d" % (class_k, iteration - 1)) 
+                binary_list = [os.path.join(decompressed_parameter_file_folder, image + "_r%02d.cistem" % class_k ) for image in image_list]
+                park_data, par_extk_dict, _ = cistem_star_file.merge_all_binary_with_filmid(binary_list, read_extend=True)                
+                select_data = park_data[:, [film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, scanord_col]]
+
+                all_extended_list.append(par_extk_dict)
+                parx.append(select_data)
                 all_occ = parx[k][:, newocc_col].ravel()
                 class_average_occ.append(mean(all_occ))
+
+                if "tomo" in parameters["data_mode"] and k == 0:
+                    
+                    index = get_particles_tilt_index(select_data, ptl_col=newptlind_col)
+
+                film_index = get_particles_tilt_index(select_data, ptl_col = newfilm_col)
 
             parx_3d = np.array(parx)
 
     else:
-        # for local run, read directly from map/parfile_constrain.txt
-        parx = []
-        for k in range(nclasses):
-            if "new" in parameters["refine_metric"]:
-                occindex = 10                                # no id in the constrain file
-            elif "frealignx" in parameters["refine_metric"]:
-                occindex = 11
-            
-            with open("project_dir.txt") as f:
-                project_dir = f.readline().strip("\n")
-            remote_par_stat = os.path.join(project_dir, "frealign", "maps", "parfile_constrain_r%02d.txt" % (k + 1))
-            stat = np.loadtxt(remote_par_stat, ndmin=2)
-            occmean = stat[0, occindex]
-            class_average_occ.append(occmean)
+        with open("project_dir.txt") as f:
+            project_dir = f.readline().strip("\n")
 
-            # reload local par files
-            parxfile = "%s/%s_r%02d_%02d.par" % (path, dataset, k + 1, iteration)
-            parkdata = np.loadtxt(parxfile, comments="C", ndmin=2)
-            occ_only = parkdata[:, [0, occ_col, logp_col, sigma_col, score_col, tltan_col, scanord_col]]
-            parx.append(occ_only)
-        
-        if "tomo" in parameters["data_mode"]:
-            get_particles_tilt_index(parxfile, ".")
-            index_file = "particle_tilt.index"
+        logger.info(f"Retrieving occupancies from {nclasses} classes")
+        with tqdm(desc="Progress", total=nclasses, file=TQDMLogger()) as pbar:
+            for k in range(nclasses):
+                
+                global_dataset_name = parameters["data_set"]
+                decompressed_parameter_file_folder = os.path.join(project_dir, "frealign", "maps", global_dataset_name + "_r%02d_%02d" % (k + 1, iteration - 1)) 
+                remote_par_stat = os.path.join(decompressed_parameter_file_folder, global_dataset_name + "_r%02d_stat.cistem" % (k + 1))
+                stat = cistem_star_file.Parameters.from_file(remote_par_stat).get_data()
+                occmean = stat[0, occ_col]
+                class_average_occ.append(occmean)
 
+                # reload local par files
+                par_binary = os.path.join(parameter_file_folders, dataset + "_r%02d.cistem" % (k + 1) )
+                park_data = cistem_star_file.Parameters.from_file(par_binary)
+                select_data = park_data.get_data()[:, [film_col, occ_col, logp_col, sigma_col, score_col, ptl_col, scanord_col]]
+                parx.append(select_data)
+                all_extended_list.append(park_data.get_extended_data().get_tilts())
+
+                if "tomo" in parameters["data_mode"] and k == 0:
+                    
+                    index = get_particles_tilt_index(select_data, ptl_col=newptlind_col)
+                pbar.update(1)
+      
         parx_3d = np.array(parx)
     
-    if is_parx and "tomo" in parameters["data_mode"]:
-        
-        tilt_index = np.loadtxt(index_file, dtype='int', ndmin=2)
-        index = tilt_index.tolist()
+    if "tomo" in parameters["data_mode"]:
 
         if parameters["refine_score_weighting"]: # score weights
             logger.info("Weighting logp with score averages")
@@ -178,25 +160,28 @@ def occupancy_extended(parameters, dataset, iteration, nclasses, path=".", is_fr
             
             for k in range(0, nclasses):
                 for i in index:
-                    per_particle_scoreweight(parx_3d[k, :,:], newlogp_col, newscanord_col, scoreavg_tilt, i)
+                    parx_3d[k, :,:] = per_particle_scoreweight(parx_3d[k, :,:], newlogp_col, newscanord_col, scoreavg_tilt, i)
 
         else: # tilt gaussian weights
-            logger.info("Weighting logp with tilt distribution")
-            for k in range(0, nclasses):
-                for i in index:
-                    per_particle_tiltweight(parx_3d[k, :,:], newocc_col, newtltan_col, newlogp_col, i)
+            logger.info("Weighting LogP with tilt distribution")
+            with tqdm(desc="Progress", total=nclasses, file=TQDMLogger()) as pbar:
+                for k in range(0, nclasses):
+                    for i in index:
+                        parx_3d[k, :,:] = per_particle_tiltweight(parx_3d[k, :,:], all_extended_list[k], newlogp_col, i)
+                    pbar.update(1)
 
     else:
-        logger.info("Not using tilt weighting to change OCC")
+        logger.info("Not using tilt weighting to change occupancies")
 
     # recalculate occ from logp
     all_frame, col_num = parx[0].shape
 
     ptl_logp_array = parx_3d[:, :, newlogp_col]
-    ptl_occ_array = parx_3d[:, :, newocc_col]
+    # ptl_occ_array = parx_3d[:, :, newocc_col]
     ptl_sigma_array = parx_3d[:, :, newsigma_col]
     maxlogp_array = np.amax(ptl_logp_array, axis=0)
     sum_pp_array = np.full((all_frame,), 0.0)
+
     for k in range(nclasses):
         delta_logp_array = maxlogp_array - ptl_logp_array[k, :]
         logp_mask_array = delta_logp_array < 10
@@ -218,53 +203,56 @@ def occupancy_extended(parameters, dataset, iteration, nclasses, path=".", is_fr
             np.exp(delta_array) * class_average_occ[k] * 100 / sum_pp_array,
             0,
         )
-        new_occ[k, :] = (
-            occupancy_change_multiplier * (new_occ[k, :] - ptl_occ_array[k, :])
-            + ptl_occ_array[k, :]
-        )
+
+        # new_occ[k, :] = (
+        #     occupancy_change_multiplier * (new_occ[k, :] - ptl_occ_array[k, :])
+        #     + ptl_occ_array[k, :]
+        # )
         average_sigma += ptl_sigma_array[k, :] * new_occ[k, :] / 100
 
     # updating columns in parx array
-    if not local:
-        header1 = "C\nC     1      12         14\nC    NO     OCC      SIGMA"
-    else: 
-        header1 = "C\nC     1      13         15\nC    NO     OCC      SIGMA"
-
     for k in range(nclasses):
-        occ_sigmafile = "%s/%s_r%02d_occsigma.txt" % (path, dataset, k + 1)
-        pid = parx[k][:,0].reshape((-1, 1))
-        occdata = new_occ[k, :].reshape((-1, 1)) 
-        sigmadata = average_sigma.reshape((-1, 1))
-        occ_sigma = np.hstack((pid, occdata, sigmadata))
-
-        np.savetxt(occ_sigmafile, occ_sigma, fmt='%7d%8.2f%11.2f', header=header1, comments="")
-    
-    # column replacement
-    with timer.Timer(
-        "write_occ_changed", text = "OCC write par took: {}", logger=logger.info
-    ):  
-        # bytes numbers for each column
-        if is_frealignx:
-            pshift = 8
+        occdata = new_occ[k, :]
+        sigmadata = average_sigma
+        if not local:
+            for film_id, image_name in enumerate(image_list):
+                decompressed_parameter_file_folder = os.path.join(parameter_file_folders, dataset + "_r%02d_%02d" % (k + 1, iteration - 1)) 
+                # film_id += 1 # film index from 0
+                class_binary = os.path.join(decompressed_parameter_file_folder, image_name + "_r%02d.cistem" % (k + 1))
+                image_data = cistem_star_file.Parameters.from_file(class_binary)
+                image_array = image_data.get_data()
+                if image_array.shape[0] == parx_3d.shape[1]:
+                    image_array[:, occ_col] = occdata
+                    image_array[:, sigma_col] = sigmadata
+                else:
+                    image_array[:, occ_col] = occdata[film_index[film_id][0]:film_index[film_id][1]]
+                    image_array[:, sigma_col] = sigmadata[film_index[film_id][0]:film_index[film_id][1]]
+                image_data.set_data(image_array)
+                image_data.sync_particle_occ(ptl_to_prj=False)
+                image_data.to_binary(class_binary, extended_output=class_binary.replace(".cistem", "_extended.cistem"))
         else:
-            pshift = 0
-        preocc = 91 + pshift      # columns before occ
-        logpstart = 100 + pshift  # logp start position
-        logpend = logpstart + 9   # logp end position
-        postsigma = 121 + pshift  # after sigma
-        parend = 425 + pshift     # end
-
-        for k in range(nclasses):
-            occ_sigmafile = "%s/%s_r%02d_occsigma.txt" % (path, dataset, k + 1)
-            parxfile = "%s/%s_r%02d_%02d.par" % (path, dataset, k + 1, iteration)
-            inputfile = parxfile.replace(".par", ".paro")
-            os.rename(parxfile, inputfile)
+            class_binary = os.path.join(parameter_file_folders, dataset + "_r%02d.cistem" % (k + 1))
+            image_data = cistem_star_file.Parameters.from_file(class_binary)
+            image_array = image_data.get_data()
+            image_array[:, occ_col] = occdata
+            image_array[:, sigma_col] = sigmadata
+            image_data.set_data(image_array)
+            image_data.to_binary(class_binary)
             
-            writecom = f"""/bin/bash -c "paste -d '' <(cut -b 1-{preocc} '{inputfile}') <(cut -b 8-15 '{occ_sigmafile}') <(cut -b {logpstart}-{logpend} '{inputfile}') <(cut -b 16-26 '{occ_sigmafile}') <(cut -b {postsigma}-{parend} {inputfile}) > {parxfile}" """
-            [output, error] = local_run.run_shell_command(writecom, verbose=False)
-            os.remove(occ_sigmafile)
-            os.remove(inputfile)
-
+            # Also update occupancies in tilt-series specific metadata
+            for film_id, image_name in enumerate(image_list):
+                image_name = image_name.replace("_r01.", "_r%02d." % (k + 1))
+                image_data = cistem_star_file.Parameters.from_file(image_name)
+                image_array = image_data.get_data()
+                if image_array.shape[0] == parx_3d.shape[1]:
+                    image_array[:, occ_col] = occdata
+                    image_array[:, sigma_col] = sigmadata
+                else:
+                    image_array[:, occ_col] = occdata[np.where(parx_3d[k,:,newfilm_col]==film_id)]
+                    image_array[:, sigma_col] = sigmadata[np.where(parx_3d[k,:,newfilm_col]==film_id)]
+                image_data.set_data(image_array)
+                image_data.sync_particle_occ(ptl_to_prj=False)
+                image_data.to_binary(image_name, extended_output=image_name.replace(".cistem", "_extended.cistem"))
 
 def random_sample_occ(
     parameters, iteration, dataset, classes, metric="frealignx", parameters_only=False
@@ -334,152 +322,111 @@ def random_seeding(seeding):
 
 
 @timer.Timer(
-    "occ_initialization", text="OCC initialization took: {}", logger=logger.info
+    "occ_initialization", text="Occupancies initialization took: {}", logger=logger.info
 )
-def classification_initialization(parameters, dataset, classes, iteration, use_frame = False, is_tomo = False, references_only = False, parameters_only = False):
+def classification_initialization( dataset, classes, iteration, decompressed_parameter_file_folder, image_list, use_frame = False, is_tomo = False, references_only = False, parameters_only = False):
 
     if not references_only:
-        #if not parameters["reconstruct_weights"]:
-        if True:
-            # initialize metadata
-            parfile = os.path.join("maps", "%s_r01_%02d.par" % (dataset, iteration - 1))
-            par_data = frealign_parfile.Parameters.from_file(parfile).data
-            Ncol = par_data.shape[1]
-            if Ncol > 16:
-                is_parx = True
-            else:
-                is_parx = False
+        # read all images parameters for statistices and we need to track the film id to recover individual image data
+        binary_list = [os.path.join(decompressed_parameter_file_folder, image + "_r01.cistem") for image in image_list]
+        par_data = cistem_star_file.merge_all_binary_with_filmid(binary_list, read_extend=False)
 
-            # only consider metric new
-            if use_frame or is_tomo:
-                ptlind_col = 16
-            else:
-                ptlind_col = 0
+        # the column index from cistem2 binary
+        (
+            film_col,
+            occ_col,
+            logp_col,
+            sigma_col,
+            score_col,
+            ptlind_col,
+            scanord_col, 
+        ) = get_occupancy_columns()
 
-            occ_col = 11
-            film_col = 7
-            scanorder = 19
-            Nrow = par_data.shape[0]
-            
-            film = np.unique(par_data[:, film_col].ravel())
-            
-            if not use_frame and not is_tomo:
-                N = Nrow
-            else:
-                CNF = par_data[:, scanorder]
-                maxframe = int(np.amax(CNF)) + 1
-                N = 0
-                ptl_per_film=[]
-                filma = par_data[:, film_col]
-                ptla = par_data[:, ptlind_col]
-                for m in film:
-                    filmmask = np.where(filma == m)
-                    ptls = ptla[filmmask][-1] + 1
-                    N += ptls
-                    ptl_per_film.append(ptls)
-                N = int(N)
-            logger.info("Total number of particles is " + str(N))
-            # seed = -100
-            for k in range(classes):
-                if not use_frame and not is_tomo:
-                    
-                    occ = np.zeros(N)            
-                    ref = k + 1
-                    occmax = 0
-                    """
-                    for ptl in range(N):
-                        #i = int(N * random_seeding(seed))
-                        i = int(N*np.random.random_sample())
-                        occ[i] = occ[i] + 1
-                    """
-                    seed = np.random.rand(N)
-                    rani = (seed * N).astype(int)
-                    unique, counts = np.unique(rani, return_counts=True)
-                    for i, c in zip(unique, counts):
-                        occ[i] = occ[i] + c
-                    
-                    occmax = np.max(occ)
-                    occ = occ / occmax * 100
-                    
-                    # update par_data and write class par
-                    par_data[:, occ_col] = occ
-                    class_par = parfile.replace("_r01", "_r%02d" % ref)
-                    version = project_params.param(parameters["refine_metric"], iteration).split("_")[0]
-                    frealign_par = frealign_parfile.Parameters(version=version)
-                    frealign_par.write_parameter_file(
-                        class_par, par_data, parx=is_parx, frealignx=False
-                    )
-                
-                else:
-                    occ = np.zeros(N)
-                    ref = k + 1
-                    occmax = 0
-                    # logger.info("start random seeding")
-                    #for ptl in range(int(N)):
-                    #    i = int(N*np.random.random_sample())
-                    #    logger.info("iterate particle " + str(ptl)+ "\n")
-                    """
-                        count = 0 
-                        for film, ptls in enumerate(ptl_per_film):
-                            # filmblock = occ[occ[:, film] == m]
-                            # ptls = filmblock[-1, ptlind_col] + 1
-                            count += ptls
-                            if i <= count:
-                                dp = count - i
-                                pind = int(ptls - dp - 1)
-                                mask = np.logical_and(occ[:, 0] == film, occ[:, 1] == pind)
-                                newocc = occ[:, 2] + 1
-                                occ[:, 2] = np.where(mask, newocc,  occ[:, 2] )
-                                break
-                            else:
-                                continue
-                    """
-                    seed = np.random.rand(N)
-                    rani = (seed * N).astype(int)
-                    unique, counts = np.unique(rani, return_counts=True)
-                    
-                    for i, c in zip(unique, counts):
-                        # occ[:, 3]= np.where(occ[:, 2] == i, occ[:,3] + c, occ[:,3])
-                        occ[i] = occ[i] + c
-                    
-                    occmax = np.max(occ)
-                    occ = occ / occmax * 100
-                    Fast = False
-                    if Fast:
-                        occf = np.repeat(occ, maxframe)
-                        occf = np.resize(occf, Nrow)
-                    else:
-                        if "tomo" in parameters["data_mode"] and not os.path.isfile("../csp/particle_tilt.index"):
-                            get_particles_tilt_index(parfile, "../csp")
-                        index_file = "../csp/particle_tilt.index"
-                        tilt_index = np.loadtxt(index_file, dtype='int', ndmin=2)
-                        index = tilt_index.tolist()
-                        occf = np.zeros(Nrow)
-                        for i, ind in enumerate(index):
-                            occf[ind[0]:ind[1]] = occ[i]
-
-                    #occmax = np.max(occ[:, 3].ravel())
-                    #occ[:, 3] = occ[:, 3] / occmax * 100
-                    
-                    # update par_data and write class par
-                    par_data[:, occ_col] = occf
-                    class_par = parfile.replace("_r01", "_r%02d" % ref)
-                    version = project_params.param(parameters["refine_metric"], iteration).split("_")[0]
-                    frealign_par = frealign_parfile.Parameters(version=version)
-                    frealign_par.write_parameter_file(
-                        class_par, par_data, parx=is_parx, frealignx=False
-                    )
+        Nrow = par_data.shape[0]
         
+        film = np.unique(par_data[:, film_col].ravel())
+        
+        if not use_frame and not is_tomo:
+            N = Nrow
         else:
-            input_par_file = "maps/%s_r01_%02d.par" % (dataset, iteration - 1)
-            for res in range(1, classes):
-                mask = ["0", "0", "0", "0", "0"]
-                mask[(res - 1) % 5] = "1"
-                frealign_parfile.Parameters.generate_par_file(
-                    input_par_file,
-                    "maps/%s_r%02d_%02d.par" % (dataset, res + 1, iteration - 1),
-                    ",".join(mask),
-                )
+            CNF = par_data[:, scanord_col]
+            maxframe = int(np.amax(CNF)) + 1
+            N = 0
+            ptl_per_film=[]
+            filma = par_data[:, film_col]
+            ptla = par_data[:, ptlind_col]
+            for m in film:
+                filmmask = np.where(filma == m)
+                ptls = ptla[filmmask][-1] + 1
+                N += ptls
+                ptl_per_film.append(ptls)
+            N = int(N)
+        logger.info(f"Total number of particles is {N:,}")
+       
+        for k in range(classes):
+            ref = k + 1
+            if not use_frame and not is_tomo:
+                
+                occ = np.zeros(N)            
+                occmax = 0
+                seed = np.random.rand(N)
+                rani = (seed * N).astype(int)
+                unique, counts = np.unique(rani, return_counts=True)
+
+                for i, c in zip(unique, counts):
+                    occ[i] = occ[i] + c
+                
+                occmax = np.max(occ)
+                occ = occ / occmax * 100
+                
+                # update par_data and write class par
+                par_data[:, occ_col] = occ
+            
+            else:
+                occ = np.zeros(N)
+                ref = k + 1
+                occmax = 0
+
+                seed = np.random.rand(N)
+                rani = (seed * N).astype(int)
+                unique, counts = np.unique(rani, return_counts=True)
+                
+                for i, c in zip(unique, counts):
+                    
+                    occ[i] = occ[i] + c
+                
+                occmax = np.max(occ)
+                occ = occ / occmax * 100
+                Fast = False
+                if Fast:
+                    occf = np.repeat(occ, maxframe)
+                    occf = np.resize(occf, Nrow)
+                else:
+                    tilt_index = get_particles_tilt_index(par_data, ptl_col=ptlind_col)
+                    index = tilt_index.tolist()
+                    occf = np.zeros(Nrow)
+                    for i, ind in enumerate(index):
+                        occf[ind[0]:ind[1]] = occ[i]
+
+                # update par_data and write class par
+                par_data[:, occ_col] = occf
+           
+            class_parameter_file_folder = decompressed_parameter_file_folder.replace("_r01_", "_r%02d_" % ref)
+            
+            if not os.path.exists(class_parameter_file_folder):
+                os.makedirs(class_parameter_file_folder)
+
+            # split the par_data to individual array and save as binary file
+            for f, image in enumerate(image_list):
+                saved_binary = os.path.join(class_parameter_file_folder, image + "_r%02d.cistem" % ref )
+                ext_binary = os.path.join(decompressed_parameter_file_folder, image + "_r01_extended.cistem" )
+                ext_data = cistem_star_file.ExtendedParameters.from_file(ext_binary)
+                image_data = par_data[par_data[:, film_col] ==  f ]
+                image_data[:, film_col] = 0 # reset film id as 0
+                image_parameters = cistem_star_file.Parameters()
+                image_parameters.set_data(data=image_data, extended_parameters=ext_data)
+                image_parameters.sync_particle_occ(ptl_to_prj=False)
+                image_parameters.to_binary(saved_binary, extended_output=ext_binary.replace("r01", "r%02d" % ref))
 
     if not parameters_only:
         for ref in range(1, classes):
@@ -510,15 +457,17 @@ def get_statistics_from_par(parfile, statistics_file):
         f.write(" ".join(map(str, vars)) + "\n")
 
 
-def per_particle_tiltweight(target, occ_col, tltan_col, logp_col, index):
+def per_particle_tiltweight(target, tltang_dict, logp_col, index):
 
-    ptl_occ_tltang = target[index[0]:index[1], occ_col : tltan_col + 1]
+    ptl_data = target[index[0]:index[1], :]
     
-    ptl_logp = statistics.weighted_by_tilt_angle(ptl_occ_tltang)
-
+    ptl_logp = statistics.weighted_by_tilt_angle(ptl_data, tltang_dict)
+    
     # pardata[index[0]:index[1], occ_col] = ptl_occ
     target[index[0]:index[1], logp_col] = ptl_logp
     # pardata[index[0]:index[1], sigma_col] = ptl_sigma
+    
+    return target
 
 def per_particle_scoreweight(target, logp_col, scanord_col, scoreavg_tilt, index):
 
@@ -527,3 +476,5 @@ def per_particle_scoreweight(target, logp_col, scanord_col, scoreavg_tilt, index
     ptl_logp = statistics.weighted_by_scoreavgs(ptl_logp_scanord, scoreavg_tilt)
     
     target[index[0]:index[1], logp_col] = ptl_logp
+
+    return target

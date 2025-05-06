@@ -10,6 +10,7 @@ import re
 import shutil
 import socket
 import sys
+from tqdm import tqdm
 from pathlib import Path, PosixPath
 
 import numpy as np
@@ -23,6 +24,7 @@ from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import clear_scratch
 from pyp.utils import get_relative_path, movie2regex
 from pyp.system.db_comm import save_parameters_to_website
+from pyp.streampyp.logging import TQDMLogger
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -150,33 +152,34 @@ def get_relevant_films(parameters, array_job_num):
     ]
 
 
-def get_missing_files(parameters, inputlist, verbose=True):
+def get_missing_files(parameters, inputlist, exhaustive=True, verbose=True):
     missing_files = []
-    for sname in inputlist:
-        try:
-            command = "cat swarm/pre_process.swarm | grep %s.log | awk '{print $NF}'" % sname
-            [output, error] = run_shell_command(command, verbose=False)
-            logfile = output.replace("../", "").strip()
-            if (
-                not os.path.exists(logfile)
-                or not "finished successfully" in open(logfile).read()
-            ):
-                if not os.path.exists(logfile):
-                    logger.info(f"{logfile} does not exist")
-                else:
-                    logger.info(f"{sname} did not terminate successfully")
+    logger.info("Looking for failed jobs")
+    with tqdm(desc="Progress", total=len(inputlist), file=TQDMLogger()) as pbar:
+        for sname in inputlist:
+            try:
+                logfile = os.path.join("log",sname+".log")
+                if (
+                    not os.path.exists(logfile)
+                    or not "finished successfully" in open(logfile).read()
+                ):
+                    if "csp_no_stacks" in parameters.keys() and parameters["csp_no_stacks"]:
+                        # find all movies that were part of the array job and add to missing files
+                        series = project_params.get_film_order(parameters, sname)
+                        array_job_num = slurm.get_array_job(parameters, series)
+                        all_files = project_params.get_relevant_films(parameters, array_job_num)
+                        [missing_files.append(f) for f in all_files if f not in missing_files]
+                    else:
+                        missing_files.append(sname)
+                        if not exhaustive:
+                            pbar.update(n=len(inputlist))
+                            return missing_files
+            except:
+                pass
+            pbar.update(1)
 
-                if "csp_no_stacks" in parameters.keys() and parameters["csp_no_stacks"]:
-                    # find all movies that were part of the array job and add to missing files
-                    series = project_params.get_film_order(parameters, sname)
-                    array_job_num = slurm.get_array_job(parameters, series)
-                    all_files = project_params.get_relevant_films(parameters, array_job_num)
-                    [missing_files.append(f) for f in all_files if f not in missing_files]
-                else:
-                    missing_files.append(sname)
-        except:
-            logger.error("File swarm/pre_process.swarm not found")
-            pass
+    if len(missing_files) > 0:
+        logger.warning(f"{len(missing_files):,} job(s) produced no output or failed to run")
 
     return missing_files
 
@@ -208,7 +211,7 @@ def check_parameter_consistency(parameters):
 
 
 def resolve_path(parameter):
-    if isinstance(parameter, PosixPath) or not "PosixPath" in parameter:
+    if isinstance(parameter, PosixPath) or not parameter or not "PosixPath" in parameter:
         return str(parameter)
     else:
         return str(eval(parameter))
@@ -251,8 +254,8 @@ def create_micrographs_list(parameters):
         mdocs = list()
         mdoc_pattern = "*.mdoc"
         if "data_path_mdoc" in parameters and parameters["data_path_mdoc"] != None:
-            mdoc_folder = parameters["data_path_mdoc"].parent
-            mdoc_pattern = parameters["data_path_mdoc"].name
+            mdoc_folder = Path(project_params.resolve_path(parameters["data_path_mdoc"])).parent
+            mdoc_pattern = Path(project_params.resolve_path(parameters["data_path_mdoc"])).name
             mdocs = list(mdoc_folder.glob(str(mdoc_pattern)))
         # if none found, look in raw data folder
         if len(mdocs) == 0:
@@ -260,32 +263,41 @@ def create_micrographs_list(parameters):
             data_folder = data_path.parent
             mdocs = list(data_folder.glob(mdoc_pattern))
 
-        if parameters["data_mode"] == "tomo": 
-            if not parameters["movie_mdoc"] and len(parameters["movie_pattern"]) > 0 and len(glob.glob("raw/*" + movie_extension)) > 0:
-                regex = movie2regex(parameters["movie_pattern"], filename="*")
-                r = re.compile(regex)
-                match_files = [
-                    re.match(r, f)
-                    for f in [f.replace("raw/", "") for f in glob.glob("raw/*" + movie_extension)]
-                ]
-                files = [m.group(1) for m in match_files if m != None]
-                logger.info("Create micrograph list using movie patterns")
+        if parameters["data_mode"] == "tomo":
+            if not parameters["movie_no_frames"]:
+                if not parameters["movie_mdoc"] and len(parameters["movie_pattern"]) > 0 and len(glob.glob("raw/*" + movie_extension)) > 0:
+                    regex = movie2regex(parameters["movie_pattern"], filename="*")
+                    r = re.compile(regex)
+                    match_files = [
+                        re.match(r, f)
+                        for f in [f.replace("raw/", "") for f in glob.glob("raw/*" + movie_extension)]
+                    ]
+                    files = [m.group(1) for m in match_files if m != None]
+                    logger.info(f"Create micrograph list using movie pattern {parameters['movie_pattern']}")
 
-            elif parameters["movie_mdoc"] and len(mdocs) > 0:
-                files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
-                logger.info("Create micrograph list using mdocs files")
-                # NOTE: one mdoc for one tilt-series (rather than one tilt)
+                    # Now that we've determined the list of tilt-series, we can create symlinks to the metadata into the raw/ folder (if needed)
+                    raw_path = Path(project_params.resolve_path(parameters['data_path']))
+                    for file in sorted(list(set(files))):
+                        for ext in [ '.order', '.rawtlt', '.xml' ]: 
+                            current_file = os.path.join(raw_path.parent,file+ext)
+                            if os.path.exists(current_file):
+                                utils.symlink_relative_pattern(current_file,os.path.join(os.getcwd(),"raw"))                    
+
+                elif parameters["movie_mdoc"] and len(mdocs) > 0:
+                    files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
+                    logger.info("Create micrograph list using mdocs files")
+                    # NOTE: one mdoc for one tilt-series (rather than one tilt)
             else:
-                logger.info("Create micrograph list using detected files (one mrc per tilt-series)")
+                logger.info("Create micrograph list using detected files (one file per tilt-series)")
 
         files = sorted(list(set(files)))
-        logger.info("Found {} unique file(s) for processing".format(len(files)))
+        logger.info(f"Found {len(files):,} unique file(s) for processing")
         f = open(micrographs, "w")
         f.write("\n".join([s for s in files if len(s) > 0]))
         f.close()
     else:
         f = open(micrographs, "r")
-        files = f.read().split("\n")
+        files = [ file for file in f.read().split("\n") if file ]
         f.close()
 
     if len(files) == 0:
@@ -503,6 +515,19 @@ def parse_parameters(my_parameters,block,mode):
 
     # only check tabs included in current block and mode
     blocks = [ specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and ( ( block in b and block != "import" ) or b.endswith("_import_raw") ) ]
+
+    extra_blocks = []
+    if "tomo" in mode:
+        if "pre_process" in block:
+            extra_blocks = ["tomo_denoise_eval", "tomo_segment_open", "tomo_segment_close", "tomo_picking", "tomo_segment", "tomo_milo", "tomo_par_open" ]
+    else:
+        if "pre_process" in block:
+            extra_blocks = [ "spr_denoise", "spr_picking", "spr_drgn" ]
+
+    if len(extra_blocks) > 0:
+        for extra_block in extra_blocks:
+            blocks.extend([specifications["blocks"][b]["tabs"] for b in specifications["blocks"].keys() if mode in b and extra_block in b ])
+
     blocks = list(np.unique(np.concatenate(blocks).flat))
     tabs = {}
     tabs["_name"] = specifications["tabs"]["_name"]
@@ -514,6 +539,7 @@ def parse_parameters(my_parameters,block,mode):
 
     # create parser
     parser = parse_from_groups(tabs, my_parameters)
+    parser.add_argument("-params_file", "--params_file")
 
     # parse input
     if my_parameters != 0:
@@ -557,19 +583,34 @@ def sanitize_parameters(parameters):
                         clean_parameters[f"{t}_{p}"] = parameters[f"{t}_{p}"]
     return clean_parameters
 
-def save_parameters(parameters, path=".", param_file_name=".pyp_config.toml"):
+# copy entries that are not default
+def inherit_from_parent(parameters,parameter_file):
+
+    import toml
+
+    clean_parameters = parameters.copy()
+    
+    parameters_from_file = toml.load(parameter_file)
+
+    for k in parameters_from_file.keys():
+        clean_parameters[k] = parameters_from_file[k]
+
+    return clean_parameters
+
+def save_parameters(parameters, path=".", website=True, param_file_name=".pyp_config.toml"):
     # WARNING - toml.dump does not support saving entries that are None, so those will not be saved
     parameter_file = Path(path) / param_file_name
     with open(parameter_file, "w") as f:
         toml.dump(parameters, f)
 
     # save parameters to website
-    try:
-        save_parameters_to_website(sanitize_parameters(parameters))
-    except:
-        logger.warning("Detected inconsistencies in pyp configuration file")
-        type, value, traceback = sys.exc_info()
-        sys.__excepthook__(type, value, traceback)
+    if website:
+        try:
+            save_parameters_to_website(sanitize_parameters(parameters))
+        except:
+            logger.warning("Detected inconsistencies in pyp configuration file")
+            type, value, traceback = sys.exc_info()
+            sys.__excepthook__(type, value, traceback)
 
 def load_pyp_parameters(path="."):
     return load_parameters(path)
@@ -583,16 +624,16 @@ def load_relion_parameters(path="."):
     return load_parameters(path, param_file_name="relion.config")
 
 
-def save_pyp_parameters(parameters, path="."):
-    save_parameters(parameters, path)
+def save_pyp_parameters(parameters, path=".", website=True):
+    save_parameters(parameters, path,website)
 
 
 def save_3davg_parameters(parameters, path="."):
-    save_parameters(parameters, path, param_file_name="3davg.config")
+    save_parameters(parameters, path, website=False, param_file_name="3davg.config")
 
 
 def save_relion_parameters(parameters, path="."):
-    save_parameters(parameters, path, param_file_name="relion.config")
+    save_parameters(parameters, path, website=False, param_file_name="relion.config")
 
 
 def parse_pyp_arguments():
@@ -772,8 +813,17 @@ def get_weight_from_projects(weight_folder: Path, parameters: dict) -> str:
     return None
 
 def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
+    """Set force flags according to parameter changes
 
-    all_differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and 'force' not in k}
+    Args:
+        previous_parameters (dict): Previous set of parameters
+        new_parameters (dict): Current set of parameters
+        project_dir (str, optional): _description_. Defaults to ".".
+
+    Returns:
+        dict: parameters with updated force keys
+    """
+    all_differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and not k.endswith("_force")}
 
     differences = {d for d in all_differences if not ( ( isinstance(previous_parameters[d],PosixPath) or isinstance(previous_parameters[d],str) ) and project_params.resolve_path(previous_parameters[d]) == project_params.resolve_path(new_parameters[d]) ) }
 
@@ -793,7 +843,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             inputlist = [line.strip() for line in f]
 
         # initialize all _force parameters if previous run was successful
-        if len(get_missing_files(previous_parameters, inputlist, verbose=False)) == 0:
+        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False, verbose=False)) == 0:
             new_parameters["movie_force"] = False
             new_parameters["ctf_force"] = False
             new_parameters["detect_force"] = False
@@ -802,7 +852,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                 new_parameters["tomo_vir_force"] = False
                 new_parameters["tomo_rec_force"] = False
 
-    if len(differences) > 0:
+    if len(differences) > 0 and new_parameters.get("micromon_block") != "tomo-particles-train":
 
         for k in differences:
 
@@ -856,7 +906,10 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     new_parameters["ctf_force"] = True
                     clean_ctf_files(project_dir)
 
-                if "detect_" in k or "tomo_spk_" in k:
+                if ( "detect_" in k 
+                    or "tomo_spk_" in k
+                    or "tomo_pick_" in k and not "tomo_pick_vir_" in k
+                ):
                     # assume we are re-picking particles
                     logger.info(
                         f"Particle positions will be re-computed to reflect change in parameter {k}"
@@ -872,39 +925,55 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                     clean_picking_files(project_dir)
 
                 # tomo reconstruction cascade
-                if "tomo_ali" in k or "scope_tilt_axis" in k:
-                    logger.info(
-                        f"Tilt-series will be re-aligned to reflect change in parameter {k}"
-                    )
-                    new_parameters["tomo_ali_force"] = True
-                    new_parameters["tomo_rec_force"] = True
-                    new_parameters["tomo_vir_force"] = True
-                    clean_tomo_vir_particles(project_dir)
+                if "tomo" in previous_parameters["data_mode"]:
+                    if "tomo_ali" in k or "scope_tilt_axis" in k:
+                        logger.info(
+                            f"Tilt-series will be re-aligned to reflect change in parameter {k}"
+                        )
+                        new_parameters["tomo_ali_force"] = True
+                        new_parameters["tomo_rec_force"] = True
+                        new_parameters["tomo_vir_force"] = True
+                        clean_tomo_vir_particles(project_dir)
+                        new_parameters["detect_force"] = True
+                        clean_picking_files(project_dir)
+                        new_parameters["ctf_force"] = True
 
-                elif "tomo_rec" in k:
-                    logger.info(
-                        f"Tomograms will be re-computed to reflect change in parameter {k}"
-                    )
-                    new_parameters["tomo_rec_force"] = True
-                    if not "tomo_rec_erase_fiducials" in k:
+                    elif "tomo_rec" in k:
+                        logger.info(
+                            f"Tomograms will be re-computed to reflect change in parameter {k}"
+                        )
+                        new_parameters["tomo_rec_force"] = True
+                        if not "tomo_rec_erase_fiducials" in k:
+                            new_parameters["tomo_vir_force"] = True
+                            clean_tomo_vir_particles(project_dir)
+                            new_parameters["detect_force"] = True
+                            clean_picking_files(project_dir)
+
+                    elif (
+                        ( "tomo_vir_" in k 
+                        and "tomo_vir_rad" not in k 
+                        and "tomo_srf_detect_" not in k 
+                        and "tomo_vir_detect_" not in k 
+                        and not ( new_parameters.get("micromon_block") == "tomo-picking" and new_parameters.get("tomo_pick_method") == "manual" )
+                        )
+                        or ("tomo_spk_" in k and new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") == "virions" )
+                        or "tomo_pick_" in k and ( new_parameters["micromon_block"] == "tomo-picking" and new_parameters.get("tomo_pick_method") == "virions" or new_parameters["micromon_block"] == "tomo-segmentation-closed" )
+                        or new_parameters.get("tomo_vir_method") == "pyp-eval" and new_parameters["micromon_block"] == "tomo-preprocessing" and "detect_nn3d_" in k
+                    ):
+                        logger.info(
+                            f"Virions will be re-computed to reflect change in parameter {k}"
+                        )
                         new_parameters["tomo_vir_force"] = True
                         clean_tomo_vir_particles(project_dir)
 
-                elif "tomo_vir_" in k and "tomo_vir_detect_" not in k:
-                    logger.info(
-                        f"Virions will be re-computed to reflect change in parameter {k}"
-                    )
-                    new_parameters["tomo_vir_force"] = True
-                    clean_tomo_vir_particles(project_dir)
-
-                    thresholds_file = os.path.join( project_dir, "next", "virion_thresholds.next")
-                    if os.path.exists(thresholds_file):
-                        os.remove(thresholds_file)
+                        thresholds_file = os.path.join( project_dir, "next", "virion_thresholds.next")
+                        if os.path.exists(thresholds_file):
+                            os.remove(thresholds_file)
 
     else:
         # rerun a failed job without changing parameters 
         if len(glob.glob("mrc/*mrc")) == 0:
-            logger.info("No processed results detected in the mrc/ folder, will force movie alignment, ctf estimation, and particle detection")
+            logger.info("No processed results detected in mrc/ folder, will force movie alignment, ctf estimation, and particle detection")
             new_parameters["movie_force"] = True
             # Triggering all following recalculations
             new_parameters["ctf_force"] = True
@@ -942,13 +1011,14 @@ def clean_picking_files(project_dir):
 
 def clean_tomo_vir_particles(project_dir):
 
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_vir????_binned_nad.*") )]
+    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_vir????_binned_nad*.mrc") )]
+    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "webp", "*_vir????_binned_nad.webp") )]
     [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*_vir*.*") )]
     [os.remove(f) for f in glob.glob( os.path.join(project_dir, "next", "virion_thresholds.next") )]
     [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
 
 
-def get_latest_refinement_reference(parent_path: str):
+def get_latest_refinement_reference(parent_path: str, parfile_compress: bool = False):
     """get_latest_refinement_reference Get the latest parfile/reference from parent block
 
     _extended_summary_
@@ -964,15 +1034,24 @@ def get_latest_refinement_reference(parent_path: str):
         
     """
 
+    # look for par files in frealign/maps/ first
     parent_refinement_path = Path(parent_path) / "frealign" / "maps"
-    
-    if not parent_refinement_path.exists():
-        return None, None
-    
-    parfiles = sorted(list(parent_refinement_path.glob("*_r01_??.par*")), key=lambda x: str(x))
-    references = sorted(list(parent_refinement_path.glob("*_r01_??.mrc")), key=lambda x: str(x))
+    if parent_refinement_path.exists():
+        if parfile_compress:
+            parfiles = sorted(list(parent_refinement_path.glob("*_r01_??.bz2")), key=lambda x: str(x))
+        else:
+            parfiles = sorted(list(parent_refinement_path.glob("*_r01_??.par*")), key=lambda x: str(x))
+        references = sorted(list(parent_refinement_path.glob("*_r01_??.mrc")), key=lambda x: str(x))
+        latest_parfile = parfiles[-1] if len(parfiles) > 0 else None
+        latest_reference = references[-1] if len(references) > 0 else None
+        return latest_parfile, latest_reference
 
-    latest_parfile = parfiles[-1] if len(parfiles) > 0 else None
-    latest_reference = references[-1] if len(references) > 0 else None
+    # then look for txt file in frealign/
+    parent_refinement_tomo_path = Path(parent_path) / "frealign"
+    if parent_refinement_tomo_path.exists():
+        parfiles = sorted(list(parent_refinement_tomo_path.glob("*_volumes.txt")), key=lambda x: str(x))
+        latest_parfile = parfiles[-1] if len(parfiles) > 0 else None
+        return latest_parfile, None
 
-    return latest_parfile, latest_reference
+    # else, give up
+    return None, None

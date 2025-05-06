@@ -1,0 +1,73 @@
+#!/bin/bash
+
+
+# Usage:
+#   run-local-tests <path to pyp.sif>
+
+# This script is for running automated tests for Python code that doesn't need a full SLURM environment.
+# It's just for unit-testing small bits of Python code that has minimal dependencies outside of the stdlib.
+
+# This script requires an apptainer container to provide the Python environment for testing.
+# If you have the full pyp container (in all its impressive glory), you can use that.
+
+# If you don't have the ful pyp container (because it's pretty large and unwieldy now),
+# then you can use any container that provides a Python environment with pytest
+# and also any Python dependencies needed by your tests.
+
+# The /singularity/micromamba.def container definition file in this project attempts to define a minimal
+# container for running Python tests that depend only on the Python stdlib and maybe a few python dependencies.
+# This container tries to define a Python environment that is a close to pyp's Python environment as possible,
+# but without any of the non-python dependencies to (hopefully) keep the container filesize small and convenient.
+
+
+# abort on errors
+set -e
+
+
+# find the pyp source folder from this script location
+scriptdir="$(dirname "$(realpath "$0")")"
+pypdir="$(realpath "$scriptdir/..")"
+if [ -d "$pypdir" ]; then
+  echo "Using pyp folder from host: $pypdir"
+else
+  echo "No pyp folder found at: $pypdir"
+  exit 1
+fi
+
+
+# the first argument should be a path to the apptainer container
+container=$1
+shift
+if [ -z "$container" ]; then
+  echo "No container set: provide the path to the pyp (or testing) container as the first argument"
+  exit 1
+fi
+if [ ! -f "$container" ]; then
+  echo "No container found at: $container"
+  exit 1
+fi
+
+
+# choose the files to test here:
+testdir=/opt/pyp/tests
+test_args=( \
+  "$testdir/streampyp/params.py" \
+	"$testdir/system/test_stream_shell_command.py" \
+)
+
+
+# cd to an unbindable folder before running apptainer,
+# since apptainer always binds the current folder and messes up the filesystem
+cd /
+
+
+# run pytest inside a singularity container
+apptainer_args=( \
+  --no-home \
+  --bind "$pypdir:/opt/pyp" \
+)
+envvars=( \
+  PYTHONPATH="/opt/pyp/src" \
+)
+echo "Starting apptainer container ..."
+apptainer run "${apptainer_args[@]}" "$container" "${envvars[@]}" pytest -c "$testdir/pytest.ini" "${test_args[@]}"

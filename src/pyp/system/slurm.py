@@ -79,7 +79,7 @@ def calculate_rec_swarm_required_resources(mparameters, fparameters, particles):
     return increment, threads
 
 
-def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.swarm"):
+def create_pyp_swarm_file(parameters, files, timestamp, run_mode, swarm_file="pre_process.swarm"):
 
     # enable Nvidia GPU?
     gpu = needs_gpu(parameters)
@@ -121,7 +121,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
                             ),
                             timestamp,
                             s,
-                            parameters["data_mode"],
+                            run_mode,
                             os.getcwd(),
                         )
                         for s in files
@@ -133,12 +133,12 @@ def create_pyp_swarm_file(parameters, files, timestamp, swarm_file="pre_process.
     return swarm_file, gpu
 
 
-def create_train_swarm_file(parameters, timestamp, swarm_file="train.swarm"):
+def create_train_swarm_file(timestamp, train_type, train_jobtype=None, swarm_file="train.swarm"):
     with open(os.path.join("swarm", swarm_file), "w") as f:
         f.write(
-            "cd '{2}'; export {1}train={1}train; {0} 2>&1 | tee log/{3}_{1}train.log".format(
-                run_pyp(command="pyp", script=True),
-                parameters["data_mode"],
+            "cd '{2}'; export {1}={1}; {0} 2>&1 | tee log/{3}_{1}train.log".format(
+                run_pyp(command="pyp", script=True, gpu=True),
+                train_type+"train" if train_jobtype is None else train_jobtype,
                 os.getcwd(),
                 timestamp,
             )
@@ -146,6 +146,67 @@ def create_train_swarm_file(parameters, timestamp, swarm_file="train.swarm"):
         f.write("\n")
 
     return swarm_file
+
+
+def create_milo_swarm_file(parameters, timestamp, swarm_file="miloeval.swarm"):
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+        f.write(
+            "cd {2}; export {1}eval={1}eval; {0} 2>&1 | tee log/{3}_{1}milo_eval.log".format(
+                run_pyp(command="pyp", script=True, gpu=True),
+                "milo",
+                os.getcwd(),
+                timestamp,
+            )
+        )
+        f.write("\n")
+
+    return swarm_file
+
+
+def create_other_swarm_file(parameters, timestamp, swarm_file, run_mode):
+    gpu = needs_gpu(parameters)
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+        f.write(
+            "cd '{2}'; export {1}={1}; {0} 2>&1 | tee log/{3}_{1}.log".format(
+                run_pyp(command="pyp", script=True, gpu=gpu),
+                run_mode,
+                os.getcwd(),
+                timestamp,
+            )
+        )
+        f.write("\n")
+
+    return swarm_file
+
+
+def create_tomohalf_swarm_file(parameters, files, timestamp, swarm_file="cryocare.swarm"):
+    # enable Nvidia GPU?
+    gpu = needs_gpu(parameters)
+
+    with open(os.path.join("swarm", swarm_file), "w") as f:
+
+        f.write(
+            "\n".join(
+                [
+                    "cd '{4}/swarm'; export {3}={3}; {0} --file {2} --path '{4}' 2>&1 | tee ../log/{2}.log".format(
+                        run_pyp(
+                            command="pyp",
+                            script=True,
+                            cpus=parameters["slurm_tasks"],
+                            gpu=gpu,
+                        ),
+                        timestamp,
+                        s,
+                        "cryocare",
+                        os.getcwd(),
+                    )
+                    for s in files
+                ]
+            )
+        )
+        f.write("\n")
+
+    return swarm_file, gpu
 
 
 def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swarm"):
@@ -390,6 +451,11 @@ def submit_jobs(
             firstline = f.readline()
             is_list = "#" not in firstline
             is_script = "#" in firstline and "bash" in firstline
+        import stat
+        try:
+            os.chmod(myfile,stat.S_IRWXU)
+        except:
+            pass
 
     if is_list:
         with open(myfile) as file:
@@ -398,14 +464,8 @@ def submit_jobs(
     else:
         procs = 1
 
-    # format dependencies based on the environment/batch system
-    if len(dependencies) == 0:
-        depend = ""
-    else:
-        depend = " --dependency=afterany:{0}".format(dependencies)
-
     # call the corresponding submission function
-    if is_list:
+    if is_list and ( procs > 1 or jobtype == "cspswarm"):
         id = jobs.submit_commands(
             submit_dir,
             command_file,
@@ -439,7 +499,8 @@ def submit_jobs(
             use_gpu,
         )
 
-    logger.info("Submitting {0} job(s) ({1})".format(procs, id.strip()))
+    if id != "standalone":
+        logger.info(f"Submitting {procs:,} job(s) ({id.strip()})")
 
     return id if jobtype != "cspswarm" and jobtype != "classmerge" else (id, procs)
 
@@ -525,9 +586,12 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
 
     jobtype = "cspswarm"
     jobname = "Iteration %d (split)" % parameters["refine_iter"] if Web.exists else "cspswarm"
-
+    
     # submit jobs to batch system
-    if parameters["slurm_merge_only"]:
+    import glob
+    scratch_folder = swarm_folder.parents[0] / 'frealign' / 'scratch'
+    if parameters["slurm_merge_only"] and os.path.exists(scratch_folder) and len(glob.glob(str(scratch_folder / '*.bz2'))) > 0 and parameters["class_num"] == 1:
+        logger.warning(f"Found {len(glob.glob(str(scratch_folder / '*.bz2'))):,} refinement results from a previous run, attempting to resume!")
         id = ""
     else:
         if parameters["csp_parx_only"]:
@@ -549,7 +613,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
                 jobname,
                 queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
                 threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_memory"],
+                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
                 gres=parameters["slurm_gres"],
                 account=parameters.get("slurm_account"),
                 walltime=parameters["slurm_walltime"],
@@ -576,7 +640,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
             jobname,
             queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
             threads=parameters["slurm_tasks"],
-            memory=parameters["slurm_memory"],
+            memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
             gres=parameters["slurm_gres"],
             account=parameters.get("slurm_account"),
             walltime=parameters["slurm_walltime"],
@@ -596,7 +660,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
         queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
         scratch=0,
         threads=parameters["slurm_merge_tasks"],
-        memory=parameters["slurm_merge_memory"],
+        memory=parameters["slurm_merge_tasks"]*parameters["slurm_merge_memory_per_task"],
         gres=parameters["slurm_merge_gres"],
         account=parameters.get("slurm_merge_account"),
         walltime=parameters["slurm_merge_walltime"],

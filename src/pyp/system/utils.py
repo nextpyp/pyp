@@ -3,7 +3,6 @@ import os
 import socket
 from pwd import getpwnam
 from pyp.system.singularity import get_pyp_configuration
-from pyp.streampyp.web import Web
 
 def timeout_command(command, time, full_path=False):
     if full_path:
@@ -35,6 +34,9 @@ def imod_load_command():
     load_imod_cmd = "export IMOD_DIR={0};".format(get_imod_path())
     return load_imod_cmd
 
+def legacy_imod_load_command():
+    load_imod_cmd = "export IMOD_DIR={0};".format(get_legacy_imod_path())
+    return load_imod_cmd
 
 def phenix_load_command():
     phenix = "  ; /programs/phenix-1.18.2-3874/phenix-1.18.2-3874/build/bin/"
@@ -48,11 +50,20 @@ def get_imod_path():
     return "/opt/IMOD"
     # return "export LD_LIBRARY_PATH=/opt/IMOD/qtlib:/opt/IMOD/lib:$LD_LIBRARY_PATH /opt/IMOD"
 
+def get_legacy_imod_path():
+    return "/opt/IMOD_4.11.24"
+
 def cuda_path_prefix(command):
     config = get_pyp_configuration()
     if 'cudaLibs' in config["pyp"]:
         command = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{':'.join(path for path in config['pyp']['cudaLibs'])}; " + command
+    else:
+        command = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/pkgs/cudatoolkit-11.0.3-h7761cd4_13/lib/:/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs:/opt/imod_4.11.24/qtlib; " + command
     return command
+
+def get_pytom_path():
+    command_base = f"micromamba run -n pytom"
+    return command_base
 
 def get_aretomo_path():
     config = get_pyp_configuration()
@@ -75,27 +86,65 @@ def get_motioncor3_path():
 def get_gpu_id():
     return 0
 
+def get_gpu_ids(parameters,separator=","):
+    # return list of GPU devices based on gres variable
+    gres = parameters["slurm_gres"]
+    if "gpu" in gres:
+        for g in gres.split(","):
+            if "gpu" in g:
+                for i in g.split(":"):
+                    if i.isdigit():
+                        gpus = int(i)
+                        break
+        return separator.join(str(x) for x in range(gpus))
+    else:
+        return 0
+
 def get_gpu_file():
     return os.path.join(os.environ["PYP_SCRATCH"],"gpu_device.id")
 
 def needs_gpu(parameters):
     # enable Nvidia GPU?
-    if ( ( "movie_ali" in parameters and "motioncor" in parameters["movie_ali"].lower() and parameters.get("movie_force") )
-        or ("tomo_ali_method" in parameters and "aretomo" in parameters["tomo_ali_method"].lower() and parameters.get("tomo_ali_force") )
-        or ("tomo_rec_method" in parameters and "aretomo" in parameters["tomo_rec_method"].lower() and parameters.get("tomo_rec_force") )
-        or ("detect_method" in parameters and parameters["detect_method"].endswith("-train") and parameters.get("detect_force") )
-        or ("tomo_spk_method" in parameters and parameters["tomo_spk_method"].endswith("-train") and parameters.get("detect_force") )
-        or ("tomo_vir_method" in parameters and parameters["tomo_vir_method"].endswith("-train") and parameters.get("tomo_vir_force") )
-        or ( parameters.get("tomo_rec_topaz_denoise") and parameters.get("tomo_rec_topaz_use_gpu") and parameters.get("tomo_rec_force") )
-        or "gpu:" in parameters.get("slurm_gres")
-        ):
-        return True
-    else:
-        return False
+    
+    gpu_for_movies = parameters.get("movie_force") and parameters.get("movie_ali") == 'motioncor'
+
+    gpu_for_alignment = parameters.get("tomo_ali_force") and parameters.get("tomo_ali_method") == "aretomo"
+    
+    gpu_for_reconstruction = parameters.get("tomo_rec_force") and parameters.get("tomo_rec_method") == "aretomo"
+    
+    gpu_for_denoising = (
+        parameters.get("micromon_block") == "tomo-denoising-train"
+        or parameters.get("micromon_block") == "tomo-denoising-eval" and not ( parameters.get("tomo_denoise_method") == "topaz" and not parameters.get("tomo_denoise_topaz_use_gpu") )
+    )
+
+    gpu_for_segmentation = parameters.get("micromon_block") == "tomo-segmentation-open" and parameters.get("tomo_mem_use_gpu")
+
+    gpu_for_mining = "tomo-milo" in parameters.get("micromon_block")
+
+    gpu_for_picking = ( parameters.get("micromon_block") == "tomo-particles-train" 
+                       or parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
+                       or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_vir_method"] 
+                       or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_spk_method"] and parameters["tomo_vir_method"] == "none"
+                       or parameters["data_mode"] == "tomo" and "pytom" in parameters["tomo_pick_method"] and parameters["tomo_vir_method"] == "none"
+                       )
+    
+    gpu_for_heterogeneity = "drgn" in parameters.get("micromon_block")
+
+    return (
+        gpu_for_movies
+        or gpu_for_alignment
+        or gpu_for_reconstruction
+        or gpu_for_denoising
+        or gpu_for_segmentation
+        or gpu_for_mining
+        or gpu_for_picking
+        or gpu_for_heterogeneity
+    ) 
 
 def get_gpu_queue(parameters):
     # try to get the gpu partition
     queue = ""
+    return queue
     config = get_pyp_configuration()
     if "slurm" in config:
         if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ):
@@ -133,7 +182,7 @@ def get_bsoft_path():
     return "{0}/external/bsoft".format(os.environ["PYP_DIR"])
 
 def get_topaz_path():
-    return "/usr/local/envs/pyp/bin"
+    return "/opt/conda/envs/pyp/bin"
 
 def get_embfactor_path():
     return "{0}/external/embfactor".format(os.environ["PYP_DIR"])
@@ -166,7 +215,6 @@ def get_unblur2_path():
 
 def get_tomoctf_path():
     return "{0}/external/tomoctf_src_June2014".format(os.environ["PYP_DIR"])
-
 
 def get_csp_path():
     return "{0}/external/CSP".format(os.environ["PYP_DIR"])

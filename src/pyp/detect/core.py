@@ -8,6 +8,7 @@ from pyp import utils
 from pyp.analysis import plot
 from pyp.detect import joint, topaz
 from pyp.inout.image import mrc, writepng
+from pyp.inout.image.core import get_image_dimensions
 from pyp.inout.metadata import frealign_parfile
 from pyp.streampyp.web import Web
 from pyp.system import local_run, project_params
@@ -22,14 +23,15 @@ logger = initialize_pyp_logger(log_name=relative_path)
 
 def tomo_spk_is_required(parameters):
     """Whether to detect and extract spikes."""
-    return "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0
+    return "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 or parameters.get("tomo_vir_detect_method") != "none"
 
 def tomo_subvolume_extract_is_required(parameters):
     return "tomo_ext_size" in parameters and parameters["tomo_ext_size"] > 0 and parameters["tomo_ext_fmt"] != "none"
 
 def tomo_vir_is_required(parameters):
     """Whether to detect and extract virions."""
-    return "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" and "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0
+    force = "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" and parameters["tomo_vir_method"] != "pyp-train" and "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0 and not ( "tomo_vir_force" in parameters and not parameters["tomo_vir_force"] )
+    return force or parameters["micromon_block"] == "tomo-picking-closed" or parameters["micromon_block"] == "tomo-segmentation-closed"
 
 
 def is_required(parameters,name):
@@ -65,6 +67,12 @@ def detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options):
 
     thickness = parameters["tomo_rec_thickness"]
     # project gold beads into raw tilt-series
+    
+    # get tomogram dimensions directly from aligned tilt-series
+    x, y, _ = get_image_dimensions(f"{name}_bin.ali")
+    x *= binning
+    y *= binning
+        
     command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0  -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7} -ProjectModel {1}_gold3d.mod".format(
         get_imod_path(), name, thickness, binning, x, y, tilt_options, zfact,
     )
@@ -1091,6 +1099,17 @@ def pick_particles(
                     "{}.box".format(name), boxes * data_bin * auto_binning, fmt="%i\t"
                 )
 
+        elif mparameters["detect_method"] == "import" and os.path.exists(project_params.resolve_path(mparameters["detect_files"])):
+            box_file = os.path.join(project_params.resolve_path(mparameters["detect_files"]), f"{name}.box")
+            if os.path.exists(box_file):
+                boxes = np.loadtxt(box_file, ndmin=2)
+                add_columns = np.zeros([boxes.shape[0], 2])
+                boxes = np.hstack((boxes, add_columns))
+                np.savetxt(
+                        "{}.box".format(name), boxes, fmt="%f\t"
+                        )
+            else:
+                logger.warning("Couldn't find any box file for this image")
         else:
             logger.error(
                 f"Particle picking strategy not recognized: {mparameters['detect_method']}"

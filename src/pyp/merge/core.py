@@ -18,7 +18,7 @@ from pyp.merge import weights as pyp_weights
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import get_imod_path, get_aretomo_path, get_topaz_path, get_gpu_id
+from pyp.system.utils import get_imod_path, get_aretomo_path, get_topaz_path, get_gpu_ids
 from pyp.utils import get_relative_path
 from pyp.utils.timer import Timer
 
@@ -137,7 +137,7 @@ def do_exclude_virions(name):
     return exclude_virions
 
 
-def do_exclude_views(name, tilt_angles):
+def do_exclude_views(name):
     """Identify ignored views (exclude_views) from s_exclude_views.mod and _RAPTOR.log"""
     exclude_model = "%s_exclude_views.mod" % name
     if os.path.isfile(exclude_model):
@@ -151,50 +151,6 @@ def do_exclude_views(name, tilt_angles):
             exclude_views = ""
     else:
         exclude_views = ""
-    # exclude_views = "-EXCLUDELIST2 1,2,3,4,5,6,7,8,34,35,36,37,38,39,40,41"
-
-    # Update excluded views per RAPTOR alignment
-    # checks for existing tilt series alignment
-    if os.path.exists("{0}_RAPTOR.log".format(name)):
-        excluded = []
-        # supposedly produces clean tilt series by excluding unalignable tilts
-        # but apparently not doing this rn
-        if excluded:
-            logger.warning(f"Failed to align views {excluded}")
-            if exclude_views == "":
-                exclude_views = "-EXCLUDELIST2 " + ",".join(excluded)
-            else:
-                # combine excluded views into unique sorted list
-                excluded.extend(
-                    exclude_views.replace(" ", "").split("-EXCLUDELIST2")[1].split(",")
-                )
-                exclude_views = "-EXCLUDELIST2 " + ",".join(
-                    [str(i) for i in sorted([int(j) for j in list(set(excluded))])]
-                )
-
-            # create clean aligned tilt series and corresponding tilt-angle file
-            # Look at this
-            newstack_exclude_views = "-fromone -exclude " + ",".join(
-                [str(i) for i in sorted([int(j) for j in list(set(excluded))])]
-            )
-            command = "{0}/bin/newstack -input {1}.ali -output {1}_clean.ali {2}".format(
-                get_imod_path(), name, newstack_exclude_views
-            )
-            logger.info(command)
-            logger.info(
-                subprocess.check_output(
-                    command, stderr=subprocess.STDOUT, shell=True, text=True
-                )
-            )
-
-            tilt_angles_clean = []
-            for i in range(tilt_angles.size):
-                if str(i + 1) not in excluded:
-                    tilt_angles_clean.append(str(tilt_angles[i]))
-
-            f = open("{0}_clean.tlt".format(name), "w")
-            f.write("\n".join(str(elem) for elem in tilt_angles_clean))
-            f.close()
 
     return exclude_views
 
@@ -245,39 +201,52 @@ def weight_average(input_stack, output_stack, weights):
         else:
             mrc.write(weighted_frame, output_stack)
 
+def get_tilt_options(parameters,exclude_views):
+    # Reconstruction options 
+    # -RADIAL 0.125,0.15, -RADIAL 0.25,0.15 (autoem2), 0.35,0.05 (less stringent)
+    tilt_options = "-MODE 2 -OFFSET 0.00 -PERPENDICULAR -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {0}".format(exclude_views)
+    
+    if parameters.get("tomo_rec_filter_form") == "fakesirt":
+        tilt_options += f" -FakeSIRTiterations {parameters.get('tomo_rec_fake_sirt_iterations')}"
+    if parameters.get("tomo_rec_filtering_method") == "gaussian":
+        tilt_options += f" -RADIAL {parameters['tomo_rec_lpradial_cutoff']},{parameters['tomo_rec_lpradial_falloff']}"
+    elif parameters.get("tomo_rec_filtering_method") == "hamming":
+        tilt_options += f" -HammingLikeFilter {parameters.get('tomo_rec_hamming')}"
 
-@Timer("merge", text="Merging took: {}", logger=logger.info)
+    return tilt_options
+
 def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=False):
     """Perform 3D reconstruction for tomoswarm."""
 
-    if "tomo_rec_dose_weighting" in parameters and parameters["tomo_rec_dose_weighting"] and os.path.exists("%s.order" % name):
+    if parameters.get("tomo_rec_2d_filtering_method") != "none":
+        if parameters.get("tomo_rec_2d_filtering_method") == "doseweighting" and os.path.exists("%s.order" % name):
 
-        dose_file = open("%s.dose" % name, "w")
-        with open("%s.order" % name, "r") as f:
-            for line in f.readlines():
-                prev_accumulative_dose = float(line.strip()) * float(
-                    parameters["scope_dose_rate"]
-                )
-                dose_per_tilt = float(parameters["scope_dose_rate"])
-                dose_file.write(
-                    "%f\t%f\n" % (prev_accumulative_dose, dose_per_tilt)
-                )
-        dose_file.close()
+            dose_file = open("%s.dose" % name, "w")
+            with open("%s.order" % name, "r") as f:
+                for line in f.readlines():
+                    prev_accumulative_dose = float(line.strip()) * float(
+                        parameters["scope_dose_rate"]
+                    )
+                    dose_per_tilt = float(parameters["scope_dose_rate"])
+                    dose_file.write(
+                        "%f\t%f\n" % (prev_accumulative_dose, dose_per_tilt)
+                    )
+            dose_file.close()
 
-        command = "{0}/bin/mtffilter -dtype 2 -dfile {1}.dose -volt {2} -verbose 1 -input {1}.ali -output {1}.mtf.ali".format(
-            get_imod_path(), name, int(float(parameters["scope_voltage"]))
-        )
-        # suppress long log
-        if ["slurm_verbose"]:
-            logger.info(command)
-        run_shell_command(command, verbose=False)
-    else:
-        command = "{0}/bin/mtffilter {1}.ali {1}.mtf.ali -lowpass {2},{3}".format(
-            get_imod_path(), name, parameters["tomo_rec_mtfilter_cutoff"], parameters["tomo_rec_mtfilter_falloff"]
-        )
-        run_shell_command(command, verbose=parameters["slurm_verbose"])
+            command = "{0}/bin/mtffilter -dtype 2 -dfile {1}.dose -volt {2} -verbose 1 -input {1}.ali -output {1}.mtf.ali".format(
+                get_imod_path(), name, int(float(parameters["scope_voltage"]))
+            )
+            # suppress long log
+            if ["slurm_verbose"]:
+                logger.info(command)
+            run_shell_command(command, verbose=False)
+        elif parameters.get("tomo_rec_2d_filtering_method") == "lowpass":
+            command = "{0}/bin/mtffilter {1}.ali {1}.mtf.ali -lowpass {2},{3}".format(
+                get_imod_path(), name, parameters["tomo_rec_mtfilter_cutoff"], parameters["tomo_rec_mtfilter_falloff"]
+            )
+            run_shell_command(command, verbose=parameters["slurm_verbose"])
 
-    shutil.move("{0}.mtf.ali".format(name), "{0}.ali".format(name))
+        shutil.move("{0}.mtf.ali".format(name), "{0}.ali".format(name))
 
     # create binned raw stack
     command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -bin {2}".format(
@@ -293,18 +262,18 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     # create binned reconstruction
     # only reconstruct tomograms if we're not using aretomo2
-    thickness = parameters["tomo_rec_thickness"] + parameters['tomo_rec_thickness'] % 2
+    thickness = parameters["tomo_rec_thickness"]
 
     if 'imod' in parameters["tomo_rec_method"].lower():
 
-        if False and parameters["tomo_rec_square"]:
-            command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -SLICE 0,{2} -THICKNESS {3} -WIDTH {4} -IMAGEBINNED {5} -FULLIMAGE {6},{4} {7} {8}".format(
-                get_imod_path(), name, x - 1, thickness, y, binning, x, tilt_options, zfact,
-            )
-        else:
-            command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7}".format(
-                get_imod_path(), name, thickness, binning,  x, y, tilt_options, zfact,
-            )
+        # get tomogram dimensions directly from aligned tilt-series
+        x, y, _ = get_image_dimensions(f"{name}_bin.ali")
+        x *= binning
+        y *= binning
+
+        command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7}".format(
+            get_imod_path(), name, thickness, binning,  x, y, tilt_options, zfact,
+        )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
 
     elif "aretomo" in parameters["tomo_rec_method"].lower() and ( "aretomo" not in parameters["tomo_ali_method"].lower() or force):
@@ -317,18 +286,17 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 reconstruct_option = "-Wbp 1"
 
             # the new version of AreTomo2 apparently need the alignments
-            if not os.path.exists(f"{name}.aln"):
-                tilt_angles = np.loadtxt(f"{name}.tlt",ndmin=2)
-                tilt_order = np.loadtxt(f"{name}.order",ndmin=2)
-                x, y, z = get_image_dimensions(f"{name}.ali")
-                with open(f"{name}.aln",'w') as f:
-                    f.write("# AreTomo Alignment / Priims bprmMn)\n")
-                    f.write(f"# RawSize = {x} {y} {z}\n")
-                    f.write(f"# NumPatches = 0\n")
-                    f.write(f"# SEC     ROT         GMAG       TX          TY      SMEAN     SFIT    SCALE     BASE     TILT\n")
-                    for tilt, order in zip(tilt_angles, tilt_order):
-                        #    0    00.0000    1.00000   1493.353   -740.186     1.00     1.00     1.00     0.00    -60.00
-                        f.write("%5d%11.4f%11.5f%11.3f%11.3f%9.2f%9.2f%9.2f%9.2f%9.2f\n" % (order,0,1,0,0,1,1,1,0,tilt))
+            tilt_angles = np.loadtxt(f"{name}.tlt",ndmin=2)
+            tilt_order = np.loadtxt(f"{name}.order",ndmin=2)
+            x, y, z = get_image_dimensions(f"{name}.ali")
+            with open(f"{name}.aln",'w') as f:
+                f.write("# AreTomo Alignment / Priims bprmMn)\n")
+                f.write(f"# RawSize = {x} {y} {z}\n")
+                f.write(f"# NumPatches = 0\n")
+                f.write(f"# SEC     ROT         GMAG       TX          TY      SMEAN     SFIT    SCALE     BASE     TILT\n")
+                for tilt, order in zip(tilt_angles, tilt_order):
+                    #    0    00.0000    1.00000   1493.353   -740.186     1.00     1.00     1.00     0.00    -60.00
+                    f.write("%5d%11.4f%11.5f%11.3f%11.3f%9.2f%9.2f%9.2f%9.2f%9.2f\n" % (order,0,1,0,0,1,1,1,0,tilt))
 
             command = f"{get_aretomo_path()} \
 -InMrc {name}.ali \
@@ -340,42 +308,5 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 {reconstruct_option} \
 -Align 0 \
--Gpu {get_gpu_id()}"
+-Gpu {get_gpu_ids(parameters,separator=' ')}"
             run_shell_command(command, verbose=parameters["slurm_verbose"])
-
-    if parameters["tomo_rec_topaz_denoise"]:
-
-        """
-        usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
-                    [-a EVEN_TRAIN_PATH] [-b ODD_TRAIN_PATH] [--N-train N_TRAIN]
-                    [--N-test N_TEST] [-c CROP]
-                    [--base-kernel-width BASE_KERNEL_WIDTH]
-                    [--optim {adam,adagrad,sgd}] [--lr LR] [--criteria {L1,L2}]
-                    [--momentum MOMENTUM] [--batch-size BATCH_SIZE]
-                    [--num-epochs NUM_EPOCHS] [-w WEIGHT_DECAY]
-                    [--save-interval SAVE_INTERVAL] [--save-prefix SAVE_PREFIX]
-                    [--num-workers NUM_WORKERS] [-j NUM_THREADS] [-g GAUSSIAN]
-                    [-s PATCH_SIZE] [-p PATCH_PADDING] [-d DEVICE]
-                    [volumes ...]
-        """
-
-        # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
-        import torch
-        if torch.cuda.is_available():
-            devices = 0
-        else:
-            devices = -1
-
-        time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
-        logger.info("Denoising tomogram using Topaz")
-        command = f"{get_topaz_path()}/topaz denoise3d \
-{name}.rec \
---model {parameters['tomo_rec_topaz_model']} \
---device {devices} \
---gaussian {parameters['tomo_rec_topaz_gaussian']} \
---patch-size {parameters['tomo_rec_topaz_patch_size']} \
---patch-padding {parameters['tomo_rec_topaz_patch_padding']} \
---output {os.getcwd()} \
-2>&1 | tee {time_stamp}_topaz_denoise3d.log"
-
-        run_shell_command(command, verbose=parameters['slurm_verbose'])

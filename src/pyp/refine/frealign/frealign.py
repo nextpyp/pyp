@@ -27,6 +27,7 @@ from pyp.analysis import plot, statistics
 from pyp.analysis.occupancies import occupancies, occupancy_extended
 from pyp.inout.image import mrc, writepng, img2webp
 from pyp.inout.metadata import create_curr_iter_par, frealign_parfile, isfrealignx
+from pyp.inout.metadata.cistem_star_file import *
 from pyp.refine.csp import cspty
 from pyp.system import local_run, mpi, project_params, slurm, user_comm
 from pyp.system.db_comm import save_classes_to_website
@@ -839,13 +840,13 @@ def parse_arguments(skip=False):
     # XD: current options for frealignX
     empty_parameters.update([("score_weighting", "F"), ("dose_weighting", "F")])
     empty_parameters.update(
-        [("dose_weighting_multiply", "T"), ("per_particle_splitting", "T")]
+        [("reconstruct_dose_weighting_multiply", "T"), ("per_particle_splitting", "T")]
     )
     empty_parameters.update([("rotreg", "F"), ("transreg", "F"), ("saveplots", "F")])
     empty_parameters.update([("num_frames", "1")])
     empty_parameters.update([("merge_normalize", "T")])
-    empty_parameters.update([("dose_weighting_fraction", "8")])
-    empty_parameters.update([("dose_weighting_transition", ".75")])
+    empty_parameters.update([("reconstruct_dose_weighting_fraction", "8")])
+    empty_parameters.update([("reconstruct_dose_weighting_transition", ".75")])
     empty_parameters.update([("ref_par", "")])
     empty_parameters.update([("same_ref", "F")])
     empty_parameters.update([("spatial_sigma", "500"), ("time_sigma", "21")])
@@ -1625,14 +1626,12 @@ def split_reconstruction(
     fp = mp
 
     dataset = fp["refine_dataset"]
-    name = dataset + "_r%02d_%02d" % (ref, i)
+    name = dataset + "_r%02d" % (ref)
 
-    parfile = "%s_used.par" % (name)
+    parfile = f"../{name}_used.cistem" # "%s_used.par" % (name)
+    reference = parfile.replace("_used.cistem", ".mrc")
 
     ranger = "%07d_%07d" % (first, last)
-
-    # TODO - fix this, it takes too much time
-    # boff, thresh = mreconstruct_pre(mp, fp, i, ref)
 
     pixel = float(mp["scope_pixel"]) * float(mp["data_bin"]) * float(mp["extract_bin"])
     dstep = pixel * float(mp["scope_mag"]) / 10000.0
@@ -1665,6 +1664,7 @@ def split_reconstruction(
         ranger,
     )
     reclogfile = "../log/%s_%s_mreconst.log" % (name, ranger)
+    reclogfile = "%s_%s_mreconst.log" % (name, ranger)
     if os.path.exists("log"):
         reclogfile = reclogfile.replace("../", "")
 
@@ -1684,7 +1684,8 @@ def split_reconstruction(
         if scratch_transfer_stack:
             stack = "/scratch/%s_stack.mrc" % dataset
         else:
-            stack = stack_dir + "%s_stack.mrc" % dataset
+            # stack = stack_dir + "%s_stack.mrc" % dataset
+            stack = parfile.split("_r")[0] + "_stack.mrc"
 
         with open(reclogfile, "w") as f:
             f.write("Using particle stack {0}\n".format(stack))
@@ -1705,628 +1706,118 @@ def split_reconstruction(
 
     frealign_paths = get_frealign_paths()
 
-    if "cc" in project_params.param(mp["refine_metric"], i).lower():
+    #############
+    ###cistem2###
+    #############
 
-        # dumping requires an existing non-empty file for 3D output
-        shutil.copy2(
-            dataset + "_r%02d_%02d.mrc" % (ref, i - 1), name + "_" + ranger + ".mrc"
-        )
-
-        command = """
-%s/bin/frealign_v9_mp.exe << eot >>%s 2>&1
-M,0,F,F,F,F,%s,T,%s,%s,%s,%s,T,%s,%s                                         !CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,FBEAUT,FFILT,FBFACT,FMATCH,IFSC,FDUMP,IMEM,INTERP
-%s,0.,%s,%s,%s,%s,%s,%s,%s,%s,%s                                        !RO,RI,PSIZE,MW,WGH,XSTD,PBC,BOFF,DANG,ITMAX,IPMAX
-%s                                                                        !MASK
-%i,%i                                                                        !IFIRST,ILAST
-%s                                                                        !ASYM symmetry card
-1.0, %s, %s, %s, %s, %s, 0., 0.                                                !RELMAG,DSTEP,TARGET,THRESH,CS,AKV,TX,TY
-%s, %s, %s, %s, %s, %s                                                        !RREC,RMIN,RMAX,RCLAS,DFSTD,RBFACT
-%s
-/dev/null
-%s
-%s_%s.res
-%s_%s_dummy.shft
-0., 0., 0., 0., 0., 0., 0., 0.                                                !terminator with RELMAG=0.0
-%s_%s.mrc
-%s_%s_weights
-%s_%s_half1.mrc
-%s_%s_half2.mrc
-%s_%s_phasediffs
-%s_%s_pointspread
-eot
-""" % (
-            frealign_paths["cc3m"],
-            reclogfile,
-            project_params.param(fp["reconstruct_iewald"], i),
-            project_params.param(fp["reconstruct_ffilt"], i),
-            project_params.param(fp["reconstruct_fbfact"], i),
-            fmatch,
-            fp["refine_fboost"],
-            project_params.param(fp["refine_imem"], i),
-            project_params.param(fp["refine_interp"], i),
-            rad_rec,
-            pixel,
-            mp["particle_mw"],
-            mp["scope_wgh"],
-            project_params.param(fp["refine_xstd"], i),
-            project_params.param(fp["refine_pbc"], i),
-            boff,
-            project_params.param(fp["refine_dang"], i),
-            project_params.param(fp["refine_itmax"], i),
-            project_params.param(fp["refine_ipmax"], i),
-            project_params.param(fp["refine_mask"], i),
-            first,
-            last,
-            project_params.param(fp["particle_sym"], i),
-            dstep,
-            project_params.param(fp["refine_target"], i),
-            thresh,
-            mp["scope_cs"],
-            mp["scope_voltage"],
-            res_rec,
-            project_params.param(fp["refine_rlref"], i),
-            postprocess.get_rhref(fp, i),
-            project_params.param(fp["class_rhcls"], i),
-            project_params.param(fp["refine_dfsig"], i),
-            project_params.param(fp["refine_rbfact"], i),
-            stack,
-            parfile,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-        )
-
+    if fp["reconstruct_norm"]:
+        normalize = "yes"
     else:
+        normalize = "no"
+    if "t" in project_params.param(fp["refine_adjust"], i).lower():
+        adjust = "yes"
+    else:
+        adjust = "no"
+    if "t" in project_params.param(fp["refine_crop"], i).lower():
+        crop = "yes"
+    else:
+        crop = "no"
+    if fp["refine_invert"]:
+        invert = "yes"
+    else:
+        invert = "no"
 
-        # v9.11
+    if True: 
+        
+        if project_params.param(mp["reconstruct_dose_weighting_enable"], i):
+            dose_weighting = "yes"
 
-        # {1} - first particle
-        # {2} - last particle
-        # {3} - current iteration
-        # {4} - class number
-        # {5} - group number
+            # if dose weighting is enabled, we will go into this block
+            weight_files = project_params.resolve_path(mp["reconstruct_dose_weighting_weights"]) if "reconstruct_dose_weighting_weights" in mp else ""
+            external_weight = "/scratch/not_provided"
 
-        if fp["reconstruct_norm"]:
-            normalize = "yes"
+            if ".txt" in weight_files:
+                tag = "_" + name.split("_")[1] + "_" if "*" in weight_files else "txt"
+                files = [f for f in glob.glob(weight_files) if tag in f]
+                external_weight = files[0]
+
+            dose_weighting_multiply = "yes" if mp["reconstruct_dose_weighting_multiply"] else "no"
+            dose_weighting_fraction = str(fp["reconstruct_dose_weighting_fraction"])
+            dose_weighting_transition = str(fp["reconstruct_dose_weighting_transition"])
+
+            dose_weighting = "\n".join([dose_weighting, 
+                                        external_weight, 
+                                        dose_weighting_multiply, 
+                                        dose_weighting_fraction, 
+                                        dose_weighting_transition])
         else:
-            normalize = "no"
-        if "t" in project_params.param(fp["refine_adjust"], i).lower():
-            adjust = "yes"
+            dose_weighting = "no"
+
+        if (mp["class_num"] > 1 or mp["refine_global_stat"]) and os.path.exists(f"{name}_stat.cistem"):
+            statistics_file = f"../{name}_stat.cistem" 
         else:
-            adjust = "no"
-        if "t" in project_params.param(fp["refine_crop"], i).lower():
-            crop = "yes"
-        else:
-            crop = "no"
-        if fp["refine_invert"]:
-            invert = "yes"
-        else:
-            invert = "no"
+            statistics_file = "null"
+        # statistics_file = f"../{name}_stat.cistem" 
 
-        # ensure that scores with 0 are used
+        score_weighting = "yes" if fp["refine_score_weighting"] else "no"
+        # min_tilt_particle_score = fp["csp_UseImagesForRefinementMin"]
+        min_tilt_particle_score = 0
+        # max_tilt_particle_score = fp["csp_UseImagesForRefinementMax"]
+        max_tilt_particle_score = -1 # we just use occ as limit 
+        per_particle_splitting = "yes" if fp["reconstruct_per_particle_splitting"] else "no"
+        res_ref = "0"
+        smoothing = "1"
+        padding = "1"
+        exclude = "no"
+        center = "no"
+        blurring = "yes" if fp["reconstruct_lblur"] else "no"
+        th_input = "no"
 
-        # if thresh < 1:
-
-        # thresh = 0.999
-        """
-        if (
-            "new" in project_params.param(fp["refine_metric"], i).lower()
-            and not "frealignx" in project_params.param(fp["refine_metric"], i).lower()
-            and not fp["dose_weighting_enable"]
-            and not fp["reconstruct_lblur"]
-        ):
-        """
-        if False and "spr" in fp["data_mode"] and not "local" in fp["extract_fmt"] and "new" in project_params.param(fp["refine_metric"], i).lower():
-
-            command = (
-                "{0}/bin/reconstruct3d << eot >> {1} 2>&1\n".format(
-                    frealign_paths["new"], reclogfile
-                )
-                + "{0}\n{1}\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                    stack,
-                    Path(os.environ["PYP_SCRATCH"]) / parfile,
-                    Path(os.environ["PYP_SCRATCH"]) / name,
-                    first,
-                )
-                + project_params.param(fp["particle_sym"], i)
-                + "\n"
-                + str(first)
-                + "\n"
-                + str(last)
-                + "\n"
-                + str(pixel)
-                + "\n"
-                + str(mp["scope_voltage"])
-                + "\n"
-                + str(mp["scope_cs"])
-                + "\n"
-                + str(mp["scope_wgh"])
-                + "\n"
-                + str(mp["particle_mw"])
-                + "\n"
-                + "0\n"
-                + str(rad_rec)
-                + "\n"
-                + str(res_rec)
-                + "\n"
-                + project_params.param(fp["refine_bsc"], i)
-                + "\n"
-                + "%f\n" % thresh
-                + normalize
-                + "\n"
-                + adjust
-                + "\n"
-                + invert
-                + "\n"
-                + crop
-                + "\n"
-                + dump_intermediate
-                + "\n"
-                + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                    Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                )
-                + "eot\n"
+        command = (
+            "{0}/reconstruct3d << eot >> {1} 2>&1\n".format(
+                frealign_paths["cistem2"], reclogfile
             )
-
-        elif "cistem2" in project_params.param(fp["refine_metric"], i).lower():
-
-            res_ref = "0"
-            smoothing = "1"
-            padding = "1"
-            exclude = "no"
-            center = "no"
-            if fp["reconstruct_lblur"]:
-                blurring = "yes"
-            else:
-                blurring = "no"
-            th_input = "no"
-
-            command = (
-                "{0}/reconstruct3d << eot >> {1} 2>&1\n".format(
-                    frealign_paths["cistem2"], reclogfile
-                )
-                + "{0}\n{1}.star\n{1}.mrc\n{1}_map1.mrc\n{1}_map2.mrc\n{1}.mrc\n{1}_n{2}.res\n".format(
-                    stack, Path(os.environ["PYP_SCRATCH"]) / name, str(first)
-                )
-                + project_params.param(fp["particle_sym"], i)
-                + "\n"
-                + str(first)
-                + "\n"
-                + str(last)
-                + "\n"
-                + str(pixel)
-                + "\n"
-                + mp["particle_mw"]
-                + "\n"
-                + "0\n"
-                + str(rad_rec)
-                + "\n"
-                + str(res_rec)
-                + "\n"
-                + str(res_ref)
-                + "\n"
-                + project_params.param(fp["refine_bsc"], i)
-                + "\n"
-                + "%f\n" % thresh
-                + smoothing
-                + "\n"
-                + padding
-                + "\n"
-                + normalize
-                + "\n"
-                + adjust
-                + "\n"
-                + invert
-                + "\n"
-                + exclude
-                + "\n"
-                + crop
-                + "\n"
-                + "yes\n"
-                + center
-                + "\n"
-                + blurring
-                + "\n"
-                + th_input
-                + "\n"
-                + dump_intermediate
-                + "\n"
-                + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n1\n".format(
-                    Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                )
-                + "eot\n"
+            + f"{stack}\n"
+            + f"{parfile}\n"
+            + f"{statistics_file}\n"
+            + f"{reference}\n"
+            + f"{name}_map1.mrc\n"
+            + f"{name}_map2.mrc\n"
+            + f"output.mrc\n"
+            + f"{name}_n{first}.res\n"
+            + f"{project_params.param(fp['particle_sym'], i)}\n"
+            + f"{first}\n"
+            + f"{last}\n"
+            + f"{pixel}\n"
+            + f"{mp['particle_mw']}\n"
+            + "0\n" # inner radius
+            + f"{rad_rec}\n"
+            + f"{res_rec}\n"
+            + f"{res_ref}\n"
+            + f"{project_params.param(fp['refine_bsc'], i)}\n"
+            + f"{score_weighting}\n"
+            + f"{min_tilt_particle_score}\n"
+            + f"{max_tilt_particle_score}\n"
+            + f"{dose_weighting}\n"
+            + f"{thresh}\n"
+            + f"{smoothing}\n"
+            + f"{padding}\n"
+            + f"{normalize}\n"
+            + f"{adjust}\n"
+            + f"{invert}\n"
+            + f"{exclude}\n"
+            + f"{crop}\n"
+            + "yes\n" # split even odd
+            + f"{per_particle_splitting}\n"
+            + f"{center}\n"
+            + f"{blurring}\n"
+            + f"{th_input}\n"
+            + f"{dump_intermediate}\n"
+            + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n1\n".format(
+                Path(os.environ["PYP_SCRATCH"]) / name, str(count)
             )
-
-        else:
-            # frealignx
-            # this is for the input reconstruction
-            prev_name = dataset + "_r%02d_%02d" % (ref, i - 1)
-
-            # {1} - first particle
-            # {2} - last particle
-            # {3} - current iteration
-            # {4} - class number
-            # {5} - group number
-
-            if project_params.param(fp["reconstruct_norm"], i):
-                normalize = "yes"
-            else:
-                normalize = "no"
-            if "t" in project_params.param(fp["refine_adjust"], i).lower():
-                adjust = "yes"
-            else:
-                adjust = "no"
-            if "t" in project_params.param(fp["refine_crop"], i).lower():
-                crop = "yes"
-            else:
-                crop = "no"
-            if fp["refine_invert"]:
-                invert = "yes"
-            else:
-                invert = "no"
-            if not fp["refine_score_weighting"]:
-                score_weighting = "no"
-            else:
-                score_weighting = "yes"
-
-            if project_params.param(mp["dose_weighting_enable"], i):
-                dose_weighting = "yes"
-            else:
-                dose_weighting = "no"
-
-            if mp["dose_weighting_multiply"]:
-                dose_weighting_multiply = "yes"
-            else:
-                dose_weighting_multiply = "no"
-
-            if not fp["reconstruct_per_particle_splitting"]:
-                per_particle_splitting = "no"
-            else:
-                per_particle_splitting = "yes"
-
-            if fp["reconstruct_lblur"]:
-                blurring = "yes"
-            else:
-                blurring = "no"
-
-            # add blurring parameters
-            if blurring == "yes":
-                blurring = blurring + "\n" + str(fp["reconstruct_lblur_start"])
-                blurring = blurring + "\n" + str(fp["reconstruct_lblur_step"])
-                blurring = blurring + "\n" + str(fp["reconstruct_lblur_nrot"])
-                blurring = blurring + "\n" + str(fp["reconstruct_lblur_range"])
-            """
-            if int(project_params.param(fp["reconstruct_num_frames"], i)) > 1:
-                num_frames = int(project_params.param(fp["reconstruct_num_frames"], i))
-                # infer number of frames directly from parameter file
-            else:
-                num_frames = 1
-            """
-            dose_weighting_fraction = fp["dose_weighting_fraction"]
-
-            dose_weighting_transition = fp["dose_weighting_transition"]
-
-            # if "original" in project_params.param(fp["refine_metric"], i).lower():
-            if not fp["dose_weighting_enable"] and not fp["reconstruct_lblur"]:
-                command = (
-                    "{0}/reconstruct3d_stats << eot >> {1} 2>&1\n".format(
-                        frealign_paths["frealignx"], reclogfile
-                    )
-                    + "{0}\n{1}\n{4}.mrc\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                        stack,
-                        parfile,
-                        Path(os.environ["PYP_SCRATCH"]) / name,
-                        first,
-                        Path(os.environ["PYP_SCRATCH"]) / prev_name,
-                    )
-                    + project_params.param(fp["particle_sym"], i)
-                    + "\n"
-                    + str(first)
-                    + "\n"
-                    + str(last)
-                    + "\n"
-                    + str(pixel)
-                    + "\n"
-                    + str(mp["scope_voltage"])
-                    + "\n"
-                    + str(mp["scope_cs"])
-                    + "\n"
-                    + str(mp["scope_wgh"])
-                    + "\n"
-                    + str(mp["particle_mw"])
-                    + "\n"
-                    + "0\n"
-                    + str(rad_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(project_params.param(fp["refine_bsc"], i))
-                    + "\n"
-                    + "%f\n" % thresh
-                    + "%0.1f\n" % 1
-                    + "%d\n" % 2
-                    + normalize
-                    + "\n"
-                    + adjust
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + "no"
-                    + "\n"
-                    + crop
-                    + "\n"
-                    + "yes"
-                    + "\n"
-                    + "no\n"
-                    + "no\n"
-                    + "no\n"
-                    + dump_intermediate
-                    + "\n"
-                    + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                        Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                    )
-                    + "eot\n"
-                )
-
-            elif "ab" in project_params.param(fp["refine_metric"], i).lower():
-                command = (
-                    "{0}/reconstruct3d_AB1 << eot >> {1} 2>&1\n".format(
-                        frealign_paths["frealignx"], reclogfile
-                    )
-                    + "{0}\n{1}\n{4}.mrc\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                        stack,
-                        parfile,
-                        Path(os.environ["PYP_SCRATCH"]) / name,
-                        first,
-                        Path(os.environ["PYP_SCRATCH"]) / prev_name,
-                    )
-                    + project_params.param(fp["particle_sym"], i)
-                    + "\n"
-                    + str(first)
-                    + "\n"
-                    + str(last)
-                    + "\n"
-                    + str(pixel)
-                    + "\n"
-                    + mp["scope_voltage"]
-                    + "\n"
-                    + mp["scope_cs"]
-                    + "\n"
-                    + mp["scope_wgh"]
-                    + "\n"
-                    + mp["particle_mw"]
-                    + "\n"
-                    + "0\n"
-                    + str(rad_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + project_params.param(fp["refine_bsc"], i)
-                    + "\n"
-                    + score_weighting
-                    + "\n"
-                    + dose_weighting
-                    + "\n"
-                    + str(num_frames)
-                    + "\n"
-                    + str(dose_weighting_fraction)
-                    + "\n"
-                    + str(dose_weighting_transition)
-                    + "\n"
-                    + "%f\n" % thresh
-                    + "%0.1f\n" % 1.0
-                    + "%d\n" % 2
-                    + normalize
-                    + "\n"
-                    + adjust
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + "no"
-                    + "\n"
-                    + crop
-                    + "\n"
-                    + "yes"
-                    + "\n"
-                    + "no\n"
-                    + blurring
-                    + "\n"
-                    + "no\n"
-                    + dump_intermediate
-                    + "\n"
-                    + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                        Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                    )
-                    + "eot\n"
-                )
-
-            elif fp["reconstruct_lblur"]:
-                blurring = "Yes"
-                external_weight = "/scratch/not_provided"
-                command = (
-                    "{0}/reconstruct3d_stats_DW << eot >> {1} 2>&1\n".format(
-                        frealign_paths["frealignx"], reclogfile
-                    )
-                    + "{0}\n{1}\n{4}.mrc\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                        stack,
-                        parfile,
-                        Path(os.environ["PYP_SCRATCH"]) / name,
-                        first,
-                        Path(os.environ["PYP_SCRATCH"]) / prev_name,
-                    )
-                    + project_params.param(fp["particle_sym"], i)
-                    + "\n"
-                    + str(first)
-                    + "\n"
-                    + str(last)
-                    + "\n"
-                    + str(pixel)
-                    + "\n"
-                    + str(mp["scope_voltage"])
-                    + "\n"
-                    + str(mp["scope_cs"])
-                    + "\n"
-                    + str(mp["scope_wgh"])
-                    + "\n"
-                    + str(mp["particle_mw"])
-                    + "\n"
-                    + "0\n"
-                    + str(rad_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + project_params.param(fp["refine_bsc"], i)
-                    + "\n"
-                    + score_weighting
-                    + "\n"
-                    + dose_weighting
-                    + "\n"
-                    + external_weight
-                    + "\n"
-                    + dose_weighting_multiply
-                    + "\n"
-                    + per_particle_splitting
-                    + "\n"
-                    + str(num_frames)
-                    + "\n"
-                    + str(dose_weighting_fraction)
-                    + "\n"
-                    + str(dose_weighting_transition)
-                    + "\n"
-                    + "%f\n" % thresh
-                    + "%0.1f\n" % 1
-                    + "%d\n" % 2
-                    + normalize
-                    + "\n"
-                    + adjust
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + "no"
-                    + "\n"
-                    + crop
-                    + "\n"
-                    + "yes"
-                    + "\n"
-                    + "no\n"
-                    + blurring
-                    + "\n"
-                    + "no\n"
-                    + dump_intermediate
-                    + "\n"
-                    + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                        Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                    )
-                    + "eot\n"
-                )
-
-            else:
-                # if dose weighting is enabled, we will go into this block
-                weight_files = project_params.resolve_path(mp["dose_weighting_weights"]) if "dose_weighting_weights" in mp else ""
-                external_weight = "/scratch/not_provided"
-
-                if ".txt" in weight_files:
-                    tag = "_" + name.split("_")[1] + "_" if "*" in weight_files else "txt"
-                    files = [f for f in glob.glob(weight_files) if tag in f]
-                    external_weight = files[0]
-
-                command = (
-                    "{0}/reconstruct3d_stats_DW << eot >> {1} 2>&1\n".format(
-                        frealign_paths["frealignx"], reclogfile
-                    )
-                    + "{0}\n{1}\n{4}.mrc\n{2}_map1.mrc\n{2}_map2.mrc\n{2}.mrc\n{2}_n{3}.res\n".format(
-                        stack,
-                        parfile,
-                        Path(os.environ["PYP_SCRATCH"]) / name,
-                        first,
-                        Path(os.environ["PYP_SCRATCH"]) / prev_name,
-                    )
-                    + project_params.param(fp["particle_sym"], i)
-                    + "\n"
-                    + str(first)
-                    + "\n"
-                    + str(last)
-                    + "\n"
-                    + str(pixel)
-                    + "\n"
-                    + str(mp["scope_voltage"])
-                    + "\n"
-                    + str(mp["scope_cs"])
-                    + "\n"
-                    + str(mp["scope_wgh"])
-                    + "\n"
-                    + str(mp["particle_mw"])
-                    + "\n"
-                    + "0\n"
-                    + str(rad_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + str(res_rec)
-                    + "\n"
-                    + project_params.param(fp["refine_bsc"], i)
-                    + "\n"
-                    + score_weighting
-                    + "\n"
-                    + dose_weighting
-                    + "\n"
-                    + external_weight
-                    + "\n"
-                    + dose_weighting_multiply
-                    + "\n"
-                    + per_particle_splitting
-                    + "\n"
-                    + str(num_frames)
-                    + "\n"
-                    + str(dose_weighting_fraction)
-                    + "\n"
-                    + str(dose_weighting_transition)
-                    + "\n"
-                    + "%f\n" % thresh
-                    + "%0.1f\n" % 1
-                    + "%d\n" % 2
-                    + normalize
-                    + "\n"
-                    + adjust
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + "no"
-                    + "\n"
-                    + crop
-                    + "\n"
-                    + "yes"
-                    + "\n"
-                    + "no\n"
-                    + "no"
-                    + "\n"
-                    + "no\n"
-                    + dump_intermediate
-                    + "\n"
-                    + "{0}_map1_n{1}.mrc\n{0}_map2_n{1}.mrc\n".format(
-                        Path(os.environ["PYP_SCRATCH"]) / name, str(count)
-                    )
-                    + "eot\n"
-                )
+            + "eot\n"
+        )
 
     os.environ["OMP_NUM_THREADS"] = os.environ["NCPUS"] = "{}".format(cpucount)
 
@@ -2354,7 +1845,7 @@ def local_merge_reconstruction(name=""):
     output_2 = "dumpfile_map2.mrc"
     dummy_name = "temp"
 
-    # intermediate reconsutructions should be named in sequence from 1 to N
+    # intermediate reconstructions should be named in sequence from 1 to N
     map_1 = "(\w+)_map1_n[0-9]+\.mrc$" if len(name) == 0 else f"(\w+){name}_map1_n[0-9]+\.mrc$"
     r_1 = re.compile(map_1)
     map_2 = "(\w+)_map2_n[0-9]+\.mrc$" if len(name) == 0 else f"(\w+){name}_map2_n[0-9]+\.mrc$"
@@ -2529,7 +2020,7 @@ eot
             [
                 f
                 for f in os.listdir(os.environ["PYP_SCRATCH"])
-                if f.startswith(name + "_map1_n")
+                if f.startswith(dataset + "_map1_n")
             ]
         )
 
@@ -2580,7 +2071,7 @@ eot
         elif True:
             command = (
                 "{0}/merge3d << eot >> {1} 2>&1\n".format(
-                    frealign_paths["frealignx"], reclogfile
+                    frealign_paths["cistem2"], reclogfile
                 )
                 + "{0}_half1.mrc\n{0}_half2.mrc\n{0}.mrc\n{0}_statistics.txt\n".format(
                     name
@@ -2591,7 +2082,7 @@ eot
                 + str(rad_rec)
                 + "\n"
                 + "{0}_map1_n.mrc\n{0}_map2_n.mrc\n".format(
-                    Path(os.environ["PYP_SCRATCH"]) / name
+                    Path(os.environ["PYP_SCRATCH"]) / dataset
                 )
                 + str(num_dump)
                 + "\n"
@@ -2639,12 +2130,7 @@ eot
     )
     with open(reclogfile, "a") as f:
         f.write(command)
-    if mp["slurm_verbose"]:
-        logger.info(command)
-    subprocess.Popen(command, shell=True, text=True).wait()
-    
-    # cleanup
-    # os.remove( scratch + name + '.res' )
+    local_run.stream_shell_command(command, verbose=mp["slurm_verbose"])
     
     if mp["slurm_verbose"]:
         with open(reclogfile) as log:
@@ -2837,48 +2323,52 @@ def get_phase_residuals(input,parfile,fp,i):
 )
 def mreconstruct_pre(mp, fp, i, ref=1):
 
-    if "cc" in project_params.param(fp["refine_metric"], i).lower():
-        parfile = "%s_r%02d_%02d.par" % (fp["refine_dataset"], ref, i)
-    else:
-        parfile = "%s_r%02d_%02d_used.par" % (fp["refine_dataset"], ref, i)
+    # FIXME: new cistem binary
 
-    if int(project_params.param(fp["class_num"], i)) > 1:
-        cutoff = 1
-    else:
-        cutoff = float(project_params.param(fp["reconstruct_cutoff"], i))
+    # if "cc" in project_params.param(fp["refine_metric"], i).lower():
+    #     parfile = "%s_r%02d_%02d.par" % (fp["refine_dataset"], ref, i)
+    # else:
+    #     parfile = "%s_r%02d_%02d_used.par" % (fp["refine_dataset"], ref, i)
 
-    # use the middle point between the cutoff and the minimum PR value as BOFF
-    # input = np.array( [line.split() for line in open( parfile ) if not line.startswith('C') ], dtype=float )
-    input = frealign_parfile.Parameters.from_file(parfile).data
+    # if int(project_params.param(fp["class_num"], i)) > 1:
+    #     cutoff = 1
+    # else:
+    #     cutoff = float(project_params.param(fp["reconstruct_cutoff"], i))
 
-    prs = get_phase_residuals(input,parfile,fp,i)
+    # # use the middle point between the cutoff and the minimum PR value as BOFF
+    # input = frealign_parfile.Parameters.from_file(parfile).data
 
-    if len(prs) > 0:
-        minpr = float(prs[0])
-        maxpr = float(prs[-1])
-        if cutoff < 1 and cutoff > 0:
-            thresh = prs[min(int(len(prs) *(1 - cutoff)), len(prs) - 1)]
-        elif cutoff == 1: 
-            thresh = max(0, minpr)
-        elif cutoff == 0:
-            thresh = 0
-    else:
-        minpr = maxpr = 90
-        thresh = 90
+    # prs = get_phase_residuals(input,parfile,fp,i)
 
-    if float(project_params.param(fp["refine_boff"], i)) == 0:
-        boff = (maxpr + minpr) / 2.0
-    else:
-        boff = float(project_params.param(fp["refine_boff"], i))
+    # if len(prs) > 0:
+    #     minpr = float(prs[0])
+    #     maxpr = float(prs[-1])
+    #     if cutoff < 1 and cutoff > 0:
+    #         thresh = prs[min(int(len(prs) *(1 - cutoff)), len(prs) - 1)]
+    #     elif cutoff == 1: 
+    #         thresh = max(0, minpr)
+    #     elif cutoff == 0:
+    #         thresh = 0
+    # else:
+    #     minpr = maxpr = 90
+    #     thresh = 90
 
-    # OVERRIDE (input .par file is already shaped by the cutoff)
-    if input.shape[1] > 13:
-        thresh = max(0, minpr)
-        if (
-            "new" in project_params.param(fp["refine_metric"], i)
-            or "frealignx" in project_params.param(fp["refine_metric"], i)
-        ) and thresh < 1:
-            thresh = 0
+    # if float(project_params.param(fp["refine_boff"], i)) == 0:
+    #     boff = (maxpr + minpr) / 2.0
+    # else:
+    #     boff = float(project_params.param(fp["refine_boff"], i))
+
+    # # OVERRIDE (input .par file is already shaped by the cutoff)
+    # if input.shape[1] > 13:
+    #     thresh = max(0, minpr)
+    #     if (
+    #         "new" in project_params.param(fp["refine_metric"], i)
+    #         or "frealignx" in project_params.param(fp["refine_metric"], i)
+    #     ) and thresh < 1:
+    #         thresh = 0
+    # FIXME: once the code above is fixed, remove the things below
+    boff = 0.0
+
     thresh = 0
     return boff, thresh
 
@@ -2936,19 +2426,20 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
     new_mrc_path = "../maps/" + name + ".mrc"
     same_ref = fp["refine_same_ref"]
 
-    if fp["denoise_enable"]:
+    if fp["reconstruct_denoise_enable"]:
+        logger.info(f"Denoising map using {fp['reconstruct_denoise_method']}")
         try:
             # increase the contrast of virus volume
             volume = scratch + name
-            if fp["denoise_method"] == "imod-nad":
-                iterations = fp["denoise_iters"] 
+            if fp["reconstruct_denoise_method"] == "nad":
+                iterations = fp["reconstruct_denoise_iters"] 
                 command = f"{get_imod_path()}/bin/nad_eed_3d -n {iterations} {volume}.mrc {volume}_denoised.mrc".format(
                 )
                 local_run.run_shell_command(command,verbose=fp["slurm_verbose"])
             elif False:
-                sigma = fp["denoise_sigma"]
-                nsearch = fp["denoise_nsearch"]
-                patchsize = fp["denoise_patch_size"]
+                sigma = fp["reconstruct_denoise_sigma"]
+                nsearch = fp["reconstruct_denoise_nsearch"]
+                patchsize = fp["reconstruct_denoise_patch_size"]
                 command = "{0}/pyp/postprocess/pyp_bm4d.py -input {1} -output {2} -sigma {3} -nsearch {4} -patch_size {5}".format(
                     os.environ["PYP_DIR"],
                     scratch + name + ".mrc",
@@ -2958,7 +2449,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
                     patchsize,
                 )
                 local_run.run_shell_command(command)
-            elif fp["denoise_method"] == "bm4d":
+            elif fp["reconstruct_denoise_method"] == "bm4d":
                 with timer.Timer(
                     "BM4D denoising", text = "BM4D denoising took: {}", logger=logger.info
                 ):
@@ -2966,7 +2457,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
                     from bm4d import bm4d
                     input = mrc.read(volume + ".mrc")
                     header = mrc.readHeaderFromFile(volume + ".mrc")
-                    output = bm4d(input,fp["denoise_sigma"])
+                    output = bm4d(input,fp["reconstruct_denoise_sigma"])
                     mrc.write(output,volume + "_denoised.mrc",header=header)
             else:
                 logger.error("Unknown denoising method")
@@ -2988,31 +2479,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
     else:
         shutil.copy2(scratch + name + ".mrc", "../maps")
 
-    """
-    # remove PSHIFT column if only doing dose-weighting
-    if (
-        fp["dose_weighting_enable"]
-        and "new" in project_params.param(fp["refine_metric"], i).lower()
-    ):
-        scratch_parfile = "%s.par" % name
-        parfile = "../maps/%s.par" % name
-        shutil.copy2(scratch_parfile , parfile)
-
-        # read parfile
-        comments = [line for line in open(parfile) if line.startswith("C")]
-        lines = [line for line in open(parfile) if not line.startswith("C")]
-
-        # overwrite with new one
-        with open(parfile, "w") as f:
-
-            [f.write(line) for line in comments]
-
-            for l in lines:
-                f.write(l[:92] + l[100:])
-    """
     # copy resolution table to maps directory
-
-    # v9.10
     if fp["refine_fssnr"] and os.path.exists(scratch + name + ".res"):
         shutil.copy2(scratch + name + ".res", "../maps")
 
@@ -3048,57 +2515,59 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         com = "mv %s %s" % (scratch + name + ".part", "../maps/" + name + ".par")
         local_run.run_shell_command(com, verbose=False)
 
+    # FIXME: new cistem binary
+
     # v9.11
-    if fp["refine_fssnr"] and os.path.exists(scratch + name + "_statistics.txt"):
-        com = """sed -i -e 's/RING RAD/RING_RAD/g' """ + "../maps/" + name + ".par"
-        local_run.run_shell_command(com, verbose=False)
+    # if fp["refine_fssnr"] and os.path.exists(scratch + name + "_statistics.txt"):
+    #     com = """sed -i -e 's/RING RAD/RING_RAD/g' """ + "../maps/" + name + ".par"
+    #     local_run.run_shell_command(com, verbose=False)
 
-        if not "cistem" in project_params.param(fp["refine_metric"], i).lower():
-            # read par file
-            #current_par_file = "../maps/{0}.par".format(name)
-            current_par_file = "{0}.par".format(name)
-            with open(current_par_file) as f:
-                all_lines = f.read().split("\n")
+    #     if not "cistem" in project_params.param(fp["refine_metric"], i).lower():
+    #         # read par file
+    #         #current_par_file = "../maps/{0}.par".format(name)
+    #         current_par_file = "{0}.par".format(name)
+    #         with open(current_par_file) as f:
+    #             all_lines = f.read().split("\n")
 
-            # remove existing resolution table
-            with open(current_par_file, "w") as f:
-                for line in range(len(all_lines) - 1):
-                    if line < 7 or all_lines[line][0] != "C":
-                        f.write(all_lines[line] + "\n")
+    #         # remove existing resolution table
+    #         with open(current_par_file, "w") as f:
+    #             for line in range(len(all_lines) - 1):
+    #                 if line < 7 or all_lines[line][0] != "C":
+    #                     f.write(all_lines[line] + "\n")
 
-        com = """echo "C" >> """ + "../maps/" + name + ".par"
-        local_run.run_shell_command(com, verbose=False)
-        if os.path.exists(scratch + name + "_n1.res"):
-            com = "grep C %s >> %s" % (
-                scratch + name + "_n1.res",
-                "../maps/" + name + ".par",
-            )
-            local_run.run_shell_command(com, verbose=False)
-        com = (
-            """echo "C                                                 sqrt       sqrt" >> """
-            + "../maps/"
-            + name
-            + ".par"
-        )
-        local_run.run_shell_command(com, verbose=False)
-        com = (
-            """echo "C  NO.  RESOL  RING RAD   FSPR    FSC  Part_FSC  Part_SSNR  Rec_SSNR       CC   EXP. C    SIG C  ERFC  TOTVOX" >> """
-            + "../maps/"
-            + name
-            + ".par"
-        )
-        local_run.run_shell_command(com, verbose=False)
-        com = (
-            "grep -v C "
-            + "{0}_statistics.txt".format(scratch + name)
-            + """ | awk '{printf "C%4d%8.2f%10.4f%7.2f%7.3f%10.3f%11.4f%10.2f%9.4f%9.4f%9.4f%6.2f%8d\\n", $1, $2, $3, 0.0, $4, $5, $6, $7, 0.0, 0.0, 0.0, 0.0, 0}' >> """
-            + "../maps/"
-            + name
-            + ".par"
-        )
-        local_run.run_shell_command(com, verbose=False)
-        com = """echo "C  Averages not calculated" >> """ + "../maps/" + name + ".par"
-        local_run.run_shell_command(com, verbose=False)
+    #     com = """echo "C" >> """ + "../maps/" + name + ".par"
+    #     local_run.run_shell_command(com, verbose=False)
+    #     if os.path.exists(scratch + name + "_n1.res"):
+    #         com = "grep C %s >> %s" % (
+    #             scratch + name + "_n1.res",
+    #             "../maps/" + name + ".par",
+    #         )
+    #         local_run.run_shell_command(com, verbose=False)
+    #     com = (
+    #         """echo "C                                                 sqrt       sqrt" >> """
+    #         + "../maps/"
+    #         + name
+    #         + ".par"
+    #     )
+    #     local_run.run_shell_command(com, verbose=False)
+    #     com = (
+    #         """echo "C  NO.  RESOL  RING RAD   FSPR    FSC  Part_FSC  Part_SSNR  Rec_SSNR       CC   EXP. C    SIG C  ERFC  TOTVOX" >> """
+    #         + "../maps/"
+    #         + name
+    #         + ".par"
+    #     )
+    #     local_run.run_shell_command(com, verbose=False)
+    #     com = (
+    #         "grep -v C "
+    #         + "{0}_statistics.txt".format(scratch + name)
+    #         + """ | awk '{printf "C%4d%8.2f%10.4f%7.2f%7.3f%10.3f%11.4f%10.2f%9.4f%9.4f%9.4f%6.2f%8d\\n", $1, $2, $3, 0.0, $4, $5, $6, $7, 0.0, 0.0, 0.0, 0.0, 0}' >> """
+    #         + "../maps/"
+    #         + name
+    #         + ".par"
+    #     )
+    #     local_run.run_shell_command(com, verbose=False)
+    #     com = """echo "C  Averages not calculated" >> """ + "../maps/" + name + ".par"
+    #     local_run.run_shell_command(com, verbose=False)
 
     # RELION postprocessing plots
     # get current pixel size
@@ -3275,9 +2744,6 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
 
     plt.savefig("../maps/%s_fsc.png" % dataset)
     plt.close()
-
-    if False and os.path.exists(fp["refine_maskth"]):
-        shutil.copy(star_file.replace(".star", "_fsc.eps"), "../maps/%s_fsc.eps" % name)
 
     # reconstruction montage
     rec = mrc.read(scratch + name + ".mrc")
@@ -3590,7 +3056,7 @@ eot
     return command
 
 
-def split_refinement(mp, ref, current_path, first, last, i, metric):
+def split_refinement(mp, ref, current_path, first, last, i):
     """function to execute refinement using refine3d in parallel
 
     Parameters
@@ -3619,7 +3085,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
 
     fp = mp
 
-    name = "%s_r%02d_%02d" % (fp["refine_dataset"], ref, i)
+    name = "%s_r%02d" % (fp["refine_dataset"], ref)
     ranger = "%07d_%07d" % (first, last)
     if fp["refine_debug"] or first == 1:
         logfile = "%s_msearch_n.log_%s" % (name, ranger)
@@ -3628,14 +3094,12 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
     scratch = Path(os.environ["PYP_SCRATCH"])
 
     # if we are in csp using frame refinement mode we can fork each batch into multiple cores
-    if mp["csp_no_stacks"] and mp["slurm_tasks"] > 1:
+    if mp["csp_no_stacks"] and mp["slurm_tasks"] > 1 and not mp["refine_beamtilt"]:
 
         # This is the output parfile for this function
-        short_file_name = name + ".par_%07d_%07d" % (1, last)
-
         # bypass refine3d if mode == 0
         if int(project_params.param(mp["refine_mode"], i)) == 0:
-            shutil.copy2(f"{name}.par", short_file_name)
+            # shutil.copy2(f"{name}.par", short_file_name)
             return 0
 
         # create multirun script
@@ -3658,61 +3122,89 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
         mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=mp["slurm_verbose"])
 
         # combine all the refined parfile
-        short_file_name = name + ".par_%07d_%07d" % (1, last)
-        all_refined_par = [par for par in glob.glob(name + ".par_*_*")]
+        # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
+        merged_file_name = name + "_refined.cistem"
+        all_refined_par = [par for par in glob.glob(name + "_*_*.cistem")]
 
+        logfile = glob.glob( "*_msearch_n.log_0000001_*" )
         # first check if the number of refined par is equal to count
         if len(all_refined_par) != count:
             # attempt to get error information to the user before exiting
             logger.error(commands[0])
-            logfile = glob.glob( "*_msearch_n.log_0000001_*" )
             if len(logfile) > 0:
                 with open( logfile[0] ) as output:
                     logger.error("\n".join([s for s in output.read().split("\n") if s]))
             raise Exception(
                 f"The number of refined parfiles ({len(all_refined_par)}) != the number of jobs ({count})."
             )
+        elif mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile[0]):
+            with open( logfile[0] ) as output:
+                logger.info("\n".join([s for s in output.read().split("\n") if s]))
 
-        if "frealignx" in metric:
-            frealignx = True
-            short_column = 17
-        else:
-            frealignx = False
-            short_column = 16
+        # TODO: Ye, not sure if this is what you wanna do?
+        merged_alignment = Parameters.merge(input_files=all_refined_par,
+                                            input_extended_files=[])
+        merged_alignment.to_binary(merged_file_name)
 
-        merged_short_par = np.empty((0, short_column))
-        for refined_par in sorted(all_refined_par, key=lambda x: x.split("_")[-1]):
-            # changed_par = refined_par.replace(".par", "_changed.par")
-            refined = np.loadtxt(refined_par, ndmin=2, comments="C")
-            # changed = np.loadtxt(changed_par, ndmin=2, comments="C")
-            # refined[:, -2] = refined[:, -2] + refined[:, -1]
-            merged_short_par = np.vstack((merged_short_par, refined))
-
-        frealign_parfile.Parameters.write_parameter_file(short_file_name, merged_short_par, parx=False, frealignx=frealignx)
-
-        """
-        sort_allpar = sorted(
-            [
-                line
-                for par in all_refined_par
-                for line in open(par)
-                if not line.startswith("C")
-            ],
-            key=lambda x: int(x.split()[0]),
-        )
-
-        # write out short allpar (extended metadata will be added later)
-        with open(short_file_name, "w") as f:
-            for line in sort_allpar:
-                f.write(line)
-        """
         # cleanup
         [
             os.remove(i)
-            for i in glob.glob(str(scratch / f"{name}.par_*_*"))
-            if i != short_file_name
+            for i in glob.glob(str(scratch / f"{name}_*_*.cistem"))
+            if i != merged_file_name
         ]
 
+    elif mp["refine_beamtilt"]:
+        # create multirun script
+        cpus = mp["slurm_tasks"]
+
+        commands, count = local_run.create_split_commands(
+            mp,
+            name,
+            last,
+            cpus,
+            scratch,
+            ref=ref,
+            current_path=current_path,
+            iteration=i,
+            step="refine_ctf",
+        )
+
+        # submit jobs to MPI
+        mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=mp["slurm_verbose"])
+
+        # combine all the refined parfile
+        # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
+        merged_file_name = name + "_refined.cistem"
+        all_refined_star = [star for star in glob.glob(name + "_*_*_refined_ctf.star")]
+
+        # first check if the number of refined par is equal to count
+        logfile = glob.glob( "*_msearch_ctf_n.log_0000001_*" )
+        if len(all_refined_star) != count:
+            # attempt to get error information to the user before exiting
+            logger.error(commands[0])
+            if len(logfile) > 0:
+                with open( logfile[0] ) as output:
+                    logger.error("\n".join([s for s in output.read().split("\n") if s]))
+            raise Exception(
+                f"The number of refined parfiles ({len(all_refined_star)}) != the number of jobs ({count})."
+            )
+        elif mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile[0]):
+            with open( logfile[0] ) as output:
+                logger.info("\n".join([s for s in output.read().split("\n") if s]))
+
+        # merge refine_ctf star files
+        merged_data = merge_star(all_refined_star)
+        merge_alignment = Parameters()
+        merge_alignment.set_data(data=merged_data)
+        merge_alignment.to_binary(merged_file_name)
+
+        # cleanup
+        [
+            os.remove(i)
+            for i in glob.glob(str(scratch / f"{name}_*_*.cistem"))
+            if i != merged_file_name
+        ]
+    
     else:
 
         # this is the regular refinement on a single core
@@ -3730,7 +3222,7 @@ def split_refinement(mp, ref, current_path, first, last, i, metric):
                 ranger,
                 logfile,
                 str(scratch),
-                metric,  # TODO: safe to pass Path here?
+                False,  # TODO: safe to pass Path here?
             )
 
             os.environ["OMP_NUM_THREADS"] = os.environ["NCPUS"] = "1"
@@ -4007,7 +3499,7 @@ def merge_refinements(mp, fp, iteration, alignment_option):
                     and int(project_params.param(fp["refine_mode"], iteration)) == 0
                 )
                 or (
-                    fp["dose_weighting_enable"]
+                    fp["reconstruct_dose_weighting_enable"]
                     and not "frealignx"
                     in project_params.param(fp["refine_metric"], iteration).lower()
                 )
@@ -4046,7 +3538,7 @@ def merge_refinements(mp, fp, iteration, alignment_option):
                 #    commands.getoutput(com)
 
         # if using dose weighting we need to use frealignx mode
-        if fp["dose_weighting_enable"]:
+        if fp["reconstruct_dose_weighting_enable"]:
             phases_or_scores = "-frealignx"
             arg_scores = False
             arg_frealignx = True
@@ -4322,7 +3814,7 @@ def merge_refinements(mp, fp, iteration, alignment_option):
 
 
 def mrefine_version(
-    mp, first, last, i, ref, current_path, name, ranger, logfile, scratch, metric
+    mp, first, last, i, ref, current_path, name, ranger, logfile, scratch, refine_beam_tilt=False
 ):
     """Return frealign refinement command."""
 
@@ -4333,6 +3825,7 @@ def mrefine_version(
     global_par = os.path.join(
         current_path, "frealign", "maps", global_name + "_r%02d_%02d.par" % (ref, i - 1)
     )
+    
     fp = mp
 
     pixel = float(mp["scope_pixel"]) * float(mp["data_bin"]) * float(mp["extract_bin"])
@@ -4354,865 +3847,164 @@ def mrefine_version(
 
     frealign_paths = get_frealign_paths()
 
-    # if first iteration and mode 4, force metric to cclin
-    # if i == 2 and int(project_params.param(mp["refine_mode"], i)) == 4:
-    #    metric = "cclin"
-   
-
-    # use CCLIN from frealign_v8 for initial orientation assignemnt (mode=4, mask=1,1,1,1,1)
-    if "cclin" in metric.lower():
-        '''    
-        thresh = 90.0
-        command = """
-%s/frealign_v8.10_intel/bin/frealign_v8_mp_cclin.exe << eot >>%s 2>&1
-M, 4, %s, %s, %s, %s, %s, T, %s, %s, %s, 0, F, %s                                !CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,FBEAUT,FFILT,FBFACT,FMATCH,IFSC,FSTAT,IBLOW
-%s, 0., %s, %s, %s, %s, %s, %s, %s, %s                                                !RO,RI,PSIZE,WGH,XSTD,PBC,BOFF,DANG,ITMAX,IPMAX
-1,1,1,1,1                                                                                !MASK
-%i, %i                                                                                !IFIRST,ILAST
-%s
-1.0, %s, %s, %s, %s, %s, 0., 0.
-%s, %s, %s, %s, %s
-%s/%s_stack.mrc
-%s_match.mrc_%s
-%s.par
-%s.par_%s
-/dev/null
--100., 0., 0., 0., 0., 0., 0., 0.                                                !terminator with RELMAG=-100.0 to skip 3D reconstruction
-%s_%s.mrc
-%s_weights_%s_%s
-%s_map1_%s.mrc
-%s_map2_%s.mrc
-%s_phasediffs_%s
-%s_pointspread_%s
-eot
-""" % (
-            os.environ["PYP_DIR"],
-            logfile,
-            project_params.param(fp["fmag"], i),
-            project_params.param(fp["fdef"], i),
-            project_params.param(fp["fastig"], i),
-            project_params.param(fp["fpart"], i),
-            project_params.param(fp["iewald"], i),
-            project_params.param(fp["ffilt"], i),
-            project_params.param(fp["fbfact"], i),
-            project_params.param(fp["fmatch"], i),
-            project_params.param(fp["iblow"], i),
-            mp["particle_rad"],
-            pixel,
-            mp["scope_wgh"],
-            project_params.param(fp["xstd"], i),
-            project_params.param(fp["pbc"], i),
-            project_params.param(fp["boff"], i),
-            project_params.param(fp["dang"], i),
-            project_params.param(fp["itmax"], i),
-            project_params.param(fp["ipmax"], i),
-            first,
-            last,
-            project_params.param(fp["symmetry"], i),
-            dstep,
-            10.0,
-            thresh,
-            mp["scope_cs"],
-            mp["scope_voltage"],  # set target PR to a low value
-            res_rec,
-            project_params.param(fp["rlref"], i),
-            postprocess.get_rhref(fp, i),
-            project_params.param(fp["dfsig"], i),
-            project_params.param(fp["rbfact"], i),
-            stack_dir,
-            fp["dataset"],
-            name,
-            ranger,
-            name,
-            name,
-            ranger,
-            dataset,
-            "%02d" % (i - 1),
-            scratch + name,
-            "%02d" % i,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-        )
-            '''
-
-        # v9.10
-        # evaluate scores without refining shifts or angles
-        mask = project_params.param(mp["refine_mask"], i)
-        mode = project_params.param(mp["refine_mode"], i)
-        if metric == "eval":
-            mask = "0,0,0,1,1"
-            mode = "1"
-        thresh = 0.0
-
-        if mp["refine_fboost"]:
-            ifsc = -1
-        else:
-            ifsc = 0
-        ifsc = 0
-
-        command = """
-%s/bin_debug/frealign_v9_intel_cclin.exe << eot >>%s 2>&1
-M, %s, %s, %s, %s, %s, %s, T, %s, %s, %s, %s, F, %s, %s                                !CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,FBEAUT,FFILT,FBFACT,FMATCH,IFSC,FDUMP,IMEM,INTERP
-%s, 0., %s, %s, %s, %s, %s, %s, %s, %s, %s                                        !RO,RI,PSIZE,MW,WGH,XSTD,PBC,BOFF,DANG,ITMAX,IPMAX
-%s                                                                                !MASK
-%i, %i                                                                                !IFIRST,ILAST
-%s
-1.0, %s, %s, %s, %s, %s, 0., 0.
-%s, %s, %s, %s, %s, %s
-%s/%s_stack.mrc
-%s_match.mrc_%s
-%s.par
-%s.par_%s
-/dev/null
--100., 0., 0., 0., 0., 0., 0., 0.                                                !terminator with RELMAG=-100.0 to skip 3D reconstruction
-%s_%s.mrc
-%s_weights_%s_%s
-%s_map1_%s.mrc
-%s_map2_%s.mrc
-%s_phasediffs_%s
-%s_pointspread_%s
-eot
-""" % (
-            frealign_paths["cclin"],
-            logfile,
-            mode,
-            project_params.param(mp["refine_fmag"], i),
-            project_params.param(mp["refine_fdef"], i),
-            project_params.param(mp["refine_fastig"], i),
-            project_params.param(mp["refine_fpart"], i),
-            project_params.param(mp["reconstruct_iewald"], i),
-            project_params.param(mp["reconstruct_ffilt"], i),
-            project_params.param(mp["reconstruct_fbfact"], i),
-            project_params.param(mp["refine_fmatch"], i),
-            ifsc,
-            project_params.param(mp["refine_imem"], i),
-            project_params.param(mp["refine_interp"], i),
-            # mp['particle_rad'], pixel, mp['particle_mw'], mp['scope_wgh'], project_params.param(fp['xstd'],i), project_params.param(fp['pbc'],i), project_params.param(fp['boff'],i), project_params.param(fp['dang'],i), project_params.param(fp['itmax'],i), project_params.param(fp['ipmax'],i),
-            mp["particle_rad"],
-            pixel,
-            mp["particle_mw"],
-            mp["scope_wgh"],
-            project_params.param(mp["refine_xstd"], i),
-            "100.0",
-            project_params.param(mp["refine_boff"], i),
-            project_params.param(mp["refine_dang"], i),
-            project_params.param(mp["refine_itmax"], i),
-            project_params.param(mp["refine_ipmax"], i),
-            mask,
-            first,
-            last,
-            project_params.param(mp["particle_sym"], i),
-            dstep,
-            project_params.param(mp["refine_target"], i),
-            thresh,
-            mp["scope_cs"],
-            mp["scope_voltage"],
-            res_rec,
-            project_params.param(mp["refine_rlref"], i),
-            postprocess.get_rhref(mp, i),
-            project_params.param(mp["class_rhcls"], i),
-            project_params.param(mp["refine_dfsig"], i),
-            project_params.param(mp["refine_rbfact"], i),
-            stack_dir,
-            fp["refine_dataset"],
-            name,
-            ranger,
-            name,
-            name,
-            ranger,
-            dataset,
-            "%02d" % (i - 1),
-            scratch + name,
-            "%02d" % i,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-        )
-    elif "cc3m" in metric.lower():
-
-        mask = project_params.param(mp["refine_mask"], i)
-        mode = project_params.param(mp["refine_mode"], i)
-
-        # update alignment mask according to settings used in classification
-        if int(project_params.param(mp["class_num"], i)) > 1:
-            refine_eulers = "0,0,0,"
-            if i % int(mp["class_refineeulers"]) == 0:
-                refine_eulers = "1,1,1,"
-                mode = project_params.param(mp["refine_mode"], i)
-            refine_shifts = "0,0"
-            if i % int(mp["class_refineshifts"]) == 0:
-                refine_shifts = "1,1"
-                mode = "1"
-            mask = refine_eulers + refine_shifts
-
-        # evaluate scores without refining shifts or angles
-        if metric == "eval":
-            mask = "0,0,0,1,1"
-            mode = "1"
-
-        thresh = 0.0
-        command = """
-%s/bin/frealign_v9.exe << eot >>%s 2>&1
-M, %s, %s, %s, %s, %s, %s, T, %s, %s, %s, %s, F, %s, %s                                !CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,FBEAUT,FFILT,FBFACT,FMATCH,IFSC,FDUMP,IMEM,INTERP
-%s, 0., %s, %s, %s, %s, %s, %s, %s, %s, %s                                        !RO,RI,PSIZE,MW,WGH,XSTD,PBC,BOFF,DANG,ITMAX,IPMAX
-%s                                                                                !MASK
-%i, %i                                                                                !IFIRST,ILAST
-%s
-1.0, %s, %s, %s, %s, %s, 0., 0.
-%s, %s, %s, %s, %s, %s
-%s/%s_stack.mrc
-%s_match.mrc_%s
-%s.par
-%s.par_%s
-/dev/null
--100., 0., 0., 0., 0., 0., 0., 0.                                                !terminator with RELMAG=-100.0 to skip 3D reconstruction
-%s_%s.mrc
-%s_weights_%s_%s
-%s_map1_%s.mrc
-%s_map2_%s.mrc
-%s_phasediffs_%s
-%s_pointspread_%s
-eot
-""" % (
-            frealign_paths["cc3m"],
-            logfile,
-            mode,
-            project_params.param(mp["refine_fmag"], i),
-            project_params.param(mp["refine_fdef"], i),
-            project_params.param(mp["refine_fastig"], i),
-            project_params.param(mp["refine_fpart"], i),
-            project_params.param(mp["reconstruct_iewald"], i),
-            project_params.param(mp["reconstruct_ffilt"], i),
-            project_params.param(mp["reconstruct_fbfact"], i),
-            project_params.param(mp["refine_fmatch"], i),
-            mp["refine_fboost"],
-            project_params.param(mp["refine_imem"], i),
-            project_params.param(mp["refine_interp"], i),
-            mp["particle_rad"],
-            pixel,
-            mp["particle_mw"],
-            mp["scope_wgh"],
-            project_params.param(mp["refine_xstd"], i),
-            project_params.param(mp["refine_pbc"], i),
-            project_params.param(mp["refine_boff"], i),
-            project_params.param(mp["refine_dang"], i),
-            project_params.param(mp["refine_itmax"], i),
-            project_params.param(mp["refine_ipmax"], i),
-            mask,
-            first,
-            last,
-            project_params.param(mp["particle_sym"], i),
-            dstep,
-            project_params.param(mp["refine_target"], i),
-            thresh,
-            mp["scope_cs"],
-            mp["scope_voltage"],
-            res_rec,
-            project_params.param(mp["refine_rlref"], i),
-            postprocess.get_rhref(mp, i),
-            project_params.param(mp["class_rhcls"], i),
-            project_params.param(mp["refine_dfsig"], i),
-            project_params.param(mp["refine_rbfact"], i),
-            stack_dir,
-            mp["refine_dataset"],
-            name,
-            ranger,
-            name,
-            name,
-            ranger,
-            dataset,
-            "%02d" % (i - 1),
-            scratch + name,
-            "%02d" % i,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-            scratch + name,
-            ranger,
-        )
-
-    elif "new" in metric or "frealignx" in metric:
-
-        # v9.11
-
-        my_mask = project_params.param(mp["refine_mask"], i).split(",")
-        if my_mask[0] == "0":
-            psib = "no"
-        else:
-            psib = "yes"
-        if my_mask[1] == "0":
-            thetab = "no"
-        else:
-            thetab = "yes"
-        if my_mask[1] == "0":
-            phib = "no"
-        else:
-            phib = "yes"
-        if my_mask[3] == "0":
-            shxb = "no"
-        else:
-            shxb = "yes"
-        if my_mask[4] == "0":
-            shyb = "no"
-        else:
-            shyb = "yes"
-
-        if (
-            mp["refine_fssnr"]
-            and os.path.exists("statistics_r%02d.txt" % ref)
-            and len(open("statistics_r%02d.txt" % ref).read()) > 0
-        ):
-            stats = "yes"
-        else:
-            stats = "no"
-
-        if project_params.param(mp["refine_focusmask"], i) == "0,0,0,0":
-            masking = "no"
-        else:
-            masking = "yes"
-        if "t" in project_params.param(mp["refine_fdef"], i).lower():
-            defocus = "yes"
-        else:
-            defocus = "no"
-        if "t" in project_params.param(mp["refine_fmatch"], i).lower():
-            match = "yes"
-        else:
-            match = "no"
-        if mp["refine_invert"]:
-            invert = "yes"
-        else:
-            invert = "no"
-
-        if project_params.param(mp["refine_mode"], i) == "1":
-            globally = "no"
-            locally = "yes"
-        else:
-            globally = "yes"
-            locally = "no"
-
-        # set radius for global search
-        if project_params.param(mp["refine_srad"], i) == 0:
-            srad = str(1.5 * mp["particle_rad"])
-        else:
-            srad = str(project_params.param(mp["refine_srad"], i))
-
-        boost = "30.0"
-        if mp["refine_fboost"]:
-            boost = str(mp["refine_fboostlim"])
-
-        mask_2d_x, mask_2d_y, mask_2d_z, mask_2d_rad = project_params.param(
-            mp["refine_focusmask"], i
-        ).split(",")
-        
-        #classification using weighted averages when do frames.
-        # TODO: should mostly used for tomo
-        if mp["class_num"] >1 and "local" in mp["extract_fmt"] and "spr" in mp["data_mode"]:
-            stack = "stack_weighted_average.mrc"
-        else:
-            stack = "stack.mrc"
-
-        if "new" in metric:
-            command = (
-                f"{frealign_paths['new']}/bin/refine3d << eot >>{logfile} 2>&1\n"
-                f"{stack_dir}/{fp['refine_dataset']}_{stack}\n"
-                f"{name}.par\n{dataset}_{i - 1:02d}.mrc\n"
-                f"statistics_r{ref:02d}.txt\n"
-                f"{stats}\n"
-                f"{name}_match.mrc_{ranger}\n"
-                f"{name}.par_{ranger}\n"
-                "/dev/null\n"
-                f"{project_params.param(fp['particle_sym'], i)}\n"
-                f"{first}\n"
-                f"{last}\n"
-                f"{pixel}\n"
-                f"{mp['scope_voltage']}\n"
-                f"{mp['scope_cs']}\n"
-                f"{mp['scope_wgh']}\n"
-                f"{mp['particle_mw']}\n"
-                f"{mp['particle_rad']}\n"
-                f"{project_params.param(mp['refine_rlref'], i)}\n"
-                f"{postprocess.get_rhref(mp, i)}\n"
-                f"{boost}\n"
-                f"{project_params.param(mp['class_rhcls'], i)}\n"
-                f"{srad}\n"
-                f"{postprocess.get_rhref(mp, i)}\n"
-                f"{project_params.param(mp['refine_dang'], i)}\n"
-                "20\n"
-                f"{project_params.param(mp['refine_searchx'], i)}\n"
-                f"{project_params.param(mp['refine_searchy'], i)}\n"
-                f"{mask_2d_x}\n{mask_2d_y}\n{mask_2d_z}\n{mask_2d_rad}\n"
-                "500.0\n"
-                "50.0\n"
-                f"{project_params.param(mp['refine_iblow'], i)}\n"
-                f"{globally}\n"
-                f"{locally}\n"
-                f"{psib}\n"
-                f"{thetab}\n"
-                f"{phib}\n"
-                f"{shxb}\n"
-                f"{shyb}\n"
-                f"{match}\n"
-                f"{masking}\n"
-                f"{defocus}\n"
-                f"{invert}\n"
-                "eot\n"
-            )
-
-        elif "frealignx" in metric:
-
-            if project_params.param(mp["reconstruct_norm"], i):
-                normalize = "yes"
-            else:
-                normalize = "no"
-
-            exclude = "no"
-            normalize_input = "yes"
-            threshold_input = "no"
-
-            if "cistem1" in metric.lower():
-                command = (
-                    f"{frealign_paths['frealignx']}/refine3d_cistem1 << eot >>{logfile} 2>&1\n"
-                    f"{stack_dir}/{fp['refine_dataset']}_stack.mrc\n"
-                    f"{name}.par\n{dataset}_{i - 1:02d}.mrc\n"
-                    f"statistics_r{ref:02d}.txt\n"
-                    f"{stats}\n"
-                    f"{name}_match.mrc_{ranger}\n"
-                    f"{name}.par_{ranger}\n"
-                    "/dev/null\n"
-                    f"{project_params.param(fp['particle_sym'], i)}\n"
-                    f"{first}\n"
-                    f"{last}\n"
-                    "1\n"
-                    f"{pixel}\n"
-                    f"{mp['scope_voltage']}\n"
-                    f"{mp['scope_cs']}\n"
-                    f"{mp['scope_wgh']}\n"
-                    f"{mp['particle_mw']}\n"
-                    "0\n"
-                    f"{mp['particle_rad']}\n"
-                    f"{project_params.param(mp['refine_rlref'], i)}\n"
-                    f"{postprocess.get_rhref(mp, i)}\n"
-                    f"{boost}\n"
-                    f"{project_params.param(mp['class_rhcls'], i)}\n"
-                    f"{srad}\n"
-                    f"{postprocess.get_rhref(mp, i)}\n"
-                    f"{project_params.param(mp['refine_dang'], i)}\n"
-                    "20\n"
-                    f"{project_params.param(mp['refine_searchx'], i)}\n"
-                    f"{project_params.param(mp['refine_searchy'], i)}\n"
-                    f"{mask_2d_x}\n{mask_2d_y}\n{mask_2d_z}\n{mask_2d_rad}\n"
-                    "500.0\n"
-                    "50.0\n"
-                    f"{project_params.param(mp['refine_iblow'], i)}\n"
-                    f"{globally}\n"
-                    f"{locally}\n"
-                    f"{psib}\n"
-                    f"{thetab}\n"
-                    f"{phib}\n"
-                    f"{shxb}\n"
-                    f"{shyb}\n"
-                    f"{match}\n"
-                    f"{masking}\n"
-                    f"{defocus}\n"
-                    "Yes\n"
-                    f"{invert}\n"
-                    "Yes\n"
-                    "Yes\n"
-                    "No\n"
-                    "eot\n"
-                )
-            elif "global" in metric.lower():
-                command = (
-                    "{0}/refine3d_global << eot >>{1} 2>&1\n".format(
-                        frealign_paths["frealignx"], logfile
-                    )
-                    + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-                    + "{0}.par\n{3}\n{1}_{2}.mrc\n".format(
-                        name, dataset, "%02d" % (i - 1), global_par
-                    )
-                    + "statistics_r%02d.txt\n" % ref
-                    + stats
-                    + "\n"
-                    + "{0}_match.mrc_{1}\n{0}.par_{1}\n/dev/null\n".format(name, ranger)
-                    + project_params.param(mp["particle_sym"], i)
-                    + "\n"
-                    + "{0}\n{1}\n1\n".format(first, last)
-                    + "{0}\n{1}\n{2}\n{3}\n{4}\n0\n".format(
-                        pixel,
-                        mp["scope_voltage"],
-                        mp["scope_cs"],
-                        mp["scope_wgh"],
-                        mp["particle_mw"],
-                    )
-                    + str(mp["particle_rad"])
-                    + "\n"
-                    + str(project_params.param(mp["refine_rlref"], i))
-                    + "\n"
-                    + str(postprocess.get_rhref(mp, i))
-                    + "\n"
-                    + boost
-                    + "\n"
-                    + str(project_params.param(mp["class_rhcls"], i))
-                    + "\n"
-                    + srad
-                    + "\n"
-                    + str(postprocess.get_rhref(mp, i))
-                    + "\n"
-                    + str(project_params.param(mp["refine_dang"], i))
-                    + "\n"
-                    + "20\n"
-                    + str(project_params.param(mp["refine_searchx"], i))
-                    + "\n"
-                    + str(project_params.param(mp["refine_searchy"], i))
-                    + "\n"
-                    + "\n".join(
-                        project_params.param(mp["refine_focusmask"], i).split(",")
-                    )
-                    + "\n"
-                    + "500.0\n"
-                    + "50.0\n"
-                    + str(project_params.param(mp["refine_iblow"], i))
-                    + "\n"
-                    + globally
-                    + "\n"
-                    + locally
-                    + "\n"
-                    + psib
-                    + "\n"
-                    + thetab
-                    + "\n"
-                    + phib
-                    + "\n"
-                    + shxb
-                    + "\n"
-                    + shyb
-                    + "\n"
-                    + match
-                    + "\n"
-                    + masking
-                    + "\n"
-                    + defocus
-                    + "\n"
-                    + normalize
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + exclude
-                    + "\n"
-                    + normalize_input
-                    + "\n"
-                    + threshold_input
-                    + "\n"
-                    "eot\n"
-                )
-            else:
-                refine3d = "refine3d" if mp["refine_priors"] else "refine3d_no_prior"
-                command = (
-                    "{0}/{2} << eot >>{1} 2>&1\n".format(
-                        frealign_paths["frealignx"], logfile, refine3d
-                    )
-                    + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-                    + "{0}.par\n{1}_{2}.mrc\n".format(name, dataset, "%02d" % (i - 1))
-                    + "statistics_r%02d.txt\n" % ref
-                    + stats
-                    + "\n"
-                    + "{0}_match.mrc_{1}\n{0}.par_{1}\n/dev/null\n".format(name, ranger)
-                    + project_params.param(mp["particle_sym"], i)
-                    + "\n"
-                    + "{0}\n{1}\n1\n".format(first, last)
-                    + "{0}\n{1}\n{2}\n{3}\n{4}\n0\n".format(
-                        pixel,
-                        mp["scope_voltage"],
-                        mp["scope_cs"],
-                        mp["scope_wgh"],
-                        mp["particle_mw"],
-                    )
-                    + str(mp["particle_rad"])
-                    + "\n"
-                    + str(project_params.param(mp["refine_rlref"], i))
-                    + "\n"
-                    + str(postprocess.get_rhref(mp, i))
-                    + "\n"
-                    + boost
-                    + "\n"
-                    + str(project_params.param(mp["class_rhcls"], i))
-                    + "\n"
-                    + srad
-                    + "\n"
-                    + str(postprocess.get_rhref(mp, i))
-                    + "\n"
-                    + str(project_params.param(mp["refine_dang"], i))
-                    + "\n"
-                    + "20\n"
-                    + str(project_params.param(mp["refine_searchx"], i))
-                    + "\n"
-                    + str(project_params.param(mp["refine_searchy"], i))
-                    + "\n"
-                    + "\n".join(
-                        project_params.param(mp["refine_focusmask"], i).split(",")
-                    )
-                    + "\n"
-                    + "500.0\n"
-                    + "50.0\n"
-                    + str(project_params.param(mp["refine_iblow"], i))
-                    + "\n"
-                    + globally
-                    + "\n"
-                    + locally
-                    + "\n"
-                    + psib
-                    + "\n"
-                    + thetab
-                    + "\n"
-                    + phib
-                    + "\n"
-                    + shxb
-                    + "\n"
-                    + shyb
-                    + "\n"
-                    + match
-                    + "\n"
-                    + masking
-                    + "\n"
-                    + defocus
-                    + "\n"
-                    + normalize
-                    + "\n"
-                    + invert
-                    + "\n"
-                    + exclude
-                    + "\n"
-                    + normalize_input
-                    + "\n"
-                    + threshold_input
-                    + "\n"
-                    "eot\n"
-                )
-
-        else:
-
-            # cistem2
-            #
-            normalize = "yes"
-            edges = "no"
-            normalize_rec = "no"
-            thresh_rec = "no"
-
-            command = (
-                "{0}/refine3d << eot >>{1} 2>&1\n".format(
-                    frealign_paths["cistem2"], logfile
-                )
-                + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
-                + "{0}.star\n{1}_{2}.mrc\n".format(name, dataset, "%02d" % (i - 1))
-                + "statistics_r%02d.txt\n" % ref
-                + stats
-                + "\n"
-                + "{0}_match.mrc_{1}\n{0}_{1}.star\n{0}_{1}_changes.star\n".format(
-                    name, ranger
-                )
-                + project_params.param(fp["particle_sym"], i)
-                + "\n"
-                + "{0}\n{1}\n1\n".format(first, last)
-                + "{0}\n{1}\n".format(pixel, mp["particle_mw"])
-                + "0\n"
-                + mp["particle_rad"]
-                + "\n"
-                + project_params.param(mp["refine_rlref"], i)
-                + "\n"
-                + str(postprocess.get_rhref(mp, i))
-                + "\n"
-                + boost
-                + "\n"
-                + project_params.param(mp["class_rhcls"], i)
-                + "\n"
-                + srad
-                + "\n"
-                + str(postprocess.get_rhref(mp, i))
-                + "\n"
-                + project_params.param(mp["refine_dang"], i)
-                + "\n"
-                + "20\n"
-                + project_params.param(mp["refine_searchx"], i)
-                + "\n"
-                + project_params.param(mp["refine_searchy"], i)
-                + "\n"
-                + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
-                + "\n"
-                + "500.0\n"
-                + "50.0\n"
-                + project_params.param(mp["refine_iblow"], i)
-                + "\n"
-                + globally
-                + "\n"
-                + locally
-                + "\n"
-                + psib
-                + "\n"
-                + thetab
-                + "\n"
-                + phib
-                + "\n"
-                + shxb
-                + "\n"
-                + shyb
-                + "\n"
-                + match
-                + "\n"
-                + masking
-                + "\n"
-                + defocus
-                + "\n"
-                + normalize
-                + "\n"
-                + invert
-                + "\n"
-                + edges
-                + "\n"
-                + normalize_rec
-                + "\n"
-                + thresh_rec
-                + "\n1\n"
-                + "eot\n"
-            )
+    my_mask = project_params.param(mp["refine_mask"], i).split(",")
+    if my_mask[0] == "0":
+        psib = "no"
     else:
+        psib = "yes"
+    if my_mask[1] == "0":
+        thetab = "no"
+    else:
+        thetab = "yes"
+    if my_mask[1] == "0":
+        phib = "no"
+    else:
+        phib = "yes"
+    if my_mask[3] == "0":
+        shxb = "no"
+    else:
+        shxb = "yes"
+    if my_mask[4] == "0":
+        shyb = "no"
+    else:
+        shyb = "yes"
 
-        # frealignx
+    if (mp["class_num"] > 1 or mp["refine_global_stat"]) and os.path.exists(f"{name}_stat.cistem"):
+        global_stat = f"{name}_stat.cistem"
+    else:
+        global_stat = "null"
 
-        my_mask = project_params.param(mp["refine_mask"], i).split(",")
-        if my_mask[0] == "0":
-            psib = "no"
-        else:
-            psib = "yes"
-        if my_mask[1] == "0":
-            thetab = "no"
-        else:
-            thetab = "yes"
-        if my_mask[1] == "0":
-            phib = "no"
-        else:
-            phib = "yes"
-        if my_mask[3] == "0":
-            shxb = "no"
-        else:
-            shxb = "yes"
-        if my_mask[4] == "0":
-            shyb = "no"
-        else:
-            shyb = "yes"
+    if (
+        mp["refine_fssnr"]
+        and os.path.exists("statistics_r%02d.txt" % ref)
+        and len(open("statistics_r%02d.txt" % ref).read()) > 0
+    ):
+        stats = "yes"
+    else:
+        stats = "no"
+    
+    if mp["refine_priors"]:
+        use_priors = "yes"
+    else:
+        use_priors = "no"
 
-        if (
-            mp["refine_fssnr"]
-            and os.path.exists("statistics_r%02d.txt" % ref)
-            and len(open("statistics_r%02d.txt" % ref).read()) > 0
-        ):
-            stats = "yes"
-        else:
-            stats = "no"
+    if project_params.param(mp["class_focusmask"], i) == "0,0,0,0":
+        masking = "no"
+    else:
+        masking = "yes"
+    if "t" in project_params.param(mp["refine_fdef"], i).lower():
+        defocus = "yes"
+        def_range = mp["csp_ToleranceMicrographDefocus1"]
+    else:
+        defocus = "no"
+        def_range = "500"
 
-        if project_params.param(mp["refine_focusmask"], i) == "0,0,0,0":
-            masking = "no"
-        else:
-            masking = "yes"
-        if "t" in project_params.param(mp["refine_fdef"], i).lower():
-            defocus = "yes"
-        else:
-            defocus = "no"
-        if "t" in project_params.param(mp["refine_fmatch"], i).lower():
-            match = "yes"
-        else:
-            match = "no"
-        if mp["refine_invert"]:
-            invert = "yes"
-        else:
-            invert = "no"
+    if "t" in project_params.param(mp["refine_fmatch"], i).lower():
+        match = "yes"
+    else:
+        match = "no"
+    if mp["refine_invert"]:
+        invert = "yes"
+    else:
+        invert = "no"
 
-        if project_params.param(mp["refine_mode"], i) == "1":
-            globally = "no"
-            locally = "yes"
-        else:
-            globally = "yes"
-            locally = "no"
+    if project_params.param(mp["refine_mode"], i) == "1":
+        globally = "no"
+        locally = "yes"
+    else:
+        globally = "yes"
+        locally = "no"
 
-        # set radius for global search
-        if project_params.param(mp["refine_srad"], i) == "0":
-            srad = str(1.5 * float(mp["particle_rad"]))
-        else:
-            srad = project_params.param(mp["refine_srad"], i)
+    # set radius for global search
+    if project_params.param(mp["refine_srad"], i) == 0:
+        srad = str(1.5 * mp["particle_rad"])
+    else:
+        srad = str(project_params.param(mp["refine_srad"], i))
 
-        boost = "30.0"
-        if mp["refine_fboost"]:
-            boost = mp["refine_fboostlim"]
+    boost = "30.0"
+    if mp["refine_fboost"]:
+        boost = str(mp["refine_fboostlim"])
 
-        if project_params.param(mp["reconstruct_norm"], i):
-            normalize = "yes"
-        else:
-            normalize = "no"
+    mask_2d_x, mask_2d_y, mask_2d_z, mask_2d_rad = project_params.param(
+        mp["class_focusmask"], i
+    ).split(",")
+    
+    #classification using weighted averages when do frames.
+    # TODO: should mostly used for tomo
+    if mp["class_num"] >1 and "local" in mp["extract_fmt"] and "spr" in mp["data_mode"]:
+        stack = "stack_weighted_average.mrc"
+    else:
+        stack = "stack.mrc"
 
+    ###############
+    ### cistem2 ###
+    ###############
+
+    if project_params.param(mp["reconstruct_norm"], i):
+        normalize = "yes"
+    else:
+        normalize = "no"
+
+    if (
+        mp["refine_fssnr"]
+        and os.path.exists("statistics_r%02d.txt" % ref)
+        and len(open("statistics_r%02d.txt" % ref).read()) > 0
+    ):
+        stats = "yes"
+    else:
+        stats = "no"
+
+    edges = "no"
+    normalize_rec = "no"
+    thresh_rec = "no"
+
+    if not refine_beam_tilt:
+        # refine3d 
         command = (
             "{0}/refine3d << eot >>{1} 2>&1\n".format(
-                frealign_paths["frealignx"], logfile
+                frealign_paths["cistem2"], logfile
             )
-            + "{0}/{1}_stack.mrc\n".format(stack_dir, fp["refine_dataset"])
-            + "{0}.par\n{1}_{2}.mrc\n".format(name, dataset, "%02d" % (i - 1))
+            + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
+            + f"{name}.cistem\n{global_stat}\n{name}.mrc\n"
             + "statistics_r%02d.txt\n" % ref
             + stats
             + "\n"
-            + "{0}_match.mrc_{1}\n{0}.par_{1}\n/dev/null\n".format(name, ranger)
-            + project_params.param(mp["particle_sym"], i)
+            + use_priors
             + "\n"
-            + "{0}\n{1}\n".format(first, last)
-            + "1.0\n"
-            + "{0}\n{1}\n{2}\n{3}\n{4}\n".format(
-                pixel,
-                mp["scope_voltage"],
-                mp["scope_cs"],
-                mp["scope_wgh"],
-                mp["particle_mw"],
+            + "{0}_match.mrc_{1}\n{0}_{1}.cistem\n{0}_{1}_changes.cistem\n".format(
+                name, ranger
             )
-            + "0\n"
-            + mp["particle_rad"]
+            + str(project_params.param(fp["particle_sym"], i))
             + "\n"
-            + project_params.param(mp["refine_rlref"], i)
+            + "{0}\n{1}\n1\n".format(first, last)
+            + "{0}\n{1}\n".format(pixel, mp["particle_mw"])
+            + "0\n"
+            + str(mp["particle_rad"])
+            + "\n"
+            + str(project_params.param(mp["refine_rlref"], i))
             + "\n"
             + str(postprocess.get_rhref(mp, i))
             + "\n"
             + boost
             + "\n"
-            + project_params.param(mp["class_rhcls"], i)
+            + str(project_params.param(mp["class_rhcls"], i))
             + "\n"
             + srad
             + "\n"
             + str(postprocess.get_rhref(mp, i))
             + "\n"
-            + project_params.param(mp["refine_dang"], i)
+            + str(project_params.param(mp["refine_dang"], i))
             + "\n"
             + "20\n"
-            + project_params.param(mp["refine_searchx"], i)
+            + str(project_params.param(mp["refine_searchx"], i))
             + "\n"
-            + project_params.param(mp["refine_searchy"], i)
+            + str(project_params.param(mp["refine_searchy"], i))
             + "\n"
-            + "\n".join(project_params.param(mp["refine_focusmask"], i).split(","))
+            + "\n".join(project_params.param(mp["class_focusmask"], i).split(","))
             + "\n"
-            + "500.0\n"
-            + "50.0\n"
-            + project_params.param(mp["refine_iblow"], i)
+            + "%s\n" % def_range # defocus_search_range
+            + "50.0\n" # defocus_step
+            + str(project_params.param(mp["refine_iblow"], i))
             + "\n"
             + globally
             + "\n"
@@ -5238,11 +4030,60 @@ eot
             + "\n"
             + invert
             + "\n"
-            + "yes\n"
-            + "yes\n"
-            + "no\n"
-            + "eot\n"
+            + edges
+            + "\n"
+            + normalize_rec
+            + "\n"
+            + thresh_rec
+            + "\neot\n"
         )
+    else:
+        beam_tilt = "yes"
+        # refine_ctf
+        command = (
+        "{0}/refine_ctf << eot >>{1} 2>&1\n".format(
+            frealign_paths["cistem2"], logfile
+        )
+        + "{0}/{1}_stack.mrc\n".format(stack_dir, mp["refine_dataset"])
+        + f"{name}.cistem\n{name}.mrc\n"
+        + "statistics_r%02d.txt\n" % ref
+        + stats
+        + "\n"
+        + "{0}_{1}_refined_ctf.star\n{0}_{1}_changes.star\n".format(
+            name, ranger
+        )
+        + f"{name}_phase_difference.mrc\n"
+        + f"{name}_beamtilt_image.mrc\n"
+        + f"{name}_difference_image.mrc\n"
+        + "{0}\n{1}\n".format(first, last)
+        + "{0}\n{1}\n".format(pixel, mp["particle_mw"])
+        + "0\n"
+        + str(mp["particle_rad"])
+        + "\n"
+        + str(project_params.param(mp["refine_rlref"], i))
+        + "\n"
+        + str(postprocess.get_rhref(mp, i))
+        + "\n"
+        + "%s\n" % def_range # defocus_search_range
+        + "50.0\n" # defocus_step
+        + str(project_params.param(mp["refine_iblow"], i))
+        + "\n"
+        + defocus
+        + "\n"
+        + beam_tilt
+        + "\n"
+        + normalize
+        + "\n"
+        + invert
+        + "\n"
+        + edges
+        + "\n"
+        + normalize_rec
+        + "\n"
+        + thresh_rec
+        + "\n"
+        + "eot"
+    )
 
     return command
 
@@ -5581,7 +4422,7 @@ def refine_ctf(mp, fp, i, ref):
     else:
         stats = "no"
 
-    if project_params.param(fp["refine_focusmask"], i) == "0,0,0,0":
+    if project_params.param(fp["class_focusmask"], i) == "0,0,0,0":
         masking = "no"
     else:
         masking = "yes"
@@ -5654,6 +4495,48 @@ def refine_ctf(mp, fp, i, ref):
 
     frealign_paths = get_frealign_paths()
 
+    """
+            **   Welcome to RefineCTF   **
+
+                Version : 1.00
+                Compiled : Mar 27 2020
+                    Mode : Interactive
+
+    Input particle images [../pyp_frames_stack.mrc]    :
+    Input cisTEM star filename
+    [pyp_frames_r01_03.star]                           :
+    Input reconstruction [pyp_frames_r01_02.mrc]       :
+    Input data statistics [my_statistics.txt]          :
+    Use statistics [no]                                :
+    Output star file [my_refined_parameters.star]      :
+    Output parameter changes
+    [my_parameter_changes.par]                         :
+    Output phase difference image
+    [my_phase_difference.mrc]                          :
+    Output beam tilt image [my_beamtilt_image.mrc]     :
+    Output phase diff - beam tilt
+    [my_difference_image.mrc]                          :
+    First particle to refine (0 = first in stack) [1]  :
+    Last particle to refine (0 = last in stack) [0]    :
+    Pixel size of reconstruction (A) [1.0]             :
+    Molecular mass of particle (kDa) [1000.0]          :
+    Inner mask radius (A) [0.0]                        :
+    Outer mask radius (A) [100.0]                      :
+    Low resolution limit (A) [300.0]                   :
+    High resolution limit (A) [8.0]                    :
+    Defocus search range (A) [500.0]                   :
+    Defocus step (A) [50.0]                            :
+    Tuning parameters: padding factor [1.0]            :
+    Refine defocus [No]                                : yes
+    Estimate beamtilt [No]                             : yes
+    Normalize particles [Yes]                          :
+    Invert particle contrast [No]                      :
+    Exclude images with blank edges [Yes]              :
+    Normalize input reconstruction [Yes]               :
+    Threshold input reconstruction [No]                :
+    Max. threads to use for calculation [1]            :
+    """
+
     command = (
         "{0}/refine_ctf << eot >>{1} 2>&1\n".format(frealign_paths["cistem2"], logfile)
         + "../{}_stack.mrc\n".format(fp["refine_dataset"])
@@ -5696,53 +4579,18 @@ def refine_ctf(mp, fp, i, ref):
         + "\n"
         + threads
         + "\n"
-        + "eot\n"
+        + "eot"
     )
 
-    local_run.run_shell_command(command)
+    local_run.run_shell_command(command,verbose=mp["slurm_verbose"])
 
-
-"""
-        **   Welcome to RefineCTF   **
-
-             Version : 1.00
-            Compiled : Mar 27 2020
-                Mode : Interactive
-
-Input particle images [../pyp_frames_stack.mrc]    :
-Input cisTEM star filename
-[pyp_frames_r01_03.star]                           :
-Input reconstruction [pyp_frames_r01_02.mrc]       :
-Input data statistics [my_statistics.txt]          :
-Use statistics [no]                                :
-Output star file [my_refined_parameters.star]      :
-Output parameter changes
-[my_parameter_changes.par]                         :
-Output phase difference image
-[my_phase_difference.mrc]                          :
-Output beam tilt image [my_beamtilt_image.mrc]     :
-Output phase diff - beam tilt
-[my_difference_image.mrc]                          :
-First particle to refine (0 = first in stack) [1]  :
-Last particle to refine (0 = last in stack) [0]    :
-Pixel size of reconstruction (A) [1.0]             :
-Molecular mass of particle (kDa) [1000.0]          :
-Inner mask radius (A) [0.0]                        :
-Outer mask radius (A) [100.0]                      :
-Low resolution limit (A) [300.0]                   :
-High resolution limit (A) [8.0]                    :
-Defocus search range (A) [500.0]                   :
-Defocus step (A) [50.0]                            :
-Tuning parameters: padding factor [1.0]            :
-Refine defocus [No]                                : yes
-Estimate beamtilt [No]                             : yes
-Normalize particles [Yes]                          :
-Invert particle contrast [No]                      :
-Exclude images with blank edges [Yes]              :
-Normalize input reconstruction [Yes]               :
-Threshold input reconstruction [No]                :
-Max. threads to use for calculation [1]            :
-"""
+    logger.warning(mp.get("slurm_verbose"))
+    logger.warning(logfile)
+    logger.warning(len(logfile))
+    logger.warning(os.path.exists(logfile))
+    if mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile):
+        with open( logfile[0] ) as output:
+            logger.info("\n".join([s for s in output.read().split("\n") if s]))
 
 
 def create_initial_model(parameters, actual_pixel, box_size, local_parameters):
@@ -5979,7 +4827,7 @@ eot
 
         plot_name = "maps/" + current + "_snr.png"
 
-        postprocess.smooth_part_fsc(
+        postprocess.tanh_part_fsc(
             str(stats_file_name), plot_name
         )  # TODO: safe to pass Path here?
 

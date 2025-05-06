@@ -6,4 +6,4 @@
 pyp=`dirname "$0"`/pyp
 
 # always use csp_no_stacks
-clean=clean $pyp "$@"
+clean=clean $pyp -csp_no_stacks "$@"

@@ -24,34 +24,47 @@ def get_pyp_configuration():
 
     return config
 
+def standalone_mode():
+    """Returns true when pyp is running in standalone mode
+    """    
+    config = get_pyp_configuration()
+    if ( "slurm" not in config or "host" not in config["slurm"] ) and not Web.exists:
+        return True
+    else:
+        return False
 
 def get_singularity_command(command, parameters, gpu=False):
 
     config = get_pyp_configuration()
 
-    binds = "-B " + ",".join(config["pyp"]["binds"])
-
-    if os.path.exists(config["pyp"]["scratch"]):
-        binds = binds + "," + config["pyp"]["scratch"]
-    elif os.path.exists(config["pyp"]["scratch"].split("$")[0]):
-        binds = binds + "," + config["pyp"]["scratch"].split("$")[0]
-
-    if "SINGULARITY_CONTAINER" in os.environ:
-        binds += " --no-home -B {0}/.ssh".format(os.environ["HOME"])
-
-    if "sources" in config["pyp"].keys():
-        binds += " -B {0}:/opt/pyp".format(config["pyp"]["sources"])
-
-    container = config["pyp"]["container"]
-
-    if gpu:
-        gpu_enbale = "--nv"
+    if standalone_mode():
+        command = (
+            f"mkdir -p {os.environ['PYP_SCRATCH']}; {command} {parameters}"
+        )
     else:
-        gpu_enbale = ""
+        binds = "-B " + ",".join(config["pyp"]["binds"]) if config["pyp"].get("binds") else ""
 
-    command = (
-        f"singularity --quiet --silent exec {gpu_enbale} {binds} {container} {command} {parameters}"
-    )
+        if os.path.exists(config["pyp"]["scratch"]):
+            binds = binds + "," + config["pyp"]["scratch"]
+        elif os.path.exists(config["pyp"]["scratch"].split("$")[0]):
+            binds = binds + "," + config["pyp"]["scratch"].split("$")[0]
+
+        if "SINGULARITY_CONTAINER" in os.environ:
+            binds += " --no-home -B {0}/.ssh".format(os.environ["HOME"])
+
+        if "sources" in config["pyp"].keys():
+            binds += " -B {0}:/opt/pyp".format(config["pyp"]["sources"])
+
+        container = config["pyp"]["container"]
+
+        if gpu:
+            gpu_enable = "--nv"
+        else:
+            gpu_enable = ""
+
+        command = (
+            f"mkdir -p {os.environ['PYP_SCRATCH']}; singularity --quiet --silent exec {gpu_enable} {binds} {container} {command} {parameters}"
+        )
 
     return command
 
@@ -136,7 +149,7 @@ def run_pyp(command, script=False, cpus=1, gpu=False):
         singularity_path = ""
         if "singularity" in get_pyp_configuration()["pyp"].keys():
             singularity_path = get_pyp_configuration()["pyp"]["singularity"]
-        elif "singularity" in get_pyp_configuration()["slurm"].keys():
+        elif "slurm" in get_pyp_configuration() and "singularity" in get_pyp_configuration()["slurm"].keys():
             singularity_path = get_pyp_configuration()["slurm"]["singularity"]
         if len(singularity_path) > 0:
             command = singularity_path + "; " + command

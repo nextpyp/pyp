@@ -16,6 +16,7 @@ from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
 from pyp.utils import flatten, get_relative_path, symlink_relative
+from pyp.inout.metadata import pyp_metadata
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -46,31 +47,36 @@ def save_micrograph_to_website(name,verbose=False):
         try:
             # scan the CTF info
             ctf_path = "%s.ctf" % name
-            ctf = None
             if os.path.exists(ctf_path):
                 ctf = Web.CTF(*[float(x[0]) for x in csv.reader(open(ctf_path, "r"))])
             else:
+                ctf = []
                 logger.warning("Cannot find ctf information to submit to database")
+            if len(ctf) == 0:
+               ctf = None
 
             # scan the AVGROT info
             avgrot_path = "%s_avgrot.txt" % name
-            avgrot = None
             if os.path.exists(avgrot_path):
                 avgrot = [Web.AVGROT(*x) for x in np.loadtxt(avgrot_path, comments="#").T]
             else:
+                avgrot = []
                 logger.warning("Cannot find avgrot information to submit to database")
+            if len(avgrot) == 0:
+                avgrot = None
 
             # scan motion info
             xf_path = "%s.xf" % name
-            xf = None
             if os.path.exists(xf_path):
                 xf = [Web.XF(*x) for x in np.loadtxt(xf_path, ndmin=2)]
             else:
+                xf = []
                 logger.warning("Cannot find xf information to submit to database")
-
+            if len(xf) == 0:
+                xf = None
+ 
             # scan particles info
             boxx_path = "%s.boxx" % name
-            boxx = None
             if os.path.exists(boxx_path):
                 boxx = [
                     Web.BOXX(x[0], x[1], x[2], x[3], int(x[4]), int(x[5]))
@@ -78,6 +84,8 @@ def save_micrograph_to_website(name,verbose=False):
                 ]
             else:
                 boxx = []
+            if len(boxx) == 0:
+                boxx = None
 
             # actually send the micrograph to the website
             Web().write_micrograph(name, ctf, avgrot, xf, boxx)
@@ -105,7 +113,7 @@ def save_tiltseries_to_website(name, metadata, verbose=False ):
             avgrot_path = "%s_avgrot.txt" % name
             avgrot = None
             if os.path.exists(avgrot_path):
-                avgrot = [Web.AVGROT(*x) for x in np.loadtxt(avgrot_path, comments="#").T]
+                avgrot = [Web.AVGROT(*x) for x in np.nan_to_num(np.loadtxt(avgrot_path, comments="#").T)]
 
             # scan motion info
             xf_path = "%s.xf" % name
@@ -193,6 +201,23 @@ def save_classes_to_website(name, metadata, verbose=False):
         except:
             logger.error("Failed to enter classes into database")
             raise
+
+def save_drgnmap_to_website(epoch, verbose=False):
+
+    # if there's no website, don't bother saving anything
+    if not Web.exists:
+        return
+    else:
+        try:
+            # actually send the reconstruction to the website
+            Web().write_tomo_drgn_convergence(epoch)
+
+            if verbose:
+                logger.info("Drgn map entered into database successfully")
+        except:
+            logger.error("Failed to enter Drgn map into database")
+            raise
+
 
 def save_to_database_daemon(name, current_path, parameters):
 
@@ -374,6 +399,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
         "webp/{0}_raw.webp",
         "mrc/{0}.mrc",
         "mrc/{0}.rec",
+        "mrc/{0}_seg.rec",
         "next/{0}.next",
         "next/{0}_exclude_views.next",
         "next/virion_thresholds.next",
@@ -388,6 +414,31 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
     # no need to transfer tomogram if re-doing reconstruction
     elif 'tomo_rec_force' in parameters and parameters['tomo_rec_force']:
         initial_files.remove("mrc/{0}.rec")
+
+    if parameters.get("tomo_ali_method") == "import" and os.path.exists(project_params.resolve_path(parameters["tomo_ali_import"])):
+        # cp .tlt .xf 
+        raw_tlt_file = name + ".rawtlt"
+        tlt_file = name + ".tlt"
+        xf_file = name + ".xf"
+        external_tlt = os.path.join(project_params.resolve_path(parameters["tomo_ali_import"]), tlt_file)
+        if os.path.exists(external_tlt):
+            logger.info(f"Import tilt-angles from: {external_tlt}")
+            shutil.copy2(external_tlt, working_path)
+            # also copy as .rawtlt
+            shutil.copy2(external_tlt, os.path.join(working_path,raw_tlt_file))
+        else:
+            raise Exception(f"No .tlt file found for {name} in import directory")
+
+        external_xf = os.path.join(project_params.resolve_path(parameters["tomo_ali_import"]), xf_file)
+        if os.path.exists(external_xf):
+            logger.info(f"Import tilt-series alignments from: {external_xf}")
+            shutil.copy2(external_xf, working_path)
+        else:
+            raise Exception(f"No .xf file found for {name} in import directory")
+
+        # read metadata and save into pickle file
+        data = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)
+        data.loadFiles()
 
     if "tomo_spk_files" in parameters:
         if os.path.exists(project_params.resolve_path(parameters["tomo_spk_files"])):
@@ -404,6 +455,8 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
     file_patterns = [
         f"sva/{name}_vir????_cut.txt",
         f"raw/{name}.order",  # retrieve order file for dose weighting
+        f"mrc/{name}_vir????_binned_nad.mrc",
+        f"mrc/{name}_vir????_binned_nad_seg.mrc"
     ]
 
     filelist = []
@@ -419,7 +472,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
             spk_file = os.path.join(spk_path, name + ".spk")
             dest = os.path.join(project_path, "mod", name + ".spk")
             if os.path.exists(spk_file) and not os.path.exists(dest):
-                print("Coping ", spk_file, " to ", dest)
+                print("Copying ", spk_file, " to ", dest)
                 shutil.copy2(spk_file, dest)
 
 
@@ -434,7 +487,7 @@ def save_tomo_results(name, parameters, current_path, verbose=False):
         name
     )
 
-    if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")):
+    if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")) and not os.path.exists(os.path.join(current_path,"mrc",name+".mrc")):
         symlink_relative(
             os.path.join(current_path,"raw",name+".mrc"),
             os.path.join(current_path,"mrc",name+".mrc")
@@ -464,7 +517,7 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
 
     files[
         "mrc"
-    ] = "{0}.rec {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
+    ] = "{0}.rec {0}_bin.ali {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
         name
     )
 
@@ -483,59 +536,35 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
     )
     files[
         "sva"
-    ] = "{0}_region_*.rec {0}_spk????.rec {0}_vir????_spk????.mrc {0}_vir????.txt {0}_vir????_cut.txt {0}_spk????.proj".format(
+    ] = "{0}_region_*.rec {0}_spk????.rec {0}_vir????_spk????.mrc {0}_vir????.txt {0}_vir????_cut.txt {0}_spk????.proj {0}_vir0000.rec".format(
         name
     )
+    if parameters.get("tomo_ext_coords"):
+        files["sva"] += " {0}.spk".format(name)
+
     files["pkl"] = "{0}.pkl".format(name)
 
     save_results(files, current_path, verbose=verbose)
-
 
 def load_csp_results(name, parameters, project_path, working_path, verbose=False):
     """Load existing results from previous runs and standard project parameter files
     into working_path."""
 
     initial_files = [
-        "ctf/{0}.ctf",
+        "mrc/{0}.mrc",
+        "pkl/{0}.pkl",
     ]
-
-    file_patterns = [
-        "box/{0}.box",  # needed by trajectory plotting after regularization 
-        "box/{0}.boxx",
-        "csp/{0}.allboxes",
-        "csp/{0}_local.allboxes",
-        "csp/{0}_boxes3d.txt"
-    ]
-
-    if "local" in parameters["extract_fmt"].lower():
-        file_patterns.append(f"ali/{name}_*.xf")
 
     filelist = []
     project_path_escape = Path(glob.escape(str(project_path)))
-    filelist += (str(project_path / f.format(name)) for f in initial_files)
-    filelist += flatten(
-        sorted(glob.glob(str(project_path_escape / f.format(name)))) for f in file_patterns
-    )
+    filelist += (str(project_path_escape / f.format(name)) for f in initial_files)
 
     load_results(filelist, project_path, working_path, verbose=verbose)
-
-    # this is not always strictly needed
-    load_tomo_results(name, parameters, project_path, working_path, verbose=verbose)
-
 
 def save_csp_results(name, parameters, current_path, verbose=False):
     """Save sp swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
-    iteration = parameters["refine_iter"]
-    if iteration == 2:
-        files[
-        "csp"
-        ] = "{0}.allboxes {0}_local.allboxes".format(name)
-    else:
-        files[
-            "csp"
-        ] = "{0}.allboxes {0}_local.allboxes".format(name)
-    files["csp"] += " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
+    files["csp"] = " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
 
     save_results(files, current_path, verbose=verbose)

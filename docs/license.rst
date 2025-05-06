@@ -2,14 +2,12 @@
 License
 =======
 
-``nextPYP`` is distributed under the open-source BSD 3-Clause license.
-
 BSD 3-Clause License
 --------------------
 
 .. code-block:: bash
 
-   Copyright (c) 2023, Alberto Bartesaghi
+   Copyright (c) 2025, Alberto Bartesaghi
 
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions are met:
@@ -40,12 +38,13 @@ BSD 3-Clause License
 Dependencies
 ------------
 
-``nextPYP`` uses functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_, `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_, `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_ and `Topaz <https://github.com/tbepler/topaz>`_.
+``nextPYP`` uses functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_, `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_, `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_, `Topaz <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_, `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_, and `pytom-match-pick <https://github.com/SBC-Utrecht/pytom-match-pick>`_.
+
 
 The corresponding licenses are reproduced below.
 
-cisTEM and CTFFIND4 license
-===========================
+cisTEM and CTFFIND4
+===================
 
 .. code-block:: bash
 
@@ -74,8 +73,8 @@ cisTEM and CTFFIND4 license
    OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
    OF THE POSSIBILITY OF SUCH DAMAGE.
 
-IMOD license
-============
+IMOD
+====
 
 .. code-block:: bash
 
@@ -203,8 +202,8 @@ IMOD license
       www:  http://bio3d.colorado.edu/imod/index.html
       University of Colorado, Dept. of MCD Biology, 347 UCB, Boulder, CO 80309
 
-AreTomo2 and MotioCor3 license
-==============================
+AreTomo2 and MotionCor3
+=======================
 
 .. code-block:: bash
 
@@ -234,7 +233,117 @@ AreTomo2 and MotioCor3 license
    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
    DAMAGE.
 
-Topaz license
-=============
+Topaz
+=====
 
-Topaz is distributed under the `GNU General Public License v3.0 <https://github.com/tbepler/topaz/blob/master/LICENSE>`_.
+Topaz is distributed under the `GNU General Public License v3.0 <https://github.com/tbepler/topaz/blob/master/LICENSE>`__.
+
+
+IsoNet
+======
+
+.. code-block:: bash
+
+    MIT License
+
+    Copyright (c) 2021 Yun-Tao Liu, Heng Zhang, Hui Wang
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+cryoCARE
+========
+
+.. code-block:: bash
+
+    BSD 3-Clause License
+
+    Copyright (c) 2020, juglab
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice, this
+      list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+    3. Neither the name of the copyright holder nor the names of its
+      contributors may be used to endorse or promote products derived from
+      this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+MemBrain-Seg
+============
+
+.. code-block:: bash
+  
+    BSD License
+
+    Copyright (c) 2023, Lorenz Lamm
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice, this
+      list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+    3. Neither the name of the copyright holder nor the names of its
+      contributors may be used to endorse or promote products derived from
+      this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+tomoDRGN
+========
+
+tomoDRGN is distributed under the `GNU General Public License v3.0 <https://github.com/bpowell122/tomodrgn/blob/master/LICENSE.txt>`__.
+
+
+pytom-match-pick
+================
+
+pytom-match-pick is distributed under the `GNU General Public License v2.0 <https://github.com/SBC-Utrecht/pytom-match-pick/blob/main/LICENSE>`__.

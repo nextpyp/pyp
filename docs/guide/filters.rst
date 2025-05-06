@@ -2,49 +2,48 @@
 Filter micrographs/tilt-series
 ==============================
 
-``nextPYP`` allows users to select a subset of micrographs or tilt-series for further processing through the use of **Filters**.
+**Filters** allow users to select a subset of micrographs or tilt-series to be processed downstream.
 
-Step 1: Create a filter
------------------------
+Creating filters
+----------------
 
-- Click inside the :badge:`Pre-processing,badge-secondary` block and go to the **Table** view.
+- Click inside the :bdg-secondary:`Pre-processing` block and go to the **Table** view.
 
-- Create a new filter by providing a name and clicking :badge:`Save,badge-primary`.
+- Create a new filter by providing a name and clicking :bdg-primary:`Save`.
 
-- Add new criteria to the filter using the :badge:`+Add,badge-primary` button.
+- Add new criteria to the filter using the :bdg-primary:`+Add` button.
 
-- Select the desired parameter from the dropdown list and set the range using the sliders.
+- Select the desired parameter from the dropdown list and set the desired range using the sliders.
 
-- Use :badge:`Apply filters,badge-primary` to preview the results of the filter.
+- Use :bdg-primary:`Apply filters` to preview the results of the filter.
 
-- You can also manually include or exclude individual micrographs or tilt-series using the **Exclude** column in the table. Shortcuts are provided to facilitate the labeling of large datasets: type **x** to exclude and **c** to include an image and advance to the next or previous entry in the table.
+- You can also manually include or exclude individual micrographs or tilt-series using the **Exclude** column in the table. Shortcuts are provided to facilitate the labeling of large datasets, for example, type **x** to exclude and **c** to include an image and advance to the next or previous entry in the table.
 
-- Once you are satisfied with the results, click :badge:`Save,badge-primary` to save the filter settings.
+- Once you are satisfied with the results, click :bdg-primary:`Save` to store the filter settings.
+
+Here is a screenshot showing the use of filters in the :bdg-secondary:`Pre-processing` block:
 
 .. figure:: ../images/guide_create_new_filter.webp
     :alt: Create new filter
 
-.. tip::
-    - You can create additional filters by providing a different name and clicking :badge:`Save,badge-primary`.
-    - Saved filters can be retrieved by clicking :badge:`Load,badge-primary` and selecting the name of the filter from the list.
-    - Once a filter is loaded, it can be edited or deleted by clicking :badge:`Delete,badge-primary` (this operation cannot be undone).
+.. admonition:: Tips
 
-Step 2: Apply the filter
-------------------------
+    - You can create multiple filters by providing a new name and clicking :bdg-primary:`Save`.
+    - Previously saved filters can be retrieved by clicking :bdg-primary:`Load` and selecting the name of the filter from a list.
+    - Once a filter is loaded, it can be edited, or deleted by clicking :bdg-primary:`Delete` (this operation cannot be undone).
 
-- Create a new refinement block downstream from the :badge:`Pre-processing,badge-secondary` block. Select the name of the desired filter from the **Filter micrographs** or **Filter tilt-series** dropdown menu, and click :badge:`Save,badge-primary`. When you execute the :badge:`Particle refinement,badge-secondary` block, only the micrographs (or tilt-series) selected by the filter will be used for the processing downstream.
+Applying filters
+----------------
+
+- Filters are applied to blocks downstream of the :bdg-secondary:`Pre-processing` block
+
+- Create a new block downstream from the :bdg-secondary:`Pre-processing` block. Select the name of the desired filter from the **Filter micrographs** or **Filter tilt-series** dropdown menu, and click :bdg-primary:`Save`. When you execute the new block, only the micrographs (or tilt-series) selected by the filter will be processed.
 
 .. figure:: ../images/guide_select_new_filter.webp
     :alt: Select filter
 
-.. tip::
-    - Filters do not work if you have previously executed the :badge:`Particle refinement,badge-secondary` block without using a filter or using a different filter (you need to create a new :badge:`Particle refinement,badge-secondary` block in this case).
+.. admonition:: Tips
 
-    - You can experiment using different subsets of micrographs or tilt-series by creating multiple :badge:`Particle refinement,badge-secondary` blocks and selecting a different filter for each block.
+    - Filters are only applied when first running blocks downstream of the :bdg-secondary:`Pre-processing` block. If a filter is updated or a different filter is selected, the option to ``Delete files and data`` must be selected before re-running the block (or a new block downstream of the :bdg-secondary:`Pre-processing` should be created).
 
-.. seealso::
-
-    * :doc:`Particle picking<picking>`
-    * :doc:`Visualization in ChimeraX/ArtiaX<chimerax_artiax>`
-    * :doc:`Neural-network picking<neural_network>`
-    * :doc:`Overview<overview>`
+    - You can experiment using different subsets of micrographs or tilt-series by creating multiple :bdg-secondary:`Particle refinement` blocks and selecting a different filter for each block.

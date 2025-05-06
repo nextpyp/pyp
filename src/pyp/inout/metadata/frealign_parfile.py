@@ -27,6 +27,7 @@ TODO
 
 from inspect import Parameter
 import os
+import glob
 import shutil
 from pathlib import Path
 
@@ -605,14 +606,55 @@ class Parameters:
             input += ".bz2"
         if input.endswith(".bz2"):
             # decompress file in local scratch directory
+            folder = Path(input).absolute().parent
             current_dir = os.getcwd()
-            os.chdir(os.environ["PYP_SCRATCH"])
+            try:
+                # try to go to local scratch first
+                os.chdir(os.environ["PYP_SCRATCH"])
+            except: 
+                # if we don't have permission or it does not exist, 
+                # try to go to the folder where the input is 
+                os.chdir(folder)
             Parameters.decompress_file(input, threads)
             output = os.path.join(os.getcwd(), Path(input).name[:-4])
             os.chdir(current_dir)
         else:
             output = input
         return output
+    
+    @staticmethod
+    def decompress_parameter_file_and_move(file: Path, new_file: Path, micrograph_list: list = [], threads=1):
+        # delete the file if it already exists in the new path
+        if new_file.exists():
+            if os.path.isdir(new_file): 
+                shutil.rmtree(new_file)
+            else:
+                raise Exception(f"Incompatible file format in {new_file}. If this file was produced by a version of nextPYP older than 0.7.0, you may need to run an additional refinement iteration and use the new parfile as input for this operation.")
+        
+        # decompress the file into folder
+        assert (str(file).endswith(".bz2")), f"{file} needs to be compressed in .bz2 format."
+        decompressed_file = Parameters.decompress_parameter_file(str(file), threads)
+        assert (os.path.isdir(decompressed_file)), f"{file} is not a folder after decompression."
+
+        # check if the folder contains all the parameter files
+        if len(micrograph_list) > 0:
+            for micrograph in micrograph_list:
+                if not (Path(decompressed_file) / f"{micrograph}.cistem").exists():
+                    logger.warning(f"No metadata for {micrograph} found in {file}")
+                else:
+                    assert ((Path(decompressed_file) / f"{micrograph}_extended.cistem").exists()), f"{micrograph}_extended.cistem is not in {file}."
+
+        os.makedirs(new_file, exist_ok=True)
+        files_to_transfer = glob.glob(os.path.join(decompressed_file,"*"))
+        arguments = []
+        for file in files_to_transfer:
+            arguments.append((file,os.path.join(new_file,Path(file).name)))
+        if len(files_to_transfer) > 500:
+            logger.info(f"Copying metadata to project directory")
+            silent = False
+        else:
+            silent = True
+        mpi.submit_function_to_workers(shutil.move,arguments=arguments,silent=silent)
 
     @staticmethod
     def write_parameter_file(output_fname, contents, parx=False, frealignx=False):
@@ -747,7 +789,7 @@ class Parameters:
             commands.append("grep '^[^C]' '%s' > '%s' && cut -c%d-%d '%s' > '%s' && cut -c%d-%d '%s' > '%s'" % (parfile, parfile + '.tmp',
                                                                                                     section1_start, section1_end, parfile + '.tmp', f"{idx}_1.tmp",
                                                                                                     section2_start, section2_end, parfile + '.tmp', f"{idx}_2.tmp"))
-        mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
+        mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True, verbose=False)
 
         # update (write) INDEX, FILM columns for each parfile
         if frealignx:

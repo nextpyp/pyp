@@ -11,14 +11,15 @@ import sys
 import time
 from pathlib import Path
 from traceback import FrameSummary
+from tqdm import tqdm
 
 import numpy as np
 from pyp.streampyp.web import Web
-import pyp.streampyp.metadb_daemon
+from pyp.streampyp.logging import TQDMLogger
 from pyp.analysis import plot
 from pyp.inout.image import compress_and_delete
 from pyp.inout.image import digital_micrograph as dm4
-from pyp.system import project_params, slurm, user_comm, set_up
+from pyp.system import project_params, slurm, mpi, set_up
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
@@ -38,7 +39,7 @@ def pyp_daemon(args):
         model = None
     camera = args["stream_camera_profile"]
     scope = args["stream_scope_profile"]
-    session = args["stream_session_name"]
+    session = args["stream_session_name"] or os.path.split(args["stream_transfer_target"])[-1]
     if "detect_rad" in args.keys():
         particle_rad = args["detect_rad"]
     else:
@@ -53,9 +54,12 @@ def pyp_daemon(args):
         data_dir = output_dir
     else:
         data_dir = config["stream"]["target"]
-    session_dir = os.path.join(
-        data_dir, args["stream_session_group"], args["stream_session_name"]
-    )
+    if args.get("stream_session_group") != None and args.get("stream_session_name") != None:
+        session_dir = os.path.join(
+            data_dir, args["stream_session_group"], args["stream_session_name"]
+        )
+    else:
+        session_dir = data_dir
     raw_dir = os.path.join(session_dir, "raw")
     swarm_dir = os.path.join(session_dir, "swarm")
 
@@ -128,6 +132,10 @@ def pyp_daemon(args):
         # load and set default PYP parameters
         parameters = project_params.load_pyp_parameters(session_dir)
 
+    for key in parameters:
+        if key.endswith("_force") and parameters[key]:
+            parameters[key] = False
+
     parameters["data_set"] = session
 
     # run only one job per node
@@ -180,7 +188,7 @@ def pyp_daemon(args):
                 queue=queue,
                 scratch=0,
                 threads=parameters["slurm_class2d_tasks"],
-                memory=parameters["slurm_class2d_memory"],
+                memory=parameters["slurm_class2d_tasks"]*parameters["slurm_class2d_memory_per_task"],
                 gres=parameters["slurm_class2d_gres"],
                 account=parameters.get("slurm_class2d_account"),
                 walltime=parameters["slurm_class2d_walltime"],
@@ -195,17 +203,14 @@ def pyp_daemon(args):
     if os.path.exists(stop_flag):
         os.remove(stop_flag)
 
-    logger.info("Entering loop %s", raw_dir)
+    logger.info("Watching for new files in: %s", raw_dir)
     # Look for new and unprocesed data for a maximum of timeout days
 
-    daemon_start_time = time.time()
     current_count = 0
 
     import toml
 
-    while time.time() - daemon_start_time < datetime.timedelta(
-        days=args["stream_session_timeout"]
-    ).total_seconds() and not os.path.exists(stop_flag):
+    while not os.path.exists(stop_flag):
 
         restart_or_clean = False
 
@@ -230,6 +235,7 @@ def pyp_daemon(args):
 
             # read specification file
             specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+            
             # figure out which parameters need to be added and set as default values
             for t in specifications["tabs"].keys():
                 if not t.startswith("_"):
@@ -239,10 +245,17 @@ def pyp_daemon(args):
                             if "default" in specifications["tabs"][t][p]:
                                 new_parameters[f"{t}_{p}"] = specifications["tabs"][t][p]["default"]
 
+            for key in new_parameters:
+                if key.endswith("_force") and new_parameters[key]:
+                    new_parameters[key] = False
+
+            if "extract_bnd" in new_parameters.keys() and isinstance(args["extract_bnd"], dict) and "ref" in new_parameters["extract_bnd"].keys():
+                new_parameters["extract_bnd"] = new_parameters["extract_box"]
+
             parameters = project_params.parameter_force_check(previous_parameters, new_parameters, project_dir=session_dir)
 
             # update args
-            for key in { k for k in args.keys() & parameters.keys() if args[k] != parameters[k] }:
+            for key in { k for k in args.keys() & parameters.keys() if args[k] != parameters[k] and not k.endswith("_force") }:
                 args[key] = parameters[key]
 
             if (
@@ -253,23 +266,17 @@ def pyp_daemon(args):
                 parameters["tomo_vir_force"] or
                 parameters["tomo_ali_force"]
             ):
-                # there is no longer need to clean the metadata since we are relying on _force parameters now
-                # clean_pkl_items(parameters, namelist, session_dir)
-
                 # create a flag for fyp restart
                 Path(os.path.join(session_dir, "fypd.restart")).touch()
 
                 alreadysubmitted = []
 
-                # remove corresponding image files so refinement daemon can keep track of images that are ready to be processed
-                if "spr" in args["data_mode"]:
-                    [ os.remove(f) for f in glob.glob( os.path.join( session_dir, "mrc", "*.mrc" ) ) ]
-                else:
-                    [ os.remove(f) for f in glob.glob( os.path.join( session_dir, "mrc", "*.rec" ) ) ]
+                # edit metadata to force recalculations as needed
+                clean_pkl_items(parameters, namelist, session_dir)
 
                 restart_or_clean = True
             else:
-                logger.info("Nothing changed in parameters, history files won't change")
+                logger.info("No parameter changes detected, no need for updates")
 
             try:
                 os.remove(restart_flag)
@@ -315,6 +322,7 @@ def pyp_daemon(args):
             for key in different_values:
                 parameters[key] = new_parameters[key]
                 args[key] = new_parameters[key]
+            
             try:
                 filelist = glob.glob( os.path.join( session_dir, "ctf", "*.*" ) )
                 filelist += glob.glob( os.path.join( session_dir, "mrc", "*.*" ) )
@@ -336,6 +344,15 @@ def pyp_daemon(args):
 
         # turn off "_force" parameters after cleaning/restart so next time won't trigger unnecessary procedure
         if restart_or_clean:
+
+            if "extract_bnd" in args.keys() and isinstance(args["extract_bnd"], dict) and "ref" in args["extract_bnd"].keys():
+                args["extract_bnd"] = args["extract_box"]
+
+            # disable the _force parameters in the configure file
+            for key in args:
+                if key.endswith("_force") and args[key]:
+                    args[key] = False
+
             '''
             for key in args:
                 if "_force" in key and any(
@@ -365,6 +382,9 @@ def pyp_daemon(args):
                 all_files = [ Path(s).name for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path_mdoc"])).suffix ) ) ]
             else:
                 all_files = [ Path(s).stem for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path"])).suffix ) ) ]
+            if parameters["stream_compress"] != "none" and restart_or_clean:
+                all_files += [ Path(s).stem for s in glob.glob( os.path.join( session_dir, "raw", "*." + parameters["stream_compress"] ) ) ]
+
             for f in all_files:
                 if args["gain_reference"]:
                     isgain = f == Path(project_params.resolve_path(args["gain_reference"])).stem or "gain" in f.lower()
@@ -417,7 +437,7 @@ def pyp_daemon(args):
                             try:
                                 name = re.match(r, f).group(1)
                             except:
-                                raise Exception("Could not determine tilt-series name")
+                                raise Exception(f"Could not determine tilt-series name from {f} using pattern {args['movie_pattern']}")
                         else:
                             name = f
                         # check that all files are present
@@ -435,10 +455,8 @@ def pyp_daemon(args):
                         if args["slurm_verbose"]:
                             logger.info("Adding {0} to queue".format(name))
                         tobesubmitted.append(name)
-                        if len(tobesubmitted) > 10:
-                            break
 
-                        # generate rawtlt file for this tilt-series
+                        # generate rawtlt or order files for this tilt-series
                         if "tomo" in args["data_mode"]:
                             tilts = args["stream_tilt_angles"].split(",") if "stream_tilt_angles" in args else 0
                             if len(tilts) > 1 and tilts != 0:
@@ -453,8 +471,8 @@ def pyp_daemon(args):
                                     for order in orders:
                                         order_file.write( order + "\n" )
 
-                        # cap number of jobs submitted
-                        if args["slurm_bundle_size"] > 1 and len(tobesubmitted) == args["slurm_bundle_size"]:
+                        # cap number of jobs submitted, except when restart or clean flags were raised
+                        if len(tobesubmitted) >= args["slurm_bundle_size"] and not restart_or_clean:
                             break
 
         # Submit jobs to swarm
@@ -494,7 +512,7 @@ def pyp_daemon(args):
                 jobname=args["data_mode"]+"_session",
                 queue=queue,
                 threads=args["slurm_tasks"],
-                memory=args["slurm_memory"],
+                memory=args["slurm_tasks"]*args["slurm_memory_per_task"],
                 gres=parameters["slurm_gres"],
                 account=args.get("slurm_account"),
                 walltime=args.get("slurm_merge_walltime"),
@@ -536,9 +554,12 @@ def pyp_daemon_process(args,):
         data_dir = output_dir
     else:
         data_dir = config["stream"]["target"]
-    session_dir = os.path.join(
-        data_dir, args["stream_session_group"], args["stream_session_name"]
-    )
+    if args.get("stream_session_group") != None and args.get("stream_session_name") != None:
+        session_dir = os.path.join(
+            data_dir, args["stream_session_group"], args["stream_session_name"]
+        )
+    else:
+        session_dir = data_dir
     raw_dir = os.path.join(session_dir, "raw")
 
     # movies = frames > 1
@@ -570,23 +591,25 @@ def pyp_daemon_process(args,):
                 )
         '''
 
-        # extract tilt-angles from dm4 header before compressing
+        # extract tilt-angles from dm4 header before compressing, if needed
         data_path = Path(project_params.resolve_path(parameters["data_path"]))
 
-        if data_path.suffix == ".dm4" and "tomo" in parameters["data_mode"].lower():
+        rawtlt_file = os.path.join( raw_dir, name + ".rawtlt" )
+        if data_path.suffix == ".dm4" and "tomo" in parameters["data_mode"].lower() and not os.path.exists(rawtlt_file):
             tilt_angles = []
             for i in sorted( glob.glob( os.path.join( raw_dir, name + "*" + data_path.suffix ) ) ):
                 dm = dm4.DigitalMicrographReader(i)
                 tilt_angles.append( float(dm.get_tilt_angles()) )
-            with open( os.path.join( raw_dir, name + ".rawtlt" ),'w' ) as f:
+            with open( rawtlt_file,'w' ) as f:
                 for item in tilt_angles:
                     f.write("%s\n" % item)
 
         if 'stream_compress' in args and args['stream_compress'] != "none":
+            arguments = []
             for i in glob.glob( os.path.join( raw_dir, name + "*" + data_path.suffix ) ):
-                compress_and_delete(
-                    Path(i).with_suffix(""), args['stream_compress'], data_path.suffix
-                )
+                arguments.append(((Path(i).with_suffix(""), args['stream_compress'], data_path.suffix)))
+            if len(arguments) > 0:
+                mpi.submit_function_to_workers(compress_and_delete,arguments=arguments,verbose=parameters["slurm_verbose"])
         else:
 
             # simply remove signal files
@@ -626,106 +649,117 @@ def clean_pkl_items(parameters, namelist, current_path):
 
     first = True
     if not is_spr:
-        for name in namelist:
-            # loading pkl file
-            pklname = os.path.join(current_path, "pkl", name + ".pkl")
-            if os.path.exists(pklname):
-                metadata_object = pyp_metadata.LocalMetadata(pklname, is_spr=is_spr)
-                metadata = metadata_object.data
-                meta_update = False
+        with tqdm(desc="Progress", total=len(namelist), file=TQDMLogger()) as pbar:
+            for name in namelist:
+                # loading pkl file
+                pklname = os.path.join(current_path, "pkl", name + ".pkl")
+                if os.path.exists(pklname):
+                    metadata_object = pyp_metadata.LocalMetadata(pklname, is_spr=is_spr)
+                    metadata = metadata_object.data
+                    meta_update = False
 
-                if "ctf_force" in parameters and parameters["ctf_force"]:
-                    if first:
-                        logger.info(
-                            f"CTF parameters will be re-computed"
-                        )
-                    if "ctf" in metadata:
-                        del metadata["ctf"]
-                        meta_update = True
-
-                if "tomo_ali_force" in parameters and parameters["tomo_ali_force"]:
-                    if first:
-                        logger.info(
-                            f"Movie alignments will be re-computed"
-                        )
-                    if "ali" in metadata:
-                        del metadata["ali"]
-                        meta_update = True
-                if "movie_force" in parameters and parameters["movie_force"]:
-                    if first:
-                        logger.info(
-                            f"Movie drift parameters will be re-computed"
-                        )
-                    if "drift" in metadata:
-                        del metadata["drift"]
-                        meta_update = True
-                if "tomo_vir_force" in parameters and parameters["tomo_vir_force"] or parameters["tomo_vir_method"] == "none":
-                    if "vir" in metadata:
+                    if "ctf_force" in parameters and parameters["ctf_force"]:
                         if first:
                             logger.info(
-                                f"Virion parameters will be re-computed"
+                                f"CTF parameters will be re-computed"
                             )
-                        del metadata["vir"]
-                        meta_update = True
-                    [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mrc",name+"_vir????_binned_nad.*") ) ]
-                    [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
-                if "detect_force" in parameters and parameters["detect_force"] or parameters["tomo_spk_method"] != "none":
-                    if first:
-                        logger.info(
-                            f"Particle parameters will be re-computed"
-                        )
-                    if "box" in metadata:
-                        del metadata["box"]
-                        meta_update = True
-                    [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
-                    [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mod",name+".spk") ) ]
+                        if "ctf" in metadata:
+                            del metadata["ctf"]
+                            meta_update = True
+                        if "global_ctf" in metadata:
+                            del metadata["global_ctf"]
+                        if "ctf_avrot" in metadata:
+                            del metadata["ctf_avrot"]
+                        if "ts_ctf_avgrot" in metadata:
+                            del metadata["ts_ctf_avgrot"]
 
-                # update current pkl file
-                if meta_update:
-                    metadata_object.write()
+                    if "tomo_ali_force" in parameters and parameters["tomo_ali_force"]:
+                        if first:
+                            logger.info(
+                                f"Tilt-series alignments will be re-computed"
+                            )
+                        if "ali" in metadata:
+                            del metadata["ali"]
+                            meta_update = True
+                    
+                    if "movie_force" in parameters and parameters["movie_force"] and not parameters["movie_no_frames"]:
+                        if first:
+                            logger.info(
+                                f"Movie drift parameters will be re-computed"
+                            )
+                        if "drift" in metadata:
+                            del metadata["drift"]
+                            meta_update = True
 
-                first = False
+                    if "tomo_vir_force" in parameters and parameters["tomo_vir_force"] or parameters["tomo_vir_method"] == "none":
+                        if "vir" in metadata:
+                            if first:
+                                logger.info(
+                                    f"Virion parameters will be re-computed"
+                                )
+                            del metadata["vir"]
+                            meta_update = True
+                        [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mrc",name+"_vir????_binned_nad.*") ) ]
+                        [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
+
+                    if "detect_force" in parameters and parameters["detect_force"] or parameters["tomo_spk_method"] != "none":
+                        if first:
+                            logger.info(
+                                f"Particle parameters will be re-computed"
+                            )
+                        if "box" in metadata:
+                            del metadata["box"]
+                            meta_update = True
+                        [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
+                        [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mod",name+".spk") ) ]
+
+                    # update current pkl file
+                    if meta_update:
+                        metadata_object.write()
+
+                    first = False
+                pbar.update(1)
 
     else:
-        for name in namelist:
-            # loading pkl file
-            pklname = os.path.join(current_path, "pkl", name + ".pkl")
-            if os.path.exists(pklname):
-                metadata_object = pyp_metadata.LocalMetadata(pklname, is_spr=is_spr)
-                metadata = metadata_object.data
-                meta_update = False
+        with tqdm(desc="Progress", total=len(namelist), file=TQDMLogger()) as pbar:
+            for name in namelist:
+                # loading pkl file
+                pklname = os.path.join(current_path, "pkl", name + ".pkl")
+                if os.path.exists(pklname):
+                    metadata_object = pyp_metadata.LocalMetadata(pklname, is_spr=is_spr)
+                    metadata = metadata_object.data
+                    meta_update = False
 
-                if "ctf_force" in parameters and parameters["ctf_force"]:
-                    if first:
-                        logger.info(
-                            f"CTF parameters will be re-computed"
-                        )
-                    if "ctf" in metadata:
-                        del metadata["ctf"]
-                        meta_update = True
+                    if "ctf_force" in parameters and parameters["ctf_force"]:
+                        if first:
+                            logger.info(
+                                f"CTF parameters will be re-computed"
+                            )
+                        if "ctf" in metadata:
+                            del metadata["ctf"]
+                            meta_update = True
 
-                if "movie_force" in parameters and parameters["movie_force"]:
-                    if first:
-                        logger.info(
-                            f"Movie drift parameters will be re-computed"
-                        )
-                    if "drift" in metadata:
-                        del metadata["drift"]
-                        meta_update = True
+                    if "movie_force" in parameters and parameters["movie_force"]:
+                        if first:
+                            logger.info(
+                                f"Movie drift parameters will be re-computed"
+                            )
+                        if "drift" in metadata:
+                            del metadata["drift"]
+                            meta_update = True
 
-                if "detect_force" in parameters and parameters["detect_force"]:
-                    if first:
-                        logger.info(
-                            f"Particle parameters will be re-computed"
-                        )
-                    if "box" in metadata:
-                        del metadata["box"]
-                        meta_update = True
+                    if "detect_force" in parameters and parameters["detect_force"]:
+                        if first:
+                            logger.info(
+                                f"Particle parameters will be re-computed"
+                            )
+                        if "box" in metadata:
+                            del metadata["box"]
+                            meta_update = True
 
-                # update current pkl file
-                if meta_update:
-                    metadata_object.write()
+                    # update current pkl file
+                    if meta_update:
+                        metadata_object.write()
 
-                first = False
-
-
+                    first = False
+                pbar.update(1)

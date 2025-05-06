@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import shutil
 import subprocess
+from statistics import median
 import sys
 from pathlib import Path
 
@@ -14,7 +15,7 @@ from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, get_frealign_paths
 from pyp.system.wrapper_functions import newstack
-from pyp.utils import get_relative_path
+from pyp.utils import get_relative_path, timer
 
 from .. import metadata
 from . import digital_micrograph as dm4
@@ -868,7 +869,9 @@ def get_image_dimensions(name):
 
     command = "{0}/bin/header -size '{1}'".format(get_imod_path(), name)
     [output, error] = run_shell_command(command, verbose=False)
-    return [int(num) for num in output.split()]
+    if "ERROR" in output:
+        logger.error(output)
+    return list(map(int, output.split()))
 
 
 def get_image_mode(name):
@@ -970,13 +973,13 @@ def readMoviefileandsave(filename, parameters, binning, gain_reference_file=None
                 os.remove(inputfile)
         """
         elif mode <= 1:
-            com = "{0}/bin/newstack {1} {2} -mode 2; rm {2}~".format(
+            com = "{0}/bin/newstack {1} {2} -mode 2; rm -f {2}~".format(
                 get_imod_path(), inputfile, outputfile,
             )
             run_shell_command(com)
             mode = 2
         elif inputfile != outputfile:
-            com = "{0}/bin/newstack {1} {2} -mode 2; rm {2}~".format(
+            com = "{0}/bin/newstack {1} {2} -mode 2; rm -f {2}~".format(
                 get_imod_path(), inputfile, outputfile,
             )
             run_shell_command(com)
@@ -1379,31 +1382,31 @@ def compress_images(input, output, cpus=1):
 
     os.environ["IMOD_FORCE_OMP_THREADS"] = str(cpus)
 
-    command = "{0}/bin/mrc2tif -O 1 -P -s -c 8 {1} {2} && rm {1}".format(
+    command = "{0}/bin/mrc2tif -O 1 -P -s -c 8 {1} {2} && rm -f {1}".format(
         get_imod_path(), input, output
     )
     run_shell_command(command, verbose=False)
 
-
+@timer.Timer("pre-processing", text="Tilt-series pre-processing took: {}", logger=logger.info)
 def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
 
     commands = []
-    if parameters["tomo_rec_square"]:
+    if parameters["tomo_ali_square"]:
         square_enabled = True
     else:
         square_enabled = False
-    squares = [ "%s_%04d_square.mrc"%(name, idx) for idx in range(z) ]
+    
     if len(aligned_tilts) > 0:
         from_frames = True
         # make individual tilted images squares
-        for tilt in aligned_tilts:
+        for i, tilt in enumerate(aligned_tilts):
             if square_enabled:
-                command = "{0}/bin/newstack {1} {2}_square.mrc -size {3},{3} -taper 1,1 -bin {4}".format(
-                    get_imod_path(), tilt, tilt.replace(".mrc", ""), int(square / binning), binning
+                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4}".format(
+                    get_imod_path(), tilt, name, int(square / binning), binning, i
                 )
             else:
-                command = "{0}/bin/newstack {1} {2}_square.mrc -taper 1,1 -bin {3}".format(
-                    get_imod_path(), tilt, tilt.replace(".mrc", ""), binning
+                command = "{0}/bin/newstack {1} {2}_{4:04d}_square.mrc -taper 1,1 -bin {3}".format(
+                    get_imod_path(), tilt, name, binning, i
                 )
             commands.append(command)
     else:
@@ -1417,6 +1420,8 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
                     get_imod_path(), tilt_idx, name, binning
                 )
             commands.append(command)
+
+    squares = [ "%s_%04d_square.mrc"%(name, idx) for idx in range(z) ]
 
     from pyp.system import mpi
     mpi.submit_jobs_to_workers(commands, os.getcwd())
@@ -1432,47 +1437,43 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
     os.rename("{0}_square.mrc".format(name), "{0}.mrc".format(name))
 
 
-def get_tilt_axis_angle(name, parameters):
+def get_tilt_axis_angle(name):
 
     # figure out tilt-axis angle and store in metadata
     [output, _] = run_shell_command(
         "%s/bin/xf2rotmagstr %s.xf" % (get_imod_path(), name), 
-        verbose=parameters["slurm_verbose"],
+        verbose=False,
     )
     xf_rot_mag = output.split("\n")
-    axis_mean = counter = 0
+    axes = []
     for line in xf_rot_mag:
         if (
             "rot=" in line
-            and line.split()[0] == "1:"
         ):
             axis, MAGNIFICATION = (
                 float(line.split()[2][:-1]),
                 float(line.split()[4][:-1]),
             )
-            axis_mean += axis
-            counter += 1
-
-    logger.info("Detected TILT AXIS ANGLE = " + str(axis / counter))
-    return axis / counter
+            axes.append(axis)
+    return median(axes)
 
 
-def generate_aligned_tiltseries(name, parameters, tilt_metadata):
+def generate_aligned_tiltseries(name, parameters, x, y):
 
     # align unbinned data
     sec = 0 
     with open(f"{name}.xf", "r") as f:
         for line in f.readlines():
             if len(line) > 1:
-                with open(f"{name}_{sec:04d}.xf", "w") as newf:
+                with open(f"{name}_{sec:04d}.xfs", "w") as newf:
                     newf.write(line)
                 sec += 1
 
     commands = [] 
     aligned_images = []
     for tilt in range(sec):
-        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xf -linear -taper 1,1 && rm {1}_{2:04d}_square.mrc {1}_{2:04d}.xf".format(
-            get_imod_path(), name, tilt
+        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs -linear -taper 1,1 -size {3},{4} && rm -f {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
+            get_imod_path(), name, tilt, x, y
         )
         commands.append(command)
         aligned_images.append("{0}_{1:04d}.ali".format(name, tilt))
@@ -1489,6 +1490,11 @@ def generate_aligned_tiltseries(name, parameters, tilt_metadata):
     run_shell_command(command, verbose=False)
     [os.remove(f) for f in aligned_images]
 
+    # generate binned version also
+    command = "{0}/bin/newstack {1}.ali {1}_bin.ali -bin {2}; rm -rf {1}_bin.ali~".format(
+        get_imod_path(), name, parameters["tomo_rec_binning"]
+    )
+    run_shell_command(command,verbose=parameters["slurm_verbose"])
 
 def cistem_mask_create(parameters: dict, model: str, output: str):
     """
@@ -1549,7 +1555,6 @@ def cistem_mask_create(parameters: dict, model: str, output: str):
         + "0.35\n"
         + "eot\n"
     )
-    print(threshold)
 
     run_shell_command(command, verbose=parameters["slurm_verbose"])
     command = f"{get_imod_path()}/bin/alterheader -del {model_pixel},{model_pixel},{model_pixel} {output_mask}"

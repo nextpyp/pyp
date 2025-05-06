@@ -1,4 +1,5 @@
 import errno
+import subprocess
 import os
 from itertools import chain
 from pathlib import Path
@@ -40,6 +41,14 @@ def symlink_relative(target: Union[Path, str], destination: Union[Path, str]):
         os.symlink(relative_source, destination.name, dir_fd=dir_fd)
     finally:
         os.close(dir_fd)
+
+def symlink_relative_pattern(pattern, destination):
+    source = Path(pattern).parent
+    wildcard = Path(pattern).name
+    command = f'cd {destination}; find {source}/ -name "{wildcard}" -exec ln -rsf {{}} . \;'
+    subprocess.Popen(
+            command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+        ).communicate()
 
 def makedirs_list(paths):
     [os.makedirs(f) for f in paths if not os.path.exists(f) and not os.path.islink(f)]

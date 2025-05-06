@@ -20,16 +20,18 @@ import shutil
 import socket
 import sys
 import time
+import toml
 from pathlib import Path
 
 import numpy as np
 
-from pyp.system import project_params, slurm
+from pyp.system import project_params, slurm, mpi
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.singularity import get_pyp_configuration, run_pyp, run_slurm, run_ssh
+from pyp.system.singularity import get_pyp_configuration, run_pyp
 from pyp.system.user_comm import notify
 from pyp.utils import get_relative_path, movie2regex, symlink_relative
+from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -275,7 +277,7 @@ def get_target(file, path):
 
 def is_image(file):
 
-    return file.split(".")[-1] in ["tif", "mrc", "dm4"]
+    return Path(file).suffix in [".tif", ".tiff", ".mrc", ".dm4", ".eer"]
 
 
 def move_to_destination(file, server, path):
@@ -353,7 +355,7 @@ def remove_from_destination(file, server, path):
         if os.path.exists(target):
             os.remove(target)
     else:
-        com = "ssh {0} rm {1}".format(server, target)
+        com = "ssh {0} rm -f {1}".format(server, target)
         run_shell_command(com)
 
 
@@ -386,12 +388,22 @@ def launch_preprocessing(args, autoprocess):
 
         time_stamp = time.strftime("%Y%m%d_%H%M%S")
 
-        swarm_file = os.path.join(
-            autoprocess,
-            "{0}_{1}_{2}_daemon.swarm".format(
-                time_stamp, args["stream_session_group"], args["stream_session_name"]
-            ),
-        )
+        if "stream_session_group" in args and "stream_session_name" in args:
+            swarm_file = os.path.join(
+                    autoprocess,
+                    "{0}_{1}_{2}_daemon.swarm".format(
+                        time_stamp, args["stream_session_group"], args["stream_session_name"]
+                    ),
+            )
+        elif "stream_transfer_target" in args:
+            swarm_file = os.path.join(
+                autoprocess,
+                "{0}_{1}_daemon.swarm".format(
+                    time_stamp, args["stream_transfer_target"]
+                ),
+            )
+        else:
+            raise Exception("Please specify a value for -stream_transfer_target")
 
         with open(swarm_file, "w") as f:
 
@@ -426,8 +438,10 @@ def launch_preprocessing(args, autoprocess):
             jobname = (
                 args["stream_camera_profile"] + "_" + args["stream_session_name"][-4:]
             )
-        else:
+        elif args.get("stream_session_name"):
             jobname = args["stream_session_name"][-8:]
+        else:
+            jobname = os.path.split(autoprocess)[-1][-8:]
 
         if "slurm_daemon_queue" not in args or args["slurm_daemon_queue"] == "None":
             queue = ""
@@ -442,7 +456,7 @@ def launch_preprocessing(args, autoprocess):
             queue=queue,
             scratch=0,
             threads=args["slurm_daemon_tasks"],
-            memory=args["slurm_daemon_memory"],
+            memory=args["slurm_daemon_tasks"]*args["slurm_daemon_memory_per_task"],
             gres=args["slurm_daemon_gres"],
             account=args.get("slurm_daemon_account"),
             walltime=args["slurm_daemon_walltime"],
@@ -495,22 +509,28 @@ def resolve_sources(args):
 
 if __name__ == "__main__":
 
-    # load existing parameters or from data_parent
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-data_mode", "--data_mode")
-    args, unknown = parser.parse_known_args()
-    parent_parameters = vars(args)
+    params_file_path = get_params_file_path()
+    if params_file_path is not None:
+        config = ParamsConfig.from_file()
+        parent_parameters = parse_params_from_file(config, params_file_path)
 
-    # parse arguments
-    args = project_params.parse_parameters(0,"stream",parent_parameters["data_mode"])
+        # parse arguments
+        args = project_params.parse_parameters(parent_parameters,"stream",parent_parameters["data_mode"])
+    else:
+        # load existing parameters or from data_parent
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("-data_mode", "--data_mode")
+        args, unknown = parser.parse_known_args()
+        parent_parameters = vars(args)
+
+        # parse arguments
+        args = project_params.parse_parameters(0,"stream",parent_parameters["data_mode"])
 
     if (
         not "stream_transfer_target" in args.keys()
-        or not "stream_session_name" in args.keys()
-        or not "stream_session_group" in args.keys()
     ):
         logger.error(
-            "You must specify non-empty values for -stream_transfer_target, -stream_session_name and -stream_session_group"
+            "You must specify a non-empty value for -stream_transfer_target"
         )
         sys.exit()
 
@@ -518,11 +538,15 @@ if __name__ == "__main__":
 
     # destination of raw data
     if args["stream_transfer_target"]:
-        target_path = os.path.join(
-            project_params.resolve_path(args["stream_transfer_target"]),
-            args["stream_session_group"],
-            args["stream_session_name"],
-        )
+        if args.get("stream_session_group") != None and args.get("stream_session_name") != None:
+            target_path = os.path.join(
+                project_params.resolve_path(args["stream_transfer_target"]),
+                args["stream_session_group"],
+                args["stream_session_name"],
+            )
+        else:
+            target_path = project_params.resolve_path(args["stream_transfer_target"])
+            
     elif "target" in config["stream"].keys():
         target_path = os.path.join(
             config["stream"]["target"],
@@ -567,12 +591,15 @@ if __name__ == "__main__":
     # launch processing daemon pypd
     pyp_command, jobnumber, message = launch_preprocessing(args, target_path)
 
+    session_name = args.get("stream_session_name") or Path(project_params.resolve_path(args["stream_transfer_target"])).name
+    group_name = args.get("stream_session_group") or "group"
+
     # notify user if needed
     subject = (
         "Data on "
-        + args["stream_session_group"]
+        + group_name
         + "/"
-        + args["stream_session_name"]
+        + session_name
         + " ("
         + jobnumber
         + ")"
@@ -581,15 +608,15 @@ if __name__ == "__main__":
         "*** This is an automatically generated email ***\n\n"
         + "( export pypdaemon=pypdaemon && pyp_main.py "
         + " -group "
-        + args["stream_session_group"]
+        + group_name
         + " -session "
-        + args["stream_session_name"]
+        + session_name
         + " )\n\n"
         + "( export pypdaemon=pypdaemon && pyp_main.py "
         + " -group "
-        + args["stream_session_group"]
+        + group_name
         + " -session "
-        + args["stream_session_name"]
+        + session_name
         + " -particle_rad 75 -particle_sym D3 -particle_mw 300 -extract_box 384 -thresholds 1000,2500,7500,1000 -model /data/Livlab/autoprocess_d256/GDH/GDH_OG_20140612/frealign/20140826_011259_GDH_OG_20140612_01.mrc )\n"
     )
     body = body + "\n" + pyp_command + "\n\n" + message
@@ -605,32 +632,33 @@ if __name__ == "__main__":
     scratch = os.path.join(target_path, "txt")
     Path(scratch).mkdir(parents=True, exist_ok=True)
     transferred_filename = os.path.join(
-        scratch, "{0}_filelist_transferred.txt".format(args["stream_session_name"])
+        scratch, "{0}_filelist_transferred.txt".format(session_name)
     )
     filelist_filename = os.path.join(
-        scratch, "{0}_filelist.txt".format(args["stream_session_name"])
+        scratch, "{0}_filelist.txt".format(session_name)
     )
     transfer_filename = os.path.join(
-        scratch, "{0}_filelist_transfer.txt".format(args["stream_session_name"])
+        scratch, "{0}_filelist_transfer.txt".format(session_name)
     )
     elapsed_time_file = os.path.join(
-        target_path, "%s_speed.txt" % args["stream_session_name"]
+        target_path, "%s_speed.txt" % session_name
     )
 
     # restart if needed
     if args["stream_transfer_restart"]:
         logger.warning("Restarting data transfer")
         for f in [transferred_filename, filelist_filename, transfer_filename]:
-            try:
-                if args["slurm_verbose"]:
-                    logger.info("Deleting " + Path(f).name)
-                os.remove(f)
-            except:
-                if args["slurm_verbose"]:
-                    logger.error("Cannot delete " + f)
-                pass
+            if Path(f).exists:
+                try:
+                    if args["slurm_verbose"]:
+                        logger.info("Deleting " + Path(f).name)
+                    os.remove(f)
+                except:
+                    if args["slurm_verbose"]:
+                        logger.error("Cannot delete " + f)
+                    pass
         remove_from_destination(
-            file="%s_speed.txt" % args["stream_session_name"],
+            file="%s_speed.txt" % session_name,
             server=server,
             path=target_path,
         )
@@ -646,11 +674,19 @@ if __name__ == "__main__":
     # run loop until timeout
     daemon_start_time = time.time()
 
-    logger.info("Entering loop with timeout = %i day(s)" % args["stream_session_timeout"])
+    # retrieve version number
+    version = toml.load(os.path.join(os.environ['PYP_DIR'],"nextpyp.toml"))['version']
+    memory = f"and {int(os.environ['SLURM_MEM_PER_NODE'])/1024:.0f} GB of RAM" if "SLURM_MEM_PER_NODE" in os.environ else "?"
+    mpi_tasks = mpi.initialize_worker_pool()
+
+    logger.info(
+        "Running nextPYP v{} on {} using {} task(s) {}".format(
+        version, socket.gethostname(), mpi_tasks, memory
+        )
+    )
 
     while (
-        time.time() - daemon_start_time
-        < datetime.timedelta(days=args["stream_session_timeout"]).total_seconds() and not os.path.exists(stop_flag)
+        not os.path.exists(stop_flag)
     ):
 
         # keep track of data transfer speed
@@ -753,7 +789,7 @@ if __name__ == "__main__":
                     args["stream_transfer_operation"] == "move" and args["stream_transfer_all"],
                     f,
                     os.path.join(target_path, "raw"),
-                    args["stream_session_name"],
+                    session_name,
                     args["stream_camera_profile"],
                     server,
                     results,

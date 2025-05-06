@@ -7,12 +7,12 @@ import shutil
 import subprocess
 import datetime
 from pathlib import Path
-from typing import Union
+from tqdm import tqdm
 
 import numpy as np
 
 import pyp.inout.image as imageio
-from pyp.detect import tomo_subvolume_extract_is_required, tomo_vir_is_required
+from pyp.detect import tomo_subvolume_extract_is_required, tomo_vir_is_required, detect_gold_beads
 from pyp import align, preprocess, merge
 from pyp import ctf as ctf_mod
 from pyp.inout.image import digital_micrograph as dm4
@@ -24,18 +24,20 @@ from pyp.system.utils import get_imod_path
 from pyp.system.wrapper_functions import avgstack, cistem_rescale, cistem_resize
 from pyp.system.project_params import resolve_path
 from pyp.utils import get_relative_path, movie2regex, timer
+from pyp.streampyp.logging import TQDMLogger
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
 
 
 def invert_contrast(name):
-    command = "{0}/bin/newstack {1}.mrc {1}.mrc -multadd -1,0".format(
+    command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -multadd -1,0 && mv {1}.mrc~ {1}.mrc".format(
         get_imod_path(), name
     )
     local_run.run_shell_command(command)
 
 
+@timer.Timer("remove_xrays", text="Removing hot pixels took: {}", logger=logger.info)
 def remove_xrays_from_file(name,verbose=False):
     logger.info("Removing xrays")
     # Hot-pixel removal using IMOD's ccderaser
@@ -67,7 +69,7 @@ def remove_xrays_from_movie_file(name, inplace=False):
         output, error = avgstack(input_fname, output_fname, start_end_section)
 
         # Hot-pixel detection using IMOD's ccderaser
-        command = "{0}/bin/ccderaser -input {1}_hpr.avg -output {1}_hpr.avg -find -points {2} -scan 4.50 -xyscan 128 -edge 64".format(
+        command = "{0}/bin/ccderaser -input {1}_hpr.avg -output {1}_hpr.avg~ -find -points {2} -scan 4.50 -xyscan 128 -edge 64 && mv {1}_hpr.avg~ {1}_hpr.avg".format(
             get_imod_path(), name, model
         )
         local_run.run_shell_command(command)
@@ -81,7 +83,7 @@ def remove_xrays_from_movie_file(name, inplace=False):
         logger.info(output)
         logger.info("No hot pixels found.")
     else:
-        command = "{0}/bin/ccderaser -input {1}.tif -output {1}.tif -model {2} -allsec /".format(
+        command = "{0}/bin/ccderaser -input {1}.tif -output {1}.tif~ -model {2} -allsec / && mv {1}.tif~ {1}.tif".format(
             get_imod_path(), name, model
         )
         local_run.run_shell_command(command)
@@ -133,6 +135,46 @@ def preprocess_and_alignment_of_frames(
             frame_name, parameters, current_path, working_path, parameters["movie_ali"],
         )
 
+def frames_from_pattern(filename,name,pattern):
+    """Generate list of frames from movie pattern
+
+    Args:
+        filename (str): absolute path to data
+        name (str): tilt-series name
+        pattern (str): movie-pattern
+
+    Returns:
+        _type_: _description_
+    """
+    _, file_format = os.path.splitext(pattern)
+    regex = movie2regex(pattern,name)
+    r = re.compile(regex)
+
+    labels = ["TILTSERIES", "SCANORD", "ANGLE"]
+    labels = [l for l in labels if pattern.find(l) >= 0]
+    labels.sort(key=lambda x: int(pattern.find(x)))
+    detected_movies = [f for f in sorted(os.listdir(Path(filename).parents[0])) if r.match(f)]
+
+    return detected_movies
+
+def need_recalculation_for_sessions(name,parameters):
+    """Figure out if we need to recalculate virions on sessions side. This side does not use the _force parameters so we need a dedicated method to figure out if recalculations are needed.
+
+    Args:
+        name (str): tilt-series name
+        parameters (dict): pyp parameters
+
+    Returns:
+        boolean: true if re-calculation is needed
+    """
+    from pyp.inout.metadata import pyp_metadata
+    from pyp.streampyp.web import Web
+    pklname = os.path.join(name + ".pkl")
+    if os.path.exists(pklname) and parameters["micromon_block"] == "" and Web.exists:
+        metadata = pyp_metadata.LocalMetadata(pklname, is_spr=False).data
+        if ( parameters.get("tomo_vir_method") != "none" and "vir" not in metadata ) or ( parameters.get("tomo_vir_detect_method") != "none" and "box" not in metadata ):
+            parameters["detect_force"] = True
+    return parameters["detect_force"]
 
 def read_tilt_series(
     filename, parameters, metadata, current_path=Path.cwd(), working_path=Path.cwd(), project_path=""
@@ -175,27 +217,41 @@ def read_tilt_series(
     elif os.path.isfile(filename + ".tgz"):
         command = "tar xvfz " + filename + ".tgz".format(name)
         local_run.run_shell_command(command)
-    elif parameters["movie_mdoc"] and not parameters["movie_no_frames"]:
-        tilts = frames_from_mdoc(mdocs, parameters)
-        for tilt_image in tilts:
-            tilt_image_filename = tilt_image[0]
-            if (project_raw_path / tilt_image_filename).exists():
-                shutil.copy2(project_raw_path / tilt_image_filename, ".")
-            else:
-                raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
-    elif len( glob.glob(filename + "*.mrc") ) > 0:
-        for i in glob.glob(filename + "*.mrc"):
+    elif not parameters["movie_no_frames"]:
+        arguments = []
+        if parameters["movie_mdoc"]:
+            tilts = frames_from_mdoc(mdocs, parameters)
+            for tilt_image in tilts:
+                tilt_image_filename = tilt_image[0]
+                if (project_raw_path / tilt_image_filename).exists():
+                    arguments.append((os.path.join(project_raw_path, tilt_image_filename), "."))
+                else:
+                    raise Exception(f"{tilt_image_filename} indicated inside {name}.mdoc is not found in {project_raw_path}")
+        else:
+            options = [parameters["movie_pattern"]]
+            if parameters.get("stream_compress"):
+                options.append(parameters["movie_pattern"].replace(Path(parameters["movie_pattern"]).suffix,"."+parameters["stream_compress"]))
+            for pattern in options:
+                detected_movies = frames_from_pattern(filename=filename,name=name,pattern=pattern)
+                if len(detected_movies) > 0:
+                    break
+            for i in detected_movies:
+                arguments.append((os.path.join(Path(filename).parents[0], i),"."))
+        if len(arguments) > 0:
+            mpi.submit_function_to_workers(shutil.copy2,arguments,verbose=True)
+    elif os.path.exists(filename + ".mrc"):
+        try:
+            shutil.copy2(filename + ".mrc", ".")
+        except:
+            # ignore if file already exists
+            pass
+    elif os.path.exists(filename + ".tif") or os.path.exists(filename + ".tif.mdoc") or os.path.exists(filename + ".tiff") or os.path.exists(filename + ".tiff.mdoc"):
+        for i in glob.glob(filename + ".tif") + glob.glob(filename + ".tif.mdoc") + glob.glob(filename + ".tiff") + glob.glob(filename + ".tiff.mdoc"):
             try:
                 shutil.copy2(i, ".")
             except:
                 # ignore if file already exists
                 pass
-    elif len(glob.glob(filename + "*.tif")) > 0 or len(glob.glob(filename + "*.tiff")) > 0:
-        for i in glob.glob(filename + "*.tif") + glob.glob(filename + "*.tif.mdoc") + glob.glob(filename + "*.tiff") + glob.glob(filename + "*.tiff.mdoc"):
-            shutil.copy2(i, ".")
-    elif len(glob.glob(filename + "*.eer")) > 0:
-        for i in glob.glob(filename + "*.eer"):
-            shutil.copy2(i, ".")
 
     source = os.path.split(os.path.realpath(filename))[0]
     gain_pattern_fc3 = "{0}/*CountRef*".format("/".join(source.split("/")))
@@ -240,7 +296,7 @@ def read_tilt_series(
             # read and align intermediate frames
             if os.path.exists(filename + "_frames.tbz"):
 
-                logger.info("Processing individual frames")
+                logger.info("Processing movie frames")
 
                 # decompress frames
                 if int(parameters["slurm_tasks"]) > 0:
@@ -319,14 +375,14 @@ def read_tilt_series(
                 plt.close()
 
         elif os.path.isfile(name + ".mrc"):
-            
+
             if not parameters["movie_mdoc"]:
                 # .rawtlt and .order should be moved to the local scratch at this point
                 assert Path(f"{name}.rawtlt").exists(), "Please provide .rawtlt file containing the initial tilt angles."
                 assert Path(f"{name}.order").exists(), "Please provide .order file containing the acquisition order."
-                           
+
             elif len(mdocs) > 0 and parameters["movie_mdoc"]:
-                
+
                 tilts = frames_from_mdoc(mdocs, parameters)
                 tilts.sort(key=lambda x: x[1])
 
@@ -335,10 +391,10 @@ def read_tilt_series(
 
                 np.savetxt(f"{name}.rawtlt", tilt_angles, fmt="%.2f")
                 np.savetxt(f"{name}.order", order, fmt="%d")
-        
+
             else:
                 raise Exception("Please either provide .rawtlt/.order files or .mdoc file(s) for initial tilt angles and acquisition order.")
-  
+
 
             if not os.path.isfile("{0}.rawtlt".format(name)):
                 # write to .rawtlt
@@ -357,44 +413,46 @@ def read_tilt_series(
                 shifts[i] = np.zeros([1, 2])
 
             x, y, z = get_image_dimensions(name + ".mrc")
-            
+
             # sanity check if number of tilts derived from .rawtlt is correct
-            assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"      
+            assert (z == len(sorted_tilts)), f"{z} tilts in {name+'.mrc'} != {len(sorted_tilts)} from .rawtlt"
             assert (z == len(order)), f"{z} tilts in {name+'.mrc'} != {len(order)} from .order"
 
             pixel_size = parameters["scope_pixel"]
             voltage = parameters["scope_voltage"]
             mag = parameters["scope_mag"]
-            tilt_axis = parameters["scope_tilt_axis"] - 90.0
+            tilt_axis = parameters["scope_tilt_axis"]
 
             if "extract_fmt" in parameters.keys() and "frealign" not in parameters["extract_fmt"]:
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc -mode 1 -multadd 1,32768".format(
+                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 1 -multadd 1,32768 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc -scale 0,32767 -mode 1".format(
+                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -scale 0,32767 -mode 1 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
             else:
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc -mode 2".format(
+                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 2 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
             local_run.run_shell_command(command)
 
             # read image dimensions
             [micrographinfo, error] = local_run.run_shell_command(
-                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=parameters["slurm_verbose"]
+                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=False
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
-            commands = []
-            # separate tilted images for later per-tilt ctf estimation 
-            for idx in range(z):
-                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}.mrc".format(
-                    get_imod_path(), idx, name, 
-                )
-                commands.append(command)
+            # separate tilted images for later per-tilt ctf estimation. 
+            # UPDATE: only do this if we need to estimate the CTF
+            if ctf_mod.is_required_3d(parameters) and not ctf_mod.is_done(metadata,parameters, name=name, project_dir=current_path):
+                commands = []
+                for idx in range(z):
+                    command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}.mrc".format(
+                        get_imod_path(), idx, name, 
+                    )
+                    commands.append(command)
 
-            mpi.submit_jobs_to_workers(commands, os.getcwd())
+                mpi.submit_jobs_to_workers(commands, os.getcwd())
 
             docfile = filename + ".mrc.mdoc"
             if os.path.isfile(docfile):
@@ -411,7 +469,7 @@ def read_tilt_series(
             logger.error("Cannot read %s", filename)
 
     elif len(parameters["movie_pattern"]) > 0 or len(mdocs) == 1:
-        # use either movie pattern OR mdoc file to fine corresponding tilted images 
+        # use either movie pattern OR mdoc file to find corresponding tilted images 
 
         pattern = parameters["movie_pattern"]
         metadata_from_mdoc = parameters["movie_mdoc"] 
@@ -431,20 +489,31 @@ def read_tilt_series(
                 except:
                     logger.warning(f"Cannot detect tilt angles from filename and .rawtlt")
 
-            root_pattern, file_format = os.path.splitext(pattern)
-            regex = movie2regex(pattern, name)
-            r = re.compile(regex)
-            r_mdoc = re.compile(regex.replace(file_format, ".mdoc"))
+            options = [parameters["movie_pattern"]]
+            if parameters.get("stream_compress"):
+                options.append(parameters["movie_pattern"].replace(Path(parameters["movie_pattern"]).suffix,"."+parameters["stream_compress"]))           
+            for pattern in options:
+                root_pattern, file_format = os.path.splitext(pattern)
+                regex = movie2regex(pattern, name)
+                r = re.compile(regex)
+                r_mdoc = re.compile(regex.replace(file_format, ".mdoc"))
 
-            # raise flag for tif format
-            if parameters["movie_pattern"].endswith(".tif"):
-                open("istif", "a").close()
+                # raise flag for tif format
+                if parameters["movie_pattern"].endswith(".tif"):
+                    open("istif", "a").close()
 
-            # put all the tif files in a list and initialize their angles, scanord as zero
-            labels = ["TILTSERIES", "SCANORD", "ANGLE"]
-            labels = [l for l in labels if pattern.find(l) >= 0]
-            labels.sort(key=lambda x: int(pattern.find(x)))
-            detected_movies = [r.match(f) for f in sorted(os.listdir(".")) if r.match(f)]
+                # put all the tif files in a list and initialize their angles, scanord as zero
+                labels = ["TILTSERIES", "SCANORD", "ANGLE"]
+                labels = [l for l in labels if pattern.find(l) >= 0]
+                labels.sort(key=lambda x: int(pattern.find(x)))
+                detected_movies = [r.match(f) for f in sorted(os.listdir(".")) if r.match(f)]
+                if len(detected_movies) > 0:
+                    break
+
+            if "SCANORD" not in pattern:
+                assert (len(detected_movies) == len(order_from_file)), f"{len(detected_movies)} tilts matching {parameters['movie_pattern']} != {len(order_from_file)} from .order"
+            if "ANGLE" not in pattern:
+                assert (len(detected_movies) == len(tilt_angles_from_file)), f"{len(detected_movies)} tilts matching {parameters['movie_pattern']} != {len(tilt_angles_from_file)} from .rawtlt"
 
             tilts = [[f, 0, 0] for f in [r.group(0) for r in detected_movies]]
             if not len(tilts) > 0:
@@ -498,7 +567,7 @@ def read_tilt_series(
         pixel_size = parameters["scope_pixel"]
         voltage = parameters["scope_voltage"]
         mag = parameters["scope_mag"]
-        tilt_axis = parameters["scope_tilt_axis"] - 90.0
+        tilt_axis = parameters["scope_tilt_axis"]
 
         # sort the list based on tilt angle
         sorted_tilts = sorted(tilts, key=lambda x: x[1])
@@ -546,17 +615,17 @@ def read_tilt_series(
             isfirst = True
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
             t.start()
-            logger.info(f"Processing individual frames using {parameters['movie_ali']}")
+            logger.info(f"Processing movie frames using: {parameters['movie_ali']}")
             import torch
             if torch.cuda.is_available() and 'motioncor' in parameters["movie_ali"]:
-                for tilt in sorted_tilts:
-                    logger.info("Aligning frames for tilt angle %.2f", tilt[1])
-                    frame_name = tilt[0].replace(file_format, "")
-                    align.align_movie_super( parameters, frame_name, file_format, isfirst)
+                with tqdm(desc="Progress", total=len(sorted_tilts), file=TQDMLogger()) as pbar:
+                    for tilt in sorted_tilts:
+                        frame_name = tilt[0].replace(file_format, "")
+                        align.align_movie_frames( parameters, frame_name, file_format, isfirst)
+                        pbar.update(1)
             else:
                 # submit jobs to workers
                 for tilt in sorted_tilts:
-                    logger.info("Aligning frames for tilt angle %.2f", tilt[1])
                     frame_name = tilt[0].replace(file_format, "")
 
                     arguments.append(
@@ -570,7 +639,7 @@ def read_tilt_series(
                     isfirst = False
 
                 mpi.submit_function_to_workers(
-                    align.align_movie_super, arguments, verbose=parameters["slurm_verbose"]
+                    align.align_movie_frames, arguments, verbose=parameters["slurm_verbose"]
                 )
             t.stop()
 
@@ -578,7 +647,7 @@ def read_tilt_series(
             aligned_tilts = [sorted_tilt[0].replace(file_format, ".avg") for sorted_tilt in sorted_tilts]
             aligned_tilts_str = " ".join(aligned_tilts)
 
-            t = timer.Timer(text="Combine into one tiltseries took: {}", logger=logger.info)
+            t = timer.Timer(text="Combine into one tilt-series took: {}", logger=logger.info)
             t.start()
             command = "{0}/bin/newstack {2} {1}.mrc".format(
                 get_imod_path(), name, aligned_tilts_str
@@ -600,7 +669,7 @@ def read_tilt_series(
 
         for idx, tilt in enumerate(sorted_tilts):
             frame_name = tilt[0].replace(file_format, "")
-            s = np.loadtxt(glob.glob(frame_name + "*.xf")[0], dtype=float)[:, -2:]
+            s = np.loadtxt(glob.glob(frame_name + "*.xf")[0], dtype=float, ndmin=2)[:, -2:]
             shifts[idx] = np.array( s[:, :2] )
             shiftsmag[idx] = np.hypot(s[:, 0], s[:, 1]).sum()
 
@@ -613,7 +682,8 @@ def read_tilt_series(
 
     else:
         logger.error("Cannot read %s", filename)
-    if metadata:
+
+    if metadata and metadata.get("drift"):
         drift_metadata["drift"] = {}
         if metadata.get("drift"):
             for i in metadata["drift"]:
@@ -621,8 +691,10 @@ def read_tilt_series(
         elif metadata.get("web") and metadata.get("web").get("drift"):
             for i in metadata.get("web")["drift"]:
                 drift_metadata["drift"][i] = metadata.get("web")["drift"][i]
-    else:
+    elif 'shifts' in locals():
         drift_metadata["drift"] = shifts
+    else:
+        drift_metadata["drift"] = {}
 
     if "eer" in parameters["data_path"] and parameters["movie_eer_reduce"] > 1:
         upsample = parameters["movie_eer_reduce"]
@@ -630,17 +702,13 @@ def read_tilt_series(
         pixel_size /= upsample
 
     logger.info(
-        "Original dimensions: [ X ,Y, Z ] = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, axis = %f",
+        "Original tilt-series dimensions = [ %s, %s, %s ]",
         x,
         y,
-        z,
-        pixel_size,
-        voltage,
-        mag,
-        float(tilt_axis),
+        z
     )
 
-    if parameters["tomo_rec_format"]:
+    if parameters["tomo_ali_format"]:
         squarex = math.ceil(x / 512.0) * 512
         squarey = math.ceil(y / 512.0) * 512
     else:
@@ -649,46 +717,37 @@ def read_tilt_series(
 
     square = max(squarex, squarey)
 
-    if binning > 1 or square != x or True:
+    parameters["detect_force"] = need_recalculation_for_sessions(name=name,parameters=parameters)
 
-        t = timer.Timer(text="Convert tilt-series into squares took: {}", logger=logger.info)
-        t.start()
+    # only need squared tilt-series when: 
+    # 1. tiltseries alignment is not done yet
+    # 2. squared aligned tiltseries needs to be generated (for producing downsampled tomogram or subvolume/virion extraction)
+    if ( not project_params.tiltseries_align_is_done(metadata)
+        or not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) 
+        or ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] )
+        or parameters["tomo_vir_force"] 
+        or parameters["tomo_rec_force"]
+        or tomo_subvolume_extract_is_required(parameters)
+        or tomo_vir_is_required(parameters)
+        or not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path) ):
 
-        # only need squared tilt-series when: 
-        # 1. tiltseries alignment is not done yet
-        # 2. squared aligned tiltseries needs to be generated (for producing downsampled tomogram or subvolume/virion extraction)
-        if not project_params.tiltseries_align_is_done(metadata) or \
-            not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
-            ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
-            parameters["tomo_vir_force"] or \
-            parameters["tomo_rec_force"] or \
-            tomo_subvolume_extract_is_required(parameters) or \
-            tomo_vir_is_required(parameters) or \
-            not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path):
-            imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
-        t.stop()
+        imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
 
-        f = open("{0}.mrc".format(name), "rb")
-        headerbytes = f.read(1024)
-        headerdict = imageio.mrc.parseHeader(headerbytes)
-        x, y, z = headerdict["nx"], headerdict["ny"], headerdict["nz"]
+    if parameters["tomo_ali_square"]:
+        x, y, z = square, square, parameters["tomo_rec_thickness"]
 
-        pixel_size *= binning
+        logger.info(
+            "Transformed tilt-series dimensions = [ %s, %s, %s ]",
+            x,
+            y,
+            z
+        )
+
+    pixel_size *= binning
 
     # invert contrast if needed
     if parameters["data_invert"]:
         preprocess.invert_contrast(name)
-
-    logger.info(
-        "After resizing/binning: [ X ,Y, Z ] = [ %s, %s, %s ], pixel = %s, kV = %s, mag = %s, axis = %f",
-        x,
-        y,
-        z,
-        pixel_size,
-        voltage,
-        mag,
-        float(tilt_axis),
-    )
 
     return [x, y, z, pixel_size, voltage, mag, tilt_axis, drift_metadata]
 
@@ -746,9 +805,19 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         or scaling > 1.01
         or int(mparameters["extract_box"]) != model_box_size
     ):
-        logger.warning(f"Rescaling {initial_model} pixel size to binning {1/scaling:.2f}, which would be {model_pixel_size/scaling:.2f}")
+        # lowpass filter volume to new Nyquist frequency before downsampling
+        if scaling < 1:
+            new_nyquist_frequency = 2.0*model_pixel_size/scaling
+            logger.info(f"Lowpass filtering {initial_model} to {new_nyquist_frequency:.2f} A before resampling")
+            command = f"{get_imod_path()}/bin/mtffilter -3dfilter -units 4 -lowpass {new_nyquist_frequency},100 '{initial_model}' {frealign_initial_model}~"
+            local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
+            source = f"{frealign_initial_model}~"
+        else:
+            source = initial_model
+
+        logger.info(f"Rescaling reference {frealign_initial_model} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
         command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
-            get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, initial_model,
+            get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, source,
         )
         local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
 
@@ -823,3 +892,146 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
     return frames_set
 
 
+def regenerate_average_quick(
+    filename, parameters, dims, frame_list
+):
+
+    binning = int(parameters["data_bin"])
+    aligned_tilts = []
+
+    name = os.path.basename(filename)
+
+    # escape special character in case it contains [
+    filename = glob.escape(filename)
+
+    # generate gain reference
+    _, gain_reference_file = get_gain_reference(
+        parameters, dims[0], dims[1],
+    )
+
+    if gain_reference_file is not None:
+        commands = []
+
+        for movie in frame_list:
+            com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}~; mv {1}~ {1}'.format(
+                get_imod_path(), movie, gain_reference_file,
+            )
+            commands.append(com)
+
+        mpi.submit_jobs_to_workers(commands, os.getcwd())
+
+    # regenerate average in each tilt
+    t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
+    t.start()
+    logger.info(f"Processing movie frames using existing alignments")
+    arguments = []
+    for movie in frame_list:
+        m_name = movie.replace(".mrc", "")
+        arguments.append((movie, m_name, parameters, "imod"))
+  
+    mpi.submit_function_to_workers(align.apply_alignments_and_average, arguments, verbose=parameters["slurm_verbose"])
+
+    t.stop()
+
+    # compose drift-corrected tilt-series
+    aligned_tilts = [frame.replace(".mrc", ".avg") for frame in frame_list]
+    aligned_tilts_str = " ".join(aligned_tilts)
+
+    command = "{0}/bin/newstack {2} {1}.mrc".format(
+        get_imod_path(), name, aligned_tilts_str
+    )
+
+    # suppress long log
+    if parameters["slurm_verbose"]:
+        logger.info(command)
+    local_run.run_shell_command(command, verbose=False)
+
+    # read image dimensions
+    [micrographinfo, error] = local_run.run_shell_command(
+        "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name),verbose=False
+    )
+    x, y, z = list(map(int, micrographinfo.split()))
+    
+    if parameters["tomo_ali_format"]:
+        squarex = math.ceil(x / 512.0) * 512
+        squarey = math.ceil(y / 512.0) * 512
+    else:
+        squarex = x
+        squarey = y
+
+    square = max(squarex, squarey)
+
+    # squared tilt-series: 
+    if True:
+        imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
+ 
+    # invert contrast if needed
+    if parameters["data_invert"]:
+        preprocess.invert_contrast(name)
+
+
+def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
+    """
+    Erase gold beads and reconstruct tomograms
+    """
+
+    gold_mod = f"{name}_gold.mod"
+
+    if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
+        # create binned aligned stack, if needed
+        if not os.path.exists(f'{name}_bin.ali'):
+            command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
+                get_imod_path(), name, binning
+            )
+            local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+
+        detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+
+    if parameters["tomo_rec_erase_fiducials"]:
+
+        if not os.path.exists(gold_mod):
+            logger.error(f"Failed to erase gold becasue no fiducials were found in tomogram")
+            return
+
+        # save projected gold coordinates as txt file
+        com = f"{get_imod_path()}/bin/model2point {gold_mod} {name}_gold_ccderaser.txt"
+        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+        
+        # calculate unbinned tilt-series coordinates
+        with open(f"{name}_gold_ccderaser.txt") as f:
+            gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00" in line], dtype='f', ndmin=2)
+
+        gold_coordinates[:,:2] *= binning
+        np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
+
+        # convert back to imod model using one point per contour
+        com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
+        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+
+        # erase gold on (unbinned) aligned tilt-series
+        erase_factor = parameters["tomo_rec_erase_factor"]
+        if parameters["tomo_rec_erase_order"] == "noise":
+            erase_order = -1
+        elif parameters["tomo_rec_erase_order"] == "mean":
+            erase_order = 0
+        elif parameters["tomo_rec_erase_order"] == "first":
+            erase_order = 1
+        elif parameters["tomo_rec_erase_order"] == "second":
+            erase_order = 2
+        elif parameters["tomo_rec_erase_order"] == "third":
+            erase_order = 3
+        erase_iterations = parameters['tomo_rec_erase_iterations']
+
+        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
+        [ output, _ ] = local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+        if "The largest circle radius is too big for the arrays" in output:
+            raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")
+
+        try:
+            os.remove(name + "_gold_ccderaser.txt")
+            os.remove(name + "_gold_ccderaser.mod")
+        except:
+            pass
+
+        # re-calculate reconstruction using gold-erased tilt-series
+        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)

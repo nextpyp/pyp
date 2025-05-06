@@ -9,4 +9,5 @@ from .core import (
     movie2regex,
     symlink_force,
     symlink_relative,
+    symlink_relative_pattern,
 )

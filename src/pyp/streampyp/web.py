@@ -93,7 +93,7 @@ class Web:
             pass
 
     def slurm_sbatch(
-        self, web_name, cluster_name, commands, dir=None, env=[], args=[], deps=[], mpi=None
+        self, web_name, cluster_name, commands, dir=None, env=[], args=[], deps=[], mpi=None, job_type=None
     ):
         """
         Launches a SLURM job using sbatch
@@ -109,6 +109,8 @@ class Web:
                            Pass a dictionary of arguments to mpirun:
                              oversubscribe: boolean
                              cpus: int
+                           NOTE: The `mpi` argument is not currently supported by the website.
+        :param [str] job_type: A type for the job, to use in SLURM templates via the `job.type` variable
         :return str: Returns the database id of the submitted job
         """
 
@@ -143,7 +145,8 @@ class Web:
                 env=env,
                 args=args,
                 deps=deps,
-                mpi=mpi
+                mpi=mpi,
+                type=job_type
             )
         )
 
@@ -297,6 +300,15 @@ class Web:
                 metadata=metadata,
                 fsc=fsc.tolist(),
                 plots=plots
+            )
+        )
+
+    def write_tomo_drgn_convergence(self, epoch):
+
+        self._request(
+            Request.write_tomo_drgn_convergence(
+                webid=self.webid,
+                epoch=epoch
             )
         )
 

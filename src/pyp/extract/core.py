@@ -21,7 +21,7 @@ from pyp.inout.image import (
     readMoviefileandsave,
     readTIFfileandsave,
 )
-from pyp.preprocess import remove_xrays_from_movie_file
+from pyp.inout.metadata import cistem_star_file
 from pyp.system import mpi
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
@@ -365,7 +365,7 @@ def extract_particles(
 def extract_particles_non_mpi(
     input,
     output,
-    boxes,
+    cistem_obj,
     radius,
     boxsize,
     image_binning,
@@ -428,7 +428,16 @@ def extract_particles_non_mpi(
         else:
             image = mrc.read(input + ".mrc")
         nx, ny, frames = image.shape[-2], image.shape[-1], image.ndim - 1
+    
+    if isinstance(cistem_obj,cistem_star_file.ExtendedParameters) or isinstance(cistem_obj[0],cistem_star_file.Parameters):
+        boxes_obj = cistem_obj[0] # only read 1 class
 
+        x_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_X_POSITION)
+        y_coord_col = boxes_obj.get_index_of_column(cistem_star_file.ORIGINAL_Y_POSITION)
+        boxes = boxes_obj.get_data()[:, [x_coord_col, y_coord_col]].tolist()
+    else:
+        boxes = cistem_obj
+    
     boxes.reverse()
     count = 0
     while len(boxes) > 0:
@@ -474,54 +483,6 @@ def extract_particles_non_mpi(
                 logger.warning(
                     "Particle falls completely outside bounds:",
                     box[0] / coordinate_binning,
-                )
-                raw = np.zeros([boxsize, boxsize])
-        elif frames > 1:
-            if use_frames:
-                # if frames, coordinates would be like = [ x, y, tilt, frame ]
-                extraction = image[box[2]][
-                    box[3],
-                    int(round(minX)) : int(round(maxX)),
-                    int(round(minY)) : int(round(maxY)),
-                ]
-            else:
-                extraction = image[
-                    box[2],
-                    int(round(minX)) : int(round(maxX)),
-                    int(round(minY)) : int(round(maxY)),
-                ]
-            inside = np.squeeze(extraction)
-
-            inside = inside.reshape(
-                int(round(maxX)) - int(round(minX)), int(round(maxY)) - int(round(minY))
-            )
-
-            if min(inside.shape) > 0:
-                raw = inside.mean() * np.ones([boxsize, boxsize])
-                try:
-                    raw[
-                        int(round(minx)) : int(round(maxx)),
-                        int(round(miny)) : int(round(maxy)),
-                    ] = inside
-                except:
-                    logger.info(
-                        "ERROR - Dimensions do not match",
-                        raw[
-                            int(round(minx)) : int(round(maxx)),
-                            int(round(miny)) : int(round(maxy)),
-                        ].shape,
-                        inside.shape,
-                    )
-                    logger.info(minx, maxx, miny, maxy)
-                    raw[
-                        int(round(minx)) : int(round(maxx)),
-                        int(round(miny)) : int(round(maxy)) - 1,
-                    ] = inside
-                    pass
-            else:
-                logger.warning(
-                    "Particle falls completely outside bounds: [%d, %d, %d, %d]"
-                    % (minx, maxx, miny, maxy)
                 )
                 raw = np.zeros([boxsize, boxsize])
 
@@ -627,7 +588,7 @@ def extract_particles_mpi(
             commands = []
 
             for movie in input:
-                com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}; rm -f {1}~'.format(
+                com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}~; mv {1}~ {1}'.format(
                     get_imod_path(), movie, gain_reference_file,
                 )
                 commands.append(com)
@@ -659,7 +620,7 @@ def extract_particles_mpi(
         else:
             shutil.copy2(input, "frealign/" + input)
 
-    number_of_particles = len(boxes)
+    number_of_particles = boxes[0].get_num_rows()# len(boxes)
 
     # bypass extraction
     if not extract:

@@ -212,6 +212,33 @@ def eulerTwoZYZtoOneZYZ(matrixZYZZYZ):
     return m
 
 
+def get_degrees_from_matrix(matrix: np.ndarray):
+
+    if matrix[2, 2] < 1 - np.nextafter(0, 1):
+        if matrix[2, 2] > -1 + np.nextafter(0, 1):
+            theta = math.acos(matrix[2, 2])
+            psi = math.atan2(matrix[2, 1] / math.sin(theta), matrix[2, 0] / math.sin(theta))
+            phi = math.atan2(matrix[1, 2] / math.sin(theta), -matrix[0, 2] / math.sin(theta))
+        else:
+            theta = math.pi
+            phi = math.atan2(-matrix[0, 1], -matrix[0, 0])
+            psi = 0
+    else:
+        theta = 0
+        phi = math.atan2(matrix[0, 1], matrix[0, 0])
+        psi = 0
+
+    frealign = np.degrees(np.array([psi, theta, phi]))
+
+    # frealign does not use negative angles, so we add 360 to each negative angle
+    frealign = np.where(frealign < 0, frealign + 360.0, frealign)
+
+    psi, theta, phi = frealign[0], frealign[1], frealign[2]
+
+    return psi, theta, phi
+
+
+
 def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
 
     """
@@ -241,7 +268,7 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
 
     However, different programs use different conventions. Here we only introduce LEFT and RIGHT handedness for rotation. 
     
-    * Left handedness is used by IMOD and vtk module, 3DAVG, EMAN2, Frealign, including normXYZ, normXYZ and Euler angles of rotation.
+    * Left handedness is used by 3DAVG, EMAN2, Frealign, including normXYZ, normXYZ and Euler angles of rotation.
     Its rotation matrix, if rotating around z axis, should be 
                    cos(angle)    sin(angle)  0
     R( angle ) = [ -sin(angle)    cos(angle)  0 ] 
@@ -326,18 +353,6 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
         ]
     )
 
-    """    
-    # Z * Y * Z
-    refinement_rotation_reverse = np.matrix(
-        [
-            [m[0], -m[4], -m[8], 0],
-            [-m[1], m[5], m[9], 0],
-            [-m[2], m[6], m[10], 0],
-            [m[12], m[13], m[14], m[15]],
-        ]
-    )
-    
-    """
     # translation matrix only
     refinement_translation = np.dot(np.linalg.inv(refinement_rotation), refinement)
 
@@ -373,6 +388,9 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
     # n = np.dot(np.linalg.inv(refinement_rotation), n)
     n = eulerTwoZYZtoOneZYZ(n)
 
+    # now we combine all the rotations into particle rotation (in parfile)
+    ppsi, ptheta, pphi = get_degrees_from_matrix(n)
+
     r = np.dot(n, r)
 
     ######################
@@ -384,83 +402,14 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
     t = np.dot(np.linalg.inv(refinement_translation), t)
     t = np.dot(np.linalg.inv(refinement_rotation_reverse), t)
     t = np.dot(np.linalg.inv(norm_reverse), t)
+
+    # now we store particle shifts directly into parfile without norm, matrix
+    px = -t[0, 3]
+    py = -t[1, 3]
+    pz = -t[2, 3]
+
     t = np.dot(tilt_angle_matrix, t)
     t = np.dot(np.linalg.inv(tilt_axis_rotation_matrix), t)
-
-    # Legacy code
-    """
-    # correction in the direction perpendicular to the tilt axis
-    # correction = [ -.5, 0, 0, 1 ]
-    # tcorrection = np.dot( r2D, correction )
-
-    # print 'tcorrection', tcorrection
-
-    # apply .box coordinate discretization error
-    r2D = vtk.rotation_matrix( np.radians(tilt_axis_angle), [0,0,1] )
-    t = vtk.translation_matrix( [tilt_correction[0], tilt_correction[1], 0] )
-    # t = vtk.translation_matrix( [tcorrection[0], tcorrection[1], 0] )
-
-    # tilt axis angle rotation: t->RotateZ( tilt_axis_angle )
-    t = np.dot( r2D, t )
-
-    # Difference vector between 2D rotation origins (IMOD vs. FREALIGN)
-    diff2D = [ 1, 1, 0, 1 ]
-
-    # Compute: t = Rot(C1) wrt C2 - C1 = Rot * ( C1 - C2 ) - ( C1 - C2 )
-    tdiff2D = np.dot( r2D, diff2D ) - diff2D
-
-    # print 'tdiff2D', tdiff2D
-
-    # apply rotation center and refinement translations: t->Translate( -tdiff2D[0], -tdiff2D[1], -tdiff2D[2] );
-    t = np.dot( vtk.translation_matrix( -tdiff2D ), t )
-
-    # correct for center of tilt axis: t->Translate( -1, 0, 0 );
-    t = np.dot( vtk.translation_matrix( [-1,0,0] ), t )
-
-    # apply tilt angle rotation: t->RotateY( -tilt_angle );
-    t = np.dot( vtk.rotation_matrix( np.radians(-tilt_angle), [0,1,0] ), t )
-
-    # Convert to IMOD's tilt axis location: t->Translate( .5, 0, .5 );
-    t = np.dot( vtk.translation_matrix( [.5,0,.5] ), t )
-
-    # The remaining transformations are the spike normal and the 3DAVG refinement transformation.
-    # Spike normals are a pure rotation R1. 3DAVG refinement is a full rotation and translation matrix F = R2 * T2
-    # If the two transformations are composed, the net rotation is then: R = R1 * R2 and the translation component is T2.
-    # The origin of the net rotation R is different from the image rotation, so to account for this we express
-    # as R * T3, where T3 corrects for the difference in the origin of the rotation.
-
-    # apply spike euler angles (pure rotation R1)
-    t = np.dot( vtk.rotation_matrix( np.radians(-normal[2]), [0,0,1] ), t )
-    t = np.dot( vtk.rotation_matrix( np.radians(-normal[0]), [1,0,0] ), t )
-    t = np.dot( vtk.rotation_matrix( np.radians(-normal[1]), [0,0,1] ), t )
-
-    # apply 3DAVG refinement transformation (rotation only, R2)
-    t = np.dot( refinement_rotation, t )
-
-    #  compute translation due to change in rotation origin for R1 * R2
-    r = vtk.rotation_matrix( np.radians(-normal[2]), [0,0,1] )
-    r = np.dot( vtk.rotation_matrix( np.radians(-normal[0]), [1,0,0] ), r )
-    r = np.dot( vtk.rotation_matrix( np.radians(-normal[1]), [0,0,1] ), r )
-    r = np.dot( refinement_rotation, r )
-
-    # Difference vector between rotation origins C1=[51,50,50] and C2=[51,51,50]
-    diff = [ 0, 1, 0, 1 ]
-
-    # Compute: t = Rot(C1) wrt C2 - C1 = Rot * ( C1 - C2 ) - ( C1 - C2 )
-    tdiff = np.dot( r, diff ) - diff
-
-    # print 'tdiff', tdiff
-
-    # compute post-multiplying translation component from refinement matrix, T2
-    f = np.dot( np.linalg.inv( refinement_rotation ), refinement )
-
-    # apply rotation center and refinement translations
-    t = np.dot( vtk.translation_matrix( [-tdiff[0,0]+f[0,3], -tdiff[0,1]-f[1,3], -tdiff[0,2]+f[2,3] ] ), t )
-    # t = np.dot( vtk.translation_matrix( -tdiff[0,:3] ), t )
-
-    # try this option to see if it fixes the problem
-    t = np.dot( vtk.translation_matrix([0,0,-cutOffset]), t )
-    """
 
     # extract euler angles from transformation matrix by decoding its sin and cos
 
@@ -491,12 +440,9 @@ def spa_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset):
         phi = math.atan2(r[0, 1], r[0, 0])
         psi = 0
 
-    frealign = np.degrees(np.array([psi, theta, phi]))
+    psi, theta, phi = get_degrees_from_matrix(r)
 
-    # frealign does not use negative angles, so we add 360 to each negative angle
-    frealign = np.where(frealign < 0, frealign + 360.0, frealign)
-
-    return [frealign[0], frealign[1], frealign[2], t[0, 3], t[1, 3]]
+    return [psi, theta, phi, t[0, 3], t[1, 3]], [-ppsi, -ptheta, -pphi, px, py, pz]
 
 
 def getShiftsForRecenter(normal, m, cutOffset):
@@ -556,7 +502,6 @@ def getShiftsForRecenter(normal, m, cutOffset):
 
     return [t[0, 3], t[1, 3], t[2, 3]]
 
-
 def findSpecimenBounds(particle_coordinates, dim_tomogram):
     """ Find the boundaries in x, y, z of 'specimen', which will be used to divide a tomogram into several grids for frame refinement
         (z is determined by the particle coordinates)
@@ -680,14 +625,15 @@ def divide2regions(
                     ]
                 )
 
-    logger.info(
-        f"Tomogram is divided into {len(corners_squares)} grid(s) for CSPT region-based refinement."
-    )
+    if len(corners_squares) > 1:
+        logger.info(
+            f"Dividing into {len(corners_squares)} region(s) for CSPT region-based refinement"
+        )
 
     return corners_squares, [patchsize_x, patchsize_y, patchsize_z]
 
 
-def findSpecimenBounds(particle_coordinates, dim_tomogram):
+def findSpecimenBounds(particle_parameters, dim_tomogram):
     """ Find the boundaries in x, y, z of 'specimen', which will be used to divide a tomogram into several grids for frame refinement
         (z is determined by the particle coordinates)
 
@@ -711,8 +657,9 @@ def findSpecimenBounds(particle_coordinates, dim_tomogram):
     max_x, max_y, max_z = 0, 0, 0
 
     # particle coordinates - x, y, z are in index 1, 2, 3 respectively
-    for coord in particle_coordinates:
-        x, y, z = float(coord[1]), float(coord[2]), float(coord[3])
+    for particle_index in particle_parameters:
+        particle = particle_parameters[particle_index]
+        x, y, z = particle.x_position_3d, particle.y_position_3d, particle.z_position_3d
 
         if x < min_x:
             min_x = math.floor(x)
@@ -738,83 +685,6 @@ def findSpecimenBounds(particle_coordinates, dim_tomogram):
     top_right_corner = [max_x, max_y, max_z]
 
     return [bottom_left_corner, top_right_corner]
-
-
-def divide2regions(
-    bottom_left_corner, top_right_corner, split_x=4, split_y=4, split_z=1, overlap=0.0
-):
-    """Divide the tomogram into several grids to sort local particles for frame refinement
-
-    Parameters
-    ----------
-    bottom_left_corner : list[float]
-        The 3D coordinate of one corner of tomogram
-    top_right_corner : list[float]
-        The 3D coordinate of the other corner of tomogram
-    split_x : int, optional
-        The number of grids to be divided in x direction, by default 4
-    split_y : int, optional
-        The number of grids to be divided in y direction, by default 4
-    split_z : int, optional
-        The number of grids to be divided in z direction, by default 1
-    overlap : float, optional
-        The percentage of overlapped area between grids, 0.0 - 1.0, by default 0.2
-
-    Returns
-    -------
-    list[list[float]], list[float]]
-        The first list stores 3D coordinate of the bottom-left corners for every divided square
-        The second list stores the size of squares [ x, y, z ]
-    """
-
-    if split_x < 1 or split_y < 1 or split_z < 1:
-        logger.error(f"Split x/y/z has to be greater than zero.")
-        sys.exit()
-
-    corners_squares = []
-
-    tomosize_x = top_right_corner[0] - bottom_left_corner[0]
-    tomosize_y = top_right_corner[1] - bottom_left_corner[1]
-    tomosize_z = top_right_corner[2] - bottom_left_corner[2]
-
-    if split_x - split_x * overlap + overlap != 0:
-        patchsize_x = tomosize_x / (split_x - split_x * overlap + overlap)
-    else:
-        patchsize_x = tomosize_x
-
-    if split_y - split_y * overlap + overlap != 0:
-        patchsize_y = tomosize_y / (split_y - split_y * overlap + overlap)
-    else:
-        patchsize_y = tomosize_y
-
-    if split_z - split_z * overlap + overlap != 0:
-        patchsize_z = tomosize_z / (split_z - split_z * overlap + overlap)
-    else:
-        patchsize_z = tomosize_z
-
-    curr_x, curr_y, curr_z = bottom_left_corner
-    increment_x, increment_y, increment_z = (
-        patchsize_x * (1 - overlap),
-        patchsize_y * (1 - overlap),
-        patchsize_z * (1 - overlap),
-    )
-
-    for i in range(split_x):
-        for j in range(split_y):
-            for k in range(split_z):
-                corners_squares.append(
-                    [
-                        curr_x + (increment_x * i),
-                        curr_y + (increment_y * j),
-                        curr_z + (increment_z * k),
-                    ]
-                )
-
-    logger.info(
-        f"Dividing into {len(corners_squares)} region(s) for CSPT region-based refinement"
-    )
-
-    return corners_squares, [patchsize_x, patchsize_y, patchsize_z]
 
 
 def DefocusOffsetFromCenter(
@@ -1075,7 +945,38 @@ def relion2Spk(x, y, z, binning, relion_x, relion_y, relion_z, tomo_x_bin=512, t
     
     return new_x, new_y, new_z
 
+def cistem2_alignment2Relion(ppsi, ptheta, pphi, px, py, pz):
 
+    # input: per particle rotation and shifts from extended Particles object
+    # rotation 
+    # R( normZ )*R( normX )*R( normY )*R( az )*R( alt )*R( phi )*R( -ppsi )*R( -ptheta )*R( -pphi ) (all left handedness)
+    #      Z          X          Z         Z       X        Z          Z           Y           Z 
+
+    mpsi = vtk.rotation_matrix(np.radians(-ppsi), [0, 0, 1])
+    mtheta = vtk.rotation_matrix(np.radians(-ptheta), [0, 1, 0])
+    mphi = vtk.rotation_matrix(np.radians(-pphi), [0, 0, 1])
+    refine_rotation = functools.reduce(np.matmul, [mpsi, mtheta, mphi])
+    
+    m = eulerTwoZYZtoOneZYZ(refine_rotation)
+
+    if m[2, 2] < 1 - np.nextafter(0, 1):
+
+        if m[2, 2] > -1 + np.nextafter(0, 1):
+            y = math.acos(m[2, 2])
+            z2 = math.atan2(m[2, 1] / math.sin(y), -m[2, 0] / math.sin(y))
+            z1 = math.atan2(m[1, 2] / math.sin(y), m[0, 2] / math.sin(y))
+        else:
+            y = math.pi
+            z1 = -math.atan2(m[1, 0], m[1, 1])
+            z2 = 0
+    else:
+        y = 0
+        z1 = math.atan2(m[1, 0], m[1, 1])
+        z2 = 0
+  
+    rot, tilt, psi = np.degrees(np.array([z2, y, z1])) 
+    
+    return rot, tilt, psi, -px, -py, -pz
 
 
 def alignment2Relion(matrix, ppsi, ptheta, pphi, normX, normY, normZ):
@@ -1180,3 +1081,141 @@ def get_vir_binning_boxsize(vir_rad, pixel_size, factor_rad2boxsize=3, binned_vi
     virion_boxsize = factor_rad2boxsize * int(vir_rad / pixel_size)
     return int(math.ceil( virion_boxsize / binned_vir_boxsize)), virion_boxsize
 
+
+def csp_euler_angles(tilt_angle, tilt_axis_angle, normal, m, cutOffset, csp_matrix):
+
+    """refinement angles merge with csp eular angles"""
+    
+    # Refinement matrix, including rotation and translation, which is from 3DAVG or EMAN2
+    refinement = np.matrix(
+        [
+            [m[0], m[1], m[2], m[3]],
+            [m[4], m[5], m[6], m[7]],
+            [m[8], m[9], m[10], m[11]],
+            [m[12], m[13], m[14], m[15]],
+        ]
+    )
+    # Rotation matrix only ( Z1 * X * Z2 )
+    refinement_rotation = np.matrix(
+        [
+            [m[0], m[1], m[2], 0],
+            [m[4], m[5], m[6], 0],
+            [m[8], m[9], m[10], 0],
+            [m[12], m[13], m[14], m[15]],
+        ]
+    )
+
+    # invert the order of rotation matrix ( Z2 * X * Z1 )
+    refinement_rotation_reverse = np.matrix(
+        [
+            [m[0], -m[4], m[8], 0],
+            [-m[1], m[5], -m[9], 0],
+            [m[2], -m[6], m[10], 0],
+            [m[12], m[13], m[14], m[15]],
+        ]
+    )
+
+    # translation matrix only
+    refinement_translation = np.dot(np.linalg.inv(refinement_rotation), refinement)
+
+    # correct translations x and z to make sense
+    refinement_translation[0, 3] = -refinement_translation[0, 3]
+    refinement_translation[2, 3] = -refinement_translation[2, 3]
+
+    # compute rotation matrix of norm X Y Z, be careful that vtk uses right handedness but 3DAVG uses left handedness
+    normX = vtk.rotation_matrix(np.radians(-normal[0]), [1, 0, 0])
+    normY = vtk.rotation_matrix(np.radians(-normal[1]), [0, 0, 1])
+    normZ = vtk.rotation_matrix(np.radians(-normal[2]), [0, 0, 1])
+    norm = np.dot(normZ, np.dot(normX, normY))
+    norm_reverse = np.dot(normY, np.dot(normX, normZ))
+
+    # compute matrix of Tilt axis rotation (around Z)
+    tilt_axis_rotation_matrix = vtk.rotation_matrix(
+        np.radians(tilt_axis_angle), [0, 0, 1]
+    )
+    # compute matrix of tilt angle (around Y)
+    tilt_angle_matrix = vtk.rotation_matrix(np.radians(tilt_angle), [0, 1, 0])
+
+    ###################
+    # Rotation matrix #
+    ###################
+    # R( -phi )*R( -alt )*R( -az )*R( -normY )*R( -normX )*R( -normZ )*R( tilt_angle )*R( -tilt_axis_rotation )
+    #      Z         X        Z          Z           X           Z             Y                   Z
+    r = np.linalg.inv(tilt_axis_rotation_matrix)
+    r = np.dot(tilt_angle_matrix, r)
+
+    # convert ZXZ to ZYZ and then merge two ZYZs into one ZYZ
+    n = eulerZXZtoZYZ(np.linalg.inv(norm))
+
+    n = np.dot(eulerZXZtoZYZ(np.linalg.inv(refinement_rotation)), n)
+
+    # n = np.dot(np.linalg.inv(refinement_rotation), n)
+    n = eulerTwoZYZtoOneZYZ(n)
+
+    csp_psi, csp_theta, csp_phi = csp_matrix
+    # now we combine all the rotations into particle rotation (in parfile)
+    mpsi = vtk.rotation_matrix(np.radians(csp_psi), [0, 0, 1])
+    mtheta = vtk.rotation_matrix(np.radians(csp_theta), [0, 1, 0])
+    mphi = vtk.rotation_matrix(np.radians(csp_phi), [0, 0, 1])
+    refine_rotation = functools.reduce(np.matmul, [mphi, mtheta, mpsi])
+
+    n = np.matmul(refine_rotation, n)
+
+    n = eulerTwoZYZtoOneZYZ(n)
+
+    ppsi, ptheta, pphi = get_degrees_from_matrix(n)
+
+    r = np.dot(n, r)
+
+    ######################
+    # Translation matrix #
+    ######################
+    # R( -tilt_axis_rotation )*R( tilt_angle )*R( -normZ )*R( -normX )*R( -normY )*R( -az )*R( -alt )*R( -phi )*T( -translation )
+
+    t = vtk.translation_matrix([0, 0, -cutOffset])
+    t = np.dot(np.linalg.inv(refinement_translation), t)
+    t = np.dot(np.linalg.inv(refinement_rotation_reverse), t)
+    t = np.dot(np.linalg.inv(norm_reverse), t)
+
+    # now we store particle shifts directly into parfile without norm, matrix
+    px = -t[0, 3]
+    py = -t[1, 3]
+    pz = -t[2, 3]
+
+    t = np.dot(tilt_angle_matrix, t)
+    t = np.dot(np.linalg.inv(tilt_axis_rotation_matrix), t)
+
+    # extract euler angles from transformation matrix by decoding its sin and cos
+
+    # Frealign first rotates the "reference" by PHI -> THETA -> PSI extrinsically
+    # then moves/translates the reference to match 2D particle projections
+
+    # Matrix(ZYZ) -> R(z1) * R(y) * R(z2)
+    # z1 = phi
+    # y = theta
+    # z2 = psi
+
+    # *** LEFT handedness
+    #            cz1*cy*cz2 - sz1*sz2       cz1*cy*sz2 + sz1*cz2         -cz1*sy
+    # Matrix = [ -sz1*cy*cz2 - cz1*sz2      -sz1*cy*sz2 + cz1*cz2         sz1*sy ]
+    #                 sy*cz2                       sy*sz2                   cy
+
+    if r[2, 2] < 1 - np.nextafter(0, 1):
+        if r[2, 2] > -1 + np.nextafter(0, 1):
+            theta = math.acos(r[2, 2])
+            psi = math.atan2(r[2, 1] / math.sin(theta), r[2, 0] / math.sin(theta))
+            phi = math.atan2(r[1, 2] / math.sin(theta), -r[0, 2] / math.sin(theta))
+        else:
+            theta = math.pi
+            phi = math.atan2(-r[0, 1], -r[0, 0])
+            psi = 0
+    else:
+        theta = 0
+        phi = math.atan2(r[0, 1], r[0, 0])
+        psi = 0
+
+    psi, theta, phi = get_degrees_from_matrix(r)
+
+
+
+    return [psi, theta, phi, t[0, 3], t[1, 3]], [-ppsi, -ptheta, -pphi, px, py, pz]

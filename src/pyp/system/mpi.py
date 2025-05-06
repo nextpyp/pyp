@@ -93,10 +93,11 @@ def submit_jobs_to_workers(commands, working_path=os.getcwd(), verbose=False, si
 
     if num_cpus > 1 and len(commands) > 1:
 
+        first_command = commands[0].split('\n')[0]
+        if "/opt/" in first_command:
+            first_command = first_command.split("/opt/")[1]
         if not silent:
-            logger.info(f"Running {len(commands):,} command(s)")
-        if verbose:
-            logger.info(f"First command is: {commands[0]}")
+            logger.info(f"Running {len(commands):,} command(s) ({first_command})")
 
         # NOTE: be aware of the current working directory for all the workers, as they might be initiated in a different place
         current_directory = os.getcwd()
@@ -175,22 +176,20 @@ def submit_function_to_workers(function, arguments, verbose=False, silent=False)
 
         current_directory = os.getcwd()
         if not silent:
-            logger.info(f"Running {num_processes:,} function(s)")
-        if verbose:
-            logger.info(f"First function is: {funcs[0].__name__}")
-        if silent:
-                parallel(delayed(wrapper)(func, *arg, current_directory=current_directory) for idx, func in enumerate(funcs) for arg in args[idx])
-        else:
-            with tqdm_joblib(tqdm(desc="Progress", total=len(funcs), miniters=1, file=TQDMLogger())) as progress_bar:
-                parallel(delayed(wrapper)(func, *arg, current_directory=current_directory) for idx, func in enumerate(funcs) for arg in args[idx])
-
+            logger.info(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
+        with tqdm_joblib(tqdm(desc="Progress", total=num_processes, miniters=1, file=TQDMLogger(), disable=silent)) as progress_bar:
+            parallel(delayed(wrapper)(func, *arg, current_directory=current_directory) for idx, func in enumerate(funcs) for arg in args[idx])
         if not silent:
             logger.info(f"{num_processes:,} functions(s) finished")
 
     else:
         # execute all commands serially
-        for function, arguments in zip(funcs, args):
-            for argument in arguments:
-                function(*argument)
+        if not silent:
+            logger.info(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
+        with tqdm(desc="Progress", total=num_processes, file=TQDMLogger(), disable=silent) as pbar:
+           for function, arguments in zip(funcs, args):
+                for argument in arguments:
+                    function(*argument)
+                    pbar.update(1)
     # all done
     return

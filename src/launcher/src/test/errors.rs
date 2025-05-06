@@ -313,11 +313,8 @@ fn config_scratch_not_folder() {
 		(ENVNAME_CONFIG, config_path.to_str().unwrap())
 	];
 
-	assert_eq!(launcher(&args, &envvars), Err(LauncherError::ConfigFolderNotFound {
-		section: "pyp".to_string(),
-		key: "scratch".to_string(),
-		path: "foo".to_string()
-	}));
+	// this is no longer an error
+	assert!(matches!(launcher(&args, &envvars), Ok(..)));
 }
 
 #[test]

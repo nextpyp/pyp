@@ -116,10 +116,9 @@ def cryolo2mod(cbox, mod, size, scaling, z, write=True):
             "%s/bin/point2model -scat -sphere %d %s %s"
             % (get_imod_path(), size, cbox + ".txt", mod)
         )
-        os.system("%s/bin/imodtrans -Y -T %s %s" % (get_imod_path(), mod, mod))
+        os.system("%s/bin/imodtrans -Y -T %s %s~ && mv %s~ %s" % (get_imod_path(), mod, mod, mod, mod))
         # clean up
         os.remove(cbox + ".txt")
-        os.remove("%s~" % mod)
 
     return np.array(ret_spikes)
 

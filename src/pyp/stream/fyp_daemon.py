@@ -14,7 +14,7 @@ import numpy as np
 
 from pyp.inout.image import mrc
 from pyp.inout.metadata import frealign_parfile, pyp_metadata, generateRelionParFileNew
-from pyp.inout.metadata.core import spa_extract_coordinates, get_max_resolution
+from pyp.inout.metadata.core import spa_extract_coordinates_legacy, get_max_resolution
 from pyp.refine.frealign import frealign
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import mpi, project_params
@@ -55,7 +55,7 @@ def get_allboxes_and_allparxs_from_box(
     current_directory = Path.cwd()
     os.chdir(project_folder)
     try:
-        [allboxes, allparxs] = spa_extract_coordinates(
+        [allboxes, allparxs] = spa_extract_coordinates_legacy(
             filename=pkl_file.stem,
             parameters=parameters,
             only_inside=False,
@@ -102,6 +102,7 @@ def get_positions_and_new_particle_count_from_box_files(
 
     project_directory = Path().cwd().parent
     mrc_dir = project_directory / "mrc"
+    os.makedirs( mrc_dir, exist_ok=True)
     flag = {}
     # Loop until we have enough particles
     while new_particles < parameters[threshold_type]:
@@ -117,7 +118,7 @@ def get_positions_and_new_particle_count_from_box_files(
         ]
 
         if len(pkl_files) > 0:
-            logger.info(f"Detected {len(pkl_files):,} new images with CTF resolution better than {parameters['class2d_ctf_min_res']} A. Generating metadata")
+            logger.info(f"Processing {len(pkl_files):,} new images with estimated CTF resolution better than {parameters['class2d_ctf_min_res']} A")
 
             # generate allparx files from new micrographs
             with tqdm(desc="Progress", total=len(pkl_files), file=TQDMLogger()) as pbar:
@@ -141,7 +142,7 @@ def get_positions_and_new_particle_count_from_box_files(
                                 logger.info(f"Number of particles from {film_name}: {len(lines)}")
                             if len(lines) != len(allboxes):
                                 logger.error(
-                                    "Number of particles does not match number of coordinates to extract. "
+                                    "Number of particles does not match number of coordinates to extract"
                                     f"Removing {allparxs_fpath}"
                                 )
                                 os.remove(allparxs_fpath)
@@ -153,7 +154,7 @@ def get_positions_and_new_particle_count_from_box_files(
                     pbar.update(1)
 
         if len(boxes_lists) and (len(boxes_lists)-len(old_boxes_lists)) > 0 and number_of_particles_changed:
-            logger.info(f"Cumulative number of new micrographs: {len(boxes_lists)-len(old_boxes_lists):,}; Cumulative number of new particles: {new_particles:,}")
+            logger.info(f"{new_particles:,} particles detected (~{int(new_particles/(len(boxes_lists)-len(old_boxes_lists)))} particles per micrograph)")
 
         flag = detect_flags(existing_unique_name=prev_name, project_directory=project_directory, existing_boxes_lists=old_boxes_lists)
         if not "None" in flag.values():
@@ -271,7 +272,7 @@ def write_par_to_file(
             film += 1
             os.remove(parx)
 
-    logger.info(f"Done merging files into {new_par_filename}")
+    logger.info(f"Merged metadata into {new_par_filename}")
 
     return counter
 
@@ -328,14 +329,12 @@ def write_stacks_to_file(
         new_stack = str(stack_dir / f"{new_name}_stack.mrc")
         previous_stack = str(stack_dir / f"{previous_name}_stack.mrc")
 
-        logger.info(f"Merging particle stacks into {new_stack}")
+        logger.info(f"Generating merged particle stack {new_stack}")
 
         if previous_name is None or not os.path.exists(previous_stack):
             mrc.merge_fast(new_stacks, new_stack, remove=True)
         else:
             mrc.merge_fast([previous_stack] + new_stacks, new_stack, remove=True)
-
-        logger.info(f"Finished merging particle stacks into {new_stack}")
 
     except:
         type, value, traceback = sys.exc_info()
@@ -377,13 +376,14 @@ def run_refinement(  # rename to daemon2D after testing
         start_iteration = classification_status["refinement"]
         max_capacity = parameters['class2d_max_refinement']
 
-    logger.info(f"Beginning {classification_type} classification job")
+    logger.info(f"Initial threshold reached, beginning {classification_type} classification")
 
     if classification_type == "ab initio":
         previous_name = None
-        logger.info(
-            "Forcing previous_name to be None since classification_type is 'ab initio'"
-        )
+        if parameters.get("slurm_verbose"):
+            logger.info(
+                "Forcing previous_name to be None since classification_type is 'ab initio'"
+            )
     else:
         assert previous_name is not None
 
@@ -458,10 +458,14 @@ def run_refinement(  # rename to daemon2D after testing
             if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
                 logger.info(f"Using fraction {class_fraction} from total particles number {particle_num:,} for ab initio")
 
-            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
+            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Ab-initio: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of particles: {class_fraction:.2}")
+            if cycle_number == 0:
+                # print table header
+                logger.info(f"Ab-initio mode\tIteration\tResolution limit (A)\tParticles used (percentage)")
+            # print data for current iteration
+            logger.info(f"\t\t{cycle_number+1:11}/{resolution_cycle_count+ITER:2}\t\t\t{high_res_limit:4.1f}\t{round(100.0*class_fraction):20}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -517,10 +521,14 @@ def run_refinement(  # rename to daemon2D after testing
             if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
                 logger.info(f"Using fraction {class_fraction} from total particles number {particle_num:,} for seeded_startup")
 
-            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
+            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Seeded startup: iteration {cycle_number+1}/{resolution_cycle_count+ITER}, High Res Limit: {high_res_limit:.2f}, Fraction of particles: {class_fraction:.2}")
+            if cycle_number == 0:
+                # print table header
+                logger.info(f"Seeded startup\tIteration\tResolution limit (A)\tParticles used (percentage)")
+            # print data for current iteration
+            logger.info(f"\t\t{cycle_number+1:11}/{resolution_cycle_count+ITER:2}\t\t\t{high_res_limit:4.1f}\t{round(100.0*class_fraction):20}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -575,10 +583,14 @@ def run_refinement(  # rename to daemon2D after testing
 
         for cycle_number in range(start_iteration, refinement_cycle_count):
 
-            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
+            flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
 
-            logger.info(f"Refinement mode: iteration {cycle_number}/{refinement_cycle_count}, High Res Limit: {high_res_limit}, Fraction of particles: {class_fraction:.2}")
+            if cycle_number == 0:
+                # print table header
+                logger.info(f"Refinement mode\tIteration\tResolution limit (A)\tParticles used (percentage)")
+            # print data for current iteration
+            logger.info(f"\t\t{cycle_number+ITER:11}/{refinement_cycle_count:2}\t\t\t{high_res_limit:4.1f}\t{round(100.0*class_fraction):20}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -729,10 +741,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
     # after it, every time it reach the threshold -> refinement
     # seeded_startup = True
 
-    daemon_start_time = time.time()
-    while time.time() - daemon_start_time < datetime.timedelta(
-        days=mparameters["stream_session_timeout"]
-    ).total_seconds() and not os.path.exists(stop_flag):
+    while not os.path.exists(stop_flag):
 
         if global_start:
             boxes_lists = dict() if existing_boxes_lists is None else existing_boxes_lists
@@ -816,12 +825,12 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     
                     force_preprocessing = False
                 else:
-                    force_preprocessing = any(["_force" in key and new_parameters[key]==True for key in new_parameters ])
+                    force_preprocessing = any([key.endswith("_force") and new_parameters[key]==True for key in new_parameters ])
                                     
                     # disable the _force parameters in the configure file
                     if force_preprocessing:
                         for key in new_parameters:
-                            if "_force" in key and new_parameters[key]==True and not "_force_integer" in key:
+                            if key.endswith("_force") and new_parameters[key]==True:
                                 new_parameters[key] = False
                             else:
                                 pass
@@ -875,7 +884,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                         del new_status["seeded_startup"]
                         del new_status["refinement"]
                     except:
-                        logger.info("Classification status is ab initio only, nothing to change")
+                        logger.info("Classification status is already ab initio, no changes needed")
                     # get boxes again
                     boxes_lists_before = boxes_lists.copy()
 
@@ -931,7 +940,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
 
                     new_boxes_lists = get_new_boxes(boxes_lists_before, boxes_lists)
                     # only run refinement mode if we get additional particles
-                    logger.info(f"{new_particles} new particles detected, exceeds {incremental_threshold_2D} threshold")
+                    logger.info(f"{new_particles:,} new particles detected, exceeds {incremental_threshold_2D:,} threshold")
 
                     previous_name = new_name
                     new_name = generate_unique_name(mparameters)
@@ -1025,7 +1034,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     del new_status["seeded_startup"]
                     del new_status["refinement"]
                 except:
-                    logger.info("Classification status is ab initio only, nothing to change")
+                    logger.info("Classification status is already ab initio, no changes needed")
                 # get boxes again
                 boxes_lists_before = boxes_lists.copy()
 
@@ -1079,7 +1088,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
             new_boxes_lists = get_new_boxes(boxes_lists_before, boxes_lists)
 
             # only run refinement mode if we get additional particles
-            logger.info(f"{new_particles:,} new particles detected, exceeds {incremental_threshold_2D:,} threshold")
+            logger.info(f"Incremental threshold of {incremental_threshold_2D:,} particles reached")
 
             previous_name = new_name
             new_name = generate_unique_name(mparameters)
@@ -1101,7 +1110,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
         except:
             type, value, traceback = sys.exc_info()
             sys.__excepthook__(type, value, traceback)
-            logger.warning("Inconsistencies detected during processing, waiting 30 seconds before resuming")
+            logger.warning("Inconsistencies detected during processing, waiting 30 seconds before retrying")
             time.sleep(30)
             pass
 

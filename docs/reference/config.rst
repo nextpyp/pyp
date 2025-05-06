@@ -1,6 +1,8 @@
-=============
-Configuration
-=============
+:tocdepth: 3
+
+==================
+Configuration file
+==================
 
 ``nextPYP`` uses a single configuration file to provide all environmental information needed to run.
 
@@ -15,15 +17,15 @@ Placement
 The ``config.toml`` file can be placed anywhere you like on the filesystem, but you'll
 need to let PYP know where to find it. There are two mechanisms for doing this.
 
-1. Environment variable
------------------------
+Environment variable
+--------------------
 
 ``nextPYP`` first uses the ``$PYP_CONFIG`` environment variable to find the config file.
 If ``$PYP_CONFIG`` is present and its value is a path to an existing file in the filesystem,
 ``nextPYP`` will use that file for the configuration.
 
-2. Default location
--------------------
+Default location
+----------------
 
 Otherwise, ``nextPYP`` will look for the configuration file at the default location
 in the user's home directory:
@@ -64,20 +66,21 @@ is dedicated to configuring the container environment.
 
 .. _Singularity: https://sylabs.io/guides/3.5/user-guide/introduction.html
 
-|
-
 ``container``
 ~~~~~~~~~~~~~
 
 :Type: string
-:Required: yes
+:Required: no in web mode, yes in CLI mode
 :Description:
 	Path to the PYP Singularity container on the SLURM cluster,
 	ideally in a read-only location.
+
+	For web-enabled installations of nextPYP, this configuration option is not required.
+	If this option is not explicitly specified, nextPYP will look for the pyp container
+	at ``<web.sharedExecDir>/containers/pyp.sif``, where ``<web.sharedExecDir>`` is the
+	:ref:`web.sharedExecDir` configuration option in the :ref:`web` section, described below.
 :Examples:
 	``container = '/storage/singularity-images/pyp.sif'``
-
-|
 
 ``sources``
 ~~~~~~~~~~~
@@ -94,8 +97,6 @@ is dedicated to configuring the container environment.
 :Examples:
 	``sources = '/home/myuser/code/pyp'``
 
-|
-
 ``scratch``
 ~~~~~~~~~~~
 
@@ -106,8 +107,6 @@ is dedicated to configuring the container environment.
 	This location should have fast read/write speeds, ideally in local storage.
 :Examples:
 	``scratch = '/tmp/pyp-scratch'``
-
-|
 
 ``binds``
 ~~~~~~~~~
@@ -140,6 +139,7 @@ is dedicated to configuring the container environment.
 	- ``/sbin/**``
 	- ``/scif/**``
 	- ``/singularity/**``
+	- ``/apptainer/**``
 	- ``/srv/**``
 	- ``/sys/**``
 	- ``/usr/**``
@@ -152,10 +152,8 @@ is dedicated to configuring the container environment.
 
 	``binds = ['/storage1/cryoem-data', '/storage2/cryoem-data']``
 
-|
-
 ``containerExec``
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 :Type: string or table
 :Required: no
@@ -174,6 +172,17 @@ is dedicated to configuring the container environment.
 
 	``containerExec = { module = 'singularity', exec = 'apptainer' }``
 
+``cudaLibs``
+~~~~~~~~~~~~
+
+:Type: array of strings
+:Required: no
+:Default: empty array
+:Description:
+	Path to a folder containing CUDA runtime libraries.
+	When pyp is launched, these folder paths will be added to ``LD_LIBRARY_PATH``.
+:Examples:
+	``cudaLibs = ['/usr/bin/cuda']``
 
 
 SLURM Section
@@ -189,8 +198,6 @@ This section is used to configure properties of the SLURM_ cluster.
 
 .. _SLURM: https://slurm.schedmd.com/overview.html
 
-|
-
 ``user``
 ~~~~~~~~
 
@@ -202,8 +209,6 @@ This section is used to configure properties of the SLURM_ cluster.
 :Examples:
 	``user = 'pyp'``
 
-|
-
 ``host``
 ~~~~~~~~
 
@@ -213,8 +218,6 @@ This section is used to configure properties of the SLURM_ cluster.
 	Hostname of a login node for the SLURM cluster.
 :Examples:
 	``host = 'slurm-login-01.example.org'``
-
-|
 
 ``key``
 ~~~~~~~~
@@ -227,8 +230,6 @@ This section is used to configure properties of the SLURM_ cluster.
 :Examples:
 	``key = '/path/to/ssh/mykey'``
 
-|
-
 ``port``
 ~~~~~~~~
 
@@ -239,8 +240,6 @@ This section is used to configure properties of the SLURM_ cluster.
 	Network port to use to connect to the SSH daemon on the SLURM login node.
 :Examples:
 	``port = 2204``
-
-|
 
 ``maxConnections``
 ~~~~~~~~~~~~~~~~~~
@@ -255,8 +254,6 @@ This section is used to configure properties of the SLURM_ cluster.
 :Examples:
 	``maxConnections = 10``
 
-|
-
 ``timeoutSeconds``
 ~~~~~~~~~~~~~~~~~~
 
@@ -267,8 +264,6 @@ This section is used to configure properties of the SLURM_ cluster.
 	The number of seconds to wait before closing an idle SSH connection.
 :Examples:
 	``timeoutSeconds = 500``
-
-|
 
 ``path``
 ~~~~~~~~
@@ -281,35 +276,18 @@ This section is used to configure properties of the SLURM_ cluster.
 :Examples:
 	``path = '/opt/slurm/bin'``
 
-|
+``templatesDir``
+~~~~~~~~~~~~~~~~
 
-``queues``
-~~~~~~~~~
-
-:Type: list of strings
-:Required: no
-:Default: just the default queue for the SLURM cluster
+:Type: string
+:Required: yes
 :Description:
-	The names of any SLURM queues to which users can submit PYP jobs.
-	If no choice is made by the user, the first queue will be used by default.
-:Examples:
-	``queues = ['default', 'quick']``
+	Path to the folder containing SLURM template files.
 
-|
+	.. seealso::
+		**(TODO: add a link to the templates documentation here)**
 
-``gpuQueues``
-~~~~~~~~~~~~~
 
-:Type: list of strings
-:Required: no
-:Default: just the default queue for the SLURM cluster
-:Description:
-	The names of any SLURM queues with GPU hardware to which users can submit PYP jobs.
-	If no choice is made by the user, the first queue will be used by default.
-:Examples:
-	``gpuQueues = ['default-gpu', 'quick-gpu']``
-
-|
 
 Standalone Section
 ------------------
@@ -321,8 +299,6 @@ Standalone Section
 :Occurs: once
 
 This section is used to configure properties of the job launcher in non-cluster (aka standalone) mode.
-
-|
 
 ``availableCpus``
 ~~~~~~~~~~~~~~~~~
@@ -338,8 +314,6 @@ This section is used to configure properties of the job launcher in non-cluster 
 :Examples:
 	``availableCpus = 4``
 
-|
-
 ``availabileMemoryGiB``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -354,8 +328,6 @@ This section is used to configure properties of the job launcher in non-cluster 
 :Examples:
 	``availabileMemoryGiB = 4``
 
-|
-
 ``availableGpus``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -368,21 +340,6 @@ This section is used to configure properties of the job launcher in non-cluster 
 	unless they somehow are visible to and usable by the NVidia Cuda runtime.
 :Examples:
 	``availableGpus = 4``
-
-|
-
-StreamPYP Section
------------------
-
-``[stream]``
-~~~~~~~~~~~~
-
-:Required: yes
-:Occurs: once
-
-This section is used to configure the microscope streaming capabilities of PYP.
-
-**TODO:** write this section
 
 
 Web Section
@@ -408,6 +365,8 @@ in different directories on different servers, there are two ways to fix it:
 
 ----
 
+.. _web:
+
 ``[web]``
 ~~~~~~~~~
 
@@ -416,15 +375,6 @@ in different directories on different servers, there are two ways to fix it:
 
 	for web interface: yes
 :Occurs: once
-
-Minimal example:
-::
-
-	[web]
-	localDir = '/home/streamPYP/web'
-	sharedDir = '/network/streamPYP/shared'
-
-|
 
 ``host``
 ~~~~~~~~
@@ -441,7 +391,7 @@ Minimal example:
 	To make the application HTTP server reachable from an external private network, set ``host`` to ``0.0.0.0`` to bind
 	to all available network interfaces.
 
-	.. warn::
+	.. warning::
 		The application HTTP server is not designed to securely handle traffic from the public internet.
 		Exposing the application HTTP server directly to the public internet increases your risk of a security
 		compromise.
@@ -456,8 +406,6 @@ Minimal example:
 	``host = '10.0.3.4'``
 
 	``host = '0.0.0.0'``
-
-|
 
 ``port``
 ~~~~~~~~
@@ -475,7 +423,7 @@ Minimal example:
 	service installed that uses that port. To avoid a port conflict, you can configure the application HTTP
 	server to use a different port, but be sure to use a non-privileged port at or above 1024.
 
-	.. warn::
+	.. warning::
 		Using a privileged port (below 1024) like 80 or 443 for the application server requires root privileges,
 		but the application HTTP server was not designed to run with root privileges. Doing so would be insecure,
 		and any security compromise that had access to elevated permissions would be much more severe.
@@ -485,8 +433,6 @@ Minimal example:
 :Examples:
 	``port = 8082``
 
-|
-
 ``localDir``
 ~~~~~~~~~~~~
 
@@ -495,28 +441,55 @@ Minimal example:
 :Description:
 	Directory for the database and web server assets.
 
-	This location should have fast read/write speeds, ideally in local storage.
+	This location should have fast read/write speeds, ideally in local storage on the web server.
 
-	This location does not need to be sharerd with the SLURM nodes.
+	This location does not need to be shared with the SLURM nodes.
+
+	.. note::
+		This setting is initially set by the installation script using the ``PYP_LOCAL`` environment variable.
 :Examples:
 	``localDir = '/home/streamPYP/web'``
 
-|
-
 ``sharedDir``
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 :Type: string
 :Required: yes
 :Description:
 	Directory for intermediate files and metadata for each user of the web interface.
 
-	This location should have a lot of available space and must be also available
-	on the SLURM nodes.
-:Examples:
-	``sharedDir = '/network/streamPYP/shared'``
+	Since this location holds the bulk of the intermediate Cryo-EM and Cryo-ET metadata for each user of the website,
+	it should have a large amount of available space.
+	This folder must also be available to both the website and the SLURM nodes at the same location in the filesystem.
 
-|
+	This folder should also be writable by the service account running the website process.
+
+	.. note::
+		This setting is initially set by the installation script using the ``PYP_SHARED_DATA`` environment variable.
+:Examples:
+	``sharedDir = '/network/streamPYP/sharedData'``
+
+.. _web.sharedExecDir:
+
+``sharedExecDir``
+~~~~~~~~~~~~~~~~~
+
+:Type: string
+:Required: yes
+:Description:
+	Directory for executables needed by both the web server and the SLURM nodes.
+
+	This location should have a enough space to host the executable files (mostly Apptainer containers, ~10s of GiB).
+	This folder must also be available to both the website and the SLURM nodes at the same location in the filesystem.
+
+	.. warning::
+		Since this folder hosts executable files, for security reasons,
+		it should **not** be writable by the service account running the website process.
+
+	.. note::
+		This setting is initially set by the installation script using the ``PYP_SHARED_EXEC`` environment variable.
+:Examples:
+	``sharedExecDir = '/network/streamPYP/sharedExec'``
 
 ``auth``
 ~~~~~~~~
@@ -529,28 +502,30 @@ Minimal example:
 
 	- ``login``: Users log into the web interface with a username and password.
 
-	  Users are assigned fine-grained permissions by privileged administrator accounts.
+	  Users are then assigned fine-grained permissions to website features by privileged administrator accounts.
 
-	  This option is suitable for most users of streamPYP.
+	  This option is suitable for most users of nextPYP.
 
-	- ``none``: No user authenticaion is performed by the web interface.
+	- ``none``: No user authentication is performed by the web interface.
 
 	  All visitors to the website are associated with the administrator account
-	  and are granted full permissions.
+	  and are granted full permissions to all website features.
 
-	  This option is suitable for single-user instances of streamPYP or developers.
+	  This option is suitable for single-user instances of nextPYP or developers.
 
 	- ``reverse-proxy``: Users are authenticated by a reverse-proxy server
-	  (perhaps implementing SSO for an organization) before reaching streamPYP.
+	  (perhaps implementing SSO for an organization) before reaching nextPYP.
 
-	  StreamPYP will use the ``X-userid`` HTTP header to identify users, which must
+	  nextPYP will use the ``X-userid`` HTTP header to identify users, which must
 	  be securely provided by the reverse proxy server.
 
-	  Users are assigned fine-grained permissions by privileged administrator accounts.
+	  .. warning::
+	     To provide the ``X-userid`` HTTP header securely, the reverse proxy server must
+	     **block** any submission of this HTTP header from the HTTP client (eg, the user's web browser).
+
+	  Users are then assigned fine-grained permissions to website features by privileged administrator accounts.
 :Examples:
 	``auth = 'login'``
-
-|
 
 ``webhost``
 ~~~~~~~~~~~
@@ -577,7 +552,7 @@ Minimal example:
 	``$hostname`` is the host name of the server from the point of view of the compute node. Note this configuration
 	uses unencrypted HTTP rather than encrypted HTTPs.
 
-	.. warn::
+	.. warning::
 		In this private network configuration, if the web server has any public network interfaces,
 		be sure to configure the firewall to only allow connections to the port defined by ``web.port``
 		over the private network interface. Connections over the public network interface should be blocked
@@ -593,8 +568,6 @@ Minimal example:
 	
 	``webhost = 'http://dev.streampyp.example.org:8080'``
 
-|
-
 ``debug``
 ~~~~~~~~~
 
@@ -606,10 +579,8 @@ Minimal example:
 
 	Most users will not need this option.
 
-|
-
 ``heapMiB``
-~~~~~~~~~
+~~~~~~~~~~~
 
 :Type: integer
 :Required: no
@@ -620,21 +591,17 @@ Minimal example:
 	If you find the website becoming slow and less responsive,
 	try allowing the website to use more memory by increasing the maximum heap size.
 
-|
-
 ``databaseGB``
-~~~~~~~~~
+~~~~~~~~~~~~~~
 
 :Type: float
 :Required: no
 :Default: 1.0
 :Description:
-	Number of GB to use for the database cache
-
-|
+	Number of GB to use for the database cache in the web server memory (RAM).
 
 ``jmx``
-~~~~~~~~~
+~~~~~~~
 
 :Type: boolean
 :Required: no
@@ -644,10 +611,8 @@ Minimal example:
 
 	Most users will not need this option.
 
-|
-
 ``oomdump``
-~~~~~~~~~
+~~~~~~~~~~~
 
 :Type: boolean
 :Required: no
@@ -659,10 +624,8 @@ Minimal example:
 
 	Most users will not need this option.
 
-|
-
 ``workflowDirs``
-~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 :Type: array of strings
 :Required: no
@@ -676,8 +639,6 @@ Minimal example:
 :Examples:
 	``workflowDirs = ['/storage/workflows']``
 
-|
-
 ``minPasswordLength``
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -686,3 +647,4 @@ Minimal example:
 :Default: 12
 :Description:
 	The minimum length accepted for new passwords.
+	This setting only applies when ``web.auth`` is ``login``.

@@ -4,10 +4,11 @@ import multiprocessing
 import os
 import subprocess
 import sys
-
+from pathlib import Path
 import numpy
 
 from pyp.system import project_params
+from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
 from pyp.utils import get_relative_path
@@ -43,7 +44,35 @@ def coordinates_from_mod_file(filename):
                     coord.append(default_radius)
 
                 indexes.append(numpy.array(coord, dtype=float))
-    return numpy.absolute(numpy.array(indexes))
+    return numpy.absolute(numpy.array(indexes,ndmin=2))
+
+
+def coordinates_to_model_file(coordinates,filename,radius=50):
+    """Save 3D coordinates as IMOD model
+
+    Args:
+        coordinates (numpy.array): input coordinates
+        filename (str): output file name
+        radius (int, optional): marker radius. Defaults to 0.
+    """
+    name = Path(filename).stem
+    numpy.savetxt("{}.box".format(name), coordinates.astype('float').astype('str'), fmt='%s', delimiter='\t')
+
+    # convert to IMOD model
+    command = f"{get_imod_path()}/bin/point2model -scat -sphere {radius} -values 1 -input {name}.box -output {name}.mod"
+    run_shell_command(command)
+
+    command = f"{get_imod_path()}/bin/imodtrans -Y -T {name}.mod {filename}"
+    run_shell_command(command)
+
+    try:
+        os.remove( name + ".box")
+    except:
+        pass
+    try:
+        os.remove( name + ".mod")
+    except:
+        pass
 
 
 # HF vir:
