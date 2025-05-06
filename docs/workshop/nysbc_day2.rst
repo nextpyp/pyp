@@ -78,17 +78,13 @@ Creating/starting new sessions
 
   * Click on the **Resources** tab.
   
-    - Set ``Threads per task`` to 41
+    - Set ``Split, Threads`` to 41
 
-    - Set ``Memory per task`` to 164
-    
     * General advice for setting resource limits:
       
-      - The ``Threads per task`` should match the number of tilts in your tilt series, if you have the computational resources to do so.
+      - The ``Split, Threads`` should match the number of tilts in your tilt series, if you have the computational resources to do so.
 
       - In general, the more threads you use, the more tilts that can be processed at the same time, and the faster you see pre-processing results.
-
-      - The ``Memory per task`` should be set to 4 GB per thread.
 
   * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
 

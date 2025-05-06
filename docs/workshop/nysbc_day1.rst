@@ -85,9 +85,7 @@ Dataset 1: Immature Gag protein from HIV-1 VLPs
 
   * Go to the **Resources** tab
 
-    - Set ``Threads per task`` to 41
-
-    - Set ``Memory per task`` to 164
+    - Set ``Split, Threads`` to 41
   
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
@@ -252,15 +250,11 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
       .. md-tab-item:: I'm a core course participant
 
-        - Set ``Threads per task`` to 124
-
-        - Set ``Memory per task in GB`` to 720 
+        - Set ``Split, Threads`` to 124
 
       .. md-tab-item:: I'm an additional TA
 
-        - Set ``Threads per task`` to 70
-
-        - Set ``Memory per task in GB`` to 720
+        - Set ``Split, Threads`` to 70
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 

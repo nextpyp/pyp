@@ -28,7 +28,7 @@ v0.7.0
 
    - Tomogram denosing with `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_ supports training and evaluation, with real-time monitoring of results and feeding of denoised tomograms into downstream blocks such as particle picking or segmentation.
 
-   - New blocks for continuous heterogeneity analysis using `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_, streaming training metrics and outputs in real-time, and visualization of UMAP, PCA embeddings, cluster centroids, and 3D volumes.
+   - New blocks for continuous heterogeneity analysis using `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_, streaming training metrics and outputs in real-time, and visualization of UMAP, PCA embeddings, cluster centroids, and 3D volumes (beta).
 
    - New ab-initio refinement strategy enables de novo structure determination through iterative alignment of random particle subsets, with optional shape masking and multi-class refinement for heterogeneous datasets (beta).
 

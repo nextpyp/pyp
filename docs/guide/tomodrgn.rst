@@ -55,13 +55,13 @@ Results can also be analyzed using standard volume space analysis:
 Select particle subsets (filter-star)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. warning::
+    
+    This feature is currently under development. In the meantime, to filter particles after the tomoDRGN analysis, please follow the steps in the `Isolate particle subsets <https://bpowell122.github.io/tomodrgn/tutorials/isolate_particle_subsets.html>`_ tutorial and re-import the results into ``nextPYP``.
+
 #. Click on ``DRGN Particles`` (output of the :bdg-secondary:`tomoDRGN (analyze)` or :bdg-secondary:`tomoDRGN (analyze-volumes)` blocks) and select :bdg-primary:`tomoDRGN (filter-star)`
 #. Select the classes you want to keep as a comma separated list
 #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. This will run tomoDRGN's ``filter-star`` command
-
-.. warning::
-    
-    This functionality has not been implemented yet
 
 Further refine selected particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -68,7 +68,7 @@ Step 1: Create a new session
 
       .. md-tab-item:: Resources
 
-        * Set the number of ``Threads per task``, ``Memory per task``, and other resources as needed (see :doc:`Computing resources<../reference/computing>`)
+        * Set ``Split, Threads`` and other resources as needed (see :doc:`Computing resources<../reference/computing>`)
 
   * :bdg-primary:`Save` your settings
 
