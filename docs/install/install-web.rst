@@ -677,6 +677,13 @@ See below for more information about manual upgrade steps that are specific to e
   The installer's prompt will contain much more detailed information though, including the exact locations
   of the relevant files, and full commands needed to do some of the tasks that you can copy into your terminal.
 
+  .. admonition:: Using SLURM too? A few more steps are needed.
+    :collapsible:
+
+    SLURM users have additional steps that are needed since ``nextPYP`` has transitioned to a template-based
+    system for submitting jobs. As part of the upgrade, you'll need to follow the
+    :ref:`template installation<slurm-config>` instructions as well.
+
 
 Step 4: Start nextPYP again
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

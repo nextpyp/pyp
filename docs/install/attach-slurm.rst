@@ -98,6 +98,8 @@ Depending on how your network is configured, choose one of the following options
     since the HTTPs protocol uses the correct port implicitly.
 
 
+.. _slurm-config:
+
 SLURM configuration
 ~~~~~~~~~~~~~~~~~~~
 
@@ -122,7 +124,7 @@ Each of the required settings are described in more detail below.
 
    The ``slurm.templatesDir`` setting configures the location of :doc:`SLURM submission templates<../reference/templates>`.
    You'll need to create this folder somewhere that the service account can read, but not write.
-   This folder doesn't need to be shared with compute nodes, to a location on the local filesystem of the web server
+   This folder doesn't need to be shared with compute nodes, so a location on the local filesystem of the web server
    machine is a good choice. A subfolder of your installation folder that is owned by ``root`` or your administrator
    account works well, like in the example above.
 
