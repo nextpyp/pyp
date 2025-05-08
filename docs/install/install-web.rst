@@ -3,6 +3,12 @@
 Overview
 ========
 
+
+.. info:: Upgrading from an older version of ``nextPYP``?
+
+  Skip down to the :ref:`instructions for upgrades<upgrade>`. They're a bit different than first-time installations.
+
+
 Supported operating systems
 ---------------------------
 
