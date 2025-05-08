@@ -29,7 +29,7 @@ The execution of most blocks in ``nextPYP`` involves three main phases:
 Because each phase has distinct computational requirements, resources (i.e., number of threads, memory, etc.) are specified independently for each phase.
 
 .. tip::
-    Real time information about jobs is available in the :doc:`Jobs panel<../guide/overview#jobs-panel>`.
+    Real time information about jobs is available in the :ref:`Jobs panel<jobs-panel>`.
 
 Resource allocation
 -------------------

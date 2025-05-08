@@ -289,6 +289,9 @@ Parameters
 
 Block parameters are specified using dialog forms. These are shown every time a new block is created or copied, or when clicking the icon :fa:`bars` and selecting the :fa:`edit` Edit option.
 
+
+.. _jobs-panel:
+
 Jobs panel
 ==========
 
