@@ -2,12 +2,12 @@
 Import/export functionality
 ###########################
 
-``nextPYP`` supports importing existing single-particle and tomography **Sessions** or **Projects**, as well as `Relion 4.0 <https://relion.readthedocs.io/en/release-4.0/>`_ or `Relion 5.0 <https://relion.readthedocs.io/en/release-5.0/>`_ projects.
+``nextPYP`` supports importing and exporting single-particle and tomography **Sessions** or **Projects**, as well as `Relion 4.0 <https://relion.readthedocs.io/en/release-4.0/>`_ or `Relion 5.0 <https://relion.readthedocs.io/en/release-5.0/>`_ projects.
 
 Import Sessions
 ===============
 
-.. nextpyp:: Import a ``nextPYP`` session
+.. nextpyp:: Importing a ``nextPYP`` session
   :collapsible: open  
 
   * Create a new project in ``nextPYP`` or navigate to an existing one
@@ -42,7 +42,7 @@ Import Sessions
 Import Projects
 ===============
 
-.. nextpyp:: Import a ``nextPYP`` project
+.. nextpyp:: Importing a ``nextPYP`` project
   :collapsible: open  
 
   * Create a new project in ``nextPYP`` or navigate to an existing one
@@ -70,13 +70,13 @@ Import Projects
   * Once the run finishes, click inside the block to inspect the results
 
 
-Import from \*.star files
-=========================
+Import (from \*.star)
+=====================
 
 Single-particle
 ---------------
 
-.. nextpyp:: Import single-particle project from \*.star files
+.. nextpyp:: Importing a single-particle project from \*.star files
   :collapsible: open  
 
   * Create or navigate to an existing project in ``nextPYP``
@@ -121,7 +121,7 @@ Single-particle
 Tomography
 ----------
 
-.. nextpyp:: Import tomography project from \*.star files
+.. nextpyp:: Importing a tomography project from \*.star files
   :collapsible: open  
 
   * Create or navigate to an existing project in ``nextPYP``
@@ -167,10 +167,10 @@ Tomography
   * Once the run finishes, click inside the :bdg-secondary:`Tomography (from star)` block to inspect the results
 
 
-Export to \*.star files
-=======================
+Export (to \*.star)
+===================
 
-.. nextpyp:: Export refinement in \*.star format
+.. nextpyp:: Exporting refinements to \*.star files
   :collapsible: open
 
   * Go to an existing refinement block, click on the menu icon :fa:`bars`, and select the :fa:`edit` Edit option
@@ -195,8 +195,8 @@ Export to \*.star files
 
     If you wish to export results from the **Reference-based refinement**, **Ab-initio reconstruction**, or **Calculate reconstruction** blocks, you have two options:
 
-    - Re-run the original block after enabling the **Export metadata (*.star)** option
+    - Re-run the original block after enabling the ``Export metadata (*.star)`` option
 
-    - Alternatively, create and run a new **3D refinement** block downstream, making sure to check the **Export metadata (*.star)** option and uncheck all refinement settings in the **Refinement** tab
+    - Alternatively, create and run a new **3D refinement** block downstream, making sure to check the ``Export metadata (*.star)`` option and uncheck all refinement settings in the **Refinement** tab
 
   Once the job ends, the results will appear in the specified folder and will be ready to import into other packages. For a tomography project, for example, you can use the `Relion's Import Coordinates <https://relion.readthedocs.io/en/release-4.0/STA_tutorial/ImportCoords.html>`_ procedure to import the data
