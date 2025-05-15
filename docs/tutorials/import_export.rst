@@ -1,13 +1,13 @@
-######################
-Import/export projects
-######################
+###########################
+Import/export functionality
+###########################
 
-This page shows how to import and export single-particle and tomography projects. ``nextPYP`` supports importing projects from existing nextPYP **Sessions** or **Projects**, as well as `Relion 4.0 <https://relion.readthedocs.io/en/release-4.0/>`_ or `Relion 5.0 <https://relion.readthedocs.io/en/release-5.0/>`_ projects.
+``nextPYP`` supports importing existing single-particle and tomography **Sessions** or **Projects**, as well as `Relion 4.0 <https://relion.readthedocs.io/en/release-4.0/>`_ or `Relion 5.0 <https://relion.readthedocs.io/en/release-5.0/>`_ projects.
 
-Import nextPYP sessions
-========================
+Import Sessions
+===============
 
-.. nextpyp:: Import a session
+.. nextpyp:: Import a ``nextPYP`` session
   :collapsible: open  
 
   * Create a new project in ``nextPYP`` or navigate to an existing one
@@ -16,33 +16,33 @@ Import nextPYP sessions
 
       .. md-tab-item:: Single-particle
 
-        * Click on :bdg-primary:`Import Data` and select :bdg-primary:`Single-particle (from Sessions)`
+        * Click on :bdg-primary:`Import Data` and select :bdg-primary:`Single-particle (from Session)`
 
         * Start typing the name of a single-particle session in the **Session** field
         
         * Select the name of session you want to import from the list of available sessions
         
-        * Click :bdg-primary:`Save` and a new :bdg-secondary:`Single Particle (from Sessions)` block will appear on the project page
+        * Click :bdg-primary:`Save` and a new :bdg-secondary:`Single Particle (from Session)` block will appear on the project page
 
       .. md-tab-item:: Tomography
 
-        * Click on :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Sessions)`
+        * Click on :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Session)`
 
         * Start typing the name of a tomography session in the **Session** field
         
         * Select the name of the session you want to import from the list of available sessions
         
-        * Click :bdg-primary:`Save` and a new :bdg-secondary:`Tomography (from Sessions)` block will appear on the project page
+        * Click :bdg-primary:`Save` and a new :bdg-secondary:`Tomography (from Session)` block will appear on the project page
 
   * Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block` to launch the import process
 
   * Once the run finishes, click inside the block to inspect the results
 
 
-Import nextPYP projects
-=======================
+Import Projects
+===============
 
-.. nextpyp:: Import a project
+.. nextpyp:: Import a ``nextPYP`` project
   :collapsible: open  
 
   * Create a new project in ``nextPYP`` or navigate to an existing one
@@ -51,7 +51,7 @@ Import nextPYP projects
 
       .. md-tab-item:: Single-particle
 
-        * Click on :bdg-primary:`Import Data` and select :bdg-primary:`Single-particle (from Project)`. A new :bdg-secondary:`Single Particle (from Project)` block will appear on the project page
+        * Click on :bdg-primary:`Import Data` and select :bdg-primary:`Single-particle (from Project)`. A new :bdg-secondary:`Single Particle (from Project)` block will appear on the page
 
         * Select the ``Path to existing CLI project`` by clicking on the icon :fa:`search` and navigating to the location of the project you want to import
         
@@ -59,7 +59,7 @@ Import nextPYP projects
 
       .. md-tab-item:: Tomography
 
-        * Click on :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Project)`. A new :bdg-secondary:`Tomography (from Project)` block will appear on the project page
+        * Click on :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Project)`. A new :bdg-secondary:`Tomography (from Project)` block will appear on the page
 
         * Select the ``Path to existing CLI project`` by clicking on the icon :fa:`search` and navigating to the location of the tomography project you want to import
         
@@ -70,13 +70,13 @@ Import nextPYP projects
   * Once the run finishes, click inside the block to inspect the results
 
 
-Import refinements in \*.star format
-====================================
+Import from \*.star files
+=========================
 
 Single-particle
 ---------------
 
-.. nextpyp:: Import single-particle refinement from \*.star files
+.. nextpyp:: Import single-particle project from \*.star files
   :collapsible: open  
 
   * Create or navigate to an existing project in ``nextPYP``
@@ -121,7 +121,7 @@ Single-particle
 Tomography
 ----------
 
-.. nextpyp:: Import tomography refinement from \*.star files
+.. nextpyp:: Import tomography project from \*.star files
   :collapsible: open  
 
   * Create or navigate to an existing project in ``nextPYP``
@@ -167,10 +167,10 @@ Tomography
   * Once the run finishes, click inside the :bdg-secondary:`Tomography (from star)` block to inspect the results
 
 
-Export refinements in \*.star format
-====================================
+Export to \*.star files
+=======================
 
-.. nextpyp:: Export 3D refinement in \*.star format
+.. nextpyp:: Export refinement in \*.star format
   :collapsible: open
 
   * Go to an existing refinement block, click on the menu icon :fa:`bars`, and select the :fa:`edit` Edit option
@@ -189,6 +189,14 @@ Export refinements in \*.star format
 
   * Click :bdg-primary:`Run` followed by :bdg-primary:`Start Run for 1 block`
 
-  This will execute one round of refinement and export the resulting metadata to a \*.star file. To avoid running any additional refinement, make sure to uncheck any refinement options in the **Refinement** tab before running the block. If you want to export results from the **Reference-based refinement**, **Ab-initio reconstruction**, or **Calculate reconstruction** blocks, you can either re-run the blocks (after selecting the option to export metadata as indicated above), or create and run new **3D refinement** block downstream (after checking the ``Export metadata (*.star)`` option and unchecking any refinement options in the **Refinement** tab)
+  .. note::
+
+    This will perform a single round of refinement and export the resulting metadata to a .star file. To prevent additional refinement from being executed, ensure that all refinement options are unchecked in the **Refinement** tab before running the block
+
+    If you wish to export results from the **Reference-based refinement**, **Ab-initio reconstruction**, or **Calculate reconstruction** blocks, you have two options:
+
+    - Re-run the original block after enabling the **Export metadata (*.star)** option
+
+    - Alternatively, create and run a new **3D refinement** block downstream, making sure to check the **Export metadata (*.star)** option and uncheck all refinement settings in the **Refinement** tab
 
   Once the job ends, the results will appear in the specified folder and will be ready to import into other packages. For a tomography project, for example, you can use the `Relion's Import Coordinates <https://relion.readthedocs.io/en/release-4.0/STA_tutorial/ImportCoords.html>`_ procedure to import the data
