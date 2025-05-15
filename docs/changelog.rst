@@ -20,7 +20,7 @@ v0.7.0
 
    - 3D particle picking via GPU-accelerated template search is supported through integration with `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_, with automatic transfer of particle orientations to downstream refinement blocks.
 
-   - Size-based particle picking, as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_, enables fast partile detection in 3D using only the particle radius, with automatic masking of artifacts and contamination.
+   - Size-based particle picking, as described in `Jin et al., 2024 <https://doi.org/10.1016/j.yjsbx.2024.100104>`_, enables fast particle detection in 3D using only the particle radius, with automatic masking of artifacts and contamination.
 
    - 3D tomogram segmentation with `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ (evaluation only) enables rapid segmentation of tomograms using a pre-trained model.
 
