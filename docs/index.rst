@@ -28,7 +28,6 @@
    Classification<tutorials/tomo_empiar_10304>
    Single-particle session<tutorials/stream_spr>
    Tomography session<tutorials/stream_tomo>
-   Import/export<tutorials/import_export>
 
    NYSBC course (day 1)<workshop/nysbc_day1>
    NYSBC course (day 2)<workshop/nysbc_day2>
@@ -48,6 +47,7 @@
    guide/tomodrgn
    guide/chimerax_artiax
    guide/workflows
+   Import/export<guide/import_export>
 
 .. toctree::
    :caption: Configuration
