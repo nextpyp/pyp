@@ -1263,8 +1263,16 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
     unbinned_spike_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / parameters['data_bin']
     binned_spike_radius = int(unbinned_spike_radius / binning)
 
+    if parameters.get("micromon_block") == "tomo-import" and os.path.exists(f"{name}.spk"):
+        coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
+        if coordinates.size > 0:
+            coordinates *= binning
+            coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+        else:
+            logger.warning("No particles were detected")
+
     # TODO: 1. pyp-eval
-    if ( 
+    elif ( 
         parameters.get("micromon_block") == "tomo-preprocessing"
         and ( 
              virion_mode and parameters.get("tomo_vir_method") == "pyp-eval"
