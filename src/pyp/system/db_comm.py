@@ -350,18 +350,20 @@ def load_spr_results(name, parameters, project_path, working_path, verbose=False
         shutil.copy("{0}.mrc".format(name), "{0}.avg".format(name))
 
 
-def save_spr_results(name, parameters, project_path, verbose = False):
+def save_spr_results(name, parameters, project_path, has_frames, verbose = False):
     """Save spr swarm run results into original file path."""
     # TODO: reorganize in a similar way to load_spr_results
     files = dict()
 
     files["pkl"] = "{0}.pkl".format(name)
 
-    files[
-        "mrc"
-    ] = "{0}.mrc {0}_DW.mrc {0}_DW.tif".format(
-        name
-    )
+    # save frame averages only if raw data has frames
+    if has_frames:
+        files[
+            "mrc"
+        ] = "{0}.mrc {0}_DW.mrc {0}_DW.tif".format(
+            name
+        )
 
     # files['ali'] = '{0}_xray.mod {0}.xf {0}.prexgraw {0}.ccc {0}.blr {0}.mrc {0}_weights.txt {0}_P????_frames.xf {0}_P????_frames_ccc.png {0}_P????_frames.blr {0}_P????_frames_frc.png {0}_frames_matches.gif {0}_P0000_frames_weights_new.png {0}_field.pdf'.format(name)
     files[
@@ -373,13 +375,16 @@ def save_spr_results(name, parameters, project_path, verbose = False):
     save_results(files, project_path, verbose)
 
 
-def save_spr_results_lean(name, project_path, verbose=False):
+def save_spr_results_lean(name, project_path, has_frames, verbose=False):
     """Save spr swarm run results into original file path."""
     # TODO: reorganize in a similar way to load_spr_results
     files = dict()
 
     files["webp"] = "{0}.webp {0}_ctffit.webp".format(name)
-    files["mrc"] = "{0}.mrc".format(name)
+
+    # save frame averages only if raw data has frames
+    if has_frames:
+        files["mrc"] = "{0}.mrc".format(name)
     files["pkl"] = "{0}.pkl".format(name)
 
     save_results(files, project_path,verbose)

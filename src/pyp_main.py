@@ -1634,10 +1634,11 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
         data = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=True)
         data.loadFiles()
 
+        has_frames = len(data.data.get("drift")) > 1 if "drift" in data.data.keys() else False
         if Web.exists:
-            save_spr_results_lean(name, current_path, verbose=parameters["slurm_verbose"])
+            save_spr_results_lean(name, current_path, has_frames=has_frames, verbose=parameters["slurm_verbose"])
         else:
-            save_spr_results(name, parameters, current_path, verbose=parameters["slurm_verbose"])
+            save_spr_results(name, parameters, current_path, has_frames=has_frames, verbose=parameters["slurm_verbose"])
 
         save_micrograph_to_website(name,'slurm_verbose' in parameters and parameters['slurm_verbose'])
 
@@ -2527,11 +2528,20 @@ def csp_extract_frames(
                     else:
                         logger.error("Cannot figure out image filename")
 
+                    logger.info(f"Copying {imagefile + Path(raw_image).suffix} to local scratch")
                     # copy over all the frames
                     shutil.copy2(
                         os.path.join(current_path, imagefile + Path(raw_image).suffix),
                         raw_image,
                     )
+
+                    # convert to 32-bits, if needed
+                    if parameters.get("movie_depth") and Path(raw_image).suffix == ".mrc":
+                        logger.info("Converting micrograph/tilt-series to 32-bits")
+                        command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
+                            get_imod_path(), raw_image
+                        )
+                        local_run.run_shell_command(command,verbose=False)
 
                     # pack it into list to adapt it into tomo extraction pipeline
                     if use_frames:
@@ -2663,13 +2673,6 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
     if not skip:
         load_csp_results(filename, parameters, Path(current_path), Path(working_path), verbose=parameters["slurm_verbose"])
 
-        # convert data to 32-bits
-        if parameters.get("movie_depth") and os.path.exists(filename + ".mrc"):
-            command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
-                get_imod_path(), filename + ".mrc"
-            )
-            local_run.run_shell_command(command)
-
     metafile = os.path.join(working_path, filename + ".pkl")
     frame_list = []
     if os.path.exists(metafile):
@@ -2695,18 +2698,23 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
                 raise Exception("Data does not have frames or pre-processing was incomplete")
 
         elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
+            # use tilt-series built from frame-averages
             imagefile = "mrc/" + filename
             parameters["gain_reference"] = None
         elif os.path.exists(os.path.join("raw", filename + ".mrc")):
+            # use raw tilt-series
             imagefile = "raw/" + filename
         else:
             raise Exception(f"Image {filename}.mrc not found")
     elif use_frames:
         imagefile = "raw/" + filename
-
-    else:
+    elif os.path.exists(os.path.join("mrc", filename + ".mrc")):
+        # use frame-average
         imagefile = "mrc/" + filename
         parameters["gain_reference"] = None
+    else:
+        # use raw micrograph
+        imagefile = "raw/" + filename
 
     # extract/retrieve particle coordinates
     allparxs = csp_extract_coordinates(
