@@ -5426,6 +5426,8 @@ if __name__ == "__main__":
                     reference = parfile.replace(".bz2",".mrc")
                     if os.path.exists(reference):
                         shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
+                    else:
+                        raise Exception(f"Cannot find reference file {reference}")
 
                     # do the actual cleaning
                     parameters = particle_cleaning(parameters)
