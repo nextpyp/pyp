@@ -14,23 +14,33 @@ The file is written in TOML_.
 Placement
 =========
 
-The ``config.toml`` file can be placed anywhere you like on the filesystem, but you'll
-need to let PYP know where to find it. There are two mechanisms for doing this.
+.. tab-set::
+  :sync-group: install_mode
 
-Environment variable
---------------------
+  .. tab-item:: Web mode
+    :sync: web
 
-``nextPYP`` first uses the ``$PYP_CONFIG`` environment variable to find the config file.
-If ``$PYP_CONFIG`` is present and its value is a path to an existing file in the filesystem,
-``nextPYP`` will use that file for the configuration.
+    In web mode, the ``config.toml`` file must be placed in the shared executables folder,
+    to ensure it's visible on both the web server machine and any compute nodes, if you're
+    using a SLURM cluster.
 
-Default location
-----------------
+    The placement of the ``config.toml`` file is handled automatically by the installer.
+    For convenience, the installer will also create a symlink to the ``config.toml`` file
+    in your installation folder.
 
-Otherwise, ``nextPYP`` will look for the configuration file at the default location
-in the user's home directory:
-``~/.pyp/config.toml``
+  .. tab-item:: Command-line mode
+    :sync: cli
 
+    In command-line mode, The ``config.toml`` file can be placed anywhere you like on the
+    shared filesystem, but you'll need to let PYP know where to find it.
+
+    You can configure the location by setting the ``$PYP_CONFIG`` environment variable
+    to the path to your configuration file.
+
+    If the ``$PYP_CONFIG`` environment variable is not set, ``nextPYP`` will look for the
+    configuration file at the default location in the user's home directory:
+    ``~/.pyp/config.toml``
+    
 
 Complete Example
 ================
