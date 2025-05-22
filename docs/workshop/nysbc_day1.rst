@@ -216,7 +216,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 .. nextpyp:: Step 2: Import alignments
   :collapsible: open
   
-  * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Pickng` block) and select :bdg-primary:`Particle refinement`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Pickng` block) and select :bdg-primary:`Calculate reconstruction`
 
   * Go to the **Sample** tab 
     
@@ -232,17 +232,15 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
     - Set ``Image binning`` to 2
 
-  * Go to the **Refinement** tab
+  * Go to the **Alignments** tab
 
-    - To demonstrate inserting a model, we will click the :fa:`search` icon next to ``Initial model (*.mrc)`` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_init_ref.mrc``  Click :bdg-primary:`Choose File`
+    - From the ``Import from`` dropdown menu, select ``nextPYP (*.bz2)``
 
     - Click the :fa:`search` icon next to ``Input parameter file (*.bz2)`` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/tomo-coarse-refinement-fg2v2MJLSY4Ui908_r01_02.bz2``  Click :bdg-primary:`Choose File`
 
-    - Set the ``Max resolution (A)`` to 8
+  * Go to the **Reconstruction** tab
 
-  * Go to the **Exposure weighting** tab
-
-    - Turn ON ``Dose Weighting`` by checking the box 
+    - Select ``Apply dose weighting`` by checking the box 
 
   * Go to the **Resources** tab
 
@@ -282,7 +280,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 .. nextpyp:: Step 4: Region-based refinement, tilt-geometry refinement, further particle refinement
   :collapsible: open
   
-  * Click on ``Particles`` (output of the :bdg-secondary:`Particle filtering` block) and select :bdg-primary:`Particle refinement`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle filtering` block) and select :bdg-primary:`3D refinement`
 
   * Go to the **Extraction** tab
 
@@ -290,33 +288,31 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
     - Set ``Image binning`` to 1
 
-  * Go to the **Refinement** tab
+  * Go to the **Particle scoring function** tab
 
-    - Next to ``Initial model (*.mrc)`` click the :fa:`search` icon. Select the ``*_r01_01.mrc`` file and click :bdg-primary:`Choose File`
-
-    - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_02_clean.bz2`` file and click :bdg-primary:`Choose File`
+    - Set ``Last tilt for refinement`` to 8 
 
     - Set ``Max resolution (A)`` to 4:3.5
 
-    - Check ``Use signed correlation``
+    - From the ``Masking strategy`` dropdown menu, select ``from file``
+
+    - Click the :fa:`search` icon to select the ``Shape mask (*.mrc)``, browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc``, and click :bdg-primary:`Choose File`
+
+  * Go to the **Refinement** tab
+
+    - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_02_clean.bz2`` file and click :bdg-primary:`Choose File`
 
     - Set ``Last iteration`` to 3
-
-    - Next to ``Shape mask (*.mrc)`` click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc`` and click :bdg-primary:`Choose File`
-
-  * Go to the **Constrained refinemnt** tab
-
-    - Set ``Last exposure for refinement`` to 8 
-
-    - Set ``Number of regions`` to 8,8,2 
 
     - Check ``Refine tilt-geometry``
 
     - Check ``Refine particle alignments`` 
 
-  * Go to the **Exposure weighting** tab
+    - Set ``Number of regions`` to 8,8,2 
 
-    - Check ``Dose weighting`` (It may already be checked)
+  * Go to the **Reconstruction** tab
+
+    - Check ``Apply dose weighting`` (It may already be checked)
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -329,31 +325,23 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
   
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
 
-  * Go to the **Refinement** tab
-
-    - Next to ``Initial model (*.mrc)`` click the :fa:`search` icon. Select the ``*_r01_03.mrc`` file and click :bdg-primary:`Choose File`
-
-    - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_03.bz2`` file and click :bdg-primary:`Choose File`
-
-    - Set ``Max resolution (A)`` to 3.5
-
-  * Go to the **Constrained refinement** tab
+  * Go to the **Particle scoring function** tab
 
     - Set ``Last exposure for refinement`` to 4 
 
-    - Check ``Movie frame refinement`` 
+    - Set ``Max resolution (A)`` to 3.5
 
-    - Check ``Regularize translations`` 
+  * Go to the **Frame refinement** tab
+
+    - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_03.bz2`` file and click :bdg-primary:`Choose File`
 
     - Set ``Spatial sigma`` to 400
 
     - Set ``Time sigma`` to 16
 
-    - If other boxes are checked, uncheck them 
+  * Go to the **Reconstruction** tab 
 
-  * Go to the **Exposure weighting** tab 
-
-    - Check ``Dose weighting``
+    - Check ``Apply dose weighting``
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
