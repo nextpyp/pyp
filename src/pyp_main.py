@@ -4554,15 +4554,15 @@ if __name__ == "__main__":
                     # reference-free
                     elif parameters.get("micromon_block") == "tomo-initial-reconstruct":
 
-                        # always do a single interation
-                        parameters["refine_iter"] = parameters["refine_maxiter"] = 2
-
                         # transfer refinement parameters
                         for key in parameters_copy.keys():
                             new_key = key.replace("csp_tomo_free_","csp_")
                             if new_key in parameters:
                                 parameters[new_key] = parameters_copy.get(key)
                         
+                        # always do a single interation
+                        parameters["refine_iter"] = parameters["refine_maxiter"] = 2
+
                         # transfer ctf handedness parameters
                         parameters["csp_ctf_handedness"] = parameters["extract_ctf_handedness"]
 
