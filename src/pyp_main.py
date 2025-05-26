@@ -1263,6 +1263,7 @@ def split(parameters):
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
                 use_gpu=gpu,
+                verbose=parameters["slurm_verbose"],
             ).strip()
 
             
@@ -1283,6 +1284,7 @@ def split(parameters):
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
                 use_gpu=gpu,
+                verbose=parameters["slurm_verbose"],
             ).strip()
 
         else:
@@ -1305,6 +1307,7 @@ def split(parameters):
                 dependencies=id_train,
                 csp_no_stacks=parameters["csp_no_stacks"],
                 use_gpu=gpu,
+                verbose=parameters["slurm_verbose"],
             ).strip()
             
             # submit merge job dependent on swarm jobs
@@ -1322,6 +1325,7 @@ def split(parameters):
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
                 csp_no_stacks=parameters["csp_no_stacks"],
+                verbose=parameters["slurm_verbose"],
             )
 
     else:

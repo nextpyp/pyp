@@ -422,6 +422,7 @@ def submit_jobs(
     tasks_per_arr=1,
     csp_no_stacks=False,
     use_gpu=False,
+    verbose=False,
 ):
     """Submit jobs to batch system"""
 
@@ -481,6 +482,7 @@ def submit_jobs(
             tasks_per_arr,
             csp_no_stacks,
             use_gpu,
+            verbose=verbose,
         )
     else:
         id = jobs.submit_script(
@@ -497,6 +499,7 @@ def submit_jobs(
             dependencies,
             is_script,
             use_gpu,
+            verbose=verbose,
         )
 
     if id != "standalone":
@@ -604,6 +607,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
                 scratch=0,
                 threads=2,
                 memory=20,
+                verbose=parameters["slurm_verbose"] if "slurm_verbose" in parameters else False,
             ).strip()
         else:
             (id, procs) = submit_jobs(
@@ -619,6 +623,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
+                verbose=parameters["slurm_verbose"],
             )
 
             # just use the first array job as prerequisite
@@ -647,6 +652,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
             tasks_per_arr=1, # one class per array job
             csp_no_stacks=parameters["csp_no_stacks"],
             dependencies=id,
+            verbose=parameters["slurm_verbose"],
         )
 
     jobtype = "cspmerge"
@@ -665,6 +671,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
         account=parameters.get("slurm_merge_account"),
         walltime=parameters["slurm_merge_walltime"],
         dependencies=id,
+        verbose=parameters["slurm_verbose"],
     )
 
     os.chdir(current_directory)

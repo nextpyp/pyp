@@ -80,6 +80,7 @@ def submit_commands(
     tasks_per_arr,
     csp_no_stacks,
     use_gpu,
+    verbose=False,
 ):
 
     # example inputs:
@@ -334,7 +335,7 @@ done
             get_gres_option(use_gpu,gres),
         )
         command = run_ssh(command)
-        [output, error] = run_shell_command(command, verbose=False)
+        [output, error] = run_shell_command(command, verbose=verbose)
         if "error" in error or "failed" in error:
             logger.warning(command)
             if not "sleeping and retrying" in error:
@@ -372,6 +373,7 @@ def submit_script(
     dependencies,
     is_script,
     use_gpu=False,
+    verbose=False,
 ):
 
     # example inputs:
@@ -464,7 +466,7 @@ def submit_script(
             walltime,
         )
         command = run_ssh(command)
-        [id, error] = run_shell_command(command, verbose=False)
+        [id, error] = run_shell_command(command, verbose=verbose)
         if "error" in error or "failed" in error:
             logger.error(error)
             raise Exception(error)

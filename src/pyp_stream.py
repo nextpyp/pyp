@@ -461,6 +461,7 @@ def launch_preprocessing(args, autoprocess):
             account=args.get("slurm_daemon_account"),
             walltime=args["slurm_daemon_walltime"],
             tasks_per_arr=1,
+            verbose=args["slurm_verbose"],
         )
 
         message = "none"

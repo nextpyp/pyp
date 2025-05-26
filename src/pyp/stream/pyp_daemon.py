@@ -192,6 +192,7 @@ def pyp_daemon(args):
                 gres=parameters["slurm_class2d_gres"],
                 account=parameters.get("slurm_class2d_account"),
                 walltime=parameters["slurm_class2d_walltime"],
+                verbose=parameters["slurm_verbose"],
             )
 
     alreadysubmitted = []
@@ -519,6 +520,7 @@ def pyp_daemon(args):
                 tasks_per_arr=args.get("slurm_bundle_size"),
                 csp_no_stacks=args.get("csp_no_stacks"),
                 use_gpu=gpu,
+                verbose=args.get("slurm_verbose"),
             ).strip()
 
             alreadysubmitted.extend(tobesubmitted)
