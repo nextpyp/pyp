@@ -2475,6 +2475,12 @@ EOF
                     m15,
                 ) = list(map(float, spike_string[12:28]))
 
+                if math.isnan(norm0) or math.isnan(norm1) or math.isnan(norm2):
+                    logger.warning(
+                        f"Invalid normals found for particle {spike}: {norm0}, {norm1}, {norm2}. Resetting to 0, 0, 1."
+                    )
+                    norm0, norm1, norm2 = 0, 0, 1
+
                 cutOffset = float(spike_string[31])
 
                 # transform to unbinned shifts
