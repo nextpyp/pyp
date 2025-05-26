@@ -448,7 +448,7 @@ def submit_script(
                 path=os.path.join(os.getcwd(), submit_dir),
             )
         partition = f"--partition={queue}" if queue != '' else ''
-        command = "{0} {2} {3} --mem={6}G --job-name={1} {4} {7} {5}".format(
+        command = "{0} {2} {3} --mem={6}G --time {8} --job-name={1} {4} {7} {5}".format(
             run_slurm(
                 command="sbatch",
                 path=os.path.join(os.getcwd(), submit_dir),
@@ -461,6 +461,7 @@ def submit_script(
             command_file,
             memory,
             get_gres_option(use_gpu,gres),
+            walltime,
         )
         command = run_ssh(command)
         [id, error] = run_shell_command(command, verbose=False)
