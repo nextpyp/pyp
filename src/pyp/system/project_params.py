@@ -603,7 +603,7 @@ def inherit_from_parent(parameters,parameter_file):
         pars = (p for p in specifications["tabs"][t].keys() if not p.startswith("_"))        
         for p in pars:
             k = f"{t}_{p}"
-            if not "copyToNewBlock" in specifications["tabs"][t][p] or specifications["tabs"][t][p].get("copyToNewBlock"):
+            if not "copyToNewBlock" in specifications["tabs"][t][p] or specifications["tabs"][t][p].get("copyToNewBlock") or k.startswith("csp_tomo_"):
                 if k in parameters_from_file.keys():
                     clean_parameters[k] = parameters_from_file[k]
             elif "default" in specifications["tabs"][t][p]:
