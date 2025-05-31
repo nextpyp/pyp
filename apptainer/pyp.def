@@ -165,7 +165,7 @@ cat << EOF > /root/pyp.sh
 	micromamba update numpy
 	# micromamba install -c conda-forge -c tbepler topaz
 	
-	micromamba install -c conda-forge faiss-gpu
+	micromamba install -c conda-forge faiss-gpu==1.8.0
 	micromamba update libstdcxx-ng
 	micromamba clean --all -y
 
