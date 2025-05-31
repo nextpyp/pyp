@@ -999,7 +999,7 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
         
         # calculate unbinned tilt-series coordinates
         with open(f"{name}_gold_ccderaser.txt") as f:
-            gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00" in line], dtype='f', ndmin=2)
+            gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00        0.00        0.00" in line], dtype='f', ndmin=2)
 
         gold_coordinates[:,:2] *= binning
         np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
