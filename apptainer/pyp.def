@@ -122,6 +122,7 @@ IncludeCmd: no
 	# cd AreTomo2
 	rm -rf .git/
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	find . ! -name "AreTomo2" -type f -exec rm -f {} \;
 	cd -
 
 	# cd /opt/pyp/external/AreTomo3
@@ -138,6 +139,7 @@ IncludeCmd: no
 	# git clone https://github.com/czimaginginstitute/AreTomo2.git
 	rm -rf .git/
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	find . ! -name "MotionCor3" -type f -exec rm -f {} \;
 	cd -
 
 	# Conda is apparently a terrible package manager and
