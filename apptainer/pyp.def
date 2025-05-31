@@ -16,6 +16,7 @@ IncludeCmd: no
 	README.rst /opt/pyp
 	tests/ /opt/pyp
 	external/ /opt/pyp
+	/nfs/bartesaghilab/ab690/nextpyp/pyp/external/tomodrgn /opt/pyp/external
 	../AreTomo2/ /opt/pyp/external
 	../AreTomo3/ /opt/pyp/external
 	../MotionCor3/ /opt/pyp/external
@@ -253,10 +254,9 @@ cat << EOF > /root/tomodrgn.sh
 	pip install "ipyvolume>=0.6.0" "pythreejs>=2.4.2" ipython_genutils
 
 	# Clone source code and install
-	# git clone https://github.com/bpowell122/tomodrgn.git
+	# git clone --depth=1 https://github.com/bpowell122/tomodrgn.git
 	# use custom version
 	cd /opt/pyp/external/
-	git clone --depth=1 https://github.com/bpowell122/tomodrgn.git
 	cd tomodrgn
 	pip install .
 	rm -rf .git/
