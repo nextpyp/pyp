@@ -74,6 +74,11 @@ def get_aretomo_path():
     command = cuda_path_prefix(command)
     return command
 
+def get_aretomo3_path():
+    command = "/opt/pyp/external/AreTomo3/AreTomo3"
+    command = cuda_path_prefix(command)
+    return command
+
 def get_motioncor3_path():
     config = get_pyp_configuration()
     if 'motionCor3' in config["pyp"]:
@@ -108,9 +113,9 @@ def needs_gpu(parameters):
     
     gpu_for_movies = parameters.get("movie_force") and parameters.get("movie_ali") == 'motioncor'
 
-    gpu_for_alignment = parameters.get("tomo_ali_force") and parameters.get("tomo_ali_method") == "aretomo"
+    gpu_for_alignment = parameters.get("tomo_ali_force") and "aretomo" in parameters.get("tomo_ali_method")
     
-    gpu_for_reconstruction = parameters.get("tomo_rec_force") and parameters.get("tomo_rec_method") == "aretomo"
+    gpu_for_reconstruction = parameters.get("tomo_rec_force") and "aretomo" in parameters.get("tomo_rec_method")
     
     gpu_for_denoising = (
         parameters.get("micromon_block") == "tomo-denoising-train"

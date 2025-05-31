@@ -17,7 +17,7 @@ IncludeCmd: no
 	tests/ /opt/pyp
 	external/ /opt/pyp
 	../AreTomo2/ /opt/pyp/external
-	# ../AreTomo3/ /opt/pyp/external
+	../AreTomo3/ /opt/pyp/external
 	../MotionCor3/ /opt/pyp/external
 
 %environment
@@ -126,10 +126,11 @@ IncludeCmd: no
 
 	# cd /opt/pyp/external/AreTomo3
 	# git clone https://github.com/czimaginginstitute/AreTomo3.git --depth 1
-	# cd AreTomo3
-	# rm -rf .git/
-	# make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
-	# cd -
+	cd /opt/pyp/external/AreTomo3
+	rm -rf .git/
+	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	find . ! -name "AreTomo3" -type f -exec rm -f {} \;
+	cd -
 
 	# git clone https://github.com/czimaginginstitute/MotionCor3.git --depth 1
 	# cd MotionCor3

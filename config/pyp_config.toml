@@ -1830,7 +1830,7 @@ condition = { arg="square", value="true" }
 name = "Alignment method"
 description = "Method to use for tilt-series alignment"
 type = "enum"
-enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)", import="import (from path)" }
+enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)", aretomo3="aretomo3 (GPU required)", import="import (from path)" }
 default = "imod_gold"
 
 [tabs.tomo_ali.import]
@@ -1921,7 +1921,7 @@ default = false
 name = "Number of patches in X"
 description = "Number of patches in X to use for tilt-series alignment"
 type = "int"
-condition = { arg="method", value=["imod_patch","aretomo"] }
+condition = { arg="method", value=["imod_patch","aretomo","aretomo3"] }
 default = 1
 
 [tabs.tomo_ali.patches_size_x]
@@ -1935,7 +1935,7 @@ default = 0
 name = "Number of patches in Y"
 description = "Number of patches in Y to use for tilt-series alignment"
 type = "int"
-condition = { arg="method", value=["imod_patch","aretomo"] }
+condition = { arg="method", value=["imod_patch","aretomo","aretomo3"] }
 default = 1
 
 [tabs.tomo_ali.patches_size_y]
@@ -1968,17 +1968,24 @@ hidden = true
 
 [tabs.tomo_ali.aretomo_zheight]
 name = "Z height of specimen in pixels"
-description = "Z height of specimen (not tomogram), critical for the alignment"
+description = "Z height of specimen (not tomogram)"
 type = "int"
 default = 600
-condition = { arg="method", value="aretomo" }
+condition = { arg="method", value=["aretomo","aretomo3"] }
+
+[tabs.tomo_ali.aretomo_estimate_zheight]
+name = "Estimate sample thickness"
+description = "Z height of specimen will be estimated automatically"
+type = "bool"
+default = false
+condition = { arg="method", value="aretomo3" }
 
 [tabs.tomo_ali.aretomo_measure_tiltoff]
 name = "Measure tilt offset"
 description = "Measure the tilt offset automatically. Note that the tilt angles might change"
 type = "bool"
 default = true
-condition = { arg="method", value="aretomo" }
+condition = { arg="method", value=["aretomo","aretomo3"] }
 
 [tabs.tomo_ali.aretomo_tiltoff]
 name = "Add tilt offset"
@@ -1992,14 +1999,14 @@ name = "B-factors for low-pass filter"
 description = "Used in the cross correlation. The first value is used for global measurement. The second for local measurement"
 type = "str"
 default = "0,0"
-condition = { arg="method", value="aretomo" }
+condition = { arg="method", value=["aretomo","aretomo3"] }
 
 [tabs.tomo_ali.aretomo_dark_tol]
 name = "Threshold to remove dark images"
 description = "Threshold to remove dark images (lower values remove fewer images)"
 type = "float"
 default = 0.7
-condition = { arg="method", value="aretomo" }
+condition = { arg="method", value=["aretomo","aretomo3"] }
 
 [tabs.tomo_rec]
 _name = "Tomogram reconstruction"
@@ -2086,7 +2093,7 @@ hidden = [ "tomo_import_star" ]
 name = "Reconstruction method"
 description = "Method used for tomogram reconstruction"
 type = "enum"
-enum = { imod="imod", aretomo="aretomo2 (GPU required)" }
+enum = { imod="imod", aretomo="aretomo2 (GPU required)", aretomo3="aretomo3 (GPU required)" }
 default = "imod"
 hidden = [ "tomo_import_star" ]
 
@@ -2095,7 +2102,7 @@ name = "Use SART reconstruction"
 description = "Use Simultaneous Algebraic Reconstruction Technique (SART)"
 type = "bool"
 default = false
-condition = { arg="method", value="aretomo" }
+condition = { arg="method", value=["aretomo","aretomo3"] }
 hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.aretomo_sart_iter]

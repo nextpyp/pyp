@@ -18,9 +18,8 @@ from pyp.merge import weights as pyp_weights
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import get_imod_path, get_aretomo_path, get_topaz_path, get_gpu_ids
+from pyp.system.utils import get_imod_path, get_aretomo_path, get_aretomo3_path, get_gpu_ids
 from pyp.utils import get_relative_path
-from pyp.utils.timer import Timer
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -298,7 +297,9 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                     #    0    00.0000    1.00000   1493.353   -740.186     1.00     1.00     1.00     0.00    -60.00
                     f.write("%5d%11.4f%11.5f%11.3f%11.3f%9.2f%9.2f%9.2f%9.2f%9.2f\n" % (order,0,1,0,0,1,1,1,0,tilt))
 
-            command = f"{get_aretomo_path()} \
+            if "aretomo" == parameters["tomo_rec_method"].lower():
+
+                command = f"{get_aretomo_path()} \
 -InMrc {name}.ali \
 -OutMrc {name}.rec \
 -AngFile {name}.tlt \
@@ -309,4 +310,302 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 {reconstruct_option} \
 -Align 0 \
 -Gpu {get_gpu_ids(parameters,separator=' ')}"
-            run_shell_command(command, verbose=parameters["slurm_verbose"])
+                run_shell_command(command, verbose=parameters["slurm_verbose"])
+                
+            elif "aretomo3" == parameters["tomo_rec_method"].lower():
+
+                # rename all the files because aretomo3 expects an mrc extension for the input
+                os.symlink( f"{name}.ali", f"{name}_aligned.mrc")
+                os.symlink( f"{name}.rawtlt", f"{name}_aligned.rawtlt")
+                os.symlink( f"{name}.aln", f"{name}_aligned.aln")
+                
+                """ Usage: AreTomo3 Tags
+
+     ******  Common Parameters  *****
+-InPrefix
+  1. Prefix of input file name(s), ogether with Insuffix
+     and InSkips, is used to form either a single or subset
+     for file name(s), which are processed by AreTomo3.
+  2. If the suffix is mdoc, any mdoc file that starts with
+     the prefix string will be selected.
+  3. If the suffix is mrc, any mrc file that starts with
+     the prefix string will be selected and processed.
+  4. The prefix can also be the path of a folder containing
+     the movie files (tiff or eer) or tilt series (mrc).
+  5. Note that movie files must be in the same directory
+     as the mdoc files.
+
+
+  1. If MDOC files have .mdoc file name extension, then
+     .mdoc should be given after (null). If another extension
+     is used, it should be used instead.
+
+  1. If a MDOC file contains any string given behind %s,
+     those MDOC files will not be processed.
+
+-OutDir
+  1. Path to output folder to store generated tilt series, tomograms,
+     and alignment files.
+
+-PixSize
+  1. Pixel size in A of input stack in angstrom.
+
+-kV
+  1. High tension in kV needed for dose weighting.
+  2. Default is 300.
+
+-Cs
+  1. Spherical aberration in mm for CTF estimation.
+
+-FmDose
+  1. Per frame dose in e/A2.
+
+-SplitSum
+   1. Generate odd and even sums using odd and even frames.
+   2. The default value is 1, which enables the split, 0
+      disables this function.
+   3. When enabled, 3 tilt series and 3 tomograms will be
+      generated. Tilt series and tomograms generated from
+      odd and even sums are appended _ODD and _EVN in
+      their file names, respectively.
+   4. When disabled, odd and even tilt series and tomograms
+      will not be generated. Tilt series and tomogram from
+      full sums are generated only.
+ 
+ -Cmd
+  1. Default 0 starts processing from motion correction.
+  2. -Cmd 1 starts processing from tilt series alignment
+     including CTF estimation, correction, tomographic
+     alignment and reconstruction.
+  3. -Cmd 2 starts processing from CTF correction and
+     then tomographic reconstruction.
+  4. -Cmd 1 and -Cmd 2 ignore -Resume.
+
+-Resume
+  1. Default 0 processes all the data.
+  2. -Resume 1 starts from what are left by skipping all the mdoc
+     files in MdocDone.txt file in the output folder.
+
+-Gpu
+   GPU IDs. Default 0.
+   For multiple GPUs, separate IDs by space.
+   For example, -Gpu 0 1 2 3 specifies 4 GPUs.
+
+-DefectFile
+1. Defect file stores entries of defects on camera.
+2. Each entry corresponds to a rectangular region in image.
+   The pixels in such a region are replaced by neighboring
+   good pixel values.
+3. Each entry contains 4 integers x, y, w, h representing
+   the x, y coordinates, width, and heights, respectively.
+
+-Gain
+1. MRC or TIFF file that stores the gain reference.
+2. Falcon camera produced .gain file can also be used
+   since it is a TIFF file.
+
+-Dark
+  1. MRC file that stores the dark reference. If not
+     specified, dark subtraction will be skipped.
+  2. If -RotGain and/or -FlipGain is specified, the
+     dark reference will also be rotated and/or flipped.
+
+-McPatch
+  1. It is followed by numbers of patches in x and y dimensions.
+  2. The default values are 1 1, meaning only full-frame
+     based alignment is performed.
+
+-McIter
+   Maximum iterations for iterative alignment,
+   default 7 iterations.
+
+-McTol
+   Tolerance for iterative alignment,
+   default 0.5 pixel.
+
+-McBin
+   Binning performed in Fourier space, default 1.0.
+
+-Group
+   1. Group every specified number of frames by adding
+      them together. The alignment is then performed
+      on the group sums. The so measured motion is
+      interpolated to each raw frame.
+   2. The 1st integer is for gobal alignment and the
+      2nd is for patch alignment.
+
+-FmRef
+   Specify a frame in the input movie stack to be the
+   reference to which all other frames are aligned. The
+   reference is 1-based index in the input movie stack
+   regardless how many frames will be thrown. By default
+   the reference is set to be the central frame.
+
+-RotGain
+   Rotate gain reference counter-clockwise.
+   0 - no rotation, default,
+   1 - rotate 90 degree,
+   2 - rotate 180 degree,
+   3 - rotate 270 degree.
+
+-FlipGain
+   Flip gain reference after gain rotation.
+   0 - no flipping, default,
+   1 - flip upside down,
+   2 - flip left right.
+
+-InvGain
+   Inverse gain value at each pixel (1/f). If a orginal
+   value is zero, the inversed value is set zero.
+   This option can be used together with flip and
+   rotate gain reference.
+
+-Mag
+   1. Correct anisotropic magnification by stretching
+      image along the major axis, the axis where the
+      lower magificantion is detected.
+   2. Three inputs are needed including magnifications
+      along major and minor axes and the angle of the
+      major axis relative to the image x-axis in degree.
+   3. By default no correction is performed.
+
+-InFmMotion
+   1. 1 - Account for in-frame motion.
+      0 - Do not account for in-frame motion.
+
+-TiltAxis
+   1. User provided angle of tilt axis in degree. If users
+      do not provide one, AreTomo3 will search in full range.
+   2. If users provide one and do not want AreTomo3 to refine
+      it, add -1 after the provided tilt axis.
+   3. Otherwise, AreTomo3 regines the provided value in a
+      in a smaller range.
+
+-AlignZ
+   Volume height for alignment, default 256
+
+-VolZ
+   1. Volume z height for reconstrunction. It must be
+      greater than 0 to reconstruct a volume.
+   2. Default is 0, only aligned tilt series will
+      generated.
+
+-ExtZ
+   1. Extra volume z height for reconstrunction. This is
+      the  space added to the estimated sample thickness for
+      the final reconstruction of tomograms.
+   2. This setting is relevant only when -VolZ -1 is set,
+      which means users want to use the estimated sample
+      thickness.
+
+      greater than 0 to reconstruct a volume.
+   2. Default is 0, only aligned tilt series will
+      generated.
+
+-AtBin
+   1. Binnings for tomograms with respect to motion
+      corrected tilt series. Users can specify two floats.
+       2. The first number is required and 1.0 is default.
+       3. The second number is optional. By default, the
+      second resolution is disabled. It is actived only
+      when users provide a different number.
+
+-TiltCor
+   1. Correct the offset of tilt angle.
+   2. This argument can be followed by two values. The
+      first value can be -1, 0, or 1. and the  default is 0,
+      indicating the tilt offset is measured for alignment
+      only  When the value is 1, the offset is applied to
+      reconstion too. When a negative value is given, tilt
+      is not measured not applied.
+   3. The second value is user provided tilt offset. When it
+      is given, the measurement is disabled.
+
+-ReconRange
+   1. It specifies the min and max tilt angles from which
+      a 3D volume will be reconstructed. Any tilt image
+      whose tilt ange is outside this range is exclueded
+      in the reconstruction.
+
+-AmpContrast
+   1. Amplitude contrast, default 0.07
+
+-ExtPhase
+   1. Guess of phase shift and search range in degree.
+   2. Only required for CTF estimation and with
+   3. Phase plate installed.
+
+-FlipVol
+   1. By giving a non-zero value, the reconstructed
+      volume is saved in xyz fashion. The default is
+      xzy.
+-FlipInt
+  1. Flip the intensity of the volume to make structure white.
+     Default 0 means no flipping. Non-zero value flips.
+-Sart
+   1. Specify number of SART iterations and number
+      of projections per update. The default values
+      are 15 and 5, respectively
+
+-Wbp
+   1. By specifying 1, weighted back projection is enabled
+      to reconstruct volume.
+
+-DarkTol
+   1. Set tolerance for removing dark images. The range is
+      in (0, 1). The default value is 0.7. The higher value is
+      more restrictive.
+
+-OutXF
+   1. When set by giving no-zero value, IMOD compatible
+      XF file will be generated.
+
+-OutImod
+   1. It generates the Imod files needed by Relion4 or Warp
+      for subtomogram averaging. These files are saved in the
+      subfolder named after the output MRC file name.
+   2. 0: default, do not generate any IMod files.
+   3. 1: generate IMod files needed for Relion 4.
+   4. 2: generate IMod files needed for WARP.
+   5. 3: generate IMod files when the aligned tilt series
+         is used as the input for Relion 4 or WARP.
+
+-Align
+   1. Skip alignment when followed by 0. This option is
+      used when the input MRC file is an aligned tilt series.
+      The default value is 1.
+
+-IntpCor
+   1. When enabled, the correction for information loss due
+      to linear interpolation will be perform. The default
+      setting value 1 enables the correction.
+
+-CorrCTF
+   1. When enabled, local CTF correction is performed on
+      raw tilt series. By default this function is enabled.
+   2. Passing 0 disables this function.
+
+            """
+                command = f"{get_aretomo3_path()} \
+-InPrefix {name}_aligned.mrc \
+-OutDir ./ \
+-Cmd 2 \
+-AtBin {binning} \
+-FlipVol 0 \
+{reconstruct_option} \
+-DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
+-VolZ {int(1.0 * thickness)} \
+-Gpu {get_gpu_ids(parameters,separator=' ')} \
+-TmpDir {os.environ['PYP_SCRATCH']}"
+                run_shell_command(command, verbose=parameters["slurm_verbose"])
+                
+                # rename output from {name}_Vol.mrc to {name}.rec
+                rec_name = f"{name}.rec"
+                if os.path.exists(rec_name):
+                    os.remove(rec_name)
+                os.symlink( f"{name}_aligned_Vol.mrc", rec_name )
+                
+                # cleanup
+                os.remove(f"{name}_aligned.mrc")
+                os.remove(f"{name}_aligned.rawtlt")
+                os.remove(f"{name}_aligned.aln")
