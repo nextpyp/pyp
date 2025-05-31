@@ -265,7 +265,7 @@ done
                     cluster_name="pyp_"+jobtype,
                     commands=Web.CommandsScript(cmdlist, processes, bundle),
                     dir=_absolutize_path(submit_dir),
-                    args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
+                    args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=""),
                     deps=dependencies,
                     mpi=mpi,
                 )
@@ -275,7 +275,7 @@ done
                     cluster_name="pyp_"+jobtype,
                     commands=Web.CommandsGrid(cmdgrid, bundle),
                     dir=_absolutize_path(submit_dir),
-                    args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=account),
+                    args=get_slurm_args( queue=queue, threads=threads, walltime=walltime, memory=memory, jobname=jobname, gres=get_gres_option(use_gpu,gres), account=""),
                     deps=dependencies,
                     mpi=mpi,
                 )
@@ -421,7 +421,7 @@ def submit_script(
                 commands=Web.CommandsScript([cmd]),
                 dir=_absolutize_path(submit_dir),
                 env=[(jobtype, jobtype)],
-                args=get_slurm_args( queue, threads, walltime, memory, jobname, get_gres_option(use_gpu,gres), account),
+                args=get_slurm_args( queue, threads, walltime, memory, jobname, get_gres_option(use_gpu,gres), account=""),
                 deps=dependencies,
                 mpi=mpi,
             )
