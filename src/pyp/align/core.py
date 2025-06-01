@@ -2183,58 +2183,6 @@ def align_stack_super(
 
                 return aligned_average
 
-                # apply transform first and then do binning
-                if True:
-                    if not apply:
-                        com = "{0}/bin/newstack {1}_unbinned.mrc {1}_unbinned.bin -linear -xform {1}.xf".format(
-                            get_imod_path(), name
-                        )
-                        # print com
-                        subprocess.check_output(
-                            com, stderr=subprocess.STDOUT, shell=True, text=True
-                        )
-                        # com = '{0}/bin/newstack {3} {1}.bin {1}.bin -bin {2} -mode 2'.format( get_imod_path(), name, int(stack_binning), interpolation )
-                        # commands.getoutput( com )
-                        bin_stack(
-                            name + "_unbinned.bin", name + ".bin", stack_binning, "imod"
-                        )
-                        try:
-                            os.remove(name + "_unbinned.bin")
-                        except:
-                            pass
-                    else:
-                        # apply residual shifts after discretization
-                        xf = np.loadtxt("{}.xf".format(name))
-                        # XD: seems like there's rounding of the shifts when frame refinement extract
-                        xf[:, -2:] -= np.round(xf[:, -2:])
-                        np.savetxt("{}_stack.xf".format(name), xf)
-                        com = "{0}/bin/newstack {1}_unbinned.mrc {1}_unbinned.bin -linear -mode 2 -xform {1}_stack.xf".format(
-                            get_imod_path(), name, stack_binning
-                        )
-                        subprocess.check_output(
-                            com, stderr=subprocess.STDOUT, shell=True, text=True
-                        )
-                        bin_stack(
-                            name + "_unbinned.bin", name + ".bin", stack_binning, "imod"
-                        )
-                        os.remove(name + "_unbinned.bin")
-                elif not apply:
-                    # elif True:
-                    xf = np.loadtxt("{}.xf".format(name))
-                    xf[:, -2:] /= stack_binning
-                    np.savetxt("{}_stack.xf".format(name), xf)
-                    com = "{0}/bin/newstack {3} {1}.mrc {1}.bin -bin {2} -mode 2 -xform {1}_stack.xf".format(
-                        get_imod_path(), name, movie_binning, interpolation
-                    )
-                    run_shell_command(com)
-                    # bin_stack( name + '.mrc', name + '.bin', stack_binning, 'imod' )
-                else:
-                    com = "{0}/bin/newstack {3} {1}.mrc {1}.bin -bin {2} -mode 2".format(
-                        get_imod_path(), name, movie_binning, interpolation
-                    )
-                    run_shell_command(com)
-                    # bin_stack( name + '.mrc', name + '.bin', stack_binning, 'imod' )
-
             else:
                 if movie_binning > 1:
                     # com = '{0}/bin/newstack {1}.mrc {1}.bin -bin {2} -mode 2'.format( get_imod_path(), name, movie_binning )
@@ -3331,43 +3279,26 @@ EOF
                         # apply local alignments
 
                         # apply shifts to unbinned stack (new)
-                        if True:
-                            if not apply:
-                                unbinned_shifts = np.copy(binned_shifts)
-                                unbinned_shifts[:, -2:] *= stack_binning
+                        if not apply:
+                            unbinned_shifts = np.copy(binned_shifts)
+                            unbinned_shifts[:, -2:] *= stack_binning
 
-                                np.savetxt(
-                                    name + "_unbinned.xf", unbinned_shifts, fmt="%13.7f"
-                                )
-                                com = "{0}/bin/newstack {1}_unbinned.mrc {1}_unbinned.ali -linear -xform {1}_unbinned.xf".format(
-                                    get_imod_path(), name
-                                )
-                                run_shell_command(com)
-                            # com = '{0}/bin/newstack {3} {1}.ali {1}.ali -bin {2} -mode 2 -multadd 1,0'.format( get_imod_path(), name, stack_binning, interpolation )
-                            bin_stack(
-                                name + "_unbinned.ali",
-                                name + ".ali",
-                                stack_binning,
-                                "imod",
+                            np.savetxt(
+                                name + "_unbinned.xf", unbinned_shifts, fmt="%13.7f"
                             )
-                            os.remove(name + "_unbinned.ali")
-                        # apply shifts to binned stack (old)
-                        else:
+                            fill_option = f"-fill {get_image_mean(name + '_unbinned.mrc')}"
+                            com = "{0}/bin/newstack {1}_unbinned.mrc {1}_unbinned.ali -linear {2} -xform {1}_unbinned.xf".format(
+                                get_imod_path(), name, fill_option
+                            )
+                            run_shell_command(com)
 
-                            # if int(parameters['extract_bin']) > 1 or movie_binning > 1:
-                            #    com = '{0}/bin/newstack -antialias 6 -xform {1}.xf -mode 2 -multadd 1,0 {1}.bin {1}.ali'.format(get_imod_path(),name)
-                            # else:
-                            #    com = '{0}/bin/newstack -nearest -xform {1}.xf -mode 2 -multadd 1,0 {1}.bin {1}.ali'.format(get_imod_path(),name)
-                            com = "{0}/bin/newstack {3} {1}.mrc {1}.ali -bin {2} -mode 2 -multadd 1,0 -xform {1}.xf".format(
-                                get_imod_path(), name, movie_binning, interpolation,
-                            )
-                            # com = '{0}/bin/newstack {2} {1}.mrc {1}.ali -mode 2 -multadd 1,0 -xform {1}.xf'.format( get_imod_path(), name, interpolation )
-                            # print com
-                            subprocess.check_output(
-                                com, stderr=subprocess.STDOUT, shell=True, text=True
-                            )
-
-                        # commands.getoutput( 'touch %s_iteration_%02d_weights_score_%08.3f' % ( name, iter, scores.mean() ) )
+                        bin_stack(
+                            name + "_unbinned.ali",
+                            name + ".ali",
+                            stack_binning,
+                            "imod",
+                        )
+                        os.remove(name + "_unbinned.ali")
 
                         # weight frames
                         last_iteration = iter == (iterations - 1)
@@ -5754,13 +5685,6 @@ EOF
                     "%s_tiltalignScript.txt" % name,
                 )
                 shutil.copy2("IMOD/%s_bin.fid.txt" % name, "%s.fid.txt" % name)
-
-                """
-                    # create aligned stack
-                    com='{0}/bin/newstack -linear -xform IMOD/{1}_bin.xf {1}_bin.preali {1}_bin.ali -taper 1,1'.format(get_imod_path(),name)
-                    print com
-                    print commands.getoutput(com)
-                    """
 
                 # TODO: Update excluded views per RAPTOR alignment
                 # checks for existing tilt series alignment
