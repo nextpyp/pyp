@@ -27,7 +27,7 @@ from pyp.analysis.image import (
 )
 from pyp.analysis.scores import per_frame_scoring
 from pyp.inout.image import mrc, writepng, img2webp, get_gain_reference
-from pyp.inout.image.core import get_image_dimensions
+from pyp.inout.image.core import get_image_dimensions, get_image_mean
 from pyp.inout.metadata import (
     csp_extract_coordinates,
     csp_spr_swarm,
@@ -1731,10 +1731,10 @@ def align_stack(name, parameters, interpolation="-linear"):
         np.savetxt("%s_actual.xf" % name, t, fmt="%13.7f")
 
         # generate aligned stack with latest alignment parameters
-        command = "{0}/bin/newstack -nearest -xform {1}_actual.xf {1}.mrc {1}.ali; rm -f {1}.ali~".format(
-            get_imod_path(), name
+        fill_option = f"-fill {get_image_mean(name + '.mrc')}"
+        command = "{0}/bin/newstack -nearest {2} -xform {1}_actual.xf {1}.mrc {1}.ali; rm -f {1}.ali~".format(
+            get_imod_path(), name, fill_option
         )
-        # command = '{0}/bin/newstack -linear -xform {1}_actual.xf {1}.mrc {1}.ali'.format(get_imod_path(),name)
         run_shell_command(command)
 
     else:
@@ -1803,9 +1803,10 @@ def align_stack(name, parameters, interpolation="-linear"):
             )
 
             # generate aligned stack
+            fill_option = f"-fill {get_image_mean(name+'.bin')}"
             run_shell_command(
-                "{0}/bin/newstack {2} -xform {1}_first.prexg {1}.bin {1}.ali -mode 2 -multadd 1,0".format(
-                    get_imod_path(), name, interpolation
+                "{0}/bin/newstack {2} {3} -xform {1}_first.prexg {1}.bin {1}.ali -mode 2 -multadd 1,0".format(
+                    get_imod_path(), name, interpolation, fill_option
                 ), verbose = False
             )
 
@@ -1857,8 +1858,8 @@ def align_stack(name, parameters, interpolation="-linear"):
 
                 # generate aligned stack with latest alignment parameters
                 run_shell_command(
-                    "{0}/bin/newstack {2} -xform {1}.prexg {1}.bin {1}.ali".format(
-                        get_imod_path(), name, interpolation
+                    "{0}/bin/newstack {2} {3} -xform {1}.prexg {1}.bin {1}.ali".format(
+                        get_imod_path(), name, interpolation, fill_option
                     ), verbose = False
                 )
 
@@ -1894,8 +1895,8 @@ def align_stack(name, parameters, interpolation="-linear"):
                 t[:, -2:] *= movie_binning
                 np.savetxt("%s.xf" % name, t, fmt="%13.7f")
                 run_shell_command(
-                    "{0}/bin/newstack -nearest -xform {1}.xf {1}.mrc {1}.ali".format(
-                        get_imod_path(), name
+                    "{0}/bin/newstack -nearest {2} -xform {1}.xf {1}.mrc {1}.ali".format(
+                        get_imod_path(), name, fill_option
                     )
                 )
 
@@ -2025,10 +2026,12 @@ def apply_alignments_and_average(input_name, name, parameters, method="imod"):
         )
     run_shell_command(command)
 
+    fill_option = f"-fill {get_image_mean(name + '.mrc')}"
+    
     if method == "imod" and not parameters["movie_weights"]:
 
-        command = env + "{0}/bin/newstack -nearest -xform {2}.xf {2}.mrc {2}.ali; rm -f {2}.ali~".format(
-            get_imod_path(), input_name, name
+        command = env + "{0}/bin/newstack -nearest {2} -xform {1}.xf {1}.mrc {1}.ali; rm -f {1}.ali~".format(
+            get_imod_path(), name, fill_option
         )
         run_shell_command(command)
 
@@ -2592,6 +2595,9 @@ EOF
                 error = 1
                 iteration = 0
                 scores = []
+                
+                fill_option = f"-fill {get_image_mean(name + '.bin')}"
+                
                 while error > 1e-4 and iteration < int(parameters["movie_iters"]):
 
                     if iteration > 0 or os.path.isfile("{}.xf".format(name)):
@@ -2600,8 +2606,8 @@ EOF
                             t = np.loadtxt("%s.xf" % name, ndmin=2)
                             t[:, -2:] /= movie_binning
                             np.savetxt("%s.xf" % name, t, fmt="%13.7f")
-                            com = "{0}/bin/newstack {2} -xform {1}.xf -mode 2 -multadd 1,0 {1}.bin {1}.ali".format(
-                                get_imod_path(), name, interpolation
+                            com = "{0}/bin/newstack {2} -xform {1}.xf -mode 2 {3} -multadd 1,0 {1}.bin {1}.ali".format(
+                                get_imod_path(), name, interpolation, fill_option
                             )
                             run_shell_command(com)
                             shutil.move(
@@ -2690,8 +2696,8 @@ EOF
                         np.savetxt(name + ".prexg", shifts)
 
                     # generate aligned stack with latest alignment parameters
-                    com = "{0}/bin/newstack {2} -xform {1}.prexg -mode 2 -multadd 1,0 {1}.bin {1}.ali".format(
-                        get_imod_path(), name, interpolation
+                    com = "{0}/bin/newstack {2} -xform {1}.prexg {3} -mode 2 -multadd 1,0 {1}.bin {1}.ali".format(
+                        get_imod_path(), name, interpolation, fill_option
                     )
                     run_shell_command(com,verbose=False)
 
@@ -4900,9 +4906,11 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
 
+        fill_option = f"-fill {get_image_mean(name + '_bin.st')}"
+        
         # generate aligned stack
-        command = "{0}/bin/newstack -linear -xform {1}_first.prexg {1}_bin.st {1}_bin.preali -mode 1 -multadd 1,0 {2}".format(
-            get_imod_path(), name, tapper_edge,
+        command = "{0}/bin/newstack -linear {3} -xform {1}_first.prexg {1}_bin.st {1}_bin.preali -mode 1 -multadd 1,0 {2}".format(
+            get_imod_path(), name, tapper_edge, fill_option
         )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
 
@@ -4934,8 +4942,8 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             # generate aligned stack with latest alignment parameters
             run_shell_command(
-                "{0}/bin/newstack -linear -xform {1}.prexg {1}_bin.st {1}_bin.preali -scale 0,32767 -mode 1 {2}".format(
-                    get_imod_path(), name, tapper_edge,
+                "{0}/bin/newstack -linear {3} -xform {1}.prexg {1}_bin.st {1}_bin.preali -scale 0,32767 -mode 1 {2}".format(
+                    get_imod_path(), name, tapper_edge, fill_option
                 ),
                 verbose=parameters["slurm_verbose"],
             )

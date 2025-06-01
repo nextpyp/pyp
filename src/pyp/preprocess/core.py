@@ -17,7 +17,7 @@ from pyp import align, preprocess, merge
 from pyp import ctf as ctf_mod
 from pyp.inout.image import digital_micrograph as dm4
 from pyp.inout.image import mrc
-from pyp.inout.image.core import get_gain_reference, get_image_dimensions
+from pyp.inout.image.core import get_gain_reference, get_image_dimensions, get_image_mean
 from pyp.system import local_run, mpi, project_params
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
@@ -98,8 +98,9 @@ def remove_xrays_from_movie_file(name, inplace=False):
 
 def apply_alignment_to_frames(frame_name):
     # TODO: Why are we using linear interpolation and not using gain correction?
-    com = "{0}/bin/newstack -input {1}.tif -output {1}.mrc -xform {1}.xf -linear".format(
-        get_imod_path(), frame_name
+    fill_option = f"-fill {get_image_mean(frame_name + '.tif')}"
+    com = "{0}/bin/newstack -input {1}.tif -output {1}.mrc {2} -xform {1}.xf -linear".format(
+        get_imod_path(), frame_name, fill_option
     )
     local_run.run_shell_command(com,verbose=False)
 
@@ -328,8 +329,9 @@ def read_tilt_series(
                         pool.apply_async(align.align_stack, args=(frame_name, parameters))
                         # aligned_tilt = align.align_stack( frame_name, parameters )
                     else:
-                        com = "{0}/bin/newstack -input {1}.mrc -output {1}.ali -xform {1}.xf -linear".format(
-                            get_imod_path(), frame_name
+                        fill_option = f"-fill {get_image_mean(frame_name+'.mrc')}"
+                        com = "{0}/bin/newstack -input {1}.mrc -output {1}.ali {2} -xform {1}.xf -linear".format(
+                            get_imod_path(), frame_name, fill_option
                         )
                         local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 

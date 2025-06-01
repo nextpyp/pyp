@@ -873,6 +873,15 @@ def get_image_dimensions(name):
         logger.error(output)
     return list(map(int, output.split()))
 
+def get_image_mean(name):
+    
+    assert Path(name), f"{name} does not exist."
+
+    command = "{0}/bin/header -mean '{1}'".format(get_imod_path(), name)
+    [output, error] = run_shell_command(command, verbose=False)
+    if "ERROR" in output:
+        logger.error(output)
+    return float(output)
 
 def get_image_mode(name):
 
@@ -1472,8 +1481,10 @@ def generate_aligned_tiltseries(name, parameters, x, y):
     commands = [] 
     aligned_images = []
     for tilt in range(sec):
-        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs -linear -taper 1,1 -size {3},{4} && rm -f {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
-            get_imod_path(), name, tilt, x, y
+        file_name = "{0}_{1:04d}_square.mrc".format(name, tilt)
+        fill_option = f"-fill {get_image_mean(file_name)}"
+        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs {5} -linear -taper 1,1 -size {3},{4} && rm -f {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
+            get_imod_path(), name, tilt, x, y, fill_option
         )
         commands.append(command)
         aligned_images.append("{0}_{1:04d}.ali".format(name, tilt))

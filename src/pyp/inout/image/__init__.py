@@ -4,6 +4,7 @@ from .core import (
     decompress,
     get_gain_reference,
     get_image_dimensions,
+    get_image_mean,
     mergeImagicFiles,
     mergeMrcFiles,
     mergeRelionFiles,
