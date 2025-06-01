@@ -599,6 +599,9 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -TmpDir {os.environ['PYP_SCRATCH']}"
                 run_shell_command(command, verbose=parameters["slurm_verbose"])
                 
+                assert os.path.exists(f"{name}_aligned_Vol.mrc"), "AreTomo3 reconstruction failed, no output file found"
+
+                # rename output from {name}_aligned_Vol.mrc to {name}.rec
                 # rename output from {name}_Vol.mrc to {name}.rec
                 rec_name = f"{name}.rec"
                 if os.path.exists(rec_name):
