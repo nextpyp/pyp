@@ -1966,19 +1966,19 @@ type = "bool"
 default = true
 hidden = true
 
-[tabs.tomo_ali.aretomo_zheight]
-name = "Z height of specimen in pixels"
-description = "Z height of specimen (not tomogram)"
-type = "int"
-default = 600
-condition = { arg="method", value=["aretomo","aretomo3"] }
-
 [tabs.tomo_ali.aretomo_estimate_zheight]
 name = "Estimate specimen thickness"
 description = "Z height of specimen will be estimated automatically"
 type = "bool"
 default = false
 condition = { arg="method", value="aretomo3" }
+
+[tabs.tomo_ali.aretomo_zheight]
+name = "Z height of specimen in pixels"
+description = "Z height of specimen (not tomogram)"
+type = "int"
+default = 600
+condition = { arg="aretomo_estimate_zheight", value=false }
 
 [tabs.tomo_ali.aretomo_measure_tiltoff]
 name = "Measure tilt offset"

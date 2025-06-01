@@ -5192,7 +5192,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             else:
                 specimen_thickness = parameters["tomo_ali_aretomo_zheight"]
 
-            if "aretomo" not in parameters["tomo_rec_method"]:
+            if "aretomo3" not in parameters["tomo_rec_method"]:
                 # skip reconstruction if using IMOD
                 thickness = 0
 
@@ -5490,7 +5490,10 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             command = f"{get_aretomo3_path()} \
 -InPrefix {name}_aretomo.mrc \
 -OutDir ./ \
--CorrCTF 0 \
+-PixSize {parameters['scope_pixel']} \
+-kV {parameters['scope_voltage']} \
+-Cs {parameters['scope_cs']} \
+-CorrCTF 1 \
 -Cmd 1 \
 -FlipVol 0 \
 -AtBin {binning_tomo} \
