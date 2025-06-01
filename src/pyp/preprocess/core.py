@@ -561,7 +561,7 @@ def read_tilt_series(
         else:
             assert len(mdocs) > 0, f"Do not detect any mdoc files, please put mdoc files with movie frames"
             # use mdoc file to get corresponding tilted images
-            tilts = frames_from_mdoc(mdocs, parameters)
+            tilts = frames_from_mdoc(mdocs, parameters, verbose=True)
             file_format = Path(tilts[0][0]).suffix
 
             dims = get_image_dimensions(tilts[0][0])
@@ -828,7 +828,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
 
 
 
-def frames_from_mdoc(mdoc_files: list, parameters: dict):
+def frames_from_mdoc(mdoc_files: list, parameters: dict, verbose: bool = False):
     """ Obtain filename, tilt angles, scanning order from mdoc files
        It is possible that one mdoc file per tilt-series or one mdoc file per tilted image
 
@@ -845,6 +845,7 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
     frames_set = []
 
     DATETIMES = ["%y-%b-%d  %H:%M:%S", "%Y-%b-%d  %H:%M:%S", "%d-%b-%y  %H:%M:%S", "%d-%b-%Y  %H:%M:%S"]
+    first = True
 
     for file in mdoc_files:
 
@@ -882,7 +883,10 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
 
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
-                    if parameters:
+                    if first and verbose and math.fabs(axis_angle-parameters["scope_tilt_axis"]) > 0.01:
+                        logger.warning(f"Specified tilt-axis angle {parameters['scope_tilt_axis']} does not match the value in the mdoc file {axis_angle}. If you want to use the value from the mdoc file, please specify {axis_angle} in the data import block.")
+                        first = False
+                    if False:
                         parameters["scope_tilt_axis"] = axis_angle
 
     # sort the frames by scanning orders
