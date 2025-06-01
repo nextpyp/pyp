@@ -60,8 +60,8 @@ def detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options):
 
     # find gold beads in 3D reconstruction
     size_of_gold = parameters["tomo_ali_fiducial"] / parameters["scope_pixel"] / binning
-    command = "{0}/bin/findbeads3d -size {1} {2}.rec {2}_gold3d.mod -max 500 -threshold 0.1 -store 0.5".format(
-        get_imod_path(), size_of_gold, name
+    command = "{0}/bin/findbeads3d -size {1} {2}.rec {2}_gold3d.mod -max {3} -threshold {4} -store {5}".format(
+        get_imod_path(), size_of_gold, name, parameters["tomo_rec_erase_detect_max"], parameters["tomo_rec_erase_detect_threshold"], parameters["tomo_rec_erase_detect_store"]
     )
     local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 

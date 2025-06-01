@@ -1974,7 +1974,7 @@ default = 600
 condition = { arg="method", value=["aretomo","aretomo3"] }
 
 [tabs.tomo_ali.aretomo_estimate_zheight]
-name = "Estimate sample thickness"
+name = "Estimate specimen thickness"
 description = "Z height of specimen will be estimated automatically"
 type = "bool"
 default = false
@@ -2062,6 +2062,33 @@ name = "Erase fiducials"
 description = "Erase fiducials from aligned tilt-series prior to reconstruction"
 type = "bool"
 default = false
+hidden = [ "tomo_import_star" ]
+
+[tabs.tomo_rec.erase_detect_max]
+name = "Maximum number of beads"
+description = "Only this number of peaks will be retained and used for finding the histogram dip"
+type = "int"
+default = 500
+condition = { arg="erase_fiducials", value="true" }
+advanced = true
+hidden = [ "tomo_import_star" ]
+
+[tabs.tomo_rec.erase_detect_threshold]
+name = "Threshold for averaging"
+description = "Relative peak strength or number of beads for averaging (https://bio3d.colorado.edu/imod/doc/man/findbeads3d.html)"
+type = "float"
+default = 0.1
+condition = { arg="erase_fiducials", value="true" }
+advanced = true
+hidden = [ "tomo_import_star" ]
+
+[tabs.tomo_rec.erase_detect_store]
+name = "Detection threshold"
+description = "Threshold relative peak strength for storing peaks in model (https://bio3d.colorado.edu/imod/doc/man/findbeads3d.html)"
+type = "float"
+default = 0.5
+condition = { arg="erase_fiducials", value="true" }
+advanced = true
 hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.erase_factor]
