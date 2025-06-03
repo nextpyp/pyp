@@ -1526,9 +1526,12 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
             else:
 
                 if "gain_reference" in parameters.keys():
-                    gain_reference_file = project_params.resolve_path(parameters["gain_reference"])
+                    x, y, _ = get_image_dimensions(name + extension)
+                    _, gain_reference_file = get_gain_reference(parameters, x, y)
                     if os.path.exists(gain_reference_file):
-                        shutil.copy2(gain_reference_file, os.getcwd())
+                        parameters["gain_reference"] = os.path.join( os.getcwd(), gain_reference_file )
+                        parameters["gain_rotation"] = 0
+                        parameters["gain_flipv"] = parameters["gain_fliph"] = False
                 logger.info("Aligning frames using: " + parameters['movie_ali'])
                 aligned_average = align.align_movie_frames(
                     parameters, name, extension
