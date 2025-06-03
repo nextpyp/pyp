@@ -5513,6 +5513,34 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             stream_shell_command(command, observer=obs, verbose=parameters["slurm_verbose"])
 
+            # run AreTomo3 with option "-Cmd 4" to Rotate tilt axis by 180 degrees
+         
+            command = f"{get_aretomo3_path()} \
+-InPrefix {name}_aretomo.mrc \
+-OutDir ./ \
+-PixSize {parameters['scope_pixel']} \
+-kV {parameters['scope_voltage']} \
+-Cs {parameters['scope_cs']} \
+-CorrCTF 1 \
+-Cmd 4 \
+-FlipVol 0 \
+-AtBin {binning_tomo} \
+{reconstruct_option} \
+-OutImod 2 \
+-TiltCor {tilt_offset_option} \
+-DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
+-AlignZ {specimen_thickness} \
+-VolZ {thickness} \
+-TiltAxis {rotation} \
+-Gpu {get_gpu_ids(parameters,separator=' ')} \
+-TmpDir {os.environ['PYP_SCRATCH']}"
+
+            output = []
+            def obs(line):
+                output.append(line)
+
+            stream_shell_command(command, observer=obs, verbose=parameters["slurm_verbose"])
+
             # detect removed images and add them to excluded views
             formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
             for line in output:
