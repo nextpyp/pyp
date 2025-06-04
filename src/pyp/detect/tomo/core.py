@@ -1821,12 +1821,13 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         # parse output from star file
         results_file = os.path.join( "pytom", f"{name}_particles.star" )
         results = pyp_metadata.parse_star(results_file)
-        coordinates = results[['rlnCoordinateX','rlnCoordinateY','rlnCoordinateZ']].to_numpy(dtype='float')
-        radius_in_pixels = parameters['tomo_pick_rad'] / parameters['scope_pixel']
-        coordinates = np.hstack( ( coordinates.copy()[:,[0,2,1]] * binning, radius_in_pixels * np.ones((coordinates.shape[0],1)) ) )
+        if len(results):
+            coordinates = results[['rlnCoordinateX','rlnCoordinateY','rlnCoordinateZ']].to_numpy(dtype='float')
+            radius_in_pixels = parameters['tomo_pick_rad'] / parameters['scope_pixel']
+            coordinates = np.hstack( ( coordinates.copy()[:,[0,2,1]] * binning, radius_in_pixels * np.ones((coordinates.shape[0],1)) ) )
 
-        normals = results[['rlnAngleRot','rlnAngleTilt','rlnAnglePsi']].to_numpy(dtype='float')
-        np.savetxt( f"{name}_normals.txt", normals)
+            normals = results[['rlnAngleRot','rlnAngleTilt','rlnAnglePsi']].to_numpy(dtype='float')
+            np.savetxt( f"{name}_normals.txt", normals)
 
     # 4. import
     elif ( parameters.get("tomo_spk_method") == "import" or parameters.get("tomo_pick_method") == "import" ) and os.path.exists(f"{name}.spk"):

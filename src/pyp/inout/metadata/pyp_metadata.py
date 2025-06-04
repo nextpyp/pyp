@@ -2858,7 +2858,11 @@ def parse_star_table(starfile, offset=0, nrows=None, keep_index=False):
                 break
             ln += 1
         f.seek(offset)
-        df = pd.read_csv(f, delimiter='\s+', header=None, skiprows=ln, nrows=nrows)
+        try:
+            df = pd.read_csv(f, delimiter='\s+', header=None, skiprows=ln, nrows=nrows)
+        except pd.errors.EmptyDataError:
+            logger.warning(f"Empty data in {starfile} at offset {offset}. Returning empty DataFrame.")
+            df = pd.DataFrame()
     df.columns = headers
     return df
 
@@ -2929,26 +2933,33 @@ def augment_star_ucsf(df, inplace=True):
 
 def parse_star(starfile, keep_index=False, augment=True, nrows=sys.maxsize):
     tables = star_table_offsets(starfile)
-    dfs = {t: parse_star_table(starfile, offset=tables[t][0], nrows=min(tables[t][3], nrows), keep_index=keep_index)
-        for t in tables}
-    if Relion.OPTICDATA in dfs:
-        if Relion.PARTICLEDATA in dfs:
-            data_table = Relion.PARTICLEDATA
-        elif Relion.MICROGRAPHDATA in dfs:
-            data_table = Relion.MICROGRAPHDATA
-        elif Relion.IMAGEDATA in dfs:
-            data_table = Relion.IMAGEDATA
+    try:
+        if tables["data_particles"][3] > 0:
+            dfs = {t: parse_star_table(starfile, offset=tables[t][0], nrows=min(tables[t][3], nrows), keep_index=keep_index)
+                for t in tables}
+            if Relion.OPTICDATA in dfs:
+                if Relion.PARTICLEDATA in dfs:
+                    data_table = Relion.PARTICLEDATA
+                elif Relion.MICROGRAPHDATA in dfs:
+                    data_table = Relion.MICROGRAPHDATA
+                elif Relion.IMAGEDATA in dfs:
+                    data_table = Relion.IMAGEDATA
+                else:
+                    data_table = None
+                if data_table is not None:
+                    df = pd.merge(dfs[Relion.OPTICDATA], dfs[data_table], on=Relion.OPTICSGROUP)
+                else:
+                    df = dfs[Relion.OPTICDATA]
+            else:
+                df = dfs[next(iter(dfs))]
+            df = check_defaults(df, inplace=True)
+            if augment:
+                augment_star_ucsf(df, inplace=True)
         else:
-            data_table = None
-        if data_table is not None:
-            df = pd.merge(dfs[Relion.OPTICDATA], dfs[data_table], on=Relion.OPTICSGROUP)
-        else:
-            df = dfs[Relion.OPTICDATA]
-    else:
-        df = dfs[next(iter(dfs))]
-    df = check_defaults(df, inplace=True)
-    if augment:
-        augment_star_ucsf(df, inplace=True)
+            df = pd.DataFrame()
+    except:
+        df = pd.DataFrame()
+
     return df
 
 
