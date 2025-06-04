@@ -19,12 +19,12 @@ import toml
 from pyp import utils
 from pyp.analysis import statistics
 from pyp.system import project_params, slurm, user_comm
-from pyp.system.local_run import run_shell_command
 from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import clear_scratch
 from pyp.utils import get_relative_path, movie2regex
 from pyp.system.db_comm import save_parameters_to_website
 from pyp.streampyp.logging import TQDMLogger
+from pyp.inout.metadata import pyp_metadata
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -826,6 +826,40 @@ def get_weight_from_projects(weight_folder: Path, parameters: dict) -> str:
 
     return None
 
+def need_tomo_rec_force(micrograph_list, project_folder, parameters):
+    """ Check if tomographic reconstruction needs to be re-calculated because new views were excluded
+    """
+    if parameters.get("tomo_rec_force"):
+        return True
+    
+    for name in micrograph_list:
+
+        # unpack pkl file
+        pkl_file = os.path.join(project_folder, "pkl", f"{name}.pkl")
+        if os.path.exists(pkl_file):
+
+            metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+            metadata = metadata_object.data
+
+            # retrieve old angles from metadata
+            if metadata and 'exclude' in metadata:
+                angles = np.sort(metadata.get('exclude').to_numpy()[:,2].astype('int') + 1)
+            else:
+                angles = np.array([])
+                
+            # retrieve new angles from next file
+            next_file = os.path.join(project_folder, "next", f"{name}_exclude_views.next")
+            if os.path.exists(next_file) and os.path.getsize(next_file) > 0:
+                new_angles = np.sort(np.loadtxt(next_file,ndmin=2)).astype('int')[:,2]+1
+            else:
+                new_angles = np.array([])
+            
+            # detect if there were changes in the excluded tilts
+            if not np.array_equal(angles, np.sort(new_angles)) and "preprocessing" in parameters.get("micromon_block"):
+                return True
+
+    return False
+
 def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
     """Set force flags according to parameter changes
 
@@ -1005,6 +1039,9 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             new_parameters["tomo_vir_force"] = True
             new_parameters["tomo_rec_force"] = True
             clean_tomo_vir_particles(project_dir)
+            
+    if "tomo" in previous_parameters["data_mode"] and need_tomo_rec_force(inputlist, project_dir, new_parameters):
+        new_parameters["tomo_rec_force"] = True
 
     return new_parameters
 
