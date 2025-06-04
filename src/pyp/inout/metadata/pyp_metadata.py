@@ -2765,7 +2765,7 @@ def merge_par_selection(input_folder, output_folder, films, selected, parameters
     mergealign: whether merge selected alignment parameters or not
     """
     all_zero_list = []
-    current_dir = os.getcwd()
+
     ipnut_1 = re.sub("_r[0-9][0-9]_", "_r%02d_" % selected[0], input_folder)
     # check decompress
     if os.path.exists(ipnut_1) and ipnut_1.endswith(".bz2"):
@@ -2813,10 +2813,10 @@ def merge_par_selection(input_folder, output_folder, films, selected, parameters
                 parameter_file = os.path.join(input_k, image + "_r%02d.cistem" % k)
                 par_obj_k = cistem_star_file.Parameters.from_file(parameter_file)
                 pardatak = par_obj_k.get_data()
-                mask = (pardatak[:, occ_col] >= parameters["reconstruct_min_occ"]).reshape(n, 1)
+                mask = (pardatak[:, occ_col] >= parameters["clean_min_occ"]).reshape(n, 1)
                 pardata_keep1 = np.where(mask, pardatak, pardata_keep1)
 
-        occ_keepmask = pardata_keep1[:, 11] >= parameters["reconstruct_min_occ"]
+        occ_keepmask = pardata_keep1[:, 11] >= parameters["clean_min_occ"]
         
         if np.any(occ_keepmask):
 

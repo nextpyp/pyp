@@ -8629,6 +8629,14 @@ default = ""
 required = false
 copyToNewBlock = false
 
+[tabs.clean.min_occ]
+name = "Min occupancy"
+description = "Keep particles with occupancies above this value (0-100)"
+type = "float"
+default = 50.0
+hidden = ["spr_map_clean", "spr_coarse_refine"]
+copyToNewBlock = false
+
 [tabs.clean.class_merge_alignment]
 name = "Use best alignments during merging"
 description = "When merging multiple classes, use alignment parameters from class with largest occupancy"
