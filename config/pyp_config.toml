@@ -8597,14 +8597,6 @@ default = 0.0
 hidden = ["spr_fine_refine", "spr_coarse_refine"]
 copyToNewBlock = false
 
-[tabs.clean.export_clean]
-name = "Export clean particle coordinates"
-description = "Save clean particle coordinates to frealign/selected_particles/"
-type = "bool"
-default = false
-copyToNewBlock = false
-condition = { arg="discard", value="true" }
-
 [tabs.clean.mintilt]
 name = "Lowest tilt-angle (degrees)"
 description = "Only keep projections with tilt-angles above this limit"
@@ -8658,6 +8650,14 @@ description = "Permanently remove particles (WARNING: this cannot be undone!)"
 type = "bool"
 default = false
 copyToNewBlock = false
+
+[tabs.clean.export_clean]
+name = "Export clean particle coordinates"
+description = "Save clean particle coordinates to frealign/selected_particles/"
+type = "bool"
+default = false
+copyToNewBlock = false
+condition = { arg="discard", value="true" }
 
 ###################
 # Daemon parameters
