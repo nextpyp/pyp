@@ -2054,7 +2054,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # map new to old parameters during virion detection
     if parameters.get("micromon_block") == "tomo-picking":
-        parameters["tomo_spk_method"] = parameters["tomo_pick_method"]
+        if parameters["tomo_pick_method"] != "virions" and parameters["tomo_pick_method"] != "pytom":
+            parameters["tomo_spk_method"] = parameters["tomo_pick_method"]
         # use spike radius as virion radius
         if parameters.get("tomo_pick_method") == "virions":
             parameters["tomo_spk_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_vir_rad"]
@@ -3932,7 +3933,7 @@ def sync_parameters(parameters):
                     new_parameters[k.replace("tomo_pick_vir_","tomo_vir_")] = parameters[k]
             # map particle picking methods
             elif k == "tomo_pick_method":
-                if parameters[k] != "virions":
+                if parameters[k] != "virions" and parameters[k] != "pytom":
                     new_parameters["tomo_spk_method"] = parameters[k]
             # copy tomo_pick_ to tomo_spk
             elif k.startswith("tomo_pick_"):
