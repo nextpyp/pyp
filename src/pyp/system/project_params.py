@@ -1040,7 +1040,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             new_parameters["tomo_rec_force"] = True
             clean_tomo_vir_particles(project_dir)
             
-    if "tomo" in previous_parameters["data_mode"] and need_tomo_rec_force(inputlist, project_dir, new_parameters):
+    if "tomo" in previous_parameters["data_mode"] and os.path.exists(micrographs) and need_tomo_rec_force(inputlist, project_dir, new_parameters):
         new_parameters["tomo_rec_force"] = True
 
     return new_parameters
