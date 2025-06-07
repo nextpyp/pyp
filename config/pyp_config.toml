@@ -2274,6 +2274,14 @@ default = "0,0,0"
 condition = { arg="method_train", value="cryocare" }
 hidden = [ "tomo_denoise_eval" ]
 
+[tabs.tomo_denoise.cryocare_use_gpu]
+name = "Use GPU"
+description = "Run cryoCARE denoise in a GPU"
+type = "bool"
+default = true
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval" ]
+
 [tabs.tomo_denoise.cryocare_patch]
 name = "Patch shape"
 description = "Per dimension size of the sub-volumes used for training (cubic shape >= 64x64x64)"

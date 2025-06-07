@@ -1252,7 +1252,7 @@ def split(parameters):
                 "swarm",
                 train_swarm_file,
                 jobtype=train_jobtype,
-                jobname="Train (gpu)",
+                jobname=job_name,
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
