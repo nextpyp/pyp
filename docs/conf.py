@@ -153,7 +153,8 @@ html_theme_options = {
                       "repo_name": "nextPYP",
                       "version_dropdown": True,
                         "version_info": [
-                            {"version": "../0.7.0/docs", "title": "0.7.0", "aliases": ["latest"]},
+                            {"version": "../0.7.1/docs", "title": "0.7.1", "aliases": ["latest"]},
+                            {"version": "../0.7.0/docs", "title": "0.7.0", "aliases": []},
                             {"version": "../0.6.5/docs", "title": "0.6.5", "aliases": []},
                             {"version": "../0.6.4/docs", "title": "0.6.4", "aliases": []},
                             {"version": "../0.6.3/docs", "title": "0.6.3", "aliases": []},
