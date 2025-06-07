@@ -1003,41 +1003,45 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
         com = f"{get_imod_path()}/bin/model2point {gold_mod} {name}_gold_ccderaser.txt"
         local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
         
-        # calculate unbinned tilt-series coordinates
-        with open(f"{name}_gold_ccderaser.txt") as f:
-            gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00        0.00        0.00" in line], dtype='f', ndmin=2)
+        # convert to unbinned tilt-series coordinates, if needed
+        if os.path.exists(f"{name}_gold_ccderaser.txt"):
+            try:
+                with open(f"{name}_gold_ccderaser.txt") as f:
+                    gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00        0.00        0.00" in line], dtype='f', ndmin=2)
 
-        gold_coordinates[:,:2] *= binning
-        np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
+                gold_coordinates[:,:2] *= binning
+                np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
 
-        # convert back to imod model using one point per contour
-        com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+                # convert back to imod model using one point per contour
+                com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
+                local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
 
-        # erase gold on (unbinned) aligned tilt-series
-        erase_factor = parameters["tomo_rec_erase_factor"]
-        if parameters["tomo_rec_erase_order"] == "noise":
-            erase_order = -1
-        elif parameters["tomo_rec_erase_order"] == "mean":
-            erase_order = 0
-        elif parameters["tomo_rec_erase_order"] == "first":
-            erase_order = 1
-        elif parameters["tomo_rec_erase_order"] == "second":
-            erase_order = 2
-        elif parameters["tomo_rec_erase_order"] == "third":
-            erase_order = 3
-        erase_iterations = parameters['tomo_rec_erase_iterations']
+                # erase gold on (unbinned) aligned tilt-series
+                erase_factor = parameters["tomo_rec_erase_factor"]
+                if parameters["tomo_rec_erase_order"] == "noise":
+                    erase_order = -1
+                elif parameters["tomo_rec_erase_order"] == "mean":
+                    erase_order = 0
+                elif parameters["tomo_rec_erase_order"] == "first":
+                    erase_order = 1
+                elif parameters["tomo_rec_erase_order"] == "second":
+                    erase_order = 2
+                elif parameters["tomo_rec_erase_order"] == "third":
+                    erase_order = 3
+                erase_iterations = parameters['tomo_rec_erase_iterations']
 
-        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
-        [ output, _ ] = local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
-        if "The largest circle radius is too big for the arrays" in output:
-            raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")
+                com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
+                [ output, _ ] = local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+                if "The largest circle radius is too big for the arrays" in output:
+                    raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")
 
-        try:
-            os.remove(name + "_gold_ccderaser.txt")
-            os.remove(name + "_gold_ccderaser.mod")
-        except:
-            pass
+                try:
+                    os.remove(name + "_gold_ccderaser.txt")
+                    os.remove(name + "_gold_ccderaser.mod")
+                except:
+                    pass
+            except:
+                logger.error(f"Failed to erase gold from tilt-series")
 
         # re-calculate reconstruction using gold-erased tilt-series
         merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
