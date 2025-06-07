@@ -545,14 +545,6 @@ type = "bool"
 default = false
 hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
 
-[tabs.movie.pattern]
-name = "Frame pattern"
-description = "Pattern to describe frame data (tilt-series name, acquisition order, and tilt-angle)"
-type = "str"
-default = "TILTSERIES_SCANORD_ANGLE.tif"
-hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
-condition = { arg="no_frames", value="false" }
-
 [tabs.movie.mdoc]
 name = "Read metadata from mdoc files"
 description = "Extract parameters from mdoc files (tilt angles, tilt axis rotation angles and scan order) if available"
@@ -560,6 +552,14 @@ type = "bool"
 default = false
 hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
 condition = { arg="no_frames", value="false" }
+
+[tabs.movie.pattern]
+name = "Frame pattern"
+description = "Pattern to describe frame data (tilt-series name, acquisition order, and tilt-angle)"
+type = "str"
+default = "TILTSERIES_SCANORD_ANGLE.tif"
+hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
+condition = { arg="mdoc", value="false" }
 
 [tabs.movie.depth]
 name = "Save frame averages in 16-bits"
