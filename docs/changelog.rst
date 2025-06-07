@@ -2,6 +2,58 @@
 Changelog
 =========
 
+v0.7.1
+------
+
+.. nextpyp:: Released TBA
+   :collapsible: open
+   
+   :fa:`plus-square` **Improvements**
+
+   - Installer now shows progress bars when downloading files. If you have an older version of wget that doesn't support this option, progress bars will not be shown.
+
+   - Update documentation, improve installation instructions, fix broken links, and start opening external links in new tabs.
+
+   - Improve efficiency when copying files from network storage to local scratch by removing unnecessary transfers.
+
+   - Use the ``-slurm_verbose`` option in the CLI to control whether sbatch commands are displayed in standard output.
+   
+   - Incorporate `AreTomo3 <https://github.com/czimaginginstitute/AreTomo3p>`_ routines for tilt-series alignment and tomogram reconstruction.
+   
+   - Always use mean image value to fill values when transforming stacks to prevent high contrast artifacts in tomograms.
+   
+   - Expose options for IMOD's findbeads3d command to give users more control over the detection of beads when erasing gold.
+   
+   - Let users specify minumum occupancy value when filtering particles in tomography pipeline, allowing for more flexible particle selection.
+   
+   - Start saving intermediate ML models during training of MiLoPYP refinement module to give users more flexibility when selecting a model for evaluation.
+   
+   - Override value of tilt-axis angle extracted from .mdoc files and show a warning instead telling users to change this setting in the Data Import block.
+
+   - Add ability to control minimum occupancy values during particle filtering in tomo pipeline.
+
+   :fa:`bug` **Bug fixes**
+   
+   - Fix bug that ocurred when propagating configuration settings from parent to downstream blocks.
+
+   - Force ``Calculate reconstruction`` block to always execute a single iteration.
+   
+   - Fix tomography import blocks to correctly retrieve existing parameter values and particle coordinates.
+
+   - Fix bug that ocurred when submitting merge jobs in the CLI that caused walltime parameter to be ignored.
+
+   - Fix bug in MiLoPYP workflow that caused the wrong compressed file to be downloaded to the local machine.
+
+   - Fix bug that prevented fiducial markers from being properly removed from some tilts when erasing gold.
+   
+   - Fix error that ocurred when trying to re-calculate tomograms using a GPU-accelerated reconstruction method.
+   
+   - Fix bug that caused an error when no particles were found using template matching during 3D particle picking.
+   
+   - Fix issue in the single-particle pipeline with application of gain reference files in the .gain format.
+
+   - Fix error that ocurred when trying to save files ending in period (.) on cloud-based blob storage systems.
+
 v0.7.0
 ------
 
