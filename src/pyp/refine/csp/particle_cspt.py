@@ -682,21 +682,23 @@ def save_reconstruction(
     # delete the broken links that have already been deleted by local merge
     local_run.run_shell_command("find . -xtype l -delete", verbose=False)
     
+    file_name_suffix = "_"
+    
     dumpfiles = glob.glob("*_???????_???????.mrc") + glob.glob("*_map?_n*.mrc") + glob.glob("*.cistem")
     if compress:
         compressed_file = output_name + ".bz2"
         frealign_parfile.Parameters.compress_parameter_file(
-            " ".join(dumpfiles), os.path.join(dest_path, compressed_file + "."), threads
+            " ".join(dumpfiles), os.path.join(dest_path, compressed_file + file_name_suffix), threads
         )
         # in case file starts to be decompressed when undergoing compression (due to live decompression)
-        os.rename(os.path.join(dest_path, compressed_file + "."), os.path.join(dest_path, compressed_file))
+        os.rename(os.path.join(dest_path, compressed_file + file_name_suffix), os.path.join(dest_path, compressed_file))
         os.chdir(saved_path)
         logger.info("Compressing intermediate files to scratch folder")
     else:
         for file in dumpfiles:
-            shutil.copy2(file, os.path.join(dest_path, file + '.'))
+            shutil.copy2(file, os.path.join(dest_path, file + file_name_suffix))
         for file in dumpfiles:
-            os.rename(os.path.join(dest_path, file + '.'), os.path.join(dest_path, file))
+            os.rename(os.path.join(dest_path, file + file_name_suffix), os.path.join(dest_path, file))
         os.chdir(saved_path)
 
 
