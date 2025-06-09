@@ -585,7 +585,7 @@ def detect_virions(parameters, virion_size, binning, name):
     [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
 
     # find virions
-    if not os.path.isfile("{0}.vir".format(name)) and ( parameters["tomo_vir_method"] == "auto" or parameters["tomo_spk_method"] == "virions" ):
+    if not os.path.isfile("{0}.vir".format(name)) and ( parameters["tomo_vir_method"] == "auto" or parameters["tomo_spk_method"] == "virions" or parameters["tomo_pick_method"] == "virions" ):
 
         extension = "rec"
         if parameters['tomo_vir_binn'] > 1:
