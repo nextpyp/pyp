@@ -4689,7 +4689,7 @@ if __name__ == "__main__":
                                     if parameters.get(key) == "auto":
                                         parameters["csp_automask"] = True
                                     elif parameters.get(key) == "file":
-                                        assert os.path.exists(project_params.resolve_path(parameters.get("metric_maskth"))), f"Mask file {parameters.get('metric_maskth')} does not exist"
+                                        assert os.path.exists(project_params.resolve_path(parameters.get("metric_maskth"))) or parameters.get("metric_maskth") == "auto", f"Mask file {parameters.get('metric_maskth')} does not exist"
                                         parameters["refine_maskth"] = project_params.resolve_path(parameters_copy.get("metric_maskth"))
 
                     if not parameters["refine_resume"]:
