@@ -4847,7 +4847,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
         error = 1
         iteration = 0
-        while error > 1e-3 and iteration < int(parameters["movie_iters"]):
+        while error > 1e-3 and iteration < int(parameters["tomo_ali_coarse_iterate"]):
 
             # re-align stack to cumulative frame average
             run_shell_command(

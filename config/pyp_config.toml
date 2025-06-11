@@ -1904,8 +1904,15 @@ condition = { arg="method", value="imod_gold" }
 default = 0.03
 
 [tabs.tomo_ali.iterate]
-name = "Number of iterations"
-description = "Repeat alignment iteratively"
+name = "Correlation iterations"
+description = "Number of iterations of the correlation (tiltxcorr -iterate option)"
+type = "int"
+condition = { arg="method", value="imod_gold" }
+default = 1
+
+[tabs.tomo_ali.coarse_iterate]
+name = "Coarse alignment iterations"
+description = "Repeat coarse alignment iteratively"
 type = "int"
 condition = { arg="method", value="imod_gold" }
 default = 5
