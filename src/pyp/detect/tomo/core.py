@@ -567,23 +567,6 @@ def process_virion_multiprocessing(
 
 def detect_virions(parameters, virion_size, binning, name):
 
-    # HF vir: change the pixel size in the header of .rec binned tomogram
-    # HoughMaxRadius is still set to 200 (Angstrom)
-    # Assume tomo_vir_size is 3/2 times bigger than the diameter of actual virus
-    ##############################################################################################################
-    hough_diameter = 200 * 2
-    hough_box = hough_diameter * (3 / 2)
-    hough_pixel = hough_box / (virion_size / float(parameters["data_bin"]) / binning)
-    hough_diameter = virion_size * 2
-
-    # Since segmentation can work with original size of volume, we don't rescale the tomo.rec pixel size anymore
-    # hough_radius = float(parameters["tomo_vir_size"])
-    ################################################################################################################
-
-    # use uniform pixel size in mrc header because avl relies in this value for specifying virion dimensions to search for
-    command = "{0}/bin/alterheader -o 0,0,0 -del {1},{1},{1} {2}.rec".format(get_imod_path(), "%.2f" % hough_pixel, name)
-    [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
-
     # find virions
     if not os.path.isfile("{0}.vir".format(name)) and ( parameters["tomo_vir_method"] == "auto" or parameters["tomo_spk_method"] == "virions" or parameters["tomo_pick_method"] == "virions" ):
 
@@ -595,7 +578,8 @@ def detect_virions(parameters, virion_size, binning, name):
             [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
 
         # use uniform pixel size in mrc header because avl relies in this value for specifying virion dimensions to search for
-        command = "{0}/bin/alterheader -o 0,0,0 -del {1},{1},{1} {2}.{3}".format(get_imod_path(), "%.2f" % (hough_pixel*parameters['tomo_vir_binn']), name, extension)
+        effective_pixel_size = parameters['tomo_rec_binning']*parameters['scope_pixel']*parameters['tomo_vir_binn']
+        command = "{0}/bin/alterheader -o 0,0,0 -del {1},{1},{1} {2}.{3}".format(get_imod_path(), "%.2f" % (effective_pixel_size), name, extension)
         [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
 
         """
@@ -700,8 +684,8 @@ def detect_virions(parameters, virion_size, binning, name):
 
         # bound the size of virions by the given tolerance
         tolerance = min(100,abs(parameters["tomo_vir_det_tol"])) / 100.
-        max_radius = parameters["tomo_vir_rad"] * ( 1 + tolerance ) / 2.0
-        min_radius = parameters["tomo_vir_rad"] * ( 1 - tolerance ) / 2.0
+        max_radius = parameters["tomo_vir_rad"] * ( 1 + tolerance )
+        min_radius = parameters["tomo_vir_rad"] * ( 1 - tolerance )
 
         command = f"{get_tomo_path()}/itkCLT-next VirusLocation --cannyLowerThreshold {parameters['tomo_vir_canny_low']} --cannyUpperThreshold {parameters['tomo_vir_canny_high']} --diffusionNumberOfIterations {parameters['tomo_vir_iterations']} --houghNumberOfVirus {parameters['tomo_vir_number']} --houghMinimumRadius {min_radius} --houghMaximumRadius {max_radius} --rejectionCriteria1 10 --rejectionCriteria2 100 {name}.{extension} -o {name}.vir"
         local_run.stream_shell_command(command,parameters["slurm_verbose"])

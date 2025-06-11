@@ -2864,13 +2864,13 @@ hidden = true
 name = "Denoising iterations before virion detection"
 description = "Number denoising iterations (anisotropic diffusion)"
 type = "int"
-default = 25
+default = 5
 condition = { arg="method", value="auto" }
 hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_picking"]
 
 [tabs.tomo_vir.canny_low]
 name = "Low threshold for Canny edge detector"
-description = "Allows to control the performance of virion detection"
+description = "Smallest gradient magnitude of edge to trace"
 type = "float"
 default = 0.2
 condition = { arg="method", value="auto" }
@@ -2878,7 +2878,7 @@ hidden = [ "tomo_segment_close", "tomo_par_close", "tomo_par_open", "tomo_pickin
 
 [tabs.tomo_vir.canny_high]
 name = "High threshold for Canny edge detector"
-description = "Allows to control the performance of virion detection"
+description = "Minimum gradient magnitude to seed edge trace"
 type = "float"
 default = 0.5
 condition = { arg="method", value="auto" }
@@ -3271,19 +3271,19 @@ condition = { arg="method", value="virions" }
 name = "Denoising iterations before detection"
 description = "Number denoising iterations (anisotropic diffusion)"
 type = "int"
-default = 25
+default = 5
 condition = { arg="method", value="virions" }
 
 [tabs.tomo_pick.vir_canny_low]
 name = "Low threshold for Canny edge detector"
-description = "Allows to control the performance of virion detection"
+description = "Smallest gradient magnitude of edge to trace"
 type = "float"
 default = 0.2
 condition = { arg="method", value="virions" }
 
 [tabs.tomo_pick.vir_canny_high]
 name = "High threshold for Canny edge detector"
-description = "Allows to control the performance of virion detection"
+description = "Minimum gradient magnitude to seed edge trace"
 type = "float"
 default = 0.5
 condition = { arg="method", value="virions" }
