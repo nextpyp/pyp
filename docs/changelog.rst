@@ -31,6 +31,10 @@ v0.7.1
    - Override value of tilt-axis angle extracted from .mdoc files and show a warning instead telling users to change this setting in the Data Import block.
 
    - Add ability to control minimum occupancy values during particle filtering in tomo pipeline.
+   
+   - Add ability to control the number of iterations during tilt-series coarse alingment and change default number of correlation iterations to 1 to improve alignment accuracy.
+   
+   - Improve accuracy and consistency of virion picking in tomography pipeline by transitioning to the use of A units.
 
    :fa:`bug` **Bug fixes**
    
