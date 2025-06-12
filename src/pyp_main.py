@@ -4604,6 +4604,7 @@ if __name__ == "__main__":
                                     parameters[new_key] = parameters_copy.get(key)
                         parameters["refine_model"] = parameters["csp_tomo_coarse_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
                         parameters["refine_parfile"] = parameters["csp_tomo_coarse_parfile"]
+                        parameters['refine_resume'] = parameters['csp_tomo_coarse_resume']
 
                         # transfer iteration parameters
                         if not parameters.get('csp_tomo_coarse_resume'):
@@ -4628,6 +4629,8 @@ if __name__ == "__main__":
                         parameters['class_focusmask'] = parameters['csp_tomo_classification_focusmask']
                         # parameters['class_refine_poses'] = parameters['csp_tomo_classification_refine_poses']
                         
+                        parameters['refine_resume'] = parameters['csp_tomo_classification_resume']
+                        
                         # transfer iteration parameters
                         if not parameters.get('csp_tomo_classification_resume'):
                             parameters['refine_iter'] = parameters['csp_tomo_classification_first_iter']
@@ -4648,6 +4651,7 @@ if __name__ == "__main__":
                         assert parameters.get("csp_tomo_movie_parfile"), f"An input parameter file (*.bz2) is required"
                         parameters["refine_parfile"] = parameters["csp_tomo_movie_parfile"]
                         parameters["refine_model"] = parameters["csp_tomo_movie_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+                        parameters['refine_resume'] = parameters['csp_tomo_movie_resume']
 
                         # transfer iteration parameters
                         if not parameters.get('csp_tomo_movie_resume'):
@@ -4667,6 +4671,7 @@ if __name__ == "__main__":
                                 parameters[key.replace("csp_tomo_movie_after_","csp_")] = parameters_copy.get(key)
                         parameters["refine_parfile"] = parameters["csp_tomo_movie_after_parfile"]
                         parameters["refine_model"] = parameters["csp_tomo_movie_parfile"].replace("_clean.bz2",".mrc").replace(".bz2",".mrc")
+                        parameters['refine_resume'] = parameters['csp_tomo_movie_resume']
                     
                         # transfer iteration parameters
                         if not parameters.get('csp_tomo_movie_after_resume'):
