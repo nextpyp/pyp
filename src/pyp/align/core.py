@@ -4619,7 +4619,7 @@ EOF
             [output, error] = run_shell_command(command, verbose=parameters["slurm_verbose"])
 
         if "Segmentation fault" in error or "Killed" in error:
-            logger.error("Try increasing the Memory per task in the Resources tab (or --slurm_memory parameter in the CLI)")
+            logger.error("Try increasing the value of 'Split, Memory per thread (GB)' in the Resources tab (or the --slurm_memory parameter in the CLI)")
             raise Exception(error)
 
     elif 'skip' in parameters["movie_ali"]:
