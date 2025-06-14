@@ -57,6 +57,10 @@ v0.7.1
    - Fix issue in the single-particle pipeline with application of gain reference files in the .gain format.
 
    - Fix error that ocurred when trying to save files ending in period (.) on cloud-based blob storage systems.
+   
+   - Fix bug in template search for open surfaces that ocurred when tomograms did not have the same dimensions in x and y.
+   
+   - Fix issue when resuming iterations that caused the wrong iteration to be resumed in some refinement blocks.
 
 v0.7.0
 ------
