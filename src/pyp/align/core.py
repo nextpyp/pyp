@@ -5827,6 +5827,9 @@ EOF
                 legacy_imod_load_command(), get_legacy_imod_path(), name
             )
             output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
+            
+            if "ERROR: TILTALIGN" in output and os.path.exists(f"IMOD/{name}_bin.xf"):
+                os.remove(f"IMOD/{name}_bin.xf")
 
             residuals = [line for line in output.split("\n") if "Residual error mean and sd" in line]
             if len(residuals) > 0:
