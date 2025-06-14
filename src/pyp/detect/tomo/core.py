@@ -1993,8 +1993,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             coordinates = np.array([])
 
         # cleanup unnecesary files
-        [ os.remove(i) for i in [ name + ".rec", name + ".mrc", name + "_vir0000.rec", name + "_vir0000_binned_nad_seg.mrc" ] if os.path.exists(i) ]
-
+        [ os.remove(i) for i in [ name + "_vir0000.rec" ] if os.path.exists(i) ]
             
     if ( spike_mode or surface_mode ) and coordinates.size > 0:
         if coordinates.shape[1] == 5:
