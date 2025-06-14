@@ -1964,7 +1964,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 spike_x, spike_y, spike_z = spikes_in_virion[spike, 3:6]
 
                 # virion boxsize is supposed to be included in coordinates.txt
-                virion_boxsize = spikes_in_virion[spike, 6]
+                virion_boxsize = spikes_in_virion[spike, 7]
 
                 spike_X, spike_Y, spike_Z = spike_x, (virion_boxsize - spike_y), spike_z
 
