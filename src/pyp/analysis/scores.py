@@ -1128,6 +1128,8 @@ def particle_cleaning(parameters: dict):
             clean_particle_count += extended_parameters.get_num_clean_particles()
             all_particle_count += extended_parameters.get_num_particles()
 
+        assert all_particle_count > 0, f"No particles left after filtering!"
+            
         logger.warning(
             "{:,} particles ({:.1f}%) from {} tilt-series will be kept".format(
                 clean_particle_count,
