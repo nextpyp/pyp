@@ -5,7 +5,7 @@ Changelog
 v0.7.1
 ------
 
-.. nextpyp:: Released TBA
+.. nextpyp:: Released 6/15/2025
    :collapsible: open
    
    :fa:`plus-square` **Improvements**
@@ -18,7 +18,7 @@ v0.7.1
 
    - Use the ``-slurm_verbose`` option in the CLI to control whether sbatch commands are displayed in standard output.
    
-   - Incorporate `AreTomo3 <https://github.com/czimaginginstitute/AreTomo3p>`_ routines for tilt-series alignment and tomogram reconstruction.
+   - Incorporate `AreTomo3 <https://github.com/czimaginginstitute/AreTomo3>`_ routines for tilt-series alignment and tomogram reconstruction.
    
    - Always use mean image value to fill values when transforming stacks to prevent high contrast artifacts in tomograms.
    
