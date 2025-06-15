@@ -18,8 +18,8 @@ IncludeCmd: no
 	external/ /opt/pyp
 	/nfs/bartesaghilab/ab690/nextpyp/pyp/external/tomodrgn /opt/pyp/external
 	../AreTomo2/ /opt/pyp/external
-	../AreTomo3/ /opt/pyp/external
 	../MotionCor3/ /opt/pyp/external
+	../AreTomo3/ /opt/pyp/external
 
 %environment
 
@@ -62,7 +62,7 @@ IncludeCmd: no
         wget https://launchpad.net/pbzip2/1.1/1.1.13/+download/$TARFILE
         tar xvfz $TARFILE
         cd $NAME
-        make
+        make -j 4
         make install
         make clean
 	cd -
@@ -158,13 +158,9 @@ cat << EOF > /root/pyp.sh
 
 	# install the python packages we need
 
-	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr htop
-	micromamba install -c conda-forge matplotlib 
-	micromamba install -c conda-forge pandas
-	micromamba install -c conda-forge conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses
-	micromamba install -c conda-forge colored-traceback
+	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr htop matplotlib pandas conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses colored-traceback torchio==0.18.92
+
 	micromamba update numpy
-	# micromamba install -c conda-forge -c tbepler topaz
 	
 	micromamba install -c conda-forge faiss-gpu==1.8.0
 	micromamba update libstdcxx-ng
@@ -204,21 +200,7 @@ EOF
 	cd -
 
 	# do all the pip installs (on the base environment?)
-	pip install torch==2.2.0 torchvision==0.17.0 tensorboard h5py imagesize tqdm
-	pip install torchio==0.18.92
-	pip install healpy
-	pip install phoenix==0.9.1
-	pip install dataset==1.6.2 
-	pip install Pillow==10.0.1 
-	pip install pyarrow==11.0.0 
-	pip install scikit_network==0.28.2
-	pip install mrcfile pytorch_metric_learning progress nptyping==2.5.0 umap_learn==0.5.3
-	pip install nibabel
-	pip install numba
-	pip install gputil
-	pip install dipy
-	pip install bm4d
-	pip install filelock
+	pip install torch==2.2.0 torchvision==0.17.0 tensorboard h5py imagesize tqdm healpy phoenix==0.9.1 dataset==1.6.2 Pillow==10.0.1 pyarrow==11.0.0 scikit_network==0.28.2 mrcfile pytorch_metric_learning progress nptyping==2.5.0 umap_learn==0.5.3 nibabel numba gputil dipy bm4d filelock
 
 	# Install pytom-match-pick
 cat << EOF > /root/pytom.sh
@@ -282,7 +264,6 @@ EOF
 cat << EOF > /root/cryocare.sh
 
 	# install the python packages we need
-	micromamba install -c conda-forge cuda-toolkit
 	
 	pip install tensorflow-gpu==2.4.0
 	pip install tifffile==2019.7.26
@@ -296,7 +277,7 @@ cat << EOF > /root/cryocare.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	micromamba create --name cryocare python=3.8 cudatoolkit=11.0 cudnn=8.0 -c conda-forge
+	micromamba create --name cryocare python=3.8 cudnn=8.0 -c conda-forge
 
 	# run the conda script in the new environment
 	chmod +x /root/cryocare.sh
