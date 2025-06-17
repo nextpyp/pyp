@@ -1409,24 +1409,26 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
         from_frames = True
         # make individual tilted images squares
         for i, tilt in enumerate(aligned_tilts):
+            fill_option = f"-fill {get_image_mean(tilt)}"
             if square_enabled:
-                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4}".format(
-                    get_imod_path(), tilt, name, int(square / binning), binning, i
+                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4} {5}".format(
+                    get_imod_path(), tilt, name, int(square / binning), binning, i, fill_option
                 )
             else:
-                command = "{0}/bin/newstack {1} {2}_{4:04d}_square.mrc -taper 1,1 -bin {3}".format(
-                    get_imod_path(), tilt, name, binning, i
+                command = "{0}/bin/newstack {1} {2}_{4:04d}_square.mrc -taper 1,1 -bin {3} {5}".format(
+                    get_imod_path(), tilt, name, binning, i, fill_option
                 )
             commands.append(command)
     else:
         for tilt_idx in range(z):
+            fill_option = f"-fill {get_image_mean(name+'.mrc')}"
             if square_enabled:
-                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4}".format(
-                    get_imod_path(), tilt_idx, name, int(square / binning), binning
+                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4} {5}".format(
+                    get_imod_path(), tilt_idx, name, int(square / binning), binning, fill_option
                 )
             else:
-                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -taper 1,1 -bin {3}".format(
-                    get_imod_path(), tilt_idx, name, binning
+                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -taper 1,1 -bin {3} {4}".format(
+                    get_imod_path(), tilt_idx, name, binning, fill_option
                 )
             commands.append(command)
 
