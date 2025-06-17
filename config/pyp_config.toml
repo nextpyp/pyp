@@ -3340,12 +3340,28 @@ enum = { none="none", phase-flip="phase-flip" }
 default = "none"
 condition = { arg="method", value="pytom" }
 
+[tabs.tomo_pick.pytom_mask_method]
+name = "Template masking method"
+description = "Method used to mask the template during template matching"
+type = "enum"
+enum = { auto="size based", file="from file" }
+default = "auto"
+condition = { arg="method", value="pytom" }
+
 [tabs.tomo_pick.pytom_mask_sigma]
 name = "Sigma (pixels)"
 description = "Sigma of gaussian drop-off around the mask edges"
 type = "float"
 default = 1.0
-condition = { arg="method", value="pytom" }
+condition = { arg="pytom_mask_method", value="auto" }
+
+[tabs.tomo_pick.pytom_mask_file]
+name = "Mask file"
+description = "Read mask from file"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+condition = { arg="pytom_mask_method", value="file" }
 
 [tabs.tomo_pick.pytom_non_spherical]
 name = "Non-spherical mask"

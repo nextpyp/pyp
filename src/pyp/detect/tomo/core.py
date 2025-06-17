@@ -1443,8 +1443,16 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         
         # build template mask
         template_mask = "template_mask.mrc"
-        command = f"{get_pytom_path()} pytom_create_mask.py --box-size {template_size} --output-file {template_mask} --radius {radius_in_binned_pixels} --voxel-size {binned_pixel_size} --sigma {parameters['tomo_pick_pytom_mask_sigma']}"
-        local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+        
+        if parameters["tomo_pick_pytom_mask_method"] == "auto":
+            logger.info("Using pytom_create_mask.py to create template mask")
+            command = f"{get_pytom_path()} pytom_create_mask.py --box-size {template_size} --output-file {template_mask} --radius {radius_in_binned_pixels} --voxel-size {binned_pixel_size} --sigma {parameters['tomo_pick_pytom_mask_sigma']}"
+            local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+        elif parameters["tomo_pick_pytom_mask_method"] == "file":
+            logger.info(f"Using provided template mask file: {parameters['tomo_pick_pytom_mask_file']}")
+            mask_file = project_params.resolve_path(parameters["tomo_pick_pytom_mask_file"])
+            command = f"{get_imod_path()}/bin/matchvol -size {template_size},{template_size},{template_size} -3dxform 1,0,0,0,0,1,0,0,0,0,1,0 '{mask_file}' {template_mask}; rm -f {template_mask}~"
+            local_run.run_shell_command(command=command,verbose=parameters["slurm_verbose"])
 
         # initialize and transfer files from project directory if needed
         os.makedirs("pytom", exist_ok=True)
