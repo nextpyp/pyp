@@ -1411,7 +1411,7 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
         for i, tilt in enumerate(aligned_tilts):
             fill_option = f"-fill {get_image_mean(tilt)}"
             if square_enabled:
-                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4} {5}".format(
+                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4} {6}".format(
                     get_imod_path(), tilt, name, int(square / binning), binning, i, fill_option
                 )
             else:
