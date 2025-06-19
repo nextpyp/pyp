@@ -1405,11 +1405,10 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
     else:
         square_enabled = False
     
+    fill_option = f"-fill {get_image_mean(name+'.mrc')}"
     if len(aligned_tilts) > 0:
-        from_frames = True
         # make individual tilted images squares
         for i, tilt in enumerate(aligned_tilts):
-            fill_option = f"-fill {get_image_mean(tilt)}"
             if square_enabled:
                 command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4} {6}".format(
                     get_imod_path(), tilt, name, int(square / binning), binning, i, fill_option
@@ -1421,7 +1420,6 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
             commands.append(command)
     else:
         for tilt_idx in range(z):
-            fill_option = f"-fill {get_image_mean(name+'.mrc')}"
             if square_enabled:
                 command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4} {5}".format(
                     get_imod_path(), tilt_idx, name, int(square / binning), binning, fill_option
@@ -1482,9 +1480,8 @@ def generate_aligned_tiltseries(name, parameters, x, y):
 
     commands = [] 
     aligned_images = []
+    fill_option = f"-fill {get_image_mean(name+'.mrc')}"
     for tilt in range(sec):
-        file_name = "{0}_{1:04d}_square.mrc".format(name, tilt)
-        fill_option = f"-fill {get_image_mean(file_name)}"
         command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs {5} -linear -taper 1,1 -size {3},{4} && rm -f {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
             get_imod_path(), name, tilt, x, y, fill_option
         )
