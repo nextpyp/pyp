@@ -2522,8 +2522,7 @@ name = "Mini-batch size"
 description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be divisible by the number of gpus"
 type = "int"
 default = 4
-condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+condition = { arg="method", value="isonet" }
 
 [tabs.tomo_denoise.isonet_steps]
 name = "Steps per epoch"
@@ -2627,8 +2626,7 @@ name = "Use percent thresholding"
 description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively. Otherwise, normalize input to 0 mean and unit standard deviation"
 type = "bool"
 default = true
-condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+condition = { arg="method", value="isonet" }
 
 [tabs.tomo_denoise.isonet_debug]
 name = "Debug"
