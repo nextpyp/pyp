@@ -1373,6 +1373,8 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             template_size = parameters.get("tomo_pick_pytom_template_size")
         else:
             template_size = int(math.ceil(model_box_length / binned_pixel_size /2.)*2)    
+            
+        assert model_pixel_size < binned_pixel_size, f"Input map should have has smaller voxel size than the output template ({model_pixel_size} > {binned_pixel_size})"
 
         """
         usage: pytom_create_template.py [-h] -i INPUT_MAP [-o OUTPUT_FILE] [--input-voxel-size-angstrom INPUT_VOXEL_SIZE_ANGSTROM] --output-voxel-size-angstrom OUTPUT_VOXEL_SIZE_ANGSTROM [--center] [--low-pass LOW_PASS]
@@ -1403,6 +1405,8 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         template_mask = "template_mask.mrc"
         command = f"{get_pytom_path()} pytom_create_template.py --box-size {template_size} --input-map {external_template} --output-file {template} --input-voxel-size-angstrom {model_pixel_size} --output-voxel-size-angstrom {binned_pixel_size} --center {invert} {mirror}"
         local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+
+        assert os.path.exists(template), f"Template {template} was not created successfully."
 
         """
         usage: pytom_create_mask.py [-h] -b BOX_SIZE [-o OUTPUT_FILE]
@@ -1717,6 +1721,8 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 defocus_in_nm = float(inf.read()) / 10000.
             
             voxel_size = parameters["scope_pixel"] * parameters["data_bin"] * parameters["tomo_rec_binning"]
+
+            assert get_image_dimensions(template) == get_image_dimensions(template_mask), f"Template and template mask should have the same dimensions, but got {get_image_dimensions(template)} and {get_image_dimensions(template_mask)}"
 
             command = f"{get_pytom_path()} pytom_match_template.py -t {template} --mask {template_mask} -v {name}.rec -d pytom/ --particle-diameter {2*parameters.get('tomo_pick_rad')} --voxel-size-angstrom {voxel_size} -a {name}.rawtlt --low-pass {parameters['tomo_pick_pytom_low_pass']} --high-pass {parameters['tomo_pick_pytom_high_pass']} --defocus {defocus_in_nm} --amplitude {parameters['scope_wgh']} --spherical {parameters['scope_cs']} --voltage {parameters['scope_voltage']} -g {get_gpu_ids(parameters)} {options}"
             local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
