@@ -235,6 +235,7 @@ def create_micrographs_list(parameters):
                 "*.tiff",
                 "*.bz2",
                 "*.eer",
+                "*.st",
             )
         ]
         for t in types:
