@@ -246,6 +246,12 @@ def read_tilt_series(
         except:
             # ignore if file already exists
             pass
+    elif os.path.exists(filename + ".st"):
+        try:
+            shutil.copy2(filename + ".st", Path(filename).name + ".mrc")
+        except:
+            # ignore if file already exists
+            pass
     elif os.path.exists(filename + ".tif") or os.path.exists(filename + ".tif.mdoc") or os.path.exists(filename + ".tiff") or os.path.exists(filename + ".tiff.mdoc"):
         for i in glob.glob(filename + ".tif") + glob.glob(filename + ".tif.mdoc") + glob.glob(filename + ".tiff") + glob.glob(filename + ".tiff.mdoc"):
             try:
