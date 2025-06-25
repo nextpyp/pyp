@@ -3958,6 +3958,7 @@ def sum_gain_correct_frames(movie, average, parameters):
 
     if parameters["gain_remove_hot_pixels"]:
         if Path(movie).suffix == '.mrc':
+            logger.info(f"Removing hot pixels")
             preprocess.remove_xrays_from_file(Path(movie).stem,parameters['slurm_verbose'])
         else:
             logger.warning(f"Skipping hot pixel removal on images of format {Path(movie).suffix}")
@@ -3970,9 +3971,14 @@ def sum_gain_correct_frames(movie, average, parameters):
     last_frame = parameters["movie_last"] if "movie_last" in parameters and parameters["movie_last"] != -1 else z
 
     # average frames in the specified range
-    output, error = avgstack(
-        movie, average, f"{first_frame},{last_frame}"
-    )
+    if Path(movie).suffix.lower() == ".eer":
+        # for eer movies, average using clip for faster speed
+        command = f"{get_imod_path()}/bin/clip flipx -es 0 -ez {z} {movie} {average}"
+        output, _ = run_shell_command(command)
+    else:
+        output, error = avgstack(
+            movie, average, f"{first_frame},{last_frame}"
+        )
 
     # are we using a gain reference?
     if "gain_reference" in parameters.keys() and parameters["gain_reference"] and os.path.exists(
