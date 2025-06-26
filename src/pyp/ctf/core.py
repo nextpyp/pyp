@@ -1098,6 +1098,8 @@ def plot_ctffind_tilt(name, parameters, ctf):
             A[count, :, :] = mrc.read(f)
             count += 1
         cols = int( math.ceil( math.sqrt(count) ) )
+        # since ctffind can produce diagnostic images with nans, we set those to 0 to prevent errors downstream
+        A[ np.isnan(A) ] = 0
         writepng(plot.contact_sheet(A, cols), name + "_2D_ctftilt.png")
         command = "/usr/bin/convert {0}_2D_ctftilt.png {0}_2D_ctftilt.webp".format(name)
         local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])

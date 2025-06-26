@@ -50,9 +50,15 @@ def mrc2webp(mrcfile, webpfile):
     img2webp(pngfile,webpfile)
  
 def writepng(data, pngfile):
-    rescaled = (255.0 * (data - data.min()) / (data.max() - data.min())).astype(
-        numpy.uint8
-    )
+    if math.fabs(data.max() - data.min()) > numpy.finfo(float).eps:
+        rescaled = (255.0 * (data - data.min()) / (data.max() - data.min())).astype(
+            numpy.uint8
+        )
+    elif math.fabs(data.max()) > numpy.finfo(float).eps:
+        rescaled = ( 255.0 * data / data.max() ).astype(numpy.uint8)
+    else:
+        rescaled = numpy.abs(data).astype(numpy.uint8)
+               
     # flip to match mrc writeout
     from PIL import Image
 

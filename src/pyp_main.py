@@ -2010,7 +2010,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             ctf_profiles[index] = np.nan_to_num(np.loadtxt( profile_file, comments="#"))
         values_file = "%s_%04d.txt" % ( name, index )
         if os.path.exists(values_file):
-            ctf_values[index] = np.loadtxt( values_file, comments="#")
+            ctf_values[index] = np.nan_to_num(np.loadtxt( values_file, comments="#"))
             all_defocus.append(ctf_values[index][1])
             all_defocus.append(ctf_values[index][2])
     median_defocus = str(np.median(np.array(all_defocus)))
