@@ -2,6 +2,33 @@
 Changelog
 =========
 
+v0.7.2
+------
+
+.. nextpyp:: Released TBA
+   :collapsible: open
+   
+  :fa:`plus-square` **Improvements**
+
+   - Start using mean of tilt-series data when filling in missing values to reduce edge artifacts during tilt-series alignment.
+
+   - Allow specification of external masks when running template search using pytom-match-pick.
+
+   - Speed up reading of *.eer files during data import blocks.
+
+   - More gracefully handle edge cases where CTF metadata is NaN or Inf in tomography pipeline.
+
+  :fa:`bug` **Bug fixes**
+   
+   - Fix bugs that occurred when parsing AreTomo3's output during automatic detection of tilt offset and dark images.
+
+   - Fix bug that ignored binning factor specified during AreTomo tilt-series alignment.
+
+   - Fix issue during importing of tilt-series that have the *.st extension.
+
+   - Expose parameters to control evaluation of IsoNet models.
+
+
 v0.7.1
 ------
 
