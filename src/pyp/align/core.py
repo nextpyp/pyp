@@ -4743,6 +4743,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
     if not parameters["tomo_ali_auto_bin"] and parameters["tomo_ali_binning"] > 0:
         binning = parameters["tomo_ali_binning"]
+    logger.info(f"Using binning factor of {binning} for tilt-series alignment")
 
     if binning > 1:
         command = "{0}/bin/newstack {1}.st {1}_bin.st -bin {2}".format(
@@ -4760,20 +4761,26 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
     tilt_angles = np.loadtxt(tltfile)
     
     if len(excluded_views) > 0:
+        # exclude views from binned tilt-series
         command = "{0}/bin/newstack {1}.st {1}_bin.st -bin {2} -fromone {3}".format(
             get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
         )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
 
-        command = "{0}/bin/newstack {1}.mrc {1}_aretomo.mrc -fromone {3}".format(
-            get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
-        )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        if binning > 1:
+            os.symlink( name + "_bin.st", name + "_aretomo.mrc")
+        else:
+            command = "{0}/bin/newstack {1}.mrc {1}_aretomo.mrc -fromone {3}".format(
+                get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
+            )
+            run_shell_command(command,verbose=parameters["slurm_verbose"])
         
         # remove excluded tilt-angles
         indexes = np.fromstring( excluded_views.split(" ")[-1], dtype=int, sep=",") - 1
         tilt_angles = np.delete( tilt_angles, indexes, axis=0)
         np.savetxt( tltfile, tilt_angles, fmt='%.2f' )
+    elif binning > 1:
+        os.symlink( name + "_bin.st", name + "_aretomo.mrc")
     else:
         os.symlink( name + ".mrc", name + "_aretomo.mrc")
 
@@ -4935,10 +4942,10 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             logger.info("Align tilt-series using: aretomo")
  
-            binning_tomo = parameters["tomo_rec_binning"]
-            thickness = parameters["tomo_rec_thickness"]
+            binning_tomo = parameters["tomo_rec_binning"] / binning
+            thickness = parameters["tomo_rec_thickness"] / binning
 
-            specimen_thickness = parameters["tomo_ali_aretomo_zheight"]
+            specimen_thickness = parameters["tomo_ali_aretomo_zheight"] / binning
             assert (specimen_thickness < thickness), f"Height of specimen ({specimen_thickness}) needs to be smaller than tomogram thickness ({thickness})"
 
             if "aretomo" not in parameters["tomo_rec_method"]:
@@ -5145,6 +5152,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             # detect removed images and add them to excluded views
             formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
+            tilt_offset = 0.0
             for line in output:
                 if "Remove image at" in line:
                     angle = line.split(" ")[3]
@@ -5154,14 +5162,17 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
                     else:
                         excluded_views = f"-EXCLUDELIST2 {index}"
                 
-            if "Tilt offset" in output:
-                tilt_offset = float([s.split(",")[0].split("Tilt offset:")[1] for s in output.split("\n") if "Tilt offset" in s ][0])
-                if tilt_offset > 0:
-                    # overwrite rawtlt files to reflect the angles offset changes
-                    rawtlt_file = f"{name}.rawtlt"
-                    tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
-                    tiltangles += tilt_offset
-                    np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
+                if "Tilt offset" in line:
+                    # Tilt offset:    -2.00,  CC: 0.0001
+                    tilt_offset = float(line.split(",")[0].split("Tilt offset:")[1])
+                    logger.info(f"Tilt offset detected: {tilt_offset} degrees")
+            
+            if math.fabs(tilt_offset) > 0:
+                # overwrite rawtlt files to reflect the angles offset changes
+                rawtlt_file = f"{name}.rawtlt"
+                tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
+                tiltangles += tilt_offset
+                np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
 
             # save output
             try:
@@ -5190,13 +5201,13 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             logger.info("Align tilt-series using: aretomo3")
  
-            thickness = parameters["tomo_rec_thickness"]
-            binning_tomo = parameters["tomo_rec_binning"]
+            thickness = parameters["tomo_rec_thickness"] / binning
+            binning_tomo = parameters["tomo_rec_binning"] / binning
 
             if parameters.get('tomo_ali_aretomo_estimate_zheight'):
                 specimen_thickness = 0
             else:
-                specimen_thickness = parameters["tomo_ali_aretomo_zheight"]
+                specimen_thickness = parameters["tomo_ali_aretomo_zheight"] / binning
 
             if "aretomo3" not in parameters["tomo_rec_method"]:
                 # skip reconstruction if using IMOD
@@ -5496,7 +5507,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             command = f"{get_aretomo3_path()} \
 -InPrefix {name}_aretomo.mrc \
 -OutDir ./ \
--PixSize {parameters['scope_pixel']} \
+-PixSize {binning*parameters['scope_pixel']} \
 -kV {parameters['scope_voltage']} \
 -Cs {parameters['scope_cs']} \
 -CorrCTF 1 \
@@ -5519,12 +5530,37 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             stream_shell_command(command, observer=obs, verbose=parameters["slurm_verbose"])
 
+            # detect removed images and add them to excluded views
+            formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
+            excluded_tilt_indexes = []
+            for line in output:
+                # Remove image 40 at 60.00 deg 
+                if line.startswith("Remove image "):
+                    angle = line.split(" ")[4]
+                    index = int(np.where(formatted_tilt_angles==angle)[0][0]) + 1
+                    if index not in excluded_tilt_indexes:
+                        excluded_tilt_indexes.append(index)
+                        if len(excluded_views) > 0:
+                            excluded_views += f",{index}"
+                        else:
+                            excluded_views = f"-EXCLUDELIST2 {index}"
+                if "tilt and beta offsets" in line:
+                    # tilt and beta offsets:     0.00     -8.20
+                    tilt_offset = float(line.split()[4])
+                    logger.info(f"Tilt offset detected: {tilt_offset} degrees")
+                    if math.fabs(tilt_offset) > 0:
+                        # overwrite rawtlt files to reflect the angles offset changes
+                        rawtlt_file = f"{name}.rawtlt"
+                        tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
+                        tiltangles += tilt_offset
+                        np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
+  
             # run AreTomo3 with option "-Cmd 4" to Rotate tilt axis by 180 degrees
          
             command = f"{get_aretomo3_path()} \
 -InPrefix {name}_aretomo.mrc \
 -OutDir ./ \
--PixSize {parameters['scope_pixel']} \
+-PixSize {binning*parameters['scope_pixel']} \
 -kV {parameters['scope_voltage']} \
 -Cs {parameters['scope_cs']} \
 -CorrCTF 1 \
@@ -5541,32 +5577,8 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
 
-            output = []
-            def obs(line):
-                output.append(line)
-
-            stream_shell_command(command, observer=obs, verbose=parameters["slurm_verbose"])
-
-            # detect removed images and add them to excluded views
-            formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
-            for line in output:
-                if "Remove image at" in line:
-                    angle = line.split(" ")[3]
-                    index = int(np.where(formatted_tilt_angles==angle)[0][0]) + 1
-                    if len(excluded_views) > 0:
-                        excluded_views += f",{index}"
-                    else:
-                        excluded_views = f"-EXCLUDELIST2 {index}"
-                
-            if "Tilt offset" in output:
-                tilt_offset = float([s.split(",")[0].split("Tilt offset:")[1] for s in output.split("\n") if "Tilt offset" in s ][0])
-                if tilt_offset > 0:
-                    # overwrite rawtlt files to reflect the angles offset changes
-                    rawtlt_file = f"{name}.rawtlt"
-                    tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
-                    tiltangles += tilt_offset
-                    np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
-
+            stream_shell_command(command, verbose=parameters["slurm_verbose"])
+             
             # save output
             try:
                 shutil.copy2(f"{name}_aretomo_Imod/{name}_aretomo_st.xf", f"{name}.xf")
@@ -5965,6 +5977,13 @@ EOF
             get_imod_path(), name, binning
         )
         run_shell_command(command,verbose=parameters["slurm_verbose"])
+
+    # apply binning factor to aretomo transformation
+    if 'aretomo' in parameters["tomo_ali_method"].lower() and binning > 1:
+        logger.info(f"Undoing binning factor {binning} to AreTomo transformations")
+        t = np.loadtxt("%s.xf" % name, ndmin=2)
+        t[:, -2:] *= binning
+        np.savetxt("%s.xf" % name, t, fmt="%13.7f")
 
     # add back excluded views to final transformations and tilt-angle files, if needed
     if len(excluded_views) > 0:
