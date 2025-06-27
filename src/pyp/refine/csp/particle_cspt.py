@@ -389,7 +389,7 @@ def merge_movie_files_in_job_arr(
             image_binning = mp["extract_bin"]
             doseRate = mp["scope_dose_rate"]
 
-            for par in par_list:
+            for par, stack in zip(par_list,movie_list):
                 micrograph_path = os.path.join(project_path, "mrc", Path(par).stem.split("_r01")[0] + ".mrc")
 
                 filename = os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".star")) 
