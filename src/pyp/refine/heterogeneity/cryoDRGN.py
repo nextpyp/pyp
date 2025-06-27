@@ -3,6 +3,8 @@ import os
 import shutil
 import glob
 from pathlib import Path
+from tqdm import tqdm
+from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, project_params, mpi
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
@@ -15,7 +17,7 @@ def get_cryodrgn_path():
     command_base = f"export PYTHONPATH=/opt/conda/envs/cryodrgn/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n cryodrgn /opt/conda/envs/cryodrgn/bin/cryodrgn"
     return command_base
 
-def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, downsample_size):
+def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, downsample_size, threads=1):
     """prepare CryoDRGN metadata and downsample particles for traning"""
 
     assert os.path.exists(alignment_star), "The input star dose not exist"
@@ -31,14 +33,11 @@ def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, do
     if boxsize > downsample_size:
         logger.info(f"Downsampling particles size to {downsample_size}")
         # downsample particles 
-        tasks = []
-        for stack in particle_stack_list:
-            
-            command = f"{get_cryodrgn_path()} downsample {stack} -D {int(downsample_size)} -o {stack.replace('.mrcs', '')}_{downsample_size}.mrcs"
-            # local_run.run_shell_command(command, verbose=True)
-            tasks.append(command)
-        
-        mpi.submit_jobs_to_workers(tasks, os.getcwd(), verbose=True)
+        with tqdm(desc="Progress", total=len(particle_stack_list), file=TQDMLogger()) as pbar:
+            for stack in particle_stack_list:            
+                command = f"{get_cryodrgn_path()} downsample {stack} -D {int(downsample_size)} -o {stack.replace('.mrcs', '')}_{downsample_size}.mrcs --max-threads {threads}"
+                local_run.run_shell_command(command)
+                pbar.update(1)
 
         # edit the input alignment star to replace the new mrcs
         command = f"sed 's/.mrcs/_{downsample_size}.mrcs/g' {alignment_star} > {alignment_star.replace('.star', '_downsample.star')}"
@@ -342,7 +341,7 @@ def run_cryodrgn_train(project_dir, parameters):
     boxsize = parameters['extract_box']
     downsample_size = parameters['heterogeneity_cryodrgn_downsample_size']
 
-    downsampled = cryodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size)
+    downsampled = cryodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size, threads=parameters['slurm_tasks'])
 
     os.chdir("../")
 
@@ -416,7 +415,7 @@ def run_cryodrgn_eval(project_dir, parameters):
     boxsize = parameters['extract_box']
     downsample_size = parameters['heterogeneity_cryodrgn_downsample_size']
 
-    downsampled = cryodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size)
+    downsampled = cryodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size, threads=parameters['slurm_tasks'])
 
     os.chdir("../")
 
