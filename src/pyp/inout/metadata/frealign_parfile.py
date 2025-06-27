@@ -636,12 +636,14 @@ class Parameters:
         decompressed_file = Parameters.decompress_parameter_file(str(file), threads)
         assert (os.path.isdir(decompressed_file)), f"{file} is not a folder after decompression."
 
-        # check if the folder contains all the parameter files
+        # check if the folder contains all the parameter files, if not, mark missing ones for deletion
+        non_empty_films = []
         if len(micrograph_list) > 0:
             for micrograph in micrograph_list:
                 if not (Path(decompressed_file) / f"{micrograph}.cistem").exists():
                     logger.warning(f"No metadata for {micrograph} found in {file}")
                 else:
+                    non_empty_films.append(micrograph[:-4])
                     assert ((Path(decompressed_file) / f"{micrograph}_extended.cistem").exists()), f"{micrograph}_extended.cistem is not in {file}."
 
         os.makedirs(new_file, exist_ok=True)
@@ -655,7 +657,8 @@ class Parameters:
         else:
             silent = True
         mpi.submit_function_to_workers(shutil.move,arguments=arguments,silent=silent)
-
+        return non_empty_films
+    
     @staticmethod
     def write_parameter_file(output_fname, contents, parx=False, frealignx=False):
         """Write out parameter file with contents in a numpy array.

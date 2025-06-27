@@ -2263,6 +2263,9 @@ def csp_split(parameters, iteration):
     else:
         classes = int(project_params.param(parameters["class_num"], iteration))
 
+    # keep track of tilt-series/micrographs without particles
+    non_empty_films = files
+
     for ref in range(classes):
         
         if classes > 1:
@@ -2297,7 +2300,7 @@ def csp_split(parameters, iteration):
                 # if the file is already here
                 if Path(str(external_parameter_file).replace(".bz2", "")).resolve() == decompressed_parameter_file_folder.resolve(): continue
                 
-                frealign_parfile.Parameters.decompress_parameter_file_and_move(file=external_parameter_file, 
+                non_empty_films = frealign_parfile.Parameters.decompress_parameter_file_and_move(file=external_parameter_file, 
                                                                                new_file=decompressed_parameter_file_folder, 
                                                                                micrograph_list=[f"{f}_r{ref+1:02d}" for f in files],
                                                                                threads=parameters["slurm_tasks"])
@@ -2328,7 +2331,7 @@ def csp_split(parameters, iteration):
         else:
             if parameter_file_folder.exists():
                 # from the previous iteration
-                frealign_parfile.Parameters.decompress_parameter_file_and_move(file=parameter_file_folder, 
+                non_empty_films = frealign_parfile.Parameters.decompress_parameter_file_and_move(file=parameter_file_folder, 
                                                                             new_file=decompressed_parameter_file_folder, 
                                                                             micrograph_list=[f"{f}_r{ref+1:02d}" for f in files],
                                                                             threads=parameters["slurm_tasks"])
@@ -2346,6 +2349,21 @@ def csp_split(parameters, iteration):
                     os.chdir(current_dir)
                     project_params.save_pyp_parameters(parameters=parameters, path=".")
 
+        if ref == 0 and len(files) > len(non_empty_films):
+
+            # write new films and micrographs files without empty micrographs/tilt-series
+            films_file = "{}.films".format(parameters["data_set"])
+            os.remove(films_file)
+            with open(films_file,'w') as f:
+                for m in non_empty_films:
+                    f.write(m+'\n')
+            micrographs_file = "{}.micrographs".format(parameters["data_set"])
+            os.remove(micrographs_file)
+            shutil.copy2(films_file,micrographs_file)
+
+            # use new micrograph from now on
+            files = non_empty_films
+            
         if parameters["reconstruct_dose_weighting_enable"] and ref == 0:
      
             # create weights folder for storing weights.txt
