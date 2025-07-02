@@ -362,7 +362,7 @@ def run_cryodrgn_train(project_dir, parameters):
     logger.info("Running CryoDRGN analyze")
     cryodrgn_analyze("train_output", "analyze_output", parameters, downsampled)
 
-    final_output = os.path.join(project_dir, "train", "heterogeneity_cryodrgn_analyze_" + str(parameters["heterogeneity_cryodrgn_analysis_epoch"]))
+    final_output = os.path.join(project_dir, "train", "analyze." + str(parameters["heterogeneity_cryodrgn_analysis_epoch"]))
     
     if not os.path.exists(final_output):
         Path(final_output).mkdir()
@@ -436,7 +436,7 @@ def run_cryodrgn_eval(project_dir, parameters):
     logger.info("Running CryoDRGN analyze")
     cryodrgn_analyze("train_output", "analyze_output", parameters, downsampled)
 
-    final_output = os.path.join(project_dir, "train", "heterogeneity_cryodrgn_analyze_" + str(parameters["heterogeneity_cryodrgn_analysis_epoch"]))
+    final_output = os.path.join(project_dir, "train", "analyze." + str(parameters["heterogeneity_cryodrgn_analysis_epoch"]))
     
     if not os.path.exists(final_output):
         Path(final_output).mkdir()
