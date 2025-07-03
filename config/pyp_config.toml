@@ -1543,6 +1543,12 @@ default = false
 advanced = true
 hidden = ["stream_tomo", "tomo_particles_train"]
 
+[tabs.detect_nn3d.use_gpu]
+name = "Use GPU"
+description = "Run on GPU"
+type = "bool"
+default = true
+
 [tabs.detect_nn3d.debug]
 name = "Debug mode"
 description = "Save diagnostic results to train/ folder"
@@ -1657,6 +1663,12 @@ description = "Mixing ratio to use for 3D visualization (0=less color, 1=more co
 type = "float"
 default = 0.2
 hidden = [ "tomo_milo_train" ]
+
+[tabs.detect_milo.use_gpu]
+name = "Use GPU"
+description = "Run on GPU"
+type = "bool"
+default = true
 
 [tabs.detect_milo.debug]
 name = "Debug mode"

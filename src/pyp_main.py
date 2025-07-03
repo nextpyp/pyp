@@ -1275,7 +1275,7 @@ def split(parameters):
                 "swarm",
                 milo_swarm_file,
                 jobtype="miloeval",
-                jobname="Milo-eval (gpu)",
+                jobname="Milo-eval (gpu)" if parameters["detect_milo_use_gpu"] else "Milo-eval (cpu)",
                 queue=partition_name,
                 scratch=0,
                 threads=parameters["slurm_tasks"],
