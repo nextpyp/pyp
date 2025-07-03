@@ -18,16 +18,25 @@ v0.7.2
 
    - More gracefully handle edge cases where CTF metadata is NaN or Inf in tomography pipeline.
 
+   - Expose parameters to control evaluation phase of IsoNet models.
+
+   - Add new option to allow running 3D neural network picker and milopyp on CPU resources.
+   
   :fa:`bug` **Bug fixes**
    
    - Fix bugs that occurred when parsing AreTomo3's output during automatic detection of tilt offset and dark images.
 
    - Fix bug that ignored binning factor specified during AreTomo tilt-series alignment.
 
-   - Fix issue during importing of tilt-series that have the *.st extension.
+   - Fix issue during importing of tilt-series with *.st extensions.
 
-   - Expose parameters to control evaluation of IsoNet models.
+   - Fix bug that occurred during classification when some micrographs/tilt-series had no particles in them.
 
+   - Fix bug that occurred during merging of *.star files when using bundle sizes greater than 1.
+   
+   - Stop using worker pool to run cryodrgn downsample command since the program is already multi-threaded.
+   
+   - Fix bug in single partile pipeline when specifying an iteration-specific cutoff value for reconstruction (e.g., 0.8:0)
 
 v0.7.1
 ------
