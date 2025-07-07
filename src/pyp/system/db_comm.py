@@ -510,6 +510,8 @@ def save_tomo_results(name, parameters, current_path, verbose=False):
         name
     )
     files["pkl"] = "{0}.pkl".format(name)
+    if parameters.get("tomo_ali_export"):
+        files["ali"] = "{0}.tlt {0}.xf".format(name)
     files["raw"] = "{0}.rawtlt {0}.order".format(name)
 
     save_results(files, current_path, verbose)
@@ -548,6 +550,8 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
         files["sva"] += " {0}.spk".format(name)
 
     files["pkl"] = "{0}.pkl".format(name)
+    if parameters.get("tomo_ali_export"):
+        files["ali"] = "{0}.tlt {0}.xf".format(name)
 
     save_results(files, current_path, verbose=verbose)
 

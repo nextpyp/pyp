@@ -2027,6 +2027,12 @@ type = "float"
 default = 0.7
 condition = { arg="method", value=["aretomo","aretomo3"] }
 
+[tabs.tomo_ali.export]
+name = "Export alignments"
+description = "Export tilt-series alignments to *.xf and *.tlt files"
+type = "bool"
+default = false
+
 [tabs.tomo_rec]
 _name = "Tomogram reconstruction"
 _description = "Parameters for tomographic reconstruction"
