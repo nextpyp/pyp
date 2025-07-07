@@ -1147,6 +1147,8 @@ def split(parameters):
         set_up.prepare_spr_dir()
     else:
         set_up.prepare_tomo_dir()
+        if parameters["tomo_ali_export"]:
+            os.makedirs("ali", exist_ok=True)
 
     # create list of micrographs
 
