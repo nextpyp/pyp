@@ -1514,8 +1514,8 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, sav
 
         bins = 80
         interval = (max(scores) - min(scores)) / bins 
-        good_bins = int((max(good_scores) - min(good_scores)) / interval) if len(good_scores) > 0 else 0
-        bad_bins = int((max(bad_scores) - min(bad_scores)) / interval) if len(bad_scores) > 0 else 0
+        good_bins = int((max(good_scores) - min(good_scores)) / interval) if len(good_scores) > 0 and np.fabs(interval) > np.finfo(float).eps else 0
+        bad_bins = int((max(bad_scores) - min(bad_scores)) / interval) if len(bad_scores) > 0 and np.fabs(interval) > np.finfo(float).eps else 0
 
         fig, axs =  plt.subplots(1, 1, tight_layout=True)
         axs.set_xlim([-0.5, max(max(scores)+1, threshold)])
