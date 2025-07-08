@@ -8,7 +8,8 @@ from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, project_params, mpi
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
-from pyp.system.singularity import get_pyp_configuration
+from pyp.inout.image import img2svgz
+from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -443,5 +444,32 @@ def run_cryodrgn_eval(project_dir, parameters):
 
     logger.info(f"Saving the final results to {final_output}")
 
-    shutil.copytree((working_path / "analyze_output"), Path(final_output), dirs_exist_ok=True)
+    # generate webp thumbnails
+    arguments = []
 
+    radius = (
+                float(parameters["particle_rad"])
+                / float(parameters["extract_bin"])
+                / float(parameters["data_bin"])
+                / float(parameters["scope_pixel"])
+            )
+
+    for pc in range(parameters['heterogeneity_cryodrgn_analysis_pc']):
+        for file in glob.glob(os.path.join(final_output,f"pc{pc+1}", "*.mrc")):
+            arguments.append((file, radius, file.replace(Path(file).suffix,".webp")))
+    for file in glob.glob( os.path.join(final_output,f"kmeans{parameters['heterogeneity_cryodrgn_analysis_ksample']}","*.mrc")):
+        arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
+    mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+
+    # convert all png thumnails to sbgz
+    arguments = []
+    for file in glob.glob(os.path.join(final_output, "*.png")):
+        arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
+    for file in glob.glob( os.path.join(final_output,f"kmeans{parameters['heterogeneity_cryodrgn_analysis_ksample']}","*.png")):
+        arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
+    for pc in range(parameters['heterogeneity_cryodrgn_analysis_pc']):
+        for file in glob.glob(os.path.join(final_output,f"pc{pc+1}", "*.png")):
+            arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
+    mpi.submit_function_to_workers(img2svgz, arguments=arguments, verbose=False)
+    
+    shutil.copytree((working_path / "analyze_output"), Path(final_output), dirs_exist_ok=True)

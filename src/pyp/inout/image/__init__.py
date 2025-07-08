@@ -10,6 +10,7 @@ from .core import (
     mergeRelionFiles,
     mrc2png,
     img2webp,
+    img2svgz,
     mrc2webp,
     png2gif,
     read,

@@ -39,6 +39,10 @@ def mrc2png(mrcfile, pngfile):
     data = mrc.read(mrcfile)
     writepng(data, pngfile)
 
+def img2svgz(pngfile, svgzfile, options=""):
+    command = f"{os.environ['IMAGICDIR']}/convert '{pngfile}' {options} '{svgzfile}'"
+    run_shell_command(command, verbose=False)
+
 def img2webp(pngfile, webpfile, options=""):
     command = f"{os.environ['IMAGICDIR']}/convert '{pngfile}' {options} -quality 100 -define webp:lossless=true '{webpfile}'"
     run_shell_command(command, verbose=False)
