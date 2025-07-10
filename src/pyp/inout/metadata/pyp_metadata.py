@@ -1405,72 +1405,73 @@ _rlnOriginZAngst #3
                     full_thickness = self.tomo_rec.loc["tomogram", "tomo_rec_thickness"]
 
                     # coordinates = data["box"].values
-                    particle_obj = self.extended[1][micrograph]
-                    for particle_index in particle_obj.keys():
+                    if micrograph in self.extended[1].keys():
+                        particle_obj = self.extended[1][micrograph]
+                        for particle_index in particle_obj.keys():
 
-                        particle_obj = self.extended[1][micrograph][particle_index]
+                            particle_obj = self.extended[1][micrograph][particle_index]
 
-                        ppsi = particle_obj.psi
-                        ptheta = particle_obj.theta
-                        pphi = particle_obj.phi
-                        pshiftx = particle_obj.shift_x
-                        pshifty = particle_obj.shift_y
-                        pshiftz = particle_obj.shift_z
+                            ppsi = particle_obj.psi
+                            ptheta = particle_obj.theta
+                            pphi = particle_obj.phi
+                            pshiftx = particle_obj.shift_x
+                            pshifty = particle_obj.shift_y
+                            pshiftz = particle_obj.shift_z
 
-                        x = particle_obj.x_position_3d / binning
-                        y = particle_obj.y_position_3d / binning
-                        z = particle_obj.z_position_3d / binning
+                            x = particle_obj.x_position_3d / binning
+                            y = particle_obj.y_position_3d / binning
+                            z = particle_obj.z_position_3d / binning
 
-                        relion_x, relion_y, relion_z = spk2Relion(x, y, z, binning, full_tomo_x, full_tomo_y, thickness=full_thickness, tomo_x_bin=tomo_x, tomo_y_bin=tomo_y, tomo_z_bin=tomo_z)
+                            relion_x, relion_y, relion_z = spk2Relion(x, y, z, binning, full_tomo_x, full_tomo_y, thickness=full_thickness, tomo_x_bin=tomo_x, tomo_y_bin=tomo_y, tomo_z_bin=tomo_z)
 
-                        # try different scanning orders to get particle alignment
-                        """
-                        # NOTE: ensure ptlind should match the index in spk file
-                        for scanord in range(0, 40, 5):
-                            condition = np.where(
-                                            (self.refinement.values[:, FILM_COL] == film_index) & \
-                                            (self.extended.values[:, PTLIND_COL - EXTEND_START] == particle_index) & \
-                                            (self.extended.values[:, SCANORD_COL - EXTEND_START] == scanord)
-                                        )
-                            if condition[0].size != 0:
-                                break
+                            # try different scanning orders to get particle alignment
+                            """
+                            # NOTE: ensure ptlind should match the index in spk file
+                            for scanord in range(0, 40, 5):
+                                condition = np.where(
+                                                (self.refinement.values[:, FILM_COL] == film_index) & \
+                                                (self.extended.values[:, PTLIND_COL - EXTEND_START] == particle_index) & \
+                                                (self.extended.values[:, SCANORD_COL - EXTEND_START] == scanord)
+                                            )
+                                if condition[0].size != 0:
+                                    break
 
-                        # if particle is not in the parfile
-                        if condition[0].size == 0:
-                            continue
+                            # if particle is not in the parfile
+                            if condition[0].size == 0:
+                                continue
 
-                        particle_data = self.extended.values[condition, :][0, 0, :]
-                        ptl_condition = np.where(
-                                            (self.refinement.values[:, FILM_COL] == film_index) & \
-                                            (self.extended.values[:, PTLIND_COL - EXTEND_START] == particle_index) & \
-                                            (np.abs(self.extended.values[:, TILTAN_COL - EXTEND_START]) <= 20)
-                                        )
+                            particle_data = self.extended.values[condition, :][0, 0, :]
+                            ptl_condition = np.where(
+                                                (self.refinement.values[:, FILM_COL] == film_index) & \
+                                                (self.extended.values[:, PTLIND_COL - EXTEND_START] == particle_index) & \
+                                                (np.abs(self.extended.values[:, TILTAN_COL - EXTEND_START]) <= 20)
+                                            )
 
-                        particle_score = np.mean(self.refinement.values[ptl_condition, :][:, :, 14])
-                        if np.isnan(particle_score):
-                            particle_score = 0
-                        """
-                        # matrix = particle_data[MATRIX0_COL - EXTEND_START : MATRIX15_COL - EXTEND_START + 1]
+                            particle_score = np.mean(self.refinement.values[ptl_condition, :][:, :, 14])
+                            if np.isnan(particle_score):
+                                particle_score = 0
+                            """
+                            # matrix = particle_data[MATRIX0_COL - EXTEND_START : MATRIX15_COL - EXTEND_START + 1]
 
 
-                        particle_score = particle_obj.score
-                        # normX, normY, normZ = particle_data[NOMRX_COL - EXTEND_START : NORMZ_COL - EXTEND_START + 1]
-                        rot, tilt, psi, dx, dy, dz = cistem2_alignment2Relion(ppsi, ptheta, pphi, pshiftx, pshifty, pshiftz)
+                            particle_score = particle_obj.score
+                            # normX, normY, normZ = particle_data[NOMRX_COL - EXTEND_START : NORMZ_COL - EXTEND_START + 1]
+                            rot, tilt, psi, dx, dy, dz = cistem2_alignment2Relion(ppsi, ptheta, pphi, pshiftx, pshifty, pshiftz)
 
-                        # relion will reset translation to zero during importing particles
-                        # so we add the translation to coordinates
-                        relion_x -= dx / pixel_size
-                        relion_y -= dy / pixel_size
-                        relion_z -= dz / pixel_size
-                        dx = dy = dz = 0.0
+                            # relion will reset translation to zero during importing particles
+                            # so we add the translation to coordinates
+                            relion_x -= dx / pixel_size
+                            relion_y -= dy / pixel_size
+                            relion_z -= dz / pixel_size
+                            dx = dy = dz = 0.0
 
-                        particle = list(map(str, [micrograph, counter, manifold, relion_x, relion_y, relion_z, f"{dx:.3f}", f"{dy:.3f}", f"{dz:.3f}", f"{rot:.2f}", f"{tilt:.2f}", f"{psi:.2f}", class_num, random_subset, particle_score]))
-                        header += "\t".join(particle) + "\n"
+                            particle = list(map(str, [micrograph, counter, manifold, relion_x, relion_y, relion_z, f"{dx:.3f}", f"{dy:.3f}", f"{dz:.3f}", f"{rot:.2f}", f"{tilt:.2f}", f"{psi:.2f}", class_num, random_subset, particle_score]))
+                            header += "\t".join(particle) + "\n"
 
-                        counter += 1
-                        class_num *= -1
-                        random_subset = 1 if random_subset == 2 else 2
-                    pbar.update(1)
+                            counter += 1
+                            class_num *= -1
+                            random_subset = 1 if random_subset == 2 else 2
+                        pbar.update(1)
 
             with open(particle_file, "w") as f:
                 f.write(header)
