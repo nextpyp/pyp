@@ -107,6 +107,12 @@ def membrain_segmentation(parameters, input, local_output):
 
     local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
 
+    try:
+        segmentation = glob.glob(local_output+'/*')[0]
+        mrc.read(segmentation)
+    except:
+        raise RuntimeError(f"Membrain-seg failed. Please check the logs for errors or increase the memory per thread allocated to the job.")
+
     if parameters[tm + "_connected_map"] != "none":
 
         segmentation = glob.glob(local_output+'/*')[0]

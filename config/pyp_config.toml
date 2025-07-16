@@ -2775,7 +2775,7 @@ condition = { arg="method", value="membrain" }
 
 [tabs.tomo_mem.sliding_wd]
 name = "Sliding window size"
-description = "Sliding window size used during inference"
+description = "Sliding window size used during inference (must be a multiple of 32)"
 type = "int"
 default = 160
 condition = { arg="method", value="membrain" }
