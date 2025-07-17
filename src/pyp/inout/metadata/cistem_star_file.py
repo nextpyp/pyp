@@ -236,6 +236,13 @@ class Tilt:
         self.angle = angle
         self.axis = axis
 
+    def __str__(self):
+        return f"Tilt index {self.tilt_index}\n\
+            Region index = {self.region_index}\n\
+            Shift = ({self.shift_x}, {self.shift_y})\n\
+            Angle = {self.angle}\n\
+            Axis = {self.axis}"
+
 class ExtendedParameters():
 
     # Headers
