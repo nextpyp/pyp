@@ -130,7 +130,7 @@ def membrain_segmentation(parameters, input, local_output):
             shutil.move(output, segmentation)
         
         # create binary mask from binary segmentation volume
-        cmask = 255 * ( mrc.read(segmentation) > 0 ).astype('uint8')
+        cmask = ( mrc.read(segmentation) > 0 ).astype('uint8')
 
         # find all connected regions, calculate sizes, and ranking 
         from skimage.measure import label
@@ -143,13 +143,13 @@ def membrain_segmentation(parameters, input, local_output):
             # keep max_number largest components after leaving out min_number largest components
             logger.info(f"Keeping {parameters['tomo_mem_connected_max_number']} largest components after {parameters['tomo_mem_connected_min_number']}")
             for i in range(1+parameters["tomo_mem_connected_min_number"],1+parameters["tomo_mem_connected_min_number"]+parameters["tomo_mem_connected_max_number"]):
-                clean[ label_ids == indexes_by_size[i] ] = 255
+                clean[ label_ids == indexes_by_size[i] ] = 1
         elif parameters["tomo_mem_connected_map"] == "size":
             # remove objects smaller than threshold
             logger.info(f"Removing areas smaller than {parameters['tomo_mem_connected_thres']}")
             for i in range(1, len(sizes)):
                 if sizes[i] > parameters["tomo_mem_connected_thres"]:
-                    clean[ label_ids == i ] = 255
+                    clean[ label_ids == i ] = 1
         else:
             clean = cmask
     
