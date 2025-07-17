@@ -2365,8 +2365,10 @@ EOF
                 )
             )
         if detect.tomo_subvolume_extract_is_required(parameters):
-            mpi.submit_function_to_workers(spk_extract_and_process, arguments, verbose=parameters["slurm_verbose"])
-
+            if len(arguments) > 0:
+                mpi.submit_function_to_workers(spk_extract_and_process, arguments, verbose=parameters["slurm_verbose"])
+            else:
+                logger.warning("No spikes to extract")
 
 def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth, z_dim = 2):
 
