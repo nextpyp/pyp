@@ -128,7 +128,8 @@ def needs_gpu(parameters):
 
     gpu_for_mining = "tomo-milo" in parameters.get("micromon_block") and parameters.get("detect_milo_use_gpu", True)
 
-    gpu_for_picking = ( parameters.get("micromon_block") == "tomo-particles-train" and parameters["detect_nn3d_use_gpu"]
+    gpu_for_picking = ( parameters.get("micromon_block") == "tomo-particles-train" and parameters["detect_nn3d_use_gpu_train"]
+                       or parameters.get("micromon_block") == "tomo-particles-eval" and parameters["detect_nn3d_use_gpu_eval"]
                        or parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
                        or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_vir_method"] 
                        or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_spk_method"] and parameters["tomo_vir_method"] == "none"

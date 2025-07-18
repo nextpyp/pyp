@@ -320,7 +320,7 @@ def tomotrain(args):
     else:
         compress = ""
 
-    if args.get('detect_nn3d_use_gpu'):
+    if args.get('detect_nn3d_use_gpu_train'):
         gpu = "--gpus 0"
     else:
         gpu = "--gpus -1"
@@ -426,7 +426,7 @@ def tomoeval(args,name):
         else:
             compress = ""
 
-        if args.get('detect_nn3d_use_gpu'):
+        if args.get('detect_nn3d_use_gpu_eval'):
             gpu = "--gpus 0"
         else:
             gpu = "--gpus -1"

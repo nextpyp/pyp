@@ -1543,11 +1543,20 @@ default = false
 advanced = true
 hidden = ["stream_tomo", "tomo_particles_train"]
 
-[tabs.detect_nn3d.use_gpu]
+[tabs.detect_nn3d.use_gpu_train]
 name = "Use GPU"
 description = "Run on GPU"
 type = "bool"
 default = true
+hidden = ["tomo_particles_eval", "stream_tomo"]
+
+[tabs.detect_nn3d.use_gpu_eval]
+name = "Use GPU"
+description = "Run on GPU"
+type = "bool"
+default = false
+advanced = true
+hidden = ["tomo_particles_train", "stream_tomo"]
 
 [tabs.detect_nn3d.debug]
 name = "Debug mode"
