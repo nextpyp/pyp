@@ -1807,6 +1807,8 @@ name = "Save particle stacks"
 description = "Store particle stacks in project directory"
 type = "bool"
 default = false
+hidden = true
+copyToNewBlock = false
 
 [tabs.extract.using_frames]
 name = "Using frames"
