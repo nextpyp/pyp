@@ -426,7 +426,7 @@ def create_csp_split_commands(
                                                 cores=cores, 
                                                 memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"]
                                                 )
-            increment = 1 if (use_frames and mode == 5) else increment
+            increment = 1 if (use_frames and mode == 5) or parameters['csp_NumberOfRandomIterations'] > 1000 and mode == 5 else increment
             list_to_iterate = ptlind_list
 
         elif mode == 3 and not use_frames:
