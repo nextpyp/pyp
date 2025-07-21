@@ -2214,9 +2214,9 @@ EOF
             ypad_up = ypad_dn = 0
 
             # Restrict upper Y and calculate padding (Y is actually Z in the reconstructed virion)
-            if lslice > x - 1:
-                ypad_up = lslice - x
-                lslice = x - 1
+            if lslice > y - 1:
+                ypad_up = lslice - y
+                lslice = y - 1
 
             # Restrict lower Y and calculate padding
             if fslice < 0:
