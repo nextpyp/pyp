@@ -2408,7 +2408,6 @@ EOF
             elif ("box" in metadata or os.path.exists("mod/%s.spk" % name) or os.path.exists("mod/%s.txt" % name) ) and not "vir" in metadata:
                 # use origin if we are using isolated particles
                 spikes_in_virion = np.zeros([1, 7])
-                spikes_in_virion[0][6] = parameters["extract_box"]
                 virion_bin = 1
             else:
                 logger.warning(f"File {virion_file} not found. Skipping")
