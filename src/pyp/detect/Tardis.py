@@ -92,7 +92,7 @@ def tardis_segmentation(parameters, input, local_output):
     mt_actin_options = f"--filter_by_length {parameters[tm + '_tardis_filter_by_length']} --connect_splines {parameters[tm + '_tardis_connect_splines']} --connect_cylinder {parameters[tm + '_tardis_connect_cylinder']}"
     
     if parameters.get("tomo_mem_method") == "tardis_mem":
-        command =f"{get_tardis_path()}tardis_mem  "
+        command =f"{get_tardis_path()}tardis_mem {common_options}"
     elif parameters.get("tomo_mem_method") == "tardis_mt":
         command =f"{get_tardis_path()}tardis_mt {common_options} {mt_actin_options}"
     elif parameters.get("tomo_mem_method") == "tardis_actin":
