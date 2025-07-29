@@ -49,7 +49,7 @@ from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
 from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
-from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools, MemBrain 
+from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools, MemBrain, Tardis
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
@@ -1164,7 +1164,7 @@ def split(parameters):
 
         cryocare_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-eval"
         isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
-        membrain = parameters["data_mode"] == "tomo" and parameters.get("tomo_mem_method") == "membrain" and parameters["micromon_block"] == "tomo-segmentation-open"
+        membrain = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-segmentation-open"
         topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising-eval"
 
         if cryocare_predict:
@@ -5174,14 +5174,17 @@ if __name__ == "__main__":
 
                 args, name, project_path, working_path, parameters = tomoswarm_prologue()
                 
-                new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
+                if parameters.get("tomo_mem_method") == "membrain":
+                    new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
+                else:
+                    new_reconstruction = Tardis.run_tardis( project_path, name, parameters )
                 
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
 
-                logger.info("nextPYP (membrane segmentation) finished successfully")
+                logger.info("nextPYP (segmentation) finished successfully")
             except:
                 trackback()
-                logger.error("nextPYP (membrane segmentation) failed")
+                logger.error("nextPYP (segmentation) failed")
                 pass
         
         elif "topazswarm" in os.environ:

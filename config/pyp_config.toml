@@ -2667,14 +2667,78 @@ hidden = [ "tomo_denoise_eval" ]
 
 [tabs.tomo_mem]
 _name = "Segmentation"
-_description = "Parameters for tomogram membrane segmentation using MemBrain-seg"
+_description = "Parameters for tomogram segmentation"
 
 [tabs.tomo_mem.method]
 name = "Method"
 description = "Segmentation method"
 type = "enum"
-enum = { membrain="membrain" }
+enum = { membrain="membrain_seg", tardis_mem="tardis_mem", tardis_actin="tardis_actin", tardis_mt="tardins_mt"} 
 default = "membrain"
+
+[tabs.tomo_mem.tardis_mem_patch_size]
+name = "Patch size"
+description = "Window size used for prediction. This will break tomograms into smaller patches with 25% overlap. Smaller values than 128 consume less GPU, but also may lead to worse segmentation results!"
+type = "enum"
+enum = { 32="32", 64="64", 96="96", 128="128", 256="256", 512="512" }
+default = "128"
+condition = { arg="method", value=["tardis_mem","tardis_mt","tardis_actin"] }
+
+[tabs.tomo_mem.tardis_mem_rotate]
+name = "Use 4x rotations during prediction"
+description = "This will increase prediction time 4 times. However, it usually will result in cleaner output"
+type = "bool"
+default = true
+condition = { arg="method", value=["tardis_mem","tardis_mt","tardis_actin"] }
+
+[tabs.tomo_mem.tardis_mem_cnn_threshold]
+name = "Threshold for semantic prediction"
+description = "Higher values lead to reduction in noise and membrane prediction recall. Lower values increase membrane prediction recall but may lead to increased noise"
+type = "float"
+default = 0.5
+condition = { arg="method", value=["tardis_mem","tardis_mt","tardis_actin"] }
+
+[tabs.tomo_mem.tardis_mem_dist_threshold]
+name = "Threshold for instance prediction"
+description = "Higher values give lower number of instances, lower values increase the number of predicted instances"
+type = "float"
+default = 0.9
+condition = { arg="method", value=["tardis_mem","tardis_mt","tardis_actin"] }
+
+[tabs.tomo_mem.tardis_mem_points_in_patch]
+name = "Max points in each point cloud"
+description = "Divide point cloud into overlapping areas that would be segmented individually and then stitched and predicted together. 1000 points requires ~12 GB of GPU memory. Use 500 or 800 for GPU with less memory. Higher numbers lead to faster inference and slightly improved segmentation"
+type = "int"
+default = 1000
+condition = { arg="method", value=["tardis_mem","tardis_mt","tardis_actin"] }
+
+[tabs.tomo_mem.tardis_filter_by_length]
+name = "Minimum length (A)"
+description = "All filaments shorter then this length will be deleted"
+type = "int"
+default = 1000
+condition = { arg="method", value=["tardis_mt","tardis_actin"]}
+
+[tabs.tomo_mem.tardis_connect_splines]
+name = "Threshold distance between microtubules (A)"
+description = "This determines how far apart two microtubules can be, while still being considered as a single unit if they are oriented in the same direction"
+type = "int"
+default = 2500
+condition = { arg="method", value=["tardis_mt","tardis_actin"]}
+
+[tabs.tomo_mem.tardis_connect_cylinder]
+name = "Thickness (A)"
+description = "Limit search area to a cylindrical radius of the specified size"
+type = "int"
+default = 250
+condition = { arg="method", value=["tardis_mt","tardis_actin"]}
+
+[tabs.tomo_mem.tardis_mem_debug]
+name = "Debug mode"
+description = "Enable saving of all intermediate files for debugging"
+type = "bool"
+default = false
+condition = { arg="method", value=["tardis_mem","tardis_mt","tardis_actin"] }
 
 [tabs.tomo_mem.preprocessing]
 name = "Pre-process tomograms"
@@ -2747,7 +2811,7 @@ description = "Filter segmentation by components"
 type = "enum"
 enum = { none="none", size="by size", number="by number" }
 default = "none"
-condition = { arg="method", value="membrain" }
+condition = { arg="method", value=["membrain","tardis_mem"] }
 
 [tabs.tomo_mem.connected_thres]
 name = "Size threshold (binned voxels)"
@@ -2796,7 +2860,7 @@ name = "Use GPU"
 description = "Select for faster speeds"
 type = "bool"
 default = true
-condition = { arg="method", value="membrain" }
+condition = { arg="method", value=["membrain","tardis_mem","tardis_mt","tardis_actin"] }
 
 [tabs.tomo_sphere]
 _name = "Virion/vesicle segmentation"
