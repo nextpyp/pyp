@@ -223,9 +223,17 @@ This section is used to configure properties of the SLURM_ cluster.
 ~~~~~~~~
 
 :Type: string
-:Required: yes
+:Required: no
 :Description:
 	Hostname of a login node for the SLURM cluster.
+
+	If no hostname is given, ``nextPYP`` will instead submit
+	jobs by calling SLURM commands locally on the web server machine.
+	This option requires that SLURM be installed and configured on the
+	web server machine.
+
+	If SLURM commands are not directly available on the web server machine,
+	then you'll need to provide a hostname for the SLURM login node.
 :Examples:
 	``host = 'slurm-login-01.example.org'``
 
