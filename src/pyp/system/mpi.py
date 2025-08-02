@@ -141,6 +141,10 @@ def submit_function_to_workers(function, arguments, verbose=False, silent=False)
         List of arguments
     """
 
+    if len(arguments) == 0:
+        logger.warning("No arguments provided to function %s, skipping execution." % function.__name__)
+        return
+
     funcs = []
     args = []
     num_processes = 0
