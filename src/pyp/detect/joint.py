@@ -611,8 +611,7 @@ def generate_3d_plots(rec_file, train_folder, args, project_dir ):
     # get corresponding volume slice from pyp reconstruction
     slice_rec = matplotlib.image.imread( os.path.join( Path(train_folder).parents[0] / 'webp', name + '.webp' ))
 
-    hm_file = glob.glob(f'exp/simsiam2d3d/test_sample/{name}_hm3d*.npy')[0]
-    hm = np.load(hm_file)
+    hm = np.load(rec_file.replace('_rec3d.npy','_hm3d_simsiam.npy'))
     
     # extract middle slice from colormap (considering binning)
     med_slice_index = 4 if args.get("detect_milo_compress") else 2
@@ -736,10 +735,10 @@ def miloeval(args):
 
         # TODO: generate 3D tomogram visualization plots
         color_file = os.path.join(output_folder,'all_colors.npy')
-        command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick//visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam exp/simsiam2d3d/test_sample/ --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
+        command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam {Path(output_file).parent} --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
         local_run.run_shell_command(command, verbose=args['slurm_verbose'])
 
-        rec_files = glob.glob('exp/simsiam2d3d/test_sample/*_rec3d.npy')
+        rec_files = glob.glob(str(Path(output_file).parent / '*_rec3d.npy'))
 
         arguments = []
         for rec_file in rec_files:
