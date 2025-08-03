@@ -454,21 +454,22 @@ def run_cryodrgn_eval(project_dir, parameters):
                 / float(parameters["scope_pixel"])
             )
 
+    analyze_output = str(working_path / "analyze_output")
     for pc in range(parameters['heterogeneity_cryodrgn_analysis_pc']):
-        for file in glob.glob(os.path.join(final_output,f"pc{pc+1}", "*.mrc")):
+        for file in glob.glob(os.path.join(analyze_output,f"pc{pc+1}", "*.mrc")):
             arguments.append((file, radius, file.replace(Path(file).suffix,".webp")))
-    for file in glob.glob( os.path.join(final_output,f"kmeans{parameters['heterogeneity_cryodrgn_analysis_ksample']}","*.mrc")):
+    for file in glob.glob( os.path.join(analyze_output,f"kmeans{parameters['heterogeneity_cryodrgn_analysis_ksample']}","*.mrc")):
         arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
     mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
 
-    # convert all png thumnails to sbgz
+    # convert all png thumnails to svgz
     arguments = []
-    for file in glob.glob(os.path.join(final_output, "*.png")):
+    for file in glob.glob(os.path.join(analyze_output, "*.png")):
         arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
-    for file in glob.glob( os.path.join(final_output,f"kmeans{parameters['heterogeneity_cryodrgn_analysis_ksample']}","*.png")):
+    for file in glob.glob( os.path.join(analyze_output,f"kmeans{parameters['heterogeneity_cryodrgn_analysis_ksample']}","*.png")):
         arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
     for pc in range(parameters['heterogeneity_cryodrgn_analysis_pc']):
-        for file in glob.glob(os.path.join(final_output,f"pc{pc+1}", "*.png")):
+        for file in glob.glob(os.path.join(analyze_output,f"pc{pc+1}", "*.png")):
             arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
     mpi.submit_function_to_workers(img2svgz, arguments=arguments, verbose=False)
     
