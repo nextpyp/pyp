@@ -5267,6 +5267,7 @@ if __name__ == "__main__":
                     null = [os.makedirs(f) for f in folders if not os.path.exists(f)]
 
                     if "tomodrgn_vae_train_input_star" in parameters and parameters.get("tomodrgn_vae_train_input_star") == "auto":
+                        assert len(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" ))) > 0, "Cannot find particle stacks. Set option to save particle stacks in parent block."
                         input_star = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "relion", "stacks", "*_particles.star" )))[-1]
                         parameters["tomodrgn_vae_train_input_star"] = input_star
                         project_params.save_parameters(parameters)
