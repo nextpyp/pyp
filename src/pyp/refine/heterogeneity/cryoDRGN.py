@@ -462,15 +462,4 @@ def run_cryodrgn_eval(project_dir, parameters):
         arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
     mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
 
-    # convert all png thumnails to svgz
-    arguments = []
-    for file in glob.glob(os.path.join(analyze_output, "*.png")):
-        arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
-    for file in glob.glob( os.path.join(analyze_output,f"kmeans{parameters['heterogeneity_cryodrgn_analysis_ksample']}","*.png")):
-        arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
-    for pc in range(parameters['heterogeneity_cryodrgn_analysis_pc']):
-        for file in glob.glob(os.path.join(analyze_output,f"pc{pc+1}", "*.png")):
-            arguments.append((file, file.replace(Path(file).suffix, ".svgz")))
-    mpi.submit_function_to_workers(img2svgz, arguments=arguments, verbose=False)
-    
     shutil.copytree((working_path / "analyze_output"), Path(final_output), dirs_exist_ok=True)
