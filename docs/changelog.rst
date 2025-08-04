@@ -8,11 +8,17 @@ v0.7.2
 .. nextpyp:: Released TBA
    :collapsible: open
    
+   :fa:`star` **New features**
+   
+   - Add `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_ routines to segment membranes, microtubules and actin in 3D.
+   
+   - Implement heterogeneity analysis using `cryoDRGN <https://cryodrgn.cs.princeton.edu/>`_ in single-particle pipeline.
+
   :fa:`plus-square` **Improvements**
 
    - Start using mean of tilt-series data when filling in missing values to reduce edge artifacts during tilt-series alignment.
 
-   - Allow specification of external masks when running template search using pytom-match-pick.
+   - Allow specification of external masks when running template search using `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_.
 
    - Speed up reading of *.eer files during data import blocks.
 
@@ -20,8 +26,12 @@ v0.7.2
 
    - Expose parameters to control evaluation phase of IsoNet models.
 
-   - Add new option to allow running 3D neural network picker and milopyp on CPU resources.
+   - Add new option to allow running 3D neural network picker and MiLopyp on CPU resources.
    
+   - Start using local torch models to avoid connecting to pytorch.org from the compute nodes.
+
+   - Reduce batch size when running constrained refinement to improve responsiveness of logs.
+
   :fa:`bug` **Bug fixes**
    
    - Fix bugs that occurred when parsing AreTomo3's output during automatic detection of tilt offset and dark images.
@@ -34,9 +44,13 @@ v0.7.2
 
    - Fix bug that occurred during merging of *.star files when using bundle sizes greater than 1.
    
-   - Stop using worker pool to run cryodrgn downsample command since the program is already multi-threaded.
+   - Stop using worker pool to run cryoDRGN downsample command since the program is already multi-threaded.
    
-   - Fix bug in single partile pipeline when specifying an iteration-specific cutoff value for reconstruction (e.g., 0.8:0)
+   - Fix bug in single partile pipeline when specifying an iteration-specific cutoff value for reconstruction (e.g., 0.8:0).
+
+   - Generate *_volumes.txt file regardless of the method used for particle picking.
+   
+   - Fix bug when requesting GPU resources during NN-based particle picking. 
 
 v0.7.1
 ------
