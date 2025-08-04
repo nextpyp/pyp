@@ -14,7 +14,7 @@ v0.7.2
    
    - Implement heterogeneity analysis using `cryoDRGN <https://cryodrgn.cs.princeton.edu/>`_ in single-particle pipeline.
 
-  :fa:`plus-square` **Improvements**
+   :fa:`plus-square` **Improvements**
 
    - Start using mean of tilt-series data when filling in missing values to reduce edge artifacts during tilt-series alignment.
 
@@ -32,7 +32,7 @@ v0.7.2
 
    - Reduce batch size when running constrained refinement to improve responsiveness of logs.
 
-  :fa:`bug` **Bug fixes**
+   :fa:`bug` **Bug fixes**
    
    - Fix bugs that occurred when parsing AreTomo3's output during automatic detection of tilt offset and dark images.
 
