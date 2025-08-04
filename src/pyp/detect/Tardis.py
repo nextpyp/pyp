@@ -91,12 +91,14 @@ def tardis_segmentation(parameters, input, local_output):
 
     mt_actin_options = f"--filter_by_length {parameters[tm + '_tardis_filter_by_length']} --connect_splines {parameters[tm + '_tardis_connect_splines']} --connect_cylinder {parameters[tm + '_tardis_connect_cylinder']}"
     
+    cnn_model_path = "/opt/pyp/external/models/fnet_attn_32"
+    dist_model_path = "/opt/pyp/external/models/dist_triang/3d/model_weights.pth"
     if parameters.get("tomo_mem_method") == "tardis_mem":
-        command =f"{get_tardis_path()}tardis_mem {common_options}"
+        command =f"{get_tardis_path()}tardis_mem {common_options} --cnn_checkpoint {os.path.join(cnn_model_path,'membrane_3d','model_weights.pth')} --dist_checkpoint {dist_model_path}"
     elif parameters.get("tomo_mem_method") == "tardis_mt":
-        command =f"{get_tardis_path()}tardis_mt {common_options} {mt_actin_options}"
+        command =f"{get_tardis_path()}tardis_mt {common_options} {mt_actin_options} --cnn_checkpoint {os.path.join(cnn_model_path,'microtubules_3d','model_weights.pth')} --dist_checkpoint {dist_model_path}"
     elif parameters.get("tomo_mem_method") == "tardis_actin":
-        command =f"{get_tardis_path()}tardis_actin {common_options} {mt_actin_options}"
+        command =f"{get_tardis_path()}tardis_actin {common_options} {mt_actin_options} --cnn_checkpoint {os.path.join(cnn_model_path,'actin_3d','model_weights.pth')} --dist_checkpoint {dist_model_path}"
     else:
         assert False, f"Unknown segmentation method {parameters.get('tomo_mem_method')}"
     local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
