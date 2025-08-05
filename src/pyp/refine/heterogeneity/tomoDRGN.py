@@ -102,10 +102,6 @@ def tomodrgn_train(parameters, input_dir, name, output):
     if False:
         options += " --preprocessed"
     
-    # --pretrain {parameters['heterogeneity_tomodrgn_pretrain']} \
-    # --emb-type {parameters['heterogeneity_tomodrgn_emd_type']} \
-    # --pose-lr {parameters['heterogeneity_tomodrgn_pose_lr']} \
-
     training_parameters = f"-n {parameters['tomodrgn_vae_train_epochs']} -b {parameters['tomodrgn_vae_train_batch']} --wd {parameters['tomodrgn_vae_train_wd']} --lr {parameters['tomodrgn_vae_train_lr']} --enc-layers-A {parameters['tomodrgn_vae_train_enc_lya']} --enc-dim-A {parameters['tomodrgn_vae_train_enc_dima']} --out-dim-A {parameters['tomodrgn_vae_train_out_dima']} --enc-layers-B {parameters['tomodrgn_vae_train_enc_lyb']} --enc-dim-B {parameters['tomodrgn_vae_train_enc_dimb']} --dec-layers {parameters['tomodrgn_vae_train_dec_hl']} --dec-dim {parameters['tomodrgn_vae_train_dec_dim']} --pe-type {parameters['tomodrgn_vae_train_pe_type']} --pooling-function {parameters['tomodrgn_vae_train_pool']} --activation {parameters['tomodrgn_vae_train_activation']} --num-seeds {parameters['tomodrgn_vae_train_num_seeds']} --num-heads {parameters['tomodrgn_vae_train_num_heads']} --l-extent {parameters['tomodrgn_vae_train_l_ext']}"
 
     if parameters["tomodrgn_vae_train_layer_norm"]:
@@ -129,9 +125,6 @@ def tomodrgn_train(parameters, input_dir, name, output):
         training_parameters += f" --norm {parameters['tomodrgn_vae_train_data_norm']}"
     if not parameters['tomodrgn_vae_train_amp']:
         training_parameters += " --no-amp"
-    
-    # if parameters['heterogeneity_tomodrgn_pose_sgd']:
-    #     training_parameters += " --do-pose-sgd"
     
     tomo = ""
     if parameters["tomodrgn_vae_train_tilt_weight"]:
@@ -309,18 +302,6 @@ def run_tomodrgn_train(project_dir, parameters):
 
     logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
     mpi.submit_jobs_to_workers(tasks, working_path=os.getcwd(), verbose=True)
-        
-    # particle_stack_list = [os.path.basename(p) for p in particles_stacks]
-
-    # do preprocessing in input_data folder
-    # os.chdir("input_data")
-    
-    # boxsize = parameters['extract_box']
-    # downsample_size = parameters['heterogeneity_tomodrgn_downsample_size']
-
-    # downsampled = tomodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size)
-
-    # os.chdir("../")
 
     train_folder = Path(project_dir) / "train"
     train_folder.mkdir(parents=True, exist_ok=True)
@@ -328,11 +309,11 @@ def run_tomodrgn_train(project_dir, parameters):
     # train
     if parameters['micromon_block'] == "tomodrgn_rec":
 
-        if parameters['heterogeneity_tomodrgn_mode'] == "backproject_voxel":
+        if parameters['tomodrgn_rec_mode'] == "backproject_voxel":
 
             backproject_voxel(parameters, "input_data", name, train_folder / f"{name}.mrc")
             
-        elif parameters['heterogeneity_tomodrgn_mode'] == "train_nn":
+        elif parameters['tomodrgn_rec_mode'] == "train_nn":
 
             train_nn(parameters, "input_data", name, train_folder)
             
@@ -349,7 +330,16 @@ def run_tomodrgn_train(project_dir, parameters):
         if (train_folder / "weights.pkl").exists() and (train_folder / "z.train.pkl").exists():
             logger.info(f"Training finished successfully, results saved to {train_folder}")
 
-            shutil.copytree(train_folder, (working_path / "train_output"), dirs_exist_ok=True)
+            # create link to the weights of the last epoch, if needed
+            weights = train_folder / f"weights.{parameters['tomodrgn_vae_train_epochs']-1}.pkl"
+            if not weights.exists():
+                current_dir = os.getcwd()
+                os.chdir(train_folder)
+                os.symlink( "weights.pkl", f"weights.{parameters['tomodrgn_vae_train_epochs']-1}.pkl")
+                os.symlink( "z.train.pkl", f"z.{parameters['tomodrgn_vae_train_epochs']-1}.train.pkl")
+                os.chdir(current_dir)
+
+            shutil.copytree(train_folder, (working_path / "train_output"), symlinks=True, dirs_exist_ok=True)
         else:
             raise Exception("Training did not finish successfully")
 
@@ -426,18 +416,6 @@ def run_tomodrgn_eval(project_dir, parameters,analyze_volumes=False):
 
     logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
     mpi.submit_jobs_to_workers(tasks, os.getcwd(), verbose=False)
-        
-    # particle_stack_list = [os.path.basename(p) for p in particles_stacks]
-
-    # do preprocessing in input_data folder
-    # os.chdir("input_data")
-    
-    # boxsize = parameters['extract_box']
-    # downsample_size = parameters['heterogeneity_tomodrgn_downsample_size']
-
-    # downsampled = tomodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size)
-
-    # os.chdir("../")
 
     (working_path / "train_output").mkdir(parents=True, exist_ok=True)
     
@@ -524,27 +502,27 @@ def backproject_voxel(parameters, input_dir, name, output):
     """
     particles_input = os.path.join(input_dir, name + "_particles.star")
 
-    options = f"--use-first-nptcls {parameters['heterogeneity_tomodrgn_use_first_nptcls']} --sort-ptcl-imgs {parameters['heterogeneity_tomodrgn_sort_ptcl_imgs']}"
+    options = f"--use-first-nptcls {parameters['tomodrgn_rec_use_first_nptcls']} --sort-ptcl-imgs {parameters['tomodrgn_rec_sort_ptcl_imgs']}"
 
-    if parameters["heterogeneity_tomodrgn_lowpass"] > 0:
-        options += f" --lowpass {parameters['heterogeneity_tomodrgn_lowpass']}"
+    if parameters["tomodrgn_rec_lowpass"] > 0:
+        options += f" --lowpass {parameters['tomodrgn_rec_lowpass']}"
 
-    if parameters["heterogeneity_tomodrgn_data_lazy"]:
+    if parameters["tomodrgn_rec_data_lazy"]:
         options += " --lazy"
         
-    if parameters["heterogeneity_tomodrgn_flip"]:
+    if parameters["tomodrgn_rec_flip"]:
         options += " --flip"
 
     tomo = ""
-    if parameters["heterogeneity_tomodrgn_tilt_weight"]:
+    if parameters["tomodrgn_rec_tilt_weight"]:
         tomo += " --recon-tilt-weight"
-    elif parameters["heterogeneity_tomodrgn_dose_weight"]:
+    elif parameters["tomodrgn_rec_dose_weight"]:
         tomo += " --recon-dose-weight"
     else:
         pass 
 
-    if parameters["heterogeneity_tomodrgn_use_firstn"] > 0:
-        tomo += f" --use-first-ntilts {parameters['heterogeneity_tomodrgn_use_firstn']}"
+    if parameters["tomodrgn_rec_use_firstn"] > 0:
+        tomo += f" --use-first-ntilts {parameters['tomodrgn_rec_use_firstn']}"
 
     command = f"{get_tomodrgn_path()} backproject_voxel {particles_input} --datadir {input_dir} --source-software nextpyp --output {output} {options} {tomo}"
 
@@ -556,114 +534,101 @@ def train_nn(parameters, input_dir, name, output):
 
     particles_input = os.path.join(input_dir, name + "_particles.star")
 
-    options = f"--checkpoint {parameters['heterogeneity_tomodrgn_train_checkpoint']} --log-interval {parameters['heterogeneity_tomodrgn_train_log_interval']} --num-workers 0"
+    options = f"--checkpoint {parameters['tomodrgn_vae_train_checkpoint']} --log-interval {parameters['tomodrgn_vae_train_log_interval']} --num-workers 0"
 
-    if parameters.get("heterogeneity_tomodrgn_train_weight") and os.path.exists(parameters["heterogeneity_tomodrgn_train_weight"]):
-        options += f" --load {parameters['heterogeneity_tomodrgn_train_weight']}"
+    if parameters.get("tomodrgn_vae_train_weight") and os.path.exists(parameters["tomodrgn_vae_train_weight"]):
+        options += f" --load {parameters['tomodrgn_vae_train_weight']}"
 
-    if parameters.get("heterogeneity_tomodrgn_train_seed"):
-        options += f" --seed {parameters['heterogeneity_tomodrgn_train_seed']}"
+    if parameters.get("tomodrgn_vae_train_seed"):
+        options += f" --seed {parameters['tomodrgn_vae_train_seed']}"
     
-    if parameters.get("heterogeneity_tomodrgn_data_ind") and os.path.exists(parameters["heterogeneity_tomodrgn_data_ind"]):
-        options += f" --ind {parameters['heterogeneity_tomodrgn_data_ind']}"
+    if parameters.get("tomodrgn_vae_train_data_ind") and os.path.exists(parameters["tomodrgn_vae_train_data_ind"]):
+        options += f" --ind {parameters['tomodrgn_vae_train_data_ind']}"
 
-    if not parameters["heterogeneity_tomodrgn_data_invert"]:
+    if not parameters["tomodrgn_vae_train_data_invert"]:
         options += " --uninvert-data"
 
-    if not parameters["heterogeneity_tomodrgn_data_windowing"]:
+    if not parameters["tomodrgn_vae_train_data_windowing"]:
         options += " --no-window"
     else:
-        options += f" --window-r {parameters['heterogeneity_tomodrgn_data_window_r']} --window-r-outer {parameters['heterogeneity_tomodrgn_data_window_r_outer']}"
+        options += f" --window-r {parameters['tomodrgn_vae_train_data_window_r']} --window-r-outer {parameters['tomodrgn_vae_train_data_window_r_outer']}"
     
-    if parameters.get("heterogeneity_tomodrgn_data_dir"):
-        data_dir = project_params.resolve_path(parameters["heterogeneity_tomodrgn_data_dir"])
+    if parameters.get("tomodrgn_train_vae_data_dir"):
+        data_dir = project_params.resolve_path(parameters["tomodrgn_train_vae_data_dir"])
         assert os.path.isdir(data_dir), "The data input directory dose not exist"
         options += f" --datadir {data_dir}"
 
-    if parameters["heterogeneity_tomodrgn_data_lazy"]:
+    if parameters["tomodrgn_train_vae_data_lazy"]:
         options += " --lazy"
 
-        if False and parameters['heterogeneity_tomodrgn_data_shufflersize'] > 0:
-            options += f" --shuffler-size {parameters['heterogeneity_tomodrgn_data_shufflersize']}"
+        if False and parameters['tomodrgn_vae_train_data_shufflersize'] > 0:
+            options += f" --shuffler-size {parameters['tomodrgn_vae_train_data_shufflersize']}"
 
     if parameters["slurm_verbose"]:
         options += " --verbose"
 
     if False:
         options += " --preprocessed"
-    
-    # --pretrain {parameters['heterogeneity_tomodrgn_pretrain']} \
-    # --emb-type {parameters['heterogeneity_tomodrgn_emd_type']} \
-    # --pose-lr {parameters['heterogeneity_tomodrgn_pose_lr']} \
-    # --enc-layers-A {parameters['heterogeneity_tomodrgn_enc_lya']} \
-    # --enc-dim-A {parameters['heterogeneity_tomodrgn_enc_dima']} \
-    # --out-dim-A {parameters['heterogeneity_tomodrgn_out_dima']} \
-    # --enc-layers-B {parameters['heterogeneity_tomodrgn_enc_lyb']} \
-    # --enc-dim-B {parameters['heterogeneity_tomodrgn_enc_dimb']} \
 
-    training_parameters = f"-n {parameters['heterogeneity_tomodrgn_train_epochs']} -b {parameters['heterogeneity_tomodrgn_train_batch']} --wd {parameters['heterogeneity_tomodrgn_train_wd']} --lr {parameters['heterogeneity_tomodrgn_train_lr']} --layers {parameters['heterogeneity_tomodrgn_layers']} --dim {parameters['heterogeneity_tomodrgn_dim']} --pe-type {parameters['heterogeneity_tomodrgn_pe_type']} --activation {parameters['heterogeneity_tomodrgn_activation']} --l-extent {parameters['heterogeneity_tomodrgn_l_ext']}"
+    training_parameters = f"-n {parameters['tomodrgn_vae_train_epochs']} -b {parameters['tomodrgn_vae_train_batch']} --wd {parameters['tomodrgn_vae_train_wd']} --lr {parameters['tomodrgn_vae_train_lr']} --layers {parameters['tomodrgn_vae_train_layers']} --dim {parameters['tomodrgn_vae_train_dim']} --pe-type {parameters['tomodrgn_vae_train_pe_type']} --activation {parameters['tomodrgn_vae_train_activation']} --l-extent {parameters['tomodrgn_vae_train_l_ext']}"
 
-    if parameters["heterogeneity_tomodrgn_layer_norm"]:
+    if parameters["tomodrgn_vae_train_layer_norm"]:
         training_parameters += " --layer-norm"
 
-    if parameters.get('heterogeneity_tomodrgn_enc_mask'):
-        training_parameters += f" --enc-mask {parameters['heterogeneity_tomodrgn_enc_mask']}"
+    if parameters.get('tomodrgn_vae_train_enc_mask'):
+        training_parameters += f" --enc-mask {parameters['tomodrgn_vae_train_enc_mask']}"
     
-    if "gaussian" in parameters['heterogeneity_tomodrgn_pe_type']:
-        training_parameters += f" --feat-sigma {parameters['heterogeneity_tomodrgn_feat_sigma']}"
+    if "gaussian" in parameters['tomodrgn_vae_train__pe_type']:
+        training_parameters += f" --feat-sigma {parameters['tomodrgn_vae_train_feat_sigma']}"
 
-    if parameters.get('heterogeneity_tomodrgn_pe_dim'):
-        training_parameters += f" --pe-dim {parameters['heterogeneity_tomodrgn_pe_dim']}"
+    if parameters.get('tomodrgn_vae_train_pe_dim'):
+        training_parameters += f" --pe-dim {parameters['tomodrgn_vae_train_pe_dim']}"
 
-    if parameters.get('heterogeneity_tomodrgn_train_beta'):
-        training_parameters += f" --beta {parameters['heterogeneity_tomodrgn_train_beta']}"
-    if parameters.get('heterogeneity_tomodrgn_train_beta_control'):
-        training_parameters += f" --beta-control {parameters['heterogeneity_tomodrgn_train_beta_control']}"    
+    if parameters.get('tomodrgn_vae_train_beta'):
+        training_parameters += f" --beta {parameters['tomodrgn_vae_train_beta']}"
+    if parameters.get('tomodrgn_vae_train_beta_control'):
+        training_parameters += f" --beta-control {parameters['tomodrgn_vae_train_beta_control']}"    
 
-    if not "none" in parameters['heterogeneity_tomodrgn_data_norm']:
-        training_parameters += f" --norm {parameters['heterogeneity_tomodrgn_data_norm']}"
-    if not parameters['heterogeneity_tomodrgn_train_amp']:
+    if not "none" in parameters['tomodrgn_vae_train_data_norm']:
+        training_parameters += f" --norm {parameters['tomodrgn_vae_train_data_norm']}"
+    if not parameters['tomodrgn_vae_train_amp']:
         training_parameters += " --no-amp"
     
-    # if parameters['heterogeneity_tomodrgn_pose_sgd']:
-    #     training_parameters += " --do-pose-sgd"
-    # --zdim {parameters['heterogeneity_tomodrgn_train_zdim']}
-    
     tomo = ""
-    if parameters["heterogeneity_tomodrgn_tilt_weight"]:
+    if parameters["tomodrgn_vae_train_tilt_weight"]:
         tomo += " --recon-tilt-weight"
-    elif parameters["heterogeneity_tomodrgn_dose_weight"]:
+    elif parameters["tomodrgn_vae_train_dose_weight"]:
         tomo += " --recon-dose-weight"
     else:
         pass 
 
-    if parameters["heterogeneity_tomodrgn_dose_mask"]:
+    if parameters["tomodrgn_vae_train_dose_mask"]:
         tomo += " --l-dose-mask"
 
-    if parameters["heterogeneity_tomodrgn_dose"] > 0:
-        tomo += f" --dose-override {parameters['heterogeneity_tomodrgn_dose']}"
+    if parameters["tomodrgn_vae_train_dose"] > 0:
+        tomo += f" --dose-override {parameters['tomodrgn_vae_train_dose']}"
 
-    if parameters["heterogeneity_tomodrgn_sequential_order"]:
+    if parameters["tomodrgn_vae_train_sequential_order"]:
         tomo += " --sequential-tilt-sampling"
     
-    if parameters["heterogeneity_tomodrgn_use_firstn"] > 0:
-        tomo += f" --use-first-ntilts {parameters['heterogeneity_tomodrgn_use_firstn']}"
+    if parameters["tomodrgn_vae_train_use_firstn"] > 0:
+        tomo += f" --use-first-ntilts {parameters['tomodrgn_vae_train_use_firstn']}"
 
     # TODO: multigpu option
     
     workers = ""
-    if parameters["heterogeneity_tomodrgn_num_workers"] > 0:
-        workers += f" --num-workers {parameters['heterogeneity_tomodrgn_num_workers']}"
+    if parameters["tomodrgn_vae_train_num_workers"] > 0:
+        workers += f" --num-workers {parameters['tomodrgn_vae_train_num_workers']}"
     else:
         workers += f" --num-workers {parameters['slurm_tasks']}"
 
-    if parameters["heterogeneity_tomodrgn_prefetch_factor"] > 0:
-        workers += f" --prefetch-factor {parameters['heterogeneity_tomodrgn_prefetch_factor']}"
+    if parameters["tomodrgn_vae_train_prefetch_factor"] > 0:
+        workers += f" --prefetch-factor {parameters['tomodrgn_vae_train_prefetch_factor']}"
 
-    if parameters["heterogeneity_tomodrgn_pst_wkrs"]:
+    if parameters["tomodrgn_vae_train_pst_wkrs"]:
         workers += " --persistent-workers"
     
-    if parameters["heterogeneity_tomodrgn_pin_mem"]:
+    if parameters["tomodrgn_vae_train_pin_mem"]:
         workers += " --pin-memory"
 
     """
@@ -700,14 +665,14 @@ def convergence_nn(parameters, input_dir):
     Assess convergence of a VAE model after 30 epochs training using internal / self-consistency heuristics
     """
     
-    ref = parameters["heterogeneity_tomodrgn_ref"]
+    ref = parameters["tomodrgn_rec_ref"]
 
     option = ""
-    if parameters["heterogeneity_tomodrgn_dc"]:
+    if parameters["tomodrgn_rec_dc"]:
         option += " --include-dc"
     
-    if not "none" in parameters["heterogeneity_tomodrgn_fscmask"]:
-        option += f" --fsc-mask {parameters['heterogeneity_tomodrgn_fscmask']}"
+    if not "none" in parameters["tomodrgn_rec_fscmask"]:
+        option += f" --fsc-mask {parameters['tomodrgn_rec_fscmask']}"
 
     """
     usage: convergence_nn [-h] [--max-epoch MAX_EPOCH] [--include-dc]
@@ -716,7 +681,7 @@ def convergence_nn(parameters, input_dir):
                         training_directory reference_volume
     """
     
-    command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['heterogeneity_tomodrgn_max_epoch']} {option} --plot-format svgz"
+    command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['tomodrgn_rec_max_epoch']} {option} --plot-format svgz"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 

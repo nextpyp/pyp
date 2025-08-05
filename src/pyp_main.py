@@ -5254,8 +5254,6 @@ if __name__ == "__main__":
                 if "drgn" in parameters.get("micromon_block"):
 
                     if parameters["data_mode"] == "spr":
-                        if parameters.get("heterogeneity_method") == "tomoDRGN":
-                            raise Exception("tomoDRGN only works for tomography")                            
                         set_up.prepare_spr_dir()
                     else:
                         set_up.prepare_tomo_dir()
@@ -5293,14 +5291,10 @@ if __name__ == "__main__":
 
                     project_dir = os.getcwd()
 
-                    if parameters["heterogeneity_method"] == "cryoDRGN":
+                    if parameters["data_mode"] == "spr":
                         cryoDRGN.run_cryodrgn_train(project_dir, parameters=parameters)
-                    
-                    elif parameters["heterogeneity_method"] == "tomoDRGN":
-                        tomoDRGN.run_tomodrgn_train(project_dir, parameters=parameters)
-                    
                     else:
-                        raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
+                        tomoDRGN.run_tomodrgn_train(project_dir, parameters=parameters)
 
                     logger.info("nextPYP (DRGN train) finished successfully")
                 else:
@@ -5319,8 +5313,6 @@ if __name__ == "__main__":
                 if "drgn" in parameters.get("micromon_block"):
 
                     if parameters["data_mode"] == "spr":
-                        if parameters.get("heterogeneity_method") == "tomoDRGN":
-                            raise Exception("tomoDRGN only works for tomography")                            
                         set_up.prepare_spr_dir()
                     else:
                         set_up.prepare_tomo_dir()
@@ -5357,13 +5349,10 @@ if __name__ == "__main__":
 
                     project_dir = os.getcwd()
 
-                    if parameters["heterogeneity_method"] == "cryoDRGN":
+                    if parameters["data_mode"] == "spr":
                         cryoDRGN.run_cryodrgn_eval(project_dir, parameters=parameters)
-
-                    elif parameters["heterogeneity_method"] == "tomoDRGN":
-                        tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
                     else:
-                        raise Exception( f"Unrecognized heterogeneity analysis method {parameters['heterogeneity_method']}" )
+                        tomoDRGN.run_tomodrgn_eval(project_dir, parameters=parameters,analyze_volumes=parameters.get("micromon_block")=="tomo-drgn-eval-vols")
 
                     logger.info("nextPYP (DRGN eval) finished successfully")
                 else:

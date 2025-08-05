@@ -143,38 +143,38 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
     pose_input = os.path.join(input_dir, name + "_poses.pkl")
     ctf_input = os.path.join(input_dir, name + "_ctf.pkl")
 
-    options = f"--checkpoint {parameters['heterogeneity_cryodrgn_train_checkpoint']} \
-        --log-interval {parameters['heterogeneity_cryodrgn_train_log_interval']} \
+    options = f"--checkpoint {parameters['cryodrgn_train_checkpoint']} \
+        --log-interval {parameters['cryodrgn_train_log_interval']} \
         --num-workers 0 \
         --max-threads {parameters['slurm_tasks']}"
 
-    if parameters.get("heterogeneity_cryodrgn_train_weight") and os.path.exists(parameters["heterogeneity_cryodrgn_train_weight"]):
-        options += f" --load {parameters['heterogeneity_cryodrgn_train_weight']}"
+    if parameters.get("cryodrgn_train_weight") and os.path.exists(parameters["cryodrgn_train_weight"]):
+        options += f" --load {parameters['cryodrgn_train_weight']}"
 
-    if parameters.get("heterogeneity_cryodrgn_train_seed"):
-        options += f" --seed {parameters['heterogeneity_cryodrgn_train_seed']}"
+    if parameters.get("cryodrgn_train_seed"):
+        options += f" --seed {parameters['cryodrgn_train_seed']}"
     
-    if parameters.get("heterogeneity_cryodrgn_data_ind") and os.path.exists(parameters["heterogeneity_cryodrgn_data_ind"]):
-        options += f" --ind {parameters['heterogeneity_cryodrgn_data_ind']}"
+    if parameters.get("cryodrgn_data_ind") and os.path.exists(parameters["cryodrgn_data_ind"]):
+        options += f" --ind {parameters['cryodrgn_data_ind']}"
 
-    if not parameters["heterogeneity_cryodrgn_data_invert"]:
+    if not parameters["cryodrgn_data_invert"]:
         options += " --uninvert-data"
 
-    if not parameters["heterogeneity_cryodrgn_data_windowing"]:
+    if not parameters["cryodrgn_data_windowing"]:
         options += " --no-window"
     else:
-        options += f" --window-r {parameters['heterogeneity_cryodrgn_data_window_r']}"
+        options += f" --window-r {parameters['cryodrgn_data_window_r']}"
     
-    if parameters.get("heterogeneity_cryodrgn_data_dir"):
-        data_dir = project_params.resolve_path(parameters["heterogeneity_cryodrgn_data_dir"])
+    if parameters.get("cryodrgn_data_dir"):
+        data_dir = project_params.resolve_path(parameters["cryodrgn_data_dir"])
         assert os.path.isdir(data_dir), "The data input directory dose not exist"
         options += f" --datadir {data_dir}"
 
-    if parameters["heterogeneity_cryodrgn_data_lazy"]:
+    if parameters["cryodrgn_data_lazy"]:
         options += " --lazy"
 
-        if parameters['heterogeneity_cryodrgn_data_shufflersize'] > 0:
-            options += f" --shuffler-size {parameters['heterogeneity_cryodrgn_data_shufflersize']}"
+        if parameters['cryodrgn_data_shufflersize'] > 0:
+            options += f" --shuffler-size {parameters['cryodrgn_data_shufflersize']}"
 
     if parameters["slurm_verbose"]:
         options += " -v"
@@ -182,45 +182,45 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
     if False and  downsampled:
         options += " --preprocessed"
 
-    training_parameters = f"-n {parameters['heterogeneity_cryodrgn_train_epochs']} \
-        -b {parameters['heterogeneity_cryodrgn_train_batch']} \
-        --wd {parameters['heterogeneity_cryodrgn_train_wd']} \
-        --lr {parameters['heterogeneity_cryodrgn_train_lr']} \
-        --pretrain {parameters['heterogeneity_cryodrgn_pretrain']} \
-        --emb-type {parameters['heterogeneity_cryodrgn_emd_type']} \
-        --pose-lr {parameters['heterogeneity_cryodrgn_pose_lr']} \
-        --enc-layers {parameters['heterogeneity_cryodrgn_enc_hl']} \
-        --enc-dim {parameters['heterogeneity_cryodrgn_enc_dim']} \
-        --encode-mode {parameters['heterogeneity_cryodrgn_enc_mode']} \
-        --dec-layers {parameters['heterogeneity_cryodrgn_dec_hl']} \
-        --dec-dim {parameters['heterogeneity_cryodrgn_dec_dim']} \
-        --pe-type {parameters['heterogeneity_cryodrgn_pe_type']} \
-        --domain {parameters['heterogeneity_cryodrgn_dec_domain']} \
-        --activation {parameters['heterogeneity_cryodrgn_activation']}\
+    training_parameters = f"-n {parameters['cryodrgn_train_epochs']} \
+        -b {parameters['cryodrgn_train_batch']} \
+        --wd {parameters['cryodrgn_train_wd']} \
+        --lr {parameters['cryodrgn_train_lr']} \
+        --pretrain {parameters['cryodrgn_pretrain']} \
+        --emb-type {parameters['cryodrgn_emd_type']} \
+        --pose-lr {parameters['cryodrgn_pose_lr']} \
+        --enc-layers {parameters['cryodrgn_enc_hl']} \
+        --enc-dim {parameters['cryodrgn_enc_dim']} \
+        --encode-mode {parameters['cryodrgn_enc_mode']} \
+        --dec-layers {parameters['cryodrgn_dec_hl']} \
+        --dec-dim {parameters['cryodrgn_dec_dim']} \
+        --pe-type {parameters['cryodrgn_pe_type']} \
+        --domain {parameters['cryodrgn_dec_domain']} \
+        --activation {parameters['cryodrgn_activation']}\
         "
     
-    if parameters.get('heterogeneity_cryodrgn_enc_mask'):
-        training_parameters += f" --enc-mask {parameters['heterogeneity_cryodrgn_enc_mask']}"
-    if "conv" in parameters['heterogeneity_cryodrgn_enc_mode'] and parameters['heterogeneity_cryodrgn_use_real']:
+    if parameters.get('cryodrgn_enc_mask'):
+        training_parameters += f" --enc-mask {parameters['cryodrgn_enc_mask']}"
+    if "conv" in parameters['cryodrgn_enc_mode'] and parameters['cryodrgn_use_real']:
         training_parameters += " --use_real"
     
-    if "gaussian" in parameters['heterogeneity_cryodrgn_pe_type']:
-        training_parameters += f" --feat-sigma {parameters['heterogeneity_cryodrgn_feat_sigma']}"
+    if "gaussian" in parameters['cryodrgn_pe_type']:
+        training_parameters += f" --feat-sigma {parameters['cryodrgn_feat_sigma']}"
 
-    if parameters.get('heterogeneity_cryodrgn_pe_dim'):
-        training_parameters += f" --pe-dim {parameters['heterogeneity_cryodrgn_pe_dim']}"
+    if parameters.get('cryodrgn_pe_dim'):
+        training_parameters += f" --pe-dim {parameters['cryodrgn_pe_dim']}"
 
-    if parameters.get('heterogeneity_cryodrgn_train_beta'):
-        training_parameters += f" --beta {parameters['heterogeneity_cryodrgn_train_beta']}"
-    if parameters.get('heterogeneity_cryodrgn_train_beta_control'):
-        training_parameters += f" --beta-control {parameters['heterogeneity_cryodrgn_train_beta_control']}"    
+    if parameters.get('cryodrgn_train_beta'):
+        training_parameters += f" --beta {parameters['cryodrgn_train_beta']}"
+    if parameters.get('cryodrgn_train_beta_control'):
+        training_parameters += f" --beta-control {parameters['cryodrgn_train_beta_control']}"    
 
-    if not "None" in parameters['heterogeneity_cryodrgn_data_norm']:
-        training_parameters += f" --norm {parameters['heterogeneity_cryodrgn_data_norm']}"
-    if not parameters['heterogeneity_cryodrgn_train_amp']:
+    if not "None" in parameters['cryodrgn_data_norm']:
+        training_parameters += f" --norm {parameters['cryodrgn_data_norm']}"
+    if not parameters['cryodrgn_train_amp']:
         training_parameters += " --no-amp"
     
-    if parameters['heterogeneity_cryodrgn_pose_sgd']:
+    if parameters['cryodrgn_pose_sgd']:
         training_parameters += " --do-pose-sgd"
     
     if "tomo" in parameters["data_mode"]:
@@ -230,7 +230,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
 
     # TODO: multigpu option
 
-    command = f"{get_cryodrgn_path()} train_vae {particles_input} --datadir {input_dir} --ctf {ctf_input} --poses {pose_input} --zdim {parameters['heterogeneity_cryodrgn_train_zdim']} --num-epochs {parameters['heterogeneity_cryodrgn_train_epochs']} -o {output} {options} {training_parameters} {tomo}"
+    command = f"{get_cryodrgn_path()} train_vae {particles_input} --datadir {input_dir} --ctf {ctf_input} --poses {pose_input} --zdim {parameters['cryodrgn_train_zdim']} --num-epochs {parameters['cryodrgn_train_epochs']} -o {output} {options} {training_parameters} {tomo}"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -265,35 +265,35 @@ def cryodrgn_analyze(input_dir, output, parameters, downsampled):
 
     options = ''
 
-    if parameters['heterogeneity_cryodrgn_analysis_skipv']:
+    if parameters['cryodrgn_analysis_skipv']:
         options += " --skip-vol"
-    if parameters['heterogeneity_cryodrgn_analysis_skipumap']:
+    if parameters['cryodrgn_analysis_skipumap']:
         options += " --skip-umap"
-    if parameters['heterogeneity_cryodrgn_analysis_flip']:
+    if parameters['cryodrgn_analysis_flip']:
         options += " --flip"
-    if parameters['heterogeneity_cryodrgn_analysis_invert']:
+    if parameters['cryodrgn_analysis_invert']:
         options += " --invert"
     
-    if parameters.get('heterogeneity_cryodrgn_analysis_downsample'):
-        options += f" -d {parameters['heterogeneity_cryodrgn_analysis_downsample']}"
+    if parameters.get('cryodrgn_analysis_downsample'):
+        options += f" -d {parameters['cryodrgn_analysis_downsample']}"
     
     original_pixelsize = parameters['scope_pixel'] * parameters["data_bin"] * parameters["extract_bin"]
 
-    if downsampled and parameters.get('heterogeneity_cryodrgn_analysis_downsample'):
+    if downsampled and parameters.get('cryodrgn_analysis_downsample'):
         
-        output_pixel = original_pixelsize * (parameters["extract_box"] / parameters["heterogeneity_cryodrgn_downsample_size"]) * (parameters["heterogeneity_cryodrgn_downsample_size"]/ parameters["heterogeneity_cryodrgn_analysis_downsample"])
+        output_pixel = original_pixelsize * (parameters["extract_box"] / parameters["cryodrgn_downsample_size"]) * (parameters["cryodrgn_downsample_size"]/ parameters["cryodrgn_analysis_downsample"])
     
-    elif parameters.get('heterogeneity_cryodrgn_analysis_downsample'):
+    elif parameters.get('cryodrgn_analysis_downsample'):
 
-        output_pixel = original_pixelsize * (parameters["extract_box"] / parameters["heterogeneity_cryodrgn_analysis_downsample"])
+        output_pixel = original_pixelsize * (parameters["extract_box"] / parameters["cryodrgn_analysis_downsample"])
     
     else:
         output_pixel = original_pixelsize
 
-    if parameters['heterogeneity_cryodrgn_analysis_epoch'] == 0 or parameters['heterogeneity_cryodrgn_analysis_epoch'] >= parameters['heterogeneity_cryodrgn_train_epochs']:
-        parameters['heterogeneity_cryodrgn_analysis_epoch'] = parameters['heterogeneity_cryodrgn_train_epochs'] - 1
+    if parameters['cryodrgn_analysis_epoch'] == 0 or parameters['cryodrgn_analysis_epoch'] >= parameters['cryodrgn_train_epochs']:
+        parameters['cryodrgn_analysis_epoch'] = parameters['cryodrgn_train_epochs'] - 1
 
-    command = f"{get_cryodrgn_path()} analyze {input_dir} {parameters['heterogeneity_cryodrgn_analysis_epoch']} -o {output} --pc {parameters['heterogeneity_cryodrgn_analysis_pc']} --ksample {parameters['heterogeneity_cryodrgn_analysis_ksample']} --vol-start-index {parameters['heterogeneity_cryodrgn_analysis_istart']} {options} --Apix {output_pixel}"
+    command = f"{get_cryodrgn_path()} analyze {input_dir} {parameters['cryodrgn_analysis_epoch']} -o {output} --pc {parameters['cryodrgn_analysis_pc']} --ksample {parameters['cryodrgn_analysis_ksample']} --vol-start-index {parameters['cryodrgn_analysis_istart']} {options} --Apix {output_pixel}"
 
     local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
 
@@ -315,7 +315,7 @@ def run_cryodrgn_train(project_dir, parameters):
     name = parameters['data_set']
     starfile = name + "_particles.star"
 
-    input_star = Path(project_params.resolve_path(parameters["heterogeneity_input_star"]))
+    input_star = Path(project_params.resolve_path(parameters["cryodrgn_input_star"]))
     assert input_star.exists(), "Can not find input star file, run the extract stacks first."
 
     # this is the input star and partilces stacks folder
@@ -340,7 +340,7 @@ def run_cryodrgn_train(project_dir, parameters):
     os.chdir("input_data")
     
     boxsize = parameters['extract_box']
-    downsample_size = parameters['heterogeneity_cryodrgn_downsample_size']
+    downsample_size = parameters['cryodrgn_downsample_size']
 
     downsampled = cryodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size, threads=parameters['slurm_tasks'])
 
@@ -355,7 +355,6 @@ def run_cryodrgn_train(project_dir, parameters):
         saved_folder = os.path.join(project_dir, "train")
         logger.info(f"Training finished successfully, saving results to {saved_folder}")
 
-        shutil.copytree((working_path / "train_output"), Path(saved_folder), dirs_exist_ok=True)
     else:
         raise Exception("Training did not finish successfully")
 
@@ -363,7 +362,7 @@ def run_cryodrgn_train(project_dir, parameters):
     logger.info("Running CryoDRGN analyze")
     cryodrgn_analyze("train_output", "analyze_output", parameters, downsampled)
 
-    final_output = os.path.join(project_dir, "train", "analyze." + str(parameters["heterogeneity_cryodrgn_analysis_epoch"]))
+    final_output = os.path.join(project_dir, "train", "analyze." + str(parameters["cryodrgn_analysis_epoch"]))
     
     if not os.path.exists(final_output):
         Path(final_output).mkdir()
@@ -389,7 +388,7 @@ def run_cryodrgn_eval(project_dir, parameters):
     name = parameters['data_set']
     starfile = name + "_particles.star"
 
-    input_star = Path(project_params.resolve_path(parameters["heterogeneity_input_star"]))
+    input_star = Path(project_params.resolve_path(parameters["cryodrgn_input_star"]))
     assert input_star.exists(), "Can not find input star file, run the extract stacks first."
 
     # this is the input star and partilces stacks folder
@@ -414,7 +413,7 @@ def run_cryodrgn_eval(project_dir, parameters):
     os.chdir("input_data")
     
     boxsize = parameters['extract_box']
-    downsample_size = parameters['heterogeneity_cryodrgn_downsample_size']
+    downsample_size = parameters['cryodrgn_downsample_size']
 
     downsampled = cryodrgn_preprocess(starfile, particle_stack_list, name, boxsize, downsample_size, threads=parameters['slurm_tasks'])
 
@@ -429,6 +428,17 @@ def run_cryodrgn_eval(project_dir, parameters):
         saved_folder = os.path.join(project_dir, "train")
         logger.info(f"Training finished successfully, saving results to {saved_folder}")
 
+        # create link to the weights of the last epoch, if needed
+        weights = working_path / "train_output" / f"weights.{parameters['cryodrgn_train_epochs']-1}.pkl"
+        if not weights.exists():
+            current_dir = os.getcwd()
+            os.chdir(working_path / "train_output")
+            os.symlink( "weights.pkl", f"weights.{parameters['cryodrgn_train_epochs']-1}.pkl")
+            os.symlink( "z.pkl", f"z.{parameters['cryodrgn_train_epochs']-1}.pkl")
+            os.chdir(current_dir)
+
+        shutil.copytree((working_path / "train_output"), Path(saved_folder), symlinks=True, dirs_exist_ok=True)
+
         shutil.copytree((working_path / "train_output"), Path(saved_folder), dirs_exist_ok=True)
     else:
         raise Exception("Training did not finish successfully")
@@ -437,7 +447,7 @@ def run_cryodrgn_eval(project_dir, parameters):
     logger.info("Running CryoDRGN analyze")
     cryodrgn_analyze("train_output", "analyze_output", parameters, downsampled)
 
-    final_output = os.path.join(project_dir, "train", "analyze." + str(parameters["heterogeneity_cryodrgn_analysis_epoch"]))
+    final_output = os.path.join(project_dir, "train", "analyze." + str(parameters["cryodrgn_analysis_epoch"]))
     
     if not os.path.exists(final_output):
         Path(final_output).mkdir()
@@ -455,10 +465,10 @@ def run_cryodrgn_eval(project_dir, parameters):
             )
 
     analyze_output = str(working_path / "analyze_output")
-    for pc in range(parameters['heterogeneity_cryodrgn_analysis_pc']):
+    for pc in range(parameters['cryodrgn_analysis_pc']):
         for file in glob.glob(os.path.join(analyze_output,f"pc{pc+1}", "*.mrc")):
             arguments.append((file, radius, file.replace(Path(file).suffix,".webp")))
-    for file in glob.glob( os.path.join(analyze_output,f"kmeans{parameters['heterogeneity_cryodrgn_analysis_ksample']}","*.mrc")):
+    for file in glob.glob( os.path.join(analyze_output,f"kmeans{parameters['cryodrgn_analysis_ksample']}","*.mrc")):
         arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
     mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
 
