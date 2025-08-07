@@ -153,6 +153,7 @@ html_theme_options = {
                       "repo_name": "nextPYP",
                       "version_dropdown": True,
                         "version_info": [
+                            {"version": "../latest/docs", "title": "latest", "aliases": ["0.7.2"]},
                             {"version": "../0.7.2/docs", "title": "0.7.2", "aliases": ["latest"]},
                             {"version": "../0.7.1/docs", "title": "0.7.1", "aliases": []},
                             {"version": "../0.7.0/docs", "title": "0.7.0", "aliases": []},
