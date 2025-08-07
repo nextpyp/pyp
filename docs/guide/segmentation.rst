@@ -37,18 +37,18 @@ Once the location of each virion or vescicle center has been determined, the seg
 
 * (optional) In cases where the default value for the threshold gives innacurate results, users can select a different threshold by selecting a virion from the table to show its 3D slices and the segmentation thresholds (8 different thresholds are shown as yellow contours in columns 1-8). The highlighted column number represents the current threshold selection (default is 1, click on a different column to select a better threshold). If none of the columns look reasonable (or if you want to ignore the current virion), select the last column labeled as "-". Repeat this process for all virions in the tilt-series and all tilt-series in the dataset
 
-Open surfaces
--------------
+Open surfaces and filaments
+---------------------------
 
-``nextPYP`` can also segment *open* surfaces using the package `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_:
+``nextPYP`` can also segment *open* surfaces, actin and microtubules using the packages `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ and `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_:
 
-* Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Segmentation (open surfaces)`
+* Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Segmentation (open surfaces, filaments)`
 
-* Select the desired parameters for MemBrain-Seg, including the location of a pre-trained model (``*.ckpt``) downloadable from their `Github repository <https://github.com/teamtomo/membrain-seg>`_
+* Select the desired segmentation method and corresponding parameters. For example, if running membrain-seg, specify the location of a pre-trained model (``*.ckpt``) downloadable from their `Github repository <https://github.com/teamtomo/membrain-seg>`_
 
 * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-* Navigate to the :bdg-primary:`Segmentation (open surfaces)` block to inspect the results of the segmentation
+* Navigate to the :bdg-primary:`Segmentation (open surfaces, filaments)` block to inspect the results of the segmentation
 
 .. note::
 

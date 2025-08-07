@@ -5,7 +5,7 @@ Changelog
 v0.7.2
 ------
 
-.. nextpyp:: Released TBA
+.. nextpyp:: Released 8/7/2025
    :collapsible: open
    
    :fa:`star` **New features**
@@ -13,6 +13,10 @@ v0.7.2
    - Add `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_ routines to segment membranes, microtubules and actin in 3D.
    
    - Implement heterogeneity analysis using `cryoDRGN <https://cryodrgn.cs.princeton.edu/>`_ in single-particle pipeline.
+   
+   - Allow webserver to submit jobs by calling SLURM directly (without having to ssh into the login node). Useful when running nextPYP in a compute node without shh access to the SLURM login node.
+
+   - Add new option to export tilt-series alignments in IMOD format (*.xf and *.tlt files).
 
    :fa:`plus-square` **Improvements**
 
@@ -31,6 +35,10 @@ v0.7.2
    - Start using local torch models to avoid connecting to pytorch.org from the compute nodes.
 
    - Reduce batch size when running constrained refinement to improve responsiveness of logs.
+   
+   - Various updates to the documentation, including improved installation instructions.
+
+   - Move option to save particle stacks to *advanced* to discourage users from using it, since nextPYP does not need particle stacks.
 
    :fa:`bug` **Bug fixes**
    
@@ -51,6 +59,10 @@ v0.7.2
    - Generate *_volumes.txt file regardless of the method used for particle picking.
    
    - Fix bug when requesting GPU resources during NN-based particle picking. 
+   
+   - Fix issue when running MiLoPYP using only 3D patches (``3D only`` option).
+
+   - Fix issue with tomodrgn's filter-star command caused by using the wrong input star file.
 
 v0.7.1
 ------
