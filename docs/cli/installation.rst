@@ -177,6 +177,7 @@ Here is an example of how to specify these options in the configuration file:
 
   [slurm]
 
+  host = 'slurm-login.myorganization.org'
   path = '/opt/slurm/bin'
   queues = [ 'general', 'quick' ]
   gpuQueue = [ 'gpu' ]
