@@ -137,7 +137,7 @@ SLURM login node.
 
 Feel free to review any other configuration settings as well. The default configuration file has
 a few comments to describe the settings configured there, but you can find more information in the
-`full documentation for the configuration file <../config.html>`_.
+`full documentation for the configuration file <../reference/config.html>`_.
 
 .. note::
 
@@ -154,7 +154,10 @@ Configure how to access system resources by specifying the following parameters:
 * ``pyp.binds``
     Since ``PYP`` runs inside of a Singularity/Apptainer container, by default, no files from outside of the container will be visible to ``PYP``. To make files visible to ``PYP``, bind the directories containing those files into the container.
 
-* ``slurm.path`` (SLURM mode only)
+* ``slurm.host`` (SLURM mode only)
+    Hostname of a login node for the cluster.
+
+* ``slurm.path`` (SLURM mode only, optional)
     Path to the SLURM binaries on the login node.
 
 * ``slurm.queues`` (SLURM mode only)

@@ -35,18 +35,18 @@ Data pre-processing consists of doing movie frame alignment, CTF estimation and 
 
     # launch pre-processing
 
-    pyp -data_mode spr                                  \
-        -scope_voltage 300                              \
-        -scope_pixel 0.66                               \
-        -data_path="PATH_TO/spr_tutorial/14*.tif"       \
-        -gain_reference="PATH_TO/spr_tutorial/Gain.mrc" \
-        -gain_flipv                                     \
-        -detect_rad 80                                  \
-        -detect_method all                              \
-        -detect_dist 40                                 \
-        -slurm_tasks 7                                  \
-        -slurm_memory 70                                \
-        -slurm_merge_tasks 7                            \
+pyp -data_mode spr                                               \
+        -scope_voltage 300                                       \
+        -scope_pixel 0.66                                        \
+        -data_path="ABSOLUTE_PATH_TO/spr_tutorial/14*.tif"       \
+        -gain_reference="ABSOLUTE_PATH_TO/spr_tutorial/Gain.mrc" \
+        -gain_flipv                                              \
+        -detect_rad 80                                           \
+        -detect_method all                                       \
+        -detect_dist 40                                          \
+        -slurm_tasks 7                                           \
+        -slurm_memory 70                                         \
+        -slurm_merge_tasks 7                                     \
         -slurm_merge_memory 70
 
 
@@ -88,7 +88,7 @@ This step runs coarse 3D refinement to assign particle orientations using an ext
         -no-refine_fssnr              \
         -no-refine_priors             \
         -reconstruct_cutoff "0"       \
-        -refine_model PATH_TO/spr_tutorial/initial_model.mrc
+        -refine_model ABSOLUTE_PATH_TO/spr_tutorial/initial_model.mrc
 
 Almost every aspect of 3D refinement, reconstruction and classification is configurable. This is done using groups of parameters similar to those used for ``pyp``. The main groups of options for ``csp`` are: 
 

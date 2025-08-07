@@ -35,7 +35,7 @@ Data pre-processing consists of movie frame alignment, tilt-series alignment, to
     pyp -data_mode tomo                                 \
         -scope_voltage 300                              \
         -scope_pixel 1.35                               \
-        -data_path="/path_to_frames/*.tif"              \
+        -data_path="ABSOLUTE_PATH_TO_FRAMES/*.tif"      \
         -ctf_max_res 5.0                                \
         -scope_tilt_axis 85.3                           \
         -tomo_rec_binning 8                             \
