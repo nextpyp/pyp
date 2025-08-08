@@ -168,7 +168,7 @@ def run_membrain(project_dir, name, parameters ):
     local_input = f"./{name}.rec"
 
     # copy the input tomogram to scratch space
-    assert os.path.exists(local_input), f"{local_input} dose not exist, please run preprocessing first"
+    assert os.path.exists(local_input), f"{local_input} does not exist, please run preprocessing first"
 
     output = name + "_seg.rec"
 

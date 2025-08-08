@@ -153,37 +153,18 @@ def tardis_segmentation(parameters, input, local_output):
 
 def run_tardis(project_dir, name, parameters ):
 
-    # always try to look for tomograms from parent project
-    if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):
-        tomogram_source = project_params.resolve_path(parameters["data_parent"])
-    else:
-        tomogram_source = project_dir
-        logger.info("Using current project tomograms for segmentation")
-
     local_input = f"./{name}.rec"
 
     # copy the input tomogram to scratch space
-    assert os.path.exists(local_input), f"{local_input} dose not exist, please run preprocessing first"
+    assert os.path.exists(local_input), f"{local_input} does not exist, please run preprocessing first"
 
     output = name + "_seg.rec"
 
-    if parameters["tomo_mem_preprocessing"]:
-        rescaled, preprocessed = membrain_preprocessing(parameters, input=local_input)
-    else:
-        rescaled = False
-        preprocessed = local_input
-    
     local_output = "seg_out"
-    tardis_segmentation(parameters, input=preprocessed, local_output=local_output)
+    tardis_segmentation(parameters, input=local_input, local_output=local_output)
     
-    if rescaled:
-        rescale_input = glob.glob(f"./Predictions/*_semantic.mrc")[0]
-        command = f"{get_tardis_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path {output}"
-
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
-    else:
-        target = glob.glob(f"./Predictions/*_semantic.mrc")[0]
-        shutil.move(target, output)
+    target = glob.glob(f"./Predictions/*_semantic.mrc")[0]
+    shutil.move(target, output)
 
     # produce poor man's visualization
     reconstruction = mrc.read(local_input)
