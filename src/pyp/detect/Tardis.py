@@ -9,7 +9,6 @@ from pyp.inout.image import mrc
 from pyp.system import local_run, project_params
 from pyp.system.logging import initialize_pyp_logger
 from pyp.utils import get_relative_path
-from pyp.system.singularity import get_pyp_configuration
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -151,7 +150,7 @@ def tardis_segmentation(parameters, input, local_output):
         # save result
         mrc.write(clean, segmentation)
 
-def run_tardis(project_dir, name, parameters ):
+def run_tardis(name, parameters ):
 
     local_input = f"./{name}.rec"
 
@@ -171,6 +170,10 @@ def run_tardis(project_dir, name, parameters ):
     segmentation = mrc.read(output)
     max = np.max(reconstruction)
     threshold = segmentation.max()
+    # apparently tardis sometimes swaps axes, so we need to check and fix
+    if reconstruction.shape != segmentation.shape:
+        segmentation = np.swapaxes(segmentation, 0, 1)
+        mrc.write(segmentation, output)
     visualization = np.where( segmentation == threshold, max, reconstruction )
     mrc.write(visualization,local_input)
 

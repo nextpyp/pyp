@@ -5177,7 +5177,7 @@ if __name__ == "__main__":
                 if parameters.get("tomo_mem_method") == "membrain":
                     new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
                 else:
-                    new_reconstruction = Tardis.run_tardis( project_path, name, parameters )
+                    new_reconstruction = Tardis.run_tardis( name, parameters )
                 
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
 
