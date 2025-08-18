@@ -644,7 +644,7 @@ Step 15: Refinement after movie frame refinement
 
         - Set ``Tilt-angle range (degrees)`` and ``Tilt-axis angle range (degrees)`` to 1.0
 
-        - Set ``Tilt-axis angle range (degrees)`` to 10.0        
+        - Set ``Tilt-axis position range (A)`` to 10.0        
 
         - Check ``Refine particle alignments``
 
