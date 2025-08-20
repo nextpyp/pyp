@@ -997,10 +997,11 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
             )
             local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
 
-        detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
-
     if parameters["tomo_rec_erase_fiducials"]:
 
+        if not os.path.exists(gold_mod):
+            detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+        
         if not os.path.exists(gold_mod):
             logger.error(f"Failed to erase gold becasue no fiducials were found in tomogram")
             return
