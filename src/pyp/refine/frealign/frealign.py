@@ -1773,6 +1773,11 @@ def split_reconstruction(
         blurring = "yes" if fp["reconstruct_lblur"] else "no"
         th_input = "no"
 
+        if fp.get("reconstruct_apply_symmetry"):
+            symmetry = project_params.param(fp["particle_sym"], i)
+        else:
+            symmetry = "C1"
+
         command = (
             "{0}/reconstruct3d << eot >> {1} 2>&1\n".format(
                 frealign_paths["cistem2"], reclogfile
@@ -1785,7 +1790,7 @@ def split_reconstruction(
             + f"{name}_map2.mrc\n"
             + f"output.mrc\n"
             + f"{name}_n{first}.res\n"
-            + f"{project_params.param(fp['particle_sym'], i)}\n"
+            + f"{symmetry}\n"
             + f"{first}\n"
             + f"{last}\n"
             + f"{pixel}\n"
