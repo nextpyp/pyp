@@ -2337,8 +2337,11 @@ EOF
         alignmentSVA = {}
         with open(refinement) as myfile:
             for line in myfile.readlines():
-                particle_name = os.path.basename(line.split()[-1])
-                alignmentSVA[particle_name] = line.split()
+                if len(line.split()) > 0:
+                    particle_name = os.path.basename(line.split()[-1])
+                    alignmentSVA[particle_name] = line.split()
+                else:
+                    logger.warning(f"Skipping empty line in {refinement}")
 
         fiducials = np.empty([0])
         if parameters.get("extract_gold"):
