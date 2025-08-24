@@ -2783,56 +2783,56 @@ def merge_par_selection(input_folder, output_folder, films, selected, parameters
         logger.error(f"Can't find corresponding parfiles: {ipnut_1}")
         sys.exit()
     
-    for image in films:
-        parameter_file = os.path.join(input_1, image + "_r%02d.cistem" % selected[0])
-        par_obj = cistem_star_file.Parameters.from_file(parameter_file)
-        occ_col = par_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
-        pardata_keep1 = par_obj.get_data()
-        extended_parameter = par_obj.get_extended_data()
-    
-        n = pardata_keep1.shape[0]
-
-        if len(selected) > 1:
-
-            for k in selected[1:]:
-                input_k = re.sub("_r[0-9][0-9]_", "_r%02d_" % k, input_folder)
-
-                if os.path.exists(input_k) and input_k.endswith(".bz2"):
-                    decompressed_inputk = input_k.replace(".bz2", "")
-
-                    frealign_parfile.Parameters.decompress_parameter_file_and_move(file=Path(input_k), 
-                                                                                new_file=Path(decompressed_inputk), 
-                                                                                micrograph_list=[],
-                                                                                threads=parameters["slurm_tasks"]
-                                                                                )
-                    input_k = decompressed_inputk
-
-                elif not os.path.exists(input_k):
-                    logger.error("Can't find corresponding parfiles")
-                    sys.exit()
-
-                parameter_file = os.path.join(input_k, image + "_r%02d.cistem" % k)
-                par_obj_k = cistem_star_file.Parameters.from_file(parameter_file)
-                pardatak = par_obj_k.get_data()
-                mask = (pardatak[:, occ_col] >= parameters["clean_min_occ"]).reshape(n, 1)
-                pardata_keep1 = np.where(mask, pardatak, pardata_keep1)
-
-        occ_keepmask = pardata_keep1[:, 11] >= parameters["clean_min_occ"]
+    with tqdm(desc="Progress", total=len(films), file=TQDMLogger()) as pbar:
+        for image in films:
+            parameter_file = os.path.join(input_1, image + "_r%02d.cistem" % selected[0])
+            par_obj = cistem_star_file.Parameters.from_file(parameter_file)
+            occ_col = par_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
+            pardata_keep1 = par_obj.get_data()
+            extended_parameter = par_obj.get_extended_data()
         
-        if np.any(occ_keepmask):
+            n = pardata_keep1.shape[0]
 
-            pardata_keep1[:, occ_col] = np.where(occ_keepmask, 100, 0)
+            if len(selected) > 1:
 
-            new_par_obj = cistem_star_file.Parameters()
-            output_binary = os.path.join(output_folder, image + "_r01.cistem")
-            output_extended = output_binary.replace(".cistem", "_extended.cistem")
-            new_par_obj.set_data(data=pardata_keep1, extended_parameters=extended_parameter)
-            new_par_obj.sync_particle_occ(ptl_to_prj=False)
-            new_par_obj.to_binary(output=output_binary, extended_output=output_extended)
+                for k in selected[1:]:
+                    input_k = re.sub("_r[0-9][0-9]_", "_r%02d_" % k, input_folder)
 
-        else:
-            all_zero_list.append(image)
+                    if os.path.exists(input_k) and input_k.endswith(".bz2"):
+                        decompressed_inputk = input_k.replace(".bz2", "")
+                        if not os.path.isdir(decompressed_inputk):
+                            frealign_parfile.Parameters.decompress_parameter_file_and_move(file=Path(input_k), 
+                                                                                        new_file=Path(decompressed_inputk), 
+                                                                                        micrograph_list=[],
+                                                                                        threads=parameters["slurm_tasks"]
+                                                                                        )
+                        input_k = decompressed_inputk
+                    elif not os.path.exists(input_k):
+                        logger.error("Can't find corresponding parfiles")
+                        sys.exit()
 
+                    parameter_file = os.path.join(input_k, image + "_r%02d.cistem" % k)
+                    par_obj_k = cistem_star_file.Parameters.from_file(parameter_file)
+                    pardatak = par_obj_k.get_data()
+                    mask = (pardatak[:, occ_col] >= parameters["clean_min_occ"]).reshape(n, 1)
+                    pardata_keep1 = np.where(mask, pardatak, pardata_keep1)
+
+            occ_keepmask = pardata_keep1[:, 11] >= parameters["clean_min_occ"]
+            
+            if np.any(occ_keepmask):
+
+                pardata_keep1[:, occ_col] = np.where(occ_keepmask, 100, 0)
+
+                new_par_obj = cistem_star_file.Parameters()
+                output_binary = os.path.join(output_folder, image + "_r01.cistem")
+                output_extended = output_binary.replace(".cistem", "_extended.cistem")
+                new_par_obj.set_data(data=pardata_keep1, extended_parameters=extended_parameter)
+                new_par_obj.sync_particle_occ(ptl_to_prj=False)
+                new_par_obj.to_binary(output=output_binary, extended_output=output_extended)
+
+            else:
+                all_zero_list.append(image)
+            pbar.update(1)
     return all_zero_list
 
 ##############
