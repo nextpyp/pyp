@@ -311,6 +311,10 @@ def parse_arguments(block):
                 parameters = project_params.inherit_from_parent(parameters_existing, params_file_path )
                 parameters['csp_no_stacks'] = dummy_parameters['csp_no_stacks']
                 parameters["refine_iter"] = 2
+                if parameters.get("micromon_block") == "tomo-fine-refinement":
+                    for k in parent_parameters.keys():
+                        if k.startswith("clean_"):
+                            parameters[k] = parent_parameters[k]
 
             if parameters_existing:
                 if "data_set" in parameters_existing:
