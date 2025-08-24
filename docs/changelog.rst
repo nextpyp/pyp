@@ -2,6 +2,30 @@
 Changelog
 =========
 
+v0.7.3
+------
+
+.. nextpyp:: Released TBA
+   :collapsible: open
+   
+   :fa:`plus-square` **Improvements**
+
+   - Improve pre-processing efficiency by skipping gold fiducial detection when they won't be erased during reconstruction.
+
+   - Improve efficiency during particle filtering by avoiding multiple decompressions of the same parameter file.
+
+   - Improve efficiency during tomography refinement by avoiding unnecessary linking of subtomogram files.
+
+   :fa:`bug` **Bug fixes**
+   
+   - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
+
+   - Fix bug when parsing input parameters during particle filtering.
+
+   - Fix bug when parsing 3D refinement metadata and applying the results to particles extracted using different box sizes.
+
+   - Fix bug that caused symmetry to be applied incorrectly when option to symmetrize maps was disabled.
+
 v0.7.2
 ------
 
