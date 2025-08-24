@@ -2204,8 +2204,7 @@ def tomo_extract_coordinates(
     cutboxsize = int(parameters["extract_box"]) * int(parameters["extract_bin"])
 
     # virions are binned by 2 by default, if spk file is provided this will be reset to 1
-    subvol_bin = float(parameters["extract_bin"]) if "extract_bin" in parameters else 1
-    final_bin = 1.0
+    subvol_bin = float(parameters["tomo_ext_binn"]) if "tomo_ext_binn" in parameters else 1
 
     if parameters.get("tomo_vir_rad", 0) > 0:
         virion_bin, virion_boxsize = get_vir_binning_boxsize(parameters["tomo_vir_rad"], parameters["scope_pixel"])
@@ -2484,14 +2483,17 @@ EOF
                     )
                     norm0, norm1, norm2 = 0, 0, 1
 
-                cutOffset = float(spike_string[31])
+                # retreive offset from 3DAVG refinement
+                cutOffset = float(spike_string[31]) * subvol_bin
 
-                # transform to unbinned shifts
-                cutOffset *= virion_bin * subvol_bin / float(parameters["extract_bin"])
-                m03 *= virion_bin * subvol_bin / float(parameters["extract_bin"])
-                m07 *= virion_bin * subvol_bin / float(parameters["extract_bin"])
-                m11 *= virion_bin * subvol_bin / float(parameters["extract_bin"])
+                # reset offset since this column is used to store correlation scores
+                cutOffset = 0
 
+                # transform shifts to unbinned coordinates
+                m03 *= subvol_bin
+                m07 *= subvol_bin
+                m11 *= subvol_bin
+ 
                 # get the transformed 3D location after SVA
                 [dx, dy, dz] = getShiftsForRecenter(
                     [norm0, norm1, norm2],
@@ -2550,8 +2552,6 @@ EOF
                         )
                         tilt_image_counter += 1
                         continue
-
-                    # print '      Processing image %i at %f degrees tilt' % ( tilt_image_counter, tilt )
 
                     # convert to radians
                     angle = math.radians(tilt)
@@ -2634,17 +2634,18 @@ EOF
                     )
 
                     # add x y shifts from STA
-                    tilt_X_true += float(fp[3]) * int(parameters["extract_bin"])
-                    tilt_Y_true += float(fp[4]) * int(parameters["extract_bin"])
-                    fp[3] = 0.0
-                    fp[4] = 0.0
+                    tilt_X_true += fp[3]
+                    tilt_Y_true += fp[4]
 
                     # make them integers and store the errors in the columns of parfile
                     tilt_X = int(math.floor(tilt_X_true))
                     tilt_Y = int(math.floor(tilt_Y_true))
 
-                    tilt_X_err = 0 # (tilt_X_true - tilt_X) * float(parameters["scope_pixel"])
-                    tilt_Y_err = 0 # (tilt_Y_true - tilt_Y) * float(parameters["scope_pixel"])
+                    tilt_X_err = tilt_X - tilt_X_true
+                    tilt_Y_err = tilt_Y - tilt_Y_true
+                    
+                    fp[3] = tilt_X_err
+                    fp[4] = tilt_Y_err
 
                     # check if particle completely inside micrograph (skip if not inside)
                     if (
@@ -2749,30 +2750,14 @@ EOF
                         df1 = 0
                         df2 = 0
 
-                    # this is the global particle index (from the autopick txt file)
-                    ptl_index = global_spike_counter
-                    dose = 0
-                    scan_order = int(scan_order_list[tilt_image_counter - 1])
-
-                    # use confidence column to store frame index
-                    confidence = 0
-
-                    ptl_CCX = tilt_image_counter
-
                     # format parameter sequence and add to current .par file
                     ppsi = ptheta = pphi = 0
-                    mag = float(parameters["scope_mag"])
 
                     occ = 100
                     sigma = 1
                     score = random.uniform(0, 1) * 10
-                    # score = 0.5
-                    logp = change = 0
+                    logp = 0
 
-                    # AB - 0verride film number if we are processing each movie independently
-                    if parameters["csp_no_stacks"]:
-                        film = 0
-                    
                     ppsi = particle_orientation[0]
                     ptheta = particle_orientation[1]
                     pphi = particle_orientation[2]
