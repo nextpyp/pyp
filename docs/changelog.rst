@@ -26,6 +26,8 @@ v0.7.3
 
    - Fix bug that caused symmetry to be applied incorrectly when option to symmetrize maps was disabled.
 
+   - Fix bug when producing .bild files for some types of symmetries.
+
 v0.7.2
 ------
 
