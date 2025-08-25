@@ -1,6 +1,6 @@
 [project]
 name = "nextPYP"
-version = "0.7.2"
+version = "0.7.3"
 authors = [
   { name="Alberto Bartesaghu", email="alberto.bartesaghi@duke.edu" },
 ]
