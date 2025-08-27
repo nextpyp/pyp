@@ -2551,7 +2551,7 @@ name = "Mini-batch size"
 description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be divisible by the number of gpus"
 type = "int"
 default = 4
-condition = { arg="method", value="isonet" }
+condition = { arg="method_train", value="isonet" }
 
 [tabs.tomo_denoise.isonet_steps]
 name = "Steps per epoch"
