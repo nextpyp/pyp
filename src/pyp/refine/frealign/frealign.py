@@ -2383,8 +2383,7 @@ def build_map_montage( map_file, radius, output ):
     z = rec.shape[0]
 
     # what if radius is larger than box
-    if radius > z / 2:
-        logger.warning("Particle radius falls outside box %f > %f", radius, z / 2)
+    if radius == 0 or radius > z / 2:
         radius = z / 2 - 1
 
     #
