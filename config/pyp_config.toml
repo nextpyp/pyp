@@ -175,6 +175,11 @@ name = "TOMO Coarse Refinement (legacy)"
 description = "3D refinement and classification (legacy)"
 tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "slurm" ]
 
+[blocks.tomo_sva_refine]
+name = "Sub-volume averaging"
+description = "Ab-initio alignment through classification"
+tabs = [ "sva", "slurm" ]
+
 [blocks.tomo_drgn_vae]
 name = "tomoDRGN VAE"
 description = "tomoDRGN (train-vae)"
@@ -7205,74 +7210,132 @@ condition = {arg="mode", value="convergence_nn"}
 # Sub-Volume Averaging
 
 [tabs.sva]
-_name = "Sub-tomogram averaging"
+_name = "Sub-volume averaging"
 _description = "Settings for sub-tomogram averaging using 3DAVG"
 
-[tabs.sva.mode]
-name = ""
-description = ""
-type = "enum"
-enum = { 0="", 1="", 2="", 3="" }
-default = "0"
+[tabs.sva.symmetry]
+name = "Order of C symmetry"
+description = "C symmetry to apply to reference for alignment (only C symmetry is supported)"
+type = "int"
+default = 1
 
-[tabs.sva.iter]
-name = ""
+[tabs.sva.refine_iter]
+name = "Iteration number"
 description = ""
 type = "int"
 default = 1
 
+[tabs.sva.mode]
+name = "Refinement mode"
+description = "Modes should be run in sequence (0-3)"
+type = "enum"
+enum = { 0="0 - Global average and sub-volume centering", 1="1 - Sub-volume classification", 2="2 - Alignment between sub-volume averages", 3="3 - Align sub-volumes to reference" }
+default = "0"
+
+[tabs.sva.parfile]
+name = "Alignments from sub-volume averaging (*.txt)"
+description = "Parameter file containing initial alignment information"
+type = "path"
+path = { type="files" }
+input = { type="txtfile" }
+condition = { arg='mode', value="0" }
+
+[tabs.sva.zcorr]
+name = "Cut offset (binned voxels)"
+description = "Apply offset to sub-volumes"
+type = "int"
+default = 0
+condition = { arg='mode', value="0" }
+
+[tabs.sva.class_num]
+name = "Classes"
+description = "Number of classes"
+type = "int"
+default = 10
+condition = { arg='mode', value="1" }
+
+[tabs.sva.class_selection]
+name = "Class selection"
+description = "Comma separated list of class indexes to keep (base-0). First class index will be used as reference for alignment"
+type = "str"
+default = ""
+condition = { arg='mode', value="2" }
+
+[tabs.sva.centering_iterations]
+name = "Centering iterations"
+description = "Number of refinement iterations against global average"
+type = "int"
+default = 0
+condition = { arg='mode', value="0" }
+
+[tabs.sva.tol_angle]
+name = "Out-of-plane rotation tolerance (degrees)"
+description = "Limit out-of-plane rotations to this value"
+type = "int"
+default = 10
+condition = { arg='mode', value=["2", "3" ] }
+
+[tabs.sva.pre_selection_fraction]
+name = "Outlier rejection before classification (fraction)"
+description = "Only classify top fraction of volumes based on similarity to global average"
+type = "float"
+default = 0.9
+advanced = true
+condition = { arg='mode', value="1" }
+
+[tabs.sva.cluster_selection_fraction]
+name = "Outlier rejection during classification (fraction)"
+description = "Only keep top fraction of sub-volumes within each class average"
+type = "float"
+default = 0.9
+advanced = true
+condition = { arg='mode', value="1" }
+
+[tabs.sva.class_refinement_iterations]
+name = "Refinement iterations"
+description = "Iterative refinement of class alignments"
+type = "int"
+default = 3
+advanced = true
+condition = { arg='mode', value="2" }
+
+[tabs.sva.class_selection_fraction]
+name = "Outlier rejection during class selection (fraction)"
+description = "Only keep top fraction of classes based on similarity to current reference"
+type = "float"
+default = 0.8
+advanced = true
+condition = { arg='mode', value="2" }
+
 [tabs.sva.mask]
-name = ""
-description = ""
+name = "Mask radius (binned voxels)"
+description = "Mask radius in X, Y and Z"
 type = "str"
 default = "25,25,25"
 
 [tabs.sva.tol_shifts]
-name = ""
-description = ""
-type = "float"
-default = 10.0
-
-[tabs.sva.tol_angle]
-name = ""
-description = ""
-type = "int"
-default = 10
-
-[tabs.sva.zcorr]
-name = ""
-description = ""
+name = "Shifts tolerance (binned voxels)"
+description = "Limit translations to this value"
 type = "int"
 default = 10
 
 [tabs.sva.highpass]
-name = ""
-description = ""
+name = "High-pass filter (cutoff, decay)"
+description = "Cutoff and decay for high-pass filter (DC=0, Nyquist=1)"
 type = "str"
 default = "0.05,0.01"
 
 [tabs.sva.lowpass]
-name = ""
-description = ""
+name = "Low-pass filter (cutoff, decay)"
+description = "Cutoff and decay for low-pass filter (DC=0, Nyquist=1)"
 type = "str"
 default = "0.25,0.05"
-
-[tabs.sva.cpu]
-name = ""
-description = ""
-type = "int"
-default = 320
 
 [tabs.sva.filter_map]
 name = ""
 description = ""
 type = "str"
-
-[tabs.sva.plot]
-name = ""
-description = ""
-type = "bool"
-default = false
+hidden = true
 
 # Post-processing Parameters (relion_postprocess)
 
