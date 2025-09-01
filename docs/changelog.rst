@@ -8,6 +8,10 @@ v0.7.3
 .. nextpyp:: Released TBA
    :collapsible: open
    
+   :fa:`star` **New features**
+   
+   -  New block for running traditional sub-volume averaging. This block can be used for ab-initio alignment through classification, as described in `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_.
+   
    :fa:`plus-square` **Improvements**
 
    - Improve pre-processing efficiency by skipping gold fiducial detection when they won't be erased during reconstruction.
