@@ -209,6 +209,26 @@ def create_tomohalf_swarm_file(parameters, files, timestamp, swarm_file="cryocar
     return swarm_file, gpu
 
 
+def create_sva_swarm_file(files, parameters, iteration, swarm_file="svaswarm.swarm"):
+    f = open(swarm_file, "w")
+    f.write(
+        "\n".join(
+            [
+                "cd '{0}'; export svaswarm=svaswarm; {1} --file {2} --iter {3} --no-skip --no-debug 2>&1 | tee ../log/{2}_sva.log".format(
+                    os.getcwd(),
+                    run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"]),
+                    s,
+                    iteration,
+                )
+                for s in files
+            ]
+        )
+    )
+    f.write("\n")
+    f.close()
+
+    return swarm_file
+
 def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swarm"):
     f = open(swarm_file, "w")
     f.write(
@@ -676,3 +696,76 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
 
     os.chdir(current_directory)
 
+def launch_sva(micrograph_list: list, parameters: dict, swarm_folder: Path):
+    """launch_sva Launch sva
+
+    Parameters
+    ----------
+    micrograph_list : list
+        List of tilt-series/micrographs to submit 
+    parameters : dict
+        PYP parameters
+    swarm_folder : Path
+        Path to the swarm folder
+    """
+
+    current_directory = Path().cwd()
+    if not os.path.exists(swarm_folder):
+        os.mkdir(swarm_folder)
+    os.chdir(swarm_folder)
+
+    project_params.save_pyp_parameters(parameters=parameters,path='..')
+
+    if len(micrograph_list) > 0:
+        swarm_file = create_sva_swarm_file(
+            micrograph_list, parameters, parameters["sva_refine_iter"], "svaswarm.swarm"
+        )
+    else:
+        parameters["slurm_merge_only"] = True
+
+    jobtype = "svaswarm"
+    jobname = "Iteration %d (split)" % parameters["sva_refine_iter"] if Web.exists else "svaswarm"
+    
+    # submit jobs to batch system
+    import glob
+    scratch_folder = swarm_folder.parents[0] / 'frealign' / 'scratch'
+    id = submit_jobs(
+        ".",
+        swarm_file,
+        jobtype,
+        jobname,
+        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+        threads=parameters["slurm_tasks"],
+        memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+        gres=parameters["slurm_gres"],
+        account=parameters.get("slurm_account"),
+        walltime=parameters["slurm_walltime"],
+        tasks_per_arr=parameters["slurm_bundle_size"],
+        csp_no_stacks=parameters["csp_no_stacks"],
+        verbose=parameters["slurm_verbose"],
+    )
+
+    # just use the first array job as prerequisite
+    id = id.strip()
+
+    jobtype = "svamerge"
+    jobname = "Iteration %d (merge)" % parameters["sva_refine_iter"] if Web.exists else "svamerge"
+
+    submit_jobs(
+        ".",
+        run_pyp(command="pyp"),
+        jobtype,
+        jobname,
+        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+        scratch=0,
+        threads=parameters["slurm_merge_tasks"],
+        memory=parameters["slurm_merge_tasks"]*parameters["slurm_merge_memory_per_task"],
+        gres=parameters["slurm_merge_gres"],
+        account=parameters.get("slurm_merge_account"),
+        walltime=parameters["slurm_merge_walltime"],
+        dependencies=id,
+        verbose=parameters["slurm_verbose"],
+    )
+
+    # go back to project directory
+    os.chdir(current_directory)
