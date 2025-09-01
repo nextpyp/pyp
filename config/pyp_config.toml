@@ -2506,7 +2506,7 @@ description = "Trained model (.h5)"
 type = "path"
 path = { type="files" }
 input = { type="isonetTrainedModel" }
-condition = { arg="method", value=["isonet"] }
+condition = { arg="method_train", value=["isonet"] }
 hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.isonet_pretrained_model]
@@ -2660,7 +2660,7 @@ name = "Use percent thresholding"
 description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively. Otherwise, normalize input to 0 mean and unit standard deviation"
 type = "bool"
 default = true
-condition = { arg="method", value="isonet" }
+condition = { arg="method_train", value="isonet" }
 
 [tabs.tomo_denoise.isonet_debug]
 name = "Debug"
