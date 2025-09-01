@@ -7214,8 +7214,8 @@ _name = "Sub-volume averaging"
 _description = "Settings for sub-tomogram averaging using 3DAVG"
 
 [tabs.sva.symmetry]
-name = "Order of C symmetry"
-description = "C symmetry to apply to reference for alignment (only C symmetry is supported)"
+name = "C symmetry order"
+description = "C symmetry to apply to reference for alignment (1=no symmetry)"
 type = "int"
 default = 1
 
@@ -7229,7 +7229,7 @@ default = 1
 name = "Refinement mode"
 description = "Modes should be run in sequence (0-3)"
 type = "enum"
-enum = { 0="0 - Global average and sub-volume centering", 1="1 - Sub-volume classification", 2="2 - Alignment between sub-volume averages", 3="3 - Align sub-volumes to reference" }
+enum = { 0="mode 0 - global average and centering", 1="mode 1 - classification", 2="mode 2 - alignment of averages", 3="mode 3 - alignment to reference" }
 default = "0"
 
 [tabs.sva.parfile]
@@ -7307,27 +7307,27 @@ default = 0.8
 advanced = true
 condition = { arg='mode', value="2" }
 
-[tabs.sva.mask]
-name = "Mask radius (binned voxels)"
-description = "Mask radius in X, Y and Z"
-type = "str"
-default = "25,25,25"
-
 [tabs.sva.tol_shifts]
-name = "Shifts tolerance (binned voxels)"
+name = "Translation tolerance (binned voxels)"
 description = "Limit translations to this value"
 type = "int"
 default = 10
 
+[tabs.sva.mask]
+name = "Mask radius (binned voxels)"
+description = "Mask radius in X, Y and Z for alignment/classification"
+type = "str"
+default = "25,25,25"
+
 [tabs.sva.highpass]
 name = "High-pass filter (cutoff, decay)"
-description = "Cutoff and decay for high-pass filter (DC=0, Nyquist=1)"
+description = "Cutoff and decay for high-pass filter (0-1, DC-Nyquist)"
 type = "str"
 default = "0.05,0.01"
 
 [tabs.sva.lowpass]
 name = "Low-pass filter (cutoff, decay)"
-description = "Cutoff and decay for low-pass filter (DC=0, Nyquist=1)"
+description = "Cutoff and decay for low-pass filter (0-1, DC-Nyquist)"
 type = "str"
 default = "0.25,0.05"
 

@@ -115,6 +115,10 @@ from pyp.system.wrapper_functions import (
 )
 from pyp.utils import timer, movie2regex, symlink_relative, symlink_relative_pattern
 
+from pyp.refine.tomo_avg import sub_tomo_avg as sub_tomo_avg
+from pyp.system.set_up import prepare_3davg_dir, prepare_3davg_xml
+from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
+
 __author__ = "Alberto Bartesaghi"
 __maintainer__ = "Alberto Bartesaghi"
 __email__ = "alberto.bartesaghi@duke.edu"
@@ -2650,6 +2654,329 @@ def csp_extract_frames(
             return particles
 
 
+def sva_initialize_and_run(parameters,dataset,iter,mode=0):
+    
+    # Create directories if needed
+    prepare_3davg_dir()
+
+    # load 3DAVG parameters
+    sva_parameters = {}
+    for k in parameters.keys():
+        if k.startswith('sva_'):
+            sva_parameters[k.replace('sva_','')] = parameters[k]
+    sva_parameters['iter'] = iter
+    sva_parameters['mode'] = mode
+    sva_parameters['dataset'] = dataset
+    sva_parameters['classes'] = parameters['sva_class_num']
+    sva_parameters['symmetry'] = parameters['sva_symmetry']
+    sva_parameters['filter_map'] = ""
+    sva_parameters['slurm_queue'] = None
+    
+    if mode == 3 or not parameters.get('slurm_launch_tasks'):
+        sva_parameters['slurm_tasks'] = parameters['slurm_tasks']
+    else:
+        sva_parameters['slurm_tasks'] = parameters.get('slurm_launch_tasks')
+    
+    # prepare xmls in protocol folder if they do not exist
+    prepare_3davg_xml(dataset)
+
+    sub_tomo_avg.sva_iterate(parameters, sva_parameters, iter, submit = False)
+    
+    # cleanup
+    try:
+        for file in glob.glob('mpi_*tmp'):
+            os.remove(file)
+    except:
+        logger.warning(f"Failed to clean up after 3DAVG")
+    
+@timer.Timer(
+    "sva_swarm", text="Total time elapsed (sva_swarm): {}", logger=logger.info
+)
+def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
+    """Sub-volume averaging.
+
+    Parameters
+    ----------
+    filename : str, Path
+        Movie filename
+    parameters : dict
+        Main configurations taken from .pyp_config
+    """
+    
+    project_dir = os.getcwd()
+    
+    dataset = parameters.get('data_set')
+    
+    # generate tilt-series specific parameter file in local scratch
+    input_file_name = os.path.join( project_dir, "3DAVG", f"{dataset}_iteration_{iteration:03d}_refined_volumes.txt")
+    os.makedirs(os.path.join(os.environ['PYP_SCRATCH'],'3DAVG'), exist_ok=True)
+    output_file_name = f"{os.environ['PYP_SCRATCH']}/3DAVG/{dataset}_volumes_pre_centered_clean_1.txt"
+    with open(input_file_name) as input:
+        with open(output_file_name,'w') as output:
+            particle_counter = 1
+            for line in input.readlines():
+                if line.startswith('number'):
+                    output.write(line)
+                elif Path(line.split('\t')[-1]).name[:-13] == filename:
+                    # update particle index number
+                    output.write(str(particle_counter)+'\t'+'\t'.join(line.split('\t')[1:]))
+                    particle_counter += 1
+                    
+    # set volumes name accordingly
+    if particle_counter > 1:
+        logger.info(f"Refining {particle_counter-1:,} particles from {filename}")
+
+        # run 3davg
+        avg_directory = os.path.join(os.environ['PYP_SCRATCH'],'3DAVG')
+        os.makedirs(avg_directory,exist_ok=True)
+        os.chdir(avg_directory)
+
+        # link files from 3DAVG
+        prefix = f"{dataset}_iteration_{iteration:03d}_refined_"
+        extensions = [ 'volumes.txt', 'averages.bin', 'averages.txt' ]
+        for i in extensions:
+            symlink_relative(os.path.join(project_dir,"3DAVG", prefix+i),prefix+i)
+            
+        logger.info(f"### Aligning all volumes to new reference ###")
+
+        sva_initialize_and_run(
+            parameters=parameters,
+            dataset=dataset,
+            iter=iteration,
+            mode=3
+            )
+
+        refined_alignments = f"{dataset}_iteration_{iteration:03d}_alignments_to_reference_0.txt"
+        assert os.path.exists(refined_alignments), "3DAVG refinement failed"
+        
+        saved_refined_alignments = f"{filename}_iteration_{iteration:03d}_alignments_to_reference_0.txt"
+
+        # save result to project folder
+        shutil.copy2( refined_alignments, Path(project_dir) / '3DAVG' / saved_refined_alignments)
+    else:
+        logger.warning(f"No particles to process for {filename}")
+
+def sva_merge(parameters):
+    """Merge function that uses sub-volumes.
+
+    Parameters
+    ----------
+    parameters : dict
+        PYP parameters loaded from .pyp_config
+    """
+    # csp_final_merge
+    
+    dataset = parameters.get('data_set')
+    
+    # read list of tilt-series
+    with open("{}.films".format(dataset)) as f:
+        files = [
+            line.strip() for line in f
+        ]
+
+    iteration = parameters.get('sva_refine_iter')
+    
+    os.chdir('3DAVG')
+    
+    # merge parameter files from all tilt-series
+    merged_file = f"{dataset}_iteration_{iteration:03}_alignments_to_reference_0.txt"
+    
+    failed = []
+    with open(merged_file,'w') as output:
+        particle_counter = 1
+        for m in files:
+            refined_alignments = f"{m}_iteration_{iteration:03}_alignments_to_reference_0.txt"
+            if os.path.exists(refined_alignments):
+                with open(refined_alignments) as input:
+                    for line in input.readlines():
+                        if not line.startswith('number'):
+                            output.write(str(particle_counter)+'\t'+'\t'.join(line.split('\t')[1:]))
+                            particle_counter += 1
+            else:
+                failed.append(m)
+
+    if len(failed) == 0:
+        # clean up intermediate alignments and we are done
+        for m in files:
+            refined_alignments = f"{m}_iteration_{iteration:03}_alignments_to_reference_0.txt"
+            if os.path.exists(refined_alignments):
+                os.remove(refined_alignments)        
+    else:
+        logger.warning(f"Retrying alignment for {len(failed)} tilt-series")
+        try:
+            os.remove(merged_file)
+        except:
+            logger.error(f"Failed to remove {merged_file}")
+            pass
+        
+        # go back to slurm directory and launch jobs for missing tilt-series
+        os.chdir("../swarm")
+
+        slurm.launch_sva(
+            micrograph_list=failed,
+            parameters=parameters,
+            swarm_folder=Path.cwd()
+            )
+
+def sva_split(parameters):
+    """Launch sva split.
+
+    Parameters
+    ----------
+    parameters : dict
+        PYP parameters loaded from .pyp_config
+    """
+    
+    # go to 3DAVG directory
+    project_dir = os.getcwd()
+
+    if not os.path.exists('3DAVG'):
+        os.mkdir('3DAVG')
+    os.chdir('3DAVG')
+
+    dataset = parameters.get('data_set')
+
+    # create symlink to volumes file in 3DAVG folder
+    volumes_file = project_params.resolve_path(parameters.get('sva_parfile'))
+    local_volumes_file = f"{dataset}_original_volumes.txt"
+    if os.path.exists(local_volumes_file):
+        os.remove(local_volumes_file)
+    symlink_relative( volumes_file, local_volumes_file)
+
+    iteration = parameters.get('sva_refine_iter')    
+
+    assert iteration < 8, f"Currently only support iterations 1 - 7"
+
+    if parameters.get('sva_mode') == '0':
+        
+        assert parameters.get('sva_refine_iter') == 1, f"Mode 0 can only be run during Iteration 1"
+    
+        logger.info(f"### Calculating global average and using it as reference for centering ###")
+        
+        # initial global average and centering if this is the first iteration (mode 0)
+        sva_initialize_and_run(
+            parameters=parameters,
+            dataset=dataset,
+            iter=iteration,
+            mode=0
+            )
+    
+        global_average = f"{dataset}_global_average.mrc"
+        global_average_zero = f"{dataset}_global_average_0.mrc"
+        if os.path.exists(global_average):
+            if os.path.exists(global_average_zero):
+                os.remove(global_average_zero)
+            symlink_relative( global_average, global_average_zero)
+        global_average_symmetrized = f"{dataset}_global_average_symmetrized.mrc"
+        global_average_symmetrized_zero = f"{dataset}_global_average_0_symmetrized.mrc"
+        if os.path.exists(global_average_symmetrized):
+            if os.path.exists(global_average_symmetrized_zero):
+                os.remove(global_average_symmetrized_zero)
+            symlink_relative( global_average_symmetrized, global_average_symmetrized_zero)
+
+        # generate thumbnails
+        arguments = []
+        for file in glob.glob(f"{dataset}_global_average*.mrc"):
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp')))
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+
+        if parameters.get("sva_centering_iterations") == 0:
+            try:
+                os.remove(f"{dataset}_volumes_pre_centered_clean_1.txt")
+            except:
+                pass
+            symlink_relative( f"{dataset}_original_volumes.txt", f"{dataset}_volumes_pre_centered_clean_1.txt")
+
+    elif parameters.get('sva_mode') == '1':
+        
+        if iteration == 1:
+            assert os.path.exists(f"{dataset}_volumes_pre_centered_clean_1.txt"), f"Cannot run Mode 1, Iteration {iteration} without running Mode 0, Iteration {iteration} first"
+        else:
+            assert os.path.exists(f"{dataset}_iteration_{iteration-1:03}_alignments_to_reference_0.txt"), f"Cannot run Mode 1, Iteration {iteration} without running Mode 3, Iteration {iteration-1} first"
+
+        logger.info(f"### 3D classification ###")
+
+        # 3D classification
+        sva_initialize_and_run(
+            parameters=parameters,
+            dataset=dataset,
+            iter=iteration,
+            mode=1
+            )
+        
+        # generate thumbnails for classes
+        arguments = []
+        for file in glob.glob(f"{dataset}_iteration_{iteration:03}_level_{parameters.get('sva_class_num')}_average_???.mrc"):
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp')))
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+        
+    elif parameters.get('sva_mode') == '2':
+        
+        assert os.path.exists(f"{dataset}_iteration_{iteration:03}_level_{parameters['sva_class_num']}_average_000.mrc"), f"Cannot run Mode 2, Iteration {iteration} without running Mode 1, Iteration {iteration} first"
+
+        # udpate class selection based on user-parameters
+        if parameters.get('sva_class_selection') and len(parameters.get('sva_class_selection').split(',')) > 0:
+            selected_classes = sorted([ int(num) for num in parameters.get('sva_class_selection').split(',')[1:] ])
+            reference_class = int(parameters.get('sva_class_selection').split(',')[0])
+            classes_file = f"{dataset}_iteration_{iteration:03}_averages.txt"
+            classes_file_tmp = classes_file + "~"
+            logger.info(f"### Aligning classes {selected_classes} to reference class {reference_class} ###")
+            with open(classes_file_tmp,'w') as output:
+                class_counter = 0
+                with open(classes_file) as input:
+                    for line in input.readlines():
+                        if line.startswith('number'):
+                            output.write(line)
+                        else:
+                            if class_counter == reference_class:
+                                # use first class as reference
+                                output.write('\t'.join( line.split('\t')[:-2] + ['-1'] + [line.split('\t')[-1]]))
+                            elif class_counter in selected_classes:
+                                # classes to keep
+                                output.write('\t'.join( line.split('\t')[:-2] + ['1'] + [line.split('\t')[-1]]))
+                            else:
+                                # classes to ignore
+                                output.write('\t'.join( line.split('\t')[:-2] + ['0'] + [line.split('\t')[-1]]))
+                            class_counter += 1
+            # substitute old file with new one
+            shutil.move(classes_file_tmp,classes_file)
+        
+        # Align class averages
+        sva_initialize_and_run(
+            parameters=parameters,
+            dataset=dataset,
+            iter=iteration,
+            mode=2
+            )
+        
+        # generate thumbnails for aligned classes
+        arguments = []
+        for file in glob.glob(f"{dataset}_iteration_{iteration:03}_refined_level_{parameters.get('sva_class_num')}_average_???.mrc"):
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp')))
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+                
+    elif parameters.get('sva_mode') == '3':
+
+        assert os.path.exists(f"{dataset}_iteration_{iteration:03}_refined_level_{parameters['sva_class_num']}_average_000.mrc"), f"Cannot run Mode 3, Iteration {iteration} without running Mode 2, Iteration {iteration} first"
+
+        # go back to project directory
+        os.chdir(project_dir)
+
+        # read list of micrographs
+        with open("{}.films".format(parameters["data_set"])) as f:
+            files = [
+                line.strip() for line in f
+            ]
+
+        os.makedirs("swarm", exist_ok=True)
+        os.chdir("swarm")
+
+        slurm.launch_sva(
+            micrograph_list=files,
+            parameters=parameters,
+            swarm_folder=Path.cwd()
+            )
+
 @timer.Timer(
     "csp_swarm", text="Total time elapsed (csp_swarm): {}", logger=logger.info
 )
@@ -4937,6 +5264,99 @@ if __name__ == "__main__":
             if os.path.exists(local_scratch):
                 # shutil.rmtree(local_scratch)
                 logger.info("Deleted temporary files from " + local_scratch)
+
+        elif "sva" in os.environ:
+
+            del os.environ["sva"]
+
+            try:
+
+                """
+                if iter == 2:
+                    calculate global average 
+                    launch mode 0 to center particles against global average
+                else:
+                    run mode 2 to align selected classes to selected reference and produce new reference
+                    launch mode 3 to align all particles to new reference
+                """
+                
+                args = parse_arguments("sva")                
+                project_params.save_parameters(args)
+
+                if args != 0:
+                    
+                    sva_split(args)
+                        
+                    logger.info("nextPYP (sva) finished successfully")
+
+            except:
+                trackback()
+                logger.error("nextPYP (sva) failed")
+                pass
+
+        elif "svaswarm" in os.environ:
+            
+            del os.environ["svaswarm"]
+
+            try:
+
+                args = project_params.parse_arguments("cspswarm")
+                parameters = project_params.load_pyp_parameters(project_params.resolve_path(args.path))
+
+                # clear local scratch and report free space
+                clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
+                get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                working_path = os.path.join(os.environ["PYP_SCRATCH"], args.file)
+                cwd = os.getcwd()
+                
+                # manage directories
+                os.chdir(args.path)
+
+                # parameters = project_params.load_pyp_parameters()
+
+                """
+                Run mode 3 to align all particles to most recent reference
+                """
+                sva_swarm(args.file, parameters, int(args.iter), args.skip, args.debug, args.path)
+
+                logger.info("nextPYP (svaswarm) finished successfully")
+
+            except:
+                trackback()
+                logger.error("nextPYP (svaswarm) failed")
+                pass
+            
+        elif "svamerge" in os.environ:
+
+            del os.environ["svamerge"]
+
+            try:
+
+                os.chdir(os.environ["PBS_O_WORKDIR"] + "/..")
+                parameters = project_params.load_pyp_parameters()
+
+                cwd = os.getcwd()
+
+                """"
+                Merge all _volumes.txt files into a single file
+                Run mode 1 to classifify particles based on most recent alignments
+                Produce png plots (so users can select the new reference and which classes to keep)
+                """
+                
+                sva_merge(parameters)
+
+                # clean up local scratch
+                if os.path.exists(os.environ["PYP_SCRATCH"]):
+                    shutil.rmtree(os.environ["PYP_SCRATCH"])
+                    logger.info("Deleted temporary files from " + os.environ["PYP_SCRATCH"])
+
+                logger.info("nextPYP (svamerge) finished successfully")
+
+            except:
+                trackback()
+                logger.error("nextPYP (svamerge) failed")
+                pass
 
         # cryolo_picking tomo
         elif "cryolo3d" in os.environ:
