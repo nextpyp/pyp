@@ -356,7 +356,12 @@ def parse_arguments(block):
         # always set dataset and refinement name based on current folder name
         parameters["data_set"] = parameters["refine_dataset"] = os.path.split(os.getcwd())[1]
         data_mode = parameters.get("data_mode")
-
+        
+        # make sure we are not missing any parent parameters
+        for i in parent_parameters:
+            if i not in parameters:
+                parameters[i] = parent_parameters[i]
+        parameters['data_mode'] = data_mode
     else:
 
         # load existing parameters or from data_parent
@@ -682,7 +687,7 @@ def parse_arguments(block):
                 ):
                     parameters["scope_mag"] = str(ctf[11])
     
-    if "class_num" in parameters.keys() and parameters["class_num"] > 1 or "tomo" in parameters["data_mode"]:
+    if "class_num" in parameters.keys() and parameters["class_num"] > 1 or parameters.get("data_mode") and "tomo" in parameters["data_mode"]:
         parameters["refine_metric"] = "new"
 
     # ensure backwards compatibility                
