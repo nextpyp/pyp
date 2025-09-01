@@ -117,13 +117,13 @@ forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_segment_open]
 name = "TOMO Segmentation (open)"
-description = "Segment membranes (membrain-seg)"
+description = "Segment open surfaces and filaments"
 tabs = [ "tomo_mem", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_segment_close]
-name = "TOMO Segmentation (close)"
-description = "Segment virions or vesicles"
+name = "TOMO Segmentation (min-flow/max-cut)"
+description = "Segment closed virion/vesicle surfaces"
 tabs = [ "tomo_sphere", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
