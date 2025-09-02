@@ -2720,9 +2720,16 @@ def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
         with open(output_file_name,'w') as output:
             particle_counter = 1
             for line in input.readlines():
+                # parse spike file name
+                spike_file_name = Path(line.split('\t')[-1]).name
+                # distinghuish between virion/spike and particle files
+                if spike_file_name[-21:-17] == "_vir":
+                    ts_name = spike_file_name[:-21]
+                else:
+                    ts_name = spike_file_name[:-13]
                 if line.startswith('number'):
                     output.write(line)
-                elif Path(line.split('\t')[-1]).name[:-13] == filename:
+                elif ts_name == filename:
                     # update particle index number
                     output.write(str(particle_counter)+'\t'+'\t'.join(line.split('\t')[1:]))
                     particle_counter += 1
