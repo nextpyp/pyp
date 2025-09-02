@@ -16,7 +16,7 @@ from pyp.refine.tomo_avg.sub_tomo_avg import (
     parse_arguments,
     sva_iterate
 )
-from pyp.system.set_up import prepare_3davg_dir, prepare_3davg_xml
+from pyp.system.set_up import prepare_3davg_dir, prepare_3davg_xmls
 from pyp.system import project_params
 from pyp.system.logging import initialize_pyp_logger
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     sva_parameters = parse_arguments()
 
     # prepare xmls in protocol folder if they do not exist
-    prepare_3davg_xml(sva_parameters["dataset"])
+    prepare_3davg_xmls(sva_parameters["dataset"])
 
     # go onother level up to project directory
     mparameters = project_params.load_pyp_parameters("..")

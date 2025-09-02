@@ -76,8 +76,8 @@ def prepare_3davg_dir():
     makedirs_list(folders)
 
 
-def prepare_3davg_xml(dataset):
-    """Prepare xml files needed for paramterizing 3DAVG sub-tomogram averaging
+def prepare_3davg_xmls(dataset):
+    """Prepare xml files needed for parametrizing 3DAVG sub-tomogram averaging
 
     Args:
         dataset (String): Name of dataset
