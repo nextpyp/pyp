@@ -359,9 +359,9 @@ def parse_xml(mp, sp):
     # parse filter, sym, mask parameters in the corresponding field
     mode_field = root.find(MODE_LIST[mode])
     sym_text = MODE_LIST[mode] + "_use_symmetrization"
-    window_x_text, window_y_text, window_z_text = [
+    window_x_text, window_y_text, window_z_text, window_sigma = [
         MODE_LIST[mode] + t
-        for t in ["_image_window_x", "_image_window_y", "_image_window_z"]
+        for t in ["_image_window_x", "_image_window_y", "_image_window_z", "_image_window_sigma"]
     ]
     highcut_text = MODE_LIST[mode] + "_high_pass_cutoff"
     highdecay_text = MODE_LIST[mode] + "_high_pass_decay"
@@ -372,6 +372,7 @@ def parse_xml(mp, sp):
     x = mode_field.find(window_x_text)
     y = mode_field.find(window_y_text)
     z = mode_field.find(window_z_text)
+    sigma = mode_field.find(window_sigma)
     highcut = mode_field.find(highcut_text)
     highdecay = mode_field.find(highdecay_text)
     lowcut = mode_field.find(lowcut_text)
@@ -385,7 +386,8 @@ def parse_xml(mp, sp):
     except ValueError:
         logger.error("Mask should be defined by x,y,z, which is separated by comma.")
         sys.exit(1)
-
+    sigma.text = str(mp.get("sva_mask_sigma",4))
+    
     # check filter setting
     if sp["highpass"] != None and sp["lowpass"] != None:
         try:

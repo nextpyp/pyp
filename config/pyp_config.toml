@@ -7319,6 +7319,12 @@ description = "Mask radius in X, Y and Z for alignment/classification"
 type = "str"
 default = "25,25,25"
 
+[tabs.sva.mask_sigma]
+name = "Mask apodization (binned voxels)"
+description = "Extend mask with a soft edge of this size"
+type = "int"
+default = 4
+
 [tabs.sva.highpass]
 name = "High-pass filter (cutoff, decay)"
 description = "Cutoff and decay for high-pass filter (0-1, DC-Nyquist)"
