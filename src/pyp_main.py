@@ -2682,8 +2682,26 @@ def sva_initialize_and_run(parameters,dataset,iter,mode=0):
     else:
         sva_parameters['slurm_tasks'] = parameters.get('slurm_launch_tasks')
     
-    # prepare xmls in protocol folder if they do not exist
-    prepare_3davg_xml(dataset)
+    # create xml file in protocol folder
+    if mode != 3:
+        if mode == 1 and iter > 1:
+            volumes = f"{dataset}_iteration_{iter-1:03d}_alignments_to_reference_0.txt"
+        else:
+            volumes = None
+        '''
+        if mode == 3:
+            volumes = f"{dataset}_iteration_{iter:03d}_refined_volumes.txt"
+        elif mode == 2:
+            volumes = f"{dataset}_iteration_{iter:03d}_volumes.txt"
+        elif mode == 1:
+            if iter == 1:
+                volumes = f"{dataset}_volumes_pre_centered_clean_1.txt"
+            else:
+                volumes = f"{dataset}_iteration_{iter-1:03d}_alignments_to_reference_0.txt"
+        else:
+            volumes = None
+        '''
+        prepare_3davg_xml(dataset,volumes,iter,mode)
 
     sub_tomo_avg.sva_iterate(parameters, sva_parameters, iter, submit = False)
     
@@ -2740,7 +2758,7 @@ def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
 
         # run 3davg
         avg_directory = os.path.join(os.environ['PYP_SCRATCH'],'3DAVG')
-        os.makedirs(avg_directory,exist_ok=True)
+        os.makedirs(os.path.join(avg_directory,"protocol"),exist_ok=True)
         os.chdir(avg_directory)
 
         # link files from 3DAVG
@@ -2749,6 +2767,8 @@ def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
         for i in extensions:
             symlink_relative(os.path.join(project_dir,"3DAVG", prefix+i),prefix+i)
             
+        xml_file = f"iteration_{iteration:03d}_mode_{parameters['sva_mode']}.xml"
+        shutil.copy2( os.path.join(project_dir,"3DAVG","protocol",xml_file), os.path.join(avg_directory,"protocol",xml_file) )
         logger.info(f"### Aligning all volumes to new reference ###")
 
         sva_initialize_and_run(
@@ -2979,6 +2999,11 @@ def sva_split(parameters):
             files = [
                 line.strip() for line in f
             ]
+
+        # create xml fle for mode 3 so all workers don't have to
+        os.chdir("3DAVG")
+        prepare_3davg_xml(dataset=dataset,volumes=None,iter=iteration,mode=3)
+        os.chdir(project_dir)
 
         os.makedirs("swarm", exist_ok=True)
         os.chdir("swarm")

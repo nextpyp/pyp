@@ -90,6 +90,23 @@ def prepare_3davg_xmls(dataset):
                 contents = f.read().replace("DEFAULT_PATTERN", dataset)
             with open(f"protocol/{basename}", "w") as f:
                 f.write(contents)
+                
+def prepare_3davg_xml(dataset,volumes,iter,mode):
+    """Prepare xml file needed for parametrizing 3DAVG sub-tomogram averaging
+
+    Args:
+        dataset (String): Name of dataset
+    """
+    # only create file for this iteration and mode
+    xmlfile = os.path.join(get_parameter_files_path(), f"iteration_{iter:03d}_mode_{mode}.xml")
+    basename = os.path.basename(xmlfile)
+    with open(xmlfile, "r") as f:
+        contents = f.read()
+        if volumes:
+            contents = contents.replace("DEFAULT_PATTERN_volumes_pre_centered_clean_1.txt", str(volumes))
+        contents = contents.replace("DEFAULT_PATTERN", dataset)
+    with open(f"protocol/{basename}", "w") as f:
+        f.write(contents)
 
 
 def initialize_classification(
