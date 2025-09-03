@@ -487,27 +487,29 @@ def sva_iterate(mp, sp, iter, submit = True):
 
     # Apply xml settings to the global average (or other mrcs if a different map is given)
     # and save them as montaged png
-    test_command = f"module load FFTW/3.3.7; {test_filter} {xmlexe} -1 {test_mrc}"
+    if not submit:
+        test_command = f"{test_filter} {xmlexe} -1 {test_mrc}"
+    else:
+        test_command = f"module load FFTW/3.3.7; {test_filter} {xmlexe} -1 {test_mrc}"
     if os.path.exists(test_mrc):
         try:
-            id = subprocess.check_output(
-                test_command, stderr=subprocess.STDOUT, shell=True, text=True
-            ).split()[-1]
+            local_run.stream_shell_command(test_command,verbose=mp['slurm_verbose'])
             logger.info(f"Apply filter on {test_mrc}")
 
-            montage_original = write_central_slices(test_mrc)
-            montage_filtered = write_central_slices(test_mrc + ".filtered.mrc")
-            writepng(montage_original, test_mrc + ".png")
-            writepng(montage_filtered, test_mrc + ".filtered.mrc.png")
-            command = f"montage -geometry 600x200 -tile 1x2 {test_mrc+'.png'} {test_mrc+'.filtered.mrc.png'} {test_mrc+'.filtered.png'}"
-            logger.info(
-                subprocess.check_output(
-                    command, stderr=subprocess.STDOUT, shell=True, text=True
+            if submit:
+                montage_original = write_central_slices(test_mrc)
+                montage_filtered = write_central_slices(test_mrc + ".filtered.mrc")
+                writepng(montage_original, test_mrc + ".png")
+                writepng(montage_filtered, test_mrc + ".filtered.mrc.png")
+                command = f"montage -geometry 600x200 -tile 1x2 {test_mrc+'.png'} {test_mrc+'.filtered.mrc.png'} {test_mrc+'.filtered.png'}"
+                logger.info(
+                    subprocess.check_output(
+                        command, stderr=subprocess.STDOUT, shell=True, text=True
+                    )
                 )
-            )
-            # clean up
-            os.remove(test_mrc + ".png")
-            os.remove(test_mrc + ".filtered.mrc.png")
+                # clean up
+                os.remove(test_mrc + ".png")
+                os.remove(test_mrc + ".filtered.mrc.png")
         except:
             logger.warning("Cannot apply Test_Metric_Filter to test your parameters")
 
