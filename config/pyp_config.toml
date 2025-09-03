@@ -7241,8 +7241,8 @@ input = { type="txtfile" }
 condition = { arg='mode', value="0" }
 
 [tabs.sva.zcorr]
-name = "Cut offset (binned voxels)"
-description = "Apply offset to sub-volumes"
+name = "Apply offset (binned voxels)"
+description = "Shift position of sub-volumes along positive/negative normal direction"
 type = "int"
 default = 0
 condition = { arg='mode', value="0" }
@@ -7256,7 +7256,7 @@ condition = { arg='mode', value="1" }
 
 [tabs.sva.class_selection]
 name = "Class selection"
-description = "Comma separated list of class indexes to keep (base-0). First class index will be used as reference for alignment"
+description = "Comma separated list of class indexes to keep (base-1). First class index will be used as reference for alignment"
 type = "str"
 default = ""
 condition = { arg='mode', value="2" }
