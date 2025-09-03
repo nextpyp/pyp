@@ -7268,6 +7268,13 @@ type = "int"
 default = 0
 condition = { arg='mode', value="0" }
 
+[tabs.sva.centering_symmetry]
+name = "Rotational symmetry"
+description = "Apply rotational symmetry to global average to improve centering"
+type = "bool"
+default = true
+condition = { arg='mode', value="0" }
+
 [tabs.sva.tol_angle]
 name = "Out-of-plane rotation tolerance (degrees)"
 description = "Limit out-of-plane rotations to this value"

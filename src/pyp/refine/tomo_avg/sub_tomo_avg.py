@@ -346,6 +346,12 @@ def parse_xml(mp, sp):
         center_iterations = center.find("loop_iterations")
         center_iterations.text = str(mp["sva_centering_iterations"])
 
+        center_symmetry = center.find("apply_rotational_symmetry")
+        if mp["sva_centering_symmetry"]:
+            center_symmetry.text = str(1)
+        else:
+            center_symmetry.text = str(0)
+
     # modify setting corresponding to the mode
     mode = int(sp["mode"])
     # check mode
