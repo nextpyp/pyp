@@ -2674,7 +2674,18 @@ def sva_initialize_and_run(parameters,dataset,iter,mode=0):
     sva_parameters['dataset'] = dataset
     sva_parameters['classes'] = parameters['sva_class_num']
     sva_parameters['symmetry'] = parameters['sva_symmetry']
-    sva_parameters['filter_map'] = ""
+    if mode == 1:
+        if iter == 1:
+            filter_map = f"{dataset}_global_average.mrc"
+        else:
+            filter_map = f"{dataset}_iteration_{iter-1:03d}_refined_selected_average_0.mrc"
+    elif mode == 2:
+        filter_map = f"{dataset}_iteration_{iter:03d}_level_{parameters['sva_class_num']}_average_000.mrc"
+    elif mode == 3:
+        filter_map = f"{dataset}_iteration_{iter:03d}_refined_level_{parameters['sva_class_num']}_average_000.mrc"
+    else:
+        filter_map = ""
+    sva_parameters['filter_map'] = filter_map
     sva_parameters['slurm_queue'] = None
     
     if mode == 3 or not parameters.get('slurm_launch_tasks'):
@@ -2705,6 +2716,10 @@ def sva_initialize_and_run(parameters,dataset,iter,mode=0):
 
     sub_tomo_avg.sva_iterate(parameters, sva_parameters, iter, submit = False)
     
+    if os.path.exists(filter_map+'.filtered.mrc'):
+        os.rename(filter_map+'.filtered.mrc',dataset+'_test_metric_filtered.mrc')
+        generate_map_thumbnail(dataset + '_test_metric_filtered.mrc', 0, dataset + '_test_metric_filtered.webp')
+
     # cleanup
     try:
         for file in glob.glob('mpi_*tmp'):
@@ -2752,6 +2767,12 @@ def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
                     output.write(str(particle_counter)+'\t'+'\t'.join(line.split('\t')[1:]))
                     particle_counter += 1
                     
+    # read list of micrographs
+    with open("{}.films".format(dataset)) as f:
+        files = [
+            line.strip() for line in f
+        ]
+    
     # set volumes name accordingly
     if particle_counter > 1:
         logger.info(f"Refining {particle_counter-1:,} particles from {filename}")
@@ -2778,13 +2799,16 @@ def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
             mode=3
             )
 
-        refined_alignments = f"{dataset}_iteration_{iteration:03d}_alignments_to_reference_0.txt"
-        assert os.path.exists(refined_alignments), "3DAVG refinement failed"
-        
-        saved_refined_alignments = f"{filename}_iteration_{iteration:03d}_alignments_to_reference_0.txt"
+        # save results to project folder        
+        files_to_save = []
+        files_to_save.append(f"{dataset}_iteration_{iteration:03d}_alignments_to_reference_0.txt")  
+        if len(files) > 0 and files[0] == filename:
+            files_to_save.append(f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0.mrc")
+            files_to_save.append(f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0_filtered.mrc")
+        for f in files_to_save:
+            assert os.path.exists(f), f"File {f} is missing, likely because 3DAVG refinement failed"
+            shutil.copy2( f, Path(project_dir) / '3DAVG' / f)
 
-        # save result to project folder
-        shutil.copy2( refined_alignments, Path(project_dir) / '3DAVG' / saved_refined_alignments)
     else:
         logger.warning(f"No particles to process for {filename}")
 
@@ -2948,11 +2972,11 @@ def sva_split(parameters):
 
         # udpate class selection based on user-parameters
         if parameters.get('sva_class_selection') and len(parameters.get('sva_class_selection').split(',')) > 0:
-            selected_classes = sorted([ int(num) for num in parameters.get('sva_class_selection').split(',')[1:] ])
-            reference_class = int(parameters.get('sva_class_selection').split(',')[0])
+            selected_classes = sorted([ int(num)-1 for num in parameters.get('sva_class_selection').split(',')[1:] ])
+            reference_class = int(parameters.get('sva_class_selection').split(',')[0])-1
             classes_file = f"{dataset}_iteration_{iteration:03}_averages.txt"
             classes_file_tmp = classes_file + "~"
-            logger.info(f"### Aligning classes {selected_classes} to reference class {reference_class} ###")
+            logger.info(f"### Aligning classes {[int(n)+1 for n in selected_classes]} to reference class {int(reference_class)+1} ###")
             with open(classes_file_tmp,'w') as output:
                 class_counter = 0
                 with open(classes_file) as input:
