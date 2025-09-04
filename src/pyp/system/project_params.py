@@ -570,7 +570,7 @@ def sanitize_parameters(parameters):
         if not t.startswith("_"):
             for p in specifications["tabs"][t].keys():
                 if not p.startswith("_"):
-                    if parameters.get(f"{t}_{p}"):
+                    if f"{t}_{p}" in parameters:
                         clean_parameters[f"{t}_{p}"] = parameters[f"{t}_{p}"]
     return clean_parameters
 

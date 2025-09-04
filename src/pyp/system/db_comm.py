@@ -37,6 +37,9 @@ def save_parameters_to_website(parameters):
         except:
             logger.error("Failed to enter parameters into database")
             raise
+    else:
+        logger.error("No data_set field specified in parameters, cannot save to website")
+        return
 
 def save_micrograph_to_website(name,verbose=False):
 

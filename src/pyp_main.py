@@ -5370,7 +5370,7 @@ if __name__ == "__main__":
                     launch mode 3 to align all particles to new reference
                 """
                 
-                args = parse_arguments("sva")                
+                args = parse_arguments("sva")
                 project_params.save_parameters(args)
 
                 if args != 0:
