@@ -453,11 +453,17 @@ def parse_xml(mp, sp):
             classification = mode_field.find(class_text)
             classification.text = str(mp["sva_class_selection_fraction"])
 
-    if mode == 2:
+    elif mode == 2:
         if "sva_class_refinement_iterations" in mp:
             refine_text = "refinement_iterations"
             refine = mode_field.find(refine_text)
             refine.text = str(mp["sva_class_refinement_iterations"])
+    elif mode == 3:
+        # set threshold fraction during centering
+        if "sva_pre_selection_fraction_centering" in mp:
+            class_text = "class_cutoff_percentage"
+            classification = root.find("class").find(class_text)
+            classification.text = str(mp["sva_pre_selection_fraction_centering"])
 
     # write out modified xml for actual 3DAVG refinement
     data.write(xml.replace(".xml", ".exe.xml"), encoding="utf-8", xml_declaration=True)

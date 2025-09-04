@@ -7285,6 +7285,14 @@ type = "int"
 default = 10
 condition = { arg='mode', value=["2", "3" ] }
 
+[tabs.sva.pre_selection_fraction_centering]
+name = "Outlier rejection (fraction)"
+description = "Only keep fraction of volumes with highest similarity to global average"
+type = "float"
+default = 0.9
+advanced = true
+condition = { arg='mode', value="0" }
+
 [tabs.sva.pre_selection_fraction]
 name = "Outlier rejection before classification (fraction)"
 description = "Only classify top fraction of volumes based on similarity to global average"
