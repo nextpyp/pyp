@@ -7238,6 +7238,7 @@ description = "Parameter file containing initial alignment information"
 type = "path"
 path = { type="files" }
 input = { type="txtfile" }
+copyToNewBlock = false
 condition = { arg='mode', value="0" }
 
 [tabs.sva.zcorr]
