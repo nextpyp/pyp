@@ -2894,6 +2894,8 @@ def sva_split(parameters):
 
     dataset = parameters.get('data_set')
 
+    pixel_size = parameters['scope_pixel'] * parameters.get('data_bin') * parameters.get('tomo_ext_binn')
+
     # create symlink to volumes file in 3DAVG folder
     volumes_file = project_params.resolve_path(parameters.get('sva_parfile'))
     local_volumes_file = f"{dataset}_original_volumes.txt"
@@ -2935,7 +2937,7 @@ def sva_split(parameters):
         # generate thumbnails
         arguments = []
         for file in glob.glob(f"{dataset}_global_average*.mrc"):
-            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp')))
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
 
         if parameters.get("sva_centering_iterations") == 0:
@@ -2965,7 +2967,7 @@ def sva_split(parameters):
         # generate thumbnails for classes
         arguments = []
         for file in glob.glob(f"{dataset}_iteration_{iteration:03}_level_{parameters.get('sva_class_num')}_average_???.mrc"):
-            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp')))
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
         
     elif parameters.get('sva_mode') == '2':
@@ -3010,7 +3012,7 @@ def sva_split(parameters):
         # generate thumbnails for aligned classes
         arguments = []
         for file in glob.glob(f"{dataset}_iteration_{iteration:03}_refined_level_{parameters.get('sva_class_num')}_average_???.mrc"):
-            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp')))
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
                 
     elif parameters.get('sva_mode') == '3':
