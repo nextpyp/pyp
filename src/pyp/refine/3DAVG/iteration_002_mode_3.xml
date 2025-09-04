@@ -4,7 +4,7 @@
 	<!-- Set general options -->
 	<general>
 		
-		<volumes>DEFAULT_PATTERN_volumes_pre_centered_clean_1.txt</volumes>
+		<volumes>DEFAULT_PATTERN_volumes_pre_centered_clean.txt</volumes>
 
 		<pattern>DEFAULT_PATTERN</pattern>
 		

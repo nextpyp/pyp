@@ -2748,7 +2748,7 @@ def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
     # generate tilt-series specific parameter file in local scratch
     input_file_name = os.path.join( project_dir, "3DAVG", f"{dataset}_iteration_{iteration:03d}_refined_volumes.txt")
     os.makedirs(os.path.join(os.environ['PYP_SCRATCH'],'3DAVG'), exist_ok=True)
-    output_file_name = f"{os.environ['PYP_SCRATCH']}/3DAVG/{dataset}_volumes_pre_centered_clean_1.txt"
+    output_file_name = f"{os.environ['PYP_SCRATCH']}/3DAVG/{dataset}_volumes_pre_centered_clean.txt"
     with open(input_file_name) as input:
         with open(output_file_name,'w') as output:
             particle_counter = 1
@@ -2957,17 +2957,21 @@ def sva_split(parameters):
             arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
 
+        target_volumes_file = f"{dataset}_volumes_pre_centered_clean.txt"
         if parameters.get("sva_centering_iterations") == 0:
-            try:
-                os.remove(f"{dataset}_volumes_pre_centered_clean_1.txt")
-            except:
-                pass
-            symlink_relative( f"{dataset}_original_volumes.txt", f"{dataset}_volumes_pre_centered_clean_1.txt")
+            source_volumes_file = f"{dataset}_original_volumes.txt"
+        else:
+            source_volumes_file = f"{dataset}_volumes_pre_centered_clean_{parameters.get('sva_centering_iterations')}.txt"
+        try:
+            os.remove(target_volumes_file)
+        except:
+            pass
+        symlink_relative( source_volumes_file, target_volumes_file)
 
     elif parameters.get('sva_mode') == '1':
         
         if iteration == 1:
-            assert os.path.exists(f"{dataset}_volumes_pre_centered_clean_1.txt"), f"Cannot run Mode 1, Iteration {iteration} without running Mode 0, Iteration {iteration} first"
+            assert os.path.exists(f"{dataset}_volumes_pre_centered_clean.txt"), f"Cannot run Mode 1, Iteration {iteration} without running Mode 0, Iteration {iteration} first"
         else:
             assert os.path.exists(f"{dataset}_iteration_{iteration-1:03}_alignments_to_reference_0.txt"), f"Cannot run Mode 1, Iteration {iteration} without running Mode 3, Iteration {iteration-1} first"
 
