@@ -311,7 +311,7 @@ def parse_arguments(block):
 
                 parameters = project_params.parse_parameters(parameters_existing, block, parameters_existing["data_mode"] ) 
             
-            elif parameters_existing and 'micromon_block' in parameters_existing and ( parameters_existing['micromon_block'].endswith("-session") or not parameters.get('scope_pixel') ):
+            elif parameters_existing and 'micromon_block' in parameters_existing and parameters_existing['micromon_block'].endswith("-session"):
                 parameters = project_params.inherit_from_parent(parameters_existing, params_file_path )
                 parameters['csp_no_stacks'] = dummy_parameters['csp_no_stacks']
                 parameters["refine_iter"] = 2
@@ -319,6 +319,10 @@ def parse_arguments(block):
                     for k in parent_parameters.keys():
                         if k.startswith("clean_"):
                             parameters[k] = parent_parameters[k]
+            elif not parameters.get('scope_pixel'):
+                for k in parameters_existing.keys():
+                    if not parameters.get(k):
+                        parameters[k] = parameters_existing[k]
 
             if parameters_existing:
                 if "data_set" in parameters_existing:
