@@ -103,7 +103,7 @@ def prepare_3davg_xml(dataset,volumes,iter,mode):
     with open(xmlfile, "r") as f:
         contents = f.read()
         if volumes:
-            contents = contents.replace("DEFAULT_PATTERN_volumes_pre_centered_clean_1.txt", str(volumes))
+            contents = contents.replace("DEFAULT_PATTERN_volumes_pre_centered_clean.txt", str(volumes))
         contents = contents.replace("DEFAULT_PATTERN", dataset)
     with open(f"protocol/{basename}", "w") as f:
         f.write(contents)
