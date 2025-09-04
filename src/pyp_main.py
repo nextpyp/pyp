@@ -2801,13 +2801,13 @@ def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
 
         # save results to project folder        
         files_to_save = []
-        files_to_save.append(f"{dataset}_iteration_{iteration:03d}_alignments_to_reference_0.txt")  
         if len(files) > 0 and files[0] == filename:
             files_to_save.append(f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0.mrc")
             files_to_save.append(f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0_filtered.mrc")
         for f in files_to_save:
             assert os.path.exists(f), f"File {f} is missing, likely because 3DAVG refinement failed"
             shutil.copy2( f, Path(project_dir) / '3DAVG' / f)
+        shutil.copy2( f"{dataset}_iteration_{iteration:03d}_alignments_to_reference_0.txt", Path(project_dir) / '3DAVG' / f"{filename}_iteration_{iteration:03d}_alignments_to_reference_0.txt" )
 
     else:
         logger.warning(f"No particles to process for {filename}")
@@ -2848,16 +2848,33 @@ def sva_merge(parameters):
                         if not line.startswith('number'):
                             output.write(str(particle_counter)+'\t'+'\t'.join(line.split('\t')[1:]))
                             particle_counter += 1
+                        elif particle_counter == 1:
+                            output.write(line)
             else:
                 failed.append(m)
 
+    retries = 0
+    retry_flag = "{}.retries".format(dataset)
+    if os.path.exists(retry_flag):
+        with open(retry_flag) as f:
+            retries = int(f.read())
+    
+    # increment retry counter
+    retries += 1
+
     if len(failed) == 0:
-        # clean up intermediate alignments and we are done
+        # clean up intermediate alignments
         for m in files:
             refined_alignments = f"{m}_iteration_{iteration:03}_alignments_to_reference_0.txt"
             if os.path.exists(refined_alignments):
-                os.remove(refined_alignments)        
-    else:
+                os.remove(refined_alignments)
+        
+        # reset retry flag:
+        try:
+            os.remove(retry_flag)
+        except:
+            pass        
+    elif retries <= parameters.get("slurm_merge_retries"):
         logger.warning(f"Retrying alignment for {len(failed)} tilt-series")
         try:
             os.remove(merged_file)
