@@ -11,6 +11,7 @@ from pyp.utils import get_relative_path
 from pyp.refine.frealign import frealign
 from pyp.inout.image import img2webp
 from pyp.system.db_comm import save_drgnmap_to_website
+from pyp.system.utils import get_imod_path
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -371,13 +372,16 @@ def run_tomodrgn_train(project_dir, parameters):
             save_drgnmap_to_website(epoch)
         logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
 
-def generate_map_thumbnail( map, radius, output):
+def generate_map_thumbnail( map, radius, output, pixel_size=0):
     name = Path(map).stem + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + "_map.png"
     output_png = os.path.join( os.environ['PYP_SCRATCH'], name )
     frealign.build_map_montage( map, radius, output_png )
     img2webp(output_png,output,"-resize 1024x")
     os.remove(output_png)
-
+    if pixel_size > 0:
+        # set specified pixel size in mrc header
+        command = "{0}/bin/alterheader -o 0,0,0 -del {1},{1},{1} {2}".format(get_imod_path(), "%.2f" % pixel_size, map)
+        [ output, error ] = local_run.run_shell_command(command)
 
 # TODO - only run evaluation tasks
 def run_tomodrgn_eval(project_dir, parameters,analyze_volumes=False):
