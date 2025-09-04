@@ -2926,6 +2926,17 @@ def sva_split(parameters):
 
     iteration = parameters.get('sva_refine_iter')    
 
+    # do some sanity checks
+    assert os.path.exists(volumes_file), f"Volumes file {volumes_file} does not exist"
+    
+    # check whether sub-volumes have been extracted
+    with open(volumes_file) as f:
+        for line in f.readlines():
+            if not line.startswith('number'):
+                sub_volume_file = line.split('\t')[-1].rstrip()
+                assert Path(sub_volume_file).is_file(), f"Sub-volume file {sub_volume_file} does not exist, please run sub-volume extraction in parent block first"
+                break
+
     assert iteration < 8, f"Currently only support iterations 1 - 7"
 
     if parameters.get('sva_mode') == '0':
