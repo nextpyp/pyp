@@ -2888,6 +2888,8 @@ def sva_split(parameters):
 
     if not os.path.exists('3DAVG'):
         os.mkdir('3DAVG')
+    if not os.path.exists('frealign'):
+        symlink_relative('3DAVG','frealign')
     os.chdir('3DAVG')
 
     dataset = parameters.get('data_set')
