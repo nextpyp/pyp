@@ -7223,6 +7223,7 @@ default = 1
 name = "Iteration number"
 description = ""
 type = "int"
+copyToNewBlock = false
 default = 1
 
 [tabs.sva.mode]
@@ -7231,6 +7232,7 @@ description = "Modes should be run in sequence (0-3)"
 type = "enum"
 enum = { 0="mode 0 - global average and centering", 1="mode 1 - classification", 2="mode 2 - alignment of averages", 3="mode 3 - alignment to reference" }
 default = "0"
+copyToNewBlock = false
 
 [tabs.sva.parfile]
 name = "Alignments from sub-volume averaging (*.txt)"
