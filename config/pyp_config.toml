@@ -7241,6 +7241,7 @@ type = "path"
 path = { type="files" }
 input = { type="txtfile" }
 copyToNewBlock = false
+required = true
 condition = { arg='mode', value="0" }
 
 [tabs.sva.zcorr]
