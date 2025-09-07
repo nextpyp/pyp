@@ -1,6 +1,6 @@
 from concurrent.futures import thread
 import glob
-from logging import raiseExceptions
+import logging
 import math
 import multiprocessing
 import os
@@ -117,13 +117,13 @@ def align_frame_to_reference(name, frame, input, tiltxcorr_options, frames, resu
     com = "{0}/bin/newstack {1}_{2}.avg {1}_{2}.mrc {1}_{2}_tiltxcorr.mrc; rm -f {1}_{2}_tiltxcorr.mrc~".format(
         get_imod_path(), name, frame_name
     )
-    run_shell_command(com,verbose=False)
+    run_shell_command(com,log_level=logging.TRACE)
 
     # compute shifts
     com = "{0}/bin/tiltxcorr -input {1}_{2}_tiltxcorr.mrc -output {1}_{2}_cumulative.prexg {3}".format(
         get_imod_path(), name, frame_name, tiltxcorr_options
     )
-    run_shell_command(com,verbose=False)
+    run_shell_command(com,log_level=logging.TRACE)
 
     values = [float(cci.split()[-1]) for cci in output.split("\n") if "shifts" in cci]
     results.put([frame, values[0]])
@@ -132,7 +132,7 @@ def align_frame_to_reference(name, frame, input, tiltxcorr_options, frames, resu
     com = "tail -n +2 {0}_{1}_cumulative.prexg > {0}_{1}_cumulative.tmp; mv {0}_{1}_cumulative.tmp {0}_{1}_cumulative.prexg".format(
         name, frame_name
     )
-    run_shell_command(com,verbose=False)
+    run_shell_command(com,log_level=logging.TRACE)
 
     # cleanup
     list = "{0}_{1}.mrc {0}_{1}.avg {0}_{1}_tiltxcorr.mrc".format(frame_name, frame)
@@ -383,7 +383,7 @@ def align_spr_local(
             )
         )
 
-    mpi.submit_function_to_workers(align_movie_frames_multiprocessing, arguments, verbose=parameters["slurm_verbose"])
+    mpi.submit_function_to_workers(align_movie_frames_multiprocessing, arguments)
 
     # Collate periodogram averages
     """
@@ -473,7 +473,7 @@ def align_spr_local_inner(
                 )
             )
 
-        mpi.submit_function_to_workers(align_movie_frames_multiprocessing, arguments, verbose=parameters["slurm_verbose"])
+        mpi.submit_function_to_workers(align_movie_frames_multiprocessing, arguments)
 
         ####################################
         # regularize particle trajectories #
@@ -850,7 +850,7 @@ eot
                 apodization,
                 target,
             )
-            run_shell_command(command, verbose=mp["slurm_verbose"])
+            run_shell_command(command)
     
     elif not previous == target:
 
@@ -1162,7 +1162,7 @@ def csp_run_refinement(
                 extract_only = False
 
             if not (extract_only and current_class > 1): 
-                mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=parameters["slurm_verbose"])
+                mpi.submit_jobs_to_workers(commands, os.getcwd())
 
             time.sleep(3)
 
@@ -1195,8 +1195,7 @@ def csp_run_refinement(
                     lines = log.read()
                     if len(lines) > 0:
                         # pretty display
-                        if parameters["slurm_verbose"]:
-                            logger.info("\n" + lines)
+                        logger.debug("\n" + lines)
 
                 os.remove(f)
 
@@ -1435,9 +1434,8 @@ def postprocess_after_refinement(
                     ),
                 )
                 # send output to user interface
-                if 'slurm_verbose' in mp and mp['slurm_verbose']:
-                    with open(glob.glob("*_msearch_n.log_*")[0]) as f:
-                        logger.info(f.read())
+                with open(glob.glob("*_msearch_n.log_*")[0]) as f:
+                    logger.debug(f.read())
             else:
                 shutil.copy2(
                     glob.glob("*_msearch_ctf_n.log_*")[0],
@@ -1450,9 +1448,8 @@ def postprocess_after_refinement(
                     ),
                 )
                 # send output to user interface
-                if 'slurm_verbose' in mp and mp['slurm_verbose']:
-                    with open(glob.glob("*_msearch_ctf_n.log_*")[0]) as f:
-                        logger.info(f.read())
+                with open(glob.glob("*_msearch_ctf_n.log_*")[0]) as f:
+                    logger.debug(f.read())
         # remove log files
         if not mp["refine_debug"]:
             [os.remove(f) for f in glob.glob("*_msearch*_n.log_*")]
@@ -1772,7 +1769,7 @@ def align_stack(name, parameters, interpolation="-linear"):
             [output, error] = run_shell_command(
                 "{0}/bin/tiltxcorr -input {1}.bin -output {1}_first.prexf {2}".format(
                     get_imod_path(), name, tiltxcorr_options
-                ), verbose = False
+                ), log_level=logging.TRACE
             )
             # extract ccc values
             indexes = [
@@ -1799,7 +1796,7 @@ def align_stack(name, parameters, interpolation="-linear"):
             run_shell_command(
                 "{0}/bin/xftoxg -nfit 0 -ref {1} -input {2}_first.prexf -goutput {2}_first.prexg".format(
                     get_imod_path(), middle_frame, name
-                ), verbose = False
+                ), log_level=logging.TRACE
             )
 
             # generate aligned stack
@@ -1807,7 +1804,7 @@ def align_stack(name, parameters, interpolation="-linear"):
             run_shell_command(
                 "{0}/bin/newstack {2} {3} -xform {1}_first.prexg {1}.bin {1}.ali -mode 2 -multadd 1,0".format(
                     get_imod_path(), name, interpolation, fill_option
-                ), verbose = False
+                ), log_level=logging.TRACE
             )
 
             error = 1
@@ -1853,18 +1850,18 @@ def align_stack(name, parameters, interpolation="-linear"):
                 run_shell_command(
                     "{0}/bin/xfproduct {1}_first.prexg {1}_cumulative.prexg {1}.prexg".format(
                         get_imod_path(), name
-                    ), verbose = False
+                    ), log_level=logging.TRACE
                 )
 
                 # generate aligned stack with latest alignment parameters
                 run_shell_command(
                     "{0}/bin/newstack {2} {3} -xform {1}.prexg {1}.bin {1}.ali".format(
                         get_imod_path(), name, interpolation, fill_option
-                    ), verbose = False
+                    ), log_level=logging.TRACE
                 )
 
                 # update current transform
-                run_shell_command("mv {0}.prexg {0}_first.prexg".format(name),verbose=parameters["slurm_verbose"])
+                run_shell_command("mv {0}.prexg {0}_first.prexg".format(name))
 
                 # newerror = abs( np.loadtxt('{0}_cumulative.prexf'.format(name))[:,4:5] ).max()
                 translations = np.loadtxt("{0}_cumulative.prexf".format(name))
@@ -2608,7 +2605,7 @@ EOF
                             )
                         )
 
-                    mpi.submit_function_to_workers(align_frame_to_reference, arguments, verbose=parameters["slurm_verbose"])
+                    mpi.submit_function_to_workers(align_frame_to_reference, arguments)
 
                     ccc = np.zeros([intervals, 1])
 
@@ -2633,7 +2630,7 @@ EOF
                         com = "{0}/bin/xfproduct {1}_first.prexg {1}_cumulative.prexg {1}.prexg".format(
                             get_imod_path(), name
                         )
-                        run_shell_command(com,verbose = False)
+                        run_shell_command(com, log_level=logging.TRACE)
 
                     run_shell_command("cp {0}.prexg {0}.prexgraw".format(name))
 
@@ -2647,10 +2644,10 @@ EOF
                     com = "{0}/bin/newstack {2} -xform {1}.prexg {3} -mode 2 -multadd 1,0 {1}.bin {1}.ali".format(
                         get_imod_path(), name, interpolation, fill_option
                     )
-                    run_shell_command(com,verbose=False)
+                    run_shell_command(com, log_level=logging.TRACE)
 
                     # update current transform
-                    run_shell_command("mv {0}.prexg {0}_first.prexg".format(name), verbose=parameters["slurm_verbose"])
+                    run_shell_command("mv {0}.prexg {0}_first.prexg".format(name))
 
                     # newerror = abs( np.loadtxt('{0}_cumulative.prexg'.format(name))[:,4:5] ).max()
                     translations = np.loadtxt("{0}_cumulative.prexg".format(name))
@@ -3867,7 +3864,7 @@ EOF
                             name, micrograph_name
                         )
                     if len(com) > 0:
-                        run_shell_command(com, verbose=parameters["slurm_verbose"])
+                        run_shell_command(com)
 
                     com = "montage {0}_matches.png {0}_diagnostic.png {0}_weights.png -tile 1x3 -geometry +0+0 {0}_matches.png".format(
                         name
@@ -3875,7 +3872,7 @@ EOF
                     com = "montage {0}_matches.png {0}_diagnostic.png {0}_weights.png {0}_weights_new.png -tile 1x4 -geometry +0+0 {0}_matches.png".format(
                         name
                     )
-                    run_shell_command(com, verbose=parameters["slurm_verbose"])
+                    run_shell_command(com)
 
                     try:
                         shutil.rmtree("frealign_" + name)
@@ -3959,7 +3956,7 @@ def sum_gain_correct_frames(movie, average, parameters):
     if parameters["gain_remove_hot_pixels"]:
         if Path(movie).suffix == '.mrc':
             logger.info(f"Removing hot pixels")
-            preprocess.remove_xrays_from_file(Path(movie).stem,parameters['slurm_verbose'])
+            preprocess.remove_xrays_from_file(Path(movie).stem)
         else:
             logger.warning(f"Skipping hot pixel removal on images of format {Path(movie).suffix}")
 
@@ -4436,14 +4433,12 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
 {dose_weighting_options} \
 {mag_correction_options} \
 -Gpu {get_gpu_ids(parameters,separator=' ')}"
-        [ output, error ] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+        [ output, error ] = run_shell_command(command)
 
         if "Segmentation fault" in error or "Killed" in error:
             raise Exception(error)
 
         if "no CUDA-capable device is detected" in output or "All GPUs are in use" in output:
-            if not parameters['slurm_verbose']:
-                logger.error(output)
             logger.error('A GPU must be available for MotionCor3 to run')
             raise Exception(output)
 
@@ -4620,10 +4615,10 @@ EOF
             "export OMP_NUM_THREADS={0}; export NCPUS={0}; ".format(threads)
             + command
         )
-        if parameters['data_mode'] == 'tomo' and parameters["slurm_verbose"] and not isfirst:
-            [output, error] = run_shell_command(command, verbose=False)
+        if parameters['data_mode'] == 'tomo' and not isfirst:
+            [output, error] = run_shell_command(command, log_level=logging.TRACE)
         else:
-            [output, error] = run_shell_command(command, verbose=parameters["slurm_verbose"])
+            [output, error] = run_shell_command(command)
 
         if "Segmentation fault" in error or "Killed" in error:
             logger.error("Try increasing the value of 'Split, Memory per thread (GB)' in the Resources tab (or the --slurm_memory parameter in the CLI)")
@@ -4750,7 +4745,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         command = "{0}/bin/newstack {1}.st {1}_bin.st -bin {2}".format(
             get_imod_path(), name, binning
         )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        run_shell_command(command)
     else:
         shutil.copy2( f"{name}.st", f"{name}_bin.st" )
 
@@ -4766,7 +4761,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         command = "{0}/bin/newstack {1}.st {1}_bin.st -bin {2} -fromone {3}".format(
             get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
         )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        run_shell_command(command)
 
         if binning > 1:
             os.symlink( name + "_bin.st", name + "_aretomo.mrc")
@@ -4774,7 +4769,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             command = "{0}/bin/newstack {1}.mrc {1}_aretomo.mrc -fromone {3}".format(
                 get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
             )
-            run_shell_command(command,verbose=parameters["slurm_verbose"])
+            run_shell_command(command)
         
         # remove excluded tilt-angles
         indexes = np.fromstring( excluded_views.split(" ")[-1], dtype=int, sep=",") - 1
@@ -4843,13 +4838,13 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         command = "{0}/bin/tiltxcorr -input {1}_bin.st -output {1}_first.prexf {2}".format(
             get_imod_path(), name, tiltxcorr_options
         )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        run_shell_command(command)
 
         # convert to global shifts with respect to middle frame
         command = "{0}/bin/xftoxg -nfit 0 -input {1}_first.prexf -goutput {1}_first.prexg".format(
             get_imod_path(), name
         )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        run_shell_command(command)
 
         fill_option = f"-fill {get_image_mean(name + '_bin.st')}"
         
@@ -4857,7 +4852,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         command = "{0}/bin/newstack -linear {3} -xform {1}_first.prexg {1}_bin.st {1}_bin.preali -mode 1 -multadd 1,0 {2}".format(
             get_imod_path(), name, tapper_edge, fill_option
         )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        run_shell_command(command)
 
         error = 1
         iteration = 0
@@ -4867,34 +4862,32 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             run_shell_command(
                 "{0}/bin/tiltxcorr -input {1}_bin.preali -output {1}_cumulative.prexf {2}".format(
                     get_imod_path(), name, tiltxcorr_options
-                ),
-                verbose=parameters["slurm_verbose"],
+                )
             )
 
             # convert to global shifts with respect to middle frame
             run_shell_command(
                 "{0}/bin/xftoxg -nfit 0 -input {1}_cumulative.prexf -goutput {1}_cumulative.prexg".format(
                     get_imod_path(), name
-                ), verbose=parameters["slurm_verbose"]
+                )
             )
 
             # concatenate with latest transform
             run_shell_command(
                 "{0}/bin/xfproduct {1}_first.prexg {1}_cumulative.prexg {1}.prexg".format(
                     get_imod_path(), name
-                ), verbose=parameters["slurm_verbose"]
+                )
             )
 
             # generate aligned stack with latest alignment parameters
             run_shell_command(
                 "{0}/bin/newstack -linear {3} -xform {1}.prexg {1}_bin.st {1}_bin.preali -scale 0,32767 -mode 1 {2}".format(
                     get_imod_path(), name, tapper_edge, fill_option
-                ),
-                verbose=parameters["slurm_verbose"],
+                )
             )
 
             # update current transform
-            run_shell_command("mv {0}.prexg {0}_first.prexg".format(name),verbose=parameters["slurm_verbose"])
+            run_shell_command("mv {0}.prexg {0}_first.prexg".format(name))
 
             newerror = abs(
                 np.loadtxt("{0}_cumulative.prexf".format(name))[:, 4:5]
@@ -4915,7 +4908,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             )
 
         # update current transform
-        run_shell_command("mv {0}_first.prexg {0}.prexg".format(name),verbose=parameters["slurm_verbose"])
+        run_shell_command("mv {0}_first.prexg {0}.prexg".format(name))
 
     actual_pixel = (
         float(parameters["scope_pixel"]) * float(parameters["data_bin"]) * binning
@@ -5149,7 +5142,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             def obs(line):
                 output.append(line)
 
-            stream_shell_command(command, observer=obs, verbose=parameters["slurm_verbose"])
+            stream_shell_command(command, observer=obs)
 
             # detect removed images and add them to excluded views
             formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
@@ -5185,8 +5178,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             except:
                 if 'Error: GPU' in output:
-                    if not parameters['slurm_verbose']:
-                        logger.error(output)
+                    logger.error(output)
                     logger.error('A GPU must be available for AreTomo2 to run')
                 # write identity transformations
                 with open(f"{name}.xf", "w") as f:
@@ -5529,7 +5521,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             def obs(line):
                 output.append(line)
 
-            stream_shell_command(command, observer=obs, verbose=parameters["slurm_verbose"])
+            stream_shell_command(command, observer=obs)
 
             # detect removed images and add them to excluded views
             formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
@@ -5578,7 +5570,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
 
-            stream_shell_command(command, verbose=parameters["slurm_verbose"])
+            stream_shell_command(command)
              
             # save output
             try:
@@ -5590,8 +5582,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             except:
                 if 'Error: GPU' in output:
-                    if not parameters['slurm_verbose']:
-                        logger.error(output)
+                    logger.error(output)
                     logger.error('A GPU must be available for AreTomo3 to run')
                 # write identity transformations
                 with open(f"{name}.xf", "w") as f:
@@ -5626,14 +5617,14 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             command = "{0} export PATH={1}:$PATH; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} {4}-verb 1".format(
                 load_imod_cmd, get_legacy_imod_path() + "/bin", name, gold_diameter, fid_markers
             )
-            run_shell_command(command,verbose=parameters["slurm_verbose"])
+            run_shell_command(command)
 
             # try to recover from failure by re-running RAPTOR using fixed number of fiducials
             if not os.path.exists("IMOD/{0}_bin.xf".format(name)):
                 command = "{0} export PATH={1}:$PATH; {1}/RAPTOR -seed 96 -execPath {1} -path . -input {2}_bin.preali -output . -diameter {3} -markers 30 -verb 1".format(
                     load_imod_cmd, get_legacy_imod_path() + "/bin", name, gold_diameter
                 )
-                run_shell_command(command,verbose=parameters["slurm_verbose"])
+                run_shell_command(command)
 
             # if second try also failed, switch back to patch tracking
             if not os.path.exists("IMOD/{0}_bin_tiltalignScript.txt".format(name)):
@@ -5738,9 +5729,8 @@ EOF
 
                 # TODO: Update excluded views per RAPTOR alignment
                 # checks for existing tilt series alignment
-                if parameters["slurm_verbose"]:
-                    with open(f"{name}_RAPTOR.log") as f:
-                        logger.info(f.read())
+                with open(f"{name}_RAPTOR.log") as f:
+                    logger.debug(f.read())
                 if os.path.exists("{0}_RAPTOR.log".format(name)):
                     excluded = []
                     # supposedly produces clean tilt series by excluding unalignable tilts
@@ -5801,7 +5791,7 @@ EOF
                 parameters["tomo_ali_pixels_trim_x"],
                 parameters["tomo_ali_pixels_trim_y"],
             )
-            proc = stream_shell_command(command, verbose=parameters["slurm_verbose"])
+            proc = stream_shell_command(command)
 
             if not os.path.exists("%s_patches.fid" % name):
                 raise Exception(proc.stdout.read())
@@ -5810,7 +5800,7 @@ EOF
             command = "{0}/bin/imodchopconts -input {1}_patches.fid -output {1}.fid -overlap 4 -surfaces 1".format(
                 get_imod_path(), name
             )
-            proc = stream_shell_command(command, verbose=parameters["slurm_verbose"])
+            proc = stream_shell_command(command)
 
             if not os.path.exists("%s.fid" % name):
                 raise Exception(proc.stdout.read())
@@ -5845,7 +5835,7 @@ EOF
             com = "{0} export PATH={1}/bin:$PATH; {1}/bin/tiltalign -param {2}_tiltalignScript.txt".format(
                 legacy_imod_load_command(), get_legacy_imod_path(), name
             )
-            output, error = run_shell_command(com,verbose=parameters["slurm_verbose"])
+            output, error = run_shell_command(com)
             
             if "ERROR: TILTALIGN" in output and os.path.exists(f"IMOD/{name}_bin.xf"):
                 os.remove(f"IMOD/{name}_bin.xf")
@@ -5959,7 +5949,7 @@ EOF
             name,
             extra_options
         )
-        output, error = run_shell_command(command,verbose=parameters["slurm_verbose"])
+        output, error = run_shell_command(command)
         if "ERROR: TILTALIGN" in output:
             logger.error(output)
 
@@ -5977,7 +5967,7 @@ EOF
         command = "{0}/bin/xfproduct {1}.prexg {1}_bin.xf {1}.xf -scale {2},{2}".format(
             get_imod_path(), name, binning
         )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        run_shell_command(command)
 
     # apply binning factor to aretomo transformation
     if 'aretomo' in parameters["tomo_ali_method"].lower() and binning > 1:

@@ -1,9 +1,6 @@
-import math
+import logging
 import os
 import shutil
-import subprocess
-import datetime
-import time
 
 from pathlib import Path
 
@@ -236,14 +233,12 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 get_imod_path(), name, int(float(parameters["scope_voltage"]))
             )
             # suppress long log
-            if ["slurm_verbose"]:
-                logger.info(command)
-            run_shell_command(command, verbose=False)
+            run_shell_command(command, log_level=logging.TRACE)
         elif parameters.get("tomo_rec_2d_filtering_method") == "lowpass":
             command = "{0}/bin/mtffilter {1}.ali {1}.mtf.ali -lowpass {2},{3}".format(
                 get_imod_path(), name, parameters["tomo_rec_mtfilter_cutoff"], parameters["tomo_rec_mtfilter_falloff"]
             )
-            run_shell_command(command, verbose=parameters["slurm_verbose"])
+            run_shell_command(command)
 
         shutil.move("{0}.mtf.ali".format(name), "{0}.ali".format(name))
 
@@ -251,13 +246,13 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
     command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -bin {2}".format(
         get_imod_path(), name, binning
     )
-    run_shell_command(command,verbose=parameters["slurm_verbose"])
+    run_shell_command(command)
 
     # create binned aligned stack
     command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
         get_imod_path(), name, binning
     )
-    run_shell_command(command,verbose=parameters["slurm_verbose"])
+    run_shell_command(command)
 
     # create binned reconstruction
     # only reconstruct tomograms if we're not using aretomo2
@@ -273,7 +268,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
         command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7}".format(
             get_imod_path(), name, thickness, binning,  x, y, tilt_options, zfact,
         )
-        run_shell_command(command,verbose=parameters["slurm_verbose"])
+        run_shell_command(command)
 
     elif "aretomo" in parameters["tomo_rec_method"].lower() and ( "aretomo" not in parameters["tomo_ali_method"].lower() or force):
 
@@ -310,7 +305,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 {reconstruct_option} \
 -Align 0 \
 -Gpu {get_gpu_ids(parameters,separator=' ')}"
-                run_shell_command(command, verbose=parameters["slurm_verbose"])
+                run_shell_command(command)
                 
             elif "aretomo3" == parameters["tomo_rec_method"].lower():
 
@@ -597,7 +592,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -VolZ {int(1.0 * thickness)} \
 -Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
-                run_shell_command(command, verbose=parameters["slurm_verbose"])
+                run_shell_command(command)
                 
                 assert os.path.exists(f"{name}_aligned_Vol.mrc"), "AreTomo3 reconstruction failed, no output file found"
 

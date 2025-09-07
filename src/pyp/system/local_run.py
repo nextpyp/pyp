@@ -1,3 +1,4 @@
+import logging
 import math
 import multiprocessing
 import os
@@ -61,20 +62,19 @@ def create_pyp_multirun_file(
     return mpirunfile
 
 
-def run_shell_command(command, verbose=False):
-    if verbose:
-        logger.info(command)
+def run_shell_command(command,log_level=logging.DEBUG):
+    logger.debug(command)
     [output, error] = subprocess.Popen(
         command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
     ).communicate()
-    if verbose and len(output) > 0:
-        logger.info("\n".join([s for s in output.split("\n") if "your model does not fully load the pre-trained weight" not in s]))
+    if len(output) > 0:
+        logger.log(log_level,"\n".join([s for s in output.split("\n") if "your model does not fully load the pre-trained weight" not in s]))
     if len(error) > 0 and "BZIP2" not in error and "no version information available" not in error and "Format: lossy" not in error and "p_observed" not in error and "it/s" not in error and "sleeping and retrying" not in error and "TIFFReadDirectory: Warning" not in error and "Found device" not in error and "your model does not fully load the pre-trained weight" not in error and "We recommend you start setting" not in error:
         logger.error(error)
     return output, error
 
 
-def stream_shell_command(command, verbose=False, log=lambda line: logger.info(line), observer=lambda line: True):
+def stream_shell_command(command, log=lambda line: logger.info(line), observer=lambda line: True):
     """
     Run a command in a sub-shell and stream the results into the logger.
     Lines sent to argument functions (log, observer) will not include training newline characters.
@@ -97,8 +97,6 @@ def stream_shell_command(command, verbose=False, log=lambda line: logger.info(li
         WARNING: This function will perform no sanitization of the command before sending it to the shell,
                  so it is the responsibility of the caller to ensure the command is safe to run.
                  See: https://docs.python.org/3/library/subprocess.html#security-considerations
-    verbose : bool
-        True to log the command before running it
     log : (str): None
         Logging function to use.
         Optional, defaults to the usual logger.
@@ -112,8 +110,7 @@ def stream_shell_command(command, verbose=False, log=lambda line: logger.info(li
 
     """
 
-    if verbose:
-        logger.info(command)
+    logger.debug(command)
 
     # start the shell subprocess
     proc = subprocess.Popen(
@@ -195,7 +192,7 @@ def create_initial_multirun_file(
         group = 0
         # TODO: scontrol won't work inside the container
         [output, error] = run_shell_command(
-            "%s/scontrol show hostname $SLURM_JOB_NODELIST" % slurm_prefix(),
+            "%s/scontrol show hostname $SLURM_JOB_NODELIST" % slurm_prefix()
         )
         nodes = output.splitlines()
         for i in nodes:

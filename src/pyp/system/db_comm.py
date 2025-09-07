@@ -32,8 +32,7 @@ def save_parameters_to_website(parameters):
             # actually send the micrograph to the website
             Web().write_parameters(parameter_id=parameters["data_set"], parameters=parameters)
 
-            if 'slurm_verbose' in parameters and parameters['slurm_verbose']:
-                logger.info("Parameters entered into database successfully")
+            logger.trace("Parameters entered into database successfully")
         except:
             logger.error("Failed to enter parameters into database")
             raise
@@ -41,7 +40,7 @@ def save_parameters_to_website(parameters):
         logger.error("No data_set field specified in parameters, cannot save to website")
         return
 
-def save_micrograph_to_website(name,verbose=False):
+def save_micrograph_to_website(name):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
@@ -93,13 +92,12 @@ def save_micrograph_to_website(name,verbose=False):
             # actually send the micrograph to the website
             Web().write_micrograph(name, ctf, avgrot, xf, boxx)
 
-            if verbose:
-                logger.info("Series %s entered into database successfully" % name)
+            logger.trace("Series %s entered into database successfully" % name)
         except:
             logger.error("Failed to enter micrograph into database")
             raise
 
-def save_tiltseries_to_website(name, metadata, verbose=False ):
+def save_tiltseries_to_website(name, metadata):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
@@ -138,13 +136,12 @@ def save_tiltseries_to_website(name, metadata, verbose=False ):
             # actually send the tilt series to the website
             Web().write_tiltseries(name, ctf, avgrot, xf, boxx, metadata)
 
-            if verbose:
-                logger.info("Series %s entered into database successfully" % name)
+            logger.trace("Series %s entered into database successfully" % name)
         except:
             logger.error("Failed to enter tilt-series into database")
             raise
 
-def save_reconstruction_to_website(name, fsc, plots, metadata, verbose=False):
+def save_reconstruction_to_website(name, fsc, plots, metadata):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
@@ -154,13 +151,12 @@ def save_reconstruction_to_website(name, fsc, plots, metadata, verbose=False):
             # actually send the reconstruction to the website
             Web().write_reconstruction(name, metadata, fsc, plots)
 
-            if verbose:
-                logger.info("Reconstruction %s entered into database successfully" % name)
+            logger.trace("Reconstruction %s entered into database successfully" % name)
         except:
             logger.error("Failed to enter reconstruction into database")
             raise
 
-def save_refinement_to_website(name, iteration, verbose=False):
+def save_refinement_to_website(name, iteration):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
@@ -169,12 +165,11 @@ def save_refinement_to_website(name, iteration, verbose=False):
         try:
             # actually send the refinement to the website
             Web().write_refinement(name, iteration)
-            if verbose:
-                logger.info("Refinement %s entered into database successfully" % name)
+            logger.trace("Refinement %s entered into database successfully" % name)
         except:
             logger.error("Failed to enter refinement into database")
 
-def save_refinement_bundle_to_website(name, iteration, verbose=False):
+def save_refinement_bundle_to_website(name, iteration):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
@@ -184,12 +179,11 @@ def save_refinement_bundle_to_website(name, iteration, verbose=False):
             # actually send the refinement to the website
             Web().write_refinement_bundle(name, iteration)
 
-            if verbose:
-                logger.info("Refinement bundle %s entered into database successfully" % name)
+            logger.trace("Refinement bundle %s entered into database successfully" % name)
         except:
             logger.error("Failed to enter refinement into database")
 
-def save_classes_to_website(name, metadata, verbose=False):
+def save_classes_to_website(name, metadata):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
@@ -199,13 +193,12 @@ def save_classes_to_website(name, metadata, verbose=False):
             # actually send the micrograph to the website
             Web().write_classes(name,metadata)
 
-            if verbose:
-                logger.info("Classes %s entered into database successfully" % name)
+            logger.trace("Classes %s entered into database successfully" % name)
         except:
             logger.error("Failed to enter classes into database")
             raise
 
-def save_drgnmap_to_website(epoch, verbose=False):
+def save_drgnmap_to_website(epoch):
 
     # if there's no website, don't bother saving anything
     if not Web.exists:
@@ -215,8 +208,7 @@ def save_drgnmap_to_website(epoch, verbose=False):
             # actually send the reconstruction to the website
             Web().write_tomo_drgn_convergence(epoch)
 
-            if verbose:
-                logger.info("Drgn map entered into database successfully")
+            logger.trace("Drgn map entered into database successfully")
         except:
             logger.error("Failed to enter Drgn map into database")
             raise
@@ -308,7 +300,7 @@ def load_config_files(data_set, project_path, working_path):
     load_results(filelist, project_path, working_path)
 
 
-def load_spr_results(name, parameters, project_path, working_path, verbose=False):
+def load_spr_results(name, parameters, project_path, working_path):
     """Load existing results from previous runs and standard project parameter files
     into working_path."""
 
@@ -339,21 +331,21 @@ def load_spr_results(name, parameters, project_path, working_path, verbose=False
     # do not retrieve local alignment parameters,
     # filelist += ' '.join( sorted( glob.glob( current_path + '/ali/{0}_P????_frames.xf'.format(name) ) ) )
 
-    load_results(filelist, project_path, working_path, verbose)
+    load_results(filelist, project_path, working_path)
 
     # convert to mrc
     if os.path.exists("{0}.tif".format(name)):
         command = "{0}/bin/newstack {1}.tif {1}.mrc; rm -f {1}.tif".format(
             get_imod_path(), name
         )
-        run_shell_command(command, verbose=parameters["slurm_verbose"])
+        run_shell_command(command)
 
     # rename movie average
     if os.path.exists("{0}.mrc".format(name)):
         shutil.copy("{0}.mrc".format(name), "{0}.avg".format(name))
 
 
-def save_spr_results(name, parameters, project_path, has_frames, verbose = False):
+def save_spr_results(name, parameters, project_path, has_frames):
     """Save spr swarm run results into original file path."""
     # TODO: reorganize in a similar way to load_spr_results
     files = dict()
@@ -375,10 +367,10 @@ def save_spr_results(name, parameters, project_path, has_frames, verbose = False
         name
     )
 
-    save_results(files, project_path, verbose)
+    save_results(files, project_path)
 
 
-def save_spr_results_lean(name, project_path, has_frames, verbose=False):
+def save_spr_results_lean(name, project_path, has_frames):
     """Save spr swarm run results into original file path."""
     # TODO: reorganize in a similar way to load_spr_results
     files = dict()
@@ -390,10 +382,10 @@ def save_spr_results_lean(name, project_path, has_frames, verbose=False):
         files["mrc"] = "{0}.mrc".format(name)
     files["pkl"] = "{0}.pkl".format(name)
 
-    save_results(files, project_path,verbose)
+    save_results(files, project_path)
 
 
-def load_tomo_results(name, parameters, project_path, working_path, verbose):
+def load_tomo_results(name, parameters, project_path, working_path):
     """Load existing results from previous runs and standard project parameter files
     into working_path."""
 
@@ -472,7 +464,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
     filelist += (str(project_path / f.format(name)) for f in initial_files)
     filelist += flatten(sorted(glob.glob(str(project_path_escape / f))) for f in file_patterns)
 
-    load_results(filelist, project_path, working_path, verbose)
+    load_results(filelist, project_path, working_path)
 
     if "extract_files" in parameters.keys():
         spk_path = project_params.resolve_path(parameters["extract_files"])
@@ -484,7 +476,7 @@ def load_tomo_results(name, parameters, project_path, working_path, verbose):
                 shutil.copy2(spk_file, dest)
 
 
-def save_tomo_results(name, parameters, current_path, verbose=False):
+def save_tomo_results(name, parameters, current_path):
     """Save tomo swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
@@ -517,10 +509,10 @@ def save_tomo_results(name, parameters, current_path, verbose=False):
         files["ali"] = "{0}.tlt {0}.xf".format(name)
     files["raw"] = "{0}.rawtlt {0}.order".format(name)
 
-    save_results(files, current_path, verbose)
+    save_results(files, current_path)
 
 
-def save_tomo_results_lean(name, parameters, current_path, verbose):
+def save_tomo_results_lean(name, parameters, current_path):
     """Save tomo swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
@@ -541,7 +533,7 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
 
     files[
         "webp"
-    ] = "{0}.webp {0}_?D_ctftilt.webp {0}_raw.webp {0}_ali.webp {0}_sides.webp {0}_rec.webp {0}_rec.png {0}_vir????_binned_nad.webp".format(
+    ] = "{0}.webp {0}_?D_ctftilt.webp {0}_raw.webp {0}_ali.webp {0}_sides.webp {0}_rec.webp {0}_score.webp {0}_rec.png {0}_vir????_binned_nad.webp".format(
         name
     )
     files[
@@ -556,9 +548,9 @@ def save_tomo_results_lean(name, parameters, current_path, verbose):
     if parameters.get("tomo_ali_export"):
         files["ali"] = "{0}.tlt {0}.xf".format(name)
 
-    save_results(files, current_path, verbose=verbose)
+    save_results(files, current_path)
 
-def load_csp_results(name, parameters, project_path, working_path, verbose=False):
+def load_csp_results(name, parameters, project_path, working_path):
     """Load existing results from previous runs and standard project parameter files
     into working_path."""
 
@@ -571,12 +563,12 @@ def load_csp_results(name, parameters, project_path, working_path, verbose=False
     project_path_escape = Path(glob.escape(str(project_path)))
     filelist += (str(project_path_escape / f.format(name)) for f in initial_files)
 
-    load_results(filelist, project_path, working_path, verbose=verbose)
+    load_results(filelist, project_path, working_path)
 
-def save_csp_results(name, parameters, current_path, verbose=False):
+def save_csp_results(name, parameters, current_path):
     """Save sp swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
     files["csp"] = " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
 
-    save_results(files, current_path, verbose=verbose)
+    save_results(files, current_path)

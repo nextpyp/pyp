@@ -1,7 +1,7 @@
 import os
 import shutil
 import socket
-
+import logging
 import numpy as np
 
 from pyp import utils
@@ -63,7 +63,7 @@ def detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options):
     command = "{0}/bin/findbeads3d -size {1} {2}.rec {2}_gold3d.mod -max {3} -threshold {4} -store {5}".format(
         get_imod_path(), size_of_gold, name, parameters["tomo_rec_erase_detect_max"], parameters["tomo_rec_erase_detect_threshold"], parameters["tomo_rec_erase_detect_store"]
     )
-    local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.run_shell_command(command)
 
     thickness = parameters["tomo_rec_thickness"]
     # project gold beads into raw tilt-series
@@ -76,7 +76,7 @@ def detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options):
     command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0  -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7} -ProjectModel {1}_gold3d.mod".format(
         get_imod_path(), name, thickness, binning, x, y, tilt_options, zfact,
     )
-    local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.run_shell_command(command)
 
 
 @Timer("detect", text="Particle picking took: {}", logger=logger.info)
@@ -1077,7 +1077,7 @@ def pick_particles(
                 command = "montage -geometry +0+0 -tile x2 {0}_images.png {0}_histog.png {0}_energy.png".format(
                     name
                 )
-                local_run.run_shell_command(command, verbose=mparameters["slurm_verbose"])
+                local_run.run_shell_command(command)
 
             else:
 
@@ -1185,12 +1185,12 @@ def pick_particles(
                 command = "{0}/convert {1}.webp -flip -fill none -stroke green1 {2} {1}_tmp.webp".format(
                     os.environ["IMAGICDIR"], name, options
                 )
-                local_run.run_shell_command(command, verbose=False)
+                local_run.run_shell_command(command, log_level=logging.TRACE)
 
                 command = "{0}/convert {1}_tmp.webp -flip -fill none -stroke red {2} {1}_boxed.webp".format(
                     os.environ["IMAGICDIR"], name, newoptions
                 )
-                local_run.run_shell_command(command, verbose=False)
+                local_run.run_shell_command(command, log_level=logging.TRACE)
 
             # pythonesque way
             if False:

@@ -505,7 +505,7 @@ def sva_iterate(mp, sp, iter, submit = True):
         test_command = f"module load FFTW/3.3.7; {test_filter} {xmlexe} -1 {test_mrc}"
     if os.path.exists(test_mrc):
         try:
-            local_run.stream_shell_command(test_command,verbose=mp['slurm_verbose'])
+            local_run.stream_shell_command(test_command)
             logger.info(f"Apply filter on {test_mrc}")
 
             if submit:
@@ -550,10 +550,10 @@ def sva_iterate(mp, sp, iter, submit = True):
             600,
         )
         """
-        local_run.run_shell_command(sbatch_com, verbose=mp['slurm_verbose'])
+        local_run.run_shell_command(sbatch_com)
         logger.info(
             f"\n\n\n\t\t 3DAVG [ iteration {iter} ] [ mode {mode} ] submitted successfully, JOBID = {id} \n\n"
         )
     else:
         command = f"export I_MPI_HYDRA_BOOTSTRAP=ssh && export HYDRA_BOOTSTRAP=ssh && /opt/mpich-3.2.1/bin/mpirun -genv I_MPI_PIN disable -np {sp['slurm_tasks']} {executable} {xmlexe}"
-        local_run.stream_shell_command(command,verbose=mp['slurm_verbose'])
+        local_run.stream_shell_command(command)

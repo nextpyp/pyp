@@ -1,4 +1,5 @@
 import glob
+import logging
 import math
 import multiprocessing
 import os
@@ -450,13 +451,12 @@ EOF
             + command
         )
     
-    [ output, error ] = local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+    [ output, error ] = local_run.run_shell_command(command)
 
     try:
-        if parameters["slurm_verbose"]:
-            with open(logfile, "r") as f:
-                ctffind4 = f.read()
-                logger.info(ctffind4)
+        with open(logfile, "r") as f:
+            ctffind4 = f.read()
+            logger.debug(ctffind4)
         if not ctffind5:
             # parse output and return df1, df2, angast and CC
             return np.loadtxt("power.txt", comments="#", dtype="f")[[1, 2, 3, 5, 6]]
@@ -597,8 +597,7 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
         local_run.run_shell_command(
             "{0}/convert ctffind3.png -gravity Center -crop 100%x+0+0 ctffind3.png".format(
                 os.environ["IMAGICDIR"]
-            ),
-            verbose=parameters["slurm_verbose"],
+            )
         )
         local_run.run_shell_command(
             '{0}/convert ctffind3.png -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate +10+30 Defocus1={1} -pointsize 20 -fill white -weight 700 -undercolor "#0008" -annotate 0x0+10+65 Defocus2={2} -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate 0x0+10+100 Angast={3} -pointsize 20 -fill white -weight 700  -undercolor "#0008" -annotate 0x0+10+135 CCC={4} ctffind3.png'.format(
@@ -607,8 +606,7 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
                 "%.2f" % df2,
                 "%.2f" % angast,
                 "%.4f" % ccc,
-            ),
-            verbose=parameters["slurm_verbose"],
+            )
         )
 
         import matplotlib.pyplot as plt
@@ -1102,13 +1100,13 @@ def plot_ctffind_tilt(name, parameters, ctf):
         A[ np.isnan(A) ] = 0
         writepng(plot.contact_sheet(A, cols), name + "_2D_ctftilt.png")
         command = "/usr/bin/convert {0}_2D_ctftilt.png {0}_2D_ctftilt.webp".format(name)
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command(command)
 
         # produce 2D map of 2D profiles
         command = "/usr/bin/montage -geometry 384x384+0+0 {0}_????_ctftilt.png {0}_1D_ctftilt.webp".format(
             name
         )
-        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command(command)
 
 
 @Timer(
@@ -1629,7 +1627,7 @@ EOF
             raise Exception(f"Unrecognized ctffind command: {estimation}")
 
         # suppress long log
-        [output, error] = local_run.run_shell_command(command, verbose=False)
+        [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
         assert Path(logfile).exists(), f"{logfile} does not exist. CTFFIND_TILT fails to run."
 
         with open(logfile, 'r') as f:
@@ -1649,9 +1647,9 @@ EOF
                 estimated_tilt_axis = tilt_axis
             assert estimated_tilt_angle is not None and estimated_tilt_axis is not None, "Ctffind_tilt logfile does not contain estimated tilt geometry. Please check. "
 
-        if parameters["slurm_verbose"] and imagefile.endswith('_0000'):
+        if imagefile.endswith('_0000'):
             with open(logfile) as f:
-                logger.info(f.read())
+                logger.debug(f.read())
             if len(error) > 0:
                 logger.error(error)
         
@@ -1989,8 +1987,7 @@ EOF
     contrast_stretch("power_avg.png")
     local_run.run_shell_command(
         "%s/montage power_avg.png power.png -geometry +0+0 power.png"
-        % os.environ["IMAGICDIR"],
-        verbose=parameters["slurm_verbose"],
+        % os.environ["IMAGICDIR"]
     )
 
     # 2D CTF USING CTFFIND3

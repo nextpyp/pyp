@@ -8266,10 +8266,18 @@ _name = "Resources"
 _description = "Parameters to control jobs submission using the SLURM scheduler"
 
 [tabs.slurm.verbose]
-name = "Verbose mode"
+name = "Verbose mode (legacy)"
 description = "Provide more information when running jobs"
 type = "bool"
 default = false
+hidden = true
+
+[tabs.slurm.verbose_level]
+name = "Logging level"
+description = "Filter log messages based on their severity"
+type = "enum"
+enum = { info="low (info)", debug="medium (debug)", trace="high (trace)" }
+default = "info"
 
 [tabs.slurm.tasks]
 name = "Split, Threads"

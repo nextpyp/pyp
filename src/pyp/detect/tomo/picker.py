@@ -5,6 +5,7 @@ from pyp.system.utils import get_imod_path
 from pyp.utils import get_relative_path
 from pyp.system.logging import initialize_pyp_logger
 
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
@@ -161,8 +162,8 @@ class Picker():
         f.close()
         circle = int(self.radius / self.pixelsize / self.auto_binning)
         # Saving coordinates in spk format and swapping Y-Z
-        run_shell_command(get_imod_path()+'/bin/point2model boxs.txt '+self.name+'.mod -sphere %s' % circle,  verbose=False)
-        run_shell_command(get_imod_path()+'/bin/imodtrans -Y -T ' +self.name+ '.mod ' + self.name + ".spk", verbose=False )
+        run_shell_command(get_imod_path()+'/bin/point2model boxs.txt '+self.name+'.mod -sphere %s' % circle, log_level=logging.TRACE)
+        run_shell_command(get_imod_path()+'/bin/imodtrans -Y -T ' +self.name+ '.mod ' + self.name + ".spk", log_level=logging.TRACE)
         logger.info(f"\t{len(boxs):,} particles detected")
 
         if show:

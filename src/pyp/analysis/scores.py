@@ -1,3 +1,4 @@
+import logging
 import math
 import multiprocessing
 import os
@@ -1117,7 +1118,7 @@ def particle_cleaning(parameters: dict):
                             parameters["clean_threshold"],
                             parameters["scope_pixel"]))
         if len(mpi_args) > 0:
-            mpi.submit_function_to_workers(filter_particles, mpi_args, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(filter_particles, mpi_args)
 
         # Statistics             
         clean_particle_count = 0
@@ -1154,7 +1155,7 @@ def particle_cleaning(parameters: dict):
                 mpi_args.append((parameter_file, clean_parameter_folder))
             
             if len(mpi_args) > 0:
-                mpi.submit_function_to_workers(deep_clean_particles, mpi_args, verbose=parameters["slurm_verbose"])
+                mpi.submit_function_to_workers(deep_clean_particles, mpi_args)
 
             clean_micrograph_list = np.array([str(f.name).split("_r")[0] for f in Path(clean_parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f)])
             
@@ -1639,9 +1640,9 @@ def generate_clean_spk(input_parameter_folder, binning=1, output_path="./frealig
 
                     outfile = os.path.join(output_path, os.path.basename(file).replace("_extended.cistem", ".mod"))
                     command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_extended.cistem', '.box')} {outfile}"
-                    run_shell_command(command, verbose=False)
+                    run_shell_command(command, log_level=logging.TRACE)
 
-                    run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
+                    run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')), log_level=logging.TRACE)
 
                     os.remove(outfile)
 

@@ -60,8 +60,7 @@ def fsc_multiprocessing(
             com = "{5}; e2proc3d.py {0} {1} --process=mask.auto3d:radius=100:threshold={2}:nshells={3}:nshellsgauss={4}:nmaxseed=0:return_mask=1".format(
                 average, mask, threshold, shell, gauss, utils.eman_load_command()
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
 
             # shutil.copy2( average, mask )
@@ -79,8 +78,7 @@ def fsc_multiprocessing(
             com = "{1}; e2proc3d.py {0} {0} --process=filter.lowpass.gauss:cutoff_pixels=20".format(
                 mask, utils.eman_load_command()
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
 
             current_mask = mrc.read(mask)
@@ -121,16 +119,14 @@ def fsc_multiprocessing(
         com = "{4}; e2proc3d.py {0} {1}_{2}.mrc --multfile={3}".format(
             half1, os.path.basename(half1)[:-4], name, mask, utils.eman_load_command()
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
         # mask second half
         com = "{4}; e2proc3d.py {0} {1}_{2}.mrc --multfile={3}".format(
             half2, os.path.basename(half2)[:-4], name, mask, utils.eman_load_command()
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
         # randomize phases
@@ -142,8 +138,7 @@ def fsc_multiprocessing(
                 phases.split(",")[-1],
                 utils.eman_load_command(),
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
         else:
             # print 'Bypassing phase filtering'
@@ -157,8 +152,7 @@ def fsc_multiprocessing(
             apix,
             utils.eman_load_command(),
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
         # clanup
@@ -173,8 +167,7 @@ def fsc_multiprocessing(
         com = "{0}; e2proc3d.py {1} fsc_{3}.txt --apix={4} --calcfsc={2}".format(
             utils.eman_load_command(), half1, half2, name, apix
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
     # parse result
@@ -359,8 +352,7 @@ if __name__ == "__main__":
             com = "{0}; e2pdb2mrc.py -A {1} -R {2} -B {3},{4},{5} {6}.pdb {6}.mrc".format(
                 utils.eman_load_command(), args.apix, args.pdbres, x, y, z, pdbfile
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
         else:
             logger.info("Using existing map for pdb coordinates.")
@@ -375,8 +367,7 @@ if __name__ == "__main__":
             com = "{4}; e2proc3d.py {0} {1} --apix={2} --process=filter.lowpass.gauss:cutoff_pixels={3}".format(
                 second_half, average, args.apix, args.lowpass, utils.eman_load_command()
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
             mask = mrc.read(average)
             logger.info(
@@ -422,8 +413,7 @@ if __name__ == "__main__":
             com = "{3}; e2proc3d.py {0} {0} --apix={1} --process=filter.lowpass.gauss:cutoff_pixels={2}".format(
                 average, args.apix, args.lowpass, utils.eman_load_command()
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             logger.info(subprocess.getoutput(com))
 
             logger.info(

@@ -2,11 +2,12 @@
 import os
 import shutil
 import glob
+import logging
 from pathlib import Path
 from tqdm import tqdm
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, project_params, mpi
-from pyp.system.logging import initialize_pyp_logger
+from pyp.system.logging import initialize_pyp_logger, get_verbose_level
 from pyp.utils import get_relative_path
 from pyp.inout.image import img2svgz
 from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
@@ -25,11 +26,11 @@ def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, do
 
     # cryodrgn pose pkl
     command = f"{get_cryodrgn_path()} parse_pose_star {alignment_star} -o {output}_poses.pkl -D {boxsize}"
-    local_run.run_shell_command(command, verbose=True)
+    local_run.run_shell_command(command)
 
     # ctf metadata pkl
     command = f"{get_cryodrgn_path()} parse_ctf_star {alignment_star} -o {output}_ctf.pkl"
-    local_run.run_shell_command(command, verbose=True)
+    local_run.run_shell_command(command)
 
     if boxsize > downsample_size:
         logger.info(f"Downsampling particles size to {downsample_size}")
@@ -42,7 +43,7 @@ def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, do
 
         # edit the input alignment star to replace the new mrcs
         command = f"sed 's/.mrcs/_{downsample_size}.mrcs/g' {alignment_star} > {alignment_star.replace('.star', '_downsample.star')}"
-        local_run.run_shell_command(command, verbose=True)
+        local_run.run_shell_command(command)
 
         downsampled = True
     else:
@@ -176,7 +177,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
         if parameters['cryodrgn_data_shufflersize'] > 0:
             options += f" --shuffler-size {parameters['cryodrgn_data_shufflersize']}"
 
-    if parameters["slurm_verbose"]:
+    if get_verbose_level(parameters) < logging.INFO:
         options += " -v"
 
     if False and  downsampled:
@@ -232,7 +233,7 @@ def cryodrgn_train(parameters, input_dir, name, output, downsampled=True):
 
     command = f"{get_cryodrgn_path()} train_vae {particles_input} --datadir {input_dir} --ctf {ctf_input} --poses {pose_input} --zdim {parameters['cryodrgn_train_zdim']} --num-epochs {parameters['cryodrgn_train_epochs']} -o {output} {options} {training_parameters} {tomo}"
 
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
 
 def cryodrgn_analyze(input_dir, output, parameters, downsampled):
     """cryodrgn analyze""" 
@@ -295,7 +296,7 @@ def cryodrgn_analyze(input_dir, output, parameters, downsampled):
 
     command = f"{get_cryodrgn_path()} analyze {input_dir} {parameters['cryodrgn_analysis_epoch']} -o {output} --pc {parameters['cryodrgn_analysis_pc']} --ksample {parameters['cryodrgn_analysis_ksample']} --vol-start-index {parameters['cryodrgn_analysis_istart']} {options} --Apix {output_pixel}"
 
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
 
 
 # TODO - only run training tasks
@@ -304,7 +305,7 @@ def run_cryodrgn_train(project_dir, parameters):
     # scratch space
     working_path = Path(os.environ["PYP_SCRATCH"]) / "cryodrgn"
 
-    logger.info(f"Working path: {working_path}")
+    logger.info(f"Using temporary folder {working_path}")
 
     working_path.mkdir(parents=True, exist_ok=True)
     os.chdir(working_path)
@@ -377,7 +378,7 @@ def run_cryodrgn_eval(project_dir, parameters):
     # scratch space
     working_path = Path(os.environ["PYP_SCRATCH"]) / "cryodrgn"
 
-    logger.info(f"Working path: {working_path}")
+    logger.info(f"Using temporary folder {working_path}")
 
     working_path.mkdir(parents=True, exist_ok=True)
     os.chdir(working_path)
@@ -470,6 +471,6 @@ def run_cryodrgn_eval(project_dir, parameters):
             arguments.append((file, radius, file.replace(Path(file).suffix,".webp")))
     for file in glob.glob( os.path.join(analyze_output,f"kmeans{parameters['cryodrgn_analysis_ksample']}","*.mrc")):
         arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
-    mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+    mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
 
     shutil.copytree((working_path / "analyze_output"), Path(final_output), dirs_exist_ok=True)

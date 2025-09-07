@@ -2,6 +2,7 @@ import argparse
 import collections
 import datetime
 import glob
+import logging
 import math
 import multiprocessing
 import os
@@ -969,7 +970,7 @@ def frealign_def_split(fp, parfile, tolerance):
             + """ | grep -v RESOL | grep -v Average | grep -v Date | grep C | awk '{if ($2 != "") printf "%14.5f%14.5f%14.5f%14.5f%14.5f%14.5f%14.5f\n", $2, $3, $4, $6, $7, $8, $9}' > """
             + "maps/statistics_r01.txt"
         )
-        local_run.run_shell_command(com, verbose=False)
+        local_run.run_shell_command(com, log_level=logging.TRACE)
 
     def_swarm_file = slurm.create_def_swarm_file(fp, parfile, tolerance)
 
@@ -1828,8 +1829,7 @@ def split_reconstruction(
 
     # run job
     if run:
-        if fp["slurm_verbose"]:
-            logger.info(command)
+        logger.debug(command)
         with open(reclogfile, "a") as f:
             f.write(command)
         subprocess.Popen(command, shell=True, text=True).wait()
@@ -1889,7 +1889,7 @@ def local_merge_reconstruction(name=""):
         + "eot\n"
     )
 
-    local_run.run_shell_command(command, verbose=False)
+    local_run.run_shell_command(command, log_level=logging.TRACE)
 
     assert (os.path.exists(output_1)), "Local merge3d failed, stopping"
     # remove previous intermediates reconstruction 
@@ -2135,11 +2135,10 @@ eot
     )
     with open(reclogfile, "a") as f:
         f.write(command)
-    local_run.stream_shell_command(command, verbose=mp["slurm_verbose"])
+    local_run.stream_shell_command(command)
     
-    if mp["slurm_verbose"]:
-        with open(reclogfile) as log:
-            logger.info(log.read())
+    with open(reclogfile) as log:
+        logger.debug(log.read())
 
     try:
         os.remove(scratch + name + "_weights")
@@ -2164,9 +2163,8 @@ eot
         for log in logfilelist:
             l.write("".join([line for line in open(log)]))
 
-    if mp["slurm_verbose"]:
-        with open(reclogfile) as log:
-            logger.info(log.read())
+    with open(reclogfile) as log:
+        logger.debug(log.read())
 
     # remove individual log files
     null = [os.remove(i) for i in logfilelist if os.path.isfile(i)]
@@ -2439,7 +2437,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
                 iterations = fp["reconstruct_denoise_iters"] 
                 command = f"{get_imod_path()}/bin/nad_eed_3d -n {iterations} {volume}.mrc {volume}_denoised.mrc".format(
                 )
-                local_run.run_shell_command(command,verbose=fp["slurm_verbose"])
+                local_run.run_shell_command(command)
             elif False:
                 sigma = fp["reconstruct_denoise_sigma"]
                 nsearch = fp["reconstruct_denoise_nsearch"]
@@ -2497,13 +2495,13 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         )
         try:
             # Note: grep will return an error if the output is empty
-            local_run.run_shell_command(com, verbose=False)
+            local_run.run_shell_command(com, log_level=logging.TRACE)
         except:
             pass
         # append resolution table to temp file
         com = "cat '%s' >> '%s'" % (scratch + name + ".res", scratch + name + ".part")
         try:
-            local_run.run_shell_command(com, verbose=False)
+            local_run.run_shell_command(com, log_level=logging.TRACE)
         except:
             pass
         # copy body of parameter file
@@ -2512,66 +2510,12 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
             scratch + name + ".part",
         )
         try:
-            local_run.run_shell_command(com, verbose=False)
+            local_run.run_shell_command(com, log_level=logging.TRACE)
         except:
             pass
         # replace original par file with modified file
         com = "mv %s %s" % (scratch + name + ".part", "../maps/" + name + ".par")
-        local_run.run_shell_command(com, verbose=False)
-
-    # FIXME: new cistem binary
-
-    # v9.11
-    # if fp["refine_fssnr"] and os.path.exists(scratch + name + "_statistics.txt"):
-    #     com = """sed -i -e 's/RING RAD/RING_RAD/g' """ + "../maps/" + name + ".par"
-    #     local_run.run_shell_command(com, verbose=False)
-
-    #     if not "cistem" in project_params.param(fp["refine_metric"], i).lower():
-    #         # read par file
-    #         #current_par_file = "../maps/{0}.par".format(name)
-    #         current_par_file = "{0}.par".format(name)
-    #         with open(current_par_file) as f:
-    #             all_lines = f.read().split("\n")
-
-    #         # remove existing resolution table
-    #         with open(current_par_file, "w") as f:
-    #             for line in range(len(all_lines) - 1):
-    #                 if line < 7 or all_lines[line][0] != "C":
-    #                     f.write(all_lines[line] + "\n")
-
-    #     com = """echo "C" >> """ + "../maps/" + name + ".par"
-    #     local_run.run_shell_command(com, verbose=False)
-    #     if os.path.exists(scratch + name + "_n1.res"):
-    #         com = "grep C %s >> %s" % (
-    #             scratch + name + "_n1.res",
-    #             "../maps/" + name + ".par",
-    #         )
-    #         local_run.run_shell_command(com, verbose=False)
-    #     com = (
-    #         """echo "C                                                 sqrt       sqrt" >> """
-    #         + "../maps/"
-    #         + name
-    #         + ".par"
-    #     )
-    #     local_run.run_shell_command(com, verbose=False)
-    #     com = (
-    #         """echo "C  NO.  RESOL  RING RAD   FSPR    FSC  Part_FSC  Part_SSNR  Rec_SSNR       CC   EXP. C    SIG C  ERFC  TOTVOX" >> """
-    #         + "../maps/"
-    #         + name
-    #         + ".par"
-    #     )
-    #     local_run.run_shell_command(com, verbose=False)
-    #     com = (
-    #         "grep -v C "
-    #         + "{0}_statistics.txt".format(scratch + name)
-    #         + """ | awk '{printf "C%4d%8.2f%10.4f%7.2f%7.3f%10.3f%11.4f%10.2f%9.4f%9.4f%9.4f%6.2f%8d\\n", $1, $2, $3, 0.0, $4, $5, $6, $7, 0.0, 0.0, 0.0, 0.0, 0}' >> """
-    #         + "../maps/"
-    #         + name
-    #         + ".par"
-    #     )
-    #     local_run.run_shell_command(com, verbose=False)
-    #     com = """echo "C  Averages not calculated" >> """ + "../maps/" + name + ".par"
-    #     local_run.run_shell_command(com, verbose=False)
+        local_run.run_shell_command(com, log_level=logging.TRACE)
 
     # RELION postprocessing plots
     # get current pixel size
@@ -2767,7 +2711,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
     command = "montage ../maps/{0}_map.png ../maps/{1}_fsc.png ../maps/{0}_prs.png ../maps/{0}_used_prs.png -geometry 690x460 ../maps/{0}_fyp.png".format(
         name, dataset
     )
-    local_run.run_shell_command(command, verbose=False)
+    local_run.run_shell_command(command, log_level=logging.TRACE)
     img2webp(f"../maps/{name}_fyp.png",f"../maps/{name}_fyp.webp") 
 
     rec = mrc.read(scratch + name + ".mrc")
@@ -2838,7 +2782,7 @@ EOF
         command = "montage {0}_used_scores.png weights_2D_weights.png weights_3D_weights.png -geometry +0+0 -tile 1x3 ../maps/{0}_wgh.png".format(
             name
         )
-        local_run.run_shell_command(command, verbose=False)
+        local_run.run_shell_command(command, log_level=logging.TRACE)
 
     # Generate phase residual plots
     # ${SPA_DIR}/frealign/frealign_plt.sh $1 1
@@ -3123,7 +3067,7 @@ def split_refinement(mp, ref, current_path, first, last, i):
         )
 
         # submit jobs to MPI
-        mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=mp["slurm_verbose"])
+        mpi.submit_jobs_to_workers(commands, os.getcwd())
 
         # combine all the refined parfile
         # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
@@ -3141,9 +3085,9 @@ def split_refinement(mp, ref, current_path, first, last, i):
             raise Exception(
                 f"The number of refined parfiles ({len(all_refined_par)}) != the number of jobs ({count})."
             )
-        elif mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile[0]):
+        elif len(logfile) > 0 and os.path.exists(logfile[0]):
             with open( logfile[0] ) as output:
-                logger.info("\n".join([s for s in output.read().split("\n") if s]))
+                logger.debug("\n".join([s for s in output.read().split("\n") if s]))
 
         # TODO: Ye, not sure if this is what you wanna do?
         merged_alignment = Parameters.merge(input_files=all_refined_par,
@@ -3174,7 +3118,7 @@ def split_refinement(mp, ref, current_path, first, last, i):
         )
 
         # submit jobs to MPI
-        mpi.submit_jobs_to_workers(commands, os.getcwd(), verbose=mp["slurm_verbose"])
+        mpi.submit_jobs_to_workers(commands, os.getcwd())
 
         # combine all the refined parfile
         # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
@@ -3192,9 +3136,9 @@ def split_refinement(mp, ref, current_path, first, last, i):
             raise Exception(
                 f"The number of refined parfiles ({len(all_refined_star)}) != the number of jobs ({count})."
             )
-        elif mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile[0]):
+        elif len(logfile) > 0 and os.path.exists(logfile[0]):
             with open( logfile[0] ) as output:
-                logger.info("\n".join([s for s in output.read().split("\n") if s]))
+                logger.debug("\n".join([s for s in output.read().split("\n") if s]))
 
         # merge refine_ctf star files
         merged_data = merge_star(all_refined_star)
@@ -3389,7 +3333,7 @@ def merge_refinements(mp, fp, iteration, alignment_option):
                         )
             f.close()
 
-            # make sure that all particles were succesfully aligned
+            # make sure that all particles were successfully aligned
             lines = [
                 _f
                 for _f in (
@@ -4180,11 +4124,10 @@ Output dump filename for intermediate arrays
 [dump_file.dat]                                    :
     """
 
-    output, error = local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+    output, error = local_run.run_shell_command(command)
 
-    if parameters["slurm_verbose"]:
-        with open(logfile) as f:
-            logger.info(f.read())
+    with open(logfile) as f:
+        logger.debug(f.read())
 
     plot_refine2d_reconstructions(output_reconstruction, new_name, pngfile, parameters)
     
@@ -4366,11 +4309,10 @@ Number of dump files [1]                           :
 Error : Error: Dump file dump_file_seed_1.dat not found
     """
 
-    output, error = local_run.run_shell_command(command, verbose=False)
+    output, error = local_run.run_shell_command(command, log_level=logging.TRACE)
 
-    if parameters["slurm_verbose"]:
-        with open(logfile) as f:
-            logger.info(f.read())
+    with open(logfile) as f:
+        logger.debug(f.read())
 
     [os.remove(f) for f in os.listdir(".") if f.endswith(".dat")]
 
@@ -4586,15 +4528,11 @@ def refine_ctf(mp, fp, i, ref):
         + "eot"
     )
 
-    local_run.run_shell_command(command,verbose=mp["slurm_verbose"])
+    local_run.run_shell_command(command)
 
-    logger.warning(mp.get("slurm_verbose"))
-    logger.warning(logfile)
-    logger.warning(len(logfile))
-    logger.warning(os.path.exists(logfile))
-    if mp.get("slurm_verbose") and len(logfile) > 0 and os.path.exists(logfile):
+    if len(logfile) > 0 and os.path.exists(logfile):
         with open( logfile[0] ) as output:
-            logger.info("\n".join([s for s in output.read().split("\n") if s]))
+            logger.debug("\n".join([s for s in output.read().split("\n") if s]))
 
 
 def create_initial_model(parameters, actual_pixel, box_size, local_parameters):
@@ -4820,7 +4758,7 @@ eot
         + """ | grep -v RESOL | grep -v Average | grep -v Date | grep C | awk '{if ($2 != "") printf "%14.5f%14.5f%14.5f%14.5f%14.5f%14.5f%14.5f\\n", $2, $3, $4, $6, $7, $8, $9}' > """
         + str(Path(os.environ["PYP_SCRATCH"]) / f"statistics_r{(ref + 1):02d}.txt")
     )
-    local_run.run_shell_command(com, verbose=False)
+    local_run.run_shell_command(com, log_level=logging.TRACE)
 
     # smooth part FSC curves
     if project_params.param(fp["refine_metric"], iteration) == "new":

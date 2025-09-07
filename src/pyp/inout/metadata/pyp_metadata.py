@@ -1,6 +1,7 @@
 
 import os, sys
 import glob
+import logging
 import re
 import math
 from pathlib import Path
@@ -491,7 +492,7 @@ class LocalMetadata:
         header = self.files[key]["header"]
 
         command = f"{get_imod_path()}/bin/imodinfo -a {file}"
-        [output, error] = run_shell_command(command, verbose=False)
+        [output, error] = run_shell_command(command, log_level=logging.TRACE)
 
         modfile = output.split("contour")
         indexes = []
@@ -526,7 +527,7 @@ class LocalMetadata:
         header = self.files[key]["header"]
 
         command = f"{get_imod_path()}/bin/header -size '{file}'"
-        [output, error] = run_shell_command(command, verbose=False)
+        [output, error] = run_shell_command(command, log_level=logging.TRACE)
 
         x, y, z = list(map(int, output.split()))
         if file.endswith(".rec"):
@@ -644,13 +645,13 @@ class LocalMetadata:
             command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 -values 1 {tmp} {path}"
         else:
             command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {tmp} {path}"
-        run_shell_command(command, verbose=False)
+        run_shell_command(command, log_level=logging.TRACE)
         if os.path.exists(tmp):
             os.remove(tmp)
 
         # label yz-swap in the model file
         command = f"{get_imod_path()}/bin/imodtrans -Y -T {path} {path}~ && mv {path}~ {path}"
-        run_shell_command(command, verbose=False)
+        run_shell_command(command, log_level=logging.TRACE)
 
 
 
@@ -1132,7 +1133,7 @@ _rlnRandomSubset #16
                     comm = "par2star.py --stack {0} --apix {1} --ac {2} --cs {3} --voltage {4} {5} {6}".format(
                         stack, ptl_pxl, ac, cs, voltage, parfile, saved_file
                     )
-                    run_shell_command(comm, verbose=True)
+                    run_shell_command(comm, log_level=logging.TRACE)
                 logger.info(f"Alignments exported to {Path(saved_file).resolve()}")
             else:
                 # mostly using stack instead of exporting raw shifts
@@ -1927,7 +1928,7 @@ _rlnRandomSubset #14
                     # update image size - from .mrc images
                     assert (os.path.exists(avg_src)), f"{avg_src} does not exist"
                     command = f"{get_imod_path()}/bin/header -size '{avg_src}'"
-                    [output, error] = run_shell_command(command, verbose=False)
+                    [output, error] = run_shell_command(command, log_level=logging.TRACE)
                     x, y, z = list(map(int, output.split()))
                     arr = np.array([[x, y, z]])
                     imagekey = os.path.basename(avg).replace(".mrc", "")
@@ -2054,7 +2055,7 @@ _rlnRandomSubset #14
                 assert (os.path.exists(Path(rln_path) / path)), f"{Path(rln_path) / path} does not exist"
 
                 command = f"{get_imod_path()}/bin/header -size '{Path(rln_path) / path}'"
-                [output, error] = run_shell_command(command, verbose=False)
+                [output, error] = run_shell_command(command, log_level=logging.TRACE)
                 x, y, z = list(map(int, output.split()))
                 arr = np.array([[x, y, z]])
                 self.data[name]["image"] = pd.DataFrame(arr, columns=FILES_TOMO["image"]["header"])
@@ -2543,12 +2544,11 @@ _rlnRandomSubset #14
         with tqdm(desc="Progress", total=len(self.data), file=TQDMLogger()) as pbar:
             first = True
             for tomo in self.data.keys():
-                if parameters.get("slurm_verbose") and first:
-                    logger.info(f"Image = {self.data[tomo]['image'].to_numpy()[0]}")
-                    logger.info(f"Tomo = {self.data[tomo]['tomo'].to_numpy()[0]}")
-                    logger.info(f"Binning = {tomogram_binning}")
+                if first:
+                    logger.trace(f"Image = {self.data[tomo]['image'].to_numpy()[0]}")
+                    logger.trace(f"Binning = {tomogram_binning}")
                     if "frames" in self.data[tomo]:
-                        logger.info(f"Frames = {self.data[tomo]['frames']}")
+                        logger.trace(f"Frames = {self.data[tomo]['frames']}")
                 arr = np.asarray(self.data[tomo]["box"])
                 if arr.shape[1] == 3:
                     arr = np.hstack([arr, np.ones([arr.shape[0],1])])

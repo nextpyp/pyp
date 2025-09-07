@@ -152,7 +152,7 @@ def get_relevant_films(parameters, array_job_num):
     ]
 
 
-def get_missing_files(parameters, inputlist, exhaustive=True, verbose=True):
+def get_missing_files(parameters, inputlist, exhaustive=True):
     missing_files = []
     logger.info("Looking for failed jobs")
     with tqdm(desc="Progress", total=len(inputlist), file=TQDMLogger()) as pbar:
@@ -866,11 +866,10 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
 
     differences = {d for d in all_differences if not ( ( isinstance(previous_parameters[d],PosixPath) or isinstance(previous_parameters[d],str) ) and project_params.resolve_path(previous_parameters[d]) == project_params.resolve_path(new_parameters[d]) ) }
 
-    if previous_parameters.get("slurm_verbose"):
-        if len(differences):
-            logger.info(f"Parameters changed: {differences}")
-        else:
-            logger.info("No parameter changes detected")
+    if len(differences):
+        logger.trace(f"Parameters changed: {differences}")
+    else:
+        logger.trace("No parameter changes detected")
 
     try:
         data_set = previous_parameters["data_set"]
@@ -882,7 +881,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             inputlist = [line.strip() for line in f]
 
         # initialize all _force parameters if previous run was successful
-        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False, verbose=False)) == 0:
+        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False)) == 0:
             new_parameters["movie_force"] = False
             new_parameters["ctf_force"] = False
             new_parameters["detect_force"] = False

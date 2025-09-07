@@ -9,6 +9,7 @@
 
 import datetime
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Union
@@ -23,6 +24,18 @@ __email__ = "alberto@cs.duke.edu"
 
 logger = logging.getLogger(__name__)
 
+def get_verbose_level(parameters):
+
+    if parameters.get('slurm_verbose_level') == "trace":
+        return logging.TRACE
+    elif parameters.get('slurm_verbose_level') == "debug":
+        return logging.DEBUG
+    elif parameters.get('slurm_verbose_level') == "info":
+        return logging.INFO
+    elif parameters.get('slurm_verbose'):
+        return logging.DEBUG
+    else:
+        return logging.INFO    
 
 def initialize_pyp_logger(
     log_name: str = "pyp",
@@ -54,8 +67,22 @@ def initialize_pyp_logger(
 
     DATE_TIME_FMT = "%Y-%m-%d %H:%M:%S"
 
+    # add new logger level to report detailed information
+    TRACE_LEVEL = 5
+    logging.addLevelName(TRACE_LEVEL, "TRACE")
+    logging.TRACE = TRACE_LEVEL
+
+    def trace(self, message, *args, **kwargs):
+        if self.isEnabledFor(TRACE_LEVEL):
+            self._log(TRACE_LEVEL, message, args, **kwargs)
+
+    logging.Logger.trace = trace
+
     log = logging.getLogger(log_name)
-    log.setLevel(level)
+    if os.environ.get("PYP_LOGGER_LEVEL"):
+        log.setLevel(int(os.environ["PYP_LOGGER_LEVEL"]))
+    else:
+        log.setLevel(level)
     log.handlers = []  # reset logging handlers if they already exist
 
     screen_format = "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d | %(message)s"

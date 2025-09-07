@@ -27,6 +27,7 @@ TODO
 
 from inspect import Parameter
 import os
+import logging
 import glob
 import shutil
 from pathlib import Path
@@ -569,7 +570,7 @@ class Parameters:
 
         threads = 7 if threads > 7 else threads
         command = f"tar -v -c -h -v {input} | pbzip2 -c -v -p{threads} > '{output}'"
-        run_shell_command(command, verbose=False)
+        run_shell_command(command, log_level=logging.TRACE)
 
     # compress
     @staticmethod
@@ -587,7 +588,7 @@ class Parameters:
         threads = 7 if threads > 7 else threads
 
         command = f"pbzip2 -v -d -c -p{threads} '{input}' | tar x"
-        run_shell_command(command, verbose=False)
+        run_shell_command(command, log_level=logging.TRACE)
 
     # decompress paramater file in scratch directory
     @staticmethod
@@ -792,7 +793,7 @@ class Parameters:
             commands.append("grep '^[^C]' '%s' > '%s' && cut -c%d-%d '%s' > '%s' && cut -c%d-%d '%s' > '%s'" % (parfile, parfile + '.tmp',
                                                                                                     section1_start, section1_end, parfile + '.tmp', f"{idx}_1.tmp",
                                                                                                     section2_start, section2_end, parfile + '.tmp', f"{idx}_2.tmp"))
-        mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True, verbose=False)
+        mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
 
         # update (write) INDEX, FILM columns for each parfile
         if frealignx:
@@ -824,7 +825,7 @@ class Parameters:
             # concatenate first column, film column with the rest of parfiles
             command = "paste -d '' {0} > '{1}'".format(" ".join([ 'indexes.tmp', f"{idx}_1.tmp", 'films.tmp', f"{idx}_2.tmp"]), 
                                                     parfile)
-            run_shell_command(command, verbose=False)
+            run_shell_command(command, log_level=logging.TRACE)
 
             # remove tmp files
             os.remove('films.tmp')
@@ -840,10 +841,10 @@ class Parameters:
             splits = [inputlist[i:i+batch_size] for i in range(0, len(inputlist), batch_size)]
             for batch in splits:
                 command = "cat {0} >> {1}".format(" ".join(f'"{w}"' for w in batch), filename)
-                run_shell_command(command, verbose=False)
+                run_shell_command(command, log_level=logging.TRACE)
         else:
             command = "cat {0} >> '{1}'".format(" ".join(f'"{w}"' for w in inputlist), filename)
-            run_shell_command(command, verbose=False)
+            run_shell_command(command, log_level=logging.TRACE)
 
         [os.remove(f) for f in os.listdir(".") if f.endswith(".tmp")]
 
@@ -1845,7 +1846,7 @@ class Parameters:
     @staticmethod
     def add_lines_with_statistics(input_parfile, current_class, current_path, is_frealignx=False):
 
-        logger.debug("Adding 10,000 rows for good statistics with refine3d")
+        logger.trace("Adding 10,000 rows for good statistics with refine3d")
         # first append the other rows back
         film_col = 7
         current_data = Parameters.from_file(input_parfile).data
