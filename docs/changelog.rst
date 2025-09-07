@@ -11,6 +11,8 @@ v0.7.3
    :fa:`star` **New features**
    
    -  New block for running traditional sub-volume averaging. This block can be used for ab-initio alignment through classification, as described in `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_.
+
+   - New logger allows users to select one of three levels of verbosity for greater control over program output.
    
    :fa:`plus-square` **Improvements**
 
@@ -19,6 +21,8 @@ v0.7.3
    - Improve efficiency during particle filtering by avoiding multiple decompressions of the same parameter file.
 
    - Improve efficiency during tomography refinement by avoiding unnecessary linking of subtomogram files.
+
+   - Visualization of 3D correlation volume when doing template matching using pytom-match-pick.
 
    :fa:`bug` **Bug fixes**
    
@@ -31,6 +35,8 @@ v0.7.3
    - Fix bug that caused symmetry to be applied incorrectly when option to symmetrize maps was disabled.
 
    - Fix bug when producing .bild files for some types of symmetries.
+
+   - Remove inconsistencies when clearing up temporary scratch folders after jobs finish running.
 
 v0.7.2
 ------
