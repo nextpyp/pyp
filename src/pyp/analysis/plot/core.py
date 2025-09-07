@@ -1163,7 +1163,7 @@ def plot_local_alignment(
     plt.close()
 
 
-def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=False):
+def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, clipping=True):
     """tomo_slicer_gif - Generate a GIF animation from a tomogram navigating through its z slices 
 
     Parameters
@@ -1207,8 +1207,11 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     dimensions = volume.shape # array shape z, y, x
     num_z_slices = dimensions[0]
     mean, std = volume.mean(), volume.std()
-    min_cutoff, max_cutoff = mean - 2 * std, mean + 2 * std
-
+    
+    if clipping:
+        min_cutoff, max_cutoff = mean - 2 * std, mean + 2 * std
+    else:
+        min_cutoff, max_cutoff = volume.min(), volume.max()
     
     # generate pngs for the middle slices
     starting_slice, ending_slice = 0, num_z_slices - 1
@@ -1289,6 +1292,20 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     ]
     [os.remove(png) for png in pngList]
 
+def false_color(input, output):
+    
+    # create CLUT
+    command = f"/usr/bin/convert -size 1x1! xc:cyan xc:purple xc:magenta +append -resize 255x1! CLUT.png"
+    run_shell_command(command)
+    
+    # colorize
+    command = f"/usr/bin/convert {input} CLUT.png -clut {output}"
+    run_shell_command(command)
+
+    try:
+       os.remove("CLUT.png")
+    except:
+       pass
 
 def tomo_montage(input, output, dimensions=384, verbose=False):
     """tomo_slicer_gif - Generate a montage from an mrc file

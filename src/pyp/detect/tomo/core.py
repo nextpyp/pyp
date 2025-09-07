@@ -1827,6 +1827,15 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             normals = results[['rlnAngleRot','rlnAngleTilt','rlnAnglePsi']].to_numpy(dtype='float')
             np.savetxt( f"{name}_normals.txt", normals)
 
+        # prepare scores for display
+        current_dir = os.getcwd()
+        os.chdir("pytom")
+        scores_file = name + "_scores.mrc"
+        scores_webp_file = scores_file.replace(".mrc","_bw_rec.webp")
+        plot.tomo_slicer_gif( scores_file, scores_webp_file, flipyz=True, averagezslices=2, clipping=False )
+        plot.false_color(scores_webp_file, os.path.join( current_dir, name + '_score.webp'))
+        os.chdir(current_dir)
+
     # 4. import
     elif ( parameters.get("tomo_spk_method") == "import" or parameters.get("tomo_pick_method") == "import" ) and os.path.exists(f"{name}.spk"):
 
