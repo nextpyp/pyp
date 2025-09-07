@@ -1,7 +1,7 @@
 import math
 import os
 import shutil
-
+import logging
 import numpy as np
 
 from pyp.inout.image import mrc, write_out_relion_stack
@@ -264,8 +264,7 @@ def contrast_stretch(input, output="", resize=100):
     run_shell_command(
         "{0}/convert {1} -resize {3}% -contrast-stretch 1%x2% {2}".format(
             os.environ["IMAGICDIR"], input, output, resize
-        ),
-        verbose=False,
+        ), log_level=logging.TRACE
     )
 
 
@@ -481,6 +480,5 @@ def dose_weight(args, parameters, imagefile, working_path, current_path):
         working_path,
         args.file,
     )
-    if parameters['slurm_verbose']:
-        logger.info(command)
+    logger.debug(command)
     os.system(command)

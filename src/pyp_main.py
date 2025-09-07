@@ -27,7 +27,7 @@ import shutil
 import socket
 import sys
 import time
-import json
+import logging
 import pickle
 import re
 import toml
@@ -45,7 +45,6 @@ from pyp.analysis.image import (
     contrast_stretch,
     normalize_frames,
 )
-from pyp.analysis import statistics
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
 from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
@@ -53,7 +52,6 @@ from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocar
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
-from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.inout.metadata import (
     compileDatabase,
     csp_extract_coordinates,
@@ -62,10 +60,7 @@ from pyp.inout.metadata import (
     generateGlobalFrameWeights,
     generateRelionParFileNew,
     get_new_input_list,
-    tomo_load_frame_xf,
     use_existing_alignments,
-    get_image_particle_index,
-    get_particles_tilt_index,
     compute_global_weights,
     compute_global_weights_from_par,
     cistem_star_file,
@@ -81,7 +76,7 @@ from pyp.stream import pyp_daemon
 from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
 from pyp.streampyp.web import Web
 from pyp.streampyp.logging import TQDMLogger
-from pyp.system import local_run, mpi, project_params, set_up, slurm, user_comm
+from pyp.system import local_run, mpi, project_params, set_up, slurm
 from pyp.system.db_comm import (
     load_config_files,
     load_csp_results,
@@ -97,7 +92,7 @@ from pyp.system.db_comm import (
     save_tomo_results,
     save_tomo_results_lean,
 )
-from pyp.system.logging import initialize_pyp_logger
+from pyp.system.logging import initialize_pyp_logger, get_verbose_level
 from pyp.system.set_up import prepare_frealign_dir
 from pyp.system.singularity import (
     get_mpirun_command,
@@ -113,7 +108,7 @@ from pyp.system.wrapper_functions import (
     replace_sections,
     write_current_particle,
 )
-from pyp.utils import timer, movie2regex, symlink_relative, symlink_relative_pattern
+from pyp.utils import timer, symlink_relative, symlink_relative_pattern
 
 from pyp.refine.tomo_avg import sub_tomo_avg as sub_tomo_avg
 from pyp.system.set_up import prepare_3davg_dir, prepare_3davg_xml
@@ -223,8 +218,7 @@ def create_links_to_files(files,parameters):
                     )
                 destination = d + "/" + name + f
                 if os.path.isfile(source) and not os.path.exists(destination):
-                    if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
-                        logger.info("Retrieving " + source)
+                    logger.debug("Retrieving " + source)
                     shutil.copy2(source, destination)
 
             # separately transfer .xml, .order and .rawtlt files when using movies
@@ -618,10 +612,10 @@ def parse_arguments(block):
 
             # try to get parameters from autoprocessing daemon
             logger.info(
-                "Attempting to load existing parameters and metadata from %s",
+                "Attempting to load existing parameters and metadata from: %s" %
                 os.path.split(str(project_params.resolve_path(parameters["data_path"])).split(",")[0])[0].replace(
                     "/raw", ""
-                ),
+                )
             )
 
             if "data_retrieve" in parameters.keys() and parameters["data_retrieve"]:
@@ -705,6 +699,26 @@ def parse_arguments(block):
         parameters["extract_cls"] = 1
 
     return parameters
+
+def parse_logger_level():
+
+    # read params from a params file instead of the CLI, if needed
+    params_file_path = get_params_file_path()
+    if params_file_path is not None:
+        config = ParamsConfig.from_file()
+        parameters = parse_params_from_file(config, params_file_path)
+    elif os.path.exists('.pyp_config.toml'):
+        parameters = project_params.load_pyp_parameters('.')
+    elif ( Path.cwd().parents[0] / '.pyp_config.toml' ).exists:
+        parameters = project_params.load_pyp_parameters('..')
+    else:
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("-slurm_verbose_level", "--slurm_verbose_level")
+        parser.add_argument("-slurm_verbose", "--slurm_verbose", action="store_true")
+        args, _ = parser.parse_known_args()
+        parameters = vars(args)
+
+    return get_verbose_level(parameters=parameters)
 
 @timer.Timer(
     "spr_merge", text="Total time elapsed (spr_merge): {}", logger=logger.info
@@ -1280,8 +1294,7 @@ def split(parameters):
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
-                use_gpu=gpu,
-                verbose=parameters["slurm_verbose"],
+                use_gpu=gpu
             ).strip()
 
             
@@ -1301,8 +1314,7 @@ def split(parameters):
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
-                use_gpu=gpu,
-                verbose=parameters["slurm_verbose"],
+                use_gpu=gpu
             ).strip()
 
         else:
@@ -1324,8 +1336,7 @@ def split(parameters):
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 dependencies=id_train,
                 csp_no_stacks=parameters["csp_no_stacks"],
-                use_gpu=gpu,
-                verbose=parameters["slurm_verbose"],
+                use_gpu=gpu
             ).strip()
             
             # submit merge job dependent on swarm jobs
@@ -1342,8 +1353,7 @@ def split(parameters):
                 memory=parameters["slurm_merge_tasks"]*parameters["slurm_merge_memory_per_task"],
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
-                csp_no_stacks=parameters["csp_no_stacks"],
-                verbose=parameters["slurm_verbose"],
+                csp_no_stacks=parameters["csp_no_stacks"]
             )
 
     else:
@@ -1357,7 +1367,7 @@ def split(parameters):
             parameters, files, timestamp, nodes
         )
 
-        local_run.run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile))
 
         mpirun = get_mpirun_command()
 
@@ -1453,7 +1463,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
         raise Exception("Unknown dataset or session name")
     load_config_files(dataset, current_path, working_path)
     if not skip:
-        load_spr_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
+        load_spr_results(name, parameters, current_path, working_path)
 
         # convert frame average to 32-bits
         if parameters.get("movie_depth") and os.path.exists(name+".avg"):
@@ -1632,7 +1642,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
             logger.warning("No particles from box for image " + name)
 
     if len(mpiF) > 0:
-        mpi.submit_function_to_workers(mpiF, mpiARG, verbose=parameters["slurm_verbose"])
+        mpi.submit_function_to_workers(mpiF, mpiARG)
 
     # store binning factor in CTF metadata
     ctf = np.loadtxt(f"{name}.ctf")
@@ -1661,11 +1671,11 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
 
         has_frames = len(data.data.get("drift")) > 1 if "drift" in data.data.keys() else False
         if Web.exists:
-            save_spr_results_lean(name, current_path, has_frames=has_frames, verbose=parameters["slurm_verbose"])
+            save_spr_results_lean(name, current_path, has_frames=has_frames)
         else:
-            save_spr_results(name, parameters, current_path, has_frames=has_frames, verbose=parameters["slurm_verbose"])
+            save_spr_results(name, parameters, current_path, has_frames=has_frames)
 
-        save_micrograph_to_website(name,'slurm_verbose' in parameters and parameters['slurm_verbose'])
+        save_micrograph_to_website(name)
 
     # clean-up
     if not keep:
@@ -1728,7 +1738,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     working_path = Path(os.environ["PYP_SCRATCH"]) / name
 
-    logger.info(f"Working path: {working_path}")
+    logger.info(f"Using temporary folder {working_path}")
 
     if not keep:
         shutil.rmtree(working_path, "True")
@@ -1755,7 +1765,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         raise Exception("Unknown dataset or session name")
     load_config_files(dataset, current_path, working_path)
     if not skip:
-        load_tomo_results(name, parameters, current_path, working_path, verbose=parameters["slurm_verbose"])
+        load_tomo_results(name, parameters, current_path, working_path)
 
         if parameters.get("tomo_rec_depth"):
             if os.path.exists(name + ".rec"):
@@ -1809,7 +1819,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             if os.path.getsize(f"{name}_exclude_views.next") > 0:
                 # convert next file to imod model
                 com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
-                local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+                local_run.run_shell_command(com)
                 new_angles = np.sort(np.loadtxt(f'{name}_exclude_views.next',ndmin=2)).astype('int')[:,2]+1
             elif os.path.exists(f"{name}_exclude_views.mod"):
                 os.remove(f"{name}_exclude_views.mod")
@@ -1878,7 +1888,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # remove x-rays
     if 'movie_no_frames' in parameters and parameters['movie_no_frames'] and "gain_remove_hot_pixels" in parameters and parameters["gain_remove_hot_pixels"]:
-        preprocess.remove_xrays_from_file(name,parameters['slurm_verbose'])
+        preprocess.remove_xrays_from_file(name)
     else:
         os.symlink(name + ".mrc", name + ".st")
 
@@ -2002,7 +2012,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if len(mpi_funcs) > 0:
         t = timer.Timer(text="Tomogram reconstruction + ctffind tilt took: {}", logger=logger.info)
         t.start()
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"])
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args)
         t.stop()
 
     if ctffind_tilt:
@@ -2104,14 +2114,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if virion_mode:
             tilt_metadata["virion_coordinates"] = virion_coordinates
             logger.info(f"Total number of virions = {len(virion_coordinates):,}")
-            if parameters.get("slurm_verbose"):
-                logger.info(f"Virion coordinates = \n{virion_coordinates}")
+            logger.debug(f"Virion coordinates = \n{virion_coordinates}")
 
     if spike_mode or surface_mode:
         tilt_metadata["spike_coordinates"] = spike_coordinates
         logger.info(f"Total number of particles = {len(spike_coordinates):,}")
-        if parameters.get("slurm_verbose"):
-            logger.info(f"Particle coordinates = \n{spike_coordinates}")
+        logger.debug(f"Particle coordinates = \n{spike_coordinates}")
 
     mpi_funcs, mpi_args = [ ], [ ]
     if ctffind_tilt:
@@ -2120,11 +2128,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     if not os.path.exists(f"{name}.webp"):
         mpi_funcs.append(plot.plot_tomo_ctf)
-        mpi_args.append( [(name,parameters["slurm_verbose"])] )
+        mpi_args.append( [(name,)] )
 
     if not os.path.exists(f"{name}_rec.webp") or parameters["tomo_rec_force"]:
         mpi_funcs.append(plot.tomo_slicer_gif)
-        mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True, 2, parameters["slurm_verbose"])] )
+        mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True, 2)] )
 
     if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp") or parameters["tomo_ali_force"]:
         mpi_funcs.append(plot.tomo_montage)
@@ -2137,12 +2145,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if len(mpi_funcs):
         t = timer.Timer(text="Ploting ctf and tomo webp's took: {}", logger=logger.info)
         t.start()
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args, silent=True)
         t.stop()
 
     # convert to jpg to fool nextPYP
     if os.path.exists(name + ".webp"):
-        local_run.run_shell_command(f"convert {name}.webp {name}.jpg",verbose=False)
+        local_run.run_shell_command(f"convert {name}.webp {name}.jpg", log_level=logging.TRACE)
 
     t = timer.Timer(text="Save result and clean scratch took: {}", logger=logger.info)
     t.start()
@@ -2183,11 +2191,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         data.loadFiles()
 
         if Web.exists:
-            save_tomo_results_lean(name, parameters, current_path, verbose=parameters["slurm_verbose"])
+            save_tomo_results_lean(name, parameters, current_path)
         else:
-            save_tomo_results(name, parameters, current_path, verbose=parameters["slurm_verbose"])
+            save_tomo_results(name, parameters, current_path)
 
-        save_tiltseries_to_website(name, tilt_metadata, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
+        save_tiltseries_to_website(name, tilt_metadata)
 
     # clean-up
     if not keep:
@@ -2547,7 +2555,7 @@ def csp_extract_frames(
                     # [shutil.copy2(current_path + "/raw/" + f, f) for f in imagefile]
                     for f in imagefile:
                         arguments.append((current_path + "/raw/" + f, f))
-                    mpi.submit_function_to_workers(shutil.copy2, arguments, verbose=parameters["slurm_verbose"])
+                    mpi.submit_function_to_workers(shutil.copy2, arguments)
 
                     # convert eer files to mrc using movie_eer_reduce and movie_eer_frames parameters (flipping in x is required to match unblur/motioncorr convention)
                     arguments = []
@@ -2586,7 +2594,7 @@ def csp_extract_frames(
                         command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
                             get_imod_path(), raw_image
                         )
-                        local_run.run_shell_command(command,verbose=False)
+                        local_run.run_shell_command(command, log_level=logging.TRACE)
 
                     # pack it into list to adapt it into tomo extraction pipeline
                     if use_frames:
@@ -2876,7 +2884,11 @@ def sva_merge(parameters):
         except:
             pass        
     elif retries <= parameters.get("slurm_merge_retries"):
-        logger.warning(f"Retrying alignment for {len(failed)} tilt-series")
+        logger.warning(
+            "{0} job(s) failed, attempt {1} of {2} to re-submit jobs".format(
+                len(failed), retries, parameters.get("slurm_merge_retries")
+            )
+        )
         try:
             os.remove(merged_file)
         except:
@@ -2967,7 +2979,7 @@ def sva_split(parameters):
         arguments = []
         for file in glob.glob(f"{dataset}_global_average*.mrc"):
             arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
-        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
 
         target_volumes_file = f"{dataset}_volumes_pre_centered_clean.txt"
         if parameters.get("sva_centering_iterations") == 0:
@@ -3001,7 +3013,7 @@ def sva_split(parameters):
         arguments = []
         for file in glob.glob(f"{dataset}_iteration_{iteration:03}_level_{parameters.get('sva_class_num')}_average_???.mrc"):
             arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
-        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
         
     elif parameters.get('sva_mode') == '2':
         
@@ -3046,7 +3058,7 @@ def sva_split(parameters):
         arguments = []
         for file in glob.glob(f"{dataset}_iteration_{iteration:03}_refined_level_{parameters.get('sva_class_num')}_average_???.mrc"):
             arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
-        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
                 
     elif parameters.get('sva_mode') == '3':
 
@@ -3131,7 +3143,7 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
     t = timer.Timer(text="Retrieve metadata took: {}", logger=logger.info)
     t.start()
     if not skip:
-        load_csp_results(filename, parameters, Path(current_path), Path(working_path), verbose=parameters["slurm_verbose"])
+        load_csp_results(filename, parameters, Path(current_path), Path(working_path))
 
     metafile = os.path.join(working_path, filename + ".pkl")
     frame_list = []
@@ -3237,10 +3249,10 @@ def csp_swarm(filename, parameters, iteration, skip, debug):
         # save results
         if not debug:
             save_csp_results(
-                filename, parameters, current_path, verbose=parameters["slurm_verbose"]
+                filename, parameters, current_path
             )
             if "tomo" in parameters["data_mode"] or parameters["extract_fmt"] == "frealign_local":
-                save_refinement_to_website(filename, iteration, 'slurm_verbose' in parameters and parameters['slurm_verbose'])
+                save_refinement_to_website(filename, iteration)
         
     else:
         
@@ -3872,7 +3884,7 @@ def cryolo_3d(
             + "--janni_batches 3 --train_times 10 --batch_size 4 --learning_rate 0.0001 --nb_epoch 200 --object_scale 5.0 --no_object_scale 1.0 --coord_scale 1.0 "\
             + f"--class_scale 1.0 --debug --log_path logs/ -- config_cryolo.json {boxsize}"
 
-        local_run.run_shell_command(command, verbose=True)
+        local_run.run_shell_command(command)
 
         # cryolo train submit jobs to GPU node
         submit_script = "cryolo_train_submit.sh"
@@ -3913,7 +3925,7 @@ def cryolo_3d(
         s.write(command)
     command = run_slurm(command="sbatch", path=os.getcwd()) + " " + submit_script
     command = run_ssh(command)
-    local_run.run_shell_command(command, verbose=True)
+    local_run.run_shell_command(command)
 
     slurm.check_sbatch_job_finish("cryolo_predict")
 
@@ -3930,7 +3942,7 @@ def cryolo_3d(
             command = "python {3}/src/pyp/analysis/geometry/pyp_convert_coord.py -cryolo2mod -input cryolo_output/COORDS/{0}.box -output ../mod/{0}.mod -boxsize {1} -z {2} -s 1".format(
                 boxfile, boxsize, z_height, os.environ["PYP_DIR"]
             )
-            local_run.run_shell_command(command, verbose=True)
+            local_run.run_shell_command(command)
         else:
             pass
 
@@ -4038,7 +4050,7 @@ def disable_profiler(profiler,path=os.getcwd()):
 def get_free_space(scratch):
     # report space available on local scratch
     command = f"df -h {scratch} 2> /dev/null"
-    [ output, error ] = local_run.run_shell_command(command, verbose=False)
+    [ output, error ] = local_run.run_shell_command(command, log_level=logging.TRACE)
     for line in output.split("\n"):
         if len(line) > 0:
             logger.info(line)
@@ -4133,7 +4145,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
         pyp parameters
     """    
     # generate webp files for visualization
-    plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True, 2, parameters["slurm_verbose"] )
+    plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True, 2 )
     
     # copy outputs to project folder
     if segmentation:
@@ -4209,8 +4221,7 @@ def update_metadata_coordinates(parameters):
 
             if coordinates.size > 0:                
 
-                if parameters.get("slurm_verbose"):
-                    logger.info(f"Reading {coordinates.shape[0]:,} particle coordinates from {next_file}")
+                logger.debug(f"Reading {coordinates.shape[0]:,} particle coordinates from {next_file}")
 
                 # convert to binned coordinates
                 coordinates /= parameters.get("tomo_rec_binning")
@@ -4370,8 +4381,7 @@ def sync_parameters(parameters):
             if k.startswith("tomo_pick_vir_"):
                 default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
                 if parameters[k] != default:
-                    if parameters.get("slurm_verbose"):
-                        logger.info(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                    logger.trace(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
                     new_parameters[k.replace("tomo_pick_vir_","tomo_vir_")] = parameters[k]
             # map particle picking methods
             elif k == "tomo_pick_method":
@@ -4381,21 +4391,18 @@ def sync_parameters(parameters):
             elif k.startswith("tomo_pick_"):
                 default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
                 if parameters[k] != default and not k.endswith('_method'):
-                    if parameters.get("slurm_verbose"):
-                        logger.info(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
+                    logger.trace(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
                     new_parameters[k.replace("tomo_pick_","tomo_spk_")] = parameters[k]
             # copy tomo_srf parameters to tomo_vir
             if k.startswith("tomo_srf_"):
                 default = specifications.get("tabs").get("tomo_srf").get(k.replace("tomo_srf_","")).get("default")
                 if parameters[k] != default:
-                    if parameters.get("slurm_verbose"):
-                        logger.info(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
+                    logger.trace(f"Replacing {k.replace('tomo_srf_','tomo_vir_')} <- {k} with value {parameters[k]}")
                     new_parameters[k.replace("tomo_srf_","tomo_vir_")] = parameters[k]
             if k.startswith("tomo_sphere_"):
                 default = specifications.get("tabs").get("tomo_sphere").get(k.replace("tomo_sphere_","")).get("default")
                 if parameters[k] != default:
-                    if parameters.get("slurm_verbose"):
-                        logger.info(f"Replacing {k.replace('tomo_sphere_','tomo_vir_seg_')} <- {k} with value {parameters[k]}")
+                    logger.trace(f"Replacing {k.replace('tomo_sphere_','tomo_vir_seg_')} <- {k} with value {parameters[k]}")
                     new_parameters[k.replace("tomo_sphere_","tomo_vir_seg_")] = parameters[k]
 
         parameters = new_parameters.copy()
@@ -4404,6 +4411,10 @@ def sync_parameters(parameters):
 if __name__ == "__main__":
 
     try:
+
+        # use global environment variable to control logger level
+        os.environ["PYP_LOGGER_LEVEL"] = str(parse_logger_level())
+        logger = initialize_pyp_logger(log_name=relative_path)
 
         mpi_tasks = mpi.initialize_worker_pool()
 

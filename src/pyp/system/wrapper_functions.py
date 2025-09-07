@@ -1,5 +1,5 @@
 import os
-import subprocess
+import logging
 
 from pyp.system import local_run
 from pyp.system.logging import initialize_pyp_logger
@@ -11,7 +11,7 @@ logger = initialize_pyp_logger(log_name=relative_path)
 
 
 def run_slurm_command(command):
-    [output, error] = local_run.run_shell_command(command,verbose=False)
+    [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
     return output, error
 
 

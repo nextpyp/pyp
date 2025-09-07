@@ -1,4 +1,5 @@
 import glob
+import logging
 import math
 import multiprocessing
 import os
@@ -41,11 +42,11 @@ def mrc2png(mrcfile, pngfile):
 
 def img2svgz(pngfile, svgzfile, options=""):
     command = f"{os.environ['IMAGICDIR']}/convert '{pngfile}' {options} '{svgzfile}'"
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
 
 def img2webp(pngfile, webpfile, options=""):
     command = f"{os.environ['IMAGICDIR']}/convert '{pngfile}' {options} -quality 100 -define webp:lossless=true '{webpfile}'"
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
 
 def mrc2webp(mrcfile, webpfile):
     pngfile = webpfile.replace(".webp",".png")
@@ -878,7 +879,7 @@ def get_image_dimensions(name):
     assert Path(name), f"{name} does not exist."
 
     command = "{0}/bin/header -size '{1}'".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, verbose=False)
+    [output, error] = run_shell_command(command, log_level=logging.TRACE)
     if "ERROR" in output:
         logger.error(output)
     return list(map(int, output.split()))
@@ -888,7 +889,7 @@ def get_image_mean(name):
     assert Path(name), f"{name} does not exist."
 
     command = "{0}/bin/header -mean '{1}'".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, verbose=False)
+    [output, error] = run_shell_command(command, log_level=logging.TRACE)
     if "ERROR" in output:
         logger.error(output)
     return float(output)
@@ -896,7 +897,7 @@ def get_image_mean(name):
 def get_image_mode(name):
 
     command = "{0}/bin/header -mode {1}".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, verbose=False)
+    [output, error] = run_shell_command(command, log_level=logging.TRACE)
     return int(output)
 
 
@@ -986,7 +987,7 @@ def readMoviefileandsave(filename, parameters, binning, gain_reference_file=None
             com = env + '{0}/bin/clip multiply -m 2 {1} "{2}" {3}; rm -f {3}~'.format(
                 get_imod_path(), inputfile, gain_reference_file, outputfile,
             )
-            run_shell_command(com,parameters["slurm_verbose"])
+            run_shell_command(com)
             mode = 2
             if inputfile != outputfile:
                 os.remove(inputfile)
@@ -1404,7 +1405,7 @@ def compress_images(input, output, cpus=1):
     command = "{0}/bin/mrc2tif -O 1 -P -s -c 8 {1} {2} && rm -f {1}".format(
         get_imod_path(), input, output
     )
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
 
 @timer.Timer("pre-processing", text="Tilt-series pre-processing took: {}", logger=logger.info)
 def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
@@ -1449,9 +1450,7 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
         get_imod_path(), " ".join(squares) , name
     )
     # suppress long log
-    if parameters["slurm_verbose"]:
-        logger.info(command)
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
     os.rename("{0}.mrc".format(name), "{0}.raw.mrc".format(name))
     os.rename("{0}_square.mrc".format(name), "{0}.mrc".format(name))
 
@@ -1460,8 +1459,7 @@ def get_tilt_axis_angle(name):
 
     # figure out tilt-axis angle and store in metadata
     [output, _] = run_shell_command(
-        "%s/bin/xf2rotmagstr %s.xf" % (get_imod_path(), name), 
-        verbose=False,
+        "%s/bin/xf2rotmagstr %s.xf" % (get_imod_path(), name), log_level=logging.TRACE
     )
     xf_rot_mag = output.split("\n")
     axes = []
@@ -1505,16 +1503,14 @@ def generate_aligned_tiltseries(name, parameters, x, y):
         get_imod_path(), name, " ".join(aligned_images)
     )
     # suppress long log
-    if parameters["slurm_verbose"]:
-        logger.info(command)
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
     [os.remove(f) for f in aligned_images]
 
     # generate binned version also
     command = "{0}/bin/newstack {1}.ali {1}_bin.ali -bin {2}; rm -rf {1}_bin.ali~".format(
         get_imod_path(), name, parameters["tomo_rec_binning"]
     )
-    run_shell_command(command,verbose=parameters["slurm_verbose"])
+    run_shell_command(command)
 
 def cistem_mask_create(parameters: dict, model: str, output: str):
     """
@@ -1576,9 +1572,9 @@ def cistem_mask_create(parameters: dict, model: str, output: str):
         + "eot\n"
     )
 
-    run_shell_command(command, verbose=parameters["slurm_verbose"])
+    run_shell_command(command)
     command = f"{get_imod_path()}/bin/alterheader -del {model_pixel},{model_pixel},{model_pixel} {output_mask}"
-    run_shell_command(command, verbose=parameters["slurm_verbose"])
+    run_shell_command(command)
 
     assert (os.path.exists(output_mask)), f"Threshold falls outside range, try to use a different threshold"
     logger.info(f"Mask {output_mask} created successfully!")

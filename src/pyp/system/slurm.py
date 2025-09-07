@@ -1,4 +1,4 @@
-import math
+import logging
 import multiprocessing
 import os
 import shutil
@@ -32,7 +32,7 @@ def check_sbatch_job_finish(jobname):
         # command = 'squeue -u %s -o ' % user
         command = "squeue --me -o %j"
         command = run_ssh(command)
-        [info, error] = run_shell_command(command, verbose=False)
+        [info, error] = run_shell_command(command, log_level=logging.TRACE)
         if jobname in info:
             time.sleep(5)
             logger.info("waiting for %s job finish", jobname)
@@ -441,8 +441,7 @@ def submit_jobs(
     dependencies="",
     tasks_per_arr=1,
     csp_no_stacks=False,
-    use_gpu=False,
-    verbose=False,
+    use_gpu=False
 ):
     """Submit jobs to batch system"""
 
@@ -501,8 +500,7 @@ def submit_jobs(
             dependencies,
             tasks_per_arr,
             csp_no_stacks,
-            use_gpu,
-            verbose=verbose,
+            use_gpu
         )
     else:
         id = jobs.submit_script(
@@ -518,8 +516,7 @@ def submit_jobs(
             walltime,
             dependencies,
             is_script,
-            use_gpu,
-            verbose=verbose,
+            use_gpu
         )
 
     if id != "standalone":
@@ -626,8 +623,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
                 queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
                 scratch=0,
                 threads=2,
-                memory=20,
-                verbose=parameters["slurm_verbose"] if "slurm_verbose" in parameters else False,
+                memory=20
             ).strip()
         else:
             (id, procs) = submit_jobs(
@@ -642,8 +638,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
                 account=parameters.get("slurm_account"),
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
-                csp_no_stacks=parameters["csp_no_stacks"],
-                verbose=parameters["slurm_verbose"],
+                csp_no_stacks=parameters["csp_no_stacks"]
             )
 
             # just use the first array job as prerequisite
@@ -671,8 +666,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
             walltime=parameters["slurm_walltime"],
             tasks_per_arr=1, # one class per array job
             csp_no_stacks=parameters["csp_no_stacks"],
-            dependencies=id,
-            verbose=parameters["slurm_verbose"],
+            dependencies=id
         )
 
     jobtype = "cspmerge"
@@ -690,8 +684,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
         gres=parameters["slurm_merge_gres"],
         account=parameters.get("slurm_merge_account"),
         walltime=parameters["slurm_merge_walltime"],
-        dependencies=id,
-        verbose=parameters["slurm_verbose"],
+        dependencies=id
     )
 
     os.chdir(current_directory)
@@ -727,8 +720,6 @@ def launch_sva(micrograph_list: list, parameters: dict, swarm_folder: Path):
     jobname = "Iteration %d (split)" % parameters["sva_refine_iter"] if Web.exists else "svaswarm"
     
     # submit jobs to batch system
-    import glob
-    scratch_folder = swarm_folder.parents[0] / 'frealign' / 'scratch'
     id = submit_jobs(
         ".",
         swarm_file,
@@ -741,8 +732,7 @@ def launch_sva(micrograph_list: list, parameters: dict, swarm_folder: Path):
         account=parameters.get("slurm_account"),
         walltime=parameters["slurm_walltime"],
         tasks_per_arr=parameters["slurm_bundle_size"],
-        csp_no_stacks=parameters["csp_no_stacks"],
-        verbose=parameters["slurm_verbose"],
+        csp_no_stacks=parameters["csp_no_stacks"]
     )
 
     # just use the first array job as prerequisite
@@ -763,8 +753,7 @@ def launch_sva(micrograph_list: list, parameters: dict, swarm_folder: Path):
         gres=parameters["slurm_merge_gres"],
         account=parameters.get("slurm_merge_account"),
         walltime=parameters["slurm_merge_walltime"],
-        dependencies=id,
-        verbose=parameters["slurm_verbose"],
+        dependencies=id
     )
 
     # go back to project directory

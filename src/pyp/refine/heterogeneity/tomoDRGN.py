@@ -1,4 +1,5 @@
 # tomodrgn
+import logging
 import os
 import shutil
 import glob
@@ -6,7 +7,7 @@ import random
 import string
 from pathlib import Path
 from pyp.system import local_run, project_params, mpi
-from pyp.system.logging import initialize_pyp_logger
+from pyp.system.logging import initialize_pyp_logger, get_verbose_level
 from pyp.utils import get_relative_path
 from pyp.refine.frealign import frealign
 from pyp.inout.image import img2webp
@@ -28,11 +29,11 @@ def tomodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, do
 
     # tomodrgn pose pkl
     command = f"{get_tomodrgn_path()} parse_pose_star {alignment_star} -o {output}_poses.pkl -D {boxsize}"
-    local_run.run_shell_command(command, verbose=True)
+    local_run.run_shell_command(command)
 
     # ctf metadata pkl
     command = f"{get_tomodrgn_path()} parse_ctf_star {alignment_star} -o {output}_ctf.pkl"
-    local_run.run_shell_command(command, verbose=True)
+    local_run.run_shell_command(command)
 
     if boxsize > downsample_size:
         logger.info(f"Downsampling particles size to {downsample_size}")
@@ -43,11 +44,11 @@ def tomodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, do
             command = f"{get_tomodrgn_path()} downsample {stack} -D {downsample_size} -o {stack.replace('.mrcs', '')}_{downsample_size}.mrcs"
             tasks.append(command)
         
-        mpi.submit_jobs_to_workers(tasks, os.getcwd(), verbose=False)
+        mpi.submit_jobs_to_workers(tasks, os.getcwd())
 
         # edit the input alignment star to replace the new mrcs
         command = f"sed 's/.mrcs/_{downsample_size}.mrcs/g' {alignment_star} > {alignment_star.replace('.star', '_downsample.star')}"
-        local_run.run_shell_command(command, verbose=True)
+        local_run.run_shell_command(command)
 
         downsampled = True
     else:
@@ -97,7 +98,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
     if parameters["tomodrgn_vae_train_data_lazy"]:
         options += " --lazy"
 
-    if parameters["slurm_verbose"]:
+    if get_verbose_level(parameters) < logging.INFO:
         options += " -v"
 
     if False:
@@ -179,7 +180,7 @@ def tomodrgn_train(parameters, input_dir, name, output):
             epoch = int(line.split('# =====> Epoch:')[-1].split('Average gen loss')[0])
             # TODO: do something useful here one day
 
-    local_run.stream_shell_command(command, observer=obs, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command, observer=obs)
 
 def tomodrgn_analyze(parameters,input_dir, output):
     """tomodrgn analyze""" 
@@ -246,7 +247,7 @@ def tomodrgn_analyze(parameters,input_dir, output):
 
     command = f"{get_tomodrgn_path()} analyze {input_dir} --epoch {parameters['tomodrgn_analyze_epoch']} -o {output} --pc {parameters['tomodrgn_analyze_pc']} {options} --plot-format svgz"
 
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
 
     # generate webp thumbnails
     arguments = []
@@ -264,7 +265,7 @@ def tomodrgn_analyze(parameters,input_dir, output):
     
     for file in glob.glob( os.path.join(output,f"kmeans{parameters['tomodrgn_analyze_ksample']}","*.mrc")):
         arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
-    mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+    mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
 
 
 # TODO - only run training tasks
@@ -273,7 +274,7 @@ def run_tomodrgn_train(project_dir, parameters):
     # scratch space
     working_path = Path(os.environ["PYP_SCRATCH"]) / "tomodrgn"
 
-    logger.info(f"Working path: {working_path}")
+    logger.info(f"Using temporary folder {working_path}")
 
     working_path.mkdir(parents=True, exist_ok=True)
     os.chdir(working_path)
@@ -302,7 +303,7 @@ def run_tomodrgn_train(project_dir, parameters):
         tasks.append(command)
 
     logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
-    mpi.submit_jobs_to_workers(tasks, working_path=os.getcwd(), verbose=True)
+    mpi.submit_jobs_to_workers(tasks, working_path=os.getcwd())
 
     train_folder = Path(project_dir) / "train"
     train_folder.mkdir(parents=True, exist_ok=True)
@@ -365,7 +366,7 @@ def run_tomodrgn_train(project_dir, parameters):
         for folder in glob.glob(str(convergence_folder / "vols.*")):
             for file in glob.glob(str(Path(folder) / "*.mrc")):
                 arguments.append((file, radius, os.path.join(folder, Path(file).stem + ".webp")))
-        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
         
         for folder in glob.glob(str(convergence_folder / "vols.*")):
             epoch = int(folder.split(".")[-1])
@@ -389,7 +390,7 @@ def run_tomodrgn_eval(project_dir, parameters,analyze_volumes=False):
     # scratch space
     working_path = Path(os.environ["PYP_SCRATCH"]) / "tomodrgn"
 
-    logger.info(f"Working path: {working_path}")
+    logger.info(f"Using temporary folder {working_path}")
 
     working_path.mkdir(parents=True, exist_ok=True)
     os.chdir(working_path)
@@ -419,7 +420,7 @@ def run_tomodrgn_eval(project_dir, parameters,analyze_volumes=False):
         tasks.append(command)
 
     logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
-    mpi.submit_jobs_to_workers(tasks, os.getcwd(), verbose=False)
+    mpi.submit_jobs_to_workers(tasks, os.getcwd())
 
     (working_path / "train_output").mkdir(parents=True, exist_ok=True)
     
@@ -488,7 +489,7 @@ def run_tomodrgn_eval(project_dir, parameters,analyze_volumes=False):
                 arguments.append((file, radius, file.replace(Path(file).suffix,".webp")))
         for file in glob.glob( os.path.join(final_output_analysis,f"kmeans{parameters['tomodrgn_analyze_volumes_ksample']}","*.mrc")):
             arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
-        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments, verbose=False)
+        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
 
 def backproject_voxel(parameters, input_dir, name, output):
 
@@ -530,7 +531,7 @@ def backproject_voxel(parameters, input_dir, name, output):
 
     command = f"{get_tomodrgn_path()} backproject_voxel {particles_input} --datadir {input_dir} --source-software nextpyp --output {output} {options} {tomo}"
 
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
 
 def train_nn(parameters, input_dir, name, output):
 
@@ -568,7 +569,7 @@ def train_nn(parameters, input_dir, name, output):
         if False and parameters['tomodrgn_vae_train_data_shufflersize'] > 0:
             options += f" --shuffler-size {parameters['tomodrgn_vae_train_data_shufflersize']}"
 
-    if parameters["slurm_verbose"]:
+    if get_verbose_level(parameters) < logging.INFO:
         options += " --verbose"
 
     if False:
@@ -660,7 +661,7 @@ def train_nn(parameters, input_dir, name, output):
     """
     
     command = f"{get_tomodrgn_path()} train_nn {particles_input} --datadir {input_dir} --source-software nextpyp --outdir {output} {options} {training_parameters} {tomo} {workers}"
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
 
 
 def convergence_nn(parameters, input_dir):
@@ -687,7 +688,7 @@ def convergence_nn(parameters, input_dir):
     
     command = f"{get_tomodrgn_path()} convergence_nn {input_dir} {ref} --max-epoch {parameters['tomodrgn_rec_max_epoch']} {option} --plot-format svgz"
 
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
 
 
 def convergence_vae(parameters, input_dir, output):
@@ -726,7 +727,7 @@ def convergence_vae(parameters, input_dir, output):
 
     command = f"{get_tomodrgn_path()} convergence_vae {input_dir} --epoch {parameters['tomodrgn_vae_convergence_epoch_index']} -o {output} {options} --plot-format svgz"
 
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
     
 def tomodrgn_eval_vol(parameters, output_dir, parent):
     
@@ -762,7 +763,7 @@ def tomodrgn_eval_vol(parameters, output_dir, parent):
     
     command = f"{get_tomodrgn_path()} eval_vol -o {output_dir} --weights {parent}/weights.{epoch}.pkl --config {parent}/config.pkl -b {batch_size} {options} --zfile {parent}/z.{epoch}.train.pkl"
 
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
 
 def tomodrgn_analyze_volumes(parameters, output_dir, vol_dir, parent):
     
@@ -795,7 +796,7 @@ def tomodrgn_analyze_volumes(parameters, output_dir, vol_dir, parent):
     logger.warning(f"CURRENT DIRECTORY FILES = {glob.glob('*_stack.mrcs')}")
     command = f"{get_tomodrgn_path()} analyze_volumes --outdir {output_dir} --config {parent}/config.pkl --voldir {vol_dir} {options}"
 
-    local_run.stream_shell_command(command, verbose=parameters['slurm_verbose'])
+    local_run.stream_shell_command(command)
     
 def filtering_with_labels(args,input_star,filtered_star_file,parent_project_dir):
     """Select k-means classes of interest
@@ -872,7 +873,7 @@ def filtering_with_labels(args,input_star,filtered_star_file,parent_project_dir)
     
     command = f"{get_tomodrgn_path()} filter_star {input_star} -o {filtered_star_file} {filtering_parameters}"
 
-    local_run.stream_shell_command(command, verbose=args['slurm_verbose'])
+    local_run.stream_shell_command(command)
 
     if os.path.exists(filtered_star_file):
-        logger.info(f"Filtered star file succesfully saved to {filtered_star_file}")
+        logger.info(f"Filtered star file successfully saved to {filtered_star_file}")

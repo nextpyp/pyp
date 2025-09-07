@@ -1,7 +1,5 @@
 import os
-import sys
-import subprocess
-import numpy as np
+import logging
 from collections import Callable
 from joblib import Parallel, delayed
 import contextlib
@@ -11,7 +9,7 @@ from tqdm import tqdm
 from pyp.system.local_run import run_shell_command
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path, timer
+from pyp.utils import get_relative_path
 
 relative_path = str(get_relative_path(__file__))
 logger = initialize_pyp_logger(log_name=relative_path)
@@ -78,7 +76,7 @@ def submit_jobs_file_to_workers(commands_file, working_path=os.getcwd()):
     submit_jobs_to_workers(new_commands, working_path)
 
 
-def submit_jobs_to_workers(commands, working_path=os.getcwd(), verbose=False, silent = False):
+def submit_jobs_to_workers(commands, working_path=os.getcwd(), silent = False):
     """Run shell command in parallel using MPI.
 
     Parameters
@@ -117,10 +115,9 @@ def submit_jobs_to_workers(commands, working_path=os.getcwd(), verbose=False, si
         first_time = True
         for command in commands:
             try:
-                [output, error] = run_shell_command(command, verbose=False)
+                [output, error] = run_shell_command(command, log_level=logging.TRACE)
                 if first_time:
-                    if verbose:
-                        logger.info("Now executing {}".format(command))
+                    logger.debug("Now executing {}".format(command))
                     first_time = False
             except:
                 if not "frealign" in command:
@@ -130,7 +127,7 @@ def submit_jobs_to_workers(commands, working_path=os.getcwd(), verbose=False, si
     return
 
 
-def submit_function_to_workers(function, arguments, verbose=False, silent=False):
+def submit_function_to_workers(function, arguments, silent=False):
     """Run python function in parallel using MPI.
 
     Parameters
@@ -179,17 +176,14 @@ def submit_function_to_workers(function, arguments, verbose=False, silent=False)
            func(*arg)
 
         current_directory = os.getcwd()
-        if not silent:
-            logger.info(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
+        logger.debug(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
         with tqdm_joblib(tqdm(desc="Progress", total=num_processes, miniters=1, file=TQDMLogger(), disable=silent)) as progress_bar:
             parallel(delayed(wrapper)(func, *arg, current_directory=current_directory) for idx, func in enumerate(funcs) for arg in args[idx])
-        if not silent:
-            logger.info(f"{num_processes:,} functions(s) finished")
+        logger.debug(f"{num_processes:,} functions(s) finished")
 
     else:
         # execute all commands serially
-        if not silent:
-            logger.info(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
+        logger.debug(f"Running {num_processes:,} function(s) ({', '.join([f.__name__ for f in funcs])})")
         with tqdm(desc="Progress", total=num_processes, file=TQDMLogger(), disable=silent) as pbar:
            for function, arguments in zip(funcs, args):
                 for argument in arguments:

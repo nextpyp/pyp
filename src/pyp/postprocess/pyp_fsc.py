@@ -41,8 +41,7 @@ def fsc_multiprocessing(
         com = "{5}; e2proc3d.py {0} {1} --process=mask.auto3d:radius=100:threshold={2}:nshells={3}:nshellsgauss={4}:nmaxseed=0:return_mask=1".format(
             average, mask, threshold, shell, gauss, utils.eman_load_command()
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
         current_mask = mrc.read(mask)
@@ -83,16 +82,14 @@ def fsc_multiprocessing(
         com = "{4}; e2proc3d.py {0} {1}_{2}.mrc --multfile={3}".format(
             half1, os.path.basename(half1)[:-4], name, mask, utils.eman_load_command(),
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
         # mask second half
         com = "{4}; e2proc3d.py {0} {1}_{2}.mrc --multfile={3}".format(
             half2, os.path.basename(half2)[:-4], name, mask, utils.eman_load_command(),
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
     else:
@@ -108,8 +105,7 @@ def fsc_multiprocessing(
             phases.split(",")[-1],
             utils.eman_load_command(),
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
     else:
         # print 'Bypassing phase filtering'
@@ -123,8 +119,7 @@ def fsc_multiprocessing(
         apix,
         utils.eman_load_command(),
     )
-    if args.verbose:
-        logger.info(com)
+    logger.debug(com)
     subprocess.getoutput(com)
 
     # sys.exit()
@@ -328,8 +323,7 @@ if __name__ == "__main__":
             com = "{5}; e2pdb2mrc.py -A {0} -R {6} -B {1},{2},{3} --center {4}.pdb {4}.mrc".format(
                 args.apix, x, y, z, pdbfile, utils.eman_load_command(), nyquist
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
         else:
             logger.info("Using existing map for pdb coordinates.")
@@ -351,8 +345,7 @@ if __name__ == "__main__":
                 args.lowpass,
                 utils.eman_load_command(),
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
             sys.exit()
         else:
@@ -406,8 +399,7 @@ if __name__ == "__main__":
             com = "{3}; e2proc3d.py {0} {0} --apix={1} --process=filter.lowpass.gauss:cutoff_pixels={2} --process=mask.zeroedge3d:x0=2:y0=2:x1=2:y1=2:z0=2:z1=2".format(
                 average, args.apix, args.lowpass, utils.eman_load_command()
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             logger.info(subprocess.getoutput(com))
 
             logger.info(

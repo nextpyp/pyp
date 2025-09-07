@@ -41,7 +41,7 @@ class WebLogHandler(logging.Handler):
         level = record.levelno
         path = record.name  # usually a path to a python script
         line = record.lineno
-        msg = record.message
+        msg = record.msg
 
         Web().log(timestamp, level, path, line, msg)
 

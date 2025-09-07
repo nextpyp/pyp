@@ -58,7 +58,7 @@ def cryocare_train(project_dir, output, parameters):
         json.dump(config, file, indent=4)
 
     command = get_cryocare_path() + f"cryoCARE_extract_train_data.py --conf {data_config}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
     # train.json
     train_config = {
@@ -85,7 +85,7 @@ def cryocare_train(project_dir, output, parameters):
         output.append(line)
 
     command = f"{get_cryocare_path()}cryoCARE_train.py --conf {train_config_file}"
-    local_run.stream_shell_command(command,observer=obs,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command,observer=obs)
 
     # parse output
     loss = [ line.split("loss:")[1].split()[0] for line in output if "ETA:" in line]
@@ -148,12 +148,11 @@ def cryocare_predict(working_path, project_path, name, parameters):
     with open(predict_config_file, 'w') as file:
         json.dump(predcit_config, file, indent=4)
 
-    if parameters["slurm_verbose"]:
-        with open(predict_config_file) as file:
-            logger.warning(file.read())
+    with open(predict_config_file) as file:
+        logger.debug(file.read())
 
     command = f"{get_cryocare_path()}cryoCARE_predict.py --conf {predict_config_file}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
     
     return name + "_half1.rec"
 
@@ -193,7 +192,7 @@ def cryocare(working_path, project_path, name, parameters):
         json.dump(config, file, indent=4)
 
     command = get_cryocare_path() + f"cryoCARE_extract_train_data.py --conf {data_config}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
     # train.json
     train_config = {
@@ -216,7 +215,7 @@ def cryocare(working_path, project_path, name, parameters):
         json.dump(train_config, file, indent=4)
 
     command = f"{get_cryocare_path()}cryoCARE_train.py --conf {train_config_file}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
     # TODO: create a list to run prediction
 
@@ -241,12 +240,11 @@ def cryocare(working_path, project_path, name, parameters):
     with open(predict_config_file, 'w') as file:
         json.dump(predcit_config, file, indent=4)
 
-    if parameters["slurm_verbose"]:
-        with open(predict_config_file) as file:
-            logger.warning(file.read())
+    with open(predict_config_file) as file:
+        logger.debug(file.read())
 
     command = f"{get_cryocare_path()}cryoCARE_predict.py --conf {predict_config_file}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])    
+    local_run.stream_shell_command(command)    
 
 def tomo_swarm_half( name, project_path, working_path, parameters):
     """
@@ -266,7 +264,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         raise Exception("Unknown dataset or session name")
     
     load_config_files( dataset, project_path, working_path)
-    load_tomo_results( name, parameters, project_path, working_path, verbose=parameters["slurm_verbose"])
+    load_tomo_results( name, parameters, project_path, working_path)
 
     # unpack pkl file
     if os.path.exists(f"{name}.pkl"):
@@ -288,7 +286,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
     arguments = []
     for f in frame_list:
         arguments.append((str(project_path) + "/raw/" + f, f))
-    mpi.submit_function_to_workers(shutil.copy2, arguments, verbose=parameters["slurm_verbose"])
+    mpi.submit_function_to_workers(shutil.copy2, arguments)
 
     # convert eer files to mrc using movie_eer_reduce and movie_eer_frames parameters (flipping in x is required to match unblur/motioncorr convention)
     if frame_list[0].endswith(".eer"):
@@ -443,7 +441,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
         raise Exception("Unknown dataset or session name")
     
     load_config_files( dataset, project_path, working_path / name)
-    load_tomo_results( name, parameters, project_path, working_path / name, verbose=parameters["slurm_verbose"])
+    load_tomo_results( name, parameters, project_path, working_path / name)
 
     # unpack pkl file
     if os.path.exists(f"{name}.pkl"):
@@ -467,7 +465,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
     arguments = []
     for f in frame_list:
         arguments.append((str(project_path) + "/raw/" + f, f))
-    mpi.submit_function_to_workers(shutil.copy2, arguments, verbose=parameters["slurm_verbose"])
+    mpi.submit_function_to_workers(shutil.copy2, arguments)
 
     # convert eer files to mrc using movie_eer_reduce and movie_eer_frames parameters (flipping in x is required to match unblur/motioncorr convention)
     if frame_list[0].endswith(".eer"):

@@ -600,13 +600,13 @@ def extract_particles_mpi(
         if binning > 1:
             for f in input:
                 arguments.append((f, "frealign/" + f, binning, method))
-            mpi.submit_function_to_workers(downsample_stack, arguments, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(downsample_stack, arguments)
 
             [os.remove(f) for f in input]
         else:
             for f in input:
                 arguments.append((f, "frealign/" + f))
-            mpi.submit_function_to_workers(os.rename, arguments, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(os.rename, arguments)
 
 
         # write a txt containing the filename of frames (for stackless CSP)
@@ -662,7 +662,7 @@ def extract_particles_mpi(
             )
         )
         count += chunks
-    mpi.submit_function_to_workers(extract_particles_non_mpi, arguments, verbose=parameters["slurm_verbose"])
+    mpi.submit_function_to_workers(extract_particles_non_mpi, arguments)
 
     if len(split_boxes) > 1:
         # merge stacks

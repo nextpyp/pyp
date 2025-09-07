@@ -1,6 +1,7 @@
 import collections
 import csv
 import glob
+import logging
 import math
 from operator import index
 import os
@@ -675,7 +676,7 @@ def get_new_input_list(parameters, inputlist):
         newinputlist = sorted(newinput_dict, key=newinput_dict.get, reverse=True)
         difference = len(inputlist) - len(newinputlist)
         if difference > 0:
-            logger.warning(f"Removing {difference:,} micrographs/tilt-series that have no particles")
+            logger.warning(f"Excluding {difference:,} micrograph(s)/tilt-series without particles")
         if len(newinputlist) > 0:
             logger.warning("Updating micrograph/tilt-series order according to number of particles")
     else:
@@ -2316,7 +2317,7 @@ EOF
         os.path.join(os.environ["PYP_SCRATCH"], name),
         inversexf,
     )
-    [output, error] = local_run.run_shell_command(command, verbose=False)
+    [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
 
     os.remove(os.path.join(os.environ["PYP_SCRATCH"], f"{name}.xf"))
     inverse_xf_file = np.loadtxt(inversexf, ndmin=2)
@@ -2327,7 +2328,7 @@ EOF
 
     # pre-load magnification matrix
     [output, error] = local_run.run_shell_command(
-        "%s/bin/xf2rotmagstr %s" % (get_imod_path(), inversexf), verbose=False
+        "%s/bin/xf2rotmagstr %s" % (get_imod_path(), inversexf), log_level=logging.TRACE
     )
     xf_rot_mag = output.split("\n")
 
@@ -2449,7 +2450,7 @@ EOF
                 elif particle_vol in alignmentSVA:
                     spike_string = alignmentSVA[particle_vol]
                 else:
-                    logger.debug(
+                    logger.trace(
                         "Skipping spike %s_vir%04d_spk%04d without alignments" % (name, spike, vir) 
                     )
                     allboxes_3d.append([spike_X, spike_Y, spike_Z])
@@ -2536,7 +2537,7 @@ EOF
 
                     # check if tilt angle is valid and within acceptable range
                     if tilt < min_tilt or tilt > max_tilt:
-                        logger.debug(
+                        logger.trace(
                             "Ignoring image at tilt angle {0} outside range [ {1}, {2} ].".format(
                                 tilt, min_tilt, max_tilt
                             )
@@ -2545,7 +2546,7 @@ EOF
                         continue
 
                     if tilt_image_counter in excluded_views:
-                        logger.debug(
+                        logger.trace(
                             "Ignoring image at tilt angle {0} excluded during alignment.".format(
                                 tilt
                             )
@@ -2581,7 +2582,7 @@ EOF
                                 break
 
                         if near_gold:
-                            logger.debug(
+                            logger.trace(
                                 "Skipping projection %s too close to gold fiducial" % tilt
                             )
                             tilt_image_counter += 1
@@ -2656,7 +2657,7 @@ EOF
                         or tilt_Y - (cutboxsize / 2.0) + min_micrograph_y
                         >= max_micrograph_y
                     ):
-                        logger.debug(
+                        logger.trace(
                             "Skipping particle outside image range: [%d,%d] x=(%d,%d), y=(%d,%d)"
                             % (
                                 tilt_X - (cutboxsize / 2) + min_micrograph_x,
@@ -3146,5 +3147,5 @@ def global_par2cistem(refinement, parameters):
         mpi_funcs.append(cistem_obj.from_parfile)
         # cistem_obj.from_parfile(parameters, extracted_rows, allboxes, filename, refinement, input_csp_dir, output_dir)
      
-    mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
+    mpi.submit_function_to_workers(mpi_funcs, mpi_args, silent=True)
 

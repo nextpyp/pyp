@@ -2,6 +2,7 @@ import datetime
 import fcntl
 import glob
 import json
+import logging
 import math
 import os
 import copy
@@ -91,7 +92,7 @@ def sort_particles_regions(
 
             if not find_square:
                 ret[-1].append(particle_index)
-                logger.debug(
+                logger.trace(
                     "Particle [x = %f, y = %f, z = %f] is possibly out of bound."
                     % (x, y, z)
                 )
@@ -398,7 +399,7 @@ def merge_movie_files_in_job_arr(
                 mpi_args.append([(Parameters.from_file(par), imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate)])
                 mpi_funcs.append(Parameters.to_star)
 
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=mp["slurm_verbose"], silent=True)
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, silent=True)
 
         with timer.Timer(
             "merge_stack", text="Merging particle stack took: {}", logger=logger.info
@@ -573,9 +574,8 @@ def merge_movie_files_in_job_arr(
             target = os.path.join(project_path, "frealign", "log", target_name)
             shutil.copy2(log_files[0], target)
             # send output to interface
-            if mp['slurm_verbose']:
-                with open(log_files[0]) as f:
-                    logger.info(f.read())
+            with open(log_files[0]) as f:
+                logger.debug(f.read())
 
         # copy recon over to project dir
         if mp["refine_parfile_compress"]:
@@ -680,7 +680,7 @@ def save_reconstruction(
         save_refinement_bundle_to_website(file.replace("_weights.svgz",""), iteration)
 
     # delete the broken links that have already been deleted by local merge
-    local_run.run_shell_command("find . -xtype l -delete", verbose=False)
+    local_run.run_shell_command("find . -xtype l -delete", log_level=logging.TRACE)
     
     file_name_suffix = "_"
     
@@ -1003,7 +1003,7 @@ def run_mpi_reconstruction(
                 tilt_max,
             )])
 
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=fp["slurm_verbose"])
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args)
 
             # transfer files to maps directory
             for file in glob.glob(dataset_name + "*_prs.png"):
@@ -1119,7 +1119,7 @@ def run_mpi_reconstruction(
                 + """ | grep -v RESOL | grep -v Average | grep -v Date | grep C | awk '{if ($2 != "") printf "%14.5f%14.5f%14.5f%14.5f%14.5f%14.5f%14.5f\\n", $2, $3, $4, $6, $7, $8, $9}' > """
                 + str(stats_file_name)
             )
-            local_run.run_shell_command(com, verbose=False)
+            local_run.run_shell_command(com, log_level=logging.TRACE)
 
         elif os.path.exists(f"{dataset_name}_statistics.txt"):
             shutil.copy2(f"{dataset_name}_statistics.txt", stats_file_name)
@@ -1265,7 +1265,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
                     fp["refine_dataset"],
                     input_dir,
                 )
-                local_run.run_shell_command(command, verbose=mp["slurm_verbose"])
+                local_run.run_shell_command(command)
 
     # remove the directory
     if not_retrying:
@@ -1292,7 +1292,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
         for star in individual_star_files[1:]:
             command = "awk 'BEGIN {{OFS=\"\\t\"}}; NF>10{{print}}' {0} >> {1}".format(star, merged_star)
-            local_run.run_shell_command(command, verbose=mp["slurm_verbose"])
+            local_run.run_shell_command(command)
             os.remove(star)
 
         logger.info(f"Stacks saved to {stacks_folder}")
@@ -1562,7 +1562,7 @@ def live_decompress_and_merge(class_index, input_dir, parameters, micrographs, a
 
             if len(arguments) > 0:
                 mpi.submit_function_to_workers(
-                    frealign_parfile.Parameters.decompress_file, arguments, verbose=parameters["slurm_verbose"]
+                    frealign_parfile.Parameters.decompress_file, arguments
                 )
                 # reset if we get a batch
                 start_time = time.time()
@@ -1669,7 +1669,7 @@ def csp_has_error(path_to_logs: Path, micrographs: dict) -> bool:
         if micrograph_log.exists():
             # use "grep" to check if log files contain any error message
             command = "grep -E %s '%s'" % ("'" + "|".join(ERROR_KEYWORDS) + "'", str(micrograph_log))
-            [output, error] = local_run.run_shell_command(command, verbose=False)
+            [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
 
             if len(output) > 0:
                 logger.error(f"{micrograph} fails. Stopping the merge job.")

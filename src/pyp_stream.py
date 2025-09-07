@@ -298,37 +298,34 @@ def move_to_destination(file, server, path):
             os.remove(file)
 
 
-def copy_to_destination(file, server, path, verbose=False):
+def copy_to_destination(file, server, path):
 
     target = get_target(file=file, path=path)
 
     # logger.info('Copying ' + file + ' to ' + target )
     if is_image(file):
-        if verbose:
-            logger.info("Copying " + Path(file).name)
+        logger.debug("Copying " + Path(file).name)
 
     if is_local(server):
         shutil.copy2(file, target)
     else:
         com = "scp -p '{0}' '{1}:{2}'".format(file, server, target)
-        [output, error] = run_shell_command(com,verbose)
+        [output, error] = run_shell_command(com)
 
 
-def link_to_destination(file, server, path, verbose=False):
+def link_to_destination(file, server, path):
 
     target = get_target(file=file, path=path)
 
     try:
-        if verbose:
-            logger.info("Linking " + file + " to " + target)
+        logger.debug("Linking " + file + " to " + target)
         symlink_relative(file, target)
     except:
-        if verbose:
-            if os.path.exists(target):
-                logger.warning(f"{target} already exists")
-            else:
-                logger.error(f"Cannot create {target}")
-            pass
+        if os.path.exists(target):
+            logger.debug(f"{target} already exists")
+        else:
+            logger.error(f"Cannot create {target}")
+        pass
 
 
 def create_in_destination(file, server, path):
@@ -460,8 +457,7 @@ def launch_preprocessing(args, autoprocess):
             gres=args["slurm_daemon_gres"],
             account=args.get("slurm_daemon_account"),
             walltime=args["slurm_daemon_walltime"],
-            tasks_per_arr=1,
-            verbose=args["slurm_verbose"],
+            tasks_per_arr=1
         )
 
         message = "none"
@@ -651,12 +647,10 @@ if __name__ == "__main__":
         for f in [transferred_filename, filelist_filename, transfer_filename]:
             if Path(f).exists:
                 try:
-                    if args["slurm_verbose"]:
-                        logger.info("Deleting " + Path(f).name)
+                    logger.debug("Deleting " + Path(f).name)
                     os.remove(f)
                 except:
-                    if args["slurm_verbose"]:
-                        logger.error("Cannot delete " + f)
+                    logger.error("Cannot delete " + f)
                     pass
         remove_from_destination(
             file="%s_speed.txt" % session_name,

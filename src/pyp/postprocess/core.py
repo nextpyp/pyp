@@ -285,7 +285,7 @@ def cistem_postprocess(args,output):
         + "eot\n"
     )
 
-    run_shell_command(command, verbose=args['slurm_verbose'])
+    run_shell_command(command)
 
 def relion_postprocess(args):
 

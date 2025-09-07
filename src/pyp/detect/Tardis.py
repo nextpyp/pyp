@@ -31,7 +31,7 @@ def membrain_preprocessing(parameters, input):
     
         command = f"{get_tardis_path()}tomo_preprocessing {match_pixel} --input-tomogram {input} --output-path {output_rescale}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
         rescaled = True
         tomo_pixelsize = parameters['tomo_mem_pixel']
@@ -47,11 +47,11 @@ def membrain_preprocessing(parameters, input):
         
         command = f"{get_tardis_path()}tomo_preprocessing extract_spectrum --input-path {template} --output-path ./template_spectrum.mrc"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
         command = f"{get_tardis_path()}tomo_preprocessing match_spectrum --input {output_rescale} --target ./template_spectrum.mrc --output {output_match_spectrum}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
     else:
         output_match_spectrum = output_rescale
@@ -60,7 +60,7 @@ def membrain_preprocessing(parameters, input):
 
         command = f"{get_tardis_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output} --pixel-size {tomo_pixelsize}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
     else:
         output = output_match_spectrum
 
@@ -100,15 +100,14 @@ def tardis_segmentation(parameters, input, local_output):
         command =f"{get_tardis_path()}tardis_actin {common_options} {mt_actin_options} --cnn_checkpoint {os.path.join(cnn_model_path,'actin_3d','model_weights.pth')} --dist_checkpoint {dist_model_path}"
     else:
         assert False, f"Unknown segmentation method {parameters.get('tomo_mem_method')}"
-    local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
-    if parameters["slurm_verbose"]:
-        try:
-            log_file = glob.glob('Predictions/*_log.txt')[0]
-            with open(log_file, 'r') as f:
-                logger.logger(f.read())
-        except:
-            pass
+    try:
+        log_file = glob.glob('Predictions/*_log.txt')[0]
+        with open(log_file, 'r') as f:
+            logger.debug(f.read())
+    except:
+        pass
 
     try:
         segmentation = glob.glob('Predictions/*_semantic.mrc')[0]

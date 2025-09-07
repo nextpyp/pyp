@@ -37,6 +37,7 @@ convenience function if you want to write a numarray array instead.
 """
 
 from re import L
+import logging
 import shutil
 import os
 import sys
@@ -670,7 +671,7 @@ def merge_fast(inputfiles, outputfile, remove=False):
 {stack}
 EOF
         """
-        [output, error] = run_shell_command(command, verbose=False)
+        [output, error] = run_shell_command(command, log_level=logging.TRACE)
         if remove:
             try:
                 os.remove(stack)
