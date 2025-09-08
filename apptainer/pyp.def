@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: mambaorg/micromamba
+From: mambaorg/micromamba:debian12-slim
 IncludeCmd: no
 
 %help
@@ -235,7 +235,7 @@ cat << EOF > /root/pytom.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	micromamba create --name pytom "python=3" -c conda-forge cupy cuda-version=11.8
+	micromamba create --name pytom "python=3" -c conda-forge cupy=13.5.1 cuda-version=11.8
 
 	# run the conda script in the new environment
 	chmod +x /root/pytom.sh
