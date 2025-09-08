@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def get_verbose_level(parameters):
 
-    if parameters.get('slurm_verbose_level') == "trace":
+    if parameters and parameters.get('slurm_verbose_level') == "trace":
         return logging.TRACE
     elif parameters.get('slurm_verbose_level') == "debug":
         return logging.DEBUG
