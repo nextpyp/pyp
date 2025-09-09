@@ -457,7 +457,7 @@ def read_tilt_series(
                     )
                     commands.append(command)
 
-                mpi.submit_jobs_to_workers(commands, os.getcwd())
+                mpi.submit_jobs_to_workers(commands)
 
             docfile = filename + ".mrc.mdoc"
             if os.path.isfile(docfile):
@@ -919,7 +919,7 @@ def regenerate_average_quick(
             )
             commands.append(com)
 
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands)
 
     # regenerate average in each tilt
     t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)

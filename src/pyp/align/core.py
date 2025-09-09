@@ -1159,7 +1159,7 @@ def csp_run_refinement(
                 extract_only = False
 
             if not (extract_only and current_class > 1): 
-                mpi.submit_jobs_to_workers(commands, os.getcwd())
+                mpi.submit_jobs_to_workers(commands)
 
             time.sleep(3)
 

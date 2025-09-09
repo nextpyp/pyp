@@ -42,7 +42,7 @@ def tomodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, do
             command = f"{get_tomodrgn_path()} downsample {stack} -D {downsample_size} -o {stack.replace('.mrcs', '')}_{downsample_size}.mrcs"
             tasks.append(command)
         
-        mpi.submit_jobs_to_workers(tasks, os.getcwd())
+        mpi.submit_jobs_to_workers(tasks)
 
         # edit the input alignment star to replace the new mrcs
         command = f"sed 's/.mrcs/_{downsample_size}.mrcs/g' {alignment_star} > {alignment_star.replace('.star', '_downsample.star')}"
@@ -301,7 +301,7 @@ def run_tomodrgn_train(project_dir, parameters):
         tasks.append(command)
 
     logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
-    mpi.submit_jobs_to_workers(tasks, working_path=os.getcwd())
+    mpi.submit_jobs_to_workers(tasks)
 
     train_folder = Path(project_dir) / "train"
     train_folder.mkdir(parents=True, exist_ok=True)
@@ -418,7 +418,7 @@ def run_tomodrgn_eval(project_dir, parameters,analyze_volumes=False):
         tasks.append(command)
 
     logger.info(f"Copying {len(particles_stacks):,} particle stack(s) to local scratch:")
-    mpi.submit_jobs_to_workers(tasks, os.getcwd())
+    mpi.submit_jobs_to_workers(tasks)
 
     (working_path / "train_output").mkdir(parents=True, exist_ok=True)
     

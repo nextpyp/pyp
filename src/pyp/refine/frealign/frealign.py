@@ -3063,7 +3063,7 @@ def split_refinement(mp, ref, current_path, first, last, i):
         )
 
         # submit jobs to MPI
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands)
 
         # combine all the refined parfile
         # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
@@ -3114,7 +3114,7 @@ def split_refinement(mp, ref, current_path, first, last, i):
         )
 
         # submit jobs to MPI
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands)
 
         # combine all the refined parfile
         # short_file_name = name + "_%07d_%07d.cistem" % (1, last)
@@ -4258,7 +4258,7 @@ def refine2d_mpi(
         """
 
     assert len(commands) > 0, f"{input_frealign_par} does not have particles"
-    mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
+    mpi.submit_jobs_to_workers(commands,log_level=logging.NOTSET)
 
     return splitted_parfiles, dumpfiles
 
@@ -5122,7 +5122,7 @@ def ref_merge_check_error_and_resubmit(fp, iteration, machinefile):
             )
 
             output = mpi.submit_jobs_file_to_workers(
-                os.path.join(os.getcwd(), mpirunfile), os.getcwd()
+                os.path.join(os.getcwd(), mpirunfile)
             )
             logger.info(output)
 

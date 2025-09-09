@@ -505,8 +505,10 @@ if __name__ == "__main__":
 
     # set logging level
     from pyp import parse_logger_level
+    loglevel = parse_logger_level()
+    logger.setLevel(loglevel)
     for handler in logger.handlers:
-        handler.setLevel(parse_logger_level())
+        handler.setLevel(loglevel)
 
     params_file_path = get_params_file_path()
     if params_file_path is not None:

@@ -1,5 +1,6 @@
 import datetime
 import glob
+import logging
 import os
 import sys
 import shutil
@@ -309,7 +310,7 @@ def write_stacks_to_file(
 
         if len(mpi_funcs) > 0:
 
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, silent=True)
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, log_level=logging.NOTSET)
 
             # remove micrographs from local scratch
             [os.remove(stack_dir / f"{film}.mrc") for film in new_films if os.path.exists(stack_dir / f"{film}.mrc")]

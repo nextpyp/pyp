@@ -293,7 +293,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
             # average eer frames
             command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {parameters['movie_eer_frames']} {f} {f.replace('.eer','.mrc')}; rm -f {f}"
             arguments.append(command)
-        mpi.submit_jobs_to_workers(arguments, os.getcwd())
+        mpi.submit_jobs_to_workers(arguments)
 
         raw_image = [ i.replace('.eer','.mrc') for i in frame_list ]
     else:
@@ -309,7 +309,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
                 get_imod_path(), f, f.replace(".tiff", ".mrc").replace(".tif", ".mrc")
             )
             commands.append(com)
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands)
         
     raw_image = [f.replace(".tiff", ".mrc").replace(".tif", ".mrc") for f in raw_image]
  
@@ -335,7 +335,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         # read half slices 
         command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, even_list))} -output {output_half1}.mrc"
         arguments.append(command)
-    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+    mpi.submit_jobs_to_workers(arguments)
 
     # half 2 movies
     arguments = []
@@ -348,7 +348,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         # read half slices and remove the original movie
         command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, odd_list))} -output {output_half2}.mrc && rm -f {f}"
         arguments.append(command)
-    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+    mpi.submit_jobs_to_workers(arguments)
 
     # generate half tomograms from half movies    
     for i in [1, 2]:
@@ -472,7 +472,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
             # average eer frames
             command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {parameters['movie_eer_frames']} {f} {f.replace('.eer','.mrc')}; rm -f {f}"
             arguments.append(command)
-        mpi.submit_jobs_to_workers(arguments, os.getcwd())
+        mpi.submit_jobs_to_workers(arguments)
 
         raw_image = [ i.replace('.eer','.mrc') for i in frame_list ]
     else:
@@ -487,7 +487,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
                 get_imod_path(), f, f.replace(".tiff", ".mrc").replace(".tif", ".mrc")
             )
             commands.append(com)
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands)
         
     raw_image = [f.replace(".tiff", ".mrc").replace(".tif", ".mrc") for f in raw_image]
  
@@ -512,7 +512,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
         # read half slices 
         command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, even_list))} -output {output_half1}.mrc"
         arguments.append(command)
-    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+    mpi.submit_jobs_to_workers(arguments)
 
     # half 2 movies
     arguments = []
@@ -525,7 +525,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
         # read half slices and remove the original movie
         command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, odd_list))} -output {output_half2}.mrc && rm -f {f}"
         arguments.append(command)
-    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+    mpi.submit_jobs_to_workers(arguments)
 
     # generate half tomograms from half movies    
     for i in [1, 2]:

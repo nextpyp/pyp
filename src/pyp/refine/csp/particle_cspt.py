@@ -395,7 +395,7 @@ def merge_movie_files_in_job_arr(
                 mpi_args.append([(Parameters.from_file(par), imagesize, image_binning, micrograph_path, filename, global_imagelist, doseRate)])
                 mpi_funcs.append(Parameters.to_star)
 
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, silent=True)
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, log_level=logging.NOTSET)
 
         with timer.Timer(
             "merge_stack", text="Merging particle stack took: {}", logger=logger.info
@@ -801,7 +801,7 @@ def run_reconstruction(
     recon_st = str(datetime.datetime.now())
     recon_S = time.perf_counter()
 
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands)
     recon_E = time.perf_counter()
     recon_T = recon_E - recon_S
     timer.Timer.timers.update({"reconstruct3d_splitcom" :{"elapsed_time": recon_T, "start_time": recon_st, "end_time": str(datetime.datetime.now())}})
