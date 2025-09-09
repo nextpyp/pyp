@@ -1290,7 +1290,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, clipping=Tr
 def false_color(input, output):
     
     # create CLUT
-    command = f"/usr/bin/convert -size 1x1! xc:cyan xc:purple xc:magenta +append -resize 255x1! CLUT.png"
+    command = f"/usr/bin/convert -size 1x1! xc:cyan xc:magenta +append -resize 255x1! CLUT.png"
     run_shell_command(command)
     
     # colorize

@@ -1713,7 +1713,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 options += " --half-precision"
 
             if parameters.get("tomo_pick_pytom_tomogram_ctf_model") != "none":
-                options += f"--tomogram-ctf-model {parameters.get('tomo_pick_pytom_tomogram_ctf_model')} "
+                options += f" --tomogram-ctf-model {parameters.get('tomo_pick_pytom_tomogram_ctf_model')} "
 
             with open(name+"_mean_defocus.txt") as inf:
                 defocus_in_nm = float(inf.read()) / 10000.
@@ -1821,6 +1821,9 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         current_dir = os.getcwd()
         os.chdir("pytom")
         scores_file = name + "_scores.mrc"
+        if parameters["tomo_pick_pytom_half_precision"]:
+            command = f"{get_imod_path()}/newstack -mode 2 {scores_file} {scores_file}~; mv {scores_file}~ {scores_file}"
+            local_run.run_shell_command(command)
         scores_webp_file = scores_file.replace(".mrc","_bw_rec.webp")
         plot.tomo_slicer_gif( scores_file, scores_webp_file, flipyz=True, averagezslices=2, clipping=False )
         plot.false_color(scores_webp_file, os.path.join( current_dir, name + '_score.webp'))
