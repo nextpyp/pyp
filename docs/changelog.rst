@@ -22,7 +22,7 @@ v0.7.3
 
    - Improve efficiency during tomography refinement by avoiding unnecessary linking of subtomogram files.
 
-   - Visualization of 3D correlation volume when doing template matching using pytom-match-pick.
+   - Visualization of 3D correlation volume and diagnostic plots when doing template matching using pytom-match-pick.
 
    :fa:`bug` **Bug fixes**
    
