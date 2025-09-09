@@ -4,12 +4,8 @@
 # SBATCH --output="3davg_%j.out"
 # SBATCH --error="3davg_%j.err"
 
-import datetime
 import os
 import sys
-import socket
-import shutil
-import time
 
 from pyp.inout.image import mrc
 from pyp.refine.tomo_avg.sub_tomo_avg import (
@@ -18,10 +14,7 @@ from pyp.refine.tomo_avg.sub_tomo_avg import (
 )
 from pyp.system.set_up import prepare_3davg_dir, prepare_3davg_xmls
 from pyp.system import project_params
-from pyp.system.logging import initialize_pyp_logger
-
-
-logger = initialize_pyp_logger(log_name=__name__)
+from pyp.system.logging import logger
 
 if __name__ == "__main__":
     

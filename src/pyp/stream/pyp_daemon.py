@@ -1,16 +1,11 @@
-import csv
-import datetime
 import glob
 import logging
 import os
 import re
 import shutil
 import socket
-import subprocess
-import sys
 import time
 from pathlib import Path
-from traceback import FrameSummary
 from tqdm import tqdm
 
 import numpy as np
@@ -21,15 +16,12 @@ from pyp.inout.image import compress_and_delete
 from pyp.inout.image import digital_micrograph as dm4
 from pyp.system import project_params, slurm, mpi, set_up
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
 from pyp.system.utils import needs_gpu, get_gpu_queue
-from pyp.utils import get_relative_path, movie2regex, timer
+from pyp.utils import movie2regex, timer
 from pyp.inout.metadata import pyp_metadata
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def pyp_daemon(args):
     if "refine_model" in args.keys() and args["refine_model"] != None:

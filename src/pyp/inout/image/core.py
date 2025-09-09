@@ -13,18 +13,15 @@ import numpy
 
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, get_frealign_paths
 from pyp.system.wrapper_functions import newstack
-from pyp.utils import get_relative_path, timer
+from pyp.utils import timer
 
 from .. import metadata
 from . import digital_micrograph as dm4
 from . import mrc
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def write_out_relion_stack(name, current_path, particles):
     # write particle stack (negated per relion's convention)

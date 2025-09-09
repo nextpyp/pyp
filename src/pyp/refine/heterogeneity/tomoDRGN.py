@@ -7,15 +7,13 @@ import random
 import string
 from pathlib import Path
 from pyp.system import local_run, project_params, mpi
-from pyp.system.logging import initialize_pyp_logger, get_verbose_level
-from pyp.utils import get_relative_path
+from pyp.system.logging import get_verbose_level
 from pyp.refine.frealign import frealign
 from pyp.inout.image import img2webp
 from pyp.system.db_comm import save_drgnmap_to_website
 from pyp.system.utils import get_imod_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_tomodrgn_path():
     command_base = f"micromamba run -n tomodrgn /opt/conda/envs/tomodrgn/bin/tomodrgn"

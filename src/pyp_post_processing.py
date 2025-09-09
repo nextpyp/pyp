@@ -21,12 +21,8 @@ import numpy
 
 from pyp.inout.image import mrc
 from pyp.system import project_params, utils
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def plotsf(result, pixel_size):
 

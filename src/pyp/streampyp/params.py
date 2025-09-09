@@ -6,13 +6,7 @@ import toml
 
 from typing import Optional, List, Dict, Any
 
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-
-
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def make_full_id(tab_id: str, arg_id: str) -> str:
     return f'{tab_id}_{arg_id}'

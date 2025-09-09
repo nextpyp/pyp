@@ -7,13 +7,10 @@ import subprocess
 import time
 from pathlib import Path
 
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_mpirun_command, run_pyp
 from pyp.utils import get_relative_path, timer
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def create_pyp_multirun_file(
     parameters, files, timestamp, nodes, mpirunfile="swarm/pre_process.swarm"

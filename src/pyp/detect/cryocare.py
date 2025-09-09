@@ -1,24 +1,19 @@
-import os, sys
+import os
 import shutil
 import numpy as np
 from pathlib import Path
 import json
 import glob
 
-from pyp.analysis import plot
 from pyp import preprocess, merge
 from pyp.inout.metadata import pyp_metadata
 from pyp.inout.image import get_image_dimensions, mrc
 from pyp.inout.image.core import generate_aligned_tiltseries
 from pyp.system import local_run, project_params, mpi, project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 from pyp.system.utils import get_imod_path, get_gpu_ids
 from pyp.system.db_comm import load_tomo_results, load_config_files
-from pyp.system.singularity import get_pyp_configuration
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_cryocare_path():
     cryocare_path = '/opt/conda/envs/cryocare'

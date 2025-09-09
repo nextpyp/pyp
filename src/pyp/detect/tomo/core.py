@@ -19,7 +19,7 @@ from pyp.inout.metadata import pyp_metadata
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.utils import timer
 from pyp.system import local_run, mpi, project_params
-from pyp.system.logging import initialize_pyp_logger, get_verbose_level
+from pyp.system.logging import get_verbose_level
 from pyp.system.utils import (
     get_tomo_path,
     get_imod_path,
@@ -27,10 +27,8 @@ from pyp.system.utils import (
     check_env,
     get_gpu_ids,
 )
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_virion_segmentation_thresholds(seg_thresh):
 

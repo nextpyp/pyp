@@ -11,15 +11,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pyp.inout.image import write_central_slices, write_multiple_slices, writepng
-from pyp.system import project_params, slurm, local_run
-from pyp.system.logging import initialize_pyp_logger
+from pyp.system import project_params, local_run
 from pyp.system.singularity import get_pyp_configuration, run_slurm
 from pyp.system.utils import get_parameter_files_path
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def run_3davg(parameters):
     # set up xml files to run 3DAVG

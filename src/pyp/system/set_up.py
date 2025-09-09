@@ -4,13 +4,10 @@ import shutil
 import subprocess
 
 from pyp.inout.metadata import frealign_parfile
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths, get_parameter_files_path
-from pyp.utils import get_relative_path, makedirs_list, symlink_force
+from pyp.utils import makedirs_list, symlink_force
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def prepare_spr_dir():
     folders = [

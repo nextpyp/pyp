@@ -3,16 +3,10 @@ import os
 import shutil
 import glob
 import numpy as np
-from pathlib import Path
-from pyp.analysis import plot
 from pyp.inout.image import mrc
 from pyp.system import local_run, project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-from pyp.system.singularity import get_pyp_configuration
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_membrane_path():
     command_base = 'export PYTHONPATH=/opt/conda/envs/membrain/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n membrain /opt/conda/envs/membrain/bin/'

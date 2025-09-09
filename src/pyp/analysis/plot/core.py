@@ -19,13 +19,9 @@ from pyp.inout.metadata import pyp_metadata, cistem_star_file
 from pyp.analysis.image import contrast_stretch
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, check_env
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def contact_sheet(Y, cols=25, rescale=True, order: list = None):
     if rescale:

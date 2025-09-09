@@ -4,13 +4,7 @@ import os
 import shutil
 from pathlib import Path
 
-from genericpath import exists
-
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def load_files(current_path,working_path,f):
     if (current_path / f).is_file():

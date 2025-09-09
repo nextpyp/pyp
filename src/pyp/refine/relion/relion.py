@@ -14,13 +14,9 @@ import numpy
 from pyp import analysis
 from pyp.inout.image import mrc, writepng
 from pyp.system import local_run, project_params, user_comm
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import eman_load_command, qos
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def run_relion(rparameters, sparameters, run=True):
 

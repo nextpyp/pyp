@@ -8,16 +8,13 @@ import numpy as np
 from pyp.analysis import statistics
 from pyp.inout.metadata import frealign_parfile, cistem_star_file
 from pyp.system import local_run, project_params
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths
-from pyp.utils import get_relative_path, symlink_force
+from pyp.utils import symlink_force
 from pyp.utils import timer
 from pyp.inout.metadata import get_particles_tilt_index
 from pyp.streampyp.logging import TQDMLogger
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def get_occupancy_columns():
 

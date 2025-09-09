@@ -5,12 +5,8 @@ import sys
 import numpy as np
 
 from pyp.analysis.geometry import transformations as vtk
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def calcSpikeNormXYZ(spike_x, spike_y, spike_z, virion_x, virion_y, virion_z):
     """

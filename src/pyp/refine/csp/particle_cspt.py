@@ -28,18 +28,14 @@ from pyp.inout.metadata import frealign_parfile, isfrealignx, pyp_metadata, gene
 from pyp.inout.metadata.cistem_star_file import *
 from pyp.refine.frealign import frealign
 from pyp.streampyp.web import Web
-from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, mpi, project_params, slurm
 from pyp.system.db_comm import save_reconstruction_to_website, save_refinement_bundle_to_website
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.set_up import prepare_frealign_dir
 from pyp.system.singularity import standalone_mode
-from pyp.utils import get_relative_path, symlink_force, timer, symlink_relative
+from pyp.utils import symlink_force, timer, symlink_relative
 from pyp_main import csp_split
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def sort_particles_regions(
     particle_parameters, corners_squares, squaresize, per_particle=False

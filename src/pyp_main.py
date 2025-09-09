@@ -92,7 +92,7 @@ from pyp.system.db_comm import (
     save_tomo_results,
     save_tomo_results_lean,
 )
-from pyp.system.logging import initialize_pyp_logger, get_verbose_level
+from pyp.system.logging import get_verbose_level
 from pyp.system.set_up import prepare_frealign_dir
 from pyp.system.singularity import (
     get_mpirun_command,
@@ -118,10 +118,7 @@ __author__ = "Alberto Bartesaghi"
 __maintainer__ = "Alberto Bartesaghi"
 __email__ = "alberto.bartesaghi@duke.edu"
 
-from pyp.utils import get_relative_path
-
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 # set seed
 random.seed(11)
@@ -4412,9 +4409,9 @@ if __name__ == "__main__":
 
     try:
 
-        # use global environment variable to control logger level
-        os.environ["PYP_LOGGER_LEVEL"] = str(parse_logger_level())
-        logger = initialize_pyp_logger(log_name=relative_path)
+        # set logging level
+        for handler in logger.handlers:
+            handler.setLevel(parse_logger_level())
 
         mpi_tasks = mpi.initialize_worker_pool()
 

@@ -24,15 +24,14 @@ import numpy as np
 from scipy.optimize import minimize
 
 from pyp import analysis, postprocess
-from pyp.analysis import plot, statistics
-from pyp.analysis.occupancies import occupancies, occupancy_extended
+from pyp.analysis import plot
+from pyp.analysis.occupancies import occupancy_extended
 from pyp.inout.image import mrc, writepng, img2webp
 from pyp.inout.metadata import create_curr_iter_par, frealign_parfile, isfrealignx
 from pyp.inout.metadata.cistem_star_file import *
 from pyp.refine.csp import cspty
 from pyp.system import local_run, mpi, project_params, slurm, user_comm
 from pyp.system.db_comm import save_classes_to_website
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_mpirun_command, run_pyp
 from pyp.system.utils import (
     eman_load_command,
@@ -40,12 +39,9 @@ from pyp.system.utils import (
     get_multirun_path,
     get_imod_path,
 )
-from pyp.utils import get_relative_path
 from pyp.utils import timer, symlink_relative
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def parse_def_arguments():
     parser = argparse.ArgumentParser(description="Defocus refinement")

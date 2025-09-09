@@ -2,24 +2,18 @@ import datetime
 import logging
 import os
 import shutil
-import socket
 import glob
 import time
 import numpy as np
 from pathlib import Path
 
 from pyp.inout.metadata import pyp_metadata
-from pyp.inout.image import img2webp
 from pyp.system import local_run, project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path, symlink_relative
-from pyp.utils.timer import Timer
 from pyp.system import local_run, mpi
 from pyp.system.utils import get_imod_path
 from pyp.system.db_comm import save_tiltseries_to_website
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 NN_INIT_COMMANDS = "export LD_LIBRARY_PATH=/opt/conda/envs/pyp/lib/python3.8/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python"
 

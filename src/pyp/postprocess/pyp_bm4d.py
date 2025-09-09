@@ -9,15 +9,12 @@ import numpy as np
 import scipy.io
 
 from pyp.inout.image import mrc
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_bm4d_path
 from pyp.utils import get_relative_path
 
 # https://www.cs.tut.fi/~foi/GCF-BM3D/README_BM4D.txt
 
-
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 if __name__ == "__main__":
 
