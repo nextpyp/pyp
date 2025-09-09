@@ -8260,9 +8260,9 @@ hidden = true
 
 [tabs.slurm.verbose_level]
 name = "Logging level"
-description = "Filter log messages based on their severity"
+description = "Filter log messages based on their importance"
 type = "enum"
-enum = { info="low (info)", debug="medium (debug)", trace="high (trace)" }
+enum = { info="normal (info)", debug="diagnostic (debug)", trace="exhaustive (trace)" }
 default = "info"
 
 [tabs.slurm.tasks]
