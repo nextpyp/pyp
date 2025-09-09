@@ -2121,7 +2121,7 @@ EOF
                 # The z height of tomograms where you pick particles
                 Z_FOR_PICKING = z_thickness
 
-                logger.info(("Information read from txt = %s", spikes[spk][0:6]))
+                logger.info(("Information read from txt = %s" % spikes[spk][0:6]))
                 spike_x, spike_y, spike_z, virion_x, virion_y, virion_z = list(
                     [x / BINNING_FOR_PICKING for x in spikes[spk][0:6]]
                 )
@@ -2148,10 +2148,10 @@ EOF
                 )
 
                 logger.info(
-                    "Spike position = [ %f, %f, %f ] ", spike_x, spike_y, spike_z
+                    "Spike position = [ %f, %f, %f ] " % (spike_x, spike_y, spike_z)
                 )
                 logger.info(
-                    "Virion position = [ %f, %f, %f ] ", virion_x, virion_y, virion_z
+                    "Virion position = [ %f, %f, %f ] " % (virion_x, virion_y, virion_z)
                 )
 
                 # To abide by the IMOD model convention for subsequent extraction
@@ -2260,18 +2260,19 @@ EOF
                 # norm comes directly from txt
                 # [ normX, normY, normZ ] = list(map(float, spikes[spk][7:10]))
                 logger.info(
-                    "Information read from txt before norm calc = %s %s %s %s %s %s",
-                    spike_x,
-                    spike_y,
-                    spike_z,
-                    virion_x,
-                    virion_y,
-                    virion_z,
+                    "Information read from txt before norm calc = %s %s %s %s %s %s" % (
+                        spike_x,
+                        spike_y,
+                        spike_z,
+                        virion_x,
+                        virion_y,
+                        virion_z,
+                    )
                 )
                 normX, normY, normZ = calcSpikeNormXYZ(
                     spike_x, spike_y, spike_z, virion_x, virion_y, virion_z
                 )
-                logger.info("NormX, NormY, NormZ = [ %f, %f, %f ]", normX, normY, normZ)
+                logger.info("NormX, NormY, NormZ = [ %f, %f, %f ]" % (normX, normY, normZ))
 
                 CHECK_NORM = True
                 if CHECK_NORM:
@@ -2286,7 +2287,7 @@ EOF
                     normX_m = vtk.rotation_matrix(np.radians(-normX), [1, 0, 0])
                     result = np.dot(normX_m, np.dot(normZ_m, vector))
                     # result should be ( 0,0,1 )
-                    logger.info("Vector after normZ & normX rotation is ", result)
+                    logger.info("Vector after normZ & normX rotation is " + result)
             elif 'normals' in locals():
                 
                 # pytom convention

@@ -230,7 +230,7 @@ def produce_boxx_files(global_indexes_to_remove, classification_pass=1, shifts=[
                         "box/{}.boxx".format(name), boxx, fmt="%2.2f", delimiter="\t"
                     )
             else:
-                logger.info("%s does not exist", boxxfile)
+                logger.info("%s does not exist" % boxxfile)
 
             micrograph_counter += 1
 
@@ -299,7 +299,7 @@ def produce_boxx_files_fast(global_indexes_to_remove, classification_pass=1, shi
     pool = multiprocessing.Pool(threads)
     manager = multiprocessing.Manager()
     results = manager.Queue()
-    logger.info("Reading box files using %i threads", threads)
+    logger.info("Reading box files using %i threads" % threads)
     for micrograph in inputlist:
         pool.apply_async(read_boxx_file_async, args=(micrograph, results))
         # read_boxx_file_async( micrograph, results )
@@ -402,7 +402,7 @@ def produce_boxx_files_fast(global_indexes_to_remove, classification_pass=1, shi
                     boxx_dbase[name][:, 5] = boxxx
                     # numpy.savetxt('box/{}.boxx'.format(name),boxx,fmt='%2.2f',delimiter='\t')
             else:
-                logger.info("%s does not exist", boxxfile)
+                logger.info("%s does not exist" % boxxfile)
 
             if micrograph_counter < len(inputlist) - 1:
                 micrograph_counter += 1
@@ -436,12 +436,12 @@ def produce_boxx_files_fast(global_indexes_to_remove, classification_pass=1, shi
             # save new extended box file
             # numpy.savetxt('box/{}.boxx'.format(name),boxx,fmt='%2.2f',delimiter='\t')
 
-    logger.info("Current global count %d", current_global_counter)
+    logger.info("Current global count %d" % current_global_counter)
     # save all boxx files in parallel
     pool = multiprocessing.Pool(threads)
     manager = multiprocessing.Manager()
     results = manager.Queue()
-    logger.info("Saving box files using %i threads", threads)
+    logger.info("Saving box files using %i threads" % threads)
     for micrograph in inputlist:
         pool.apply_async(
             write_boxx_file_async, args=(micrograph, boxx_dbase[micrograph])
@@ -818,8 +818,8 @@ if __name__ == "__main__":
                 if i not in global_indexes_to_keep
             ]
 
-            logger.info("Particles to remove = %i", len(global_indexes_to_remove))
-            logger.info("Particles to keep = %i", len(global_indexes_to_keep))
+            logger.info("Particles to remove = %i" % len(global_indexes_to_remove))
+            logger.info("Particles to keep = %i" % len(global_indexes_to_keep))
 
             produce_boxx_files(global_indexes_to_remove)
             # produce_boxx_files( global_indexes_to_keep )
@@ -853,15 +853,16 @@ if __name__ == "__main__":
                         )
                     )
             logger.info(
-                "Particles that survived previous classification = %d", particles
+                "Particles that survived previous classification = %d" % particles
             )
 
             # check consistency between indexes and current number of particles
             if max(A) > particles - 1:
                 logger.error(
-                    "Particle index greater than number of particles? %d > %d",
-                    max(A),
-                    particles,
+                    "Particle index greater than number of particles? %d > %d" % (
+                        max(A),
+                        particles,
+                    )
                 )
                 sys.exit()
 
@@ -870,14 +871,16 @@ if __name__ == "__main__":
             [global_indexes_to_remove.append(i) for i in range(particles) if i not in A]
 
             logger.info(
-                "Particles to remove in classification pass %d = %d",
-                args.extract_cls,
-                len(global_indexes_to_remove),
+                "Particles to remove in classification pass %d = %d" % (
+                    args.extract_cls,
+                    len(global_indexes_to_remove),
+                )
             )
             logger.info(
-                "Particles left after classification pass %d = %d",
-                args.extract_cls,
-                particles - len(global_indexes_to_remove),
+                "Particles left after classification pass %d = %d" % (
+                    args.extract_cls,
+                    particles - len(global_indexes_to_remove),
+                )
             )
 
             # produce_boxx_files( global_indexes_to_remove, args.extract_cls )
@@ -928,7 +931,7 @@ if __name__ == "__main__":
                 sys.exit(0)
             input = numpy.array([])
             for p in sorted(par_files):
-                logger.info("Reading %s", p)
+                logger.info("Reading %s" % p)
                 current = numpy.array(
                     [line.split() for line in open(p) if not line.startswith("C")],
                     dtype=float,
@@ -957,7 +960,7 @@ if __name__ == "__main__":
                         int(float(args.threshold) * input.shape[0]) - 1, field
                     ]
 
-            logger.info("Using phase residual threshold of %0.8f", thresh)
+            logger.info("Using phase residual threshold of %0.8f" % thresh)
 
             # combine selected classes
             if input.ndim > 2:
@@ -994,8 +997,8 @@ if __name__ == "__main__":
                 newinput_keep = input[numpy.logical_not(input[:, field] >= thresh)]
             global_indexes_to_remove = (newinput[:, 0] - 1).astype("int").tolist()
             global_indexes_to_keep = (newinput_keep[:, 0] - 1).astype("int").tolist()
-            logger.info("global_indexes_to_remove %s", global_indexes_to_remove[:5])
-            logger.info("global_indexes_to_keep %s", global_indexes_to_keep[:5])
+            logger.info("global_indexes_to_remove %s" % global_indexes_to_remove[:5])
+            logger.info("global_indexes_to_keep %s" % global_indexes_to_keep[:5])
 
             # create list of GOOD particles
             if False:
@@ -1012,8 +1015,8 @@ if __name__ == "__main__":
                     - set(global_indexes_to_remove)
                 )
 
-            logger.info("Particles to remove = %i", len(global_indexes_to_remove))
-            logger.info("Particles to keep = %i", len(global_indexes_to_keep))
+            logger.info("Particles to remove = %i" % len(global_indexes_to_remove))
+            logger.info("Particles to keep = %i" % len(global_indexes_to_keep))
 
             if not args.debug:
 
@@ -1208,7 +1211,7 @@ if __name__ == "__main__":
                 selected_classes = numpy.array(args.classes.split(","), dtype="i") - 1
             else:
                 logger.info(
-                    "Bimodal rlnAccuracyRotations distribution threshold %0.8f", cutoff
+                    "Bimodal rlnAccuracyRotations distribution threshold %0.8f" % cutoff
                 )
                 selected_classes = numpy.squeeze(
                     numpy.argwhere(
@@ -1218,7 +1221,7 @@ if __name__ == "__main__":
                     axis=(1,),
                 )
 
-            logger.info("Keeping classes %s", selected_classes + 1)
+            logger.info("Keeping classes %s" % (selected_classes + 1))
 
             # select multiple classes
             selected = []
@@ -1251,7 +1254,7 @@ if __name__ == "__main__":
             ]
 
             logger.info(
-                "Selecting %i out of %i classes", len(selected_classes), prs.size
+                "Selecting %i out of %i classes" % (len(selected_classes), prs.size)
             )
 
         else:
@@ -1276,8 +1279,8 @@ if __name__ == "__main__":
 
             selected = input
 
-        logger.info("Particles to remove = %i", len(global_indexes_to_remove))
-        logger.info("Particles to keep = %i", len(global_indexes_to_keep))
+        logger.info("Particles to remove = %i" % len(global_indexes_to_remove))
+        logger.info("Particles to keep = %i" % len(global_indexes_to_keep))
 
         # indexes are in base-0
         if not args.debug:
@@ -1359,9 +1362,10 @@ if __name__ == "__main__":
 
                 f.close()
                 logger.info(
-                    "FREALIGN parameter file for class(es) %s saved to %s",
-                    args.classes,
-                    outputparfile,
+                    "FREALIGN parameter file for class(es) %s saved to %s" % (
+                        args.classes,
+                        outputparfile,
+                    )
                 )
 
                 input = numpy.array(
@@ -1387,9 +1391,10 @@ if __name__ == "__main__":
                         arch.write("\t".join(input[i, :].tolist()) + "\n")
 
                 logger.info(
-                    "RELION parameter file for class(es) %s saved to %s",
-                    args.classes,
-                    clean_star_file,
+                    "RELION parameter file for class(es) %s saved to %s" % (
+                        args.classes,
+                        clean_star_file,
+                    )
                 )
 
         # for cls in selected_classes:

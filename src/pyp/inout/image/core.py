@@ -405,7 +405,7 @@ def read_from_matlab(filename):
         Ny = struct.unpack("i", f.read(4))[0]
         Nz = struct.unpack("i", f.read(4))[0]
 
-        logger.info("%s %s %s", Nx, Ny, Nz)
+        logger.info("%s %s %s" % (Nx, Ny, Nz))
         S = numpy.fromstring(f.read(), "double")
 
         logger.info(len(S))
@@ -598,7 +598,7 @@ def readDMfile(filename, parameters=0, binning=1):
 
         logger.info("Reading frame ")
         for frame in range(first, z):
-            logger.info("\t %d", frame)
+            logger.info("\t %d" % frame)
             if binning > 1:
                 image[frame - first, :, :] = (
                     numpy.reshape(numpy.fromfile(f, dt, y * x), [y, x])
@@ -667,7 +667,7 @@ def readDMfileandsave(filename, parameters=0, binning=1):
 
             logger.info("Reading frame ")
             for frame in range(first, z):
-                logger.info("\t %d", frame)
+                logger.info("\t %d" % frame)
 
                 # file for current frame (headersize changes so we have to read it each time)
                 frame_file = root_name + "-%04d.dm4" % (frame + 1)
@@ -853,7 +853,7 @@ def readMRCfile(filename, parameters, binning):
 
     logger.info("Reading frame ")
     for frame in range(first, z):
-        logger.info("\t %d", frame)
+        logger.info("\t %d" % frame)
 
         if binning > 1:
             image[frame - first, :, :] = (
@@ -1248,11 +1248,11 @@ def collate_and_compress(filename):
         logger.info("Successful {0}.tbz".format(name))
         for fil in files_to_delete:
             if os.path.exists(fil):
-                logger.info("Removing %s", fil)
+                logger.info("Removing %s" % fil)
                 os.remove(fil)
                 # remove signal files as well
                 for i in glob.glob("." + os.path.split(fil)[-1].split(".")[0] + "*"):
-                    logger.info("Removing %s", i)
+                    logger.info("Removing %s" % i)
                     os.remove(i)
     else:
         logger.error("{0}.tbz file not valid.".format(name))
@@ -1351,7 +1351,7 @@ def compress_and_delete(filename, compression="tbz", fileset=""):
         else:
             logger.error(".bz2 compression failed creating file {0}".format(file_list))
             try:
-                logger.info("Removing %s", tbz_file)
+                logger.info("Removing %s" % tbz_file)
                 os.remove(tbz_file)
             except:
                 logger.exception("Could not delete file %s", tbz_file)
@@ -1376,7 +1376,7 @@ def compress_and_delete(filename, compression="tbz", fileset=""):
                     for fil in glob.glob("." + name + "*"):
                         if os.path.exists(fil):
                             os.remove(fil)
-                            logger.info("Deleting %s", fil)
+                            logger.info("Deleting %s" % fil)
 
     else:
         command = "tar tf {0} --use-compress-prog=pbzip2".format(tbz_file)
@@ -1390,7 +1390,7 @@ def compress_and_delete(filename, compression="tbz", fileset=""):
                 for fil in glob.glob("." + name + "*"):
                     if os.path.exists(fil):
                         os.remove(fil)
-                        logger.info("Deleting %s", fil)
+                        logger.info("Deleting %s" % fil)
         else:
             logger.error("{0} file not valid. Keeping {1}".format(tbz_file, file_list))
             os.remove(tbz_file)

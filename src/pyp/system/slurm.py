@@ -31,7 +31,7 @@ def check_sbatch_job_finish(jobname):
         [info, error] = run_shell_command(command, log_level=logging.TRACE)
         if jobname in info:
             time.sleep(5)
-            logger.info("waiting for %s job finish", jobname)
+            logger.info("waiting for %s job finish" % jobname)
         else:
             sbatch_job = 0
     return

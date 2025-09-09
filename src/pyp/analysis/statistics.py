@@ -196,7 +196,7 @@ def optimal_threshold_bayes(samples, criteria="optimal", plot_results=""):
 
         h, edges = np.histogram(samples, 50)
 
-        logger.info("difference = %f", np.abs(h - gmm_y_sum).mean())
+        logger.info("difference = %f" % np.abs(h - gmm_y_sum).mean())
 
         for i in range(components):
 

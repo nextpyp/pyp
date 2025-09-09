@@ -325,7 +325,7 @@ def read_tilt_series(
 
                 # align frames in each tilt
                 for tilt in range(dims[-1]):
-                    logger.info("Aligning frames for tilt %f", tilt_angles[tilt])
+                    logger.info("Aligning frames for tilt %f" % tilt_angles[tilt])
                     frame_name = name + "_%04d" % tilt
                     d = imageio.readDMfileandsave(frame_name + ".dm4")
                     if not os.path.exists(frame_name + ".xf"):
@@ -471,7 +471,7 @@ def read_tilt_series(
             # pixel_size, voltage, mag, defocus, tilt_axis = imageio.readMRCheader(name + ".mrc")
 
         else:
-            logger.error("Cannot read %s", filename)
+            logger.error("Cannot read %s" % filename)
 
     elif len(parameters["movie_pattern"]) > 0 or len(mdocs) == 1:
         # use either movie pattern OR mdoc file to find corresponding tilted images 
@@ -684,7 +684,7 @@ def read_tilt_series(
         drift_metadata["tilts"] = [tilt[1] for tilt in sorted_tilts]
 
     else:
-        logger.error("Cannot read %s", filename)
+        logger.error("Cannot read %s" % filename)
 
     if metadata and metadata.get("drift"):
         drift_metadata["drift"] = {}

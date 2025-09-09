@@ -293,9 +293,10 @@ def normalize_volume(image, radius=0, pixelsize=1):
 
     if radius / pixelsize > boxsize / 2:
         logger.warning(
-            "Particle radius falls outside box %f > %f",
-            radius,
-            boxsize // 2 * pixelsize,
+            "Particle radius falls outside box %f > %f" % (
+                radius,
+                boxsize // 2 * pixelsize,
+            )
         )
         radius = boxsize * pixelsize / 2
     condition = (
@@ -319,9 +320,10 @@ def extract_background(image, radius, pixelsize):
     x, y = np.mgrid[0:boxsize, 0:boxsize] - boxsize // 2
     if radius / pixelsize > boxsize / 2:
         logger.warning(
-            "Particle radius falls outside box %f > %f",
-            radius,
-            boxsize // 2 * pixelsize,
+            "Particle radius falls outside box %f > %f" % (
+                radius,
+                boxsize // 2 * pixelsize,
+            )
         )
         radius = boxsize * pixelsize / 2
     condition = np.hypot(x, y) > radius / pixelsize
@@ -366,10 +368,11 @@ def compute_running_avg(particle, num_particles, num_frames, window_averaging):
         all_weights[i, :] = weights / weights.mean() / num_frames
 
     logger.info(
-        "Now weighting frame average for particle %d of %d containing %d frames",
-        particle,
-        num_particles,
-        num_frames,
+        "Now weighting frame average for particle %d of %d containing %d frames" % (
+            particle,
+            num_particles,
+            num_frames,
+        )
     )
 
 
@@ -447,7 +450,7 @@ def fix_empty_particles(scratch_stackfile, actual_number_of_particles, temp_stac
 
     if empty_frames > 0:
         logger.warning(
-            "Detected %d mostly empty frames (substituted with random noise).",
+            "Detected %d mostly empty frames (substituted with random noise)." %
             empty_frames,
         )
 

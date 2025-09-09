@@ -10,8 +10,8 @@ import matplotlib
 matplotlib.use("Agg")
 
 import argparse
-import datetime
 import fnmatch
+import logging
 import glob
 import multiprocessing
 import os
@@ -29,7 +29,7 @@ from pyp.system import project_params, slurm, mpi
 from pyp.system.local_run import run_shell_command
 from pyp.system.singularity import get_pyp_configuration, run_pyp
 from pyp.system.user_comm import notify
-from pyp.utils import get_relative_path, movie2regex, symlink_relative
+from pyp.utils import movie2regex, symlink_relative
 from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
 
 from pyp.system.logging import logger
@@ -94,7 +94,7 @@ def transfer_multiprocessing(
 
         logger.info(str(e))
         if "already exists" in str(e):
-            logger.info("Clearing up truncated file %s %s", f, os.path.split(f)[-1])
+            logger.info("Clearing up truncated file %s %s" % (f, os.path.split(f)[-1]))
             os.remove(os.path.join(destination, os.path.split(f)[-1]))
         condition = False
         pass
@@ -363,17 +363,17 @@ def create_paths(server, path):
 
         # set permissions
         com = "chmod g+w '{1}'".format(server, path)
-        run_shell_command(com)
+        run_shell_command(com,log_level=logging.TRACE)
 
     # do over ssh
     else:
 
         com = "ssh {0} mkdir -p '{1}'".format(server, path)
-        [output, error] = run_shell_command(com)
+        run_shell_command(com,log_level=logging.TRACE)
 
         # set permissions
         com = "ssh {0} chmod g+w '{1}'".format(server, path)
-        run_shell_command(com)
+        run_shell_command(com,log_level=logging.TRACE)
 
 
 def launch_preprocessing(args, autoprocess):
@@ -504,7 +504,7 @@ def resolve_sources(args):
 if __name__ == "__main__":
 
     # set logging level
-    from pyp import parse_logger_level
+    from pyp.system.utils import parse_logger_level
     loglevel = parse_logger_level()
     logger.setLevel(loglevel)
     for handler in logger.handlers:

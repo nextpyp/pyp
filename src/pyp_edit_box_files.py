@@ -139,8 +139,8 @@ if __name__ == "__main__":
                 if i not in global_indexes_to_keep
             ]
 
-            # logger.info("Particles to remove = %i", len(global_indexes_to_remove))
-            # logger.info("Particles to keep = %i", len(global_indexes_to_keep))
+            # logger.info("Particles to remove = %i" % len(global_indexes_to_remove))
+            # logger.info("Particles to keep = %i" % len(global_indexes_to_keep))
 
             produce_boxx_files(global_indexes_to_remove)
             # produce_boxx_files( global_indexes_to_keep )
@@ -180,9 +180,10 @@ if __name__ == "__main__":
             # check consistency between indexes and current number of particles
             if max(A) > particles - 1:
                 logger.error(
-                    "Particle index greater than number of particles? %d > %d",
-                    max(A),
-                    particles,
+                    "Particle index greater than number of particles? %d > %d" % (
+                        max(A),
+                        particles,
+                    )
                 )
                 sys.exit()
 
@@ -249,7 +250,7 @@ if __name__ == "__main__":
                 sys.exit(0)
             input = numpy.array([])
             for p in sorted(par_files):
-                logger.info("Reading %s", p)
+                logger.info("Reading %s" % p)
                 current = numpy.array(
                     [line.split() for line in open(p) if not line.startswith("C")],
                     dtype=float,
@@ -280,7 +281,7 @@ if __name__ == "__main__":
                         int(float(args.threshold) * input.shape[0]) - 1, field
                     ]
 
-            logger.info("Using phase residual threshold of %0.8f", thresh)
+            logger.info("Using phase residual threshold of %0.8f" % thresh)
 
             # combine selected classes
             if input.ndim > 2:
@@ -576,7 +577,7 @@ if __name__ == "__main__":
                     axis=(1,),
                 )
 
-            logger.info("Keeping classes %s", selected_classes + 1)
+            logger.info("Keeping classes %s" % (selected_classes + 1))
 
             # select multiple classes
             selected = []
@@ -634,8 +635,8 @@ if __name__ == "__main__":
 
             selected = input
 
-        logger.info("Particles to remove = %i", len(global_indexes_to_remove))
-        logger.info("Particles to keep = %i", len(global_indexes_to_keep))
+        logger.info("Particles to remove = %i" % len(global_indexes_to_remove))
+        logger.info("Particles to keep = %i" % len(global_indexes_to_keep))
 
         # indexes are in base-0
         if not args.debug:

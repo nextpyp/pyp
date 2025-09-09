@@ -223,7 +223,7 @@ def generateRelionParFileNew(
         ):
             # restart counter because we are keeping one frame stack per micrograph
             count = 0
-            logger.info("Processing %s", stacks)
+            logger.info("Processing %s" % stacks)
             with open(stacks, "r") as infile:
                 for line in infile:
                     # update film number
@@ -300,14 +300,14 @@ def generateRelionTomogramPositions(name, parameters):
         # check if we have picked spikes for this virion
         virion_file = "sva/%s_vir%04d_cut.txt" % (name, vir)
         if not os.path.isfile(virion_file):
-            logger.warning("File %s not found. Skipping", virion_file)
+            logger.warning("File %s not found. Skipping" % virion_file)
             continue
         else:
             spikes_in_virion = np.loadtxt(
                 virion_file, comments="number", usecols=(list(range(32))), ndmin=2
             )
             if spikes_in_virion.shape[0] == 0:
-                logger.warning("File %s not found. Skipping", virion_file)
+                logger.warning("File %s not found. Skipping" % virion_file)
                 continue
 
         # for all spikes in current virion
@@ -323,11 +323,12 @@ def generateRelionTomogramPositions(name, parameters):
             spike_y += 1
 
             logger.info(
-                "Processing spike %d at x,y,z coordinates [ %.1f, %.1f, %.1f ]",
-                spike,
-                spike_x,
-                spike_y,
-                spike_z,
+                "Processing spike %d at x,y,z coordinates [ %.1f, %.1f, %.1f ]" % (
+                    spike,
+                    spike_x,
+                    spike_y,
+                    spike_z,
+                )
             )
 
             # compute global spike coordinates from virus box size
@@ -338,10 +339,11 @@ def generateRelionTomogramPositions(name, parameters):
 
             if False:
                 logger.info(
-                    "[spike_X, spike_Y, spike_Z ] = [%s, %s, %s]",
-                    spike_X,
-                    spike_Y,
-                    spike_Z,
+                    "[spike_X, spike_Y, spike_Z ] = [%s, %s, %s]" % (
+                        spike_X,
+                        spike_Y,
+                        spike_Z,
+                    )
                 )
 
             sub_tomogram_positions.append([spike_X, spike_Y, spike_Z])
@@ -860,7 +862,7 @@ def csp_spr_swarm(filename, parameters, only_inside=False, csp_swarm=False):
             if os.path.exists(local_drifts):
 
                 if particle == 0 and frame == int(parameters["movie_first"]):
-                    logger.info("Using local alignments %s", local_drifts)
+                    logger.info("Using local alignments %s" % local_drifts)
 
                 xf_local = np.loadtxt(local_drifts, ndmin=2)
 
@@ -1421,7 +1423,7 @@ def spa_extract_coordinates(
                 if os.path.exists(local_drifts):
 
                     if particle == 0 and frame == int(parameters["movie_first"]):
-                        logger.info("Using local alignments %s", local_drifts)
+                        logger.info("Using local alignments %s" % local_drifts)
 
                     xf_local = np.loadtxt(local_drifts, ndmin=2)
 
@@ -1788,7 +1790,7 @@ def spa_extract_coordinates_legacy(
             if os.path.exists(local_drifts):
 
                 if particle == 0 and frame == int(parameters["movie_first"]):
-                    logger.info("Using local alignments %s", local_drifts)
+                    logger.info("Using local alignments %s" % local_drifts)
 
                 xf_local = np.loadtxt(local_drifts, ndmin=2)
 

@@ -1085,7 +1085,7 @@ def frealign_rec(mparameters, fparameters, iteration, alignment_option):
 
         # go back to frealign directory
         os.chdir("..")
-        logger.info("Now running iteration %i of %s", iteration, fparameters["maxiter"])
+        logger.info("Now running iteration %i of %s" % (iteration, fparameters["maxiter"]))
         frealign_iterate(mparameters, fparameters, iteration, True)
 
     else:
@@ -1129,9 +1129,10 @@ def frealign_rec(mparameters, fparameters, iteration, alignment_option):
                 if iteration < int(fparameters["maxiter"]):
 
                     logger.info(
-                        "Now running iteration %i of %s",
-                        iteration,
-                        fparameters["maxiter"],
+                        "Now running iteration %i of %s" % (
+                            iteration,
+                            fparameters["maxiter"],
+                        )
                     )
                     frealign_iterate(mparameters, fparameters, iteration + 1)
 
@@ -1275,7 +1276,7 @@ def frealign_rec(mparameters, fparameters, iteration, alignment_option):
                 os.chdir("..")
 
                 logger.info(
-                    "Now running iteration %i of %s", iteration, fparameters["maxiter"]
+                    "Now running iteration %i of %s" % (iteration, fparameters["maxiter"])
                 )
                 frealign_iterate(mparameters, fparameters, iteration + 1)
 
@@ -1608,7 +1609,7 @@ def frealign_iterate(mp, fp, iteration, keep_previous_alignments=False):
                     mpirunfile,
                 )
                 local_run.run_shell_command(command)
-                logger.info("%s %s", machinefile, os.path.exists(machinefile))
+                logger.info("%s %s" % (machinefile, os.path.exists(machinefile)))
 
         # Reconstruction
         command = "cd swarm; export frealign_rec=frealign_rec; . ./{0}".format(
@@ -3754,7 +3755,7 @@ def merge_refinements(mp, fp, iteration, alignment_option):
         try:
             shutil.copy(parfile, "../maps")
         except:
-            logger.warning("File exists %s", parfile)
+            logger.warning("File exists %s" % parfile)
 
 
 def mrefine_version(
@@ -4120,10 +4121,7 @@ Output dump filename for intermediate arrays
 [dump_file.dat]                                    :
     """
 
-    output, error = local_run.run_shell_command(command)
-
-    with open(logfile) as f:
-        logger.debug(f.read())
+    local_run.run_shell_command(command,log_level=logging.TRACE)
 
     plot_refine2d_reconstructions(output_reconstruction, new_name, pngfile, parameters)
     
@@ -4305,10 +4303,10 @@ Number of dump files [1]                           :
 Error : Error: Dump file dump_file_seed_1.dat not found
     """
 
-    output, error = local_run.run_shell_command(command, log_level=logging.TRACE)
+    local_run.run_shell_command(command, log_level=logging.TRACE)
 
     with open(logfile) as f:
-        logger.debug(f.read())
+        logger.trace(f.read())
 
     [os.remove(f) for f in os.listdir(".") if f.endswith(".dat")]
 

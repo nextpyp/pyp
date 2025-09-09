@@ -91,7 +91,7 @@ def cryolo2mod(cbox, mod, size, scaling, z, write=True):
     
     """
     if not os.path.exists(cbox):
-        logger.error("Input %s does not exist")
+        logger.error("Input %s does not exist" % cbox)
         sys.exit()
     spikes = read_box(cbox)
     ret_spikes = []

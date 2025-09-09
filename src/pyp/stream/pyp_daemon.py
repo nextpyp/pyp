@@ -195,7 +195,7 @@ def pyp_daemon(args):
     if os.path.exists(stop_flag):
         os.remove(stop_flag)
 
-    logger.info("Watching for new files in: %s", raw_dir)
+    logger.info("Watching for new files in: %s" % raw_dir)
     # Look for new and unprocesed data for a maximum of timeout days
 
     current_count = 0
@@ -570,7 +570,7 @@ def pyp_daemon_process(args,):
         try:
             os.mkdir(working_path)
         except:
-            logger.info("Cannot create %s on node %s", working_path, socket.gethostname())
+            logger.info("Cannot create %s on node %s" % (working_path, socket.gethostname()))
         os.chdir(working_path)
 
         # Format and store raw data
