@@ -1465,6 +1465,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         from pathlib import Path
         if parameters.get("tomo_pick_pytom_use_existing_scores"):
             for path in Path(debug_folder).rglob(f'{name}*.*'):
+                logger.debug(f"Retrieving existing {path}")
                 shutil.copy2( path, Path(os.getcwd())/"pytom" )
         
         if not os.path.exists( os.path.join("pytom", name + "_scores.mrc")):
@@ -1752,14 +1753,9 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             local_run.stream_shell_command(command=command)
 
             # save scores by default
-            if parameters.get("tomo_pick_pytom_save_scores"):
-                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_scores.mrc"), debug_folder )
-                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_roc.svg"), debug_folder )
-
-            if parameters.get("tomo_pick_pytom_debug"):
-                logger.info(f"Saving intermediate results to {debug_folder}")
-                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_job.json"), debug_folder )
-                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_angles.mrc"), debug_folder )                
+            for file in [ "_scores.mrc", "_job.json", "_roc.svg", "_angles.mrc"]:
+                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + file ), debug_folder )
+                logger.debug(f"Saving {name + file} to {debug_folder}")
 
         """
         usage: pytom_extract_candidates.py [-h] -j JOB_FILE [--tomogram-mask TOMOGRAM_MASK] [--ignore_tomogram_mask] -n NUMBER_OF_PARTICLES [--number-of-false-positives NUMBER_OF_FALSE_POSITIVES] [--particle-diameter PARTICLE_DIAMETER] [-c CUT_OFF] [--tophat-filter]
@@ -1805,13 +1801,10 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         command = f"{get_pytom_path()} pytom_extract_candidates.py --job-file pytom/{name}_job.json --number-of-particles {parameters['tomo_pick_pytom_number_of_particles']} --number-of-false-positives {parameters['tomo_pick_pytom_number_of_false_positives']} {options}"
         local_run.stream_shell_command(command=command)
         
-        # save scores by default
-        if parameters.get("tomo_pick_pytom_save_scores") and os.path.exists(os.path.join( os.getcwd(), "pytom", name + "_extraction_graph.svg")):
-            shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_extraction_graph.svg"), debug_folder )
-
-        if parameters.get("tomo_pick_pytom_debug") and os.path.exists(os.path.join( os.getcwd(), "pytom", name + "_particles.star")):
-            logger.info(f"Saving intermediate results to {debug_folder}")
-            shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_particles.star"), debug_folder )                
+        for file in [ "_extraction_graph.svg", "_particles.star" ]:
+            if os.path.exists(os.path.join( os.getcwd(), "pytom", name + file)):
+                logger.debug(f"Saving {name+file} to {debug_folder}")
+                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + file), debug_folder )
 
         # parse output from star file
         results_file = os.path.join( "pytom", f"{name}_particles.star" )

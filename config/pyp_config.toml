@@ -3596,25 +3596,11 @@ type = "bool"
 default = false
 condition = { arg="method", value="pytom" }
  
-[tabs.tomo_pick.pytom_save_scores]
-name = "Save scores"
-description = "Save score volumes to pytom/ directory (allows re-adjusting cutoff without recalculating scores)"
-type = "bool"
-default = true
-condition = { arg="method", value="pytom" }
-
 [tabs.tomo_pick.pytom_use_existing_scores]
 name = "Use existing scores, if available"
 description = "This allows tweaking the cutoff without recalculating the scores"
 type = "bool"
 default = true
-condition = { arg="method", value="pytom" }
-
-[tabs.tomo_pick.pytom_debug]
-name = "Save intermediate files"
-description = "Save json file and angles volume to pytom/ folder for debugging"
-type = "bool"
-default = false
 condition = { arg="method", value="pytom" }
 
 [tabs.tomo_ext]
