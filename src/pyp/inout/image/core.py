@@ -252,12 +252,13 @@ def get_gain_reference(parameters, x, y):
             gain_reference = numpy.rot90(gain_reference, parameters["gain_rotation"])
 
         logger.info(
-            "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f",
-            gain_reference_file,
-            gain_reference.shape,
-            gain_reference.min(),
-            gain_reference.max(),
-            gain_reference.mean(),
+            "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f" % (
+                gain_reference_file,
+                gain_reference.shape,
+                gain_reference.min(),
+                gain_reference.max(),
+                gain_reference.mean(),
+            )
         )
 
         gain_reference_file = "gain.mrc"
@@ -483,12 +484,13 @@ def readDMfile(filename, parameters=0, binning=1):
         fr.close()
 
         logger.info(
-            "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f",
-            gain_reference_file,
-            gain_reference.shape,
-            gain_reference.min(),
-            gain_reference.max(),
-            gain_reference.mean(),
+            "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f" % (
+                gain_reference_file,
+                gain_reference.shape,
+                gain_reference.min(),
+                gain_reference.max(),
+                gain_reference.mean(),
+            )
         )
 
     # support for separate files for each frame
