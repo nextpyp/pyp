@@ -654,7 +654,6 @@ if __name__ == "__main__":
                     logger.debug("Deleting " + Path(f).name)
                     os.remove(f)
                 except:
-                    logger.error("Cannot delete " + f)
                     pass
         remove_from_destination(
             file="%s_speed.txt" % session_name,
