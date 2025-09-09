@@ -14,15 +14,12 @@ import sys
 from pathlib import Path
 from typing import Union
 
-from pyp.streampyp.logging import WebLogHandler
+from pyp.streampyp.logging import WebLogHandler, sanitize_path
 from pyp.streampyp.web import Web
-from pyp.system.mongo_handler import MongoHandler
 
 __author__ = "Xiaochen Du"
 __maintainer__ = "Alberto Bartesaghi"
 __email__ = "alberto@cs.duke.edu"
-
-logger = logging.getLogger(__name__)
 
 def get_verbose_level(parameters):
 
@@ -41,7 +38,7 @@ def initialize_pyp_logger(
     log_name: str = "pyp",
     directory: Union[str, Path] = ".",
     filename: Union[str, Path, bool] = False,
-    level: int = logging.INFO,
+    level: int = 5,
     print_log: bool = True,
 ) -> logging.Logger:
     """Initialize the default logger with stdout and file handlers.
@@ -80,12 +77,14 @@ def initialize_pyp_logger(
 
     log = logging.getLogger(log_name)
     if os.environ.get("PYP_LOGGER_LEVEL"):
+        # logger.warning(f"Setting level to {os.environ.get('PYP_LOGGER_LEVEL')}")
         log.setLevel(int(os.environ["PYP_LOGGER_LEVEL"]))
     else:
+        # logger.warning(f"Setting DEFAULT level")
         log.setLevel(level)
     log.handlers = []  # reset logging handlers if they already exist
 
-    screen_format = "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d | %(message)s"
+    screen_format = "%(asctime)s [%(levelname)s] %(pathname)s:%(lineno)d | %(message)s"
     file_format = screen_format
 
     # screen_handler is the regular stream (bash i/o) handler
@@ -134,22 +133,18 @@ def initialize_pyp_logger(
             def new(*args):
                 levelno = args[0].levelno
                 if levelno >= logging.CRITICAL:
-                    color = "\x1b[31;1m"
                     color = red
                 elif levelno >= logging.ERROR:
-                    color = "\x1b[31;1m"
                     color = red
                 elif levelno >= logging.WARNING:
-                    color = "\x1b[33;1m"
                     color = yellow
                 elif levelno >= logging.INFO:
-                    color = "\x1b[32;1m"
                     color = green
                 elif levelno >= logging.DEBUG:
-                    color = "\x1b[35;1m"
-                    color = green
+                    color = blue
+                elif levelno >= logging.TRACE:
+                    color = magenta
                 else:
-                    color = "\x1b[0m"
                     color = white
 
                 # print message in color:
@@ -157,8 +152,8 @@ def initialize_pyp_logger(
                 # args[0].levelname
                 # args[0].msg
 
-                args[0].name = "{0}{1}{2}".format(
-                    bright, "%s" % args[0].name, reset
+                args[0].pathname = "{0}{1}{2}".format(
+                    bright, "%s" % sanitize_path(args[0].pathname), reset
                 )
                 args[0].levelname = "{0}{1}\x1b[0m".format(color, args[0].levelname)
 
@@ -198,3 +193,5 @@ def initialize_pyp_logger(
     sys.excepthook = handle_exception
 
     return log
+
+logger = initialize_pyp_logger("pyp_logger")

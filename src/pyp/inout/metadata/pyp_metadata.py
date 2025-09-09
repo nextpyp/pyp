@@ -12,18 +12,15 @@ import pickle
 from tqdm import tqdm
 
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system import project_params
-from pyp.utils import get_relative_path, movie2regex, symlink_force, symlink_relative
+from pyp.utils import movie2regex, symlink_force, symlink_relative
 from pyp.system.utils import get_imod_path
 from pyp.streampyp.logging import TQDMLogger
 from pyp.inout.metadata import frealign_parfile, cistem_star_file
 from pyp.analysis.geometry import getRelionMatrix, spk2Relion, relion2Spk, alignment2Relion,eulerZXZtoZYZ, eulerZYZtoZXZ, cistem2_alignment2Relion
 from pyp.analysis.geometry import transformations as vtk
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 # lines to skip when reading text files
 HEADERS = ["#", "C"]

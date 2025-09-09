@@ -1,18 +1,13 @@
 import os
 import random
 import shutil
-import subprocess
 import numpy as np
 
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import eman_load_command, get_relion_path, phenix_load_command, get_frealign_paths
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def fsigmoid(x, a, b):
     return 1.0 - 1.0 / (1.0 + np.exp(-a * (x - b)))

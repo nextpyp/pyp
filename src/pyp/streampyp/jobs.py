@@ -7,14 +7,10 @@ from pathlib import Path
 from pyp.streampyp.web import Web
 from pyp.system import project_params, slurm
 from pyp.system.local_run import run_shell_command, stream_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, standalone_mode, run_pyp, run_slurm, run_ssh
-from pyp.utils import get_relative_path
 from pyp.system.mpi import submit_jobs_to_workers
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def _absolutize_path(path):
     if path[0] == "/":

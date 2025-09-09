@@ -2,7 +2,6 @@ import logging
 import multiprocessing
 import os
 import shutil
-import sys
 from time import time
 from pathlib import Path
 
@@ -13,14 +12,11 @@ from pyp.streampyp import jobs
 from pyp.streampyp.web import Web
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import run_pyp, run_ssh
 from pyp.system.utils import needs_gpu
 from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def check_sbatch_job_finish(jobname):
     import time

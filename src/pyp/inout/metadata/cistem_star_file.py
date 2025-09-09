@@ -9,10 +9,8 @@ from pathlib import Path
 from pyp.analysis.geometry import csp_euler_angles
 from pyp.streampyp.logging import TQDMLogger
 
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
+
 """
 Constants goes here
 """

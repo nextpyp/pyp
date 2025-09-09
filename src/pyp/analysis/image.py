@@ -7,13 +7,10 @@ import numpy as np
 from pyp.inout.image import mrc, write_out_relion_stack
 from pyp.inout.metadata import frealign_parfile
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths, get_imod_path
-from pyp.utils import get_relative_path, symlink_relative
+from pyp.utils import symlink_relative
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def bandpass(shape, radius1, sigma1, radius2, sigma2):
     """Return highpass filter to be multiplied with fourier transform."""

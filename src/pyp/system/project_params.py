@@ -1,6 +1,4 @@
 import argparse
-import collections
-import csv
 import glob
 import math
 import multiprocessing
@@ -19,16 +17,13 @@ import toml
 from pyp import utils
 from pyp.analysis import statistics
 from pyp.system import project_params, slurm, user_comm
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import clear_scratch
-from pyp.utils import get_relative_path, movie2regex
+from pyp.utils import movie2regex
 from pyp.system.db_comm import save_parameters_to_website
 from pyp.streampyp.logging import TQDMLogger
 from pyp.inout.metadata import pyp_metadata
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def spr_is_done(name):
     extensions = ["avg", "xf"]

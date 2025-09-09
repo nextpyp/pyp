@@ -5,7 +5,6 @@ import multiprocessing
 import os
 import re
 import shutil
-import subprocess
 import datetime
 from pathlib import Path
 from tqdm import tqdm
@@ -20,16 +19,13 @@ from pyp.inout.image import digital_micrograph as dm4
 from pyp.inout.image import mrc
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, get_image_mean
 from pyp.system import local_run, mpi, project_params
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
 from pyp.system.wrapper_functions import avgstack, cistem_rescale, cistem_resize
 from pyp.system.project_params import resolve_path
-from pyp.utils import get_relative_path, movie2regex, timer
+from pyp.utils import movie2regex, timer
 from pyp.streampyp.logging import TQDMLogger
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def invert_contrast(name):
     command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -multadd -1,0 && mv {1}.mrc~ {1}.mrc".format(

@@ -9,12 +9,8 @@ from pyp.analysis import plot
 from pyp.inout.metadata import pyp_metadata
 from pyp.system import local_run, project_params, mpi
 from pyp.system.utils import get_gpu_ids, get_imod_path
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-from pyp.system.singularity import get_pyp_configuration
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_isonet_path():
     command_base = f"export PATH=/opt/conda/envs/isonet/bin:$PATH; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/isonet/lib:/opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs; export PYTHONPATH=/opt/pyp/external:/opt/conda/envs/isonet/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n isonet /opt/pyp/external/IsoNet/bin/"

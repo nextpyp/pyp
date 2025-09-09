@@ -1,24 +1,9 @@
 #!/usr/bin/env python
 
-import collections
-import math
-import multiprocessing
-import os
-import shutil
-
 import numpy
 
 from pyp.inout.metadata import isfrealignx
 from pyp.inout.metadata.frealign_parfile import Parameters
-from pyp.system import project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.system.utils import get_csp_path, get_frealign_paths, get_shell_multirun_path
-from pyp.utils import get_relative_path
-
-# relative_path = str(get_relative_path(__file__))
-# logger = initialize_pyp_logger(log_name=relative_path)
-logger = initialize_pyp_logger()
-
 
 def plot_score_profile(parfile, tomo=True):
 

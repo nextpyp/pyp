@@ -49,9 +49,8 @@ from pyp.system.utils import (
 from pyp.system.singularity import run_slurm, get_pyp_configuration
 from pyp.system.set_up import prepare_frealign_dir
 from pyp.utils import symlink_relative
-from pyp.system.logging import initialize_pyp_logger
 
-logger = initialize_pyp_logger(log_name=__name__)
+from pyp.system.logging import logger
 
 if __name__ == "__main__":
 

@@ -44,7 +44,6 @@ from pyp.refine.csp.particle_cspt import (
 from pyp.refine.frealign import frealign
 from pyp.system import mpi, project_params
 from pyp.system.local_run import create_csp_split_commands, run_shell_command, stream_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.set_up import initialize_classification, prepare_frealign_dir
 from pyp.system.utils import (
     get_frealign_paths,
@@ -61,12 +60,10 @@ from pyp.system.utils import (
     legacy_imod_load_command,
 )
 from pyp.system.wrapper_functions import avgstack
-from pyp.utils import get_relative_path, symlink_force, symlink_relative
+from pyp.utils import symlink_force, symlink_relative
 from pyp.utils.timer import Timer
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 @Timer("align_movies", text="Alignment took: {}", logger=logger.info)
 def align_frames(parameters, name, current_path, working_path):

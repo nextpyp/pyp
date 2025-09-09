@@ -7,18 +7,16 @@ from operator import index
 import os
 import re
 import shutil
-import sys
 import time
 import json
 import random
 from math import cos, sin
-from pathlib import Path, PosixPath
+from pathlib import Path
 from xml.dom.minidom import parse
 
 import numpy as np
 
 from pyp.analysis.geometry import (
-    DefocusOffsetFromCenter,
     getShiftsForRecenter,
     spa_euler_angles,
 )
@@ -27,17 +25,12 @@ from pyp.inout.metadata import frealign_parfile, pyp_metadata, cistem_star_file
 from pyp.inout.metadata.cistem_star_file import *
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.system import local_run, project_params, mpi
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
-from pyp.utils import get_relative_path, movie2regex
+from pyp.utils import movie2regex
 from pyp.utils import timer, symlink_relative
-from pyp.analysis.geometry import get_vir_binning_boxsize, alignment2Relion, spk2Relion, cistem2_alignment2Relion
+from pyp.analysis.geometry import get_vir_binning_boxsize, spk2Relion, cistem2_alignment2Relion
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
-logger = initialize_pyp_logger()
-
+from pyp.system.logging import logger
 
 def isfrealignx(parfile):
     with open(parfile) as f:

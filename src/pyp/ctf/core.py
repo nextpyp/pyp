@@ -13,14 +13,12 @@ import numpy as np
 import scipy
 from pathlib import Path
 
-from pyp import utils
 from pyp.analysis import plot
 from pyp.analysis.image import bandpass, contrast_stretch
 from pyp.inout.image import digital_micrograph as dm4
 from pyp.inout.image import mrc, mrc2png, mrc2webp, writepng
 from pyp.inout.image.core import get_image_dimensions
 from pyp.system import local_run, mpi
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import (
     get_ctffind4_path,
     get_ctffind_tilt_path,
@@ -31,12 +29,9 @@ from pyp.system.utils import (
     timeout_command,
 )
 from pyp.system.wrapper_functions import avgstack, tomo_ctf_grad
-from pyp.utils import get_relative_path
 from pyp.utils.timer import Timer
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def is_required_3d(parameters):
     return float(parameters["ctf_max_res"]) > 0

@@ -6,13 +6,9 @@ import numpy as np
 from pathlib import Path
 
 from pyp.system import local_run, project_params, utils, mpi
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 from pyp.detect import joint
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def sprtrain(args):
 

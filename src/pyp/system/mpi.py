@@ -8,11 +8,9 @@ from tqdm import tqdm
 
 from pyp.system.local_run import run_shell_command
 from pyp.streampyp.logging import TQDMLogger
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
+
 parallel = None
 
 @contextlib.contextmanager

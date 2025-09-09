@@ -16,20 +16,17 @@ import json
 from pyp import merge
 from pyp.analysis import statistics, plot, geometry
 from pyp.inout.image import mrc
-from pyp.inout.metadata import frealign_parfile, pyp_metadata , get_particles_tilt_index
+from pyp.inout.metadata import frealign_parfile, pyp_metadata
 from pyp.inout.metadata import cistem_star_file
 from pyp.refine.frealign import frealign
 from pyp.system import project_params, mpi
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path, timer, symlink_relative
+from pyp.utils import timer, symlink_relative
 from pyp.inout.utils.pyp_edit_box_files import read_boxx_file_async, write_boxx_file_async
 from pyp.system.utils import get_imod_path
 from pyp.streampyp.logging import TQDMLogger
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def per_frame_scoring(
     parameters, name, current_path, allboxes, allparxs, particle_filenames

@@ -27,15 +27,12 @@ import numpy as np
 
 from pyp.system import project_params, slurm, mpi
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
 from pyp.system.user_comm import notify
 from pyp.utils import get_relative_path, movie2regex, symlink_relative
 from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def transfer_multiprocessing(
     remove, remove_all, f, destination, session, camera, server, results, symlinks=False, pattern="",
@@ -505,6 +502,11 @@ def resolve_sources(args):
 
 
 if __name__ == "__main__":
+
+    # set logging level
+    from pyp import parse_logger_level
+    for handler in logger.handlers:
+        handler.setLevel(parse_logger_level())
 
     params_file_path = get_params_file_path()
     if params_file_path is not None:

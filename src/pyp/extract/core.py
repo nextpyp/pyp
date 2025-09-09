@@ -3,7 +3,6 @@ import os
 import random
 import shutil
 import string
-import sys
 from pathlib import Path
 import numpy as np
 
@@ -18,19 +17,13 @@ from pyp.inout.image import (
     get_gain_reference,
     get_image_dimensions,
     mrc,
-    readMoviefileandsave,
-    readTIFfileandsave,
 )
 from pyp.inout.metadata import cistem_star_file
 from pyp.system import mpi
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths, get_imod_path
-from pyp.utils import get_relative_path, timer
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def extract_particles_old(
     image,

@@ -7,13 +7,10 @@ from pathlib import Path
 from tqdm import tqdm
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, project_params, mpi
-from pyp.system.logging import initialize_pyp_logger, get_verbose_level
-from pyp.utils import get_relative_path
-from pyp.inout.image import img2svgz
+from pyp.system.logging import get_verbose_level
 from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_cryodrgn_path():
     command_base = f"export PYTHONPATH=/opt/conda/envs/cryodrgn/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n cryodrgn /opt/conda/envs/cryodrgn/bin/cryodrgn"

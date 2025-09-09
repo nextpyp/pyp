@@ -17,12 +17,8 @@ from matplotlib import cm
 
 from pyp.inout.image import mrc
 from pyp.system import utils
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def fsc_multiprocessing(
     apix, half1, half2, average, threshold, shell, gauss, phases, results, keep=False

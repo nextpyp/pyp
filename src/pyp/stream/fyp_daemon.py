@@ -1,7 +1,5 @@
 import datetime
 import glob
-import math
-import multiprocessing
 import os
 import sys
 import shutil
@@ -18,13 +16,10 @@ from pyp.inout.metadata.core import spa_extract_coordinates_legacy, get_max_reso
 from pyp.refine.frealign import frealign
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import mpi, project_params
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths
-from pyp.utils import get_relative_path, timer
+from pyp.utils import timer
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def get_existing_films(parameters: dict) -> List[str]:
     try:

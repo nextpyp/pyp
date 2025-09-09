@@ -12,14 +12,10 @@ from pyp.inout.image.core import get_image_dimensions
 from pyp.inout.metadata import frealign_parfile
 from pyp.streampyp.web import Web
 from pyp.system import local_run, project_params
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, get_parameter_files_path
-from pyp.utils import get_relative_path
 from pyp.utils.timer import Timer
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def tomo_spk_is_required(parameters):
     """Whether to detect and extract spikes."""

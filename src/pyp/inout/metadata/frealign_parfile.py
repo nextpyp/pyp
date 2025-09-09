@@ -25,7 +25,6 @@ TODO
 10. Take parameter entry corresponding to the first frame
 """
 
-from inspect import Parameter
 import os
 import logging
 import glob
@@ -36,12 +35,9 @@ import numpy as np
 import pandas as pd
 
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 from pyp.system import mpi
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 psi_col = 1
 theta_col = 2

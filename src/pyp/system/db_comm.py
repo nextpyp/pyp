@@ -1,6 +1,5 @@
 import csv
 import glob
-import json
 import os
 import shutil
 import sys
@@ -13,14 +12,11 @@ from pyp.inout.utils import load_results, save_results
 from pyp.streampyp.web import Web
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
-from pyp.utils import flatten, get_relative_path, symlink_relative
+from pyp.utils import flatten, symlink_relative
 from pyp.inout.metadata import pyp_metadata
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def save_parameters_to_website(parameters):
 
