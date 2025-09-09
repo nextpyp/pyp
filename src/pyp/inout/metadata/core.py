@@ -2370,128 +2370,91 @@ EOF
         logger.info(f"The height of specimen in the tomogram is {height_specimen:.2f} A")
 
         # traverse all virions in tilt series
-        for vir in range(virion_coordinates.shape[0]):
+        logger.info(f"Parsing metadata for {virion_coordinates.shape[0]:,} particle(s)/virion(s)")
+        with tqdm(desc="Progress", total=virion_coordinates.shape[0], file=TQDMLogger()) as pbar:
+            for vir in range(virion_coordinates.shape[0]):
 
-            if os.path.exists("mod/%s.txt" % name):
-                BINNING_FOR_PICKING = 2
-                Z_FOR_PICKING = rec_Z
-                channel_x, channel_y, channel_z, liposome_x, liposome_y, liposome_z = list(
-                    [x / BINNING_FOR_PICKING for x in virion_coordinates[vir][0:6]]
-                )
-
-                channel_y = (
-                    channel_y - (Z_FOR_PICKING // (2 * (BINNING_FOR_PICKING))) + (rec_Z // 2)
-                )
-                virion_coordinates[vir, :3] = [channel_x, channel_z, channel_y]
-
-            vir_x, vir_y, vir_z = [
-                binning * virion_coordinates[vir, 0],
-                binning * virion_coordinates[vir, 1],
-                recZ - binning * virion_coordinates[vir, 2],
-            ]
-
-            # check if we have picked spikes for this virion
-            virion_file = "sva/%s_vir%04d_cut.txt" % (name, vir)
-            if os.path.isfile(virion_file):
-                spikes_in_virion = np.loadtxt(
-                    virion_file, comments="number", usecols=(list(range(32))), ndmin=2
-                )
-                if spikes_in_virion.shape[0] == 0:
-                    logger.warning(
-                        "File {0} contains no spikes. Skipping".format(virion_file)
+                if os.path.exists("mod/%s.txt" % name):
+                    BINNING_FOR_PICKING = 2
+                    Z_FOR_PICKING = rec_Z
+                    channel_x, channel_y, channel_z, liposome_x, liposome_y, liposome_z = list(
+                        [x / BINNING_FOR_PICKING for x in virion_coordinates[vir][0:6]]
                     )
-                    continue
-            elif ("box" in metadata or os.path.exists("mod/%s.spk" % name) or os.path.exists("mod/%s.txt" % name) ) and not "vir" in metadata:
-                # use origin if we are using isolated particles
-                spikes_in_virion = np.zeros([1, 7])
-                virion_bin = 1
-            else:
-                logger.warning(f"File {virion_file} not found. Skipping")
-                continue
 
+                    channel_y = (
+                        channel_y - (Z_FOR_PICKING // (2 * (BINNING_FOR_PICKING))) + (rec_Z // 2)
+                    )
+                    virion_coordinates[vir, :3] = [channel_x, channel_z, channel_y]
 
-            # for all spikes in current virion
-            for spike in range(spikes_in_virion.shape[0]):
-                
-                particle_index = global_spike_counter
+                vir_x, vir_y, vir_z = [
+                    binning * virion_coordinates[vir, 0],
+                    binning * virion_coordinates[vir, 1],
+                    recZ - binning * virion_coordinates[vir, 2],
+                ]
 
-                # extract local spike coordinates [0-479]
-                spike_x, spike_y, spike_z = spikes_in_virion[spike, 3:6]
-
-                # virion boxsize is supposed to be included in coordinates.txt
-                virion_boxsize = spikes_in_virion[spike, 6]
-
-                spike_x, spike_y, spike_z = spike_x, (virion_boxsize - spike_y), spike_z
-
-                # compute distance of current spike to virion equator
-                dist = abs(spike_z - virion_boxsize / 2)
-
-                # compute global spike coordinates from virus box size
-                spike_X = vir_x + (spike_x - virion_boxsize // 2) * virion_bin
-                spike_Y = vir_y + (spike_y - virion_boxsize // 2) * virion_bin
-                spike_Z = vir_z + (spike_z - virion_boxsize // 2) * virion_bin
-
-                # check if this spike was used in refinement
-                spike_string = ""
-
-                # two possible names of extracted subvolumes
-                spike_vol = "%s_vir%04d_spk%04d.mrc" % (name, vir, spike)
-                particle_vol = "%s_spk%04d.rec" % (name, vir)
-
-                if spike_vol in alignmentSVA:
-                    spike_string = alignmentSVA[spike_vol]
-                elif particle_vol in alignmentSVA:
-                    spike_string = alignmentSVA[particle_vol]
+                # check if we have picked spikes for this virion
+                virion_file = "sva/%s_vir%04d_cut.txt" % (name, vir)
+                if os.path.isfile(virion_file):
+                    spikes_in_virion = np.loadtxt(
+                        virion_file, comments="number", usecols=(list(range(32))), ndmin=2
+                    )
+                    if spikes_in_virion.shape[0] == 0:
+                        logger.warning(
+                            "File {0} contains no spikes. Skipping".format(virion_file)
+                        )
+                        continue
+                elif ("box" in metadata or os.path.exists("mod/%s.spk" % name) or os.path.exists("mod/%s.txt" % name) ) and not "vir" in metadata:
+                    # use origin if we are using isolated particles
+                    spikes_in_virion = np.zeros([1, 7])
+                    virion_bin = 1
                 else:
-                    logger.trace(
-                        "Skipping spike %s_vir%04d_spk%04d without alignments" % (name, spike, vir) 
-                    )
-                    allboxes_3d.append([spike_X, spike_Y, spike_Z])
-                    global_spike_counter += 1
+                    logger.warning(f"File {virion_file} not found. Skipping")
                     continue
 
-                # extract euler angles from 3DAVG refinment
-                norm0, norm1, norm2 = list(map(float, spike_string[9:12]))
-                (
-                    m00,
-                    m01,
-                    m02,
-                    m03,
-                    m04,
-                    m05,
-                    m06,
-                    m07,
-                    m08,
-                    m09,
-                    m10,
-                    m11,
-                    m12,
-                    m13,
-                    m14,
-                    m15,
-                ) = list(map(float, spike_string[12:28]))
 
-                if math.isnan(norm0) or math.isnan(norm1) or math.isnan(norm2):
-                    logger.warning(
-                        f"Invalid normals found for particle {spike}: {norm0}, {norm1}, {norm2}. Resetting to 0, 0, 1."
-                    )
-                    norm0, norm1, norm2 = 0, 0, 1
+                # for all spikes in current virion
+                for spike in range(spikes_in_virion.shape[0]):
+                    
+                    particle_index = global_spike_counter
 
-                # retreive offset from 3DAVG refinement
-                cutOffset = float(spike_string[31]) * subvol_bin
+                    # extract local spike coordinates [0-479]
+                    spike_x, spike_y, spike_z = spikes_in_virion[spike, 3:6]
 
-                # reset offset since this column is used to store correlation scores
-                cutOffset = 0
+                    # virion boxsize is supposed to be included in coordinates.txt
+                    virion_boxsize = spikes_in_virion[spike, 6]
 
-                # transform shifts to unbinned coordinates
-                m03 *= subvol_bin
-                m07 *= subvol_bin
-                m11 *= subvol_bin
- 
-                # get the transformed 3D location after SVA
-                [dx, dy, dz] = getShiftsForRecenter(
-                    [norm0, norm1, norm2],
-                    [
+                    spike_x, spike_y, spike_z = spike_x, (virion_boxsize - spike_y), spike_z
+
+                    # compute distance of current spike to virion equator
+                    dist = abs(spike_z - virion_boxsize / 2)
+
+                    # compute global spike coordinates from virus box size
+                    spike_X = vir_x + (spike_x - virion_boxsize // 2) * virion_bin
+                    spike_Y = vir_y + (spike_y - virion_boxsize // 2) * virion_bin
+                    spike_Z = vir_z + (spike_z - virion_boxsize // 2) * virion_bin
+
+                    # check if this spike was used in refinement
+                    spike_string = ""
+
+                    # two possible names of extracted subvolumes
+                    spike_vol = "%s_vir%04d_spk%04d.mrc" % (name, vir, spike)
+                    particle_vol = "%s_spk%04d.rec" % (name, vir)
+
+                    if spike_vol in alignmentSVA:
+                        spike_string = alignmentSVA[spike_vol]
+                    elif particle_vol in alignmentSVA:
+                        spike_string = alignmentSVA[particle_vol]
+                    else:
+                        logger.trace(
+                            "Skipping spike %s_vir%04d_spk%04d without alignments" % (name, spike, vir) 
+                        )
+                        allboxes_3d.append([spike_X, spike_Y, spike_Z])
+                        global_spike_counter += 1
+                        continue
+
+                    # extract euler angles from 3DAVG refinment
+                    norm0, norm1, norm2 = list(map(float, spike_string[9:12]))
+                    (
                         m00,
                         m01,
                         m02,
@@ -2508,103 +2471,27 @@ EOF
                         m13,
                         m14,
                         m15,
-                    ],
-                    cutOffset,
-                )
-                transformed_3d_loc = [
-                    spike_X + (dx * float(parameters["extract_bin"])),
-                    spike_Y + (dy * float(parameters["extract_bin"])),
-                    spike_Z + (dz * float(parameters["extract_bin"])),
-                ]
+                    ) = list(map(float, spike_string[12:28]))
 
-                allboxes_3d.append(transformed_3d_loc)
-
-                tilt_image_counter = 1
-
-                # traverse all images in tilt series
-                for tilt in tilts:
-                    
-                    image_index = tilt_image_counter - 1
-                    tilt_index = int(scan_order_list[tilt_image_counter - 1])
-                    tilt_angle = tilt[0]
-
-                    # check if tilt angle is valid and within acceptable range
-                    if tilt < min_tilt or tilt > max_tilt:
-                        logger.trace(
-                            "Ignoring image at tilt angle {0} outside range [ {1}, {2} ].".format(
-                                tilt, min_tilt, max_tilt
-                            )
+                    if math.isnan(norm0) or math.isnan(norm1) or math.isnan(norm2):
+                        logger.warning(
+                            f"Invalid normals found for particle {spike}: {norm0}, {norm1}, {norm2}. Resetting to 0, 0, 1."
                         )
-                        tilt_image_counter += 1
-                        continue
+                        norm0, norm1, norm2 = 0, 0, 1
 
-                    if tilt_image_counter in excluded_views:
-                        logger.trace(
-                            "Ignoring image at tilt angle {0} excluded during alignment.".format(
-                                tilt
-                            )
-                        )
-                        tilt_image_counter += 1
-                        continue
+                    # retreive offset from 3DAVG refinement
+                    cutOffset = float(spike_string[31]) * subvol_bin
 
-                    # convert to radians
-                    angle = math.radians(tilt)
+                    # reset offset since this column is used to store correlation scores
+                    cutOffset = 0
 
-                    # 2D spike coordinates in current aligned projection image (with respect to image center)
-                    tilt_x = (spike_X - center_X) * math.cos(angle) + (
-                        spike_Z - center_Z
-                    ) * math.sin(angle)
-                    tilt_y = spike_Y - center_Y
-
-                    # check if too close to gold fiducials
-                    if fiducials.size > 0:
-                        fiducials_in_tilt = fiducials[
-                            fiducials[:, 2] == tilt_image_counter - 1
-                        ]
-                        near_gold = False
-                        for i in range(fiducials_in_tilt.shape[0]):
-                            # skip if gold fiducial falls withing box used for particle picking
-                            if (
-                                math.hypot(
-                                    fiducials_in_tilt[i, 0] * binning - (tilt_x + center_X),
-                                    fiducials_in_tilt[i, 1] * binning - spike_Y,
-                                )
-                                < cutboxsize / 2.0
-                            ):
-                                near_gold = True
-                                break
-
-                        if near_gold:
-                            logger.trace(
-                                "Skipping projection %s too close to gold fiducial" % tilt
-                            )
-                            tilt_image_counter += 1
-                            continue
-
-                    T = inverse_xf_file[tilt_image_counter - 1, :6]
-
-                    # get parameters from IMOD's affine transformation
-                    for line in xf_rot_mag:
-                        if (
-                            "rot=" in line
-                            and line.split()[0] == str(tilt_image_counter) + ":"
-                        ):
-                            axis, MAGNIFICATION = (
-                                float(line.split()[2][:-1]),
-                                float(line.split()[4][:-1]),
-                            )
-                    # transform 2D spike coordinates in projection
-                    tilt_X = T[0] * tilt_x + T[1] * tilt_y + T[4] + center_X
-                    tilt_Y = T[2] * tilt_x + T[3] * tilt_y + T[5] + center_Y
-
-                    # The true 2D coordiantes on raw micrographs
-                    tilt_X_true = tilt_X - min_micrograph_x
-                    tilt_Y_true = tilt_Y - min_micrograph_y
-
-                    # HF: re-center using translational shifts from sub-tomogram averaging
-                    fp, particle_orientation = spa_euler_angles(
-                        tilt,
-                        -axis,
+                    # transform shifts to unbinned coordinates
+                    m03 *= subvol_bin
+                    m07 *= subvol_bin
+                    m11 *= subvol_bin
+    
+                    # get the transformed 3D location after SVA
+                    [dx, dy, dz] = getShiftsForRecenter(
                         [norm0, norm1, norm2],
                         [
                             m00,
@@ -2626,203 +2513,320 @@ EOF
                         ],
                         cutOffset,
                     )
+                    transformed_3d_loc = [
+                        spike_X + (dx * float(parameters["extract_bin"])),
+                        spike_Y + (dy * float(parameters["extract_bin"])),
+                        spike_Z + (dz * float(parameters["extract_bin"])),
+                    ]
 
-                    # add x y shifts from STA
-                    tilt_X_true += fp[3]
-                    tilt_Y_true += fp[4]
+                    allboxes_3d.append(transformed_3d_loc)
 
-                    # make them integers and store the errors in the columns of parfile
-                    tilt_X = int(math.floor(tilt_X_true))
-                    tilt_Y = int(math.floor(tilt_Y_true))
+                    tilt_image_counter = 1
 
-                    tilt_X_err = tilt_X - tilt_X_true
-                    tilt_Y_err = tilt_Y - tilt_Y_true
-                    
-                    fp[3] = tilt_X_err
-                    fp[4] = tilt_Y_err
+                    # traverse all images in tilt series
+                    for tilt in tilts:
+                        
+                        image_index = tilt_image_counter - 1
+                        tilt_index = int(scan_order_list[tilt_image_counter - 1])
+                        tilt_angle = tilt[0]
 
-                    # check if particle completely inside micrograph (skip if not inside)
-                    if (
-                        tilt_X - (cutboxsize / 2.0) < min_micrograph_x
-                        or tilt_X - (cutboxsize / 2.0) + min_micrograph_x
-                        >= max_micrograph_x
-                        or tilt_Y - (cutboxsize / 2.0) < min_micrograph_y
-                        or tilt_Y - (cutboxsize / 2.0) + min_micrograph_y
-                        >= max_micrograph_y
-                    ):
-                        logger.trace(
-                            "Skipping particle outside image range: [%d,%d] x=(%d,%d), y=(%d,%d)"
-                            % (
-                                tilt_X - (cutboxsize / 2) + min_micrograph_x,
-                                tilt_Y - (cutboxsize / 2) + min_micrograph_y,
-                                min_micrograph_x,
-                                max_micrograph_x,
-                                min_micrograph_y,
-                                max_micrograph_y,
+                        # check if tilt angle is valid and within acceptable range
+                        if tilt < min_tilt or tilt > max_tilt:
+                            logger.trace(
+                                "Ignoring image at tilt angle {0} outside range [ {1}, {2} ].".format(
+                                    tilt, min_tilt, max_tilt
+                                )
                             )
-                        )
-                        tilt_image_counter += 1
-                        continue
+                            tilt_image_counter += 1
+                            continue
 
-                    """
-                    # check if too close to previously selected projections
-                    if len(allboxes) > 0:
-                        # convert current position to np array
-                        vector = np.array(allboxes, dtype="f")
-                        # find all projections from this micrograph
-                        vector = vector[vector[:, 2] == (tilt_image_counter - 1)][:, :2]
-                        # calculate distance to all positions
-                        if len(vector) > 0:
-                            dmin = scipy.spatial.distance.cdist(
-                                np.array(
-                                    [
-                                        tilt_X - min_micrograph_x + x_correction,
-                                        tilt_Y - min_micrograph_y + y_correction,
-                                    ],
-                                    ndmin=2,
-                                ),
-                                vector,
-                            ).min()
-                            if dmin < float(parameters["particle_rad"]) / float(
-                                parameters["scope_pixel"]
-                            ):
-                                logger.warning(
-                                    "Skipping projection %s too close to already selected position (distance of %f pixels)"
-                                    % (tilt, dmin)
+                        if tilt_image_counter in excluded_views:
+                            logger.trace(
+                                "Ignoring image at tilt angle {0} excluded during alignment.".format(
+                                    tilt
+                                )
+                            )
+                            tilt_image_counter += 1
+                            continue
+
+                        # convert to radians
+                        angle = math.radians(tilt)
+
+                        # 2D spike coordinates in current aligned projection image (with respect to image center)
+                        tilt_x = (spike_X - center_X) * math.cos(angle) + (
+                            spike_Z - center_Z
+                        ) * math.sin(angle)
+                        tilt_y = spike_Y - center_Y
+
+                        # check if too close to gold fiducials
+                        if fiducials.size > 0:
+                            fiducials_in_tilt = fiducials[
+                                fiducials[:, 2] == tilt_image_counter - 1
+                            ]
+                            near_gold = False
+                            for i in range(fiducials_in_tilt.shape[0]):
+                                # skip if gold fiducial falls withing box used for particle picking
+                                if (
+                                    math.hypot(
+                                        fiducials_in_tilt[i, 0] * binning - (tilt_x + center_X),
+                                        fiducials_in_tilt[i, 1] * binning - spike_Y,
+                                    )
+                                    < cutboxsize / 2.0
+                                ):
+                                    near_gold = True
+                                    break
+
+                            if near_gold:
+                                logger.trace(
+                                    "Skipping projection at %s degrees because it is too close to a gold fiducial" % tilt[0]
                                 )
                                 tilt_image_counter += 1
                                 continue
-                    """
 
-                    allimodboxes.append(
-                        "%2.0f\t%2.0f\t%2.0f\n"
-                        % (
-                            tilt_X,  # - min_micrograph_x + cutboxsize / 2
-                            tilt_Y,  # - min_micrograph_y # + cutboxsize / 2
-                            tilt_image_counter - 1,
+                        T = inverse_xf_file[tilt_image_counter - 1, :6]
+
+                        # get parameters from IMOD's affine transformation
+                        for line in xf_rot_mag:
+                            if (
+                                "rot=" in line
+                                and line.split()[0] == str(tilt_image_counter) + ":"
+                            ):
+                                axis, MAGNIFICATION = (
+                                    float(line.split()[2][:-1]),
+                                    float(line.split()[4][:-1]),
+                                )
+                        # transform 2D spike coordinates in projection
+                        tilt_X = T[0] * tilt_x + T[1] * tilt_y + T[4] + center_X
+                        tilt_Y = T[2] * tilt_x + T[3] * tilt_y + T[5] + center_Y
+
+                        # The true 2D coordiantes on raw micrographs
+                        tilt_X_true = tilt_X - min_micrograph_x
+                        tilt_Y_true = tilt_Y - min_micrograph_y
+
+                        # HF: re-center using translational shifts from sub-tomogram averaging
+                        fp, particle_orientation = spa_euler_angles(
+                            tilt,
+                            -axis,
+                            [norm0, norm1, norm2],
+                            [
+                                m00,
+                                m01,
+                                m02,
+                                m03,
+                                m04,
+                                m05,
+                                m06,
+                                m07,
+                                m08,
+                                m09,
+                                m10,
+                                m11,
+                                m12,
+                                m13,
+                                m14,
+                                m15,
+                            ],
+                            cutOffset,
                         )
-                    )
 
-                    # use defocus for this tilt
+                        # add x y shifts from STA
+                        tilt_X_true += fp[3]
+                        tilt_Y_true += fp[4]
 
-                    df1 = defocus_per_tilt[tilt_image_counter - 1, 1]
-                    df2 = defocus_per_tilt[tilt_image_counter - 1, 2]
-                    angast = defocus_per_tilt[tilt_image_counter - 1, 3]
+                        # make them integers and store the errors in the columns of parfile
+                        tilt_X = int(math.floor(tilt_X_true))
+                        tilt_Y = int(math.floor(tilt_Y_true))
 
-                    if parameters["csp_ctf_handedness"]:
-                        ctf_tilt_angle = angle * -1
-                    else:
-                        # i.e. EMPIAR-10164
-                        ctf_tilt_angle = angle
+                        tilt_X_err = tilt_X - tilt_X_true
+                        tilt_Y_err = tilt_Y - tilt_Y_true
+                        
+                        fp[3] = tilt_X_err
+                        fp[4] = tilt_Y_err
 
-                    # x-distance of tilt-axis to center of image
-                    # variable axis is from invert transform back to raw micrographs and is right handedness; positive angle - counterclockwise rotation
-                    tilt_axis_radians = math.radians(-axis)
-                    x_shift = tilt_series_alignment[tilt_image_counter - 1, -2]
-                    y_shift = tilt_series_alignment[tilt_image_counter - 1, -1]
+                        # check if particle completely inside micrograph (skip if not inside)
+                        if (
+                            tilt_X - (cutboxsize / 2.0) < min_micrograph_x
+                            or tilt_X - (cutboxsize / 2.0) + min_micrograph_x
+                            >= max_micrograph_x
+                            or tilt_Y - (cutboxsize / 2.0) < min_micrograph_y
+                            or tilt_Y - (cutboxsize / 2.0) + min_micrograph_y
+                            >= max_micrograph_y
+                        ):
+                            logger.trace(
+                                "Skipping position (%d,%d) because it falls outside the range [%d-%d, %d-%d]"
+                                % (
+                                    tilt_X - (cutboxsize / 2) + min_micrograph_x,
+                                    tilt_Y - (cutboxsize / 2) + min_micrograph_y,
+                                    min_micrograph_x,
+                                    max_micrograph_x,
+                                    min_micrograph_y,
+                                    max_micrograph_y,
+                                )
+                            )
+                            tilt_image_counter += 1
+                            continue
 
-                    distance_to_axis = (
-                        math.cos(tilt_axis_radians) * x_shift
-                        - math.sin(tilt_axis_radians) * y_shift
-                    )
-                    tilt_based_height = (
-                        distance_to_axis * math.tan(ctf_tilt_angle) * actual_pixel
-                    )
+                        """
+                        # check if too close to previously selected projections
+                        if len(allboxes) > 0:
+                            # convert current position to np array
+                            vector = np.array(allboxes, dtype="f")
+                            # find all projections from this micrograph
+                            vector = vector[vector[:, 2] == (tilt_image_counter - 1)][:, :2]
+                            # calculate distance to all positions
+                            if len(vector) > 0:
+                                dmin = scipy.spatial.distance.cdist(
+                                    np.array(
+                                        [
+                                            tilt_X - min_micrograph_x + x_correction,
+                                            tilt_Y - min_micrograph_y + y_correction,
+                                        ],
+                                        ndmin=2,
+                                    ),
+                                    vector,
+                                ).min()
+                                if dmin < float(parameters["particle_rad"]) / float(
+                                    parameters["scope_pixel"]
+                                ):
+                                    logger.warning(
+                                        "Skipping projection %s too close to already selected position (distance of %f pixels)"
+                                        % (tilt, dmin)
+                                    )
+                                    tilt_image_counter += 1
+                                    continue
+                        """
 
-                    defocus_offset = (
-                        -tilt_based_height
-                        + height_specimen * math.cos(ctf_tilt_angle)
-                        - actual_pixel * (spike_Z - center_Z) * math.cos(ctf_tilt_angle)
-                        + actual_pixel * (spike_X - center_X) * math.sin(ctf_tilt_angle)
-                    )
-                    # defocus_offset = DefocusOffsetFromCenter( transformed_3d_loc, [center_X, center_Y, center_Z], tilt, T, 300.0 ) * actual_pixel
-                    df1 += defocus_offset
-                    df2 += defocus_offset
+                        allimodboxes.append(
+                            "%2.0f\t%2.0f\t%2.0f\n"
+                            % (
+                                tilt_X,  # - min_micrograph_x + cutboxsize / 2
+                                tilt_Y,  # - min_micrograph_y # + cutboxsize / 2
+                                tilt_image_counter - 1,
+                            )
+                        )
 
-                    # print( "%d = "%(tilt_image_counter), defocus_offset )
-                    if not float(parameters["scope_cs"]) > 0:
-                        df1 = 0
-                        df2 = 0
+                        # use defocus for this tilt
 
-                    # format parameter sequence and add to current .par file
-                    ppsi = ptheta = pphi = 0
+                        df1 = defocus_per_tilt[tilt_image_counter - 1, 1]
+                        df2 = defocus_per_tilt[tilt_image_counter - 1, 2]
+                        angast = defocus_per_tilt[tilt_image_counter - 1, 3]
 
-                    occ = 100
-                    sigma = 1
-                    score = random.uniform(0, 1) * 10
-                    logp = 0
+                        if parameters["csp_ctf_handedness"]:
+                            ctf_tilt_angle = angle * -1
+                        else:
+                            # i.e. EMPIAR-10164
+                            ctf_tilt_angle = angle
 
-                    ppsi = particle_orientation[0]
-                    ptheta = particle_orientation[1]
-                    pphi = particle_orientation[2]
+                        # x-distance of tilt-axis to center of image
+                        # variable axis is from invert transform back to raw micrographs and is right handedness; positive angle - counterclockwise rotation
+                        tilt_axis_radians = math.radians(-axis)
+                        x_shift = tilt_series_alignment[tilt_image_counter - 1, -2]
+                        y_shift = tilt_series_alignment[tilt_image_counter - 1, -1]
 
-                    allboxes.append(
-                        [
-                            tilt_X,
-                            tilt_Y,
-                            tilt_image_counter - 1,
-                        ]
-                    )
-                    cistem_parameters.append([image_counter,
-                                            fp[0],
-                                            fp[1],
-                                            fp[2],
-                                            fp[3] * pixel,
-                                            fp[4] * pixel,
-                                            df1,
-                                            df2,
-                                            angast,
-                                            phase_shift, 
-                                            image_activity, 
-                                            occ, 
-                                            logp, 
-                                            sigma, 
-                                            score, 
-                                            actual_pixel, 
-                                            voltage, 
-                                            cs, 
-                                            wgh, 
-                                            beam_tilt_x, 
-                                            beam_tilt_y, 
-                                            image_shift_x, 
-                                            image_shift_y, 
-                                            tilt_X,
-                                            tilt_Y,
-                                            image_index, 
-                                            particle_index,
-                                            tilt_index,
-                                            region_index, 
-                                            frame_index, 
-                                            frame_shift_x, 
-                                            frame_shift_y,
-                                            ])
-                    
-                    if tilt_index not in tilt_parameters:
-                        tilt_parameters[tilt_index] = {}
-                        tilt_parameters[tilt_index][region_index] = Tilt(tilt_index=tilt_index, 
-                                                                        region_index=region_index, 
-                                                                        shift_x=0.0, 
-                                                                        shift_y=0.0, 
-                                                                        angle=tilt_angle, 
-                                                                        axis=-axis)
+                        distance_to_axis = (
+                            math.cos(tilt_axis_radians) * x_shift
+                            - math.sin(tilt_axis_radians) * y_shift
+                        )
+                        tilt_based_height = (
+                            distance_to_axis * math.tan(ctf_tilt_angle) * actual_pixel
+                        )
 
-                    tilt_image_counter += 1
-                    image_counter += 1
+                        defocus_offset = (
+                            -tilt_based_height
+                            + height_specimen * math.cos(ctf_tilt_angle)
+                            - actual_pixel * (spike_Z - center_Z) * math.cos(ctf_tilt_angle)
+                            + actual_pixel * (spike_X - center_X) * math.sin(ctf_tilt_angle)
+                        )
+                        # defocus_offset = DefocusOffsetFromCenter( transformed_3d_loc, [center_X, center_Y, center_Z], tilt, T, 300.0 ) * actual_pixel
+                        df1 += defocus_offset
+                        df2 += defocus_offset
 
-                    if particle_index not in particle_parameters:            
-                        particle_parameters[particle_index] = Particle(particle_index=particle_index, 
-                                                                    shift_x=particle_orientation[3], 
-                                                                    shift_y=particle_orientation[4], 
-                                                                    shift_z=particle_orientation[5], 
-                                                                    psi=ppsi, 
-                                                                    theta=ptheta, 
-                                                                    phi=pphi, 
-                                                                    x_position_3d=transformed_3d_loc[0], 
-                                                                    y_position_3d=transformed_3d_loc[1], 
-                                                                    z_position_3d=transformed_3d_loc[2], 
-                                                                    score=0.0, 
-                                                                    occ=100.0)
-                global_spike_counter += 1
+                        # print( "%d = "%(tilt_image_counter), defocus_offset )
+                        if not float(parameters["scope_cs"]) > 0:
+                            df1 = 0
+                            df2 = 0
+
+                        # format parameter sequence and add to current .par file
+                        ppsi = ptheta = pphi = 0
+
+                        occ = 100
+                        sigma = 1
+                        score = random.uniform(0, 1) * 10
+                        logp = 0
+
+                        ppsi = particle_orientation[0]
+                        ptheta = particle_orientation[1]
+                        pphi = particle_orientation[2]
+
+                        allboxes.append(
+                            [
+                                tilt_X,
+                                tilt_Y,
+                                tilt_image_counter - 1,
+                            ]
+                        )
+                        cistem_parameters.append([image_counter,
+                                                fp[0],
+                                                fp[1],
+                                                fp[2],
+                                                fp[3] * pixel,
+                                                fp[4] * pixel,
+                                                df1,
+                                                df2,
+                                                angast,
+                                                phase_shift, 
+                                                image_activity, 
+                                                occ, 
+                                                logp, 
+                                                sigma, 
+                                                score, 
+                                                actual_pixel, 
+                                                voltage, 
+                                                cs, 
+                                                wgh, 
+                                                beam_tilt_x, 
+                                                beam_tilt_y, 
+                                                image_shift_x, 
+                                                image_shift_y, 
+                                                tilt_X,
+                                                tilt_Y,
+                                                image_index, 
+                                                particle_index,
+                                                tilt_index,
+                                                region_index, 
+                                                frame_index, 
+                                                frame_shift_x, 
+                                                frame_shift_y,
+                                                ])
+                        
+                        if tilt_index not in tilt_parameters:
+                            tilt_parameters[tilt_index] = {}
+                            tilt_parameters[tilt_index][region_index] = Tilt(tilt_index=tilt_index, 
+                                                                            region_index=region_index, 
+                                                                            shift_x=0.0, 
+                                                                            shift_y=0.0, 
+                                                                            angle=tilt_angle, 
+                                                                            axis=-axis)
+
+                        tilt_image_counter += 1
+                        image_counter += 1
+
+                        if particle_index not in particle_parameters:            
+                            particle_parameters[particle_index] = Particle(particle_index=particle_index, 
+                                                                        shift_x=particle_orientation[3], 
+                                                                        shift_y=particle_orientation[4], 
+                                                                        shift_z=particle_orientation[5], 
+                                                                        psi=ppsi, 
+                                                                        theta=ptheta, 
+                                                                        phi=pphi, 
+                                                                        x_position_3d=transformed_3d_loc[0], 
+                                                                        y_position_3d=transformed_3d_loc[1], 
+                                                                        z_position_3d=transformed_3d_loc[2], 
+                                                                        score=0.0, 
+                                                                        occ=100.0)
+                    global_spike_counter += 1
+                pbar.update(1)
+                
     elif refinement.endswith(".parx"):
         # parx file format read
         logger.info(f"Reading alignment parameters from {os.path.basename(refinement)}")
@@ -3140,5 +3144,5 @@ def global_par2cistem(refinement, parameters):
         mpi_funcs.append(cistem_obj.from_parfile)
         # cistem_obj.from_parfile(parameters, extracted_rows, allboxes, filename, refinement, input_csp_dir, output_dir)
      
-    mpi.submit_function_to_workers(mpi_funcs, mpi_args, silent=True)
+    mpi.submit_function_to_workers(mpi_funcs, mpi_args, log_level=logging.NOTSET)
 
