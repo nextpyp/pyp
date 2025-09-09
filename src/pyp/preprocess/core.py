@@ -734,7 +734,7 @@ def read_tilt_series(
         imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
 
     if parameters["tomo_ali_square"]:
-        x, y, z = square, square, parameters["tomo_rec_thickness"]
+        x, y = square, square
 
         logger.info(
             "Transformed tilt-series dimensions = [ %s, %s, %s ]" % (x,y,z)
@@ -746,7 +746,7 @@ def read_tilt_series(
     if parameters["data_invert"]:
         preprocess.invert_contrast(name)
 
-    return [x, y, z, pixel_size, voltage, mag, tilt_axis, drift_metadata]
+    return [x, y, pixel_size, voltage, mag, tilt_axis, drift_metadata]
 
 
 def resample_and_resize(input, output, scale, size):
