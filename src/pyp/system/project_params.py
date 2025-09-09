@@ -1040,18 +1040,24 @@ def clean_ctf_files(project_dir):
 
 
 def clean_picking_files(project_dir):
-
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*.*") )]
+    if os.path.exists(os.path.join(project_dir, "csp")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
+    if os.path.exists(os.path.join(project_dir, "sva")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*.*") )]
 
 
 def clean_tomo_vir_particles(project_dir):
 
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_vir????_binned_nad*.mrc") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "webp", "*_vir????_binned_nad.webp") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*_vir*.*") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "next", "virion_thresholds.next") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
+    if os.path.exists(os.path.join(project_dir, "mrc")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_vir????_binned_nad*.mrc") )]
+    if os.path.exists(os.path.join(project_dir, "webp")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "webp", "*_vir????_binned_nad.webp") )]
+    if os.path.exists(os.path.join(project_dir, "sva")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*_vir*.*") )]
+    if os.path.exists(os.path.join(project_dir, "next")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "next", "virion_thresholds.next") )]
+    if os.path.exists(os.path.join(project_dir, "csp")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
 
 
 def get_latest_refinement_reference(parent_path: str, parfile_compress: bool = False):
