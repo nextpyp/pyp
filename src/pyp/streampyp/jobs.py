@@ -280,7 +280,7 @@ done
             commands = []
             for batch in cmdgrid:
                 commands.append( "; ".join(batch) )
-            submit_jobs_to_workers(commands, working_path=submit_dir)
+            submit_jobs_to_workers(commands)
             
             # run only one instance of csp_local_merge once all cspswarm processes finish
             if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:

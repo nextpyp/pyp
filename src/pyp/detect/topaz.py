@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import shutil
 import time
@@ -47,7 +48,7 @@ def sprtrain(args):
                     binning
                 )
             )
-    mpi.submit_function_to_workers(joint.bin_image, arguments, silent=True)
+    mpi.submit_function_to_workers(joint.bin_image, arguments, log_level=logging.NOTSET)
 
     time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
     output_folder = os.path.join( train_folder, time_stamp )

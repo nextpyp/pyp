@@ -558,7 +558,7 @@ def extract_particles_mpi(
                 )
                 commands.append(com)
         if len(commands) > 0:
-            mpi.submit_jobs_to_workers(commands, os.getcwd())
+            mpi.submit_jobs_to_workers(commands)
             
         input = [f.replace(".tiff", ".mrc").replace(".tif", ".mrc") for f in input]
         
@@ -586,7 +586,7 @@ def extract_particles_mpi(
                 )
                 commands.append(com)
 
-            mpi.submit_jobs_to_workers(commands, os.getcwd())
+            mpi.submit_jobs_to_workers(commands)
 
         # down-sample images
         arguments = []
@@ -762,4 +762,4 @@ def extract_stacks_particle_cspt(
             idx += 1
 
     if len(command_list) > 0:
-        mpi.submit_jobs_to_workers(command_list, os.getcwd())
+        mpi.submit_jobs_to_workers(command_list)

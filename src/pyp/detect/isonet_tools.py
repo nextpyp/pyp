@@ -323,7 +323,7 @@ def convert_and_transfer_tomograms(train_name,project_dir,parameters):
         else:
             command = f"cp {absolute_rec} ."
         commands.append(command)
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands)
 
 def isonet_train(project_dir, output, parameters):
     

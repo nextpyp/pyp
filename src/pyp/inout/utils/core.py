@@ -2,6 +2,7 @@ import filecmp
 import glob
 import os
 import shutil
+import logging
 from pathlib import Path
 
 from pyp.system.logging import logger
@@ -30,7 +31,7 @@ def load_results(file_list, files_path, working_path):
     
     from pyp.system import mpi
     mpi.submit_function_to_workers(
-        load_files, arguments, silent=True
+        load_files, arguments, log_level=logging.NOTSET
     )
 
 def transfer_files(project_path,d,file):
@@ -67,5 +68,5 @@ def save_results(files, project_path):
     
     if len(arguments) > 0:
         mpi.submit_function_to_workers(
-            transfer_files, arguments, silent = True
+            transfer_files, arguments, log_level=logging.NOTSET
         )

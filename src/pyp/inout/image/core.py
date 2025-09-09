@@ -1441,7 +1441,7 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
     squares = [ "%s_%04d_square.mrc"%(name, idx) for idx in range(z) ]
 
     from pyp.system import mpi
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands)
     
     command = "{0}/bin/newstack {1} {2}_square.mrc".format(
         get_imod_path(), " ".join(squares) , name
@@ -1494,7 +1494,7 @@ def generate_aligned_tiltseries(name, parameters, x, y):
         aligned_images.append("{0}_{1:04d}.ali".format(name, tilt))
 
     from pyp.system import mpi
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands)
 
     command = "{0}/bin/newstack {2} {1}.ali".format(
         get_imod_path(), name, " ".join(aligned_images)

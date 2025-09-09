@@ -664,6 +664,7 @@ def merge_fast(inputfiles, outputfile, remove=False):
         inputfiles[0] = outputfile
     # TODO: use divide-and-conquer to take advantage of parallel processing (same for local_merge3d & merge3d)
     append_stacks = f"{get_frealign_paths()['cistem2']}/append_stacks"
+    first = True
     for stack in inputfiles[1:]:
         command = f"""
 {append_stacks} << EOF
@@ -671,7 +672,12 @@ def merge_fast(inputfiles, outputfile, remove=False):
 {stack}
 EOF
         """
-        [output, error] = run_shell_command(command, log_level=logging.TRACE)
+        if first:
+            log_level = logging.DEBUG
+            first = False
+        else:
+            log_level = logging.NOTSET
+        run_shell_command(command, log_level)
         if remove:
             try:
                 os.remove(stack)

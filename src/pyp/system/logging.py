@@ -23,14 +23,15 @@ __email__ = "alberto@cs.duke.edu"
 
 def get_verbose_level(parameters):
 
-    if parameters and parameters.get('slurm_verbose_level') == "trace":
-        return logging.TRACE
-    elif parameters.get('slurm_verbose_level') == "debug":
-        return logging.DEBUG
-    elif parameters.get('slurm_verbose_level') == "info":
-        return logging.INFO
-    elif parameters.get('slurm_verbose'):
-        return logging.DEBUG
+    if parameters:
+        if parameters.get('slurm_verbose_level') == "trace":
+            return logging.TRACE
+        elif parameters.get('slurm_verbose_level') == "debug":
+            return logging.DEBUG
+        elif parameters.get('slurm_verbose_level') == "info":
+            return logging.INFO
+        elif parameters.get('slurm_verbose'):
+            return logging.DEBUG
     else:
         return logging.INFO    
 
@@ -76,12 +77,6 @@ def initialize_pyp_logger(
     logging.Logger.trace = trace
 
     log = logging.getLogger(log_name)
-    if os.environ.get("PYP_LOGGER_LEVEL"):
-        # logger.warning(f"Setting level to {os.environ.get('PYP_LOGGER_LEVEL')}")
-        log.setLevel(int(os.environ["PYP_LOGGER_LEVEL"]))
-    else:
-        # logger.warning(f"Setting DEFAULT level")
-        log.setLevel(level)
     log.handlers = []  # reset logging handlers if they already exist
 
     screen_format = "%(asctime)s [%(levelname)s] %(pathname)s:%(lineno)d | %(message)s"

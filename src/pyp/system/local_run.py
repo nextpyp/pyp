@@ -60,7 +60,7 @@ def create_pyp_multirun_file(
 
 
 def run_shell_command(command,log_level=logging.DEBUG):
-    logger.debug(command)
+    logger.log(log_level,command)
     [output, error] = subprocess.Popen(
         command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
     ).communicate()

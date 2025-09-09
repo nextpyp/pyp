@@ -330,7 +330,7 @@ def run_cryodrgn_train(project_dir, parameters):
         command = f"cp {stack} {os.getcwd()}/input_data/"
         tasks.append(command)
 
-    mpi.submit_jobs_to_workers(tasks, os.getcwd())
+    mpi.submit_jobs_to_workers(tasks)
     
     particle_stack_list = [os.path.basename(p) for p in particles_stacks]
 
@@ -403,7 +403,7 @@ def run_cryodrgn_eval(project_dir, parameters):
         command = f"cp {stack} {os.getcwd()}/input_data/"
         tasks.append(command)
 
-    mpi.submit_jobs_to_workers(tasks, os.getcwd())
+    mpi.submit_jobs_to_workers(tasks)
     
     particle_stack_list = [os.path.basename(p) for p in particles_stacks]
 

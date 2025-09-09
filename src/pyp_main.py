@@ -2142,7 +2142,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     if len(mpi_funcs):
         t = timer.Timer(text="Ploting ctf and tomo webp's took: {}", logger=logger.info)
         t.start()
-        mpi.submit_function_to_workers(mpi_funcs, mpi_args, silent=True)
+        mpi.submit_function_to_workers(mpi_funcs, mpi_args, log_level=logging.NOTSET)
         t.stop()
 
     # convert to jpg to fool nextPYP
@@ -2178,7 +2178,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                     get_imod_path(), name + ".rec"
                 )
                 commands.append(command)
-            mpi.submit_jobs_to_workers(commands,os.getcwd())
+            mpi.submit_jobs_to_workers(commands)
 
         with open( f"{name}.pickle", 'wb') as f:
             pickle.dump(tilt_metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -2561,7 +2561,7 @@ def csp_extract_frames(
                             # average eer frames
                             command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {parameters['movie_eer_frames']} {f} {f.replace('.eer','.mrc')}; rm -f {f}"
                             arguments.append(command)
-                    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+                    mpi.submit_jobs_to_workers(arguments)
                     if imagefile[0].endswith(".eer"):
                         raw_image = [ i.replace('.eer','.mrc') for i in imagefile ]
                     else:
@@ -4410,9 +4410,10 @@ if __name__ == "__main__":
     try:
 
         # set logging level
+        log_level = parse_logger_level()
+        logger.setLevel(log_level)
         for handler in logger.handlers:
-            handler.setLevel(parse_logger_level())
-
+            handler.setLevel(log_level)
         mpi_tasks = mpi.initialize_worker_pool()
 
         jobid = None

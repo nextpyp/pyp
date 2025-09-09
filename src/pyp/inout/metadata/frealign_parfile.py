@@ -650,10 +650,10 @@ class Parameters:
             arguments.append((file,os.path.join(new_file,Path(file).name)))
         if len(files_to_transfer) > 500:
             logger.info(f"Copying metadata to project directory")
-            silent = False
+            log_level = logging.INFO
         else:
-            silent = True
-        mpi.submit_function_to_workers(shutil.move,arguments=arguments,silent=silent)
+            log_level = logging.NOTSET
+        mpi.submit_function_to_workers(shutil.move,arguments=arguments,log_level=log_level)
         return non_empty_films
     
     @staticmethod
@@ -789,7 +789,7 @@ class Parameters:
             commands.append("grep '^[^C]' '%s' > '%s' && cut -c%d-%d '%s' > '%s' && cut -c%d-%d '%s' > '%s'" % (parfile, parfile + '.tmp',
                                                                                                     section1_start, section1_end, parfile + '.tmp', f"{idx}_1.tmp",
                                                                                                     section2_start, section2_end, parfile + '.tmp', f"{idx}_2.tmp"))
-        mpi.submit_jobs_to_workers(commands, os.getcwd(), silent=True)
+        mpi.submit_jobs_to_workers(commands,log_level=logging.NOTSET)
 
         # update (write) INDEX, FILM columns for each parfile
         if frealignx:
