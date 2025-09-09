@@ -1848,7 +1848,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         [
             x,
             y,
-            z,
             scope_pixel,
             scope_voltage,
             scope_mag,
@@ -1868,7 +1867,6 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         [
             x,
             y,
-            z,
             scope_pixel,
             scope_voltage,
             scope_mag,
