@@ -254,7 +254,7 @@ def regularize_image(
     position_y_col = alignment_parameters.get_index_of_column(ORIGINAL_Y_POSITION)
 
 
-    logger.info("Now processing tilt %d", tilt_count)
+    logger.info("Now processing tilt %d" % tilt_count)
     tilt_idx = np.where(input_arr[:, tilt_col].astype(int) == tilt_count)[0]
     
     if tilt_idx.shape[0] == 0:

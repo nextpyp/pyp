@@ -900,7 +900,7 @@ class Parameters:
                     if update_film:
                         row[film_col] = film_idx
                     row_idx += 1
-                    # logger.info("film idx %d", row[film_col])
+                    # logger.info("film idx %d" % row[film_col])
                 film_idx += 1
 
         output_arr = np.vstack([np.vstack(f) for f in grouped_arr])

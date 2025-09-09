@@ -39,7 +39,7 @@ def run_relion(rparameters, sparameters, run=True):
     lscratch = "/lscratch/" + os.environ["SLURM_JOBID"]
     lscratch = "/scratch"
 
-    logger.info("Running on %s", working_dir)
+    logger.info("Running on %s" % working_dir)
 
     os.environ["TMPDIR"] = "/lscratch/%s/TMPDIR" % os.environ["SLURM_JOBID"]
     os.environ["TMPDIR"] = "/scratch/TMPDIR"
@@ -930,7 +930,7 @@ def post_processing(sp, rp):
         apix = float(mrc.readHeaderFromFile(map)["xlen"]) / float(model_box_size)
         radius = float(sp["particle_rad"]) / apix
         if radius > z / 2:
-            logger.warning("Particle radius falls outside box %f > %f", radius, z / 2)
+            logger.warning("Particle radius falls outside box %f > %f" % (radius, z / 2))
             radius = z / 2 - 1
 
         lim = int(z / 2 - radius)
@@ -1074,21 +1074,21 @@ if __name__ == "__main__":
 
             frames_file = rparameters["dataset"] + "_frames.star"
             if not os.path.exists(frames_file):
-                logger.error("%s does not exist.", frames_file)
+                logger.error("%s does not exist." % frames_file)
                 sys.exit()
 
         if "polish" in rparameters["mode"].lower():
 
             if not os.path.exists(rparameters["mask"]):
                 logger.error(
-                    "%s does not exist. Needed for particle polishing",
+                    "%s does not exist. Needed for particle polishing" %
                     rparameters["mask"],
                 )
                 sys.exit()
 
             frames_file = "Refine3D/%s_frames_data.star" % rparameters["dataset"]
             if not os.path.exists(frames_file):
-                logger.error("%s not found.", frames_file)
+                logger.error("%s not found." % frames_file)
                 sys.exit()
 
         # manage resources automatically
@@ -1165,7 +1165,7 @@ if __name__ == "__main__":
         # launch next relion command
         dependency = launch_relion(rparameters, sparameters)
 
-        logger.info("Job ID %s", dependency)
+        logger.info("Job ID %s" % dependency)
 
         if False and "t" in sparameters["data_auto"].lower():
             launch_pyp(rparameters, sparameters, dependency)

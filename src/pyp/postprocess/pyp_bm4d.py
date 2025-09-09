@@ -84,6 +84,6 @@ if __name__ == "__main__":
     tb = time()
     total_time = total_time + tb - ta
 
-    logger.info("Execution time of all is %d sec", total_time)
+    logger.info("Execution time of all is %d sec" % total_time)
 
     matlab.exit()

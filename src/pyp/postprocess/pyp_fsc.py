@@ -327,7 +327,7 @@ if __name__ == "__main__":
         if not os.path.exists(average):
 
             logger.info(
-                "Generating low resolution map for selecting masking threshold:",
+                "Generating low resolution map for selecting masking threshold:" +
                 average,
             )
 
@@ -345,7 +345,7 @@ if __name__ == "__main__":
             subprocess.getoutput(com)
             sys.exit()
         else:
-            logger.info("Using existing map to generate mask: %f", average)
+            logger.info("Using existing map to generate mask: %f" % average)
 
     else:
 
@@ -410,7 +410,7 @@ if __name__ == "__main__":
             )
             sys.exit()
         else:
-            logger.info("Using existing average of two half maps %f", average)
+            logger.info("Using existing average of two half maps %f" % average)
 
     if args.align:
 
@@ -432,7 +432,7 @@ if __name__ == "__main__":
         logger.info(command)
         logger.info(subprocess.getoutput(command))
         logger.info(
-            "Moving %s %s", first_half.replace(".mrc", "_rotated.mrc"), first_half
+            "Moving %s %s" % (first_half.replace(".mrc", "_rotated.mrc"), first_half)
         )
         shutil.move(first_half.replace(".mrc", "_rotated.mrc"), first_half)
 
@@ -458,19 +458,21 @@ if __name__ == "__main__":
     for threshold in thresholds:
         if threshold < min_threshold or threshold > max_threshold:
             logger.info(
-                "Threshold %0.8f falls outside density range [%0.4f,%0.4f]",
-                threshold,
-                min_threshold,
-                max_threshold,
+                "Threshold %0.8f falls outside density range [%0.4f,%0.4f]" % (
+                    threshold,
+                    min_threshold,
+                    max_threshold,
+                )
             )
         else:
             for shell in shells:
                 for gauss in gausses:
                     logger.info(
-                        "Submitting th = %0.8f, sh = %0.4f, gs = %0.4f",
-                        threshold,
-                        shell,
-                        gauss,
+                        "Submitting th = %0.8f, sh = %0.4f, gs = %0.4f" % (
+                            threshold,
+                            shell,
+                            gauss,
+                        )
                     )
                     # pool.apply_async(fsc_multiprocessing, args=( args.apix, first_half, second_half, average, threshold, shell, gauss, args.phases, results, args.keep ) )
                     fsc_multiprocessing(
@@ -516,7 +518,7 @@ if __name__ == "__main__":
             fsc = result[-1]
             # ax.plot( fsc[:,0], fsc[:,1], label='Th=%02.4f, Sh=%02.4f, Gs=%02.4f' % ( result[0], result[1], result[2] ) )
             cutoff = fsc_cutoff(fsc, cutoff_value)
-            logger.info("Resolution = %f", cutoff)
+            logger.info("Resolution = %f" % cutoff)
         # ax.plot( fsc[:,0], fsc[:,1], label='Mask %02d (.5 = %.2f %s, .143 = %.2f %s)' % ( count, cutoffs[0], u'\u00c5', cutoffs[1], u'\u00c5' ) )
         ax.plot(
             fsc[:, 0],

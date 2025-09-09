@@ -330,7 +330,7 @@ def select_clean_micrographs(parameters, micrographs, inputlist):
         )
         if parameters["slurm_email"]:
             user_comm.notify(parameters["data_set"], parameters["data_set"] + ".png")
-        logger.info("Filtering out micrographs below threshold = %f", th)
+        logger.info("Filtering out micrographs below threshold = %f" % th)
         names = dbase[:, 0].squeeze()
         clean_list = names[(dbase[:, 19].astype("f") >= th).squeeze()].tolist()
         # clean_list = dbase[ dbase[:,19].astype('f') >= th ][:,0].tolist()

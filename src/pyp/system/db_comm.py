@@ -226,13 +226,13 @@ def save_to_database_daemon(name, current_path, parameters):
             # (re-)create the session
             session = db.session(group_id, session_id)
             if not session.exists():
-                logger.info("Session %s does not exist", session.session_id)
+                logger.info("Session %s does not exist" % session.session_id)
             else:
                 # (re-)create the micrograph
                 micrograph = session.micrograph(name)
                 micrograph.create(int(round(time.time() * 1000)))
 
-                logger.info("Updating micrograph id %s", name)
+                logger.info("Updating micrograph id %s" % name)
                 # create micrograph if not already in list
                 if not name in session.get_micrograph_ids():
                     session.append_micrograph_id(name)

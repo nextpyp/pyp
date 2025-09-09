@@ -102,12 +102,8 @@ from pyp.system.singularity import (
     run_slurm,
     run_ssh,
 )
-from pyp.system.utils import get_imod_path, get_topaz_path, get_multirun_path, get_parameter_files_path, get_gpu_queue
-from pyp.system.wrapper_functions import (
-    avgstack,
-    replace_sections,
-    write_current_particle,
-)
+from pyp.system.utils import get_imod_path, get_topaz_path, get_multirun_path, get_parameter_files_path, get_gpu_queue, parse_logger_level
+
 from pyp.utils import timer, symlink_relative, symlink_relative_pattern
 
 from pyp.refine.tomo_avg import sub_tomo_avg as sub_tomo_avg
@@ -153,10 +149,11 @@ def spr_swarm_check_error(parameters, name):
 
         if p_in_stack != p_in_box:
             logger.error(
-                "Number of particles does not match %s, stack = %d, box = %d",
-                name,
-                p_in_stack,
-                p_in_box,
+                "Number of particles does not match %s, stack = %d, box = %d" % (
+                    name,
+                    p_in_stack,
+                    p_in_box,
+                )
             )
             return True
     return False
@@ -696,26 +693,6 @@ def parse_arguments(block):
         parameters["extract_cls"] = 1
 
     return parameters
-
-def parse_logger_level():
-
-    # read params from a params file instead of the CLI, if needed
-    params_file_path = get_params_file_path()
-    if params_file_path is not None:
-        config = ParamsConfig.from_file()
-        parameters = parse_params_from_file(config, params_file_path)
-    elif os.path.exists('.pyp_config.toml'):
-        parameters = project_params.load_pyp_parameters('.')
-    elif ( Path.cwd().parents[0] / '.pyp_config.toml' ).exists:
-        parameters = project_params.load_pyp_parameters('..')
-    else:
-        parser = argparse.ArgumentParser(add_help=False)
-        parser.add_argument("-slurm_verbose_level", "--slurm_verbose_level")
-        parser.add_argument("-slurm_verbose", "--slurm_verbose", action="store_true")
-        args, _ = parser.parse_known_args()
-        parameters = vars(args)
-
-    return get_verbose_level(parameters=parameters)
 
 @timer.Timer(
     "spr_merge", text="Total time elapsed (spr_merge): {}", logger=logger.info
@@ -3293,7 +3270,7 @@ def box_edit(skip, startat):
     micrographs = "{}.micrographs".format(parameters["data_set"])
 
     if not os.path.isfile(micrographs):
-        logger.warning("Cannot find %s", micrographs)
+        logger.warning("Cannot find %s" % micrographs)
         files = [
             s.replace("mrc/", "").replace(".mrc", "") for s in glob.glob("mrc/*.mrc")
         ]
@@ -3361,7 +3338,7 @@ def box_edit(skip, startat):
                 coords[:, 0] = factor * coords[:, 0]
                 coords[:, 1] = factor * (ydim / factor - coords[:, 1])
                 coords = np.hstack((coords, np.zeros((coords.shape[0], 1))))
-                logger.info("%d boxes saved to boxer/%s.box", coords.shape[0], f)
+                logger.info("%d boxes saved to boxer/%s.box" % (coords.shape[0], f))
                 np.savetxt("box/{0}.box".format(f), coords, delimiter="\t", fmt="%.0f")
 
                 os.remove(Path(os.environ["PYP_SCRATCH"]) / f"{f}.txt")
@@ -3379,7 +3356,7 @@ def tomo_edit(startat, raw, ali, rec, reg, seg, vir, spk, skip, clean):
     micrographs = "{}.micrographs".format(parameters["data_set"])
 
     if not os.path.isfile(micrographs):
-        logger.warning("Cannot find %s", micrographs)
+        logger.warning("Cannot find %s" % micrographs)
         files = [
             s.replace("raw/", "").replace(".tbz", "") for s in glob.glob("raw/*.tbz")
         ]
@@ -3772,7 +3749,7 @@ def cryolo_3d(
     micrographs = "{}.reclist".format(parameters["data_set"])
 
     if not os.path.isfile(micrographs):
-        logger.warning("Cannot find %s", micrographs)
+        logger.warning("Cannot find %s" % micrographs)
         files = [
             s.replace("mrc/", "").replace(".rec", "") for s in glob.glob("mrc/*.rec")
         ]
@@ -3859,7 +3836,7 @@ def cryolo_3d(
         z = int(mrc.readHeaderFromFile(yolo_ini_dir + "/" + name + ".rec")["nz"])
         if not int(inputsize) == x:
             logger.warning(
-                "The actual image size in x dimension is %s. Using actual size now.", x
+                "The actual image size in x dimension is %s. Using actual size now." % x
             )
         inputsize = str(x)
         z_height = str(z)
@@ -5244,8 +5221,8 @@ if __name__ == "__main__":
                                 logger.warning(
                                     "CSPT files already exist. Please delete if you want to re-create them."
                                 )
-                                logger.info("\t %s", parxfile)
-                                logger.info("\t %s", stackfile)
+                                logger.info("\t %s" % parxfile)
+                                logger.info("\t %s" % stackfile)
 
                         logger.info("nextPYP (csp) finished successfully")
                 except:

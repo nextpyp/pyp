@@ -62,19 +62,19 @@ def extract_particles_old(
         minY = box[0]
         maxY = box[0] + boxsize
         if minX < 0:
-            # logger.warning("Particle %d falls outside X lower range %d", count, minX)
+            # logger.warning("Particle %d falls outside X lower range %d" % (count, minX))
             minx = -minX
             minX = 0
         elif maxX >= nx:
-            # logger.warning("Particle %d falls outside X upper range ( %d, %d)", count, maxX, nx)
+            # logger.warning("Particle %d falls outside X upper range ( %d, %d)" % (count, maxX, nx))
             maxx = -(maxX - nx + 1)
             maxX = nx - 1
         if minY < 0:
-            # logger.warning("Particle %d falls outside Y lower range %d", count, minY)
+            # logger.warning("Particle %d falls outside Y lower range %d" % (count, minY))
             miny = -minY
             minY = 0
         elif maxY >= ny:
-            # logger.warning("Particle %d falls outside Y upper range ( %d, %d"), count, maxY, ny)
+            # logger.warning("Particle %d falls outside Y upper range ( %d, %d") % (count, maxY, ny))
             maxy = -(maxY - ny + 1)
             maxY = ny - 1
         # pdb.set_trace()
@@ -90,7 +90,7 @@ def extract_particles_old(
                 raw = inside.mean() * np.ones([boxsize, boxsize])
                 raw[int(minx) : int(maxx), int(miny) : int(maxy)] = inside
             else:
-                logger.warning("Particle falls completely outside bounds:", box)
+                logger.warning("Particle falls completely outside bounds:" + box)
                 raw = np.zeros([boxsize, boxsize])
         elif frames > 1:
             # raw = np.squeeze( image[ box[2], box[1]:box[1]+boxsize, box[0]:box[0]+boxsize ] )
@@ -128,14 +128,14 @@ def extract_particles_old(
                 except:
                     # print 'ERROR - Dimensions do not match', raw[ int(minx):int(maxx), int(miny):int(maxy) ].shape, inside.shape
                     logger.info(
-                        "ERROR - Dimensions do not match",
+                        "ERROR - Dimensions do not match" +
                         raw[
                             int(round(minx)) : int(round(maxx)),
                             int(round(miny)) : int(round(maxy)),
-                        ].shape,
+                        ].shape +
                         inside.shape,
                     )
-                    logger.info(minx, maxx, miny, maxy)
+                    logger.info("minx = %f, maxx = %f, miny = %f, maxy = %f" % (minx, maxx, miny, maxy))
                     raw[
                         int(round(minx)) : int(round(maxx)),
                         int(round(miny)) : int(round(maxy)) - 1,
@@ -144,11 +144,12 @@ def extract_particles_old(
                 # raw[ int(round(minx)):int(round(maxx)), int(round(miny)):int(round(maxy)) ] = inside
             else:
                 logger.warning(
-                    "Particle falls completely outside bounds:",
-                    minx,
-                    maxx,
-                    miny,
-                    maxy,
+                    "Particle falls completely outside bounds: [%d, %d, %d, %d]" % (
+                        minx,
+                        maxx,
+                        miny,
+                        maxy,
+                    )
                 )
                 raw = np.zeros([boxsize, boxsize])
 
@@ -450,20 +451,20 @@ def extract_particles_non_mpi(
         maxY = minY + boxsize
 
         if minX < 0:
-            # logger.warning("Particle %d falls outside X lower range %d", count, minX)
+            # logger.warning("Particle %d falls outside X lower range %d" % (count, minX))
             minx = -minX
             minX = 0
         elif maxX >= nx:
-            # logger.warning("Particle %d falls outside X upper range ( %d, %d)", count, maxX, nx)
+            # logger.warning("Particle %d falls outside X upper range ( %d, %d)" % (count, maxX, nx))
             maxx = -(maxX - nx + 1)
             maxX = nx - 1
 
         if minY < 0:
-            # logger.warning("Particle %d falls outside Y lower range %d", count, minY)
+            # logger.warning("Particle %d falls outside Y lower range %d" % (count, minY))
             miny = -minY
             minY = 0
         elif maxY >= ny:
-            # logger.warning("Particle %d falls outside Y upper range ( %d, %d)", count, maxY, ny)
+            # logger.warning("Particle %d falls outside Y upper range ( %d, %d)" % (count, maxY, ny))
             maxy = -(maxY - ny + 1)
             maxY = ny - 1
 
@@ -474,7 +475,7 @@ def extract_particles_non_mpi(
                 raw[int(minx) : int(maxx), int(miny) : int(maxy)] = inside
             else:
                 logger.warning(
-                    "Particle falls completely outside bounds:",
+                    "Particle falls completely outside bounds: " +
                     box[0] / coordinate_binning,
                 )
                 raw = np.zeros([boxsize, boxsize])

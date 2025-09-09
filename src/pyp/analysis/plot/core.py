@@ -687,7 +687,7 @@ def generate_plots(
                             fmatch_stack, sorted_indexes, fmatch_stack_group
                         )
                     else:
-                        logger.info("File not found %s", fmatch_stack)
+                        logger.info("File not found %s" % fmatch_stack)
 
     if dump:
         fig = plt.figure(figsize=(5, 5))

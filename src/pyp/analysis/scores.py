@@ -460,10 +460,11 @@ def shape_phase_residuals(
                             thresholds[g, f] = mythreshold
                         else:
                             logger.warning(
-                                "Not enough points for estimating statistics %d %d %d",
-                                g,
-                                f,
-                                prs.size,
+                                "Not enough points for estimating statistics %d %d %d" % (
+                                    g,
+                                    f,
+                                    prs.size,
+                                )
                             )
 
                 elif threshold <= 1:
@@ -629,7 +630,7 @@ def shape_phase_residuals(
             bad_particles,
             np.where(metric_weights == 0, 1, 0).sum(),
         )
-        logger.info("Total particles = %d", total_particles)
+        logger.info("Total particles = %d" % total_particles)
         input[:, occ] = np.where(metric_weights == 0, 0, input[:, occ])
         fmatch_stack_removed = "../maps/%s_match_removed.mrc" % (
             os.path.splitext(inputparfile)[0]
@@ -829,7 +830,7 @@ def eval_phase_residual(
 ):
 
     if math.fabs(defocus) > tolerance:
-        logger.info("Evaluating %f = %d", defocus, np.nan)
+        logger.info("Evaluating %f = %d" % (defocus, np.nan))
         return np.nan
 
     particles = input.shape[0]
@@ -868,7 +869,7 @@ def eval_phase_residual(
         try:
             symlink_relative(os.path.join(os.getcwd(),stack), local_stack)
         except:
-            logger.info("symlink failed %s %s", local_stack, stack)
+            logger.info("symlink failed %s %s" % ( local_stack, stack))
             pass
 
     # call FREALIGN directly to improve performance
@@ -911,7 +912,7 @@ def eval_phase_residual(
             dtype=float,
         )
 
-    logger.info("Evaluating %f = %f", defocus, scores.mean())
+    logger.info("Evaluating %f = %f" % (defocus, scores.mean()))
 
     os.chdir("..")
 
@@ -1400,7 +1401,7 @@ def update_boxx_files(global_indexes_to_remove, parameters, classification_pass,
     pool = multiprocessing.Pool(threads)
     manager = multiprocessing.Manager()
     results = manager.Queue()
-    logger.info("Reading box files using %i threads", threads)
+    logger.info("Reading box files using %i threads" % threads)
     for micrograph in inputlist:
         pool.apply_async(read_boxx_file_async, args=(micrograph, results))
     pool.close()
@@ -1492,7 +1493,7 @@ def update_boxx_files(global_indexes_to_remove, parameters, classification_pass,
 
                     boxx_dbase[name][:, 5] = boxxx
             else:
-                logger.info("%s does not exist", boxxfile)
+                logger.info("%s does not exist" % boxxfile)
 
             if micrograph_counter < len(inputlist) - 1:
                 micrograph_counter += 1
@@ -1518,12 +1519,12 @@ def update_boxx_files(global_indexes_to_remove, parameters, classification_pass,
             boxxx[index_in_micrograph - 1] = classification_pass - 1
             boxx_dbase[name][:, 5] = boxxx
 
-    logger.info("Current global count %d", current_global_counter)
+    logger.info("Current global count %d" % current_global_counter)
     # save all boxx files in parallel
     pool = multiprocessing.Pool(threads)
     manager = multiprocessing.Manager()
     results = manager.Queue()
-    logger.info("Saving box files using %i threads", threads)
+    logger.info("Saving box files using %i threads" % threads)
     for micrograph in inputlist:
         pool.apply_async(
             write_boxx_file_async, args=(micrograph, boxx_dbase[micrograph])

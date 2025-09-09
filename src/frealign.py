@@ -54,6 +54,13 @@ from pyp.system.logging import logger
 
 if __name__ == "__main__":
 
+    # set logging level
+    from pyp.system.utils import parse_logger_level
+    loglevel = parse_logger_level()
+    logger.setLevel(loglevel)
+    for handler in logger.handlers:
+        handler.setLevel(loglevel)
+
     mpi_tasks = mpi.initialize_worker_pool()
 
     # retrieve version number

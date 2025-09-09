@@ -449,7 +449,7 @@ def run_refinement(  # rename to daemon2D after testing
             else:
                 class_fraction = parameters['class2d_fraction'] if cycle_number < resolution_cycle_count else 1.0
 
-            logger.debug(f"Using fraction {class_fraction} from total particles number {particle_num:,} for ab initio")
+            logger.trace(f"Using fraction {class_fraction} from total particles number {particle_num:,} for ab initio")
 
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
@@ -511,7 +511,7 @@ def run_refinement(  # rename to daemon2D after testing
             else:
                 class_fraction = parameters['class2d_fraction'] if cycle_number < resolution_cycle_count else 1.0
 
-            logger.debug(f"Using fraction {class_fraction} from total particles number {particle_num:,} for seeded_startup")
+            logger.trace(f"Using fraction {class_fraction} from total particles number {particle_num:,} for seeded_startup")
 
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
@@ -568,7 +568,7 @@ def run_refinement(  # rename to daemon2D after testing
         else:
             class_fraction = 1.0
 
-        logger.debug(f"Using fraction {class_fraction} from total particles number {particle_num:,} for refinement")
+        logger.trace(f"Using fraction {class_fraction} from total particles number {particle_num:,} for refinement")
 
         high_res_limit = parameters['class2d_rhref']
 

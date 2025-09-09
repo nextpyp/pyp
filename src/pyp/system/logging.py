@@ -136,7 +136,7 @@ def initialize_pyp_logger(
                 elif levelno >= logging.INFO:
                     color = green
                 elif levelno >= logging.DEBUG:
-                    color = blue
+                    color = cyan
                 elif levelno >= logging.TRACE:
                     color = magenta
                 else:
