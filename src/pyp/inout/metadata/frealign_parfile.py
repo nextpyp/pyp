@@ -566,7 +566,7 @@ class Parameters:
 
         threads = 7 if threads > 7 else threads
         command = f"tar -v -c -h -v {input} | pbzip2 -c -v -p{threads} > '{output}'"
-        run_shell_command(command, log_level=logging.TRACE)
+        run_shell_command(command, log_level=logging.NOTSET)
 
     # compress
     @staticmethod

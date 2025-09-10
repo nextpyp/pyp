@@ -1665,7 +1665,7 @@ def csp_has_error(path_to_logs: Path, micrographs: dict) -> bool:
         if micrograph_log.exists():
             # use "grep" to check if log files contain any error message
             command = "grep -E %s '%s'" % ("'" + "|".join(ERROR_KEYWORDS) + "'", str(micrograph_log))
-            [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
+            [output, error] = local_run.run_shell_command(command, log_level=logging.NOTSET)
 
             if len(output) > 0:
                 logger.error(f"{micrograph} fails. Stopping the merge job.")
