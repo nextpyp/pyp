@@ -524,7 +524,7 @@ class LocalMetadata:
         header = self.files[key]["header"]
 
         command = f"{get_imod_path()}/bin/header -size '{file}'"
-        [output, error] = run_shell_command(command, log_level=logging.TRACE)
+        [output, error] = run_shell_command(command, log_level=logging.NOTSET)
 
         x, y, z = list(map(int, output.split()))
         if file.endswith(".rec"):
@@ -1925,7 +1925,7 @@ _rlnRandomSubset #14
                     # update image size - from .mrc images
                     assert (os.path.exists(avg_src)), f"{avg_src} does not exist"
                     command = f"{get_imod_path()}/bin/header -size '{avg_src}'"
-                    [output, error] = run_shell_command(command, log_level=logging.TRACE)
+                    [output, error] = run_shell_command(command, log_level=logging.NOTSET)
                     x, y, z = list(map(int, output.split()))
                     arr = np.array([[x, y, z]])
                     imagekey = os.path.basename(avg).replace(".mrc", "")
@@ -2052,7 +2052,7 @@ _rlnRandomSubset #14
                 assert (os.path.exists(Path(rln_path) / path)), f"{Path(rln_path) / path} does not exist"
 
                 command = f"{get_imod_path()}/bin/header -size '{Path(rln_path) / path}'"
-                [output, error] = run_shell_command(command, log_level=logging.TRACE)
+                [output, error] = run_shell_command(command, log_level=logging.NOTSET)
                 x, y, z = list(map(int, output.split()))
                 arr = np.array([[x, y, z]])
                 self.data[name]["image"] = pd.DataFrame(arr, columns=FILES_TOMO["image"]["header"])

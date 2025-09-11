@@ -443,7 +443,7 @@ def read_tilt_series(
 
             # read image dimensions
             [micrographinfo, error] = local_run.run_shell_command(
-                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.TRACE
+                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.NOTSET
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
@@ -678,7 +678,7 @@ def read_tilt_series(
 
         # read image dimensions
         [micrographinfo, error] = local_run.run_shell_command(
-            "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.TRACE
+            "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.NOTSET
         )
         x, y, z = list(map(int, micrographinfo.split()))
         drift_metadata["tilts"] = [tilt[1] for tilt in sorted_tilts]
@@ -947,7 +947,7 @@ def regenerate_average_quick(
 
     # read image dimensions
     [micrographinfo, error] = local_run.run_shell_command(
-        "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.TRACE
+        "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.NOTSET
     )
     x, y, z = list(map(int, micrographinfo.split()))
     
