@@ -878,7 +878,7 @@ def get_image_dimensions(name):
     assert Path(name), f"{name} does not exist."
 
     command = "{0}/bin/header -size '{1}'".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, log_level=logging.TRACE)
+    [output, error] = run_shell_command(command, log_level=logging.NOTSET)
     if "ERROR" in output:
         logger.error(output)
     return list(map(int, output.split()))
@@ -888,7 +888,7 @@ def get_image_mean(name):
     assert Path(name), f"{name} does not exist."
 
     command = "{0}/bin/header -mean '{1}'".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, log_level=logging.TRACE)
+    [output, error] = run_shell_command(command, log_level=logging.NOTSET)
     if "ERROR" in output:
         logger.error(output)
     return float(output)
@@ -896,7 +896,7 @@ def get_image_mean(name):
 def get_image_mode(name):
 
     command = "{0}/bin/header -mode {1}".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, log_level=logging.TRACE)
+    [output, error] = run_shell_command(command, log_level=logging.NOTSET)
     return int(output)
 
 
@@ -1537,7 +1537,7 @@ def cistem_mask_create(parameters: dict, model: str, output: str):
     assert ("particle_rad" in parameters), "Please provide particle radius"
 
     command = f"{get_imod_path()}/bin/header -pixel '{model}'"
-    [stdo, stdr] = run_shell_command(command)
+    [stdo, stdr] = run_shell_command(command,logging.NOTSET)
     model_pixel = float(stdo.split()[0])
     logger.info(f"{model} has pixel size {model_pixel}")
 
