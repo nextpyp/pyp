@@ -2951,6 +2951,7 @@ def sva_split(parameters):
         arguments = []
         for file in glob.glob(f"{dataset}_global_average*.mrc"):
             arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
+        logger.info(f"Producing webp files from each volume")
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
 
         target_volumes_file = f"{dataset}_volumes_pre_centered_clean.txt"
@@ -2985,6 +2986,7 @@ def sva_split(parameters):
         arguments = []
         for file in glob.glob(f"{dataset}_iteration_{iteration:03}_level_{parameters.get('sva_class_num')}_average_???.mrc"):
             arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
+        logger.info(f"Producing webp files from each volume")
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
         
     elif parameters.get('sva_mode') == '2':
@@ -3030,6 +3032,7 @@ def sva_split(parameters):
         arguments = []
         for file in glob.glob(f"{dataset}_iteration_{iteration:03}_refined_level_{parameters.get('sva_class_num')}_average_???.mrc"):
             arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
+        logger.info(f"Producing webp files from each volume")
         mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
                 
     elif parameters.get('sva_mode') == '3':
