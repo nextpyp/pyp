@@ -7317,6 +7317,7 @@ name = "Translation tolerance (binned voxels)"
 description = "Limit translations to this value"
 type = "int"
 default = 10
+condition = { arg='mode', value=["0","2","3"] }
 
 [tabs.sva.mask]
 name = "Mask radius (binned voxels)"
