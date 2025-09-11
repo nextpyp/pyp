@@ -1808,6 +1808,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         # parse output from star file
         results_file = os.path.join( "pytom", f"{name}_particles.star" )
+        assert os.path.exists(results_file), f"Pytom's output file {results_file} is missing"
         results = pyp_metadata.parse_star(results_file)
         if len(results):
             coordinates = results[['rlnCoordinateX','rlnCoordinateY','rlnCoordinateZ']].to_numpy(dtype='float')
