@@ -4025,7 +4025,7 @@ def disable_profiler(profiler,path=os.getcwd()):
 def get_free_space(scratch):
     # report space available on local scratch
     command = f"df -h {scratch} 2> /dev/null"
-    [ output, error ] = local_run.run_shell_command(command, log_level=logging.TRACE)
+    [ output, error ] = local_run.run_shell_command(command, log_level=logging.NOTSET)
     for line in output.split("\n"):
         if len(line) > 0:
             logger.info(line)
@@ -4450,6 +4450,7 @@ if __name__ == "__main__":
 
         try:
             os.makedirs(LOCAL_SCRATCH, exist_ok=True)
+            logger.info("Created temporary folder " + LOCAL_SCRATCH)
 
             # TODO: switch to pyp.system.utils.get_imod_path()
             os.environ["IMAGICDIR"] = "/usr/bin"
