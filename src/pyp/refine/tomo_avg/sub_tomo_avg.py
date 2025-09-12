@@ -552,4 +552,5 @@ def sva_iterate(mp, sp, iter, submit = True):
         )
     else:
         command = f"export I_MPI_HYDRA_BOOTSTRAP=ssh && export HYDRA_BOOTSTRAP=ssh && /opt/mpich-3.2.1/bin/mpirun -genv I_MPI_PIN disable -np {sp['slurm_tasks']} {executable} {xmlexe}"
-        local_run.stream_shell_command(command)
+        proc = local_run.stream_shell_command(command)
+        assert proc.returncode == 0, f"{proc.stdout.read()}Try increasing the Split, Memory per thread (GB)"

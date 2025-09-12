@@ -2709,9 +2709,86 @@ def sva_initialize_and_run(parameters,dataset,iter,mode=0):
         logger.warning(f"Failed to clean up after 3DAVG")
     
 @timer.Timer(
+    "sva_run", text="Total time elapsed (sva_run): {}", logger=logger.info
+)
+def sva_run(parameters,threed_avg_dir):
+
+    os.chdir(threed_avg_dir)
+
+    sva_mode = parameters.get("sva_mode")
+    iteration = parameters.get("sva_refine_iter")
+    dataset = parameters.get('data_set')
+    
+    if sva_mode == '0':
+        logger.info(f"### Calculating global average and centering (mode 0) ###")
+    elif sva_mode == '1':
+        logger.info(f"### Running 3D classification (mode 1) ###")
+    elif sva_mode == '2':
+        logger.info(f"### Aligning class averages (mode 2) ###")
+
+    # initial global average and centering if this is the first iteration (mode 0)
+    sva_initialize_and_run(
+        parameters=parameters,
+        dataset=dataset,
+        iter=iteration,
+        mode=sva_mode
+        )
+
+    pixel_size = parameters['scope_pixel'] * parameters.get('data_bin') * parameters.get('tomo_ext_binn')
+
+    arguments = []
+
+    if sva_mode == '0':
+        
+        global_average = f"{dataset}_global_average.mrc"
+        global_average_zero = f"{dataset}_global_average_0.mrc"
+        if os.path.exists(global_average):
+            if os.path.exists(global_average_zero):
+                os.remove(global_average_zero)
+            symlink_relative( global_average, global_average_zero)
+        global_average_symmetrized = f"{dataset}_global_average_symmetrized.mrc"
+        global_average_symmetrized_zero = f"{dataset}_global_average_0_symmetrized.mrc"
+        if os.path.exists(global_average_symmetrized):
+            if os.path.exists(global_average_symmetrized_zero):
+                os.remove(global_average_symmetrized_zero)
+            symlink_relative( global_average_symmetrized, global_average_symmetrized_zero)
+
+        # generate thumbnails
+        for file in glob.glob(f"{dataset}_global_average*.mrc"):
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
+
+        target_volumes_file = f"{dataset}_volumes_pre_centered_clean.txt"
+        if parameters.get("sva_centering_iterations") == 0:
+            source_volumes_file = f"{dataset}_original_volumes.txt"
+        else:
+            source_volumes_file = f"{dataset}_volumes_pre_centered_clean_{parameters.get('sva_centering_iterations')}.txt"
+        try:
+            os.remove(target_volumes_file)
+        except:
+            pass
+        symlink_relative( source_volumes_file, target_volumes_file)
+    
+    elif sva_mode == '1':
+        
+        # generate thumbnails for classes
+        arguments = []
+        for file in glob.glob(f"{dataset}_iteration_{iteration:03}_level_{parameters.get('sva_class_num')}_average_???.mrc"):
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
+    
+    elif sva_mode == '2':
+        
+        # generate thumbnails for aligned classes
+        arguments = []
+        for file in glob.glob(f"{dataset}_iteration_{iteration:03}_refined_level_{parameters.get('sva_class_num')}_average_???.mrc"):
+            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
+        
+    logger.info(f"Producing webp files from each volume")
+    mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)                    
+
+@timer.Timer(
     "sva_swarm", text="Total time elapsed (sva_swarm): {}", logger=logger.info
 )
-def sva_swarm(filename, parameters, iteration, skip, debug, project_path):
+def sva_swarm(filename, parameters, iteration):
     """Sub-volume averaging.
 
     Parameters
@@ -2896,8 +2973,6 @@ def sva_split(parameters):
 
     dataset = parameters.get('data_set')
 
-    pixel_size = parameters['scope_pixel'] * parameters.get('data_bin') * parameters.get('tomo_ext_binn')
-
     # create symlink to volumes file in 3DAVG folder
     volumes_file = project_params.resolve_path(parameters.get('sva_parfile'))
     local_volumes_file = f"{dataset}_original_volumes.txt"
@@ -2920,76 +2995,20 @@ def sva_split(parameters):
 
     assert iteration < 8, f"Currently only support iterations 1 - 7"
 
-    if parameters.get('sva_mode') == '0':
+    sva_mode = parameters.get('sva_mode')
+   
+    if sva_mode == '0':
         
         assert parameters.get('sva_refine_iter') == 1, f"Mode 0 can only be run during Iteration 1"
     
-        logger.info(f"### Calculating global average and using it as reference for centering ###")
-        
-        # initial global average and centering if this is the first iteration (mode 0)
-        sva_initialize_and_run(
-            parameters=parameters,
-            dataset=dataset,
-            iter=iteration,
-            mode=0
-            )
-    
-        global_average = f"{dataset}_global_average.mrc"
-        global_average_zero = f"{dataset}_global_average_0.mrc"
-        if os.path.exists(global_average):
-            if os.path.exists(global_average_zero):
-                os.remove(global_average_zero)
-            symlink_relative( global_average, global_average_zero)
-        global_average_symmetrized = f"{dataset}_global_average_symmetrized.mrc"
-        global_average_symmetrized_zero = f"{dataset}_global_average_0_symmetrized.mrc"
-        if os.path.exists(global_average_symmetrized):
-            if os.path.exists(global_average_symmetrized_zero):
-                os.remove(global_average_symmetrized_zero)
-            symlink_relative( global_average_symmetrized, global_average_symmetrized_zero)
-
-        # generate thumbnails
-        arguments = []
-        for file in glob.glob(f"{dataset}_global_average*.mrc"):
-            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
-        logger.info(f"Producing webp files from each volume")
-        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
-
-        target_volumes_file = f"{dataset}_volumes_pre_centered_clean.txt"
-        if parameters.get("sva_centering_iterations") == 0:
-            source_volumes_file = f"{dataset}_original_volumes.txt"
-        else:
-            source_volumes_file = f"{dataset}_volumes_pre_centered_clean_{parameters.get('sva_centering_iterations')}.txt"
-        try:
-            os.remove(target_volumes_file)
-        except:
-            pass
-        symlink_relative( source_volumes_file, target_volumes_file)
-
-    elif parameters.get('sva_mode') == '1':
+    elif sva_mode == '1':
         
         if iteration == 1:
             assert os.path.exists(f"{dataset}_volumes_pre_centered_clean.txt"), f"Cannot run Mode 1, Iteration {iteration} without running Mode 0, Iteration {iteration} first"
         else:
             assert os.path.exists(f"{dataset}_iteration_{iteration-1:03}_alignments_to_reference_0.txt"), f"Cannot run Mode 1, Iteration {iteration} without running Mode 3, Iteration {iteration-1} first"
 
-        logger.info(f"### 3D classification ###")
-
-        # 3D classification
-        sva_initialize_and_run(
-            parameters=parameters,
-            dataset=dataset,
-            iter=iteration,
-            mode=1
-            )
-        
-        # generate thumbnails for classes
-        arguments = []
-        for file in glob.glob(f"{dataset}_iteration_{iteration:03}_level_{parameters.get('sva_class_num')}_average_???.mrc"):
-            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
-        logger.info(f"Producing webp files from each volume")
-        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
-        
-    elif parameters.get('sva_mode') == '2':
+    elif sva_mode == '2':
         
         assert os.path.exists(f"{dataset}_iteration_{iteration:03}_level_{parameters['sva_class_num']}_average_000.mrc"), f"Cannot run Mode 2, Iteration {iteration} without running Mode 1, Iteration {iteration} first"
 
@@ -3020,22 +3039,21 @@ def sva_split(parameters):
             # substitute old file with new one
             shutil.move(classes_file_tmp,classes_file)
         
-        # Align class averages
-        sva_initialize_and_run(
-            parameters=parameters,
-            dataset=dataset,
-            iter=iteration,
-            mode=2
-            )
+    if sva_mode == '0' or sva_mode == '1' or sva_mode == '2':
         
-        # generate thumbnails for aligned classes
-        arguments = []
-        for file in glob.glob(f"{dataset}_iteration_{iteration:03}_refined_level_{parameters.get('sva_class_num')}_average_???.mrc"):
-            arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
-        logger.info(f"Producing webp files from each volume")
-        mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
-                
-    elif parameters.get('sva_mode') == '3':
+        # go back to project directory
+        os.chdir(project_dir)
+        
+        os.makedirs("swarm", exist_ok=True)
+        os.chdir("swarm")
+
+        logger.info(f"Launching sub-volume averaging iteration {iteration} (mode {sva_mode})")
+        
+        slurm.launch_sva_run(
+            parameters=parameters
+        )
+        
+    elif sva_mode == '3':
 
         assert os.path.exists(f"{dataset}_iteration_{iteration:03}_refined_level_{parameters['sva_class_num']}_average_000.mrc"), f"Cannot run Mode 3, Iteration {iteration} without running Mode 2, Iteration {iteration} first"
 
@@ -3053,10 +3071,7 @@ def sva_split(parameters):
         prepare_3davg_xml(dataset=dataset,volumes=None,iter=iteration,mode=3)
         os.chdir(project_dir)
 
-        os.makedirs("swarm", exist_ok=True)
-        os.chdir("swarm")
-
-        slurm.launch_sva(
+        slurm.launch_sva_mra(
             micrograph_list=files,
             parameters=parameters,
             swarm_folder=Path.cwd()
@@ -5352,6 +5367,27 @@ if __name__ == "__main__":
                     logger.error("nextPYP (sva) failed")
                     raise
 
+            elif "svarun" in os.environ:
+                
+                try:
+                    del os.environ["svarun"]
+
+                    parameters = project_params.load_pyp_parameters(project_params.resolve_path('..'))
+
+                    # clear local scratch and report free space
+                    clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
+                    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                    """
+                    Run modes 0, 1, or 2
+                    """
+                    sva_run(parameters,Path.cwd().parents[0]/"3DAVG")
+
+                    logger.info("nextPYP (svarun) finished successfully")
+                except:
+                    logger.error("nextPYP (svarun) failed")
+                    raise
+                                    
             elif "svaswarm" in os.environ:
                 
                 try:
@@ -5375,7 +5411,7 @@ if __name__ == "__main__":
                     """
                     Run mode 3 to align all particles to most recent reference
                     """
-                    sva_swarm(args.file, parameters, int(args.iter), args.skip, args.debug, args.path)
+                    sva_swarm(args.file, parameters, int(args.iter))
 
                     logger.info("nextPYP (svaswarm) finished successfully")
                 except:

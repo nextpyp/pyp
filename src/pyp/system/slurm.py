@@ -205,7 +205,7 @@ def create_tomohalf_swarm_file(parameters, files, timestamp, swarm_file="cryocar
     return swarm_file, gpu
 
 
-def create_sva_swarm_file(files, parameters, iteration, swarm_file="svaswarm.swarm"):
+def create_sva_mra_swarm_file(files, parameters, iteration, swarm_file="svaswarm.swarm"):
     f = open(swarm_file, "w")
     f.write(
         "\n".join(
@@ -221,6 +221,17 @@ def create_sva_swarm_file(files, parameters, iteration, swarm_file="svaswarm.swa
         )
     )
     f.write("\n")
+    f.close()
+
+    return swarm_file
+
+def create_sva_run_swarm_file(parameters, swarm_file="svarun.swarm"):
+    f = open(swarm_file, "w")
+    f.write("cd '{0}'; export svarun=svarun; {1} 2>&1 | tee ../log/sva_run.log\n".format(
+                    os.getcwd(),
+                    run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"])
+                )
+    )
     f.close()
 
     return swarm_file
@@ -685,7 +696,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
 
     os.chdir(current_directory)
 
-def launch_sva(micrograph_list: list, parameters: dict, swarm_folder: Path):
+def launch_sva_mra(micrograph_list: list, parameters: dict, swarm_folder: Path):
     """launch_sva Launch sva
 
     Parameters
@@ -706,7 +717,7 @@ def launch_sva(micrograph_list: list, parameters: dict, swarm_folder: Path):
     project_params.save_pyp_parameters(parameters=parameters,path='..')
 
     if len(micrograph_list) > 0:
-        swarm_file = create_sva_swarm_file(
+        swarm_file = create_sva_mra_swarm_file(
             micrograph_list, parameters, parameters["sva_refine_iter"], "svaswarm.swarm"
         )
     else:
@@ -754,3 +765,37 @@ def launch_sva(micrograph_list: list, parameters: dict, swarm_folder: Path):
 
     # go back to project directory
     os.chdir(current_directory)
+
+def launch_sva_run(parameters: dict):
+    """launch_sva Launch sva modes 0, 1, and 2
+
+    Parameters
+    ----------
+    parameters : dict
+        PYP parameters
+    swarm_folder : Path
+        Path to the swarm folder
+    """
+
+    swarm_file = create_sva_run_swarm_file(
+        parameters, "svarun.swarm"
+    )
+
+    jobtype = "svarun"
+    jobname = "Iteration %d (mode %s)" % ( parameters["sva_refine_iter"], parameters["sva_mode"] ) if Web.exists else "svarun"
+    
+    # submit jobs to batch system
+    id = submit_jobs(
+        ".",
+        swarm_file,
+        jobtype,
+        jobname,
+        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+        threads=parameters["slurm_tasks"],
+        memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+        gres=parameters["slurm_gres"],
+        account=parameters.get("slurm_account"),
+        walltime=parameters["slurm_walltime"],
+        tasks_per_arr=parameters["slurm_bundle_size"],
+        csp_no_stacks=parameters["csp_no_stacks"]
+    )
