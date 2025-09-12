@@ -38,7 +38,7 @@ BSD 3-Clause License
 Dependencies
 ------------
 
-``nextPYP`` uses functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_, `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_, `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_, `Topaz <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_, `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_, and `pytom-match-pick <https://github.com/SBC-Utrecht/pytom-match-pick>`_.
+``nextPYP`` uses functionality from `IMOD <https://bio3d.colorado.edu/imod/>`_, `cisTEM <https://cistem.org/>`_, `CTFFIND4 <https://grigoriefflab.umassmed.edu/ctffind4>`_, `AreTomo2 <https://github.com/czimaginginstitute/AreTomo2>`_, `AreTomo3 <https://github.com/czimaginginstitute/AreTomo3>`_, `MotionCor3 <https://github.com/czimaginginstitute/MotionCor3>`_, `Topaz <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_, `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_, `tomoDRGN <https://github.com/bpowell122/tomodrgn>`_, `cryoDRGN <https://github.com/ml-struct-bio/cryodrgn>`_, `pytom-match-pick <https://github.com/SBC-Utrecht/pytom-match-pick>`_, and `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_.
 
 
 The corresponding licenses are reproduced below.
@@ -202,8 +202,8 @@ IMOD
       www:  http://bio3d.colorado.edu/imod/index.html
       University of Colorado, Dept. of MCD Biology, 347 UCB, Boulder, CO 80309
 
-AreTomo2 and MotionCor3
-=======================
+AreTomo2, AreTomo3 and MotionCor3
+=================================
 
 .. code-block:: bash
 
@@ -342,8 +342,39 @@ tomoDRGN
 
 tomoDRGN is distributed under the `GNU General Public License v3.0 <https://github.com/bpowell122/tomodrgn/blob/master/LICENSE.txt>`__.
 
+cryoDRGN
+========
+
+cryoDRGN is distributed under the `GNU General Public License v3.0 <https://github.com/ml-struct-bio/cryodrgn/blob/main/LICENSE.txt>`__.
 
 pytom-match-pick
 ================
 
 pytom-match-pick is distributed under the `GNU General Public License v2.0 <https://github.com/SBC-Utrecht/pytom-match-pick/blob/main/LICENSE>`__.
+
+TARDIS
+======
+
+.. code-block:: bash
+
+   MIT License
+
+   Copyright (c) 2022 Robert Kiewisz, Tristan Bepler
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.

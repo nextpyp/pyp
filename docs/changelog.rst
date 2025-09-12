@@ -2,6 +2,42 @@
 Changelog
 =========
 
+v0.7.3
+------
+
+.. nextpyp:: Released TBA
+   :collapsible: open
+   
+   :fa:`star` **New features**
+   
+   -  New block for running traditional sub-volume averaging. This block can be used for ab-initio alignment through classification, as described in `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_.
+
+   - New logger allows users to select one of three levels of verbosity for greater control over program output.
+   
+   :fa:`plus-square` **Improvements**
+
+   - Improve pre-processing efficiency by skipping gold fiducial detection when they won't be erased during reconstruction.
+
+   - Improve efficiency during particle filtering by avoiding multiple decompressions of the same parameter file.
+
+   - Improve efficiency during tomography refinement by avoiding unnecessary linking of subtomogram files.
+
+   - Visualization of 3D correlation volume and diagnostic plots when doing template matching using pytom-match-pick.
+
+   :fa:`bug` **Bug fixes**
+   
+   - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
+
+   - Fix bug when parsing input parameters during particle filtering.
+
+   - Fix bug when parsing 3D refinement metadata and applying the results to particles extracted using different box sizes.
+
+   - Fix bug that caused symmetry to be applied incorrectly when option to symmetrize maps was disabled.
+
+   - Fix bug when producing .bild files for some types of symmetries.
+
+   - Remove inconsistencies when clearing up temporary scratch folders after jobs finish running.
+
 v0.7.2
 ------
 

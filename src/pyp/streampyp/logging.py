@@ -5,7 +5,6 @@ import time
 
 from pyp.streampyp.web import Web
 
-
 def get_slurm_array_id():
     """
     get the SLURM array id, or None
@@ -15,6 +14,8 @@ def get_slurm_array_id():
     except KeyError:
         return None
 
+def sanitize_path(path):
+    return path.replace('/opt/pyp/src/','').replace('/opt/pyp/bin/run/pyp','pyp/pyp_main.py')
 
 def is_logging_allowed():
     """
@@ -39,9 +40,9 @@ class WebLogHandler(logging.Handler):
 
         timestamp = int(record.created * 1000)
         level = record.levelno
-        path = record.name  # usually a path to a python script
+        path = "\x1b[1m" + sanitize_path(record.pathname) + "\x1b[0m" # usually a path to a python script
         line = record.lineno
-        msg = record.message
+        msg = record.msg
 
         Web().log(timestamp, level, path, line, msg)
 

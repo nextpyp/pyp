@@ -7,12 +7,8 @@ from pathlib import Path
 from pyp.analysis import plot
 from pyp.inout.image import mrc
 from pyp.system import local_run, project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-from pyp.system.singularity import get_pyp_configuration
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_tardis_path():
     command_base = 'export PYTHONPATH=/opt/conda/envs/tardis/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n tardis /opt/conda/envs/tardis/bin/'
@@ -32,7 +28,7 @@ def membrain_preprocessing(parameters, input):
     
         command = f"{get_tardis_path()}tomo_preprocessing {match_pixel} --input-tomogram {input} --output-path {output_rescale}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
         rescaled = True
         tomo_pixelsize = parameters['tomo_mem_pixel']
@@ -48,11 +44,11 @@ def membrain_preprocessing(parameters, input):
         
         command = f"{get_tardis_path()}tomo_preprocessing extract_spectrum --input-path {template} --output-path ./template_spectrum.mrc"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
         command = f"{get_tardis_path()}tomo_preprocessing match_spectrum --input {output_rescale} --target ./template_spectrum.mrc --output {output_match_spectrum}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
     else:
         output_match_spectrum = output_rescale
@@ -61,7 +57,7 @@ def membrain_preprocessing(parameters, input):
 
         command = f"{get_tardis_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output} --pixel-size {tomo_pixelsize}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
     else:
         output = output_match_spectrum
 
@@ -101,15 +97,14 @@ def tardis_segmentation(parameters, input, local_output):
         command =f"{get_tardis_path()}tardis_actin {common_options} {mt_actin_options} --cnn_checkpoint {os.path.join(cnn_model_path,'actin_3d','model_weights.pth')} --dist_checkpoint {dist_model_path}"
     else:
         assert False, f"Unknown segmentation method {parameters.get('tomo_mem_method')}"
-    local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
-    if parameters["slurm_verbose"]:
-        try:
-            log_file = glob.glob('Predictions/*_log.txt')[0]
-            with open(log_file, 'r') as f:
-                logger.logger(f.read())
-        except:
-            pass
+    try:
+        log_file = glob.glob('Predictions/*_log.txt')[0]
+        with open(log_file, 'r') as f:
+            logger.debug(f.read())
+    except:
+        pass
 
     try:
         segmentation = glob.glob('Predictions/*_semantic.mrc')[0]
@@ -151,45 +146,30 @@ def tardis_segmentation(parameters, input, local_output):
         # save result
         mrc.write(clean, segmentation)
 
-def run_tardis(project_dir, name, parameters ):
-
-    # always try to look for tomograms from parent project
-    if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):
-        tomogram_source = project_params.resolve_path(parameters["data_parent"])
-    else:
-        tomogram_source = project_dir
-        logger.info("Using current project tomograms for segmentation")
+def run_tardis(name, parameters ):
 
     local_input = f"./{name}.rec"
 
     # copy the input tomogram to scratch space
-    assert os.path.exists(local_input), f"{local_input} dose not exist, please run preprocessing first"
+    assert os.path.exists(local_input), f"{local_input} does not exist, please run preprocessing first"
 
     output = name + "_seg.rec"
 
-    if parameters["tomo_mem_preprocessing"]:
-        rescaled, preprocessed = membrain_preprocessing(parameters, input=local_input)
-    else:
-        rescaled = False
-        preprocessed = local_input
-    
     local_output = "seg_out"
-    tardis_segmentation(parameters, input=preprocessed, local_output=local_output)
+    tardis_segmentation(parameters, input=local_input, local_output=local_output)
     
-    if rescaled:
-        rescale_input = glob.glob(f"./Predictions/*_semantic.mrc")[0]
-        command = f"{get_tardis_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path {output}"
-
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
-    else:
-        target = glob.glob(f"./Predictions/*_semantic.mrc")[0]
-        shutil.move(target, output)
+    target = glob.glob(f"./Predictions/*_semantic.mrc")[0]
+    shutil.move(target, output)
 
     # produce poor man's visualization
     reconstruction = mrc.read(local_input)
     segmentation = mrc.read(output)
     max = np.max(reconstruction)
     threshold = segmentation.max()
+    # apparently tardis sometimes swaps axes, so we need to check and fix
+    if reconstruction.shape != segmentation.shape:
+        segmentation = np.swapaxes(segmentation, 0, 1)
+        mrc.write(segmentation, output)
     visualization = np.where( segmentation == threshold, max, reconstruction )
     mrc.write(visualization,local_input)
 

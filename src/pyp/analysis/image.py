@@ -1,19 +1,16 @@
 import math
 import os
 import shutil
-
+import logging
 import numpy as np
 
 from pyp.inout.image import mrc, write_out_relion_stack
 from pyp.inout.metadata import frealign_parfile
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths, get_imod_path
-from pyp.utils import get_relative_path, symlink_relative
+from pyp.utils import symlink_relative
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def bandpass(shape, radius1, sigma1, radius2, sigma2):
     """Return highpass filter to be multiplied with fourier transform."""
@@ -264,8 +261,7 @@ def contrast_stretch(input, output="", resize=100):
     run_shell_command(
         "{0}/convert {1} -resize {3}% -contrast-stretch 1%x2% {2}".format(
             os.environ["IMAGICDIR"], input, output, resize
-        ),
-        verbose=False,
+        ), log_level=logging.TRACE
     )
 
 
@@ -297,9 +293,10 @@ def normalize_volume(image, radius=0, pixelsize=1):
 
     if radius / pixelsize > boxsize / 2:
         logger.warning(
-            "Particle radius falls outside box %f > %f",
-            radius,
-            boxsize // 2 * pixelsize,
+            "Particle radius falls outside box %f > %f" % (
+                radius,
+                boxsize // 2 * pixelsize,
+            )
         )
         radius = boxsize * pixelsize / 2
     condition = (
@@ -323,9 +320,10 @@ def extract_background(image, radius, pixelsize):
     x, y = np.mgrid[0:boxsize, 0:boxsize] - boxsize // 2
     if radius / pixelsize > boxsize / 2:
         logger.warning(
-            "Particle radius falls outside box %f > %f",
-            radius,
-            boxsize // 2 * pixelsize,
+            "Particle radius falls outside box %f > %f" % (
+                radius,
+                boxsize // 2 * pixelsize,
+            )
         )
         radius = boxsize * pixelsize / 2
     condition = np.hypot(x, y) > radius / pixelsize
@@ -370,10 +368,11 @@ def compute_running_avg(particle, num_particles, num_frames, window_averaging):
         all_weights[i, :] = weights / weights.mean() / num_frames
 
     logger.info(
-        "Now weighting frame average for particle %d of %d containing %d frames",
-        particle,
-        num_particles,
-        num_frames,
+        "Now weighting frame average for particle %d of %d containing %d frames" % (
+            particle,
+            num_particles,
+            num_frames,
+        )
     )
 
 
@@ -451,7 +450,7 @@ def fix_empty_particles(scratch_stackfile, actual_number_of_particles, temp_stac
 
     if empty_frames > 0:
         logger.warning(
-            "Detected %d mostly empty frames (substituted with random noise).",
+            "Detected %d mostly empty frames (substituted with random noise)." %
             empty_frames,
         )
 
@@ -481,6 +480,5 @@ def dose_weight(args, parameters, imagefile, working_path, current_path):
         working_path,
         args.file,
     )
-    if parameters['slurm_verbose']:
-        logger.info(command)
+    logger.debug(command)
     os.system(command)

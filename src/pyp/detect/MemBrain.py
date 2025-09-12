@@ -3,16 +3,10 @@ import os
 import shutil
 import glob
 import numpy as np
-from pathlib import Path
-from pyp.analysis import plot
 from pyp.inout.image import mrc
 from pyp.system import local_run, project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-from pyp.system.singularity import get_pyp_configuration
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_membrane_path():
     command_base = 'export PYTHONPATH=/opt/conda/envs/membrain/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n membrain /opt/conda/envs/membrain/bin/'
@@ -32,7 +26,7 @@ def membrain_preprocessing(parameters, input):
     
         command = f"{get_membrane_path()}tomo_preprocessing {match_pixel} --input-tomogram {input} --output-path {output_rescale}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
         rescaled = True
         tomo_pixelsize = parameters['tomo_mem_pixel']
@@ -48,11 +42,11 @@ def membrain_preprocessing(parameters, input):
         
         command = f"{get_membrane_path()}tomo_preprocessing extract_spectrum --input-path {template} --output-path ./template_spectrum.mrc"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
         command = f"{get_membrane_path()}tomo_preprocessing match_spectrum --input {output_rescale} --target ./template_spectrum.mrc --output {output_match_spectrum}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
     else:
         output_match_spectrum = output_rescale
@@ -61,7 +55,7 @@ def membrain_preprocessing(parameters, input):
 
         command = f"{get_membrane_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output} --pixel-size {tomo_pixelsize}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
     else:
         output = output_match_spectrum
 
@@ -105,7 +99,7 @@ def membrain_segmentation(parameters, input, local_output):
     
     command =f"{get_membrane_path()}membrain segment --tomogram-path {input} --ckpt-path {model} --out-folder {local_output} {rescale_patches} {store_p} {connected_map} {augment} --segmentation-threshold {parameters[tm + '_seg_thres']} --sliding-window-size {parameters[tm + '_sliding_wd']}"
 
-    local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
     try:
         segmentation = glob.glob(local_output+'/*')[0]
@@ -124,7 +118,7 @@ def membrain_segmentation(parameters, input, local_output):
 
             command =f"{get_membrane_path()}membrain components --segmentation-path {segmentation} {connected_map} --out-folder {local_output}_components"
 
-            local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+            local_run.stream_shell_command(command)
             
             output = glob.glob(local_output+'_components/*.mrc')[0]
             shutil.move(output, segmentation)
@@ -168,7 +162,7 @@ def run_membrain(project_dir, name, parameters ):
     local_input = f"./{name}.rec"
 
     # copy the input tomogram to scratch space
-    assert os.path.exists(local_input), f"{local_input} dose not exist, please run preprocessing first"
+    assert os.path.exists(local_input), f"{local_input} does not exist, please run preprocessing first"
 
     output = name + "_seg.rec"
 
@@ -185,7 +179,7 @@ def run_membrain(project_dir, name, parameters ):
         rescale_input = glob.glob(f"./{local_output}/*.mrc")[0]
         command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path {output}"
 
-        local_run.stream_shell_command(command, verbose=parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
     else:
         target = glob.glob(f"./{local_output}/*.mrc")[0]
         shutil.move(target, output)

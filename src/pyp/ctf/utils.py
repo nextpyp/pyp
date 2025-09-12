@@ -1,10 +1,4 @@
 from pyp.system import project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
 
 def update_pyp_params_using_ctf(parameters, ctf, save=False):
     """Update frealign_parfile based on ctf file.

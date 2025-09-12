@@ -11,15 +11,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pyp.inout.image import write_central_slices, write_multiple_slices, writepng
-from pyp.system import project_params, slurm, local_run
-from pyp.system.logging import initialize_pyp_logger
+from pyp.system import project_params, local_run
 from pyp.system.singularity import get_pyp_configuration, run_slurm
 from pyp.system.utils import get_parameter_files_path
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def run_3davg(parameters):
     # set up xml files to run 3DAVG
@@ -287,7 +283,7 @@ def parse_arguments():
         parameters = empty_parameters
     else:
         if len(parameters) is not len(empty_parameters):
-            logger.warning("Paramter file has changed. Adding new entries:")
+            logger.warning("Parameter file has changed. Adding new entries:")
             for key in list(empty_parameters.keys()):
                 if key not in parameters:
                     print("\t", key, empty_parameters[key])
@@ -335,16 +331,28 @@ def parse_xml(mp, sp):
 
     # modify general parameters such as volumes size and z correction
     general = root.find("general")
+    classification_section = root.find("class")
     volsize = general.find("image_geometry").find("volume_size")
     volcutoff = general.find("image_geometry").find("volume_cut_offset")
     volsize.text = str(mp["tomo_ext_size"])
     volcutoff.text = str(sp["zcorr"])
 
+    if "sva_centering_iterations" in mp:
+        center = root.find("center")
+        center_iterations = center.find("loop_iterations")
+        center_iterations.text = str(mp["sva_centering_iterations"])
+
+        center_symmetry = center.find("apply_rotational_symmetry")
+        if mp["sva_centering_symmetry"]:
+            center_symmetry.text = str(1)
+        else:
+            center_symmetry.text = str(0)
+
     # modify setting corresponding to the mode
     mode = int(sp["mode"])
     # check mode
     if mode < 0 or mode > 3:
-        logger.error(f"Cuurently only support mode 0 - 3.")
+        logger.error(f"Only modes 0 - 3 are supported")
         sys.exit(1)
     # mode 0 (re-centering) uses mra field
     if mode == 0:
@@ -353,9 +361,9 @@ def parse_xml(mp, sp):
     # parse filter, sym, mask parameters in the corresponding field
     mode_field = root.find(MODE_LIST[mode])
     sym_text = MODE_LIST[mode] + "_use_symmetrization"
-    window_x_text, window_y_text, window_z_text = [
+    window_x_text, window_y_text, window_z_text, window_sigma = [
         MODE_LIST[mode] + t
-        for t in ["_image_window_x", "_image_window_y", "_image_window_z"]
+        for t in ["_image_window_x", "_image_window_y", "_image_window_z", "_image_window_sigma"]
     ]
     highcut_text = MODE_LIST[mode] + "_high_pass_cutoff"
     highdecay_text = MODE_LIST[mode] + "_high_pass_decay"
@@ -366,6 +374,7 @@ def parse_xml(mp, sp):
     x = mode_field.find(window_x_text)
     y = mode_field.find(window_y_text)
     z = mode_field.find(window_z_text)
+    sigma = mode_field.find(window_sigma)
     highcut = mode_field.find(highcut_text)
     highdecay = mode_field.find(highdecay_text)
     lowcut = mode_field.find(lowcut_text)
@@ -379,7 +388,8 @@ def parse_xml(mp, sp):
     except ValueError:
         logger.error("Mask should be defined by x,y,z, which is separated by comma.")
         sys.exit(1)
-
+    sigma.text = str(mp.get("sva_mask_sigma",4))
+    
     # check filter setting
     if sp["highpass"] != None and sp["lowpass"] != None:
         try:
@@ -417,17 +427,45 @@ def parse_xml(mp, sp):
         rot.text = str(sp["tol_angle"])
         trans.text = str(sp["tol_shifts"])
 
-    # modify number of classes if mode == class
+    # alwasy modify number of classes
+    class_text = "class_number_of_classes"
+    classification = classification_section.find(class_text)
+    classification.text = str(sp["classes"])
+
     if mode == 1:
-        class_text = "class_number_of_classes"
-        classification = mode_field.find(class_text)
-        classification.text = str(sp["classes"])
+        # modify number of classes if mode == class
+        if "sva_pre_selection_fraction" in mp:
+            class_text = "class_cutoff_percentage_pre"
+            classification = mode_field.find(class_text)
+            classification.text = str(mp["sva_pre_selection_fraction"])
+
+        if "sva_cluster_selection_fraction" in mp:
+            class_text = "class_cutoff_percentage"
+            classification = mode_field.find(class_text)
+            classification.text = str(mp["sva_cluster_selection_fraction"])
+
+        if "sva_class_selection_fraction" in mp:
+            class_text = "class_cutoff_selection"
+            classification = mode_field.find(class_text)
+            classification.text = str(mp["sva_class_selection_fraction"])
+
+    elif mode == 2:
+        if "sva_class_refinement_iterations" in mp:
+            refine_text = "refinement_iterations"
+            refine = mode_field.find(refine_text)
+            refine.text = str(mp["sva_class_refinement_iterations"])
+    elif mode == 3:
+        # set threshold fraction during centering
+        if "sva_pre_selection_fraction_centering" in mp:
+            class_text = "class_cutoff_percentage"
+            classification = root.find("class").find(class_text)
+            classification.text = str(mp["sva_pre_selection_fraction_centering"])
 
     # write out modified xml for actual 3DAVG refinement
     data.write(xml.replace(".xml", ".exe.xml"), encoding="utf-8", xml_declaration=True)
 
 
-def sva_iterate(mp, sp, iter):
+def sva_iterate(mp, sp, iter, submit = True):
     """Iterate 3DAVG job; mode 0 - recenter; mode 1 - classification;
     mode 2 - refine; mode 3 - mra.
 
@@ -457,58 +495,62 @@ def sva_iterate(mp, sp, iter):
 
     # Apply xml settings to the global average (or other mrcs if a different map is given)
     # and save them as montaged png
-    test_command = f"module load FFTW/3.3.7; {test_filter} {xmlexe} -1 {test_mrc}"
-    if not os.path.exists(test_mrc):
-        logger.error(
-            f"{test_mrc} does not exist, please provide a correct volume for Test_Metric_Filter"
-        )
-    try:
-        id = subprocess.check_output(
-            test_command, stderr=subprocess.STDOUT, shell=True, text=True
-        ).split()[-1]
-        logger.info(f"Apply filter on {test_mrc}")
+    if not submit:
+        test_command = f"{test_filter} {xmlexe} -1 {test_mrc}"
+    else:
+        test_command = f"module load FFTW/3.3.7; {test_filter} {xmlexe} -1 {test_mrc}"
+    if os.path.exists(test_mrc):
+        try:
+            local_run.stream_shell_command(test_command)
+            logger.info(f"Apply filter on {test_mrc}")
 
-        montage_original = write_central_slices(test_mrc)
-        montage_filtered = write_central_slices(test_mrc + ".filtered.mrc")
-        writepng(montage_original, test_mrc + ".png")
-        writepng(montage_filtered, test_mrc + ".filtered.mrc.png")
-        command = f"montage -geometry 600x200 -tile 1x2 {test_mrc+'.png'} {test_mrc+'.filtered.mrc.png'} {test_mrc+'.filtered.png'}"
-        logger.info(
-            subprocess.check_output(
-                command, stderr=subprocess.STDOUT, shell=True, text=True
-            )
-        )
-        # clean up
-        os.remove(test_mrc + ".png")
-        os.remove(test_mrc + ".filtered.mrc.png")
-    except:
-        logger.warning("Cannot apply Test_Metric_Filter to test your parameters")
-
-    # prepare sbatch file for slurm job submission
-    command_file = f"prepare_3davg.sh"
-    if os.path.exists(command_file):
-        os.remove(command_file)
-    with open(command_file, "w") as f:
-        f.write("#!/bin/bash\n")
-        f.write("module load MPICH\n")
-        f.write("module load FFTW/3.3.7\n")
-        f.write(f"{executable} {xmlexe} && 3davg -plot")
+            if submit:
+                montage_original = write_central_slices(test_mrc)
+                montage_filtered = write_central_slices(test_mrc + ".filtered.mrc")
+                writepng(montage_original, test_mrc + ".png")
+                writepng(montage_filtered, test_mrc + ".filtered.mrc.png")
+                command = f"montage -geometry 600x200 -tile 1x2 {test_mrc+'.png'} {test_mrc+'.filtered.mrc.png'} {test_mrc+'.filtered.png'}"
+                logger.info(
+                    subprocess.check_output(
+                        command, stderr=subprocess.STDOUT, shell=True, text=True
+                    )
+                )
+                # clean up
+                os.remove(test_mrc + ".png")
+                os.remove(test_mrc + ".filtered.mrc.png")
+        except:
+            logger.warning("Cannot apply Test_Metric_Filter to test your parameters")
 
     # submit job using slurm
-    sbatch_com = f"sbatch --partition={queue} --mem=600g --cpus-per-task=1 --output='swarm/%x_iter{iter}_mode{mode}_%j.out' --error=swarm/%x_iter{iter}_mode{mode}_%j.err --ntasks={sp['cpu']} --job-name=3DAVG {command_file}"
-    """
-    id = slurm.submit_jobs(
-        ".",
-        f"{command_file}",
-        "3davg_swarm",
-        f"3DA_{dataset}",
-        queue,
-        0,
-        sp["cpu"],
-        600,
-    )
-    """
-    local_run.run_shell_command(sbatch_com, verbose = True)
-    logger.info(
-        f"\n\n\n\t\t 3DAVG [ iteration {iter} ] [ mode {mode} ] submitted successfully, JOBID = {id} \n\n"
-    )
+    if submit:
+        # prepare sbatch file for slurm job submission
+        command_file = f"prepare_3davg.sh"
+        if os.path.exists(command_file):
+            os.remove(command_file)
+        with open(command_file, "w") as f:
+            f.write("#!/bin/bash\n")
+            f.write("module load MPICH\n")
+            f.write("module load FFTW/3.3.7\n")
+            f.write(f"{executable} {xmlexe} && 3davg -plot")
+
+        sbatch_com = f"sbatch --partition={queue} --mem=600g --cpus-per-task=1 --output='swarm/%x_iter{iter}_mode{mode}_%j.out' --error=swarm/%x_iter{iter}_mode{mode}_%j.err --ntasks={sp['slurm_tasks']} --job-name=3DAVG {command_file}"
+        """
+        id = slurm.submit_jobs(
+            ".",
+            f"{command_file}",
+            "3davg_swarm",
+            f"3DA_{dataset}",
+            queue,
+            0,
+            sp["cpu"],
+            600,
+        )
+        """
+        local_run.run_shell_command(sbatch_com)
+        logger.info(
+            f"\n\n\n\t\t 3DAVG [ iteration {iter} ] [ mode {mode} ] submitted successfully, JOBID = {id} \n\n"
+        )
+    else:
+        command = f"export I_MPI_HYDRA_BOOTSTRAP=ssh && export HYDRA_BOOTSTRAP=ssh && /opt/mpich-3.2.1/bin/mpirun -genv I_MPI_PIN disable -np {sp['slurm_tasks']} {executable} {xmlexe}"
+        proc = local_run.stream_shell_command(command)
+        assert proc.returncode == 0, f"{proc.stdout.read()}Try increasing the Split, Memory per thread (GB)"

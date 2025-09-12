@@ -35,7 +35,7 @@ Data pre-processing consists of doing movie frame alignment, CTF estimation and 
 
     # launch pre-processing
 
-pyp -data_mode spr                                               \
+    pyp -data_mode spr                                           \
         -scope_voltage 300                                       \
         -scope_pixel 0.66                                        \
         -data_path="ABSOLUTE_PATH_TO/spr_tutorial/14*.tif"       \

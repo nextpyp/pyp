@@ -2,16 +2,13 @@ from pyp.system.local_run import run_shell_command
 from pyp.inout.image import mrc
 from pyp.utils import timer
 from pyp.system.utils import get_imod_path
-from pyp.utils import get_relative_path
-from pyp.system.logging import initialize_pyp_logger
 
+import logging
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy
 from skimage.morphology import remove_small_objects,ball
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def extract(image,boxes,boxsize):
     particles = np.zeros((len(boxes), boxsize, boxsize, boxsize))
@@ -161,8 +158,8 @@ class Picker():
         f.close()
         circle = int(self.radius / self.pixelsize / self.auto_binning)
         # Saving coordinates in spk format and swapping Y-Z
-        run_shell_command(get_imod_path()+'/bin/point2model boxs.txt '+self.name+'.mod -sphere %s' % circle,  verbose=False)
-        run_shell_command(get_imod_path()+'/bin/imodtrans -Y -T ' +self.name+ '.mod ' + self.name + ".spk", verbose=False )
+        run_shell_command(get_imod_path()+'/bin/point2model boxs.txt '+self.name+'.mod -sphere %s' % circle, log_level=logging.TRACE)
+        run_shell_command(get_imod_path()+'/bin/imodtrans -Y -T ' +self.name+ '.mod ' + self.name + ".spk", log_level=logging.TRACE)
         logger.info(f"\t{len(boxs):,} particles detected")
 
         if show:

@@ -7,13 +7,9 @@ import sys
 
 import numpy as np
 
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Particle coordinate converter")
@@ -95,7 +91,7 @@ def cryolo2mod(cbox, mod, size, scaling, z, write=True):
     
     """
     if not os.path.exists(cbox):
-        logger.error("Input %s does not exist")
+        logger.error("Input %s does not exist" % cbox)
         sys.exit()
     spikes = read_box(cbox)
     ret_spikes = []

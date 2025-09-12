@@ -13,6 +13,7 @@ from .core import (
     plot_trajectory,
     plot_trajectory_raw,
     tomo_slicer_gif,
+    false_color,
     tomo_montage,
     histogram_particle_tomo,
     par2bild

@@ -1,4 +1,5 @@
 import glob
+import logging
 import math
 import multiprocessing
 import os
@@ -12,18 +13,15 @@ import numpy
 
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, get_frealign_paths
 from pyp.system.wrapper_functions import newstack
-from pyp.utils import get_relative_path, timer
+from pyp.utils import timer
 
 from .. import metadata
 from . import digital_micrograph as dm4
 from . import mrc
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def write_out_relion_stack(name, current_path, particles):
     # write particle stack (negated per relion's convention)
@@ -41,11 +39,11 @@ def mrc2png(mrcfile, pngfile):
 
 def img2svgz(pngfile, svgzfile, options=""):
     command = f"{os.environ['IMAGICDIR']}/convert '{pngfile}' {options} '{svgzfile}'"
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
 
 def img2webp(pngfile, webpfile, options=""):
     command = f"{os.environ['IMAGICDIR']}/convert '{pngfile}' {options} -quality 100 -define webp:lossless=true '{webpfile}'"
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
 
 def mrc2webp(mrcfile, webpfile):
     pngfile = webpfile.replace(".webp",".png")
@@ -254,12 +252,13 @@ def get_gain_reference(parameters, x, y):
             gain_reference = numpy.rot90(gain_reference, parameters["gain_rotation"])
 
         logger.info(
-            "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f",
-            gain_reference_file,
-            gain_reference.shape,
-            gain_reference.min(),
-            gain_reference.max(),
-            gain_reference.mean(),
+            "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f" % (
+                gain_reference_file,
+                gain_reference.shape,
+                gain_reference.min(),
+                gain_reference.max(),
+                gain_reference.mean(),
+            )
         )
 
         gain_reference_file = "gain.mrc"
@@ -406,7 +405,7 @@ def read_from_matlab(filename):
         Ny = struct.unpack("i", f.read(4))[0]
         Nz = struct.unpack("i", f.read(4))[0]
 
-        logger.info("%s %s %s", Nx, Ny, Nz)
+        logger.info("%s %s %s" % (Nx, Ny, Nz))
         S = numpy.fromstring(f.read(), "double")
 
         logger.info(len(S))
@@ -485,12 +484,13 @@ def readDMfile(filename, parameters=0, binning=1):
         fr.close()
 
         logger.info(
-            "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f",
-            gain_reference_file,
-            gain_reference.shape,
-            gain_reference.min(),
-            gain_reference.max(),
-            gain_reference.mean(),
+            "Using gain reference: %s, shape: %s, min: %f, max: %f, mean: %f" % (
+                gain_reference_file,
+                gain_reference.shape,
+                gain_reference.min(),
+                gain_reference.max(),
+                gain_reference.mean(),
+            )
         )
 
     # support for separate files for each frame
@@ -598,7 +598,7 @@ def readDMfile(filename, parameters=0, binning=1):
 
         logger.info("Reading frame ")
         for frame in range(first, z):
-            logger.info("\t %d", frame)
+            logger.info("\t %d" % frame)
             if binning > 1:
                 image[frame - first, :, :] = (
                     numpy.reshape(numpy.fromfile(f, dt, y * x), [y, x])
@@ -667,7 +667,7 @@ def readDMfileandsave(filename, parameters=0, binning=1):
 
             logger.info("Reading frame ")
             for frame in range(first, z):
-                logger.info("\t %d", frame)
+                logger.info("\t %d" % frame)
 
                 # file for current frame (headersize changes so we have to read it each time)
                 frame_file = root_name + "-%04d.dm4" % (frame + 1)
@@ -853,7 +853,7 @@ def readMRCfile(filename, parameters, binning):
 
     logger.info("Reading frame ")
     for frame in range(first, z):
-        logger.info("\t %d", frame)
+        logger.info("\t %d" % frame)
 
         if binning > 1:
             image[frame - first, :, :] = (
@@ -878,7 +878,7 @@ def get_image_dimensions(name):
     assert Path(name), f"{name} does not exist."
 
     command = "{0}/bin/header -size '{1}'".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, verbose=False)
+    [output, error] = run_shell_command(command, log_level=logging.NOTSET)
     if "ERROR" in output:
         logger.error(output)
     return list(map(int, output.split()))
@@ -888,7 +888,7 @@ def get_image_mean(name):
     assert Path(name), f"{name} does not exist."
 
     command = "{0}/bin/header -mean '{1}'".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, verbose=False)
+    [output, error] = run_shell_command(command, log_level=logging.NOTSET)
     if "ERROR" in output:
         logger.error(output)
     return float(output)
@@ -896,7 +896,7 @@ def get_image_mean(name):
 def get_image_mode(name):
 
     command = "{0}/bin/header -mode {1}".format(get_imod_path(), name)
-    [output, error] = run_shell_command(command, verbose=False)
+    [output, error] = run_shell_command(command, log_level=logging.NOTSET)
     return int(output)
 
 
@@ -986,7 +986,7 @@ def readMoviefileandsave(filename, parameters, binning, gain_reference_file=None
             com = env + '{0}/bin/clip multiply -m 2 {1} "{2}" {3}; rm -f {3}~'.format(
                 get_imod_path(), inputfile, gain_reference_file, outputfile,
             )
-            run_shell_command(com,parameters["slurm_verbose"])
+            run_shell_command(com)
             mode = 2
             if inputfile != outputfile:
                 os.remove(inputfile)
@@ -1248,11 +1248,11 @@ def collate_and_compress(filename):
         logger.info("Successful {0}.tbz".format(name))
         for fil in files_to_delete:
             if os.path.exists(fil):
-                logger.info("Removing %s", fil)
+                logger.info("Removing %s" % fil)
                 os.remove(fil)
                 # remove signal files as well
                 for i in glob.glob("." + os.path.split(fil)[-1].split(".")[0] + "*"):
-                    logger.info("Removing %s", i)
+                    logger.info("Removing %s" % i)
                     os.remove(i)
     else:
         logger.error("{0}.tbz file not valid.".format(name))
@@ -1351,7 +1351,7 @@ def compress_and_delete(filename, compression="tbz", fileset=""):
         else:
             logger.error(".bz2 compression failed creating file {0}".format(file_list))
             try:
-                logger.info("Removing %s", tbz_file)
+                logger.info("Removing %s" % tbz_file)
                 os.remove(tbz_file)
             except:
                 logger.exception("Could not delete file %s", tbz_file)
@@ -1376,7 +1376,7 @@ def compress_and_delete(filename, compression="tbz", fileset=""):
                     for fil in glob.glob("." + name + "*"):
                         if os.path.exists(fil):
                             os.remove(fil)
-                            logger.info("Deleting %s", fil)
+                            logger.info("Deleting %s" % fil)
 
     else:
         command = "tar tf {0} --use-compress-prog=pbzip2".format(tbz_file)
@@ -1390,7 +1390,7 @@ def compress_and_delete(filename, compression="tbz", fileset=""):
                 for fil in glob.glob("." + name + "*"):
                     if os.path.exists(fil):
                         os.remove(fil)
-                        logger.info("Deleting %s", fil)
+                        logger.info("Deleting %s" % fil)
         else:
             logger.error("{0} file not valid. Keeping {1}".format(tbz_file, file_list))
             os.remove(tbz_file)
@@ -1404,7 +1404,7 @@ def compress_images(input, output, cpus=1):
     command = "{0}/bin/mrc2tif -O 1 -P -s -c 8 {1} {2} && rm -f {1}".format(
         get_imod_path(), input, output
     )
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
 
 @timer.Timer("pre-processing", text="Tilt-series pre-processing took: {}", logger=logger.info)
 def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
@@ -1443,15 +1443,13 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
     squares = [ "%s_%04d_square.mrc"%(name, idx) for idx in range(z) ]
 
     from pyp.system import mpi
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands)
     
     command = "{0}/bin/newstack {1} {2}_square.mrc".format(
         get_imod_path(), " ".join(squares) , name
     )
     # suppress long log
-    if parameters["slurm_verbose"]:
-        logger.info(command)
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
     os.rename("{0}.mrc".format(name), "{0}.raw.mrc".format(name))
     os.rename("{0}_square.mrc".format(name), "{0}.mrc".format(name))
 
@@ -1460,8 +1458,7 @@ def get_tilt_axis_angle(name):
 
     # figure out tilt-axis angle and store in metadata
     [output, _] = run_shell_command(
-        "%s/bin/xf2rotmagstr %s.xf" % (get_imod_path(), name), 
-        verbose=False,
+        "%s/bin/xf2rotmagstr %s.xf" % (get_imod_path(), name), log_level=logging.TRACE
     )
     xf_rot_mag = output.split("\n")
     axes = []
@@ -1499,22 +1496,20 @@ def generate_aligned_tiltseries(name, parameters, x, y):
         aligned_images.append("{0}_{1:04d}.ali".format(name, tilt))
 
     from pyp.system import mpi
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands)
 
     command = "{0}/bin/newstack {2} {1}.ali".format(
         get_imod_path(), name, " ".join(aligned_images)
     )
     # suppress long log
-    if parameters["slurm_verbose"]:
-        logger.info(command)
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
     [os.remove(f) for f in aligned_images]
 
     # generate binned version also
     command = "{0}/bin/newstack {1}.ali {1}_bin.ali -bin {2}; rm -rf {1}_bin.ali~".format(
         get_imod_path(), name, parameters["tomo_rec_binning"]
     )
-    run_shell_command(command,verbose=parameters["slurm_verbose"])
+    run_shell_command(command)
 
 def cistem_mask_create(parameters: dict, model: str, output: str):
     """
@@ -1542,7 +1537,7 @@ def cistem_mask_create(parameters: dict, model: str, output: str):
     assert ("particle_rad" in parameters), "Please provide particle radius"
 
     command = f"{get_imod_path()}/bin/header -pixel '{model}'"
-    [stdo, stdr] = run_shell_command(command)
+    [stdo, stdr] = run_shell_command(command,logging.NOTSET)
     model_pixel = float(stdo.split()[0])
     logger.info(f"{model} has pixel size {model_pixel}")
 
@@ -1576,9 +1571,9 @@ def cistem_mask_create(parameters: dict, model: str, output: str):
         + "eot\n"
     )
 
-    run_shell_command(command, verbose=parameters["slurm_verbose"])
+    run_shell_command(command)
     command = f"{get_imod_path()}/bin/alterheader -del {model_pixel},{model_pixel},{model_pixel} {output_mask}"
-    run_shell_command(command, verbose=parameters["slurm_verbose"])
+    run_shell_command(command)
 
     assert (os.path.exists(output_mask)), f"Threshold falls outside range, try to use a different threshold"
     logger.info(f"Mask {output_mask} created successfully!")

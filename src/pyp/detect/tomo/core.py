@@ -1,4 +1,5 @@
 import glob
+import logging
 import math
 import random
 import os
@@ -10,7 +11,7 @@ from skimage import measure
 from pyp import detect
 from pyp.detect import joint
 from pyp.analysis.geometry import calcSpikeNormXYZ, get_vir_binning_boxsize
-from pyp.analysis.geometry import transformations as vtk
+from pyp.analysis import plot
 from pyp.analysis.image import normalize_volume
 from pyp.inout.image import mrc, img2webp
 from pyp.inout.image.core import get_image_dimensions
@@ -18,7 +19,7 @@ from pyp.inout.metadata import pyp_metadata
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.utils import timer
 from pyp.system import local_run, mpi, project_params
-from pyp.system.logging import initialize_pyp_logger
+from pyp.system.logging import get_verbose_level
 from pyp.system.utils import (
     get_tomo_path,
     get_imod_path,
@@ -26,10 +27,8 @@ from pyp.system.utils import (
     check_env,
     get_gpu_ids,
 )
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_virion_segmentation_thresholds(seg_thresh):
 
@@ -69,12 +68,11 @@ def resize_template(mparameters, external_template, autopick_template):
         scaling < 0.99
         or scaling > 1.01
     ):
-        if mparameters.get("slurm_verbose"):
-            logger.warning(f"Rescaling template {external_template} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
+        logger.debug(f"Rescaling template {external_template} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
         command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
             get_imod_path(), output_box_size, autopick_template, scaling, external_template,
         )
-        local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
+        local_run.run_shell_command(command)
     elif not external_template == autopick_template:
         shutil.copy2(external_template, autopick_template)
 
@@ -178,9 +176,9 @@ def detect_particles_from_surface( parameters, virion_name, autopick_template, t
                 )
                 command = f"{get_tomo_path()}/Correlation3DNew {virion_name} {virion_name}_binned_nad_seg.mrc {threshold} {spk_pick_binning} {min(tilt_angles)} {max(tilt_angles)} 2 {lower_slice} {upper_slice} {size_x} {size_y} {size_z} {parameters['tomo_vir_detect_dist']} {parameters['tomo_vir_detect_thre']} {virion_name}_cut.txt {virion_name}_ccc.xml {virion_name}_spikes.xml"
                 if virion_name.endswith("_vir0000"):
-                    local_run.stream_shell_command(command,verbose=parameters['slurm_verbose'])
+                    local_run.stream_shell_command(command)
                 else:
-                    local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+                    local_run.run_shell_command(command)
                 fresh_template_match = True
 
             # Using uniform coordinates from virion surface
@@ -260,7 +258,7 @@ def detect_particles_from_surface( parameters, virion_name, autopick_template, t
                         offset,
                         threshold,
                     )
-                    local_run.run_shell_command(com,verbose=parameters.get("slurm_verbose"))
+                    local_run.run_shell_command(com)
 
         # revert flipy to ensure compatibility
         if os.path.exists("isdm4"):
@@ -480,7 +478,7 @@ def process_virion_multiprocessing(
     command = "{0}/bin/binvol -bin {1} {2}.rec {2}_binned.mrc".format(
         get_imod_path(), spk_pick_binning, virion_name,
     )
-    local_run.run_shell_command(command,parameters["slurm_verbose"])
+    local_run.run_shell_command(command)
 
     if not os.path.exists(f"{virion_name}_binned_nad_seg.mrc"):
 
@@ -488,7 +486,7 @@ def process_virion_multiprocessing(
         command = "{0}/bin/nad_eed_3d -n 10 {1}_binned.mrc {1}_binned_nad.mrc".format(
             get_imod_path(), virion_name,
         )
-        local_run.run_shell_command(command,verbose=False)
+        local_run.run_shell_command(command, log_level=logging.TRACE)
 
         # produce virus membrane (surface only)
         correction = binning / float(spk_pick_binning) / virion_binning * parameters["tomo_vir_binn"]
@@ -511,18 +509,18 @@ def process_virion_multiprocessing(
         iterations = parameters["tomo_vir_seg_iterations"]
         variances = 10
         command = f"{get_tomo_path()}/virus_segment_membrane {virion_name}_binned_nad.mrc {min_radius:.2f} {max_radius:.2f} {weight} {iterations} {variances} {virion_name}_binned_nad_seg.mrc"
-        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+        local_run.run_shell_command(command)
 
         if os.path.exists("%s_binned_nad.mrc" % (virion_name)):
             # produce visualization for selecting thresholds of iso-surfaces
             command = "{0}/virus_segment_membrane_select_threshold {1}_binned_nad".format(
                 get_tomo_path(), virion_name
             )
-            local_run.run_shell_command(command,parameters["slurm_verbose"])
+            local_run.run_shell_command(command)
             command = "convert -resize 1080x360 {1}_binned_nad.png {1}_binned_nad.png".format(
                 get_imod_path(), virion_name
             )
-            local_run.run_shell_command(command,parameters["slurm_verbose"])
+            local_run.run_shell_command(command)
 
             img2webp(f"{virion_name}_binned_nad.png", f"{virion_name}_binned_nad.webp")
 
@@ -531,11 +529,11 @@ def process_virion_multiprocessing(
         command = "{0}/bin/clip flipx {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(
             get_imod_path(), virion_name
         )
-        local_run.run_shell_command(command,parameters["slurm_verbose"])
+        local_run.run_shell_command(command)
         command = "{0}/bin/clip flipx {1}_binned_nad_seg.mrc {1}_binned_nad_seg.mrc~ && mv {1}_binned_nad_seg.mrc~ {1}_binned_nad_seg.mrc".format(
             get_imod_path(), virion_name
         )
-        local_run.run_shell_command(command,parameters["slurm_verbose"])
+        local_run.run_shell_command(command)
 
     threshold = get_virion_segmentation_thresholds(int(seg_thresh))
 
@@ -575,12 +573,12 @@ def detect_virions(parameters, virion_size, binning, name):
             # additional binning to speed up processing
             extension = "bin"
             command = f"{get_imod_path()}/bin/binvol -bin {parameters['tomo_vir_binn']} {name}.rec {name}.bin"
-            [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
+            [ output, error ] = local_run.run_shell_command(command)
 
         # use uniform pixel size in mrc header because avl relies in this value for specifying virion dimensions to search for
         effective_pixel_size = parameters['tomo_rec_binning']*parameters['scope_pixel']*parameters['tomo_vir_binn']
         command = "{0}/bin/alterheader -o 0,0,0 -del {1},{1},{1} {2}.{3}".format(get_imod_path(), "%.2f" % (effective_pixel_size), name, extension)
-        [ output, error ] = local_run.run_shell_command(command,parameters["slurm_verbose"])
+        [ output, error ] = local_run.run_shell_command(command)
 
         """
         USAGE:
@@ -688,7 +686,7 @@ def detect_virions(parameters, virion_size, binning, name):
         min_radius = parameters["tomo_vir_rad"] * ( 1 - tolerance )
 
         command = f"{get_tomo_path()}/itkCLT-next VirusLocation --cannyLowerThreshold {parameters['tomo_vir_canny_low']} --cannyUpperThreshold {parameters['tomo_vir_canny_high']} --diffusionNumberOfIterations {parameters['tomo_vir_iterations']} --houghNumberOfVirus {parameters['tomo_vir_number']} --houghMinimumRadius {min_radius} --houghMaximumRadius {max_radius} --rejectionCriteria1 10 --rejectionCriteria2 100 {name}.{extension} -o {name}.vir"
-        local_run.stream_shell_command(command,parameters["slurm_verbose"])
+        local_run.stream_shell_command(command)
 
         # cleanup
         if parameters['tomo_vir_binn'] > 1:
@@ -697,7 +695,7 @@ def detect_virions(parameters, virion_size, binning, name):
         rec_x, rec_z, rec_y = get_image_dimensions(f"{name}.rec")
 
         command = f"{get_imod_path()}/bin/imodtrans -Y -n {rec_x},{rec_y},{rec_z} -sx {parameters['tomo_vir_binn']} -sy {parameters['tomo_vir_binn']} -sz {parameters['tomo_vir_binn']} {name}.vir {name}.vir~ && mv {name}.vir~ {name}.vir"
-        [output, error] = local_run.run_shell_command(command,False)
+        [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
 
 def process_virions(
     name, x, y, binning, tilt_angles, tilt_options, exclude_virions, parameters,
@@ -830,11 +828,11 @@ def process_virions(
             if virion_binning > 1:
                 # down-sample aligned tilt-series first before reconstructing virions
                 command = "%s/bin/newstack -ftreduce %d %s.ali %s_bin_vir.ali" % (get_imod_path(), virion_binning, name, name)
-                [output, error] = local_run.run_shell_command(command,parameters["slurm_verbose"])
+                [output, error] = local_run.run_shell_command(command)
             else:
                 shutil.copy2( f'{name}.ali', f'{name}_bin_vir.ali' )
 
-            mpi.submit_function_to_workers(process_virion_multiprocessing, arguments, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(process_virion_multiprocessing, arguments)
 
             # save all coordinates as .spk file
             if parameters["tomo_vir_detect_method"] != "none":
@@ -844,7 +842,7 @@ def process_virions(
                     command = (
                         f"{get_imod_path()}/bin/point2model -scat -sphere 10 -color 0,0,255 -input {name}_all_spikes.txt -output {name}.spk"
                     )
-                    local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+                    local_run.run_shell_command(command)
                     os.remove(f"{name}_all_spikes.txt")
 
     else:
@@ -964,7 +962,7 @@ def build_virion(virion, binning, virion_size, x, y, tilt_options, name, virion_
         y,
         tilt_options,
     )
-    local_run.run_shell_command(command,verbose=False)
+    local_run.run_shell_command(command, log_level=logging.TRACE)
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
@@ -1026,7 +1024,7 @@ def build_virion_unbinned(
         tilt_options,
         virion_binning
     )
-    local_run.run_shell_command(command,verbose=False)
+    local_run.run_shell_command(command, log_level=logging.TRACE)
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
@@ -1102,7 +1100,7 @@ def extract_regions(parameters, name, x, y, binning, zfact, tilt_options):
             tilt_options,
             zfact,
         )
-        local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command(command)
 
         # apply binning factor
         if "extract_bin" in parameters and parameters["extract_bin"] > 1:
@@ -1142,8 +1140,7 @@ def spk_extract_and_process(
     ypad_dn,
     ypad_up,
     pad_factor,
-    parameters,
-    verbose=False
+    parameters
 ):
 
     # get tomogram dimensions directly from aligned tilt-series
@@ -1164,14 +1161,14 @@ def spk_extract_and_process(
         tilt_options,
         zfact,
     )
-    local_run.run_shell_command(command, verbose=verbose)
+    local_run.run_shell_command(command)
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
         command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec~ -blank && mv {3}.rec~ {3}.rec".format(
             get_imod_path(), int(ypad_dn), int(spike_size - 1 + ypad_dn), spike_name,
         )
-        local_run.run_shell_command(command, verbose=verbose)
+        local_run.run_shell_command(command)
 
     # rotate volume to align with Z-axis
     command = "{0}/bin/clip rotx {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(get_imod_path(), spike_name)
@@ -1182,7 +1179,7 @@ def spk_extract_and_process(
         command = "{0}/bin/clip resize -ox {2} -oy {2} -oz {2} {1}.rec {1}.rec~ && mv {1}.rec~ {1}.rec".format(
             get_imod_path(), spike_name, spike_size / pad_factor
         )
-        local_run.run_shell_command(command, verbose=verbose)
+        local_run.run_shell_command(command)
 
     # TODO: remove eman2 dependency
     # HF Liu: normalize the spikes
@@ -1201,7 +1198,7 @@ def spk_extract_and_process(
         command = "{0}/bin/binvol -input {1}.rec -output {1}.rec~ -binning {2} && mv {1}.rec~ {1}.rec".format(
             get_imod_path(), spike_name, str(parameters["tomo_ext_binn"])
         )
-        local_run.run_shell_command(command, verbose=verbose)
+        local_run.run_shell_command(command)
 
     # flipy if dm4 format
     if os.path.exists("isdm4"):
@@ -1404,7 +1401,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         # build template mask
         template_mask = "template_mask.mrc"
         command = f"{get_pytom_path()} pytom_create_template.py --box-size {template_size} --input-map {external_template} --output-file {template} --input-voxel-size-angstrom {model_pixel_size} --output-voxel-size-angstrom {binned_pixel_size} --center {invert} {mirror}"
-        local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+        local_run.stream_shell_command(command=command)
 
         assert os.path.exists(template), f"Template {template} was not created successfully."
 
@@ -1451,12 +1448,12 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         if parameters["tomo_pick_pytom_mask_method"] == "auto":
             logger.info("Using pytom_create_mask.py to create template mask")
             command = f"{get_pytom_path()} pytom_create_mask.py --box-size {template_size} --output-file {template_mask} --radius {radius_in_binned_pixels} --voxel-size {binned_pixel_size} --sigma {parameters['tomo_pick_pytom_mask_sigma']}"
-            local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+            local_run.stream_shell_command(command=command)
         elif parameters["tomo_pick_pytom_mask_method"] == "file":
             logger.info(f"Using provided template mask file: {parameters['tomo_pick_pytom_mask_file']}")
             mask_file = project_params.resolve_path(parameters["tomo_pick_pytom_mask_file"])
             command = f"{get_imod_path()}/bin/matchvol -size {template_size},{template_size},{template_size} -3dxform 1,0,0,0,0,1,0,0,0,0,1,0 '{mask_file}' {template_mask}; rm -f {template_mask}~"
-            local_run.run_shell_command(command=command,verbose=parameters["slurm_verbose"])
+            local_run.run_shell_command(command=command)
 
         # initialize and transfer files from project directory if needed
         os.makedirs("pytom", exist_ok=True)
@@ -1468,6 +1465,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         from pathlib import Path
         if parameters.get("tomo_pick_pytom_use_existing_scores"):
             for path in Path(debug_folder).rglob(f'{name}*.*'):
+                logger.debug(f"Retrieving existing {path}")
                 shutil.copy2( path, Path(os.getcwd())/"pytom" )
         
         if not os.path.exists( os.path.join("pytom", name + "_scores.mrc")):
@@ -1685,7 +1683,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             --log LOG             Can be set to `info` or `debug`
             """
 
-            if parameters['slurm_verbose']:
+            if get_verbose_level(parameters) < logging.INFO:
                 options = " --log debug"
             else:
                 options = " --log info"
@@ -1715,7 +1713,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 options += " --half-precision"
 
             if parameters.get("tomo_pick_pytom_tomogram_ctf_model") != "none":
-                options += f"--tomogram-ctf-model {parameters.get('tomo_pick_pytom_tomogram_ctf_model')} "
+                options += f" --tomogram-ctf-model {parameters.get('tomo_pick_pytom_tomogram_ctf_model')} "
 
             with open(name+"_mean_defocus.txt") as inf:
                 defocus_in_nm = float(inf.read()) / 10000.
@@ -1725,7 +1723,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             assert get_image_dimensions(template) == get_image_dimensions(template_mask), f"Template and template mask should have the same dimensions, but got {get_image_dimensions(template)} and {get_image_dimensions(template_mask)}"
 
             command = f"{get_pytom_path()} pytom_match_template.py -t {template} --mask {template_mask} -v {name}.rec -d pytom/ --particle-diameter {2*parameters.get('tomo_pick_rad')} --voxel-size-angstrom {voxel_size} -a {name}.rawtlt --low-pass {parameters['tomo_pick_pytom_low_pass']} --high-pass {parameters['tomo_pick_pytom_high_pass']} --defocus {defocus_in_nm} --amplitude {parameters['scope_wgh']} --spherical {parameters['scope_cs']} --voltage {parameters['scope_voltage']} -g {get_gpu_ids(parameters)} {options}"
-            local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+            local_run.stream_shell_command(command=command)
 
             """
             usage: pytom_estimate_roc.py [-h] -j JOB_FILE -n NUMBER_OF_PARTICLES [--particle-diameter PARTICLE_DIAMETER] [--bins BINS] [--gaussian-peak GAUSSIAN_PEAK] [--force-peak] [--crop-plot] [--show-plot] [--log LOG] [--ignore_tomogram_mask]
@@ -1752,17 +1750,12 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                                     Flag to ignore the TM job tomogram mask. Useful if the scores mrc looks reasonable, but this finds 0 particles
             """
             command = f"{get_pytom_path()} pytom_estimate_roc.py --job-file pytom/{name}_job.json --number-of-particles {3*parameters['tomo_pick_pytom_number_of_particles']} --bins 16 --crop-plot"
-            local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+            local_run.stream_shell_command(command=command)
 
             # save scores by default
-            if parameters.get("tomo_pick_pytom_save_scores"):
-                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_scores.mrc"), debug_folder )
-                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_roc.svg"), debug_folder )
-
-            if parameters.get("tomo_pick_pytom_debug"):
-                logger.info(f"Saving intermediate results to {debug_folder}")
-                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_job.json"), debug_folder )
-                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_angles.mrc"), debug_folder )                
+            for file in [ "_scores.mrc", "_job.json", "_roc.svg", "_angles.mrc"]:
+                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + file ), debug_folder )
+                logger.debug(f"Saving {name + file} to {debug_folder}")
 
         """
         usage: pytom_extract_candidates.py [-h] -j JOB_FILE [--tomogram-mask TOMOGRAM_MASK] [--ignore_tomogram_mask] -n NUMBER_OF_PARTICLES [--number-of-false-positives NUMBER_OF_FALSE_POSITIVES] [--particle-diameter PARTICLE_DIAMETER] [-c CUT_OFF] [--tophat-filter]
@@ -1806,18 +1799,16 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             options += f" --cut-off {parameters['tomo_pick_pytom_cutoff']}"
         
         command = f"{get_pytom_path()} pytom_extract_candidates.py --job-file pytom/{name}_job.json --number-of-particles {parameters['tomo_pick_pytom_number_of_particles']} --number-of-false-positives {parameters['tomo_pick_pytom_number_of_false_positives']} {options}"
-        local_run.stream_shell_command(command=command,verbose=parameters.get('slurm_verbose'))
+        local_run.stream_shell_command(command=command)
         
-        # save scores by default
-        if parameters.get("tomo_pick_pytom_save_scores") and os.path.exists(os.path.join( os.getcwd(), "pytom", name + "_extraction_graph.svg")):
-            shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_extraction_graph.svg"), debug_folder )
-
-        if parameters.get("tomo_pick_pytom_debug") and os.path.exists(os.path.join( os.getcwd(), "pytom", name + "_particles.star")):
-            logger.info(f"Saving intermediate results to {debug_folder}")
-            shutil.copy2( os.path.join( os.getcwd(), "pytom", name + "_particles.star"), debug_folder )                
+        for file in [ "_extraction_graph.svg", "_particles.star" ]:
+            if os.path.exists(os.path.join( os.getcwd(), "pytom", name + file)):
+                logger.debug(f"Saving {name+file} to {debug_folder}")
+                shutil.copy2( os.path.join( os.getcwd(), "pytom", name + file), debug_folder )
 
         # parse output from star file
         results_file = os.path.join( "pytom", f"{name}_particles.star" )
+        assert os.path.exists(results_file), f"Pytom's output file {results_file} is missing"
         results = pyp_metadata.parse_star(results_file)
         if len(results):
             coordinates = results[['rlnCoordinateX','rlnCoordinateY','rlnCoordinateZ']].to_numpy(dtype='float')
@@ -1826,6 +1817,18 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
             normals = results[['rlnAngleRot','rlnAngleTilt','rlnAnglePsi']].to_numpy(dtype='float')
             np.savetxt( f"{name}_normals.txt", normals)
+
+        # prepare scores for display
+        current_dir = os.getcwd()
+        os.chdir("pytom")
+        scores_file = name + "_scores.mrc"
+        if parameters["tomo_pick_pytom_half_precision"]:
+            command = f"{get_imod_path()}/bin/newstack -mode 2 {scores_file} {scores_file}~; mv {scores_file}~ {scores_file}"
+            local_run.run_shell_command(command)
+        scores_webp_file = scores_file.replace(".mrc","_bw_rec.webp")
+        plot.tomo_slicer_gif( scores_file, scores_webp_file, flipyz=True, averagezslices=2, clipping=False )
+        plot.false_color(scores_webp_file, os.path.join( current_dir, name + '_score.webp'))
+        os.chdir(current_dir)
 
     # 4. import
     elif ( parameters.get("tomo_spk_method") == "import" or parameters.get("tomo_pick_method") == "import" ) and os.path.exists(f"{name}.spk"):
@@ -1931,14 +1934,14 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         # flip tomogram in yz
         command = f"{get_imod_path()}/bin/clip flipyz {name}.rec {name}_vir0000.rec"
-        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+        local_run.run_shell_command(command)
 
         # flipyz and convert to mode 2
         command = f"{get_imod_path()}/bin/clip flipyz {name}_seg.rec {name}_vir0000_binned_nad_seg.mrc~"
-        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+        local_run.run_shell_command(command)
 
         command = f"{get_imod_path()}/bin/newstack -mode 2 {name}_vir0000_binned_nad_seg.mrc~ {name}_vir0000_binned_nad_seg.mrc; rm -f {name}_vir0000_binned_nad_seg.mrc~"
-        local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+        local_run.run_shell_command(command)
         
         _, _, virion_size = get_image_dimensions(name + "_vir0000.rec")
         band_width = parameters["tomo_vir_detect_band"]
@@ -1989,7 +1992,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 command = (
                     f"{get_imod_path()}/bin/point2model -scat -sphere 10 -color 0,0,255 -input {name}_all_spikes.txt -output {name}.spk"
                 )
-                local_run.run_shell_command(command,verbose=parameters['slurm_verbose'])
+                local_run.run_shell_command(command)
                 os.remove(f"{name}_all_spikes.txt")
 
         if os.path.exists(f"{name}.spk"):
@@ -2085,7 +2088,7 @@ EOF
         name,
         inversexf,
     )
-    [output, error] = local_run.run_shell_command(command,verbose=False)
+    [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
 
     inversexf_file = np.loadtxt(inversexf, ndmin=2)
     tilts = np.loadtxt("%s.tlt" % name)
@@ -2122,7 +2125,7 @@ EOF
                 # The z height of tomograms where you pick particles
                 Z_FOR_PICKING = z_thickness
 
-                logger.info(("Information read from txt = %s", spikes[spk][0:6]))
+                logger.info(("Information read from txt = %s" % spikes[spk][0:6]))
                 spike_x, spike_y, spike_z, virion_x, virion_y, virion_z = list(
                     [x / BINNING_FOR_PICKING for x in spikes[spk][0:6]]
                 )
@@ -2149,10 +2152,10 @@ EOF
                 )
 
                 logger.info(
-                    "Spike position = [ %f, %f, %f ] ", spike_x, spike_y, spike_z
+                    "Spike position = [ %f, %f, %f ] " % (spike_x, spike_y, spike_z)
                 )
                 logger.info(
-                    "Virion position = [ %f, %f, %f ] ", virion_x, virion_y, virion_z
+                    "Virion position = [ %f, %f, %f ] " % (virion_x, virion_y, virion_z)
                 )
 
                 # To abide by the IMOD model convention for subsequent extraction
@@ -2234,12 +2237,6 @@ EOF
                 z_thickness / 2 - float(spike[2])
             ) * binning  # shifty = y / binning - float(virion[1]) * binning
 
-            # compile arguments for parallel processing
-            if first_element:
-                verbose = parameters["slurm_verbose"]
-                first_element = False
-            else:
-                verbose = False
             arguments.append(
                 (
                     name,
@@ -2256,8 +2253,7 @@ EOF
                     ypad_dn,
                     ypad_up,
                     pad_factor,
-                    parameters,
-                    verbose
+                    parameters
                 )
             )
 
@@ -2268,18 +2264,19 @@ EOF
                 # norm comes directly from txt
                 # [ normX, normY, normZ ] = list(map(float, spikes[spk][7:10]))
                 logger.info(
-                    "Information read from txt before norm calc = %s %s %s %s %s %s",
-                    spike_x,
-                    spike_y,
-                    spike_z,
-                    virion_x,
-                    virion_y,
-                    virion_z,
+                    "Information read from txt before norm calc = %s %s %s %s %s %s" % (
+                        spike_x,
+                        spike_y,
+                        spike_z,
+                        virion_x,
+                        virion_y,
+                        virion_z,
+                    )
                 )
                 normX, normY, normZ = calcSpikeNormXYZ(
                     spike_x, spike_y, spike_z, virion_x, virion_y, virion_z
                 )
-                logger.info("NormX, NormY, NormZ = [ %f, %f, %f ]", normX, normY, normZ)
+                logger.info("NormX, NormY, NormZ = [ %f, %f, %f ]" % (normX, normY, normZ))
 
                 CHECK_NORM = True
                 if CHECK_NORM:
@@ -2294,7 +2291,7 @@ EOF
                     normX_m = vtk.rotation_matrix(np.radians(-normX), [1, 0, 0])
                     result = np.dot(normX_m, np.dot(normZ_m, vector))
                     # result should be ( 0,0,1 )
-                    logger.info("Vector after normZ & normX rotation is ", result)
+                    logger.info("Vector after normZ & normX rotation is " + result)
             elif 'normals' in locals():
                 
                 # pytom convention
@@ -2366,7 +2363,7 @@ EOF
             )
         if detect.tomo_subvolume_extract_is_required(parameters):
             if len(arguments) > 0:
-                mpi.submit_function_to_workers(spk_extract_and_process, arguments, verbose=parameters["slurm_verbose"])
+                mpi.submit_function_to_workers(spk_extract_and_process, arguments)
             else:
                 logger.warning("No spikes to extract")
 

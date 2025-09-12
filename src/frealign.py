@@ -49,11 +49,17 @@ from pyp.system.utils import (
 from pyp.system.singularity import run_slurm, get_pyp_configuration
 from pyp.system.set_up import prepare_frealign_dir
 from pyp.utils import symlink_relative
-from pyp.system.logging import initialize_pyp_logger
 
-logger = initialize_pyp_logger(log_name=__name__)
+from pyp.system.logging import logger
 
 if __name__ == "__main__":
+
+    # set logging level
+    from pyp.system.utils import parse_logger_level
+    loglevel = parse_logger_level()
+    logger.setLevel(loglevel)
+    for handler in logger.handlers:
+        handler.setLevel(loglevel)
 
     mpi_tasks = mpi.initialize_worker_pool()
 
@@ -327,7 +333,7 @@ if __name__ == "__main__":
                     logger.warning(f"Rescaling initial model {initial_model} to {scaling} A per pixel")
                     new_size = int(mparameters["extract_box"])
                     command = f"{get_imod_path()}/bin/matchvol -size {new_size},{new_size},{new_size} -3dxform {scaling},0,0,0,0,{scaling},0,0,0,0,{scaling},0 '{initial_model}' {frealign_initial_model}; rm -f {frealign_initial_model}~"
-                    local_run.run_shell_command(command=command,verbose=mparameters["slurm_verbose"])
+                    local_run.run_shell_command(command=command)
 
                 else:
                     symlink_relative(initial_model, frealign_initial_model)

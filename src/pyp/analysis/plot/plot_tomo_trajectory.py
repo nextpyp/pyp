@@ -8,13 +8,9 @@ import numpy as np
 
 from pyp.inout.metadata import isfrealignx
 from pyp.inout.metadata.frealign_parfile import Parameters
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 """
 Draw the particle trajectory over tilts 
@@ -154,7 +150,7 @@ if __name__ == "__main__":
     for name in tiltseries:
         fig, ax = plt.subplots(1, 1, figsize=(30, 25), dpi=200)
 
-        logger.info("Now processing %s", name)
+        logger.info("Now processing %s" % name)
         for ptl_idx, ptl in enumerate(ptlcoor[name]):
 
             x, y = ptl[0] * args.binning, ptl[1] * args.binning

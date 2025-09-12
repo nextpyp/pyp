@@ -4,13 +4,10 @@ import shutil
 import subprocess
 
 from pyp.inout.metadata import frealign_parfile
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths, get_parameter_files_path
-from pyp.utils import get_relative_path, makedirs_list, symlink_force
+from pyp.utils import makedirs_list, symlink_force
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def prepare_spr_dir():
     folders = [
@@ -76,8 +73,8 @@ def prepare_3davg_dir():
     makedirs_list(folders)
 
 
-def prepare_3davg_xml(dataset):
-    """Prepare xml files needed for paramterizing 3DAVG sub-tomogram averaging
+def prepare_3davg_xmls(dataset):
+    """Prepare xml files needed for parametrizing 3DAVG sub-tomogram averaging
 
     Args:
         dataset (String): Name of dataset
@@ -90,6 +87,23 @@ def prepare_3davg_xml(dataset):
                 contents = f.read().replace("DEFAULT_PATTERN", dataset)
             with open(f"protocol/{basename}", "w") as f:
                 f.write(contents)
+                
+def prepare_3davg_xml(dataset,volumes,iter,mode):
+    """Prepare xml file needed for parametrizing 3DAVG sub-tomogram averaging
+
+    Args:
+        dataset (String): Name of dataset
+    """
+    # only create file for this iteration and mode
+    xmlfile = os.path.join(get_parameter_files_path(), f"iteration_{iter:03d}_mode_{mode}.xml")
+    basename = os.path.basename(xmlfile)
+    with open(xmlfile, "r") as f:
+        contents = f.read()
+        if volumes:
+            contents = contents.replace("DEFAULT_PATTERN_volumes_pre_centered_clean.txt", str(volumes))
+        contents = contents.replace("DEFAULT_PATTERN", dataset)
+    with open(f"protocol/{basename}", "w") as f:
+        f.write(contents)
 
 
 def initialize_classification(

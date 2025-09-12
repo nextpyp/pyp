@@ -1,10 +1,10 @@
 import glob
+import logging
 import math
 import multiprocessing
 import os
 import re
 import shutil
-import subprocess
 import datetime
 from pathlib import Path
 from tqdm import tqdm
@@ -19,16 +19,13 @@ from pyp.inout.image import digital_micrograph as dm4
 from pyp.inout.image import mrc
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, get_image_mean
 from pyp.system import local_run, mpi, project_params
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path
 from pyp.system.wrapper_functions import avgstack, cistem_rescale, cistem_resize
 from pyp.system.project_params import resolve_path
-from pyp.utils import get_relative_path, movie2regex, timer
+from pyp.utils import movie2regex, timer
 from pyp.streampyp.logging import TQDMLogger
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def invert_contrast(name):
     command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -multadd -1,0 && mv {1}.mrc~ {1}.mrc".format(
@@ -38,13 +35,13 @@ def invert_contrast(name):
 
 
 @timer.Timer("remove_xrays", text="Removing hot pixels took: {}", logger=logger.info)
-def remove_xrays_from_file(name,verbose=False):
+def remove_xrays_from_file(name):
     logger.info("Removing xrays")
     # Hot-pixel removal using IMOD's ccderaser
     command = "{0}/bin/ccderaser -input {1}.mrc -output {1}.st -find -points {1}_xray.mod -scan 4.50 -xyscan 128".format(
         get_imod_path(), name
     )
-    local_run.run_shell_command(command,verbose=verbose)
+    local_run.run_shell_command(command)
 
 
 def remove_xrays_from_movie_file(name, inplace=False):
@@ -102,7 +99,7 @@ def apply_alignment_to_frames(frame_name):
     com = "{0}/bin/newstack -input {1}.tif -output {1}.mrc {2} -xform {1}.xf -linear".format(
         get_imod_path(), frame_name, fill_option
     )
-    local_run.run_shell_command(com,verbose=False)
+    local_run.run_shell_command(com, log_level=logging.TRACE)
 
     # remove xrays from movie frames
     preprocess.remove_xrays_from_movie_file(frame_name)
@@ -239,7 +236,7 @@ def read_tilt_series(
             for i in detected_movies:
                 arguments.append((os.path.join(Path(filename).parents[0], i),"."))
         if len(arguments) > 0:
-            mpi.submit_function_to_workers(shutil.copy2,arguments,verbose=True)
+            mpi.submit_function_to_workers(shutil.copy2,arguments)
     elif os.path.exists(filename + ".mrc"):
         try:
             shutil.copy2(filename + ".mrc", ".")
@@ -328,7 +325,7 @@ def read_tilt_series(
 
                 # align frames in each tilt
                 for tilt in range(dims[-1]):
-                    logger.info("Aligning frames for tilt %f", tilt_angles[tilt])
+                    logger.info("Aligning frames for tilt %f" % tilt_angles[tilt])
                     frame_name = name + "_%04d" % tilt
                     d = imageio.readDMfileandsave(frame_name + ".dm4")
                     if not os.path.exists(frame_name + ".xf"):
@@ -339,7 +336,7 @@ def read_tilt_series(
                         com = "{0}/bin/newstack -input {1}.mrc -output {1}.ali {2} -xform {1}.xf -linear".format(
                             get_imod_path(), frame_name, fill_option
                         )
-                        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+                        local_run.run_shell_command(com)
 
                         #                     command="""
                         # %s/bin/avgstack << EOF
@@ -446,7 +443,7 @@ def read_tilt_series(
 
             # read image dimensions
             [micrographinfo, error] = local_run.run_shell_command(
-                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), verbose=False
+                "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.NOTSET
             )
             x, y, z = list(map(int, micrographinfo.split()))
 
@@ -460,7 +457,7 @@ def read_tilt_series(
                     )
                     commands.append(command)
 
-                mpi.submit_jobs_to_workers(commands, os.getcwd())
+                mpi.submit_jobs_to_workers(commands)
 
             docfile = filename + ".mrc.mdoc"
             if os.path.isfile(docfile):
@@ -474,7 +471,7 @@ def read_tilt_series(
             # pixel_size, voltage, mag, defocus, tilt_axis = imageio.readMRCheader(name + ".mrc")
 
         else:
-            logger.error("Cannot read %s", filename)
+            logger.error("Cannot read %s" % filename)
 
     elif len(parameters["movie_pattern"]) > 0 or len(mdocs) == 1:
         # use either movie pattern OR mdoc file to find corresponding tilted images 
@@ -549,7 +546,7 @@ def read_tilt_series(
                         t[1] = float(dm.get_tilt_angles())
 
                         command = f"{get_imod_path()}/bin/dm2mrc {t[0]} {t[0].replace('.dm4', '.mrc')}"
-                        local_run.run_shell_command(command, verbose=parameters["slurm_verbose"])
+                        local_run.run_shell_command(command)
                         t[0] = t[0].replace('.dm4', '.mrc')
                         file_format = ".mrc"
                     else:
@@ -567,7 +564,7 @@ def read_tilt_series(
         else:
             assert len(mdocs) > 0, f"Do not detect any mdoc files, please put mdoc files with movie frames"
             # use mdoc file to get corresponding tilted images
-            tilts = frames_from_mdoc(mdocs, parameters, verbose=True)
+            tilts = frames_from_mdoc(mdocs, parameters)
             file_format = Path(tilts[0][0]).suffix
 
             dims = get_image_dimensions(tilts[0][0])
@@ -647,7 +644,7 @@ def read_tilt_series(
                     isfirst = False
 
                 mpi.submit_function_to_workers(
-                    align.align_movie_frames, arguments, verbose=parameters["slurm_verbose"]
+                    align.align_movie_frames, arguments
                 )
             t.stop()
 
@@ -662,9 +659,7 @@ def read_tilt_series(
             )
 
             # suppress long log
-            if parameters["slurm_verbose"]:
-                logger.info(command)
-            local_run.run_shell_command(command, verbose=False)
+            local_run.run_shell_command(command, log_level=logging.TRACE)
 
             # for per-tilt ctf estimation
             [os.rename(average, "%s_%04d.mrc"%(name, idx)) for idx, average in enumerate(aligned_tilts)]
@@ -683,13 +678,13 @@ def read_tilt_series(
 
         # read image dimensions
         [micrographinfo, error] = local_run.run_shell_command(
-            "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name),verbose=False
+            "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.NOTSET
         )
         x, y, z = list(map(int, micrographinfo.split()))
         drift_metadata["tilts"] = [tilt[1] for tilt in sorted_tilts]
 
     else:
-        logger.error("Cannot read %s", filename)
+        logger.error("Cannot read %s" % filename)
 
     if metadata and metadata.get("drift"):
         drift_metadata["drift"] = {}
@@ -710,10 +705,7 @@ def read_tilt_series(
         pixel_size /= upsample
 
     logger.info(
-        "Original tilt-series dimensions = [ %s, %s, %s ]",
-        x,
-        y,
-        z
+        "Original tilt-series dimensions = [ %s, %s, %s ]" % (x,y,z)
     )
 
     if parameters["tomo_ali_format"]:
@@ -742,13 +734,10 @@ def read_tilt_series(
         imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
 
     if parameters["tomo_ali_square"]:
-        x, y, z = square, square, parameters["tomo_rec_thickness"]
+        x, y = square, square
 
         logger.info(
-            "Transformed tilt-series dimensions = [ %s, %s, %s ]",
-            x,
-            y,
-            z
+            "Transformed tilt-series dimensions = [ %s, %s, %s ]" % (x,y,z)
         )
 
     pixel_size *= binning
@@ -757,7 +746,7 @@ def read_tilt_series(
     if parameters["data_invert"]:
         preprocess.invert_contrast(name)
 
-    return [x, y, z, pixel_size, voltage, mag, tilt_axis, drift_metadata]
+    return [x, y, pixel_size, voltage, mag, tilt_axis, drift_metadata]
 
 
 def resample_and_resize(input, output, scale, size):
@@ -818,7 +807,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
             new_nyquist_frequency = 2.0*model_pixel_size/scaling
             logger.info(f"Lowpass filtering {initial_model} to {new_nyquist_frequency:.2f} A before resampling")
             command = f"{get_imod_path()}/bin/mtffilter -3dfilter -units 4 -lowpass {new_nyquist_frequency},100 '{initial_model}' {frealign_initial_model}~"
-            local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
+            local_run.run_shell_command(command)
             source = f"{frealign_initial_model}~"
         else:
             source = initial_model
@@ -827,14 +816,14 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
         command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
             get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, source,
         )
-        local_run.run_shell_command(command,verbose=mparameters["slurm_verbose"])
+        local_run.run_shell_command(command)
 
     elif not initial_model == frealign_initial_model:
         shutil.copy2(initial_model, frealign_initial_model)
 
 
 
-def frames_from_mdoc(mdoc_files: list, parameters: dict, verbose: bool = False):
+def frames_from_mdoc(mdoc_files: list, parameters: dict):
     """ Obtain filename, tilt angles, scanning order from mdoc files
        It is possible that one mdoc file per tilt-series or one mdoc file per tilted image
 
@@ -889,8 +878,8 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict, verbose: bool = False):
 
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
-                    if first and verbose and math.fabs(axis_angle-parameters["scope_tilt_axis"]) > 0.01:
-                        logger.warning(f"Specified tilt-axis angle {parameters['scope_tilt_axis']} does not match the value in the mdoc file {axis_angle}. If you want to use the value from the mdoc file, please specify {axis_angle} in the data import block.")
+                    if first and math.fabs(axis_angle-parameters["scope_tilt_axis"]) > 0.01:
+                        logger.debug(f"Specified tilt-axis angle {parameters['scope_tilt_axis']} does not match the value in the mdoc file {axis_angle}. If you want to use the value from the mdoc file, please specify {axis_angle} in the data import block.")
                         first = False
                     if False:
                         parameters["scope_tilt_axis"] = axis_angle
@@ -930,7 +919,7 @@ def regenerate_average_quick(
             )
             commands.append(com)
 
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands)
 
     # regenerate average in each tilt
     t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
@@ -941,7 +930,7 @@ def regenerate_average_quick(
         m_name = movie.replace(".mrc", "")
         arguments.append((movie, m_name, parameters, "imod"))
   
-    mpi.submit_function_to_workers(align.apply_alignments_and_average, arguments, verbose=parameters["slurm_verbose"])
+    mpi.submit_function_to_workers(align.apply_alignments_and_average, arguments)
 
     t.stop()
 
@@ -954,13 +943,11 @@ def regenerate_average_quick(
     )
 
     # suppress long log
-    if parameters["slurm_verbose"]:
-        logger.info(command)
-    local_run.run_shell_command(command, verbose=False)
+    local_run.run_shell_command(command, log_level=logging.TRACE)
 
     # read image dimensions
     [micrographinfo, error] = local_run.run_shell_command(
-        "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name),verbose=False
+        "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.NOTSET
     )
     x, y, z = list(map(int, micrographinfo.split()))
     
@@ -995,19 +982,20 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
             command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
                 get_imod_path(), name, binning
             )
-            local_run.run_shell_command(command,verbose=parameters["slurm_verbose"])
-
-        detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+            local_run.run_shell_command(command)
 
     if parameters["tomo_rec_erase_fiducials"]:
 
+        if not os.path.exists(gold_mod):
+            detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+        
         if not os.path.exists(gold_mod):
             logger.error(f"Failed to erase gold becasue no fiducials were found in tomogram")
             return
 
         # save projected gold coordinates as txt file
         com = f"{get_imod_path()}/bin/model2point {gold_mod} {name}_gold_ccderaser.txt"
-        local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+        local_run.run_shell_command(com)
         
         # convert to unbinned tilt-series coordinates, if needed
         if os.path.exists(f"{name}_gold_ccderaser.txt"):
@@ -1020,7 +1008,7 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
 
                 # convert back to imod model using one point per contour
                 com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
-                local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+                local_run.run_shell_command(com)
 
                 # erase gold on (unbinned) aligned tilt-series
                 erase_factor = parameters["tomo_rec_erase_factor"]
@@ -1037,7 +1025,7 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
                 erase_iterations = parameters['tomo_rec_erase_iterations']
 
                 com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
-                [ output, _ ] = local_run.run_shell_command(com,verbose=parameters["slurm_verbose"])
+                [ output, _ ] = local_run.run_shell_command(com)
                 if "The largest circle radius is too big for the arrays" in output:
                     raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")
 

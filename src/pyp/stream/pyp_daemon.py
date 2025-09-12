@@ -1,16 +1,11 @@
-import csv
-import datetime
 import glob
-import math
+import logging
 import os
 import re
 import shutil
 import socket
-import subprocess
-import sys
 import time
 from pathlib import Path
-from traceback import FrameSummary
 from tqdm import tqdm
 
 import numpy as np
@@ -21,15 +16,12 @@ from pyp.inout.image import compress_and_delete
 from pyp.inout.image import digital_micrograph as dm4
 from pyp.system import project_params, slurm, mpi, set_up
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
 from pyp.system.utils import needs_gpu, get_gpu_queue
-from pyp.utils import get_relative_path, movie2regex, timer
+from pyp.utils import movie2regex, timer
 from pyp.inout.metadata import pyp_metadata
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def pyp_daemon(args):
     if "refine_model" in args.keys() and args["refine_model"] != None:
@@ -161,7 +153,7 @@ def pyp_daemon(args):
 
     # set write access to group
     run_shell_command(
-        "chmod g+w '%s'" % pyp_config_file, verbose=False
+        "chmod g+w '%s'" % pyp_config_file, log_level=logging.TRACE
     )
 
     # SKIP: launch incremental 2D classification
@@ -191,8 +183,7 @@ def pyp_daemon(args):
                 memory=parameters["slurm_class2d_tasks"]*parameters["slurm_class2d_memory_per_task"],
                 gres=parameters["slurm_class2d_gres"],
                 account=parameters.get("slurm_class2d_account"),
-                walltime=parameters["slurm_class2d_walltime"],
-                verbose=parameters["slurm_verbose"],
+                walltime=parameters["slurm_class2d_walltime"]
             )
 
     alreadysubmitted = []
@@ -204,7 +195,7 @@ def pyp_daemon(args):
     if os.path.exists(stop_flag):
         os.remove(stop_flag)
 
-    logger.info("Watching for new files in: %s", raw_dir)
+    logger.info("Watching for new files in: %s" % raw_dir)
     # Look for new and unprocesed data for a maximum of timeout days
 
     current_count = 0
@@ -453,8 +444,7 @@ def pyp_daemon(args):
                         name = f
                         condition_plus = condition and not os.path.isfile( os.path.join( session_dir, "mrc", name + ".mrc" ) )
                     if ( restart_or_clean or condition_plus ) and not name in tobesubmitted and not name in alreadysubmitted:
-                        if args["slurm_verbose"]:
-                            logger.info("Adding {0} to queue".format(name))
+                        logger.debug("Adding {0} to queue".format(name))
                         tobesubmitted.append(name)
 
                         # generate rawtlt or order files for this tilt-series
@@ -497,7 +487,7 @@ def pyp_daemon(args):
                     )
                 )
 
-            run_shell_command("chmod u+x '{0}'".format(swarm_file),verbose=False)
+            run_shell_command("chmod u+x '{0}'".format(swarm_file), log_level=logging.TRACE)
 
             # submit jobs to batch system
             gpu = needs_gpu(parameters)
@@ -519,8 +509,7 @@ def pyp_daemon(args):
                 walltime=args.get("slurm_merge_walltime"),
                 tasks_per_arr=args.get("slurm_bundle_size"),
                 csp_no_stacks=args.get("csp_no_stacks"),
-                use_gpu=gpu,
-                verbose=args.get("slurm_verbose"),
+                use_gpu=gpu
             ).strip()
 
             alreadysubmitted.extend(tobesubmitted)
@@ -581,7 +570,7 @@ def pyp_daemon_process(args,):
         try:
             os.mkdir(working_path)
         except:
-            logger.info("Cannot create %s on node %s", working_path, socket.gethostname())
+            logger.info("Cannot create %s on node %s" % (working_path, socket.gethostname()))
         os.chdir(working_path)
 
         # Format and store raw data
@@ -611,7 +600,7 @@ def pyp_daemon_process(args,):
             for i in glob.glob( os.path.join( raw_dir, name + "*" + data_path.suffix ) ):
                 arguments.append(((Path(i).with_suffix(""), args['stream_compress'], data_path.suffix)))
             if len(arguments) > 0:
-                mpi.submit_function_to_workers(compress_and_delete,arguments=arguments,verbose=parameters["slurm_verbose"])
+                mpi.submit_function_to_workers(compress_and_delete,arguments=arguments)
         else:
 
             # simply remove signal files

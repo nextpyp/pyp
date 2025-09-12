@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import multiprocessing
@@ -6,14 +7,10 @@ from pathlib import Path
 from pyp.streampyp.web import Web
 from pyp.system import project_params, slurm
 from pyp.system.local_run import run_shell_command, stream_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, standalone_mode, run_pyp, run_slurm, run_ssh
-from pyp.utils import get_relative_path
 from pyp.system.mpi import submit_jobs_to_workers
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def _absolutize_path(path):
     if path[0] == "/":
@@ -79,8 +76,7 @@ def submit_commands(
     dependencies,
     tasks_per_arr,
     csp_no_stacks,
-    use_gpu,
-    verbose=False,
+    use_gpu
 ):
 
     # example inputs:
@@ -284,7 +280,7 @@ done
             commands = []
             for batch in cmdgrid:
                 commands.append( "; ".join(batch) )
-            submit_jobs_to_workers(commands, working_path=submit_dir)
+            submit_jobs_to_workers(commands)
             
             # run only one instance of csp_local_merge once all cspswarm processes finish
             if csp_no_stacks and "classmerge" not in jobtype and len(csp_local_merge_command) > 0:
@@ -313,7 +309,7 @@ done
             for line in cmdlist:
                 f.write(line)
 
-            run_shell_command("chmod u+x '{0}'".format(multirun_file), verbose=False)
+            run_shell_command("chmod u+x '{0}'".format(multirun_file), log_level=logging.TRACE)
 
         # format dependencies based on the environment/batch system
         if len(dependencies) == 0:
@@ -335,7 +331,7 @@ done
             get_gres_option(use_gpu,gres),
         )
         command = run_ssh(command)
-        [output, error] = run_shell_command(command, verbose=verbose)
+        [output, error] = run_shell_command(command)
         if "error" in error or "failed" in error:
             logger.warning(command)
             if not "sleeping and retrying" in error:
@@ -372,8 +368,7 @@ def submit_script(
     walltime,
     dependencies,
     is_script,
-    use_gpu=False,
-    verbose=False,
+    use_gpu=False
 ):
 
     # example inputs:
@@ -430,7 +425,7 @@ def submit_script(
             cpus = f"export SLURM_CPUS_PER_TASK={threads}; SLURM_NTASKS={threads}; export OMP_NUM_THREADS={threads}; export MKL_NUM_THREADS={threads}; "
             new_cmd = cmd.replace("'/opt/pyp/bin/run/pyp'","python -u /opt/pyp/src/pyp_main.py")
             command = '/bin/bash -c "' + cpus + f"export {jobtype}={jobtype}; cd {submit_dir}; {new_cmd}" + '"'
-            stream_shell_command(command,verbose=True)
+            stream_shell_command(command)
             return "standalone"
 
     else:
@@ -466,7 +461,7 @@ def submit_script(
             walltime,
         )
         command = run_ssh(command)
-        [id, error] = run_shell_command(command, verbose=verbose)
+        [id, error] = run_shell_command(command)
         if "error" in error or "failed" in error:
             logger.error(error)
             raise Exception(error)

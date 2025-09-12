@@ -1,24 +1,19 @@
-import os, sys
+import os
 import shutil
 import numpy as np
 from pathlib import Path
 import json
 import glob
 
-from pyp.analysis import plot
 from pyp import preprocess, merge
 from pyp.inout.metadata import pyp_metadata
 from pyp.inout.image import get_image_dimensions, mrc
 from pyp.inout.image.core import generate_aligned_tiltseries
 from pyp.system import local_run, project_params, mpi, project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 from pyp.system.utils import get_imod_path, get_gpu_ids
 from pyp.system.db_comm import load_tomo_results, load_config_files
-from pyp.system.singularity import get_pyp_configuration
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_cryocare_path():
     cryocare_path = '/opt/conda/envs/cryocare'
@@ -58,7 +53,7 @@ def cryocare_train(project_dir, output, parameters):
         json.dump(config, file, indent=4)
 
     command = get_cryocare_path() + f"cryoCARE_extract_train_data.py --conf {data_config}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
     # train.json
     train_config = {
@@ -85,7 +80,7 @@ def cryocare_train(project_dir, output, parameters):
         output.append(line)
 
     command = f"{get_cryocare_path()}cryoCARE_train.py --conf {train_config_file}"
-    local_run.stream_shell_command(command,observer=obs,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command,observer=obs)
 
     # parse output
     loss = [ line.split("loss:")[1].split()[0] for line in output if "ETA:" in line]
@@ -148,12 +143,11 @@ def cryocare_predict(working_path, project_path, name, parameters):
     with open(predict_config_file, 'w') as file:
         json.dump(predcit_config, file, indent=4)
 
-    if parameters["slurm_verbose"]:
-        with open(predict_config_file) as file:
-            logger.warning(file.read())
+    with open(predict_config_file) as file:
+        logger.debug(file.read())
 
     command = f"{get_cryocare_path()}cryoCARE_predict.py --conf {predict_config_file}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
     
     return name + "_half1.rec"
 
@@ -193,7 +187,7 @@ def cryocare(working_path, project_path, name, parameters):
         json.dump(config, file, indent=4)
 
     command = get_cryocare_path() + f"cryoCARE_extract_train_data.py --conf {data_config}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
     # train.json
     train_config = {
@@ -216,7 +210,7 @@ def cryocare(working_path, project_path, name, parameters):
         json.dump(train_config, file, indent=4)
 
     command = f"{get_cryocare_path()}cryoCARE_train.py --conf {train_config_file}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command)
 
     # TODO: create a list to run prediction
 
@@ -241,12 +235,11 @@ def cryocare(working_path, project_path, name, parameters):
     with open(predict_config_file, 'w') as file:
         json.dump(predcit_config, file, indent=4)
 
-    if parameters["slurm_verbose"]:
-        with open(predict_config_file) as file:
-            logger.warning(file.read())
+    with open(predict_config_file) as file:
+        logger.debug(file.read())
 
     command = f"{get_cryocare_path()}cryoCARE_predict.py --conf {predict_config_file}"
-    local_run.stream_shell_command(command,verbose=parameters["slurm_verbose"])    
+    local_run.stream_shell_command(command)    
 
 def tomo_swarm_half( name, project_path, working_path, parameters):
     """
@@ -266,7 +259,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         raise Exception("Unknown dataset or session name")
     
     load_config_files( dataset, project_path, working_path)
-    load_tomo_results( name, parameters, project_path, working_path, verbose=parameters["slurm_verbose"])
+    load_tomo_results( name, parameters, project_path, working_path)
 
     # unpack pkl file
     if os.path.exists(f"{name}.pkl"):
@@ -288,7 +281,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
     arguments = []
     for f in frame_list:
         arguments.append((str(project_path) + "/raw/" + f, f))
-    mpi.submit_function_to_workers(shutil.copy2, arguments, verbose=parameters["slurm_verbose"])
+    mpi.submit_function_to_workers(shutil.copy2, arguments)
 
     # convert eer files to mrc using movie_eer_reduce and movie_eer_frames parameters (flipping in x is required to match unblur/motioncorr convention)
     if frame_list[0].endswith(".eer"):
@@ -300,7 +293,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
             # average eer frames
             command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {parameters['movie_eer_frames']} {f} {f.replace('.eer','.mrc')}; rm -f {f}"
             arguments.append(command)
-        mpi.submit_jobs_to_workers(arguments, os.getcwd())
+        mpi.submit_jobs_to_workers(arguments)
 
         raw_image = [ i.replace('.eer','.mrc') for i in frame_list ]
     else:
@@ -316,7 +309,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
                 get_imod_path(), f, f.replace(".tiff", ".mrc").replace(".tif", ".mrc")
             )
             commands.append(com)
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands)
         
     raw_image = [f.replace(".tiff", ".mrc").replace(".tif", ".mrc") for f in raw_image]
  
@@ -342,7 +335,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         # read half slices 
         command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, even_list))} -output {output_half1}.mrc"
         arguments.append(command)
-    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+    mpi.submit_jobs_to_workers(arguments)
 
     # half 2 movies
     arguments = []
@@ -355,7 +348,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         # read half slices and remove the original movie
         command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, odd_list))} -output {output_half2}.mrc && rm -f {f}"
         arguments.append(command)
-    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+    mpi.submit_jobs_to_workers(arguments)
 
     # generate half tomograms from half movies    
     for i in [1, 2]:
@@ -443,7 +436,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
         raise Exception("Unknown dataset or session name")
     
     load_config_files( dataset, project_path, working_path / name)
-    load_tomo_results( name, parameters, project_path, working_path / name, verbose=parameters["slurm_verbose"])
+    load_tomo_results( name, parameters, project_path, working_path / name)
 
     # unpack pkl file
     if os.path.exists(f"{name}.pkl"):
@@ -467,7 +460,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
     arguments = []
     for f in frame_list:
         arguments.append((str(project_path) + "/raw/" + f, f))
-    mpi.submit_function_to_workers(shutil.copy2, arguments, verbose=parameters["slurm_verbose"])
+    mpi.submit_function_to_workers(shutil.copy2, arguments)
 
     # convert eer files to mrc using movie_eer_reduce and movie_eer_frames parameters (flipping in x is required to match unblur/motioncorr convention)
     if frame_list[0].endswith(".eer"):
@@ -479,7 +472,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
             # average eer frames
             command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {parameters['movie_eer_frames']} {f} {f.replace('.eer','.mrc')}; rm -f {f}"
             arguments.append(command)
-        mpi.submit_jobs_to_workers(arguments, os.getcwd())
+        mpi.submit_jobs_to_workers(arguments)
 
         raw_image = [ i.replace('.eer','.mrc') for i in frame_list ]
     else:
@@ -494,7 +487,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
                 get_imod_path(), f, f.replace(".tiff", ".mrc").replace(".tif", ".mrc")
             )
             commands.append(com)
-        mpi.submit_jobs_to_workers(commands, os.getcwd())
+        mpi.submit_jobs_to_workers(commands)
         
     raw_image = [f.replace(".tiff", ".mrc").replace(".tif", ".mrc") for f in raw_image]
  
@@ -519,7 +512,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
         # read half slices 
         command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, even_list))} -output {output_half1}.mrc"
         arguments.append(command)
-    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+    mpi.submit_jobs_to_workers(arguments)
 
     # half 2 movies
     arguments = []
@@ -532,7 +525,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
         # read half slices and remove the original movie
         command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, odd_list))} -output {output_half2}.mrc && rm -f {f}"
         arguments.append(command)
-    mpi.submit_jobs_to_workers(arguments, os.getcwd())
+    mpi.submit_jobs_to_workers(arguments)
 
     # generate half tomograms from half movies    
     for i in [1, 2]:

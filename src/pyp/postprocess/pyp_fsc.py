@@ -17,12 +17,8 @@ from matplotlib import cm
 
 from pyp.inout.image import mrc
 from pyp.system import utils
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def fsc_multiprocessing(
     apix, half1, half2, average, threshold, shell, gauss, phases, results, keep=False
@@ -41,8 +37,7 @@ def fsc_multiprocessing(
         com = "{5}; e2proc3d.py {0} {1} --process=mask.auto3d:radius=100:threshold={2}:nshells={3}:nshellsgauss={4}:nmaxseed=0:return_mask=1".format(
             average, mask, threshold, shell, gauss, utils.eman_load_command()
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
         current_mask = mrc.read(mask)
@@ -83,16 +78,14 @@ def fsc_multiprocessing(
         com = "{4}; e2proc3d.py {0} {1}_{2}.mrc --multfile={3}".format(
             half1, os.path.basename(half1)[:-4], name, mask, utils.eman_load_command(),
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
         # mask second half
         com = "{4}; e2proc3d.py {0} {1}_{2}.mrc --multfile={3}".format(
             half2, os.path.basename(half2)[:-4], name, mask, utils.eman_load_command(),
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
 
     else:
@@ -108,8 +101,7 @@ def fsc_multiprocessing(
             phases.split(",")[-1],
             utils.eman_load_command(),
         )
-        if args.verbose:
-            logger.info(com)
+        logger.debug(com)
         subprocess.getoutput(com)
     else:
         # print 'Bypassing phase filtering'
@@ -123,8 +115,7 @@ def fsc_multiprocessing(
         apix,
         utils.eman_load_command(),
     )
-    if args.verbose:
-        logger.info(com)
+    logger.debug(com)
     subprocess.getoutput(com)
 
     # sys.exit()
@@ -328,8 +319,7 @@ if __name__ == "__main__":
             com = "{5}; e2pdb2mrc.py -A {0} -R {6} -B {1},{2},{3} --center {4}.pdb {4}.mrc".format(
                 args.apix, x, y, z, pdbfile, utils.eman_load_command(), nyquist
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
         else:
             logger.info("Using existing map for pdb coordinates.")
@@ -337,7 +327,7 @@ if __name__ == "__main__":
         if not os.path.exists(average):
 
             logger.info(
-                "Generating low resolution map for selecting masking threshold:",
+                "Generating low resolution map for selecting masking threshold:" +
                 average,
             )
 
@@ -351,12 +341,11 @@ if __name__ == "__main__":
                 args.lowpass,
                 utils.eman_load_command(),
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             subprocess.getoutput(com)
             sys.exit()
         else:
-            logger.info("Using existing map to generate mask: %f", average)
+            logger.info("Using existing map to generate mask: %f" % average)
 
     else:
 
@@ -406,8 +395,7 @@ if __name__ == "__main__":
             com = "{3}; e2proc3d.py {0} {0} --apix={1} --process=filter.lowpass.gauss:cutoff_pixels={2} --process=mask.zeroedge3d:x0=2:y0=2:x1=2:y1=2:z0=2:z1=2".format(
                 average, args.apix, args.lowpass, utils.eman_load_command()
             )
-            if args.verbose:
-                logger.info(com)
+            logger.debug(com)
             logger.info(subprocess.getoutput(com))
 
             logger.info(
@@ -422,7 +410,7 @@ if __name__ == "__main__":
             )
             sys.exit()
         else:
-            logger.info("Using existing average of two half maps %f", average)
+            logger.info("Using existing average of two half maps %f" % average)
 
     if args.align:
 
@@ -444,7 +432,7 @@ if __name__ == "__main__":
         logger.info(command)
         logger.info(subprocess.getoutput(command))
         logger.info(
-            "Moving %s %s", first_half.replace(".mrc", "_rotated.mrc"), first_half
+            "Moving %s %s" % (first_half.replace(".mrc", "_rotated.mrc"), first_half)
         )
         shutil.move(first_half.replace(".mrc", "_rotated.mrc"), first_half)
 
@@ -470,19 +458,21 @@ if __name__ == "__main__":
     for threshold in thresholds:
         if threshold < min_threshold or threshold > max_threshold:
             logger.info(
-                "Threshold %0.8f falls outside density range [%0.4f,%0.4f]",
-                threshold,
-                min_threshold,
-                max_threshold,
+                "Threshold %0.8f falls outside density range [%0.4f,%0.4f]" % (
+                    threshold,
+                    min_threshold,
+                    max_threshold,
+                )
             )
         else:
             for shell in shells:
                 for gauss in gausses:
                     logger.info(
-                        "Submitting th = %0.8f, sh = %0.4f, gs = %0.4f",
-                        threshold,
-                        shell,
-                        gauss,
+                        "Submitting th = %0.8f, sh = %0.4f, gs = %0.4f" % (
+                            threshold,
+                            shell,
+                            gauss,
+                        )
                     )
                     # pool.apply_async(fsc_multiprocessing, args=( args.apix, first_half, second_half, average, threshold, shell, gauss, args.phases, results, args.keep ) )
                     fsc_multiprocessing(
@@ -528,7 +518,7 @@ if __name__ == "__main__":
             fsc = result[-1]
             # ax.plot( fsc[:,0], fsc[:,1], label='Th=%02.4f, Sh=%02.4f, Gs=%02.4f' % ( result[0], result[1], result[2] ) )
             cutoff = fsc_cutoff(fsc, cutoff_value)
-            logger.info("Resolution = %f", cutoff)
+            logger.info("Resolution = %f" % cutoff)
         # ax.plot( fsc[:,0], fsc[:,1], label='Mask %02d (.5 = %.2f %s, .143 = %.2f %s)' % ( count, cutoffs[0], u'\u00c5', cutoffs[1], u'\u00c5' ) )
         ax.plot(
             fsc[:, 0],

@@ -1,7 +1,6 @@
 import datetime
 import glob
-import math
-import multiprocessing
+import logging
 import os
 import sys
 import shutil
@@ -18,13 +17,10 @@ from pyp.inout.metadata.core import spa_extract_coordinates_legacy, get_max_reso
 from pyp.refine.frealign import frealign
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import mpi, project_params
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths
-from pyp.utils import get_relative_path, timer
+from pyp.utils import timer
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def get_existing_films(parameters: dict) -> List[str]:
     try:
@@ -138,8 +134,7 @@ def get_positions_and_new_particle_count_from_box_files(
                             )
                             os.remove(allparxs_fpath)
                         else:
-                            if parameters["slurm_verbose"]:
-                                logger.info(f"Number of particles from {film_name}: {len(lines)}")
+                            logger.debug(f"Number of particles from {film_name}: {len(lines)}")
                             if len(lines) != len(allboxes):
                                 logger.error(
                                     "Number of particles does not match number of coordinates to extract"
@@ -315,7 +310,7 @@ def write_stacks_to_file(
 
         if len(mpi_funcs) > 0:
 
-            mpi.submit_function_to_workers(mpi_funcs, mpi_args, verbose=parameters["slurm_verbose"], silent=True)
+            mpi.submit_function_to_workers(mpi_funcs, mpi_args, log_level=logging.NOTSET)
 
             # remove micrographs from local scratch
             [os.remove(stack_dir / f"{film}.mrc") for film in new_films if os.path.exists(stack_dir / f"{film}.mrc")]
@@ -380,10 +375,9 @@ def run_refinement(  # rename to daemon2D after testing
 
     if classification_type == "ab initio":
         previous_name = None
-        if parameters.get("slurm_verbose"):
-            logger.info(
-                "Forcing previous_name to be None since classification_type is 'ab initio'"
-            )
+        logger.trace(
+            "Forcing previous_name to be None since classification_type is 'ab initio'"
+        )
     else:
         assert previous_name is not None
 
@@ -455,8 +449,7 @@ def run_refinement(  # rename to daemon2D after testing
             else:
                 class_fraction = parameters['class2d_fraction'] if cycle_number < resolution_cycle_count else 1.0
 
-            if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
-                logger.info(f"Using fraction {class_fraction} from total particles number {particle_num:,} for ab initio")
+            logger.trace(f"Using fraction {class_fraction} from total particles number {particle_num:,} for ab initio")
 
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
@@ -518,8 +511,7 @@ def run_refinement(  # rename to daemon2D after testing
             else:
                 class_fraction = parameters['class2d_fraction'] if cycle_number < resolution_cycle_count else 1.0
 
-            if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
-                logger.info(f"Using fraction {class_fraction} from total particles number {particle_num:,} for seeded_startup")
+            logger.trace(f"Using fraction {class_fraction} from total particles number {particle_num:,} for seeded_startup")
 
             flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory, existing_boxes_lists=boxes_lists)
             if not "None" in flag.values(): return flag, classification_status
@@ -576,8 +568,7 @@ def run_refinement(  # rename to daemon2D after testing
         else:
             class_fraction = 1.0
 
-        if "slurm_verbose" in parameters and parameters["slurm_verbose"]:
-            logger.info(f"Using fraction {class_fraction} from total particles number {particle_num:,} for refinement")
+        logger.trace(f"Using fraction {class_fraction} from total particles number {particle_num:,} for refinement")
 
         high_res_limit = parameters['class2d_rhref']
 

@@ -10,8 +10,8 @@ import matplotlib
 matplotlib.use("Agg")
 
 import argparse
-import datetime
 import fnmatch
+import logging
 import glob
 import multiprocessing
 import os
@@ -27,15 +27,12 @@ import numpy as np
 
 from pyp.system import project_params, slurm, mpi
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import get_pyp_configuration, run_pyp
 from pyp.system.user_comm import notify
-from pyp.utils import get_relative_path, movie2regex, symlink_relative
+from pyp.utils import movie2regex, symlink_relative
 from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def transfer_multiprocessing(
     remove, remove_all, f, destination, session, camera, server, results, symlinks=False, pattern="",
@@ -97,7 +94,7 @@ def transfer_multiprocessing(
 
         logger.info(str(e))
         if "already exists" in str(e):
-            logger.info("Clearing up truncated file %s %s", f, os.path.split(f)[-1])
+            logger.info("Clearing up truncated file %s %s" % (f, os.path.split(f)[-1]))
             os.remove(os.path.join(destination, os.path.split(f)[-1]))
         condition = False
         pass
@@ -298,37 +295,34 @@ def move_to_destination(file, server, path):
             os.remove(file)
 
 
-def copy_to_destination(file, server, path, verbose=False):
+def copy_to_destination(file, server, path):
 
     target = get_target(file=file, path=path)
 
     # logger.info('Copying ' + file + ' to ' + target )
     if is_image(file):
-        if verbose:
-            logger.info("Copying " + Path(file).name)
+        logger.debug("Copying " + Path(file).name)
 
     if is_local(server):
         shutil.copy2(file, target)
     else:
         com = "scp -p '{0}' '{1}:{2}'".format(file, server, target)
-        [output, error] = run_shell_command(com,verbose)
+        [output, error] = run_shell_command(com)
 
 
-def link_to_destination(file, server, path, verbose=False):
+def link_to_destination(file, server, path):
 
     target = get_target(file=file, path=path)
 
     try:
-        if verbose:
-            logger.info("Linking " + file + " to " + target)
+        logger.debug("Linking " + file + " to " + target)
         symlink_relative(file, target)
     except:
-        if verbose:
-            if os.path.exists(target):
-                logger.warning(f"{target} already exists")
-            else:
-                logger.error(f"Cannot create {target}")
-            pass
+        if os.path.exists(target):
+            logger.debug(f"{target} already exists")
+        else:
+            logger.error(f"Cannot create {target}")
+        pass
 
 
 def create_in_destination(file, server, path):
@@ -369,17 +363,17 @@ def create_paths(server, path):
 
         # set permissions
         com = "chmod g+w '{1}'".format(server, path)
-        run_shell_command(com)
+        run_shell_command(com,log_level=logging.TRACE)
 
     # do over ssh
     else:
 
         com = "ssh {0} mkdir -p '{1}'".format(server, path)
-        [output, error] = run_shell_command(com)
+        run_shell_command(com,log_level=logging.TRACE)
 
         # set permissions
         com = "ssh {0} chmod g+w '{1}'".format(server, path)
-        run_shell_command(com)
+        run_shell_command(com,log_level=logging.TRACE)
 
 
 def launch_preprocessing(args, autoprocess):
@@ -460,8 +454,7 @@ def launch_preprocessing(args, autoprocess):
             gres=args["slurm_daemon_gres"],
             account=args.get("slurm_daemon_account"),
             walltime=args["slurm_daemon_walltime"],
-            tasks_per_arr=1,
-            verbose=args["slurm_verbose"],
+            tasks_per_arr=1
         )
 
         message = "none"
@@ -509,6 +502,13 @@ def resolve_sources(args):
 
 
 if __name__ == "__main__":
+
+    # set logging level
+    from pyp.system.utils import parse_logger_level
+    loglevel = parse_logger_level()
+    logger.setLevel(loglevel)
+    for handler in logger.handlers:
+        handler.setLevel(loglevel)
 
     params_file_path = get_params_file_path()
     if params_file_path is not None:
@@ -651,12 +651,9 @@ if __name__ == "__main__":
         for f in [transferred_filename, filelist_filename, transfer_filename]:
             if Path(f).exists:
                 try:
-                    if args["slurm_verbose"]:
-                        logger.info("Deleting " + Path(f).name)
+                    logger.debug("Deleting " + Path(f).name)
                     os.remove(f)
                 except:
-                    if args["slurm_verbose"]:
-                        logger.error("Cannot delete " + f)
                     pass
         remove_from_destination(
             file="%s_speed.txt" % session_name,

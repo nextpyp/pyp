@@ -9,12 +9,8 @@ from pyp.analysis import plot
 from pyp.inout.metadata import pyp_metadata
 from pyp.system import local_run, project_params, mpi
 from pyp.system.utils import get_gpu_ids, get_imod_path
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-from pyp.system.singularity import get_pyp_configuration
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def get_isonet_path():
     command_base = f"export PATH=/opt/conda/envs/isonet/bin:$PATH; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/isonet/lib:/opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs; export PYTHONPATH=/opt/pyp/external:/opt/conda/envs/isonet/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n isonet /opt/pyp/external/IsoNet/bin/"
@@ -55,7 +51,7 @@ _rlnNumberSubtomo  #5"""
             f.write(f"\n{i + 1}    {tomo}   {pixel_size}    {df}    {sub_tomograms}" )
 
 
-def isonet_ctf_deconvolve(tomo_star, output, snr_falloff, cs=2.7, voltage=300, hp_nyquist=0.02, ncpu=4, verbose=False):
+def isonet_ctf_deconvolve(tomo_star, output, snr_falloff, cs=2.7, voltage=300, hp_nyquist=0.02, ncpu=4):
     """
     CTF deconvolution for the tomograms.
     isonet.py deconv star_file [--deconv_folder] [--snrfalloff] [--deconvstrength] [--highpassnyquist] [--overlap_rate] [--ncpu] [--tomo_idx]
@@ -79,10 +75,10 @@ def isonet_ctf_deconvolve(tomo_star, output, snr_falloff, cs=2.7, voltage=300, h
     
     command = isonet_command + f"isonet.py deconv {tomo_star} --snrfalloff {snr_falloff} --deconv_folder {output} --cs {cs} --voltage {voltage} --highpassnyquist {hp_nyquist} --ncpu {ncpu}"
     
-    local_run.stream_shell_command(command,verbose=verbose)
+    local_run.stream_shell_command(command)
 
 
-def isonet_generat_mask(tomo_star, output, d_percent, std_percent, patchsize=4, use_convol="True", z_crop=0.2, verbose=False):
+def isonet_generat_mask(tomo_star, output, d_percent, std_percent, patchsize=4, use_convol="True", z_crop=0.2):
     """
     generate a mask that include sample area and exclude "empty" area of the tomogram. The masks do not need to be precise. In general, the number of subtomograms (a value in star file) should be lesser if you masked out larger area. 
     isonet.py make_mask star_file [--mask_folder] [--patch_size] [--density_percentage] [--std_percentage] [--use_deconv_tomo] [--tomo_idx]
@@ -102,10 +98,10 @@ def isonet_generat_mask(tomo_star, output, d_percent, std_percent, patchsize=4, 
 
     command = isonet_command + f"isonet.py make_mask {tomo_star}  --mask_folder {output} --density_percentage {d_percent} --std_percentage {std_percent} --patch_size {patchsize} --use_deconv_tomo {use_convol} --z_crop {z_crop}"
    
-    local_run.stream_shell_command(command,verbose=verbose)
+    local_run.stream_shell_command(command)
 
 
-def isonet_extract(input_star, output_folder, output_star, cube_size, use_deconv="True", debug=False, verbose=False):
+def isonet_extract(input_star, output_folder, output_star, cube_size, use_deconv="True", debug=False):
 
     # extract subtomograms
     """
@@ -126,7 +122,7 @@ def isonet_extract(input_star, output_folder, output_star, cube_size, use_deconv
 
     command = isonet_command + f"isonet.py extract {input_star} --subtomo_folder {output_folder} --subtomo_star {output_star} --cube_size {cube_size} --use_deconv_tomo {use_deconv} --log_level {log_level}"
 
-    local_run.stream_shell_command(command,verbose=verbose)
+    local_run.stream_shell_command(command)
 
 
 def isonet_refine(input_star, output, parameters):
@@ -255,7 +251,7 @@ def isonet_refine(input_star, output, parameters):
     def obs(line):
         output.append(line)
     
-    local_run.stream_shell_command(command,observer=obs,verbose=parameters["slurm_verbose"])
+    local_run.stream_shell_command(command,observer=obs)
 
     # parse output
     loss = np.array([ line.split("loss:")[1].split()[0] for line in output if "ETA:" in line]).astype('f')
@@ -286,7 +282,7 @@ def isonet_refine(input_star, output, parameters):
     plt.savefig("training_loss.svgz")
     plt.close()
 
-def isonet_predict_command(input_star, model, output, batch_size, use_deconv, threshold_norm, parameters, verbose=False):
+def isonet_predict_command(input_star, model, output, batch_size, use_deconv, threshold_norm, parameters):
     """
     Predict tomograms using trained model
     isonet.py predict star_file model [--gpuID] [--output_dir] [--cube_size] [--crop_size] [--batch_size] [--tomo_idx]
@@ -313,7 +309,7 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
 --gpuID {get_gpu_ids(parameters)}
 """
     
-    local_run.stream_shell_command(command,verbose=verbose)
+    local_run.stream_shell_command(command)
 
 def convert_and_transfer_tomograms(train_name,project_dir,parameters):
     # transfer/convert tomograms to local scratch
@@ -327,7 +323,7 @@ def convert_and_transfer_tomograms(train_name,project_dir,parameters):
         else:
             command = f"cp {absolute_rec} ."
         commands.append(command)
-    mpi.submit_jobs_to_workers(commands, os.getcwd())
+    mpi.submit_jobs_to_workers(commands)
 
 def isonet_train(project_dir, output, parameters):
     
@@ -341,7 +337,7 @@ def isonet_train(project_dir, output, parameters):
     # initialize path
     working_path = Path(os.environ["PYP_SCRATCH"]) / "isonet"
 
-    logger.info(f"Working path: {working_path}")
+    logger.info(f"Using temporary folder {working_path}")
     
     working_path.mkdir(parents=True, exist_ok=True)
 
@@ -355,16 +351,14 @@ def isonet_train(project_dir, output, parameters):
     isonet_generate_star(tomogram_source, initial_star, parameters, train_name)
     
     # display star file if in verbose mode
-    if parameters["slurm_verbose"]:
-        with open(initial_star) as f:
-            logger.info("Input star file:"+f.read())
+    with open(initial_star) as f:
+        logger.debug("Input star file:"+f.read())
     
     debug = True if parameters.get("tomo_denoise_isonet_debug", False) else False
         
     # preprocess
     preprocess_star = "tomograms_processed.star"
     ncpu = parameters["slurm_tasks"]
-    verbose = parameters["slurm_verbose"]
 
     if parameters["tomo_denoise_isonet_CTFdeconvol"]:
 
@@ -381,8 +375,7 @@ def isonet_train(project_dir, output, parameters):
             cs,
             voltage,
             hp_nyquist,
-            ncpu,
-            verbose=verbose
+            ncpu
             )
     else:
         use_deconvol = False
@@ -403,8 +396,7 @@ def isonet_train(project_dir, output, parameters):
             std_percent,
             patchsize,
             use_deconvol,
-            z_crop,
-            verbose=verbose
+            z_crop
             )
 
     # extract subvolumes
@@ -418,8 +410,7 @@ def isonet_train(project_dir, output, parameters):
         extracted_star,
         cube_size,
         use_deconvol,
-        debug=debug,
-        verbose=verbose
+        debug=debug
         )    
     
     # refine (train)
@@ -497,8 +488,7 @@ def isonet_predict( name, project_dir, parameters ):
         batch_size,
         use_deconvol,
         use_threshold,
-        parameters=parameters,
-        verbose=parameters["slurm_verbose"]
+        parameters=parameters
     )
        
     output = glob.glob( "*_corrected.*" )[0]

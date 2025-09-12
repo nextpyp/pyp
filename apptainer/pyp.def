@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: mambaorg/micromamba
+From: mambaorg/micromamba:debian12-slim
 IncludeCmd: no
 
 %help
@@ -16,6 +16,7 @@ IncludeCmd: no
 	README.rst /opt/pyp
 	tests/ /opt/pyp
 	external/ /opt/pyp
+	/nfs/bartesaghilab/ab690/nextpyp/models /opt/pyp/external
 	/nfs/bartesaghilab/ab690/nextpyp/pyp/external/tomodrgn /opt/pyp/external
 	../AreTomo2/ /opt/pyp/external
 	../MotionCor3/ /opt/pyp/external
@@ -29,8 +30,8 @@ IncludeCmd: no
 	# somehow, after all that installation trouble, conda *STILL* doesn't manage to make the packages available to python
 	# probably because we don't have any way to "activate" the conda environment inside the container
 	# so we'll have to do it manually... sigh
-	export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/opt/conda/envs/pyp/lib:$LD_LIBRARY_PATH
-	export PATH=$PYP_DIR/bin:/opt/conda/envs/pyp/bin:$PATH
+	export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/opt/conda/envs/pyp/lib:/usr/local/lib:$LD_LIBRARY_PATH
+	export PATH=$PYP_DIR/bin:/opt/conda/envs/pyp/bin:/usr/local/bin:$PATH
 	export PYTHONPATH=/opt/pyp/src
 	export IMOD_DIR=/opt/IMOD
 	export PATH=$PATH:$IMOD_DIR/bin
@@ -143,6 +144,22 @@ IncludeCmd: no
 	find . ! -name "MotionCor3" -type f -exec rm -f {} \;
 	cd -
 
+	# Download and unpack MPICH source
+    	wget http://www.mpich.org/static/downloads/3.2.1/mpich-3.2.1.tar.gz
+    	tar -xzf mpich-3.2.1.tar.gz
+    
+    	# Configure, build, and install MPICH
+    	# Choose an installation directory, e.g., /opt/mpich-3.2.1
+    	cd mpich-3.2.1
+    	./configure --prefix=/opt/mpich-3.2.1 --disable-fortran --without-slurm
+    	make
+    	make install
+    
+    	# Clean up installation files to reduce image size
+    	cd ..
+    	rm mpich-3.2.1.tar.gz
+    	rm -rf mpich-3.2.1
+
 	# Conda is apparently a terrible package manager and
 	# totally fails to install 2 packages (two!!) in less than 30 minutes! (didn't try waiting longer...)
 	# Might be because conda is SUPER DUPER picky about its environment.
@@ -218,7 +235,7 @@ cat << EOF > /root/pytom.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	micromamba create --name pytom "python=3" -c conda-forge cupy cuda-version=11.8
+	micromamba create --name pytom "python=3" -c conda-forge cupy=13.5.1 cuda-version=11.8
 
 	# run the conda script in the new environment
 	chmod +x /root/pytom.sh
@@ -291,6 +308,9 @@ cat << EOF > /root/cryodrgn.sh
 
 	pip install cryodrgn
 
+	# change all plots from png to svgz!
+	sed -i 's/.png/.svgz/g' /opt/conda/envs/cryodrgn/lib/python3.9/site-packages/cryodrgn/commands/analyze.py
+
 	micromamba clean --all -y
 	
 	rm -rf /tmp/env.tar
@@ -328,6 +348,28 @@ EOF
 	micromamba run -n membrain /bin/bash -c "/root/membrain.sh > /proc/$$/fd/1 2>&1"
 	rm -rf /root/membrain.sh
 
+	# Install tardis
+cat << EOF > /root/tardis.sh
+
+	# install the python packages we need
+
+	pip install tardis-em
+
+	micromamba clean --all -y
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/tardis -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name tardis python=3.11 -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/tardis.sh
+	micromamba run -n tardis /bin/bash -c "/root/tardis.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/tardis.sh
+
 	# Install IsoNet
 cat << EOF > /root/isonet.sh
 
@@ -361,15 +403,21 @@ EOF
         ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.7
 
 	# Install WarpTools
-	#micromamba create --name warp warp=2.0.0 -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
-	#micromamba update warp -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
-	#micromamba clean --all -y
+cat << EOF > /root/warpem.sh
+	micromamba update warp -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
+	micromamba clean --all -y
 	
-	#rm -rf /tmp/env.tar
-	#conda-pack -p /opt/conda/envs/warp -o /tmp/env.tar && \
-	#	mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
-	#	rm /tmp/env.tar
-	#/venv/bin/conda-unpack
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/warp -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	#micromamba create --name warp warp=2.0.0 -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
+	
+	#chmod +x /root/warpem.sh
+	#micromamba run -n warp /bin/bash -c "/root/warpem.sh > /proc/$$/fd/1 2>&1"
+	#rm -rf /root/warpem.sh
 
 %startscript
 

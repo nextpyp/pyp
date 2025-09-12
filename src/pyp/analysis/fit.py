@@ -1,26 +1,14 @@
-import itertools
-import math
-import multiprocessing
 import os
 import subprocess
-from collections import deque
 
 import numpy as np
 
 from pyp import analysis
-from pyp.system import mpi
 from pyp.inout.image import img2webp
-from pyp.inout.metadata import frealign_parfile, pyp_metadata, isfrealignx, tomo_load_frame_xf
+from pyp.inout.metadata import pyp_metadata
 from pyp.inout.metadata.cistem_star_file import *
-from pyp.inout.utils import pyp_edit_box_files as imod
-from pyp.system import project_params
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-from pyp.analysis.geometry.pyp_convert_coord import read_3dbox
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def fit_poly_trajectory(shifts, degree=0):
 
@@ -266,7 +254,7 @@ def regularize_image(
     position_y_col = alignment_parameters.get_index_of_column(ORIGINAL_Y_POSITION)
 
 
-    logger.info("Now processing tilt %d", tilt_count)
+    logger.info("Now processing tilt %d" % tilt_count)
     tilt_idx = np.where(input_arr[:, tilt_col].astype(int) == tilt_count)[0]
     
     if tilt_idx.shape[0] == 0:

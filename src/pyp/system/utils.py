@@ -268,3 +268,29 @@ def qos(partition):
         return "--qos ccrprio"
     else:
         return ""
+
+from pyp.system.logging import get_verbose_level
+from pyp.streampyp.params import get_params_file_path, parse_params_from_file, ParamsConfig
+from pyp.system import project_params
+from pathlib import Path
+import argparse
+
+def parse_logger_level():
+
+    # read params from a params file instead of the CLI, if needed
+    params_file_path = get_params_file_path()
+    if params_file_path is not None:
+        config = ParamsConfig.from_file()
+        parameters = parse_params_from_file(config, params_file_path)
+    elif os.path.exists('.pyp_config.toml'):
+        parameters = project_params.load_pyp_parameters('.')
+    elif ( Path.cwd().parents[0] / '.pyp_config.toml' ).exists:
+        parameters = project_params.load_pyp_parameters('..')
+    else:
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("-slurm_verbose_level", "--slurm_verbose_level")
+        parser.add_argument("-slurm_verbose", "--slurm_verbose", action="store_true")
+        args, _ = parser.parse_known_args()
+        parameters = vars(args)
+
+    return get_verbose_level(parameters=parameters)

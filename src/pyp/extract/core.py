@@ -3,7 +3,6 @@ import os
 import random
 import shutil
 import string
-import sys
 from pathlib import Path
 import numpy as np
 
@@ -18,19 +17,13 @@ from pyp.inout.image import (
     get_gain_reference,
     get_image_dimensions,
     mrc,
-    readMoviefileandsave,
-    readTIFfileandsave,
 )
 from pyp.inout.metadata import cistem_star_file
 from pyp.system import mpi
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_frealign_paths, get_imod_path
-from pyp.utils import get_relative_path, timer
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def extract_particles_old(
     image,
@@ -69,19 +62,19 @@ def extract_particles_old(
         minY = box[0]
         maxY = box[0] + boxsize
         if minX < 0:
-            # logger.warning("Particle %d falls outside X lower range %d", count, minX)
+            # logger.warning("Particle %d falls outside X lower range %d" % (count, minX))
             minx = -minX
             minX = 0
         elif maxX >= nx:
-            # logger.warning("Particle %d falls outside X upper range ( %d, %d)", count, maxX, nx)
+            # logger.warning("Particle %d falls outside X upper range ( %d, %d)" % (count, maxX, nx))
             maxx = -(maxX - nx + 1)
             maxX = nx - 1
         if minY < 0:
-            # logger.warning("Particle %d falls outside Y lower range %d", count, minY)
+            # logger.warning("Particle %d falls outside Y lower range %d" % (count, minY))
             miny = -minY
             minY = 0
         elif maxY >= ny:
-            # logger.warning("Particle %d falls outside Y upper range ( %d, %d"), count, maxY, ny)
+            # logger.warning("Particle %d falls outside Y upper range ( %d, %d") % (count, maxY, ny))
             maxy = -(maxY - ny + 1)
             maxY = ny - 1
         # pdb.set_trace()
@@ -97,7 +90,7 @@ def extract_particles_old(
                 raw = inside.mean() * np.ones([boxsize, boxsize])
                 raw[int(minx) : int(maxx), int(miny) : int(maxy)] = inside
             else:
-                logger.warning("Particle falls completely outside bounds:", box)
+                logger.warning("Particle falls completely outside bounds:" + box)
                 raw = np.zeros([boxsize, boxsize])
         elif frames > 1:
             # raw = np.squeeze( image[ box[2], box[1]:box[1]+boxsize, box[0]:box[0]+boxsize ] )
@@ -135,14 +128,14 @@ def extract_particles_old(
                 except:
                     # print 'ERROR - Dimensions do not match', raw[ int(minx):int(maxx), int(miny):int(maxy) ].shape, inside.shape
                     logger.info(
-                        "ERROR - Dimensions do not match",
+                        "ERROR - Dimensions do not match" +
                         raw[
                             int(round(minx)) : int(round(maxx)),
                             int(round(miny)) : int(round(maxy)),
-                        ].shape,
+                        ].shape +
                         inside.shape,
                     )
-                    logger.info(minx, maxx, miny, maxy)
+                    logger.info("minx = %f, maxx = %f, miny = %f, maxy = %f" % (minx, maxx, miny, maxy))
                     raw[
                         int(round(minx)) : int(round(maxx)),
                         int(round(miny)) : int(round(maxy)) - 1,
@@ -151,11 +144,12 @@ def extract_particles_old(
                 # raw[ int(round(minx)):int(round(maxx)), int(round(miny)):int(round(maxy)) ] = inside
             else:
                 logger.warning(
-                    "Particle falls completely outside bounds:",
-                    minx,
-                    maxx,
-                    miny,
-                    maxy,
+                    "Particle falls completely outside bounds: [%d, %d, %d, %d]" % (
+                        minx,
+                        maxx,
+                        miny,
+                        maxy,
+                    )
                 )
                 raw = np.zeros([boxsize, boxsize])
 
@@ -457,20 +451,20 @@ def extract_particles_non_mpi(
         maxY = minY + boxsize
 
         if minX < 0:
-            # logger.warning("Particle %d falls outside X lower range %d", count, minX)
+            # logger.warning("Particle %d falls outside X lower range %d" % (count, minX))
             minx = -minX
             minX = 0
         elif maxX >= nx:
-            # logger.warning("Particle %d falls outside X upper range ( %d, %d)", count, maxX, nx)
+            # logger.warning("Particle %d falls outside X upper range ( %d, %d)" % (count, maxX, nx))
             maxx = -(maxX - nx + 1)
             maxX = nx - 1
 
         if minY < 0:
-            # logger.warning("Particle %d falls outside Y lower range %d", count, minY)
+            # logger.warning("Particle %d falls outside Y lower range %d" % (count, minY))
             miny = -minY
             minY = 0
         elif maxY >= ny:
-            # logger.warning("Particle %d falls outside Y upper range ( %d, %d)", count, maxY, ny)
+            # logger.warning("Particle %d falls outside Y upper range ( %d, %d)" % (count, maxY, ny))
             maxy = -(maxY - ny + 1)
             maxY = ny - 1
 
@@ -481,7 +475,7 @@ def extract_particles_non_mpi(
                 raw[int(minx) : int(maxx), int(miny) : int(maxy)] = inside
             else:
                 logger.warning(
-                    "Particle falls completely outside bounds:",
+                    "Particle falls completely outside bounds: " +
                     box[0] / coordinate_binning,
                 )
                 raw = np.zeros([boxsize, boxsize])
@@ -565,7 +559,7 @@ def extract_particles_mpi(
                 )
                 commands.append(com)
         if len(commands) > 0:
-            mpi.submit_jobs_to_workers(commands, os.getcwd())
+            mpi.submit_jobs_to_workers(commands)
             
         input = [f.replace(".tiff", ".mrc").replace(".tif", ".mrc") for f in input]
         
@@ -593,20 +587,20 @@ def extract_particles_mpi(
                 )
                 commands.append(com)
 
-            mpi.submit_jobs_to_workers(commands, os.getcwd())
+            mpi.submit_jobs_to_workers(commands)
 
         # down-sample images
         arguments = []
         if binning > 1:
             for f in input:
                 arguments.append((f, "frealign/" + f, binning, method))
-            mpi.submit_function_to_workers(downsample_stack, arguments, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(downsample_stack, arguments)
 
             [os.remove(f) for f in input]
         else:
             for f in input:
                 arguments.append((f, "frealign/" + f))
-            mpi.submit_function_to_workers(os.rename, arguments, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(os.rename, arguments)
 
 
         # write a txt containing the filename of frames (for stackless CSP)
@@ -662,7 +656,7 @@ def extract_particles_mpi(
             )
         )
         count += chunks
-    mpi.submit_function_to_workers(extract_particles_non_mpi, arguments, verbose=parameters["slurm_verbose"])
+    mpi.submit_function_to_workers(extract_particles_non_mpi, arguments)
 
     if len(split_boxes) > 1:
         # merge stacks
@@ -769,4 +763,4 @@ def extract_stacks_particle_cspt(
             idx += 1
 
     if len(command_list) > 0:
-        mpi.submit_jobs_to_workers(command_list, os.getcwd())
+        mpi.submit_jobs_to_workers(command_list)

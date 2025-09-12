@@ -2,7 +2,7 @@ import glob
 import math
 import os
 import shutil
-import subprocess
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,13 +19,9 @@ from pyp.inout.metadata import pyp_metadata, cistem_star_file
 from pyp.analysis.image import contrast_stretch
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, check_env
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def contact_sheet(Y, cols=25, rescale=True, order: list = None):
     if rescale:
@@ -420,7 +416,7 @@ def plot_dataset(parameters, current_count=-9, work_dir="", auto="."):
         com = "montage {}/.{}_stats.png {}/.{}_time.png -mode concatenate -tile 1x {}/{}.webp".format(
             auto, data_set, auto, data_set, auto, data_set
         )
-        run_shell_command(com, verbose=parameters["slurm_verbose"])
+        run_shell_command(com)
         os.remove("{}/.{}_stats.png".format(auto, data_set))
         os.remove("{}/.{}_time.png".format(auto, data_set))
 
@@ -691,7 +687,7 @@ def generate_plots(
                             fmatch_stack, sorted_indexes, fmatch_stack_group
                         )
                     else:
-                        logger.info("File not found %s", fmatch_stack)
+                        logger.info("File not found %s" % fmatch_stack)
 
     if dump:
         fig = plt.figure(figsize=(5, 5))
@@ -849,7 +845,7 @@ def generate_plots(
     command = "montage {0}_prs.png {0}_hist.png -tile 1x2 -geometry +0+0 {0}_prs.png".format(
         output_name
     )
-    run_shell_command(command, verbose=False)
+    run_shell_command(command, log_level=logging.TRACE)
 
     os.remove("%s_hist.png" % output_name)
 
@@ -1163,7 +1159,7 @@ def plot_local_alignment(
     plt.close()
 
 
-def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=False):
+def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, clipping=True):
     """tomo_slicer_gif - Generate a GIF animation from a tomogram navigating through its z slices 
 
     Parameters
@@ -1188,7 +1184,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
         else:
             command += f" -zbinning {averagezslices} -ybinning 1 -xbinning 1"
         
-        run_shell_command(command, verbose=verbose)
+        run_shell_command(command)
     else:
         os.symlink( tomogram, tomogram_avg)
 
@@ -1198,7 +1194,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
         command = "{0}/bin/clip flipyz {1} {2}".format(
             get_imod_path(), tomogram_avg, tomogram_flip
         )
-        run_shell_command(command, verbose=verbose)
+        run_shell_command(command)
     else:
         os.symlink( tomogram_avg, tomogram_flip )
  
@@ -1207,8 +1203,11 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     dimensions = volume.shape # array shape z, y, x
     num_z_slices = dimensions[0]
     mean, std = volume.mean(), volume.std()
-    min_cutoff, max_cutoff = mean - 2 * std, mean + 2 * std
-
+    
+    if clipping:
+        min_cutoff, max_cutoff = mean - 2 * std, mean + 2 * std
+    else:
+        min_cutoff, max_cutoff = volume.min(), volume.max()
     
     # generate pngs for the middle slices
     starting_slice, ending_slice = 0, num_z_slices - 1
@@ -1223,7 +1222,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
         tomogram_flip,
         output_pattern,
     )
-    run_shell_command(command, verbose=verbose)
+    run_shell_command(command)
 
     # sorting the pngs and create a loop by appending a reverse list
     pngList = [
@@ -1244,7 +1243,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     command = "/usr/bin/montage -resize {0}x{1} -geometry +0+0 -tile {2}x {3} {4}".format(
         dimensions[2], dimensions[1], square_size, " ".join(pngList), rec_output
     )
-    run_shell_command(command, verbose=verbose)
+    run_shell_command(command)
 
     # clean up pngs and flipped tomogram
     [os.remove(png) for png in pngList]
@@ -1267,7 +1266,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     command = "{0}/convert image.png {1}".format(
         os.environ["IMAGICDIR"], output.replace("_rec.webp",".webp")
     )
-    run_shell_command(command, verbose=verbose)
+    run_shell_command(command)
 
     # generate side projections
     x_middle = rec_x // 2
@@ -1278,8 +1277,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     contrast_stretch("side2.png")
     run_shell_command(
         "%s/montage side1.png side2.png -mode concatenate -tile 1x %s"
-        % ( os.environ["IMAGICDIR"], output.replace("_rec.webp","_sides.webp") ),
-        verbose=verbose,
+        % ( os.environ["IMAGICDIR"], output.replace("_rec.webp","_sides.webp") )
     )
     # clean up side pngs
     pngList = [
@@ -1289,8 +1287,22 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, verbose=Fal
     ]
     [os.remove(png) for png in pngList]
 
+def false_color(input, output):
+    
+    # create CLUT
+    command = f"/usr/bin/convert -size 1x1! xc:cyan xc:magenta +append -resize 255x1! CLUT.png"
+    run_shell_command(command)
+    
+    # colorize
+    command = f"/usr/bin/convert {input} CLUT.png -clut {output}"
+    run_shell_command(command)
 
-def tomo_montage(input, output, dimensions=384, verbose=False):
+    try:
+       os.remove("CLUT.png")
+    except:
+       pass
+
+def tomo_montage(input, output, dimensions=384):
     """tomo_slicer_gif - Generate a montage from an mrc file
 
     Parameters
@@ -1326,7 +1338,7 @@ def tomo_montage(input, output, dimensions=384, verbose=False):
         os.path.join( current_dir, input ),
         output_pattern,
     )
-    run_shell_command(command, verbose=verbose)
+    run_shell_command(command)
 
     # sorting the pngs and create a loop by appending a reverse list
     pngList = [
@@ -1342,14 +1354,14 @@ def tomo_montage(input, output, dimensions=384, verbose=False):
     command = "/usr/bin/montage -resize {0}x{0} -geometry +0+0 -tile {1}x {2} {3}".format(
         dimensions, tiles, " ".join(pngList), os.path.join( current_dir, output )
     )
-    run_shell_command(command, verbose=verbose)
+    run_shell_command(command)
  
     # clean up pngs and flipped tomogram
     [os.remove(png) for png in pngList]
     os.chdir( current_dir )
     shutil.rmtree( working_dir )
 
-def plot_tomo_ctf(name,verbose=False):
+def plot_tomo_ctf(name):
     """Plot CTF function called from tomo_swarm."""
     # Slice of binned reconstruction for quad plot
     if os.path.isfile("ctffind3.png"):
@@ -1366,31 +1378,31 @@ def plot_tomo_ctf(name,verbose=False):
         # compose quad-plot
         img2webp("image.png",f"{name}.webp")
 
-def plot_spr_ctf(name, verbose=False):
+def plot_spr_ctf(name):
     # resize image to have 512 pixels in height
     command = "{0}/convert {1}.jpg -flip -resize x512 +append image.png".format(
         os.environ["IMAGICDIR"], name
     )
-    run_shell_command(command, verbose=verbose)
+    run_shell_command(command)
     # add frame trajectory to power spectrum image
     if os.path.exists(name + ".xf"):
         plot_trajectory(name)
         command = "{0}/composite -geometry +256+0 {1}_xf.png ctffind3.png ctffind3.png".format(
             os.environ["IMAGICDIR"], name,
         )
-        run_shell_command(command, verbose=verbose)
+        run_shell_command(command)
     # add correlation plot
     if os.path.exists("%s.ccc" % name):
         plot_ccc(name)
         command = "{0}/composite -geometry +256+256 {1}_ccc.png ctffind3.png ctffind3.png".format(
             os.environ["IMAGICDIR"], name,
         )
-        run_shell_command(command, verbose=verbose)
+        run_shell_command(command)
     # create montage
     command = "{0}/montage image.png {1}_CTFprof.png ctffind3.png -geometry x512 -geometry +0+0 {1}_view.webp".format(
         os.environ["IMAGICDIR"], name
     )
-    run_shell_command(command, verbose=verbose)
+    run_shell_command(command)
 
 
 def plot_trajectories(
@@ -1571,7 +1583,7 @@ def par2bild(parfile, output, parameters):
 
     comm= os.environ["PYP_DIR"] + f"/external/postprocessing/par_to_bild.py --input '{parfile}' --output '{output}' {is_tomo} --apix {parameters['scope_pixel']*parameters['data_bin']*parameters['extract_bin']} --healpix_order 4 --boxsize {parameters['extract_box']} --height_scale 0.3 --width_scale 0.5 --occ_cutoff {project_params.param(parameters['reconstruct_cutoff'],parameters['refine_iter'])} --sym {parameters['particle_sym']} "
 
-    run_shell_command(comm, verbose=False)
+    run_shell_command(comm)
     
     if not os.path.exists(output):
         logger.error(f"Failed to produce {output}")

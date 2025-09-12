@@ -21,12 +21,8 @@ import numpy
 
 from pyp.inout.image import mrc
 from pyp.system import project_params, utils
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def plotsf(result, pixel_size):
 
@@ -34,7 +30,7 @@ def plotsf(result, pixel_size):
     com = "{2}; e2proc3d.py {0}.mrc .dummy.mrc --apix={1} --calcsf={0}.sf".format(
         result, pixel_size, utils.eman_load_command()
     )
-    logger.info("\nComputing structure factor... %s\n", com)
+    logger.info("\nComputing structure factor... %s\n" % com)
     logger.info(subprocess.getoutput(com))
     cryo = numpy.loadtxt("%s.sf" % result)
     plt.plot(cryo[:, 0], numpy.log(cryo[:, 1]), label="%s" % result)
@@ -116,12 +112,12 @@ def local_bfactor(input_map, bfactor, pixel_size, local):
     # bfactors = numpy.hstack( [ 90, numpy.linspace( minbfactor, maxbfactor, number_of_bins + 1 ) ] )
     bfactors = numpy.linspace(minbfactor, maxbfactor, number_of_bins + 1)
 
-    logger.info("Using local bfactors %f between density levels %f", bfactors, levels)
+    logger.info("Using local bfactors %f between density levels %f" % (bfactors, levels))
 
     low_res_values = numpy.linspace(low_res, max_low_res, number_of_bins + 1)
 
     logger.info(
-        "Using local low pass %f between density levels %f", low_res_values, levels
+        "Using local low pass %f between density levels %f" % (low_res_values, levels)
     )
 
     # apply general bfactor
@@ -158,13 +154,14 @@ def local_bfactor(input_map, bfactor, pixel_size, local):
         hth = levels[i]
 
         logger.info(
-            "Applying bfactor range [ %f, %f ], low pass range [ %f, %f ] within density range [ %f, %f ]",
-            bfactors[i - 1],
-            bfactors[i],
-            low_res_values[i - 1],
-            low_res_values[i],
-            lth,
-            hth,
+            "Applying bfactor range [ %f, %f ], low pass range [ %f, %f ] within density range [ %f, %f ]" % (
+                bfactors[i - 1],
+                bfactors[i],
+                low_res_values[i - 1],
+                low_res_values[i],
+                lth,
+                hth,
+            )
         )
         interpolation = (modulo - lth) / (hth - lth)
         output = numpy.where(
@@ -253,7 +250,7 @@ if __name__ == "__main__":
         com = "{2}; e2proc3d.py {0}.mrc {0}_clip.mrc {1}".format(
             input, clip, utils.eman_load_command()
         )
-        logger.info("\nCropping volume...\n", com)
+        logger.info("\nCropping volume...\n" % com)
         logger.info(subprocess.getoutput(com))
     else:
         shutil.copy2("%s.mrc" % input, "%s_clip.mrc" % input)
@@ -358,10 +355,11 @@ if __name__ == "__main__":
                 logger.info(subprocess.getoutput(com))
                 # _clip_U1_B-60_F0.0
                 logger.info(
-                    input + "_clip_U%d_B%d_F%.1f.mrc",
-                    int(args.upsample),
-                    int(args.bfactor),
-                    float(args.blowpass),
+                    input + "_clip_U%d_B%d_F%.1f.mrc" % (
+                        int(args.upsample),
+                        int(args.bfactor),
+                        float(args.blowpass),
+                    )
                 )
                 shutil.move(
                     input
@@ -386,7 +384,7 @@ if __name__ == "__main__":
                         utils.get_bsoft_path(), args.bfactor, pixel_size, input, name
                     )
 
-                logger.info("\nApplying bfactor...\n %s", com)
+                logger.info("\nApplying bfactor...\n %s" % com)
                 logger.info(subprocess.getoutput(com))
 
                 continue
@@ -486,7 +484,7 @@ if __name__ == "__main__":
         utils.eman_load_command(),
     )
     logger.info(
-        "\nApplying mask (if any), structure factor (if any), and setting origin to 0...\n %s",
+        "\nApplying mask (if any), structure factor (if any), and setting origin to 0...\n %s" %
         command,
     )
     logger.info(subprocess.getoutput(command))
@@ -544,4 +542,4 @@ EOF
         except OSError:
             pass
 
-    logger.info("\nFinal map saved in %s.mrc", result)
+    logger.info("\nFinal map saved in %s.mrc" % result)

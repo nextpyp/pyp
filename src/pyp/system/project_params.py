@@ -1,6 +1,4 @@
 import argparse
-import collections
-import csv
 import glob
 import math
 import multiprocessing
@@ -19,16 +17,13 @@ import toml
 from pyp import utils
 from pyp.analysis import statistics
 from pyp.system import project_params, slurm, user_comm
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import clear_scratch
-from pyp.utils import get_relative_path, movie2regex
+from pyp.utils import movie2regex
 from pyp.system.db_comm import save_parameters_to_website
 from pyp.streampyp.logging import TQDMLogger
 from pyp.inout.metadata import pyp_metadata
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def spr_is_done(name):
     extensions = ["avg", "xf"]
@@ -152,7 +147,7 @@ def get_relevant_films(parameters, array_job_num):
     ]
 
 
-def get_missing_files(parameters, inputlist, exhaustive=True, verbose=True):
+def get_missing_files(parameters, inputlist, exhaustive=True):
     missing_files = []
     logger.info("Looking for failed jobs")
     with tqdm(desc="Progress", total=len(inputlist), file=TQDMLogger()) as pbar:
@@ -335,7 +330,7 @@ def select_clean_micrographs(parameters, micrographs, inputlist):
         )
         if parameters["slurm_email"]:
             user_comm.notify(parameters["data_set"], parameters["data_set"] + ".png")
-        logger.info("Filtering out micrographs below threshold = %f", th)
+        logger.info("Filtering out micrographs below threshold = %f" % th)
         names = dbase[:, 0].squeeze()
         clean_list = names[(dbase[:, 19].astype("f") >= th).squeeze()].tolist()
         # clean_list = dbase[ dbase[:,19].astype('f') >= th ][:,0].tolist()
@@ -570,7 +565,7 @@ def sanitize_parameters(parameters):
         if not t.startswith("_"):
             for p in specifications["tabs"][t].keys():
                 if not p.startswith("_"):
-                    if parameters.get(f"{t}_{p}"):
+                    if f"{t}_{p}" in parameters:
                         clean_parameters[f"{t}_{p}"] = parameters[f"{t}_{p}"]
     return clean_parameters
 
@@ -866,11 +861,10 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
 
     differences = {d for d in all_differences if not ( ( isinstance(previous_parameters[d],PosixPath) or isinstance(previous_parameters[d],str) ) and project_params.resolve_path(previous_parameters[d]) == project_params.resolve_path(new_parameters[d]) ) }
 
-    if previous_parameters.get("slurm_verbose"):
-        if len(differences):
-            logger.info(f"Parameters changed: {differences}")
-        else:
-            logger.info("No parameter changes detected")
+    if len(differences):
+        logger.trace(f"Parameters changed: {differences}")
+    else:
+        logger.trace("No parameter changes detected")
 
     try:
         data_set = previous_parameters["data_set"]
@@ -882,7 +876,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             inputlist = [line.strip() for line in f]
 
         # initialize all _force parameters if previous run was successful
-        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False, verbose=False)) == 0:
+        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False)) == 0:
             new_parameters["movie_force"] = False
             new_parameters["ctf_force"] = False
             new_parameters["detect_force"] = False
@@ -1046,18 +1040,24 @@ def clean_ctf_files(project_dir):
 
 
 def clean_picking_files(project_dir):
-
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*.*") )]
+    if os.path.exists(os.path.join(project_dir, "csp")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
+    if os.path.exists(os.path.join(project_dir, "sva")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*.*") )]
 
 
 def clean_tomo_vir_particles(project_dir):
 
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_vir????_binned_nad*.mrc") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "webp", "*_vir????_binned_nad.webp") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*_vir*.*") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "next", "virion_thresholds.next") )]
-    [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
+    if os.path.exists(os.path.join(project_dir, "mrc")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_vir????_binned_nad*.mrc") )]
+    if os.path.exists(os.path.join(project_dir, "webp")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "webp", "*_vir????_binned_nad.webp") )]
+    if os.path.exists(os.path.join(project_dir, "sva")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*_vir*.*") )]
+    if os.path.exists(os.path.join(project_dir, "next")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "next", "virion_thresholds.next") )]
+    if os.path.exists(os.path.join(project_dir, "csp")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "csp", "*.*") )]
 
 
 def get_latest_refinement_reference(parent_path: str, parfile_compress: bool = False):

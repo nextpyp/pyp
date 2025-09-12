@@ -2,15 +2,10 @@ import filecmp
 import glob
 import os
 import shutil
+import logging
 from pathlib import Path
 
-from genericpath import exists
-
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
+from pyp.system.logging import logger
 
 def load_files(current_path,working_path,f):
     if (current_path / f).is_file():
@@ -20,7 +15,7 @@ def load_files(current_path,working_path,f):
         logger.info(f"Retrieving {Path(f).name}")
         shutil.copy2(f, working_path)
 
-def load_results(file_list, files_path, working_path,verbose=False):
+def load_results(file_list, files_path, working_path):
     """Load existing results from files."""
 
     arguments = []
@@ -36,7 +31,7 @@ def load_results(file_list, files_path, working_path,verbose=False):
     
     from pyp.system import mpi
     mpi.submit_function_to_workers(
-        load_files, arguments, verbose=verbose, silent=True
+        load_files, arguments, log_level=logging.NOTSET
     )
 
 def transfer_files(project_path,d,file):
@@ -46,16 +41,16 @@ def transfer_files(project_path,d,file):
     if os.path.isfile(file):
         if os.path.exists(target):
             if not filecmp.cmp(file, target):
-                logger.info("Updating %s", Path(target).name)
+                logger.info("Updating %s" % Path(target).name)
                 os.remove(target)
                 shutil.copy2(file, target)
             else:
-                logger.info("Keeping existing %s", Path(target).name)
+                logger.info("Keeping existing %s" % Path(target).name)
         else:
-            logger.info("Saving %s", Path(target).name)
+            logger.info("Saving %s" % Path(target).name)
             shutil.copy2(file, target)
 
-def save_results(files, project_path,verbose=False):
+def save_results(files, project_path):
     """Save processing results"""
 
     arguments = []
@@ -73,5 +68,5 @@ def save_results(files, project_path,verbose=False):
     
     if len(arguments) > 0:
         mpi.submit_function_to_workers(
-            transfer_files, arguments, verbose=verbose, silent = True
+            transfer_files, arguments, log_level=logging.NOTSET
         )

@@ -1,17 +1,13 @@
 import os
-import subprocess
+import logging
 
 from pyp.system import local_run
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import get_imod_path, get_tomoctf_path
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def run_slurm_command(command):
-    [output, error] = local_run.run_shell_command(command,verbose=False)
+    [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
     return output, error
 
 

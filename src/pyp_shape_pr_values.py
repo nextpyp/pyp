@@ -5,10 +5,8 @@ import argparse
 import numpy as np
 
 from pyp.analysis import fit, plot, scores
-from pyp.system.logging import initialize_pyp_logger
 
-logger = initialize_pyp_logger(log_name=__name__)
-
+from pyp.system.logging import logger
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="shape_pr_values")

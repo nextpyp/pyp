@@ -1,3 +1,4 @@
+import logging
 import math
 import multiprocessing
 import os
@@ -15,20 +16,17 @@ import json
 from pyp import merge
 from pyp.analysis import statistics, plot, geometry
 from pyp.inout.image import mrc
-from pyp.inout.metadata import frealign_parfile, pyp_metadata , get_particles_tilt_index
+from pyp.inout.metadata import frealign_parfile, pyp_metadata
 from pyp.inout.metadata import cistem_star_file
 from pyp.refine.frealign import frealign
 from pyp.system import project_params, mpi
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path, timer, symlink_relative
+from pyp.utils import timer, symlink_relative
 from pyp.inout.utils.pyp_edit_box_files import read_boxx_file_async, write_boxx_file_async
 from pyp.system.utils import get_imod_path
 from pyp.streampyp.logging import TQDMLogger
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def per_frame_scoring(
     parameters, name, current_path, allboxes, allparxs, particle_filenames
@@ -462,10 +460,11 @@ def shape_phase_residuals(
                             thresholds[g, f] = mythreshold
                         else:
                             logger.warning(
-                                "Not enough points for estimating statistics %d %d %d",
-                                g,
-                                f,
-                                prs.size,
+                                "Not enough points for estimating statistics %d %d %d" % (
+                                    g,
+                                    f,
+                                    prs.size,
+                                )
                             )
 
                 elif threshold <= 1:
@@ -631,7 +630,7 @@ def shape_phase_residuals(
             bad_particles,
             np.where(metric_weights == 0, 1, 0).sum(),
         )
-        logger.info("Total particles = %d", total_particles)
+        logger.info("Total particles = %d" % total_particles)
         input[:, occ] = np.where(metric_weights == 0, 0, input[:, occ])
         fmatch_stack_removed = "../maps/%s_match_removed.mrc" % (
             os.path.splitext(inputparfile)[0]
@@ -831,7 +830,7 @@ def eval_phase_residual(
 ):
 
     if math.fabs(defocus) > tolerance:
-        logger.info("Evaluating %f = %d", defocus, np.nan)
+        logger.info("Evaluating %f = %d" % (defocus, np.nan))
         return np.nan
 
     particles = input.shape[0]
@@ -870,7 +869,7 @@ def eval_phase_residual(
         try:
             symlink_relative(os.path.join(os.getcwd(),stack), local_stack)
         except:
-            logger.info("symlink failed %s %s", local_stack, stack)
+            logger.info("symlink failed %s %s" % ( local_stack, stack))
             pass
 
     # call FREALIGN directly to improve performance
@@ -913,7 +912,7 @@ def eval_phase_residual(
             dtype=float,
         )
 
-    logger.info("Evaluating %f = %f", defocus, scores.mean())
+    logger.info("Evaluating %f = %f" % (defocus, scores.mean()))
 
     os.chdir("..")
 
@@ -1117,7 +1116,7 @@ def particle_cleaning(parameters: dict):
                             parameters["clean_threshold"],
                             parameters["scope_pixel"]))
         if len(mpi_args) > 0:
-            mpi.submit_function_to_workers(filter_particles, mpi_args, verbose=parameters["slurm_verbose"])
+            mpi.submit_function_to_workers(filter_particles, mpi_args)
 
         # Statistics             
         clean_particle_count = 0
@@ -1154,7 +1153,7 @@ def particle_cleaning(parameters: dict):
                 mpi_args.append((parameter_file, clean_parameter_folder))
             
             if len(mpi_args) > 0:
-                mpi.submit_function_to_workers(deep_clean_particles, mpi_args, verbose=parameters["slurm_verbose"])
+                mpi.submit_function_to_workers(deep_clean_particles, mpi_args)
 
             clean_micrograph_list = np.array([str(f.name).split("_r")[0] for f in Path(clean_parameter_folder).glob("*.cistem") if "_extended.cistem" not in str(f)])
             
@@ -1402,7 +1401,7 @@ def update_boxx_files(global_indexes_to_remove, parameters, classification_pass,
     pool = multiprocessing.Pool(threads)
     manager = multiprocessing.Manager()
     results = manager.Queue()
-    logger.info("Reading box files using %i threads", threads)
+    logger.info("Reading box files using %i threads" % threads)
     for micrograph in inputlist:
         pool.apply_async(read_boxx_file_async, args=(micrograph, results))
     pool.close()
@@ -1494,7 +1493,7 @@ def update_boxx_files(global_indexes_to_remove, parameters, classification_pass,
 
                     boxx_dbase[name][:, 5] = boxxx
             else:
-                logger.info("%s does not exist", boxxfile)
+                logger.info("%s does not exist" % boxxfile)
 
             if micrograph_counter < len(inputlist) - 1:
                 micrograph_counter += 1
@@ -1520,12 +1519,12 @@ def update_boxx_files(global_indexes_to_remove, parameters, classification_pass,
             boxxx[index_in_micrograph - 1] = classification_pass - 1
             boxx_dbase[name][:, 5] = boxxx
 
-    logger.info("Current global count %d", current_global_counter)
+    logger.info("Current global count %d" % current_global_counter)
     # save all boxx files in parallel
     pool = multiprocessing.Pool(threads)
     manager = multiprocessing.Manager()
     results = manager.Queue()
-    logger.info("Saving box files using %i threads", threads)
+    logger.info("Saving box files using %i threads" % threads)
     for micrograph in inputlist:
         pool.apply_async(
             write_boxx_file_async, args=(micrograph, boxx_dbase[micrograph])
@@ -1639,9 +1638,9 @@ def generate_clean_spk(input_parameter_folder, binning=1, output_path="./frealig
 
                     outfile = os.path.join(output_path, os.path.basename(file).replace("_extended.cistem", ".mod"))
                     command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {file.replace('_extended.cistem', '.box')} {outfile}"
-                    run_shell_command(command, verbose=False)
+                    run_shell_command(command, log_level=logging.TRACE)
 
-                    run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')),verbose=False)
+                    run_shell_command("{0}/bin/imodtrans -T {1} {2}".format(get_imod_path(), outfile, outfile.replace('.mod', '.spk')), log_level=logging.TRACE)
 
                     os.remove(outfile)
 

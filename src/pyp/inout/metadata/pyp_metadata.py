@@ -1,6 +1,7 @@
 
 import os, sys
 import glob
+import logging
 import re
 import math
 from pathlib import Path
@@ -11,18 +12,15 @@ import pickle
 from tqdm import tqdm
 
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system import project_params
-from pyp.utils import get_relative_path, movie2regex, symlink_force, symlink_relative
+from pyp.utils import movie2regex, symlink_force, symlink_relative
 from pyp.system.utils import get_imod_path
 from pyp.streampyp.logging import TQDMLogger
 from pyp.inout.metadata import frealign_parfile, cistem_star_file
 from pyp.analysis.geometry import getRelionMatrix, spk2Relion, relion2Spk, alignment2Relion,eulerZXZtoZYZ, eulerZYZtoZXZ, cistem2_alignment2Relion
 from pyp.analysis.geometry import transformations as vtk
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 # lines to skip when reading text files
 HEADERS = ["#", "C"]
@@ -491,7 +489,7 @@ class LocalMetadata:
         header = self.files[key]["header"]
 
         command = f"{get_imod_path()}/bin/imodinfo -a {file}"
-        [output, error] = run_shell_command(command, verbose=False)
+        [output, error] = run_shell_command(command, log_level=logging.TRACE)
 
         modfile = output.split("contour")
         indexes = []
@@ -526,7 +524,7 @@ class LocalMetadata:
         header = self.files[key]["header"]
 
         command = f"{get_imod_path()}/bin/header -size '{file}'"
-        [output, error] = run_shell_command(command, verbose=False)
+        [output, error] = run_shell_command(command, log_level=logging.NOTSET)
 
         x, y, z = list(map(int, output.split()))
         if file.endswith(".rec"):
@@ -644,13 +642,13 @@ class LocalMetadata:
             command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 -values 1 {tmp} {path}"
         else:
             command = f"{get_imod_path()}/bin/point2model -scat -sphere 5 {tmp} {path}"
-        run_shell_command(command, verbose=False)
+        run_shell_command(command, log_level=logging.TRACE)
         if os.path.exists(tmp):
             os.remove(tmp)
 
         # label yz-swap in the model file
         command = f"{get_imod_path()}/bin/imodtrans -Y -T {path} {path}~ && mv {path}~ {path}"
-        run_shell_command(command, verbose=False)
+        run_shell_command(command, log_level=logging.TRACE)
 
 
 
@@ -1132,7 +1130,7 @@ _rlnRandomSubset #16
                     comm = "par2star.py --stack {0} --apix {1} --ac {2} --cs {3} --voltage {4} {5} {6}".format(
                         stack, ptl_pxl, ac, cs, voltage, parfile, saved_file
                     )
-                    run_shell_command(comm, verbose=True)
+                    run_shell_command(comm, log_level=logging.TRACE)
                 logger.info(f"Alignments exported to {Path(saved_file).resolve()}")
             else:
                 # mostly using stack instead of exporting raw shifts
@@ -1927,7 +1925,7 @@ _rlnRandomSubset #14
                     # update image size - from .mrc images
                     assert (os.path.exists(avg_src)), f"{avg_src} does not exist"
                     command = f"{get_imod_path()}/bin/header -size '{avg_src}'"
-                    [output, error] = run_shell_command(command, verbose=False)
+                    [output, error] = run_shell_command(command, log_level=logging.NOTSET)
                     x, y, z = list(map(int, output.split()))
                     arr = np.array([[x, y, z]])
                     imagekey = os.path.basename(avg).replace(".mrc", "")
@@ -2054,7 +2052,7 @@ _rlnRandomSubset #14
                 assert (os.path.exists(Path(rln_path) / path)), f"{Path(rln_path) / path} does not exist"
 
                 command = f"{get_imod_path()}/bin/header -size '{Path(rln_path) / path}'"
-                [output, error] = run_shell_command(command, verbose=False)
+                [output, error] = run_shell_command(command, log_level=logging.NOTSET)
                 x, y, z = list(map(int, output.split()))
                 arr = np.array([[x, y, z]])
                 self.data[name]["image"] = pd.DataFrame(arr, columns=FILES_TOMO["image"]["header"])
@@ -2543,12 +2541,11 @@ _rlnRandomSubset #14
         with tqdm(desc="Progress", total=len(self.data), file=TQDMLogger()) as pbar:
             first = True
             for tomo in self.data.keys():
-                if parameters.get("slurm_verbose") and first:
-                    logger.info(f"Image = {self.data[tomo]['image'].to_numpy()[0]}")
-                    logger.info(f"Tomo = {self.data[tomo]['tomo'].to_numpy()[0]}")
-                    logger.info(f"Binning = {tomogram_binning}")
+                if first:
+                    logger.trace(f"Image = {self.data[tomo]['image'].to_numpy()[0]}")
+                    logger.trace(f"Binning = {tomogram_binning}")
                     if "frames" in self.data[tomo]:
-                        logger.info(f"Frames = {self.data[tomo]['frames']}")
+                        logger.trace(f"Frames = {self.data[tomo]['frames']}")
                 arr = np.asarray(self.data[tomo]["box"])
                 if arr.shape[1] == 3:
                     arr = np.hstack([arr, np.ones([arr.shape[0],1])])
@@ -2783,56 +2780,56 @@ def merge_par_selection(input_folder, output_folder, films, selected, parameters
         logger.error(f"Can't find corresponding parfiles: {ipnut_1}")
         sys.exit()
     
-    for image in films:
-        parameter_file = os.path.join(input_1, image + "_r%02d.cistem" % selected[0])
-        par_obj = cistem_star_file.Parameters.from_file(parameter_file)
-        occ_col = par_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
-        pardata_keep1 = par_obj.get_data()
-        extended_parameter = par_obj.get_extended_data()
-    
-        n = pardata_keep1.shape[0]
-
-        if len(selected) > 1:
-
-            for k in selected[1:]:
-                input_k = re.sub("_r[0-9][0-9]_", "_r%02d_" % k, input_folder)
-
-                if os.path.exists(input_k) and input_k.endswith(".bz2"):
-                    decompressed_inputk = input_k.replace(".bz2", "")
-
-                    frealign_parfile.Parameters.decompress_parameter_file_and_move(file=Path(input_k), 
-                                                                                new_file=Path(decompressed_inputk), 
-                                                                                micrograph_list=[],
-                                                                                threads=parameters["slurm_tasks"]
-                                                                                )
-                    input_k = decompressed_inputk
-
-                elif not os.path.exists(input_k):
-                    logger.error("Can't find corresponding parfiles")
-                    sys.exit()
-
-                parameter_file = os.path.join(input_k, image + "_r%02d.cistem" % k)
-                par_obj_k = cistem_star_file.Parameters.from_file(parameter_file)
-                pardatak = par_obj_k.get_data()
-                mask = (pardatak[:, occ_col] >= parameters["clean_min_occ"]).reshape(n, 1)
-                pardata_keep1 = np.where(mask, pardatak, pardata_keep1)
-
-        occ_keepmask = pardata_keep1[:, 11] >= parameters["clean_min_occ"]
+    with tqdm(desc="Progress", total=len(films), file=TQDMLogger()) as pbar:
+        for image in films:
+            parameter_file = os.path.join(input_1, image + "_r%02d.cistem" % selected[0])
+            par_obj = cistem_star_file.Parameters.from_file(parameter_file)
+            occ_col = par_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
+            pardata_keep1 = par_obj.get_data()
+            extended_parameter = par_obj.get_extended_data()
         
-        if np.any(occ_keepmask):
+            n = pardata_keep1.shape[0]
 
-            pardata_keep1[:, occ_col] = np.where(occ_keepmask, 100, 0)
+            if len(selected) > 1:
 
-            new_par_obj = cistem_star_file.Parameters()
-            output_binary = os.path.join(output_folder, image + "_r01.cistem")
-            output_extended = output_binary.replace(".cistem", "_extended.cistem")
-            new_par_obj.set_data(data=pardata_keep1, extended_parameters=extended_parameter)
-            new_par_obj.sync_particle_occ(ptl_to_prj=False)
-            new_par_obj.to_binary(output=output_binary, extended_output=output_extended)
+                for k in selected[1:]:
+                    input_k = re.sub("_r[0-9][0-9]_", "_r%02d_" % k, input_folder)
 
-        else:
-            all_zero_list.append(image)
+                    if os.path.exists(input_k) and input_k.endswith(".bz2"):
+                        decompressed_inputk = input_k.replace(".bz2", "")
+                        if not os.path.isdir(decompressed_inputk):
+                            frealign_parfile.Parameters.decompress_parameter_file_and_move(file=Path(input_k), 
+                                                                                        new_file=Path(decompressed_inputk), 
+                                                                                        micrograph_list=[],
+                                                                                        threads=parameters["slurm_tasks"]
+                                                                                        )
+                        input_k = decompressed_inputk
+                    elif not os.path.exists(input_k):
+                        logger.error("Can't find corresponding parfiles")
+                        sys.exit()
 
+                    parameter_file = os.path.join(input_k, image + "_r%02d.cistem" % k)
+                    par_obj_k = cistem_star_file.Parameters.from_file(parameter_file)
+                    pardatak = par_obj_k.get_data()
+                    mask = (pardatak[:, occ_col] >= parameters["clean_min_occ"]).reshape(n, 1)
+                    pardata_keep1 = np.where(mask, pardatak, pardata_keep1)
+
+            occ_keepmask = pardata_keep1[:, 11] >= parameters["clean_min_occ"]
+            
+            if np.any(occ_keepmask):
+
+                pardata_keep1[:, occ_col] = np.where(occ_keepmask, 100, 0)
+
+                new_par_obj = cistem_star_file.Parameters()
+                output_binary = os.path.join(output_folder, image + "_r01.cistem")
+                output_extended = output_binary.replace(".cistem", "_extended.cistem")
+                new_par_obj.set_data(data=pardata_keep1, extended_parameters=extended_parameter)
+                new_par_obj.sync_particle_occ(ptl_to_prj=False)
+                new_par_obj.to_binary(output=output_binary, extended_output=output_extended)
+
+            else:
+                all_zero_list.append(image)
+            pbar.update(1)
     return all_zero_list
 
 ##############

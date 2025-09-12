@@ -4,13 +4,9 @@ import subprocess
 from pyp.inout.image import mrc
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.utils import eman_load_command, qos
-from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def eman_2d_classify(parameters, new_name, imagic_stack, radius):
     # this is the radius before the binning used for classification
@@ -60,13 +56,13 @@ def eman_3davg(parameters):
             command = "{0}; cd eman; e2proclst.py ../sva/{1}_*.rec --create {1}_subvols.lst".format(
                 load_eman_cmd, tilt_name,
             )
-            run_shell_command(command,verbose=parameters.get("slurm_verbose"))
+            run_shell_command(command)
 
     # merge sub-list as one subvols.lst
     com = "{0}; cd eman; e2proclst.py *_subvols.lst --merge subvols_all.lst".format(
         load_eman_cmd
     )
-    run_shell_command(com,verbose=parameters.get("slurm_verbose"))
+    run_shell_command(com)
 
     # Submit the subtomogram avg to queue and rewrite parameter file for CSPT
     command_e2avg = "e2spt_refine.py subvols_all.lst --reference={0} --niter=5 --sym={1} --mass={2} --goldstandard=30 --pkeep=0.8 --maxtilt=90.0 --parallel=mpi:280:/scratch".format(
@@ -83,4 +79,4 @@ def eman_3davg(parameters):
         command_e2avg,
         os.environ["PYP_DIR"],
     )
-    run_shell_command(command,verbose=parameters.get("slurm_verbose"))
+    run_shell_command(command)

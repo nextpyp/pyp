@@ -1,8 +1,7 @@
-import math
+import logging
 import multiprocessing
 import os
 import shutil
-import sys
 from time import time
 from pathlib import Path
 
@@ -13,14 +12,11 @@ from pyp.streampyp import jobs
 from pyp.streampyp.web import Web
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
-from pyp.system.logging import initialize_pyp_logger
 from pyp.system.singularity import run_pyp, run_ssh
 from pyp.system.utils import needs_gpu
 from pyp.utils import get_relative_path
 
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def check_sbatch_job_finish(jobname):
     import time
@@ -32,10 +28,10 @@ def check_sbatch_job_finish(jobname):
         # command = 'squeue -u %s -o ' % user
         command = "squeue --me -o %j"
         command = run_ssh(command)
-        [info, error] = run_shell_command(command, verbose=False)
+        [info, error] = run_shell_command(command, log_level=logging.TRACE)
         if jobname in info:
             time.sleep(5)
-            logger.info("waiting for %s job finish", jobname)
+            logger.info("waiting for %s job finish" % jobname)
         else:
             sbatch_job = 0
     return
@@ -208,6 +204,37 @@ def create_tomohalf_swarm_file(parameters, files, timestamp, swarm_file="cryocar
 
     return swarm_file, gpu
 
+
+def create_sva_mra_swarm_file(files, parameters, iteration, swarm_file="svaswarm.swarm"):
+    f = open(swarm_file, "w")
+    f.write(
+        "\n".join(
+            [
+                "cd '{0}'; export svaswarm=svaswarm; {1} --file {2} --iter {3} --no-skip --no-debug 2>&1 | tee ../log/{2}_sva.log".format(
+                    os.getcwd(),
+                    run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"]),
+                    s,
+                    iteration,
+                )
+                for s in files
+            ]
+        )
+    )
+    f.write("\n")
+    f.close()
+
+    return swarm_file
+
+def create_sva_run_swarm_file(parameters, swarm_file="svarun.swarm"):
+    f = open(swarm_file, "w")
+    f.write("cd '{0}'; export svarun=svarun; {1} 2>&1 | tee ../log/sva_run.log\n".format(
+                    os.getcwd(),
+                    run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"])
+                )
+    )
+    f.close()
+
+    return swarm_file
 
 def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swarm"):
     f = open(swarm_file, "w")
@@ -421,8 +448,7 @@ def submit_jobs(
     dependencies="",
     tasks_per_arr=1,
     csp_no_stacks=False,
-    use_gpu=False,
-    verbose=False,
+    use_gpu=False
 ):
     """Submit jobs to batch system"""
 
@@ -481,8 +507,7 @@ def submit_jobs(
             dependencies,
             tasks_per_arr,
             csp_no_stacks,
-            use_gpu,
-            verbose=verbose,
+            use_gpu
         )
     else:
         id = jobs.submit_script(
@@ -498,8 +523,7 @@ def submit_jobs(
             walltime,
             dependencies,
             is_script,
-            use_gpu,
-            verbose=verbose,
+            use_gpu
         )
 
     if id != "standalone":
@@ -606,8 +630,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
                 queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
                 scratch=0,
                 threads=2,
-                memory=20,
-                verbose=parameters["slurm_verbose"] if "slurm_verbose" in parameters else False,
+                memory=20
             ).strip()
         else:
             (id, procs) = submit_jobs(
@@ -622,8 +645,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
                 account=parameters.get("slurm_account"),
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
-                csp_no_stacks=parameters["csp_no_stacks"],
-                verbose=parameters["slurm_verbose"],
+                csp_no_stacks=parameters["csp_no_stacks"]
             )
 
             # just use the first array job as prerequisite
@@ -651,8 +673,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
             walltime=parameters["slurm_walltime"],
             tasks_per_arr=1, # one class per array job
             csp_no_stacks=parameters["csp_no_stacks"],
-            dependencies=id,
-            verbose=parameters["slurm_verbose"],
+            dependencies=id
         )
 
     jobtype = "cspmerge"
@@ -670,9 +691,101 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
         gres=parameters["slurm_merge_gres"],
         account=parameters.get("slurm_merge_account"),
         walltime=parameters["slurm_merge_walltime"],
-        dependencies=id,
-        verbose=parameters["slurm_verbose"],
+        dependencies=id
     )
 
     os.chdir(current_directory)
 
+def launch_sva_mra(micrograph_list: list, parameters: dict, swarm_folder: Path):
+    """launch_sva Launch sva
+
+    Parameters
+    ----------
+    micrograph_list : list
+        List of tilt-series/micrographs to submit 
+    parameters : dict
+        PYP parameters
+    swarm_folder : Path
+        Path to the swarm folder
+    """
+
+    if len(micrograph_list) > 0:
+        swarm_file = create_sva_mra_swarm_file(
+            micrograph_list, parameters, parameters["sva_refine_iter"], "svaswarm.swarm"
+        )
+    else:
+        parameters["slurm_merge_only"] = True
+
+    jobtype = "svaswarm"
+    jobname = "Iteration %d (split)" % parameters["sva_refine_iter"] if Web.exists else "svaswarm"
+    
+    # submit jobs to batch system
+    id = submit_jobs(
+        ".",
+        swarm_file,
+        jobtype,
+        jobname,
+        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+        threads=parameters["slurm_tasks"],
+        memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+        gres=parameters["slurm_gres"],
+        account=parameters.get("slurm_account"),
+        walltime=parameters["slurm_walltime"],
+        tasks_per_arr=parameters["slurm_bundle_size"],
+        csp_no_stacks=parameters["csp_no_stacks"]
+    )
+
+    # just use the first array job as prerequisite
+    id = id.strip()
+
+    jobtype = "svamerge"
+    jobname = "Iteration %d (merge)" % parameters["sva_refine_iter"] if Web.exists else "svamerge"
+
+    submit_jobs(
+        ".",
+        run_pyp(command="pyp"),
+        jobtype,
+        jobname,
+        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+        scratch=0,
+        threads=parameters["slurm_merge_tasks"],
+        memory=parameters["slurm_merge_tasks"]*parameters["slurm_merge_memory_per_task"],
+        gres=parameters["slurm_merge_gres"],
+        account=parameters.get("slurm_merge_account"),
+        walltime=parameters["slurm_merge_walltime"],
+        dependencies=id
+    )
+
+def launch_sva_run(parameters: dict):
+    """launch_sva Launch sva modes 0, 1, and 2
+
+    Parameters
+    ----------
+    parameters : dict
+        PYP parameters
+    swarm_folder : Path
+        Path to the swarm folder
+    """
+
+    swarm_file = create_sva_run_swarm_file(
+        parameters, "svarun.swarm"
+    )
+
+    jobtype = "svarun"
+    jobname = "Iteration %d (mode %s)" % ( parameters["sva_refine_iter"], parameters["sva_mode"] ) if Web.exists else "svarun"
+    
+    # submit jobs to batch system
+    id = submit_jobs(
+        ".",
+        swarm_file,
+        jobtype,
+        jobname,
+        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+        threads=parameters["slurm_tasks"],
+        memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+        gres=parameters["slurm_gres"],
+        account=parameters.get("slurm_account"),
+        walltime=parameters["slurm_walltime"],
+        tasks_per_arr=parameters["slurm_bundle_size"],
+        csp_no_stacks=parameters["csp_no_stacks"]
+    )

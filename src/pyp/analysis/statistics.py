@@ -1,12 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from pyp.system.logging import initialize_pyp_logger
-from pyp.utils import get_relative_path
-
-relative_path = str(get_relative_path(__file__))
-logger = initialize_pyp_logger(log_name=relative_path)
-
+from pyp.system.logging import logger
 
 def gauss_function(x, amp, x0, sigma):
     return amp * np.exp(-((x - x0) ** 2.0) / (2.0 * sigma ** 2.0))
@@ -201,7 +196,7 @@ def optimal_threshold_bayes(samples, criteria="optimal", plot_results=""):
 
         h, edges = np.histogram(samples, 50)
 
-        logger.info("difference = %f", np.abs(h - gmm_y_sum).mean())
+        logger.info("difference = %f" % np.abs(h - gmm_y_sum).mean())
 
         for i in range(components):
 
