@@ -202,14 +202,14 @@ Step 4: Reference-based refinement
 
         - Set ``Particle radius (A)`` to 80
 
-        - Set ``Symmetry`` to D7
+        - Set ``Particle symmetry`` to D7
 
-        - Click on the **Extraction** tab
+        - Click on the **Particle Extraction** tab
 
         .. figure:: ../images/tutorial_spa_coarse_sample.webp
           :alt: File browser
 
-      .. md-tab-item:: Extraction
+      .. md-tab-item:: Particle Extraction
 
         - Set ``Box size (pixels)`` to 128
 
@@ -278,7 +278,7 @@ Step 5: Filter bad particles
 
         - Check ``Automatic score threshold``
 
-        - Set ``Min distance between particles (A)`` to 20
+        - Set ``Min distance between particles (unbinned pixels/voxels)`` to 20
 
         - Select the ``Input parameter file`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_05.par.bz2`
 
@@ -310,11 +310,11 @@ Step 6: Particle refinement
     .. figure:: ../images/tutorial_spa_fine_dialog.webp
       :alt: File browser
 
-  * Go to the **Extraction** tab:
+  * Go to the **Particle Extraction** tab:
 
     .. md-tab-set::
 
-      .. md-tab-item:: Extraction
+      .. md-tab-item:: Particle Extraction
 
         - Set ``Box size (pixels)`` to 256
 
@@ -431,7 +431,7 @@ Step 10: Movie frame refinement
 .. nextpyp:: Particle-based movie-frame alignment and data-driven exposure weighting (:fa:`stopwatch` 8 min)
   :collapsible: open
 
-  * Click ``Particle set`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
+  * Click ``Particles`` (output of :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Movie refinement`
 
   * Go to the **Refinement** tab:
 
@@ -441,7 +441,7 @@ Step 10: Movie frame refinement
 
         - Select the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_07.mrc`
 
-        - Select the ``Input parameter`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_07.par.bz2`
+        - Select the ``Input parameter file`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_07.par.bz2`
 
         - Set ``Max resolution (A)`` to 3
 
@@ -461,11 +461,11 @@ Step 10: Movie frame refinement
 
         - Set ``Spatial sigma`` to 15
 
-        - Go to the **Exposure weighting** tab
+        - Go to the **Reconstruction** tab
 
-      .. md-tab-item:: Exposure weighting
+      .. md-tab-item:: Reconstruction
 
-        - Check ``Dose weighting``
+        - Check ``Apply dose weighting``
 
   * Click :bdg-primary:`Save`, then :bdg-primary:`Run` to launch Movie refinement. Uncheck the box for the :bdg-secondary:`Masking` block and click :bdg-primary:`Start Run for 1 block`
 
@@ -521,9 +521,11 @@ Step 12: Map sharpening
 
         - Select the ``First half map`` by clicking on the icon :fa:`search` and selecting the file `sp-flexible-refinement-*_r01_half1.mrc`
 
-        - Set ``Automask threshold`` to 0.5
+        - Set ``Threshold value`` to 0.5
 
-        - Set ``Adhoc B-factor (A^2)`` to -50
+        - Set ``B-factor method`` to adhoc
+
+        - Set ``Adhoc value (A^2)`` to -50
 
   * Click :bdg-primary:`Save`, then :bdg-primary:`Run`. Uncheck the box for the :bdg-secondary:`Masking` block and click :bdg-primary:`Start Run for 1 block`
 
