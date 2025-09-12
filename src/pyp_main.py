@@ -2799,7 +2799,7 @@ def sva_swarm(filename, parameters, iteration):
         Main configurations taken from .pyp_config
     """
     
-    project_dir = os.getcwd()
+    project_dir = Path.cwd().parents[0]
     
     dataset = parameters.get('data_set')
     
@@ -2825,6 +2825,8 @@ def sva_swarm(filename, parameters, iteration):
                     output.write(str(particle_counter)+'\t'+'\t'.join(line.split('\t')[1:]))
                     particle_counter += 1
                     
+    os.chdir(project_dir)
+    
     # read list of micrographs
     with open("{}.films".format(dataset)) as f:
         files = [
@@ -3071,10 +3073,15 @@ def sva_split(parameters):
         prepare_3davg_xml(dataset=dataset,volumes=None,iter=iteration,mode=3)
         os.chdir(project_dir)
 
+        swarm_folder = os.path.join(project_dir,'swarm')
+        if not os.path.exists(swarm_folder):
+            os.mkdir(swarm_folder)
+        os.chdir(swarm_folder)
+
         slurm.launch_sva_mra(
             micrograph_list=files,
             parameters=parameters,
-            swarm_folder=Path.cwd()
+            swarm_folder=swarm_folder
             )
 
 @timer.Timer(
@@ -5400,14 +5407,6 @@ if __name__ == "__main__":
                     clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0],parameters["slurm_zombie"])
                     get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
 
-                    working_path = os.path.join(os.environ["PYP_SCRATCH"], args.file)
-                    cwd = os.getcwd()
-                    
-                    # manage directories
-                    os.chdir(args.path)
-
-                    # parameters = project_params.load_pyp_parameters()
-
                     """
                     Run mode 3 to align all particles to most recent reference
                     """
@@ -5423,10 +5422,10 @@ if __name__ == "__main__":
                 try:
                     del os.environ["svamerge"]
 
-                    os.chdir(os.environ["PBS_O_WORKDIR"] + "/..")
+                    # go back to project directory
+                    os.chdir(Path.cwd().parents[0])
+                    
                     parameters = project_params.load_pyp_parameters()
-
-                    cwd = os.getcwd()
 
                     """"
                     Merge all _volumes.txt files into a single file

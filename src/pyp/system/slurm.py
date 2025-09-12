@@ -709,13 +709,6 @@ def launch_sva_mra(micrograph_list: list, parameters: dict, swarm_folder: Path):
         Path to the swarm folder
     """
 
-    current_directory = Path().cwd()
-    if not os.path.exists(swarm_folder):
-        os.mkdir(swarm_folder)
-    os.chdir(swarm_folder)
-
-    project_params.save_pyp_parameters(parameters=parameters,path='..')
-
     if len(micrograph_list) > 0:
         swarm_file = create_sva_mra_swarm_file(
             micrograph_list, parameters, parameters["sva_refine_iter"], "svaswarm.swarm"
@@ -762,9 +755,6 @@ def launch_sva_mra(micrograph_list: list, parameters: dict, swarm_folder: Path):
         walltime=parameters["slurm_merge_walltime"],
         dependencies=id
     )
-
-    # go back to project directory
-    os.chdir(current_directory)
 
 def launch_sva_run(parameters: dict):
     """launch_sva Launch sva modes 0, 1, and 2
