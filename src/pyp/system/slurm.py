@@ -14,7 +14,6 @@ from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.singularity import run_pyp, run_ssh
 from pyp.system.utils import needs_gpu
-from pyp.utils import get_relative_path
 
 from pyp.system.logging import logger
 
@@ -679,6 +678,13 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
     jobtype = "cspmerge"
     jobname = "Iteration %d (merge)" % parameters["refine_iter"] if Web.exists else "cspmerge"
 
+    # use a GPU if running noise2map
+    if parameters.get("reconstruct_denoise_method") == "noise2map":
+        gpu = True
+        jobname = jobname.replace("merge)","merge, gpu)")
+    else:
+        gpu = False
+        
     submit_jobs(
         ".",
         run_pyp(command="pyp"),
@@ -691,7 +697,8 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
         gres=parameters["slurm_merge_gres"],
         account=parameters.get("slurm_merge_account"),
         walltime=parameters["slurm_merge_walltime"],
-        dependencies=id
+        dependencies=id,
+        use_gpu=gpu
     )
 
     os.chdir(current_directory)

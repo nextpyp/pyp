@@ -40,6 +40,7 @@ from pyp.system.utils import (
     get_imod_path,
 )
 from pyp.utils import timer, symlink_relative
+from pyp.postprocess.warptools import warptools_noise2map
 
 from pyp.system.logging import logger
 
@@ -2458,6 +2459,14 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
                     header = mrc.readHeaderFromFile(volume + ".mrc")
                     output = bm4d(input,fp["reconstruct_denoise_sigma"])
                     mrc.write(output,volume + "_denoised.mrc",header=header)
+            elif fp["reconstruct_denoise_method"] == "noise2map":
+                with timer.Timer(
+                    "Noise2Map denoising", text = "Noise2Map denoising took: {}", logger=logger.info
+                ):
+                    # use new python implementation of BM4D
+                    input = volume + "_half1.mrc"
+                    output = warptools_noise2map(input,fp)
+                    shutil.move(output,volume + "_denoised.mrc")
             else:
                 logger.error("Unknown denoising method")
 

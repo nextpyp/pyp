@@ -4416,7 +4416,7 @@ default = false
 name = "Method"
 description = "Method to use for denosing"
 type = "enum"
-enum = { bm4d="bm4d (block matching 4d)", nad="imod-nad (anisotropic difussion)" }
+enum = { bm4d="bm4d (block matching 4d)", nad="imod-nad (anisotropic difussion)", noise2map="noise2map (warptools)" }
 default = "bm4d"
 condition = { arg="denoise_enable", value="true" }
 
@@ -4449,6 +4449,27 @@ description = "Noise sigma estimation, use higher values for more aggresive deno
 type = "float"
 default = 0.25
 condition = { arg="denoise_method", value="bm4d" }
+
+[tabs.reconstruct.denoise_flatten_spectrum]
+name = "Amplitude spectrum flattening"
+description = "Flatten the spectrum of the maps beyond 10 Angstrom to sharpen them."
+type = "bool"
+default = true
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_overflatten_factor]
+name = "Degree of flattening"
+description = "Overflattening (oversharpening) factor in case a flat spectrum isn't enough. 1.0 = flat"
+type = "float"
+default = 1.0
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_lowpass]
+name = "Low-pass filtering"
+description = "Low-pass filter to be applied to denoised maps (in Angstroms)"
+type = "float"
+default = -1
+condition = { arg="denoise_method", value="noise2map" }
 
 [tabs.reconstruct.export_enable]
 name = "Export metadata (*.star)"
