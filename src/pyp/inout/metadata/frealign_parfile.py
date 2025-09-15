@@ -584,7 +584,7 @@ class Parameters:
         threads = 7 if threads > 7 else threads
 
         command = f"pbzip2 -v -d -c -p{threads} '{input}' | tar x"
-        run_shell_command(command, log_level=logging.TRACE)
+        run_shell_command(command, log_level=logging.NOTSET)
 
     # decompress paramater file in scratch directory
     @staticmethod
