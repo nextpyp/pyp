@@ -91,7 +91,7 @@ def save_micrograph_to_website(name):
             logger.trace("Series %s entered into database successfully" % name)
         except:
             logger.error("Failed to enter micrograph into database")
-            raise
+            pass
 
 def save_tiltseries_to_website(name, metadata):
 
