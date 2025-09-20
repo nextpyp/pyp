@@ -224,13 +224,13 @@ Step 5: Virion segmentation
 .. nextpyp:: Segment individual virions in 3D (:fa:`stopwatch` 1 min)
   :collapsible: open
 
-  * Click on ``Particles`` (output of the :bdg-secondary:`Particle picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle picking` block) and select :bdg-primary:`Segmentation (min-flow/max-cut)`
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
   This next step is optional, but it showcases tools available in ``nextPYP`` to work with virions:
 
-  * Go inside the :bdg-secondary:`Segmentation (closed surfaces)` block and click on the **Segmentation** tab
+  * Go inside the :bdg-secondary:`Segmentation (min-flow/max-cut)` block and click on the **Segmentation** tab
 
     .. figure:: ../images/tutorial_tomo_pre_process_virions.webp
       :alt: Virion segmentation
@@ -249,7 +249,7 @@ Step 6: Particle picking
 .. nextpyp:: Select particles from the surface of virions (:fa:`stopwatch` 3 min)
   :collapsible: open
 
-  * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle picking (closed surfaces)`
+  * Click on ``Segmentation (min-cut/max-flow)`` (output of the :bdg-secondary:`Segmentation (min-flow/max-cut)` block) and select :bdg-primary:`Particle picking (closed surfaces)`
 
   * Go to the **Particle detection** tab:
 
@@ -267,7 +267,7 @@ Step 6: Particle picking
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-  * Navigate to the :bdg-primary:`Reconstruction` tab to inspect the particle coordinates:
+  * Navigate to the :bdg-primary:`Particles` tab to inspect the particle coordinates:
 
     .. figure:: ../images/tutorial_tomo_pre_process_spikes.webp
       :alt: Spike coordinates
