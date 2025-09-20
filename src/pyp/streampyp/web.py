@@ -3,17 +3,14 @@ talk to the website using JSON-RPC
 https://jsonrpcclient.readthedocs.io/en/latest/api.html
 """
 
-from asyncio.log import logger
 import os
-import sys
 import re
 from collections import namedtuple
-from json import dumps as serialize
 import pathlib
 
-from jsonrpcclient.clients.http_client import HTTPClient
-from jsonrpcclient.requests import Request
-
+import json
+import requests
+from jsonrpcclient import parse, request, Error, Ok
 
 class Web:
 
@@ -31,51 +28,69 @@ class Web:
     def __init__(self):
         self.host = os.environ["NEXTPYP_WEBHOST"]
         self.token = os.environ["NEXTPYP_TOKEN"]
-        self.client = HTTPClient("%s/%s" % (self.host, Web.endpoint))
         self.webid = os.environ["NEXTPYP_WEBID"]
+        self.url = f"{self.host}/{Web.endpoint}"
+        
+    def _request(self, method: str, **params):
+        try:
+            payload = request(method,params)
+            payload["token"] = self.token
+            headers = {'content-type': 'application/json'}
+            response = requests.post(self.url, data=json.dumps(payload), headers=headers)
+            parsed = parse(response.json())
+            if isinstance(parsed, Ok):
+                return parsed.result
+            elif isinstance(parse, Error):
+                raise Exception(parsed.message)
+            return None
+        except Exception as ex:
+            print(
+                f"\tfailed to send message to web server: {type(ex).__name__}: {ex}"
+            )
 
-    def _request(self, request):
-        request["token"] = self.token
-        response = self.client.send(request)
-        return response.data.result
-
-    def _request_raw(self, request):
+    def _request_raw(self, method: str, **params):
         """
         Sends the JSON-RPC request, returns the raw text response from the server
         """
-        request["token"] = self.token
-        response = self.client.send_message(
-            request=serialize(request), response_expected=True
-        )
-        return response.text
+        try:
+            payload = request(method,params)
+            payload["token"] = self.token
+            headers = {'content-type': 'application/json'}
+            response = requests.post(self.url, data=json.dumps(payload), headers=headers)
+            parsed = parse(response.json())
+            if isinstance(parsed, Ok):
+                return parsed.text
+        except Exception as ex:
+            print(
+                f"\tfailed to send message to web server: {type(ex).__name__}: {ex}"
+            )
 
-    def _send(self, message):
+    def _send(self, method: str, **params):
         """
         Sends the JSON-RPC request, and doesn't wait for a response
         """
         try:
-            message["token"] = self.token
-            self.client.send_message(
-                request=serialize(message), response_expected=False
-            )
-        except:
-            (ex_type, ex, traceback) = sys.exc_info()
+            payload = request(method,params)
+            payload["token"] = self.token
+            headers = {'content-type': 'application/json'}
+            response = requests.post(self.url, data=json.dumps(payload), headers=headers)
+            response.raise_for_status()
+        except Exception as ex:
             print(
-                "\tfailed to send message to web server: %s: %s"
-                % (ex_type.__name__, ex)
+                f"\tfailed to send notification to web server: {type(ex).__name__}: {ex}"
             )
 
     def ping(self):
         """
         :return: the string 'pong'
         """
-        return self._request_raw(Request.ping())
+        return self._request_raw("ping")
 
     def slurm_started(self, arrayid):
-        self._request(Request.slurm_started(webid=self.webid, arrayid=arrayid))
-
+        self._request("slurm_started", webid=self.webid, arrayid=arrayid)
+        
     def slurm_ended(self, arrayid, exit_code):
-        self._request(Request.slurm_ended(webid=self.webid, arrayid=arrayid, exit_code=exit_code))
+        self._request("slurm_ended", webid=self.webid, arrayid=arrayid, exit_code=exit_code)
 
     def failed(self):
         """
@@ -88,7 +103,7 @@ class Web:
         except KeyError:
             arrayid = None
         try:
-            self._request(Request.failed(webid=self.webid, arrayid=arrayid))
+            self._request("failed",webid=self.webid, arrayid=arrayid)
         except:
             pass
 
@@ -136,7 +151,7 @@ class Web:
             )
 
         return self._request(
-            Request.slurm_sbatch(
+                "slurm_sbatch",
                 webid=self.webid,
                 web_name=web_name,
                 cluster_name=cluster_name,
@@ -148,7 +163,6 @@ class Web:
                 mpi=mpi,
                 type=job_type
             )
-        )
 
     class CommandsScript:
         def __init__(self, commands, array_size=None, bundle_size=None):
@@ -234,23 +248,21 @@ class Web:
                 serial_parameters[k] = str(serial_parameters[k])
 
         self._request(
-            Request.write_parameters(
-                webid=self.webid,
-                parameter_id=parameter_id,
-                parameters=serial_parameters,
-            )
+            "write_parameters",
+            webid=self.webid,
+            parameter_id=parameter_id,
+            parameters=serial_parameters
         )
 
     def write_micrograph(self, micrograph_id, ctf, avgrot, xf, boxx):
         self._request(
-            Request.write_micrograph(
-                webid=self.webid,
-                micrograph_id=micrograph_id,
-                ctf=ctf,
-                avgrot=avgrot,
-                xf=xf,
-                boxx=boxx,
-            )
+            "write_micrograph",
+            webid=self.webid,
+            micrograph_id=micrograph_id,
+            ctf=ctf,
+            avgrot=avgrot,
+            xf=xf,
+            boxx=boxx
         )
 
     def write_tiltseries(self, tiltseries_id, ctf, avgrot, xf, boxx, metadata):
@@ -266,23 +278,22 @@ class Web:
             spike_coords = None
 
         self._request(
-            Request.write_tiltseries(
-                webid=self.webid,
-                tiltseries_id=tiltseries_id,
-                ctf=ctf,
-                avgrot=avgrot,
-                xf=xf,
-                boxx=boxx,
-                metadata={
-                    "tilts": metadata["tilts"],
-                    "drift": [l.tolist() for l in metadata["drift"].values()],
-                    "ctf_values": [l.tolist() for l in metadata["ctf_values"].values()],
-                    "ctf_profiles": [l.tolist() for l in metadata["ctf_profiles"].values()],
-                    "tilt_axis_angle": metadata["tilt_axis_angle"],
-                    "virion_coordinates": virion_coords,
-                    "spike_coordinates": spike_coords
-                }
-            )
+            "write_tiltseries",
+            webid=self.webid,
+            tiltseries_id=tiltseries_id,
+            ctf=ctf,
+            avgrot=avgrot,
+            xf=xf,
+            boxx=boxx,
+            metadata={
+                "tilts": metadata["tilts"],
+                "drift": [l.tolist() for l in metadata["drift"].values()],
+                "ctf_values": [l.tolist() for l in metadata["ctf_values"].values()],
+                "ctf_profiles": [l.tolist() for l in metadata["ctf_profiles"].values()],
+                "tilt_axis_angle": metadata["tilt_axis_angle"],
+                "virion_coordinates": virion_coords,
+                "spike_coordinates": spike_coords
+            }
         )
 
     def write_reconstruction(self, reconstruction_id, metadata, fsc, plots):
@@ -292,54 +303,49 @@ class Web:
         iteration = int(series_information[1])
 
         self._request(
-            Request.write_reconstruction(
-                webid=self.webid,
-                reconstruction_id=reconstruction_id,
-                class_num=class_num,
-                iteration=iteration,
-                metadata=metadata,
-                fsc=fsc.tolist(),
-                plots=plots
-            )
+            "write_reconstruction",
+            webid=self.webid,
+            reconstruction_id=reconstruction_id,
+            class_num=class_num,
+            iteration=iteration,
+            metadata=metadata,
+            fsc=fsc.tolist(),
+            plots=plots
         )
 
     def write_tomo_drgn_convergence(self, epoch):
 
         self._request(
-            Request.write_tomo_drgn_convergence(
-                webid=self.webid,
-                epoch=epoch
-            )
+            "write_tomo_drgn_convergence",
+            webid=self.webid,
+            epoch=epoch
         )
 
     def write_refinement_bundle(self, refinement_bundle_id, iteration):
 
         self._request(
-            Request.write_refinement_bundle(
-                webid=self.webid,
-                refinement_bundle_id=refinement_bundle_id,
-                iteration=iteration
-            )
+            "write_refinement_bundle",
+            webid=self.webid,
+            refinement_bundle_id=refinement_bundle_id,
+            iteration=iteration
         )
 
     def write_refinement(self, refinement_id, iteration):
 
         self._request(
-            Request.write_refinement(
-                webid=self.webid,
-                refinement_id=refinement_id,
-                iteration=iteration
-            )
+            "write_refinement",
+            webid=self.webid,
+            refinement_id=refinement_id,
+            iteration=iteration
         )
 
     def write_classes(self, classes_id, metadata):
 
         self._request(
-            Request.write_classes(
-                webid=self.webid,
-                classes_id=classes_id,
-                metadata=metadata,
-            )
+            "write_classes",
+            webid=self.webid,
+            classes_id=classes_id,
+            metadata=metadata
         )
 
     def log(self, timestamp, level, path, line, msg):
@@ -353,12 +359,11 @@ class Web:
         :param str msg: the message to log
         """
         return self._send(
-            Request.log(
-                webid=self.webid,
-                timestamp=timestamp,
-                level=level,
-                path=path,
-                line=line,
-                msg=msg,
-            )
+            "log",
+            webid=self.webid,
+            timestamp=timestamp,
+            level=level,
+            path=path,
+            line=line,
+            msg=msg
         )
