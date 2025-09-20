@@ -388,7 +388,7 @@ def read_tilt_series(
 
             elif len(mdocs) > 0 and parameters["movie_mdoc"]:
 
-                tilts = frames_from_mdoc(mdocs, parameters)
+                tilts = frames_from_mdoc(mdocs, parameters,first=False)
                 tilts.sort(key=lambda x: x[1])
 
                 tilt_angles = [_[1] for _ in tilts]
@@ -823,7 +823,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
 
 
 
-def frames_from_mdoc(mdoc_files: list, parameters: dict):
+def frames_from_mdoc(mdoc_files: list, parameters: dict, first=True):
     """ Obtain filename, tilt angles, scanning order from mdoc files
        It is possible that one mdoc file per tilt-series or one mdoc file per tilted image
 
@@ -840,7 +840,6 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict):
     frames_set = []
 
     DATETIMES = ["%y-%b-%d  %H:%M:%S", "%Y-%b-%d  %H:%M:%S", "%d-%b-%y  %H:%M:%S", "%d-%b-%Y  %H:%M:%S"]
-    first = True
 
     for file in mdoc_files:
 
