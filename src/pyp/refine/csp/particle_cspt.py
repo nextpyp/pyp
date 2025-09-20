@@ -1288,7 +1288,7 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
 
         for star in individual_star_files[1:]:
             command = "awk 'BEGIN {{OFS=\"\\t\"}}; NF>10{{print}}' {0} >> {1}".format(star, merged_star)
-            local_run.run_shell_command(command)
+            local_run.run_shell_command(command,log_level=logging.NOTSET)
             os.remove(star)
 
         logger.info(f"Stacks saved to {stacks_folder}")
