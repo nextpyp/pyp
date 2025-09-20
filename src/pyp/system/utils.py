@@ -1,6 +1,4 @@
-import GPUtil
 import os
-import socket
 from pwd import getpwnam
 from pyp.system.singularity import get_pyp_configuration
 
@@ -153,26 +151,6 @@ def get_gpu_queue(parameters):
     # try to get the gpu partition
     queue = ""
     return queue
-    config = get_pyp_configuration()
-    if "slurm" in config:
-        if ( "slurm_queue_gpu" not in parameters or parameters["slurm_queue_gpu"] == None ):
-            try:
-                parameters["slurm_queue_gpu"] = config["slurm"]["gpuQueues"][0]
-                queue = parameters["slurm_queue_gpu"]
-            except:
-                logger.warning("No GPU partitions configured for this instance?")
-                pass
-        elif "slurm_queue_gpu" in parameters and not parameters["slurm_queue_gpu"] == None:
-            queue = parameters["slurm_queue_gpu"]
-        else:
-            logger.warning("No GPU partitions configured for this instance?")
-    return queue
-
-def get_gpu_devices():
-    try:
-        devices = GPUtil.getAvailable(order = 'load', limit = 64, maxLoad = 0.1, maxMemory = 0.1, includeNan=False, excludeID=[], excludeUUID=[])
-    except:
-        devices = []
 
 def get_relion_path():
     return "{0}/external/postproc".format(os.environ["PYP_DIR"])

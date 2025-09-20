@@ -30,7 +30,7 @@ def fit_poly_trajectory(shifts, degree=0):
 def fit_spline_trajectory_1D_new(x, sigma=5):
 
     from scipy.ndimage import filters
-    from scipy.signal import gaussian
+    from scipy.signal.windows import gaussian
 
     b = gaussian(20, sigma)
     average = filters.convolve1d(x, b / b.sum())
@@ -50,7 +50,7 @@ def fit_angular_trajectory_1D(x, sigma=5):
 
     # filter values
     from scipy.ndimage import filters
-    from scipy.signal import gaussian
+    from scipy.signal.windows import gaussian
 
     b = gaussian(20, sigma)
     yr = filters.convolve1d(z, b / b.sum(), mode="nearest")
@@ -92,7 +92,7 @@ def fit_angular_trajectory_1D_new(x, sigma=5, normalize=False):
 
     # filter values
     from scipy.ndimage import filters
-    from scipy.signal import gaussian
+    from scipy.signal.windows import gaussian
 
     # b = gaussian( 21, sigma )
     # make sure window lenght is odd
@@ -136,7 +136,7 @@ def fit_spline_trajectory_1D(x, iters=1, k=3, factor=3.0):
         """
 
         from scipy.ndimage import filters
-        from scipy.signal import gaussian
+        from scipy.signal.windows import gaussian
 
         sigma = 3
         b = gaussian(3, sigma)
@@ -181,7 +181,7 @@ def fit_spline_trajectory(shifts, k=3, factor=3.0):
         """
 
         from scipy.ndimage import filters
-        from scipy.signal import gaussian
+        from scipy.signal.windows import gaussian
 
         sigma = 3
         b = gaussian(3, sigma)

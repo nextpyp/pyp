@@ -1,6 +1,6 @@
 import os
 import logging
-from collections import Callable
+from collections.abc import Callable
 from joblib import Parallel, delayed
 import contextlib
 import joblib
