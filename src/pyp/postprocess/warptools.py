@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pyp.system.logging import logger
 from pyp.system import local_run
-
+from pyp.system import project_params
 from pyp.system.utils import get_imod_path
 
 def get_warptools_path():
@@ -105,7 +105,7 @@ def warptools_noise2map(half1, parameters):
     return f"./denoised/{Path(half1).name}"
 
 
-def create_settings():
+def create_settings(parameters):
     
     """
     WarpTools - a collection of tools for EM data pre-processing
@@ -131,15 +131,25 @@ def create_settings():
     --tomo_dimensions      X, Y, and Z dimensions of the full tomogram in unbinned pixels, separated by 'x', e.g. 4096x4096x1000
     """
 
+    extra_options = ""
+    if parameters.get("gain_fliph"):
+        extra_options += " --gain_flip_x"
+
+    if parameters.get("gain_flipv"):
+        extra_options += " --gain_flip_y"        
+
+    if not parameters.get("gain_rotation") % 2:
+        extra_options += " --gain_transpose"
+        
     # create frame series settings file
-    command = f"{get_warptools_path()}WarpTools create_settings --folder_data frames --folder_processing warp_frameseries --output warp_frameseries.settings --extension '*.tif' --angpix 0.7894 --gain_path gain_ref.mrc --gain_flip_y --exposure 2.64"
+    command = f"{get_warptools_path()}WarpTools create_settings --folder_data {str(Path(project_params.resolve_path(parameters.get('data_path'))).parents[0])} --folder_processing warp_frameseries --output warp_frameseries.settings --extension {str(Path(project_params.resolve_path(parameters.get('data_path'))).suffix)} --angpix {parameters.get('scope_pixel')} --gain_path {parameters.get('gain_reference')} {extra_options} --exposure {parameters.get('scope_dose_rate')}"
     local_run.stream_shell_command(command)
     
     # create tilt series settings file
-    command = f"{get_warptools_path()}WarpTools create_settings --output warp_tiltseries.settings --folder_processing warp_tiltseries --folder_data tomostar --extension '*.tomostar' --angpix 0.7894 --gain_path gain_ref.mrc --gain_flip_y --exposure 2.64 --tomo_dimensions 4400x6000x1000"
+    command = f"{get_warptools_path()}WarpTools create_settings --output warp_tiltseries.settings --folder_processing warp_tiltseries --folder_data tomostar --extension '*.tomostar' --angpix {parameters.get('scope_pixel')} --gain_path {parameters.get('gain_reference')} {extra_options} --exposure {parameters.get('scope_dose_rate')} --tomo_dimensions 4400x6000x1000"
     local_run.stream_shell_command(command)
 
-def fs_motion_and_ctf():
+def fs_motion_and_ctf(parameters):
     
     """
     WarpTools - a collection of tools for EM data pre-processing
@@ -186,7 +196,7 @@ def fs_motion_and_ctf():
     command = f"{get_warptools_path()}WarpTools fs_motion_and_ctf --settings warp_frameseries.settings --m_grid 1x1x3 --c_grid 2x2x1 --c_range_max 7 --c_defocus_max 8 --c_use_sum --out_averages --out_average_halves"
     local_run.stream_shell_command(command)
     
-def ts_import():
+def ts_import(parameters):
     
     """
     WarpTools - a collection of tools for EM data pre-processing
@@ -210,11 +220,11 @@ def ts_import():
     --strict             Ensures that progress report formatting stays the same across all tools.
     """
 
-    command = f"{get_warptools_path()}WarpTools ts_import --mdocs mdoc --frameseries warp_frameseries --tilt_exposure 2.64 --min_intensity 0.3 --dont_invert --output tomostar"
+    command = f"{get_warptools_path()}WarpTools ts_import --mdocs mdoc --frameseries warp_frameseries --tilt_exposure {parameters.get('scope_dose_rate')} --min_intensity 0.3 --dont_invert --output tomostar"
     local_run.stream_shell_command(command)
 
 
-def ts_etomo_patches():
+def ts_etomo_patches(parameters):
     
     """
     WarpTools - a collection of tools for EM data pre-processing
@@ -245,10 +255,15 @@ def ts_etomo_patches():
     --workers                 List of remote workers to be used instead of locally spawned processes. Formatted as hostname:port, separated by spaces
     """
     
-    command = f"{get_warptools_path()}WarpTools ts_etomo_patches --settings warp_tiltseries.settings --angpix 10 --patch_size 500 --initial_axis -85.6"
+    binned_pixel_size = parameters.get('scope_pixel_size') * parameters.get('tomo_rec_binning')
+    
+    # produce single patch size (in A)
+    patch_size_in_A = ( parameters.get('tomo_ali_patches_size_x') + parameters.get('tomo_ali_patches_size_y') ) / 2.0 / parameters.get('scope_pixel_size')
+    
+    command = f"{get_warptools_path()}WarpTools ts_etomo_patches --settings warp_tiltseries.settings --angpix {binned_pixel_size} --patch_size {patch_size_in_A} --initial_axis {parameters.get('scope_tilt_axis')}"
     local_run.stream_shell_command(command)
     
-def ts_defocus_hand():
+def ts_defocus_hand(parameters):
     
     """
     WarpTools - a collection of tools for EM data pre-processing
@@ -273,7 +288,7 @@ def ts_defocus_hand():
     command = f"{get_warptools_path()}WarpTools ts_defocus_hand --settings warp_tiltseries.settings --check"
     local_run.stream_shell_command(command)
 
-def ts_ctf():
+def ts_ctf(parameters):
     
     
     """
@@ -306,10 +321,10 @@ def ts_ctf():
     ----------------------------------------------------------------------Advanced remote work distribution----------------------------------------------------------------------
     --workers                 List of remote workers to be used instead of locally spawned processes. Formatted as hostname:port, separated by spaces
     """
-    command = f"{get_warptools_path()}WarpTools ts_ctf --settings warp_tiltseries.settings --range_high 7 --defocus_max 8"
+    command = f"{get_warptools_path()}WarpTools ts_ctf --settings warp_tiltseries.settings --range_high {parameters.get('ctf_max_res')} --defocus_max {parameters.get('ctf_max_def')/10000}"
     local_run.stream_shell_command(command)
     
-def ts_reconstruct():
+def ts_reconstruct(parameters):
     """
     WarpTools - a collection of tools for EM data pre-processing
     Version 2.0.0
@@ -349,7 +364,7 @@ def ts_reconstruct():
     local_run.stream_shell_command(command)
 
 # optional
-def ts_import_alignments():
+def ts_import_alignments(parameters):
     
     """
     WarpTools - a collection of tools for EM data pre-processing
@@ -370,10 +385,13 @@ def ts_import_alignments():
     --strict                  Ensures that progress report formatting stays the same across all tools.
     """
     
-    command = f"{get_warptools_path()}WarpTools ts_import_alignments --settings warp_tiltseries.settings --alignments warp_tiltseries/tiltstack/TS_1 --alignment_angpix 10"
+    command = f"{get_warptools_path()}WarpTools ts_import_alignments --settings warp_tiltseries.settings --alignments warp_tiltseries/tiltstack/TS_1 --alignment_angpix {parameters.get('tomo_ali_binning')}"
     local_run.stream_shell_command(command)
-        
-def ts_template_match():
+
+
+# Particle picking
+
+def ts_template_match(parameters):
     
     """    
     WarpTools - a collection of tools for EM data pre-processing
@@ -420,7 +438,7 @@ def ts_template_match():
     command = f"{get_warptools_path()}WarpTools ts_template_match --settings warp_tiltseries.settings --tomo_angpix 10 --subdivisions 3 --template_emdb 15854 --template_diameter 130 --symmetry O --whiten --check_hand 2"
     local_run.stream_shell_command(command)
 
-def threshold_picks():
+def threshold_picks(parameters):
     
     """
     WarpTools - a collection of tools for EM data pre-processing
@@ -448,7 +466,7 @@ def threshold_picks():
     command = f"{get_warptools_path()}WarpTools threshold_picks --settings warp_tiltseries.settings --in_suffix 15854 --out_suffix clean --minimum 3"
     local_run.stream_shell_command(command)
 
-def ts_export_particles():
+def ts_export_particles(parameters):
     
     """
     WarpTools - a collection of tools for EM data pre-processing
@@ -494,12 +512,9 @@ def ts_export_particles():
     command = f"{get_warptools_path()}WarpTools ts_export_particles --settings warp_tiltseries.settings --input_directory warp_tiltseries/matching --input_pattern '*15854_clean.star' --normalized_coords --output_star relion/matching.star --output_angpix 4 --box 64 --diameter 130 --relative_output_paths --2d"
     local_run.stream_shell_command(command)
     
-def relion_refine():
-    
-    command = f"mpirun -n 3 {get_warptools_path()}/build/bin/relion_refine_mpi --o Refine3D/job001/run --auto_refine --split_random_halves --ios matching_optimisation_set.star --ref sphere.mrc --trust_ref_size --ini_high 40 --dont_combine_weights_via_disc --pool 10 --pad 2  --ctf --particle_diameter 130 --flatten_solvent --zero_mask --oversampling 1 --healpix_order 2 --auto_local_healpix_order 4--offset_range 5 --offset_step 2 --sym O --low_resol_join_halves 40 --norm --scale  --j 2 --gpu "" --pipeline_control Refine3D/job001"
-    local_run.stream_shell_command(command)
-    
-def create_population():
+# 3D refinement
+
+def create_population(parameters):
 
     """
     MTools 2.0.0+844343b6327c7775ae56e82e409e82da715c646d
@@ -510,10 +525,10 @@ def create_population():
     --version          Display version information.
     """
         
-    command = f"{get_warptools_path()}MTools create_population --directory m --name 10491"
+    command = f"{get_warptools_path()}MTools create_population --directory m --name {parameters.get('data_set')}"
     local_run.stream_shell_command(command)
 
-def create_source():
+def create_source(parameters):
     
     """
     MTools 2.0.0+844343b6327c7775ae56e82e409e82da715c646d
@@ -529,15 +544,10 @@ def create_source():
     --version                    Display version information.
     """
     
-    command = f"{get_warptools_path()}MTools create_source --name 10491 --population m/10491.population --processing_settings warp_tiltseries.settings"
+    command = f"{get_warptools_path()}MTools create_source --name {parameters.get('data_set')} --population m/{parameters.get('data_set')}.population --processing_settings warp_tiltseries.settings"
     local_run.stream_shell_command(command)
 
-def relion_mask_create():
-    
-    command = f"relion_mask_create --i relion/Refine3D/job002/run_class001.mrc --o m/mask_4apx.mrc --ini_threshold 0.04"
-    local_run.stream_shell_command(command)
-
-def create_species():
+def create_species(parameters):
     
     """
     MTools 2.0.0+844343b6327c7775ae56e82e409e82da715c646d
@@ -569,10 +579,10 @@ def create_species():
     --version                 Display version information.
     """
 
-    command = f"{get_warptools_path()}MTools create_species --population m/10491.population --name apoferritin --diameter 130 --sym O --temporal_samples 1 --half1 relion/Refine3D/job002/run_half1_class001_unfil.mrc --half2 relion/Refine3D/job002/run_half2_class001_unfil.mrc --mask m/mask_4apx.mrc --particles_relion relion/Refine3D/job002/run_data.star --angpix_resample 0.7894 --lowpass 10"
+    command = f"{get_warptools_path()}MTools create_species --population m/{parameters.get('data_set')}.population --name apoferritin --diameter 130 --sym O --temporal_samples 1 --half1 relion/Refine3D/job002/run_half1_class001_unfil.mrc --half2 relion/Refine3D/job002/run_half2_class001_unfil.mrc --mask m/mask_4apx.mrc --particles_relion relion/Refine3D/job002/run_data.star --angpix_resample 0.7894 --lowpass 10"
     local_run.stream_shell_command(command)
 
-def check_setup():
+def mcore_iterate(parameters):
 
     """
     MCore 2.0.0+844343b6327c7775ae56e82e409e82da715c646d
@@ -611,35 +621,73 @@ def check_setup():
     --help                        Display this help screen.
     --version                     Display version information.
     """
+    
+    binary_options = ""
+    if parameters.get('mcore_refine_imagewarp'):
+        binary_options += " --refine_imagewarp"
+    if parameters.get('mcore_refine_particles'):
+        binary_options += " --refine_particles"
+    if parameters.get('mcore_refine_mag'):
+        binary_options += " --refine_mag"
+    if parameters.get('mcore_refine_doming'):
+        binary_options += " --refine_doming"
+    if parameters.get('mcore_refine_stageangles'):
+        binary_options += " --refine_stageangles"
+    if parameters.get('mcore_refine_volumewarp'):
+        binary_options += " --refine_volumewarp"
+    if parameters.get('mcore_refine_tiltmovies'):
+        binary_options += " --refine_tiltmovies"   
+
+    if parameters.get('mcore_ctf_defocus'):
+        binary_options = " --ctf_defocus" 
+        if parameters.get('mcore_ctf_defocusexhaustive'):
+            binary_options += " --ctf_defocusexhaustive"    
+    if parameters.get('mcore_ctfphase'):
+        binary_options += " --ctf_phase"
+    if parameters.get('mcore_ctf_cs'):
+        binary_options += "  --ctf_cs"
+    if parameters.get('mcore_ctf_zernike3'):
+        binary_options += " --ctf_zernike3"
+    if parameters.get('mcore_ctf_zernike5'):
+        binary_options += " --ctf_zernike5"
+    if parameters.get('mcore_ctf_zernike2'):
+        binary_options += " --ctf_zernike2"
+    if parameters.get('mcore_ctf_zernike4'):
+        binary_options += " --ctf_zernike4"
+        
+    command = f"{get_warptools_path()}MCore --population m/{parameters.get('data_set')}.population --port {parameters.get('mcore_resources_port')} --devicelist {parameters.get('mcore_resources_devicelist')} --perdevice_preprocess {parameters.get('mcore_resources_perdevice_preprocess')} --perdevice_refine {parameters.get('mcore_resources_perdevice_refine')} --perdevice_postprocess {parameters.get('mcore_resources_perdevice_postprocess')} --workers_preprocess {parameters.get('mcore_resources_workers_preprocess')} --workers_refine {parameters.get('mcore_resources_workers_refine')}  --workers_postprocess {parameters.get('mcore_resources_workers_postprocess')} --iter {parameters.get('mcore_refine_iter')} --first_iteration_fraction {parameters.get('mcore_refine_iteration_fraction')} --min_particles {parameters.get('mcore_refine_min_particles')} --cpu_memory {parameters.get('mcore_refine_cpu_memory')} --weight_threshold {parameters.get('mcore_refine_weight_threshold')} --ctf_batch {parameters.get('mcore_ctf_batch')} --ctf_minresolution {parameters.get('mcore_ctf_minresolution')} {binary_options}"
+    local_run.stream_shell_command(command)
+
+def check_setup():
         
     command = f"{get_warptools_path()}MCore --population m/10491.population --iter 0"
     local_run.stream_shell_command(command)
 
-def first_refinement():
+def first_refinement(parameters):
     
     command = f"{get_warptools_path()}MCore --population m/10491.population --refine_imagewarp 6x4 --refine_particles --ctf_defocus --ctf_defocusexhaustive --perdevice_refine 4"
     local_run.stream_shell_command(command)
 
 # Benefits from a Higher Resolution Reference
-def second_refinement():
+def second_refinement(parameters):
     
     command = f"{get_warptools_path()}MCore --population m/10491.population --refine_imagewarp 6x4 --refine_particles --ctf_defocus"
     local_run.stream_shell_command(command)
 
 #  Stage Angle Refinement
-def third_refinement():
+def third_refinement(parameters):
     
     command = f"{get_warptools_path()}MCore --population m/10491.population --refine_imagewarp 6x4 --refine_particles --refine_stageangles"
     local_run.stream_shell_command(command)
 
 # Magnification/Cs/Zernike3
-def fourth_refinement():
+def fourth_refinement(parameters):
     
     command = f"{get_warptools_path()}MCore --population m/10491.population --refine_imagewarp 6x4 --refine_particles --refine_mag --ctf_cs --ctf_defocus --ctf_zernike3"
     local_run.stream_shell_command(command)
 
 # Weights (Per-Tilt Series)
-def fifth_refinement():
+def fifth_refinement(parameters):
     
     """
     EstimateWeights 2.0.0+844343b6327c7775ae56e82e409e82da715c646d
@@ -660,14 +708,32 @@ def fifth_refinement():
     --version             Display version information.
     """
     
-    command = f"{get_warptools_path()}EstimateWeights --population m/10491.population --source 10491 --resolve_items"
+    binary_options = ""
+    if parameters.get('mcore_weights_resolve_frames'):
+        binary_options += " --resolve_frames" 
+    if parameters.get('mcore_weights_resolve_items'):
+        binary_options += " --resolve_items" 
+    if parameters.get('mcore_weights_resolve_location'):
+        binary_options += " --resolve_location" 
+    if parameters.get('mcore_weights_resolve_sources'):
+        binary_options += " --resolve_sources" 
+    if parameters.get('mcore_weights_fit_anisotropy'):
+        binary_options += " --fit_anisotropy" 
+    if parameters.get('mcore_weights_do_tiltframes'):
+        binary_options += " --do_tiltframes" 
+    if parameters.get('mcore_weights_resolve_frames'):
+        binary_options += " --resolve_frames" 
+    if parameters.get('mcore_weights_reset'):
+        binary_options += " --reset"
+        
+    command = f"{get_warptools_path()}EstimateWeights --population m/10491.population --source 10491 {binary_options} --grid_width {parameters.get('mcore_weights_grid_width')} --grid_height {parameters.get('mcore_weights_grid_height')} --min_resolution {parameters.get('mcore_weights_min_resolution')}"
     local_run.stream_shell_command(command)
     
     command = f"{get_warptools_path()}MCore --population m/10491.population"
     local_run.stream_shell_command(command)
 
 # Weights (Per-Tilt, Averaged over all Tilt Series)
-def sixth_refinement():
+def sixth_refinement(parameters):
     
     command = f"{get_warptools_path()}EstimateWeights --population m/10491.population --source 10491 --resolve_frames"
     local_run.stream_shell_command(command)
@@ -676,7 +742,7 @@ def sixth_refinement():
     local_run.stream_shell_command(command)
 
 # temporal pose resolution
-def sixth_refinement():
+def sixth_refinement(parameters):
     
     """
     MTools 2.0.0+844343b6327c7775ae56e82e409e82da715c646d
@@ -688,8 +754,54 @@ def sixth_refinement():
     --version           Display version information.
     """
     
-    command = f"{get_warptools_path()}MTools resample_trajectories --population m/10491.population --species m/species/apoferritin_797f75c2/apoferritin.species --samples 2"
+    command = f"{get_warptools_path()}MTools resample_trajectories --population m/{parameters.get('data_set')}.population --species m/species/apoferritin_797f75c2/apoferritin.species --samples 2"
     local_run.stream_shell_command(command)
     
-    command = f"{get_warptools_path()}MCore --population m/10491.population --refine_imagewarp 6x4 --refine_particles --refine_stageangles --refine_mag --ctf_cs --ctf_defocus --ctf_zernike3"
+    command = f"{get_warptools_path()}MCore --population m/{parameters.get('data_set')}.population --refine_imagewarp 6x4 --refine_particles --refine_stageangles --refine_mag --ctf_cs --ctf_defocus --ctf_zernike3"
     local_run.stream_shell_command(command)
+
+# tilt-series pre-processing
+def pre_processing(parameters):
+    
+    settings_file = "warp_frameseries.settings"
+    if not os.path.exists(settings_file):
+        create_settings(parameters)
+    
+    # movie frame alignment
+    fs_motion_and_ctf(parameters)
+    
+    # import frame averages
+    ts_import(parameters)
+    
+    # tilt-series alignment
+    ts_etomo_patches(parameters)
+    
+    # tilt-series CTF estimation
+    ts_ctf(parameters)
+    
+    # tomogram reconstruction
+    ts_reconstruct(parameters)
+
+# particle picking using template matching
+def particle_picking(parameters):
+        
+    ts_template_match(parameters)
+    
+    threshold_picks(parameters)
+    
+    ts_export_particles(parameters)
+    
+# 3D refinement
+def refinement(parameters):
+
+    settings_file = parameters.get('data_set') + ".settings"
+    if not os.path.exits(settings_file):
+
+        create_population(parameters)
+
+        create_source(parameters)
+
+        create_species(parameters)
+
+    # actual refinement
+    check_setup(parameters)

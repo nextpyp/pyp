@@ -103,7 +103,7 @@ from pyp.system.singularity import (
     run_ssh,
 )
 from pyp.system.utils import get_imod_path, get_topaz_path, get_multirun_path, get_parameter_files_path, get_gpu_queue, parse_logger_level
-
+from pyp.postprocess import warptools
 from pyp.utils import timer, symlink_relative, symlink_relative_pattern
 
 from pyp.refine.tomo_avg import sub_tomo_avg as sub_tomo_avg
@@ -6346,6 +6346,48 @@ EOF
                     logger.info("nextPYP (kselection) finished successfully")
                 except:
                     logger.error("nextPYP (kselection) failed")
+                    raise
+
+            elif "warptools_preprocessing" in os.environ:
+                
+                try:
+                    del os.environ["warptools_preprocessing"]
+
+                    args = project_params.parse_arguments("tomo_warp_preprocess")
+
+                    warptools.pre_processing(args)
+                
+                    logger.info("nextPYP (warptools_preprocessing) finished successfully")
+                except:
+                    logger.error("nextPYP (warptools_preprocessing) failed")
+                    raise
+                
+            elif "warptools_picking" in os.environ:
+                
+                try:
+                    del os.environ["warptools_picking"]
+
+                    args = project_params.parse_arguments("tomo_warp_particle_picking")
+
+                    warptools.particle_picking()
+                
+                    logger.info("nextPYP (warptools_picking) finished successfully")
+                except:
+                    logger.error("nextPYP (warptools_picking) failed")
+                    raise
+                
+            elif "warptools_refine" in os.environ:
+                
+                try:
+                    del os.environ["warptools_refine"]
+
+                    args = project_params.parse_arguments("tomo_mcore_refine")
+
+                    warptools.refine()
+                
+                    logger.info("nextPYP (warptools_refine) finished successfully")
+                except:
+                    logger.error("nextPYP (warptools_refine) failed")
                     raise
 
             # split

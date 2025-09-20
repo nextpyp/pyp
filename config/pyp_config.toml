@@ -115,6 +115,12 @@ description = "Alignment, reconstruction, and CTF"
 tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
+[blocks.tomo_warp_preprocess]
+name = "Warptools Pre-processing"
+description = "Alignment, reconstruction, and CTF (warp)"
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
 [blocks.tomo_segment_open]
 name = "TOMO Segmentation (open)"
 description = "Segment open surfaces and filaments"
@@ -179,6 +185,11 @@ tabs = [ "particle", "extract", "refine", "csp", "reconstruct", "class", "slurm"
 name = "Sub-volume averaging"
 description = "Ab-initio alignment through classification"
 tabs = [ "sva", "slurm" ]
+
+[blocks.tomo_mcore_refine]
+name = "TOMO MCore Refinement"
+description = "Refinement using MCore"
+tabs = [ "mcore_refine", "mcore_ctf", "mcore_resources", "slurm" ]
 
 [blocks.tomo_drgn_vae]
 name = "tomoDRGN VAE"
@@ -7367,6 +7378,269 @@ name = ""
 description = ""
 type = "str"
 hidden = true
+
+# Refinement using MCore
+[tabs.mcore_resources]
+_name = "Resource configuration"
+_description = "Resource configuration"
+
+[tabs.mcore_resources.port]
+name = "REST API port"
+description = "Port to use for REST API calls, set to -1 to disable"
+type = "int"
+default = 14300
+
+[tabs.mcore_resources.devicelist]
+name = "Space-separated list of GPU IDs to use for processing"
+description = "Default: all GPUs in the system"
+type = "str"
+default = ""
+
+[tabs.mcore_resources.perdevice_preprocess]
+name = "Processes per PGU for processing"
+description = "Number of processes per GPU used for map pre-processing; leave blank = default to --perdevice_refine value"
+type = "str"
+default = ""
+
+[tabs.mcore_resources.perdevice_refine]
+name = "Processes per GPU for refinement"
+description = "Number of processes per GPU used for refinement; set to >1 to improve utilization if your GPUs have enough memory"
+type = "int"
+default = 1
+
+[tabs.mcore_resources.perdevice_postprocess]
+name = "Processes per GPU for post-processing"
+description = "Number of processes per GPU used for map post-processing; leave blank = default to --perdevice_refine value"
+type = "int"
+default = 1
+
+[tabs.mcore_resources.workers_preprocess]
+name = "List of workers"
+description = "List of remote workers to be used instead of locally spawned processes for map pre-processing. Formatted as hostname:port, separated by spaces"
+type = "str"
+default = ""
+hidden = true
+
+[tabs.mcore_resources.workers_refine]
+name = "List of workers for refinement"
+description = "List of remote workers to be used instead of locally spawned processes for refinement. Formatted as hostname:port, separated by spaces"
+type = "str"
+default = ""
+hidden = true
+
+[tabs.mcore_resources.workers_postprocess]
+name = "List of workers for post-processing"
+description = "List of remote workers to be used instead of locally spawned processes for map post-processing. Formatted as hostname:port, separated by spaces"
+type = "str"
+default = ""
+hidden = true
+
+# Refinement using MCore
+[tabs.mcore_refine]
+_name = "Refinement"
+_description = "Define refinement parameters"
+
+[tabs.mcore_refine.iter]
+name = "Sub-iterations"
+description = "Number of refinement sub-iterations"
+type = "int"
+default = 3
+
+[tabs.mcore_refine.first_iteration_fraction]
+name = "First iteration fraction"
+description = "Use this fraction of available resolution for alignment in first sub-iteration, increase linearly to 1.0 towards last sub-iterations"
+type = "int"
+default = 1
+
+[tabs.mcore_refine.min_particles]
+name = "Min particles per FOW"
+description = "Only use series with at least N particles in the field of view"
+type = "int"
+default = 1
+
+[tabs.mcore_refine.weight_threshold]
+name = "Weight threshold"
+description = "Refine each tilt/frame up to the resolution at which the exposure weighting function (B-factor) reaches this value"
+type = "float"
+default = 0.05
+
+[tabs.mcore_refine.cpu_memory]
+name = "Use CPU memory to store particle images during refinement"
+description = "GPU by default"
+type = "bool"
+default = false
+
+[tabs.mcore_refine.imagewarp]
+name = "Refine image warp"
+description = "Refine image warp with a grid of XxY dimensions. Examples: leave blank = don't refine, '1x1', '6x4'"
+type = "str"
+default = ""
+
+[tabs.mcore_refine.particles]
+name = "Refine particle poses"
+description = "Refine particle poses"
+type = "bool"
+default = false
+
+[tabs.mcore_refine.mag]
+name = "Refine anisotropic magnification"
+description = "Refine anisotropic magnification"
+type = "bool"
+default = false
+
+[tabs.mcore_refine.doming]
+name = "Refine doming"
+description = "Frame series only"
+type = "bool"
+default = false
+
+[tabs.mcore_refine.stageangles]
+name = "Refine stage angles"
+description =  "Tilt series only"
+type = "bool"
+default = false
+
+[tabs.mcore_refine.volumewarp]
+name = "Refine volume warp with a grid of XxYxZxT dimensions"
+description =  "Examples: leave blank = don't refine, '1x1x1x20', '4x6x1x41' (tilt series only)"
+type = "str"
+default = ""
+
+[tabs.mcore_refine.tiltmovies]
+name = "Refine tilt movie alignments"
+description =  "Tilt series only"
+type = "bool"
+default = false
+
+# Refinement using MCore
+[tabs.mcore_ctf]
+_name = "CTF refinement"
+_description = "Define CTF refinement parameters"
+
+[tabs.mcore_ctf.batch]
+name = "Batch size for CTF refinements"
+description =  "Lower = less memory, higher = faster"
+type = "int"
+default = 32
+
+[tabs.mcore_ctf.minresolution]
+name = "Min resolution for CTF refinement"
+description =  "Use only species with at least this resolution (in Angstrom) for CTF refinement"
+type = "float"
+default = 8.0
+
+[tabs.mcore_ctf.defocus]
+name = "Refine defocus"
+description = "Refine defocus using a local search"
+type = "bool"
+default = true
+
+[tabs.mcore_ctf.defocus_exhaustive]
+name = "Use exhaustive search"
+description = "Refine defocus using a more exhaustive grid search in the first sub-iteration"
+type = "bool"
+default = false
+condition = { arg='defocus', value="true" }
+
+[tabs.mcore_ctf.phase]
+name = "Refine phase shift"
+description = "Phase plate data only"
+type = "bool"
+default = false
+
+[tabs.mcore_ctf.cs]
+name = "Refine spherical aberration"
+description = "Which is also a proxy for pixel size"
+type = "bool"
+default = false
+
+[tabs.mcore_ctf.zernike3]
+name = "Refine Zernike polynomials of 3rd order"
+description = "Beam tilt, trefoil (fast)"
+type = "bool"
+default = false
+
+[tabs.mcore_ctf.zernike5]
+name = "Refine Zernike polynomials of 5th order"
+description = "(fast)"
+type = "bool"
+default = false
+
+[tabs.mcore_ctf.zernike2]
+name = "Refine Zernike polynomials of 2nd order"
+description = "(slow)"
+type = "bool"
+default = false
+
+[tabs.mcore_ctf.zernike4]
+name = "Refine Zernike polynomials of 4th order"
+description = "(slow)"
+type = "bool"
+default = false
+
+[tabs.mcore_weights]
+_name = "Exposure weights"
+_description = "MCore Exposure Weights"
+
+[tabs.mcore_weights.resolve_frames]
+name = "Estimate weights per frame or tilt"
+description = "Can be combined with 'resolve_items', resulting in Nitems*Nframes weights"
+type = "bool"
+default = false
+
+[tabs.mcore_weights.resolve_items]
+name = "Estimate weights per item, i.e. frame series or tilt series"
+description = "Resulting in Nitems*Nframes weights"
+type = "bool"
+default = true
+
+[tabs.mcore_weights.resolve_location]
+name = "Estimate weights that depend on particle position within the image or volume"
+description = "Cannot be combined with others"
+type = "bool"
+default = false
+
+[tabs.mcore_weights.resolve_sources]
+name = "Estimate weights per item, i.e. frame series or tilt series"
+description = "Can be combined with 'resolve_frames', resulting in Nitems*Nframes weights"
+type = "bool"
+default = false
+
+[tabs.mcore_weights.fit_anisotropy]
+name = "Fit anisotropic B-factors"
+description = "Only makes sense when fitting per-item, per-frame/tilt (except maybe in tilted data where BIM is perpendicular to tilt axis?)"
+type = "bool"
+default = false
+
+[tabs.mcore_weights.do_tiltframes]
+name = "Estimate weights for tilt movies frames"
+description = "Only works for tilt series where the original movies are available"
+type = "bool"
+default = false
+
+[tabs.mcore_weights.grid_height]
+name = "Grid height"
+description = "Height of the parameter grid when fitting spatially resolved weights"
+type = "bool"
+default = false
+
+[tabs.mcore_weights.grid_width]
+name = "Grid width"
+description = "Width of the parameter grid when fitting spatially resolved weights"
+type = "bool"
+default = false
+
+[tabs.mcore_weights.min_resolution]
+name = "Minimum resolution"
+description = "Minimum resolution to consider for estimation"
+type = "float"
+default = 20.0
+
+[tabs.mcore_weights.reset]
+name = "Resets all previously fitted weights for all items"
+description = "Not compatible with any other options"
+type = "bool"
+default = false
 
 # Post-processing Parameters (relion_postprocess)
 
