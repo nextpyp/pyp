@@ -186,6 +186,12 @@ name = "Sub-volume averaging"
 description = "Ab-initio alignment through classification"
 tabs = [ "sva", "slurm" ]
 
+[blocks.tomo_relion_refine]
+name = "Relion Refinement"
+description = "3D refinement (relion)"
+tabs = [ "relion_refine_general", "relion_refine_init", "relion_refine_orientations", "relion_refine_corrections", "relion_refine_sgd", "relion_refine_resources", "slurm" ]
+forwarded_tabs = [ "data", "scope" ]
+
 [blocks.tomo_mcore_refine]
 name = "TOMO MCore Refinement"
 description = "Refinement using MCore"
@@ -8147,6 +8153,323 @@ name = "random_seed"
 description = "Seed for random number generator (negative value for truly random)"
 type = "float"
 default = 0
+
+
+[tabs.relion_refine_general]
+_name = "Auto-refine"
+_description = "General options"
+
+#====== General options =====
+#                             --i () : Input particles (in a star-file)
+#                     --tomograms () : Star file with the tomograms, in case subtomos are handled as 2D stacks
+#                  --trajectories () : Star file with the tomogram motion trajectories
+#                           --ios () : Input tomo optimisation set file. It is used to set --i, --tomograms, --ref or --solvent_mask if they are not provided. Updated output optimiser set is created.
+#                             --o () : Output rootname
+#                        --iter (-1) : Maximum number of iterations to perform
+#                  --tau2_fudge (-1) : Regularisation parameter (values higher than 1 give more weight to the data)
+#             --tau2_fudge_scheme () : Tau2 fudge factor updates scheme. Valid values are plain or <deflate>-step. Where <deflate> is the deflate factor during initial stage.
+#                            --K (1) : Number of references to be refined
+#           --particle_diameter (-1) : Diameter of the circular mask that will be applied to the experimental images (in Angstroms)
+#                --zero_mask (false) : Mask surrounding background in particles to zero (by default the solvent area is filled with random noise)
+#          --flatten_solvent (false) : Perform masking on the references as well?
+#              --solvent_mask (None) : User-provided mask for the references (default is to use spherical mask with particle_diameter)
+#             --solvent_mask2 (None) : User-provided secondary mask (with its own average density)
+#              --lowpass_mask (None) : User-provided mask for low-pass filtering
+#                      --lowpass (0) : User-provided cutoff for region specified above
+#                       --tau (None) : STAR file with input tau2-spectrum (to be kept constant)
+#            --local_symmetry (None) : Local symmetry description file containing list of masks and their operators
+#      --split_random_halves (false) : Refine two random halves of the data completely separately
+#       --low_resol_join_halves (-1) : Resolution (in Angstrom) up to which the two random half-reconstructions will not be independent to prevent diverging orientations
+#           --center_classes (false) : Re-center classes based on their center-of-mass?
+
+[tabs.relion_refine_general.iter]
+name = "Max iterations"
+description = "Maximum number of iterations to perform"
+type = "int"
+default = -1
+
+[tabs.relion_refine_general.tau2_fudge]
+name = "Tau2 fudge"
+description = "Regularization parameter (values higher than 1 give more weight to the data)"
+type = "int"
+default = -1
+
+[tabs.relion_refine_general.tau2_fudge_scheme]
+name = "Tau2 fudge factor updates scheme"
+description = "Valid values are plain or <deflate>-step. Where <deflate> is the deflate factor during initial stage"
+type = "str"
+default = ""
+
+[tabs.relion_refine_general.k]
+name = "Number of classes"
+description = "Number of references to be refined"
+type = "int"
+default = 1
+
+[tabs.relion_refine_general.zero_mask]
+name = "Set background to zero"
+description = "Mask surrounding background in particles to zero (by default the solvent area is filled with random noise)"
+type = "bool"
+default = false
+
+[tabs.relion_refine_general.flatten_solvent]
+name = "Mask references"
+description = "Perform masking on the references as well?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_general.solvent_mask]
+name = "Solvent mask (*.mrc)"
+description = "User-provided mask for the references (default is to use spherical mask with particle_diameter)"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+
+[tabs.relion_refine_general.solvent_mask2]
+name = "Second solvent mask (*.mrc)"
+description = "User-provided mask for low-pass filtering"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+
+[tabs.relion_refine_general.lowpass_mask]
+name = "Lowpass mask (*.mrc)"
+description = "User-provided secondary mask (with its own average density)"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+
+[tabs.relion_refine_general.lowpass]
+name = "Lowpass filter (?)"
+description = "User-provided cutoff for region specified above"
+type = "float"
+default = 0
+
+[tabs.relion_refine_general.tau]
+name = "Tau2-spectrum (*.star)"
+description = "STAR file with input tau2-spectrum (to be kept constant)"
+type = "path"
+path = { type="files" }
+input = { type="starfile" }
+
+[tabs.relion_refine_general.local_symmetry]
+name = "Local symmetry"
+description = "Local symmetry description file containing list of masks and their operators"
+type = "path"
+path = { type="files" }
+
+[tabs.relion_refine_general.split_random_halves]
+name = "Split random halves"
+description = "Refine two random halves of the data completely separately"
+type = "bool"
+default = false
+
+[tabs.relion_refine_general.low_resol_join_halves]
+name = "Split random halves resolution (A)"
+description = "Resolution up to which the two random half-reconstructions will not be independent to prevent diverging orientations"
+type = "float"
+default = -1
+
+[tabs.relion_refine_general.center_classes]
+name = "Re-center classes"
+description = "Re-center classes based on their center-of-mass?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_init]
+_name = "Auto-refine (init)"
+_description = "Initialization"
+
+#====== Initialisation =====
+#                       --ref (None) : Image, stack or star-file with the reference(s). (Compulsory for 3D refinement!)
+#             --denovo_3dref (false) : Make an initial 3D model from randomly oriented 2D particles
+#                      --offset (10) : Initial estimated stddev for the origin offsets (in Angstroms)
+#             --firstiter_cc (false) : Perform CC-calculation in the first iteration (use this if references are not on the absolute intensity scale)
+#                    --ini_high (-1) : Resolution (in Angstroms) to which to limit refinement in the first iteration
+
+[tabs.relion_refine_init.dummy]
+name = "Half-map 1"
+description = "First half-map (mrc file)"
+type = "bool"
+default = true
+
+[tabs.relion_refine_orientations]
+_name = "Auto-refine"
+_description = "Orientations"
+
+#====== Orientations =====
+#                 --oversampling (1) : Adaptive oversampling order to speed-up calculations (0=no oversampling, 1=2x, 2=4x, etc)
+#                --healpix_order (2) : Healpix order for the angular sampling (before oversampling) on the (3D) sphere: hp2=15deg, hp3=7.5deg, etc
+#                    --psi_step (-1) : Sampling rate (before oversampling) for the in-plane angle (default=10deg for 2D, hp sampling for 3D)
+#                 --limit_tilt (-91) : Limited tilt angle: positive for keeping side views, negative for keeping top views
+#                         --sym (c1) : Symmetry group
+#                     --relax_sym () : Symmetry to be relaxed
+#                 --offset_range (6) : Search range for origin offsets (in pixels)
+#                  --offset_step (2) : Sampling rate (before oversampling) for origin offsets (in pixels)
+#              --offset_range_x (-1) : Range for sampling offsets in X-direction (in Angstrom; default=auto)
+#              --offset_range_y (-1) : Range for sampling offsets in Y-direction (in Angstrom; default=auto)
+#              --offset_range_z (-1) : Range for sampling offsets in Z-direction (in Angstrom; default=auto)
+#         --helical_offset_step (-1) : Sampling rate (before oversampling) for offsets along helical axis (in Angstroms)
+#                    --perturb (0.5) : Perturbation factor for the angular sampling (0=no perturb; 0.5=perturb)
+#              --auto_refine (false) : Perform 3D auto-refine procedure?
+#            --auto_sampling (false) : Perform auto-sampling (outside the 3D auto-refine procedure)?
+#     --auto_local_healpix_order (4) : Minimum healpix order (before oversampling) from which autosampling procedure will use local searches
+#                   --sigma_ang (-1) : Stddev on all three Euler angles for local angular searches (of +/- 3 stddev)
+#                   --sigma_rot (-1) : Stddev on the first Euler angle for local angular searches (of +/- 3 stddev)
+#                  --sigma_tilt (-1) : Stddev on the second Euler angle for local angular searches (of +/- 3 stddev)
+#                   --sigma_psi (-1) : Stddev on the in-plane angle for local angular searches (of +/- 3 stddev)
+#               --skip_align (false) : Skip orientational assignment (only classify)?
+#              --skip_rotate (false) : Skip rotational assignment (only translate and classify)?
+#              --bimodal_psi (false) : Do bimodal searches of psi angle?
+
+[tabs.relion_refine_orientations.dummy]
+name = "Half-map 1"
+description = "First half-map (mrc file)"
+type = "bool"
+default = true
+
+[tabs.relion_refine_corrections]
+_name = "Auto-refine"
+_description = "Corrections"
+
+#====== Corrections =====
+#                      --ctf (false) : Perform CTF correction?
+#                  --pad_ctf (false) : Perform CTF padding to treat CTF aliaising better?
+#    --ctf_intact_first_peak (false) : Ignore CTFs until their first peak?
+#      --ctf_uncorrected_ref (false) : Have the input references not been CTF-amplitude corrected?
+#        --ctf_phase_flipped (false) : Have the data been CTF phase-flipped?
+#         --only_flip_phases (false) : Only perform CTF phase-flipping? (default is full amplitude-correction)
+#                     --norm (false) : Perform normalisation-error correction?
+#                    --scale (false) : Perform intensity-scale corrections on image groups?
+#                  --no_norm (false) : Switch off normalisation-error correction?
+#                 --no_scale (false) : Switch off intensity-scale corrections on image groups?
+
+[tabs.relion_refine_corrections.dummy]
+name = "Half-map 1"
+description = "First half-map (mrc file)"
+type = "bool"
+default = true
+
+[tabs.relion_refine_sgd]
+_name = "Auto-refine"
+_description = "Stochastic gradient descent"
+
+#====== Stochastic Gradient Descent =====
+#                     --grad (false) : Perform gradient based optimisation (instead of default expectation-maximization)
+#                --grad_em_iters (0) : Number of iterations at the end of a gradient refinement using Expectation-Maximization
+#              --grad_ini_frac (0.3) : Fraction of iterations in the initial phase of refinement
+#              --grad_fin_frac (0.2) : Fraction of iterations in the final phase of refinement
+#              --grad_min_resol (20) : Adjusting the signal under-estimation during gradient optimization to this resolution.
+#              --grad_ini_resol (-1) : Resolution cutoff during the initial gradient refinement iterations (A)
+#              --grad_fin_resol (-1) : Resolution cutoff during the final gradient refinement iterations (A)
+#             --grad_ini_subset (-1) : Mini-batch size during the initial gradient refinement iterations
+#             --grad_fin_subset (-1) : Mini-batch size during the final gradient refinement iterations
+#                         --mu (0.9) : Momentum parameter for gradient refinement updates
+#               --grad_stepsize (-1) : Step size parameter for gradient optimisation.
+#          --grad_stepsize_scheme () : Gradient step size updates scheme. Valid values are plain or <inflate>-step . Where <inflate> is the initial inflate.
+#             --grad_write_iter (10) : Write out model every so many iterations in SGD (default is writing out all iters)
+#                      --maxsig (-1) : Maximum number of most significant poses & translations to consider
+#            --no_init_blobs (false) : Use this to switch off initializing models with random Gaussians (which is new in relion-4.0).
+#                      --som (false) : Calculate self-organizing map instead of classification.
+#                --som_ini_nodes (2) : Number of initial SOM nodes.
+#           --som_connectivity (5.0) : Number of average active neighbour connections.
+#  --som_inactivity_threshold (0.01) : Threshold for inactivity before node is dropped.
+#         --som_neighbour_pull (0.2) : Portion of gradient applied to connected nodes.
+#   --class_inactivity_threshold (0) : Replace classes with little activity during gradient based classification.
+
+[tabs.relion_refine_sgd.dummy]
+name = "Half-map 1"
+description = "First half-map (mrc file)"
+type = "bool"
+default = true
+
+[tabs.relion_refine_sva]
+_name = "Auto-refine"
+_description = "Sub-volume averaging"
+
+#====== Subtomogram averaging =====
+#       --normalised_subtomo (false) : Have subtomograms been multiplicity normalised? (Default=False)
+#       --skip_subtomo_multi (false) : Skip subtomo multiplicity correction
+#        --ctf3d_not_squared (false) : CTF3D files contain sqrt(CTF^2) patterns
+#         --subtomo_multi_thr (0.01) : Threshold to remove marginal voxels during expectation
+
+[tabs.relion_refine_sva.dummy]
+name = "Half-map 1"
+description = "First half-map (mrc file)"
+type = "bool"
+default = true
+
+[tabs.relion_refine_resources]
+_name = "Auto-refine"
+_description = "General options"
+
+#====== Computation =====
+#                         --pool (1) : Number of images to pool for each thread task
+#                            --j (1) : Number of threads to run in parallel (only useful on multi-core machines)
+#  --dont_combine_weights_via_disc (false) : Send the large arrays of summed weights through the MPI network, instead of writing large files to disc
+#          --onthefly_shifts (false) : Calculate shifted images on-the-fly, do not store precalculated ones in memory
+#      --no_parallel_disc_io (false) : Do NOT let parallel (MPI) processes access the disc simultaneously (use this option with NFS)
+#           --preread_images (false) : Use this to let the leader process read all particles into memory. Be careful you have enough RAM for large data sets!
+#                   --scratch_dir () : If provided, particle stacks will be copied to this local scratch disk prior to refinement.
+#           --keep_free_scratch (10) : Space available for copying particle stacks (in Gb)
+#            --reuse_scratch (false) : Re-use data on scratchdir, instead of wiping it and re-copying all data.
+#             --keep_scratch (false) : Don't remove scratch after convergence. Following jobs that use EXACTLY the same particles should use --reuse_scratch.
+#             --fast_subsets (false) : Use faster optimisation by using subsets of the data in the first 15 iterations
+#                      --gpu (false) : Use available gpu resources for some calculations
+#              --free_gpu_memory (0) : GPU device memory (in Mb) to leave free after allocation.
+
+[tabs.relion_refine_resources.dummy]
+name = "Half-map 1"
+description = "First half-map (mrc file)"
+type = "bool"
+default = true
+
+[tabs.relion_refine_expert]
+_name = "Auto-refine"
+_description = "Expert options"
+
+#====== Expert options =====
+#                          --pad (2) : Oversampling factor for the Fourier transforms of the references
+#                 --ref_angpix (-1.) : Pixel size (in A) for the input reference (default is to read from header)
+#                       --NN (false) : Perform nearest-neighbour instead of linear Fourier-space interpolation?
+#                    --r_min_nn (10) : Minimum number of Fourier shells to perform linear Fourier-space interpolation
+#                         --verb (1) : Verbosity (1=normal, 0=silent)
+#                 --random_seed (-1) : Number for the random seed generator
+#                 --coarse_size (-1) : Maximum image size for the first pass of the adaptive sampling approach
+#        --adaptive_fraction (0.999) : Fraction of the weights to be considered in the first pass of adaptive oversampling
+#                     --maskedge (5) : Width of the soft edge of the spherical mask (in pixels)
+#          --fix_sigma_noise (false) : Fix the experimental noise spectra?
+#         --fix_sigma_offset (false) : Fix the stddev in the origin offsets?
+#                   --incr_size (10) : Number of Fourier shells beyond the current resolution to be included in refinement
+#    --print_metadata_labels (false) : Print a table with definitions of all metadata labels, and exit
+#       --print_symmetry_ops (false) : Print all symmetry transformation matrices, and exit
+#          --strict_highres_exp (-1) : High resolution limit (in Angstrom) to restrict probability calculations in the expectation step
+#           --strict_lowres_exp (-1) : Low resolution limit (in Angstrom) to restrict probability calculations in the expectation step
+#          --dont_check_norm (false) : Skip the check whether the images are normalised correctly
+#                --always_cc (false) : Perform CC-calculation in all iterations (useful for faster denovo model generation?)
+#      --solvent_correct_fsc (false) : Correct FSC curve for the effects of the solvent mask?
+#            --skip_maximize (false) : Skip maximization step (only write out data.star file)?
+#          --failsafe_threshold (40) : Maximum number of particles permitted to be handled by fail-safe mode, due to zero sum of weights, before exiting with an error (GPU only).
+#                    --blush (false) : Perform the reconstruction with the Blush algorithm.
+#  --blush_skip_spectral_trailing (false) : Skip spectral trailing during Blush reconstruction (WARNING: This may inflate resolution estimates)
+#     --external_reconstruct (false) : Perform the reconstruction step outside relion_refine, e.g. for learned priors?)
+#              --auto_iter_max (999) : In auto-refinement, stop at this iteration.
+#       --auto_ignore_angles (false) : In auto-refinement, update angular sampling regardless of changes in orientations for convergence. This makes convergence faster.
+#        --auto_resol_angles (false) : In auto-refinement, update angular sampling based on resolution-based required sampling. This makes convergence faster.
+#   --allow_coarser_sampling (false) : In 2D/3D classification, allow coarser angular and translational samplings if accuracies are bad (typically in earlier iterations.
+#           --trust_ref_size (false) : Trust the pixel and box size of the input reference; by default the program will die if these are different from the first optics group of the data
+#        --nr_parts_sigma2noise (-1) : Number of particles (per optics group) for initial noise spectra estimation (default 1000 for SPA and 100 for STA).
+#       --dont_skip_gridding (false) : Perform gridding in the reconstruction step (obsolete?)
+#====== MPI options =====
+#   --halt_all_followers_except (-1) : For debugging: keep all followers except this one waiting
+#  --keep_debug_reconstruct_files (false) : For debugging: keep temporary data and weight files for debug-reconstructions.
+#                          --version : Print RELION version and exit
+
+[tabs.relion_refine_expert.dummy]
+name = "Half-map 1"
+description = "First half-map (mrc file)"
+type = "bool"
+default = true
 
 ####################
 # Mask parameters
