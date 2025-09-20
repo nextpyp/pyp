@@ -16,7 +16,7 @@ def create_pyp_multirun_file(
     parameters, files, timestamp, nodes, mpirunfile="swarm/pre_process.swarm"
 ):
     f = open(mpirunfile, "w")
-    f.write("#\!/bin/bash\n")
+    f.write("#\\!/bin/bash\n")
     f.write("cd '{0}/swarm'\n".format(os.getcwd()))
     f.write("export {0}swarm={0}swarm\n".format(parameters["data_mode"]))
     f.write("case $MP_CHILD in\n")
@@ -35,7 +35,7 @@ def create_pyp_multirun_file(
             f.write("{0})\n".format(group))
             # f.write('clearscratch\n')
         f.write(
-            """find %s -user $USER -exec rm -fr {} \;\n""" % os.environ["PYP_SCRATCH"]
+            """find %s -user $USER -exec rm -fr {} \\;\\n""" % os.environ["PYP_SCRATCH"]
         )
         f.write("mkdir -p %s\n" % Path(os.environ["PYP_SCRATCH"]) / str(i))
         f.write(
@@ -182,7 +182,7 @@ def create_initial_multirun_file(
     fparameters, dataset, multirun_file="swarm/commands.swarm"
 ):
     with open(multirun_file, "w") as f:
-        f.write("#\!/bin/bash\n")
+        f.write("#\\!/bin/bash\n")
         f.write("case $MP_CHILD in\n")
         lscratch = os.environ["PYP_SCRATCH"]
         stack = "%s_stack.mrc" % dataset
@@ -194,7 +194,7 @@ def create_initial_multirun_file(
         nodes = output.splitlines()
         for i in nodes:
             f.write("{0})\n".format(group))
-            f.write("""find %s -user $USER -exec rm -fr {} \;\n""" % lscratch)
+            f.write("""find %s -user $USER -exec rm -fr {} \\;\\n""" % lscratch)
             if "t" in fparameters["scratch_copy_stack"].lower():
                 f.write(
                     "cp {0} {1}\n".format(
@@ -220,7 +220,7 @@ def create_rec_split_multirun_file(
     f = open(mpirunfile, "w")
 
     if legacy:
-        f.write("#\!/bin/bash\n")
+        f.write("#\\!/bin/bash\n")
         f.write("cd '{0}/swarm'\n".format(os.getcwd()))
         f.write("unset frealign_rec\n")
         f.write("export frealign_rec_split=frealign_rec_split\n")
@@ -586,7 +586,7 @@ def create_stack_multirun_file(csp_command, mode, particles, cmin, cmax, cores):
     mpirunfile = "csp_split.multirun"
     with open(mpirunfile, "w") as f:
 
-        f.write("#\!/bin/bash\n")
+        f.write("#\\!/bin/bash\n")
         f.write("case $MP_CHILD in\n")
 
         increment = math.ceil(particles / cores)
@@ -625,7 +625,7 @@ def create_ref_multirun_file(
 
     f = open(mpirunfile, "w")
 
-    f.write("#\!/bin/bash\n")
+    f.write("#\\!/bin/bash\n")
     f.write("cd '{0}/swarm'\n".format(os.getcwd()))
     f.write("export frealign_ref=frealign_ref\n")
 
@@ -693,7 +693,7 @@ def create_ref_multirun_file_from_missing(
     lines_per_node = int(math.ceil(len(lines) / float(nodes)))
 
     f = open(mpirunfile, "w")
-    f.write("#\!/bin/bash\n")
+    f.write("#\\!/bin/bash\n")
     f.write("cd '{0}/../swarm'\n".format(os.getcwd()))
     f.write("export frealign_ref=frealign_ref\n")
     f.write("case $MP_CHILD in\n")
@@ -751,7 +751,7 @@ def run_multirun(command_list, cpus=0, logfile="/dev/null"):
     multirunfile = "multitun.multirun"
     with open(multirunfile, "w") as f:
 
-        f.write("#\!/bin/bash\n")
+        f.write("#\\!/bin/bash\n")
         f.write("case $MP_CHILD in\n")
 
         increment = math.ceil(lines / cpus)

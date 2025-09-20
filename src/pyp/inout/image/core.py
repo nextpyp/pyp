@@ -339,12 +339,12 @@ def read(filename, parameters, binning=1):
             if "/Images-Disc1" in files:
                 if int(parameters["slurm_tasks"]) > 0:
                     command = (
-                        "pbzip2 -dc -p%s %s | tar xv --transform='s/.*\///'"
+                        "pbzip2 -dc -p%s %s | tar xv --transform='s/.*\\///'"
                         % (parameters["slurm_tasks"], filename,)
                     )
                 else:
                     command = (
-                        "tar xvf %s --use-compress-prog=pbzip2 --transform='s/.*\///'"
+                        "tar xvf %s --use-compress-prog=pbzip2 --transform='s/.*\\///'"
                         % filename
                     )
                 [files, error] = run_shell_command(command)
@@ -1291,12 +1291,12 @@ def decompress(filename, threads):
         if "/Images-Disc1" in files:
             if threads > 0:
                 command = (
-                    "pbzip2 -dc -p%s %s | tar xv --transform='s/.*\///'"
+                    "pbzip2 -dc -p%s %s | tar xv --transform='s/.*\\///'"
                     % (threads, filename,)
                 )
             else:
                 command = (
-                    "tar xvf %s --use-compress-prog=pbzip2 --transform='s/.*\///'"
+                    "tar xvf %s --use-compress-prog=pbzip2 --transform='s/.*\\///'"
                     % filename
                 )
             [files, error] = run_shell_command(command)

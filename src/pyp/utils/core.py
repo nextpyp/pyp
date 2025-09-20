@@ -45,7 +45,7 @@ def symlink_relative(target: Union[Path, str], destination: Union[Path, str]):
 def symlink_relative_pattern(pattern, destination):
     source = Path(pattern).parent
     wildcard = Path(pattern).name
-    command = f'cd {destination}; find {source}/ -name "{wildcard}" -exec ln -rsf {{}} . \;'
+    command = f'cd {destination}; find {source}/ -name "{wildcard}" -exec ln -rsf {{}} . \\;'
     subprocess.Popen(
             command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
         ).communicate()
@@ -95,7 +95,7 @@ def movie2regex(pattern, filename="*"):
     """
     DELIMITERS = ["[", "]", "<", ">", "{", "}", "_", "-", ".", "(", ")", "|"]
 
-    STAR = "[\w,\W]+"
+    STAR = "[\\w,\\W]+"
     STAR_NUM_LETTER_ONLY = "[0-9a-zA-Z]+"
 
     # starts with
@@ -103,16 +103,16 @@ def movie2regex(pattern, filename="*"):
 
     # add escape to these special characters
     for d in DELIMITERS:
-        regex = regex.replace(d, f"\{d}")
-        filename = filename.replace(d, f"\{d}")
+        regex = regex.replace(d, f"\\{d}")
+        filename = filename.replace(d, f"\\{d}")
 
     if filename == "*":
         regex = regex.replace("TILTSERIES", "(%s)" % (STAR))
     else:
         regex = regex.replace("TILTSERIES", "(" + filename + ")")
 
-    regex = regex.replace("SCANORD", "(\d+)")
-    regex = regex.replace("ANGLE", "([+-]?[0-9]+(\.[0-9]+)?)")
+    regex = regex.replace("SCANORD", "(\\d+)")
+    regex = regex.replace("ANGLE", "([+-]?[0-9]+(\\.[0-9]+)?)")
 
     regex = regex.replace("*", STAR_NUM_LETTER_ONLY)
 

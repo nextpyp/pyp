@@ -4058,7 +4058,7 @@ def clear_scratch(scratch,timeout=60):
     if os.path.exists(scratch):
         for dir in [ name for name in os.listdir(scratch) if os.path.isdir(os.path.join(scratch, name)) ]:
             # check if directory is in the form {SLURM_JOB_ID}_{SLURM_ARRAY_TASK_ID}
-            if bool(re.match('[\d/_]+$',dir)):
+            if bool(re.match('[\\d/_]+$',dir)):
                 # get list of all files in this directory
                 list_of_files = glob.glob(f'{os.path.join(scratch,dir)}/**/*.*',recursive=True)
                 if len(list_of_files) > 0:
