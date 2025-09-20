@@ -5207,14 +5207,14 @@ if __name__ == "__main__":
 
                         project_params.save_parameters(parameters)
 
-                        if (
-                            parameters["refine_model"] is None
-                            or not Path(project_params.resolve_path(parameters["refine_model"])).exists() 
-                        ):
-                            logger.error(
-                                f"Reference {parameters['refine_model']} does not exist"
+                        if parameters.get("refine_model") is None:
+                            raise Exception(
+                                f"No reference provided. Cannot run refinement without an initial reference."
                             )
-                            raise
+                        elif not Path(project_params.resolve_path(parameters["refine_model"])).exists():
+                            raise Exception(
+                                f"Reference {parameters['refine_model']} not found."
+                            )
                         else:
                             try:
                                 data_set = parameters["data_set"]
