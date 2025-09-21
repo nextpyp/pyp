@@ -4445,6 +4445,22 @@ if __name__ == "__main__":
             )
 
         config = get_pyp_configuration()
+        
+        try:
+            import torch
+            if torch.cuda.is_available():               
+                num_gpus = torch.cuda.device_count()
+                logger.info(f"Number of GPUs available: {num_gpus}")
+                for i in range(num_gpus):
+                    logger.info(f"\t--- GPU {i} ---")
+                    logger.info(f"\tName: {torch.cuda.get_device_name(i)}")
+                    logger.info(f"\tTotal Memory: {torch.cuda.get_device_properties(i).total_memory / (1024**3):.2f} GB")
+                    logger.info(f"\tMulti-processor Count: {torch.cuda.get_device_properties(i).multi_processor_count}")
+                    logger.info(f"\tCUDA Cores: {torch.cuda.get_device_properties(i).max_threads_per_multi_processor * torch.cuda.get_device_properties(i).multi_processor_count}")
+                    logger.info(f"\tMax Threads per Multi-processor: {torch.cuda.get_device_properties(i).max_threads_per_multi_processor}")
+        except:
+            pass
+ 
         # make sure we use the correct library path
         os.environ['LD_LIBRARY_PATH'] = f"/opt/conda/envs/pyp/lib:{os.environ['LD_LIBRARY_PATH']}"
 
