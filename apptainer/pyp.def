@@ -44,6 +44,9 @@ IncludeCmd: no
 	apt-get -y update
 	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file wget git
 
+	# relion specific requirements
+	apt-get install -y cmake build-essential mpi-default-bin mpi-default-dev libpng-dev ghostscript libxft-dev
+
 	# trick IMOD into believing we have version 5 of libtiff
 	ln -s /usr/lib/x86_64-linux-gnu/libtiff.so.6 /usr/lib/x86_64-linux-gnu/libtiff.so.5
 
@@ -58,16 +61,16 @@ IncludeCmd: no
 	dpkg --configure -a
  
 	# install pbzip2 from source
-        NAME=pbzip2-1.1.13
-        TARFILE=${NAME}.tar.gz
-        wget https://launchpad.net/pbzip2/1.1/1.1.13/+download/$TARFILE
-        tar xvfz $TARFILE
-        cd $NAME
-        make -j 4
-        make install
-        make clean
+	NAME=pbzip2-1.1.13
+	TARFILE=${NAME}.tar.gz
+	wget https://launchpad.net/pbzip2/1.1/1.1.13/+download/$TARFILE
+	tar xvfz $TARFILE
+	cd $NAME
+	make -j 4
+	make install
+	make clean
 	cd -
-        rm -rf $NAME
+	rm -rf $NAME
 	rm $TARFILE
 	
 	# NOTE: the shell here is apparently /bin/sh = dash
@@ -144,21 +147,36 @@ IncludeCmd: no
 	find . ! -name "MotionCor3" -type f -exec rm -f {} \;
 	cd -
 
+	# install relion-5.0
+	current=`pwd`
+	cd /opt
+	git clone https://github.com/3dem/relion.git
+	cd relion
+	git checkout ver5.0
+	git pull
+	mkdir build
+	cd build
+	cmake ..
+	make -j 4
+	make install
+	rm -rf /opt/relion
+	cd $current
+
 	# Download and unpack MPICH source
-    	wget http://www.mpich.org/static/downloads/3.2.1/mpich-3.2.1.tar.gz
-    	tar -xzf mpich-3.2.1.tar.gz
-    
-    	# Configure, build, and install MPICH
-    	# Choose an installation directory, e.g., /opt/mpich-3.2.1
-    	cd mpich-3.2.1
-    	./configure --prefix=/opt/mpich-3.2.1 --disable-fortran --without-slurm
-    	make
-    	make install
-    
-    	# Clean up installation files to reduce image size
-    	cd ..
-    	rm mpich-3.2.1.tar.gz
-    	rm -rf mpich-3.2.1
+	wget http://www.mpich.org/static/downloads/3.2.1/mpich-3.2.1.tar.gz
+	tar -xzf mpich-3.2.1.tar.gz
+
+	# Configure, build, and install MPICH
+	# Choose an installation directory, e.g., /opt/mpich-3.2.1
+	cd mpich-3.2.1
+	./configure --prefix=/opt/mpich-3.2.1 --disable-fortran --without-slurm
+	make
+	make install
+
+	# Clean up installation files to reduce image size
+	cd ..
+	rm mpich-3.2.1.tar.gz
+	rm -rf mpich-3.2.1
 
 	# Conda is apparently a terrible package manager and
 	# totally fails to install 2 packages (two!!) in less than 30 minutes! (didn't try waiting longer...)
@@ -173,9 +191,10 @@ cat << EOF > /root/pyp.sh
 	# just for posterity ...
 	micromamba --version
 
+	micromamba update --all
+	
 	# install the python packages we need
-
-	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr htop matplotlib pandas conda-pack jsonrpcclient=3.3.6 overrides colorlog opencv click ncurses colored-traceback torchio==0.18.92
+	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr htop matplotlib pandas conda-pack jsonrpcclient overrides colorlog opencv click ncurses colored-traceback torchio==0.18.92
 
 	micromamba update numpy
 	
@@ -194,7 +213,7 @@ EOF
 	# https://github.com/conda/conda/issues/9367#issuecomment-558863143
 	# alas, we can't actually "activate" this environment, because conda fails saying the envrionment is unsupported
 	#micromamba update mamba
-	micromamba create --name pyp python=3.8 -c conda-forge
+	micromamba create --name pyp python=3.12 -c conda-forge
 
 	# run the conda script in the pyp environment
 	# tragically conda buffers stdout and stderr, which is basically terrible
@@ -217,7 +236,7 @@ EOF
 	cd -
 
 	# do all the pip installs (on the base environment?)
-	pip install torch==2.2.0 torchvision==0.17.0 tensorboard h5py imagesize tqdm healpy phoenix==0.9.1 dataset==1.6.2 Pillow==10.0.1 pyarrow==11.0.0 scikit_network==0.28.2 mrcfile pytorch_metric_learning progress nptyping==2.5.0 umap_learn==0.5.3 nibabel numba gputil dipy bm4d filelock
+	pip install torch==2.2.0 torchvision==0.17.0 tensorboard h5py imagesize tqdm healpy phoenix==0.9.1 dataset==1.6.2 Pillow==10.0.1 pyarrow scikit_network mrcfile pytorch_metric_learning progress nptyping==2.5.0 umap_learn==0.5.3 nibabel numba dipy bm4d filelock
 
 	# Install pytom-match-pick
 cat << EOF > /root/pytom.sh
@@ -413,11 +432,11 @@ cat << EOF > /root/warpem.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	#micromamba create --name warp warp=2.0.0 -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
+	micromamba create --name warp warp=2.0.0 -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge
 	
-	#chmod +x /root/warpem.sh
-	#micromamba run -n warp /bin/bash -c "/root/warpem.sh > /proc/$$/fd/1 2>&1"
-	#rm -rf /root/warpem.sh
+	chmod +x /root/warpem.sh
+	micromamba run -n warp /bin/bash -c "/root/warpem.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/warpem.sh
 
 %startscript
 
