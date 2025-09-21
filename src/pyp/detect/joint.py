@@ -15,7 +15,7 @@ from pyp.system.db_comm import save_tiltseries_to_website
 
 from pyp.system.logging import logger
 
-NN_INIT_COMMANDS = "export LD_LIBRARY_PATH=/opt/conda/envs/pyp/lib/python3.8/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python"
+NN_INIT_COMMANDS = "export LD_LIBRARY_PATH=/opt/conda/envs/pyp/lib/python3.12/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python"
 
 NN_INIT_COMMANDS_2D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick"
 NN_INIT_COMMANDS_3D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick"
