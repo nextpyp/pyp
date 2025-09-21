@@ -4624,6 +4624,7 @@ if __name__ == "__main__":
                 finally:
                     # we are done, clear local scratch
                     if os.path.exists(local_scratch) and not args.keep:
+                        os.chdir(LOCAL_SCRATCH)
                         shutil.rmtree(local_scratch)
 
             # swarm
@@ -4653,6 +4654,7 @@ if __name__ == "__main__":
                 finally:
                     # we are done, clear local scratch
                     if os.path.exists(local_scratch) and not args.keep:
+                        os.chdir(LOCAL_SCRATCH)
                         shutil.rmtree(local_scratch)
 
             elif "tomomerge" in os.environ:
