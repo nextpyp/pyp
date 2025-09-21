@@ -885,11 +885,11 @@ class GlobalMetadata:
                 pass
         elif not data.empty and fromstar:
             if "spr" in self.mode:
-                self.scope_data.at[0, "fames"] =  data[[Relion.IMAGESIZEZ]].values
-                self.scope_data.at[0, "movie_Xsize"] =  data[[Relion.IMAGESIZEX]].values
-                self.scope_data.at[0, "movie_Ysize"] =  data[[Relion.IMAGESIZEY]].values
-                self.scope_data.at[0, "voltage"] =  data[[Relion.VOLTAGE]].values
-                self.scope_data.at[0, "dose_rate"] =  data[[Relion.MICROGRAPHDOSERATE]].values
+                self.scope_data.at[0, "fames"] =  float(data[[Relion.IMAGESIZEZ]].values)
+                self.scope_data.at[0, "movie_Xsize"] =  float(data[[Relion.IMAGESIZEX]].values)
+                self.scope_data.at[0, "movie_Ysize"] =  float(data[[Relion.IMAGESIZEY]].values)
+                self.scope_data.at[0, "voltage"] =  float(data[[Relion.VOLTAGE]].values)
+                self.scope_data.at[0, "dose_rate"] =  float(data[[Relion.MICROGRAPHDOSERATE]].values)
                 micrographsizeX = float(data[Relion.IMAGESIZEX].values[0]) * float(data[Relion.MICROGRAPHBIN].values[0])
                 micrographsizeY = float(data[Relion.IMAGESIZEY].values[0]) * float(data[Relion.MICROGRAPHBIN].values[0])
                 self.micrograph_global[["image_Xsize"]] = micrographsizeX
