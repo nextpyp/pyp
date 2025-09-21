@@ -4445,8 +4445,8 @@ if __name__ == "__main__":
             )
 
         config = get_pyp_configuration()
-
-        os.environ['LD_LIBRARY_PATH'] = f"/opt/conda/envs/pyp/lib:os.environ['LD_LIBRARY_PATH']"
+        # make sure we use the correct library path
+        os.environ['LD_LIBRARY_PATH'] = f"/opt/conda/envs/pyp/lib:{os.environ['LD_LIBRARY_PATH']}"
 
         os.environ["OMP_NUM_THREADS"] = os.environ["IMOD_PROCESSORS"] = "1"
 
