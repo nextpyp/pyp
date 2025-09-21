@@ -878,7 +878,7 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict, first=True):
                 elif line.startswith("RotationAngle"):
                     axis_angle = float(line.split("=")[-1].strip())
                     if first and math.fabs(axis_angle-parameters["scope_tilt_axis"]) > 0.01:
-                        logger.debug(f"Specified tilt-axis angle {parameters['scope_tilt_axis']} does not match the value in the mdoc file {axis_angle}. If you want to use the value from the mdoc file, please specify {axis_angle} in the data import block.")
+                        logger.warning(f"Specified tilt-axis angle {parameters['scope_tilt_axis']} does not match the value in the mdoc file {axis_angle}. If you want to use the value from the mdoc file, please specify {axis_angle} in the data import block.")
                         first = False
                     if False:
                         parameters["scope_tilt_axis"] = axis_angle
