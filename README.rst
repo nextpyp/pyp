@@ -1,12 +1,12 @@
 ============
 Introduction
 ============
-.. |python-badge| image:: https://img.shields.io/badge/Python-3.8-3776AB.svg?style=flat&logo=python&logoColor=white
+.. |python-badge| image:: https://img.shields.io/badge/Python-3.12-3776AB.svg?style=flat&logo=python&logoColor=white
    :target: https://www.python.org
    :alt: Python 3.12
    :height: 20
 
-.. |version-badge| image:: https://img.shields.io/badge/version-0.7.2-red
+.. |version-badge| image:: https://img.shields.io/badge/version-0.7.3-red
    :alt: version 0.7.3
    :height: 20
 
