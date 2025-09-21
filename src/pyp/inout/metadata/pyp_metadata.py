@@ -2857,7 +2857,7 @@ def parse_star_table(starfile, offset=0, nrows=None, keep_index=False):
             ln += 1
         f.seek(offset)
         try:
-            df = pd.read_csv(f, delimiter='\s+', header=None, skiprows=ln, nrows=nrows)
+            df = pd.read_csv(f, delimiter='\\s+', header=None, skiprows=ln, nrows=nrows)
         except pd.errors.EmptyDataError:
             logger.warning(f"Empty data in {starfile} at offset {offset}. Returning empty DataFrame.")
             df = pd.DataFrame()
