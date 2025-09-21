@@ -207,36 +207,108 @@ def get_tilt_options(parameters,exclude_views):
 
     return tilt_options
 
-def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=False):
+def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=False, erase_fiducials=False):
     """Perform 3D reconstruction for tomoswarm."""
 
-    if parameters.get("tomo_rec_2d_filtering_method") != "none":
-        if parameters.get("tomo_rec_2d_filtering_method") == "doseweighting" and os.path.exists("%s.order" % name):
+    if not erase_fiducials:
+        if parameters.get("tomo_rec_2d_filtering_method") != "none":
+            if parameters.get("tomo_rec_2d_filtering_method") == "doseweighting" and os.path.exists("%s.order" % name):
 
-            dose_file = open("%s.dose" % name, "w")
-            with open("%s.order" % name, "r") as f:
-                for line in f.readlines():
-                    prev_accumulative_dose = float(line.strip()) * float(
-                        parameters["scope_dose_rate"]
-                    )
-                    dose_per_tilt = float(parameters["scope_dose_rate"])
-                    dose_file.write(
-                        "%f\t%f\n" % (prev_accumulative_dose, dose_per_tilt)
-                    )
-            dose_file.close()
+                dose_file = open("%s.dose" % name, "w")
+                with open("%s.order" % name, "r") as f:
+                    for line in f.readlines():
+                        prev_accumulative_dose = float(line.strip()) * float(
+                            parameters["scope_dose_rate"]
+                        )
+                        dose_per_tilt = float(parameters["scope_dose_rate"])
+                        dose_file.write(
+                            "%f\t%f\n" % (prev_accumulative_dose, dose_per_tilt)
+                        )
+                dose_file.close()
 
-            command = "{0}/bin/mtffilter -dtype 2 -dfile {1}.dose -volt {2} -verbose 1 -input {1}.ali -output {1}.mtf.ali".format(
-                get_imod_path(), name, int(float(parameters["scope_voltage"]))
-            )
-            # suppress long log
-            run_shell_command(command, log_level=logging.TRACE)
-        elif parameters.get("tomo_rec_2d_filtering_method") == "lowpass":
-            command = "{0}/bin/mtffilter {1}.ali {1}.mtf.ali -lowpass {2},{3}".format(
-                get_imod_path(), name, parameters["tomo_rec_mtfilter_cutoff"], parameters["tomo_rec_mtfilter_falloff"]
+                command = "{0}/bin/mtffilter -dtype 2 -dfile {1}.dose -volt {2} -verbose 1 -input {1}.ali -output {1}.mtf.ali".format(
+                    get_imod_path(), name, int(float(parameters["scope_voltage"]))
+                )
+                # suppress long log
+                run_shell_command(command, log_level=logging.TRACE)
+            elif parameters.get("tomo_rec_2d_filtering_method") == "lowpass":
+                command = "{0}/bin/mtffilter {1}.ali {1}.mtf.ali -lowpass {2},{3}".format(
+                    get_imod_path(), name, parameters["tomo_rec_mtfilter_cutoff"], parameters["tomo_rec_mtfilter_falloff"]
+                )
+                run_shell_command(command)
+
+            # match the stats of the original file (in-place), because it apparently matters during fiducial erasure
+            command = "{0}/bin/densmatch -scaled {1}.mtf.ali -reference {1}.ali -all && mv {1}.mtf.ali {1}.ali".format(
+                get_imod_path(), name
             )
             run_shell_command(command)
 
-        shutil.move("{0}.mtf.ali".format(name), "{0}.ali".format(name))
+    else:
+
+        gold_mod = f"{name}_gold.mod"
+
+        if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
+            # create binned aligned stack, if needed
+            if not os.path.exists(f'{name}_bin.ali'):
+                command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
+                    get_imod_path(), name, binning
+                )
+                run_shell_command(command)
+                
+        if parameters["tomo_rec_erase_fiducials"]:
+    
+            if not os.path.exists(gold_mod):
+                from pyp.detect import detect_gold_beads
+                detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+            
+            if not os.path.exists(gold_mod):
+                logger.error(f"Failed to erase gold because no fiducials were found in tomogram")
+                return
+
+            # save projected gold coordinates as txt file
+            com = f"{get_imod_path()}/bin/model2point {gold_mod} {name}_gold_ccderaser.txt"
+            run_shell_command(com)
+            
+            # convert to unbinned tilt-series coordinates, if needed
+            if os.path.exists(f"{name}_gold_ccderaser.txt"):
+                try:
+                    with open(f"{name}_gold_ccderaser.txt") as f:
+                        gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00        0.00        0.00" in line], dtype='f', ndmin=2)
+
+                    gold_coordinates[:,:2] *= binning
+                    np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
+
+                    # convert back to imod model using one point per contour
+                    com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
+                    run_shell_command(com)
+
+                    # erase gold on (unbinned) aligned tilt-series
+                    erase_factor = parameters["tomo_rec_erase_factor"]
+                    if parameters["tomo_rec_erase_order"] == "noise":
+                        erase_order = -1
+                    elif parameters["tomo_rec_erase_order"] == "mean":
+                        erase_order = 0
+                    elif parameters["tomo_rec_erase_order"] == "first":
+                        erase_order = 1
+                    elif parameters["tomo_rec_erase_order"] == "second":
+                        erase_order = 2
+                    elif parameters["tomo_rec_erase_order"] == "third":
+                        erase_order = 3
+                    erase_iterations = parameters['tomo_rec_erase_iterations']
+
+                    run_shell_command(f"{get_imod_path()}/bin/clip stat {name}.ali")
+                    com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
+                    [ output, _ ] = run_shell_command(com)
+                    if "The largest circle radius is too big for the arrays" in output:
+                        raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")
+
+                    try:
+                        os.remove(name + "_gold_ccderaser.txt")
+                        os.remove(name + "_gold_ccderaser.mod")
+                    except:
+                        pass
+                except:
+                    logger.error(f"Failed to erase gold from tilt-series")
 
     # create binned raw stack
     command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -bin {2}".format(

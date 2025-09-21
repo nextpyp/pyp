@@ -2022,7 +2022,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # erase fiducials if needed
     if need_recalculation:
 
-        preprocess.erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y)
+        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True, erase_fiducials=True)
 
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
