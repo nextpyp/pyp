@@ -11,11 +11,13 @@ import pandas as pd
 import pickle
 from tqdm import tqdm
 
+from pyp.system import mpi
 from pyp.system.local_run import run_shell_command
 from pyp.system import project_params
 from pyp.utils import movie2regex, symlink_force, symlink_relative
 from pyp.system.utils import get_imod_path
 from pyp.streampyp.logging import TQDMLogger
+from pyp.inout.image import mrc
 from pyp.inout.metadata import frealign_parfile, cistem_star_file
 from pyp.analysis.geometry import getRelionMatrix, spk2Relion, relion2Spk, alignment2Relion,eulerZXZtoZYZ, eulerZYZtoZXZ, cistem2_alignment2Relion
 from pyp.analysis.geometry import transformations as vtk
@@ -787,6 +789,8 @@ class GlobalMetadata:
                     {
                         "tomo_rec_binning" : parameters["tomo_rec_binning"], 
                         "tomo_rec_thickness" : parameters["tomo_rec_thickness"], 
+                        "tomo_ext_binn" : parameters["tomo_ext_binn"], 
+                        "tomo_ext_size" : parameters["tomo_ext_size"], 
                         "tomo_ali_square" : "true" if parameters.get("tomo_ali_square") else "false", 
                         "tomo_ali_format" : "true" if parameters.get("tomo_ali_format") else "false",
                     }, 
@@ -1139,8 +1143,6 @@ _rlnRandomSubset #16
         elif "tomo" in self.mode:
         # tomo conversion
             tomo_data_header = """
-# version 30001
-
 data_global
 
 loop_ 
@@ -1162,8 +1164,6 @@ _rlnTomoImportFractionalDose #13
         # tomo tilt would be one block for each tilt series
         # tomo tilt data: data_{tilt_name}
             tomo_tilt_header = """
-# version 30001
-
 data_%s
 
 loop_ 
@@ -1179,8 +1179,6 @@ _rlnMicrographPreExposure #9
 """
         # subtomograms refinement star
             optics_header = """
-# version 30001
-
 data_optics
 
 loop_ 
@@ -1196,8 +1194,6 @@ _rlnImagePixelSize #9
 _rlnImageSize #10
         """
             data_particles_header = """
-# version 30001
-
 data_particles
 
 loop_ 
@@ -1246,6 +1242,50 @@ _rlnAnglePsi #12
 _rlnClassNumber #13
 _rlnRandomSubset #14
 _rlnLogLikeliContribution #15
+_rlnImageName #16
+"""
+
+            particles_header_relion5_optics = f"""
+
+data_general
+
+_rlnTomoSubTomosAre2DStacks   1
+
+data_optics
+
+loop_
+_rlnOpticsGroup #1
+_rlnOpticsGroupName #2
+_rlnSphericalAberration #3
+_rlnVoltage #4
+_rlnTomoTiltSeriesPixelSize #5
+_rlnImageDimensionality #6
+_rlnTomoSubtomogramBinning #7
+_rlnImagePixelSize #8
+_rlnImageSize #9
+_rlnAmplitudeContrast #10
+"""  
+
+            particles_header_relion5_particles = f"""
+
+data_particles 
+
+loop_
+_rlnTomoName #1
+_rlnTomoParticleId #2
+_rlnCoordinateX #3
+_rlnCoordinateY #4
+_rlnCoordinateZ #5
+_rlnOriginXAngst #6
+_rlnOriginYAngst #7
+_rlnOriginZAngst #8
+_rlnAngleRot #9
+_rlnAngleTilt #10
+_rlnAnglePsi #11
+_rlnTomoParticleName #12
+_rlnOpticsGroup #13
+_rlnImageName #14
+_rlnTomoVisibleFrames #15
 """
 
         # frame refined motion star, one block for each subtomogram
@@ -1294,6 +1334,7 @@ _rlnOriginZAngst #3
 
             logger.info(f"Exporting metadata for {len(self.data)} tomograms")
             with tqdm(desc="Progress", total=len(self.data), file=TQDMLogger()) as pbar:
+                micrograph_counter = 1
                 for micrograph in self.data.keys():
                     film_index = imagelist.index(micrograph)
                     data = self.data[micrograph]
@@ -1321,7 +1362,7 @@ _rlnOriginZAngst #3
 
                     # not sure what they are
                     hand = -1.0 if not self.micrograph_global["ctf_hand"].values[0] else 1.0
-                    optic_group_name = "opticsGroup1"
+                    optic_group_name = f"opticsGroup{micrograph_counter}"
 
                     micrograph_optics = list(map(str, [micrograph, f"Movies/{micrograph}.mrc", num_tilts, full_tomo_x, full_tomo_y, z, hand, optic_group_name, pixel_size, voltage, cs, ac, dose_rate]))
                     header += "\t".join(micrograph_optics)
@@ -1360,13 +1401,14 @@ _rlnOriginZAngst #3
                         xf[5] -= dy_tilt / pixel_size
 
                         matrix = getRelionMatrix(tilt_angle, xf, z, [x, y], full_tomo_x, full_tomo_y)
+                        matrix[:-1,3] = 0
                         for r in range(matrix.shape[0]):
-                            body += f"[{matrix[r,0]:.10f},{matrix[r,1]:.10f},{matrix[r,2]:.10f},{matrix[r,3]:.10f}] "
+                            body += f"[{matrix[r,0]:.8f},{matrix[r,1]:.8f},{matrix[r,2]:.8f},{matrix[r,3]:.8f}] "
 
 
                         micrograph_tilt = list(map(str, [df1, df2, astang, ctf_scale, exposure]))
                         body += "\t".join(micrograph_tilt) + "\n"
-
+                    micrograph_counter = micrograph_counter + 1
                     pbar.update(1)
 
             header += body
@@ -1379,15 +1421,41 @@ _rlnOriginZAngst #3
             #################
             #   coord.star  #
             #################
-            header = particles_header
+            header = particles_header_relion5_optics
 
             counter = 1
             manifold = 1
             class_num = 1
             random_subset = 2
 
+            # fill out optics section
+            optics_group = 1
+            for micrograph in self.data.keys():
+                film_index = imagelist.index(micrograph)
+                data = self.data[micrograph]
+                x = data["image"].values[0][0]
+                y = data["image"].values[0][1]
+                tomo_x = data["tomo"].values[0][0]
+                tomo_y = data["tomo"].values[0][1]
+                tomo_z = data["tomo"].values[0][2]
+
+                binning = self.tomo_rec.loc["tomogram", "tomo_rec_binning"]
+                full_tomo_x = tomo_x * binning
+                full_tomo_y = tomo_y * binning
+                full_thickness = self.tomo_rec.loc["tomogram", "tomo_rec_thickness"]
+
+                # coordinates = data["box"].values
+                if micrograph in self.extended[1].keys():                                    
+                    micrograph = list(map(str, [f"{optics_group}",  f"opticsGroup{optics_group}", f"{self.scope_data['CS'].values[0]}", f"{self.scope_data['voltage'].values[0]}", f"{self.micrograph_global['image_pixel_size'].values[0]}", 2, f"{self.ptl_global['ptl_bin'].values[0]}", f"{self.ptl_global['ptl_bin'].values[0]*self.micrograph_global['image_pixel_size'].values[0]}", f"{self.tomo_rec['tomo_ext_size'].values[0]}", f"{self.scope_data['AC'].values[0]}"]))
+                    header += "\t".join(micrograph) + "\n"
+                optics_group += 1
+
+            # fill out particles section
+            header += particles_header_relion5_particles
+            
             logger.info(f"Exporting particle metadata from {len(self.data)} tomograms")
             with tqdm(desc="Progress", total=len(self.data), file=TQDMLogger()) as pbar:
+                optics_group = 1
                 for micrograph in self.data.keys():
                     film_index = imagelist.index(micrograph)
                     data = self.data[micrograph]
@@ -1405,6 +1473,10 @@ _rlnOriginZAngst #3
                     # coordinates = data["box"].values
                     if micrograph in self.extended[1].keys():
                         particle_obj = self.extended[1][micrograph]
+
+                        current_film_index = self.refinement["IMAGE_IS_ACTIVE"].to_numpy() == micrograph
+                        length = len(str(np.count_nonzero(current_film_index)))
+                        particle_counter = 1
                         for particle_index in particle_obj.keys():
 
                             particle_obj = self.extended[1][micrograph][particle_index]
@@ -1462,18 +1534,73 @@ _rlnOriginZAngst #3
                             relion_y -= dy / pixel_size
                             relion_z -= dz / pixel_size
                             dx = dy = dz = 0.0
+                            
+                            relion_x /= self.ptl_global['ptl_bin'].values[0]
+                            relion_y /= self.ptl_global['ptl_bin'].values[0]
+                            relion_z /= self.ptl_global['ptl_bin'].values[0]
+                            
+                            # keep track of visible projection indexes
+                            tomo_visible_frames = np.zeros(num_tilts,dtype='int')
+                            
+                            # find indexes of all particle projections and get their occupancy
+                            current_particle_index = self.refinement["PIND"].to_numpy() == particle_index
+                            condition = np.where( current_film_index & current_particle_index )
+                            # logger.warning(f"Number of projections for particle {particle_index}: {np.count_nonzero(condition)}")
 
-                            particle = list(map(str, [micrograph, counter, manifold, relion_x, relion_y, relion_z, f"{dx:.3f}", f"{dy:.3f}", f"{dz:.3f}", f"{rot:.2f}", f"{tilt:.2f}", f"{psi:.2f}", class_num, random_subset, particle_score]))
-                            header += "\t".join(particle) + "\n"
+                            # set available projection indexes to 1
+                            # tomo_visible_frames[ self.refinement["TIND"].to_numpy()[condition[0]].astype('int') ] = 1
+                            non_zero_indexes = self.refinement["TIND"].to_numpy()[condition[0]].astype('int')
+                            tomo_visible_frames[ non_zero_indexes ] = 1
+                            tomo_visible_frames_indexes = np.where( tomo_visible_frames != 0 )[0]
+                            tomo_visible_frames_string = f"[{','.join(tomo_visible_frames.astype('str').tolist())}]"
 
-                            counter += 1
-                            class_num *= -1
-                            random_subset = 1 if random_subset == 2 else 2
+                            if np.count_nonzero(condition) > 0:
+                                
+                                # figure out image name
+                                image_name = f"{micrograph}_p{int(particle_index+1):0{length}d}_stack.mrcs"
+
+                                if not os.path.exists(os.path.join(output_path,'relion','stacks',image_name)):
+                                    # create image stack for current particle
+                                    stack = os.path.join(output_path,'relion','stacks', micrograph+"_stack.mrcs")
+                                    command = f"{get_imod_path()}/bin/newstack -fromone -secs {particle_counter}-{particle_counter+len(tomo_visible_frames_indexes)-1} {stack} {os.path.join(os.environ['PYP_SCRATCH'],image_name)}"
+                                    run_shell_command(command)
+
+                                    # create new empty particle stack with all tilts since relion needs this
+                                    from pyp.inout.image.core import get_image_dimensions
+                                    size_x, size_y, _ = get_image_dimensions(stack)
+                                    relion_stack = np.zeros((num_tilts, size_x, size_y))
+                                    
+                                    # fill in available data and save as final stack
+                                    actual_images = mrc.read(os.path.join(os.environ['PYP_SCRATCH'],image_name))
+                                    relion_stack[tomo_visible_frames_indexes,:,:] = actual_images
+                                    mrc.write(-1*relion_stack,os.path.join(output_path,'relion','stacks',image_name))
+                                    os.remove(os.path.join(os.environ['PYP_SCRATCH'],image_name))
+                                    
+                                    # metadata for star file
+                                    particle = list(map(str, [micrograph, counter, relion_x, relion_y, relion_z, f"{dx:.3f}", f"{dy:.3f}", f"{dz:.3f}", f"{rot:.2f}", f"{tilt:.2f}", f"{psi:.2f}", micrograph+f"/{int(particle_index+1)}", optics_group, "stacks/"+image_name, tomo_visible_frames_string] ))
+                                    header += "\t".join(particle) + "\n"
+
+                                    particle_counter += len(tomo_visible_frames_indexes)
+                                    counter += 1
+                                    class_num *= -1
+                                    random_subset = 1 if random_subset == 2 else 2
+
                         pbar.update(1)
+                    optics_group += 1
 
             with open(particle_file, "w") as f:
                 f.write(header)
             logger.info(f"Particle metadata exported to {particle_file}")
+            
+            # save set in star file
+            with open(os.path.join( os.path.abspath(output_path),"relion","matching_optimisation_set.star"),'w') as f:
+                f.write(f"""
+data_
+
+_rlnTomoParticlesFile   {dataset}_particles.star
+_rlnTomoTomogramsFile   {dataset}_tomograms.star
+"""
+                        )
 
             ###### end of coord.star #######
 
