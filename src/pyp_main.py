@@ -1341,7 +1341,7 @@ def split(parameters):
             parameters, files, timestamp, nodes
         )
 
-        local_run.run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile))
+        local_run.run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),logging.NOTSET)
 
         mpirun = get_mpirun_command()
 

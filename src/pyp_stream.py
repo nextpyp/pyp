@@ -419,7 +419,7 @@ def launch_preprocessing(args, autoprocess):
             # f.write("{0} > {1}\n".format( pyp_command, os.path.join( target_path, swarm_file.replace('.swarm','.log') ) ) )
             f.write("{0}\n".format(pyp_command))
 
-        run_shell_command(f"chmod u+x '{swarm_file}'")
+        run_shell_command(f"chmod u+x '{swarm_file}'",logging.NOTSET)
 
         # transfer swarm file to remote server
         move_to_destination(file=swarm_file, server=server, path=target_path)

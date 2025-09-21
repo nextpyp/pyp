@@ -347,7 +347,7 @@ def create_rec_swarm_file(iteration, alignment_option):
         )
     )
     f.close()
-    run_shell_command("chmod u+x '%s'" % rec_swarm_file)
+    run_shell_command("chmod u+x '%s'" % rec_swarm_file,logging.NOTSET)
 
     return rec_swarm_file
 
@@ -394,7 +394,7 @@ def create_rec_merge_swarm_file(iteration):
         )
     )
     f.close()
-    run_shell_command("chmod u+x '%s'" % rec_swarm_file)
+    run_shell_command("chmod u+x '%s'" % rec_swarm_file,logging.NOTSET)
 
     return rec_swarm_file
 

@@ -206,7 +206,7 @@ def create_initial_multirun_file(
                 f.write(";;\n")
             group += 1
         f.write("esac\n")
-    run_shell_command("chmod u+x '{0}'".format(multirun_file),)
+    run_shell_command("chmod u+x '{0}'".format(multirun_file),logging.NOTSET)
 
     return nodes, multirun_file
 
@@ -257,7 +257,7 @@ def create_rec_split_multirun_file(
         f.write("esac\n")
     f.close()
 
-    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),logging.NOTSET)
 
     # manage enviroment variables
     my_env = os.environ.copy()
@@ -608,7 +608,7 @@ def create_stack_multirun_file(csp_command, mode, particles, cmin, cmax, cores):
             count += 1
         f.write("esac\n")
 
-    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),logging.NOTSET)
 
     return mpirunfile, count
 
@@ -674,7 +674,7 @@ def create_ref_multirun_file(
         f.write("esac\n")
     f.close()
 
-    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),logging.NOTSET)
 
     return mpirunfile
 
@@ -714,7 +714,7 @@ def create_ref_multirun_file_from_missing(
     f.write("esac\n")
     f.close()
 
-    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), mpirunfile),logging.NOTSET)
 
     return count, cores, mpirunfile
 
@@ -768,7 +768,7 @@ def run_multirun(command_list, cpus=0, logfile="/dev/null"):
             f.write(";;\n")
         f.write("esac\n")
 
-    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), multirunfile),)
+    run_shell_command("chmod u+x '{0}/{1}'".format(os.getcwd(), multirunfile),logging.NOTSET)
 
     command = "{0} -machinefile {1} -np {2} {3}/external/multirun/multirun -m {4} > {5}".format(
         get_mpirun_command(),

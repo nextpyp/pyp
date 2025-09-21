@@ -309,7 +309,7 @@ done
             for line in cmdlist:
                 f.write(line)
 
-            run_shell_command("chmod u+x '{0}'".format(multirun_file), log_level=logging.TRACE)
+            run_shell_command("chmod u+x '{0}'".format(multirun_file), log_level=logging.NOTSET)
 
         # format dependencies based on the environment/batch system
         if len(dependencies) == 0:

@@ -487,7 +487,7 @@ def pyp_daemon(args):
                     )
                 )
 
-            run_shell_command("chmod u+x '{0}'".format(swarm_file), log_level=logging.TRACE)
+            run_shell_command("chmod u+x '{0}'".format(swarm_file), log_level=logging.NOTSET)
 
             # submit jobs to batch system
             gpu = needs_gpu(parameters)
