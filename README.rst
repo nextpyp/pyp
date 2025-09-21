@@ -3,11 +3,11 @@ Introduction
 ============
 .. |python-badge| image:: https://img.shields.io/badge/Python-3.8-3776AB.svg?style=flat&logo=python&logoColor=white
    :target: https://www.python.org
-   :alt: Python 3.8
+   :alt: Python 3.12
    :height: 20
 
 .. |version-badge| image:: https://img.shields.io/badge/version-0.7.2-red
-   :alt: version 0.7.2
+   :alt: version 0.7.3
    :height: 20
 
 .. |license-badge| image:: https://img.shields.io/badge/License-BSD_3--Clause-yellow.svg
