@@ -2700,7 +2700,7 @@ _rlnRandomSubset #14
         saved_path = os.path.join(path, dataset + "_r01_01")
 
         if not os.path.exists(saved_path):
-            os.makedirs(saved_path)
+            os.makedirs(saved_path, exist_ok=True)
 
         pardata = refinestar2pardata(starfile)
 

@@ -371,7 +371,7 @@ def merge_movie_files_in_job_arr(
                     )
 
             if not os.path.exists(saved_path):
-                os.makedirs(saved_path)
+                os.makedirs(saved_path, exist_ok=True)
 
             for stack in movie_list:
                 shutil.copy2( stack, os.path.join(saved_path, os.path.basename(stack).replace(".mrc", ".mrcs")) )
