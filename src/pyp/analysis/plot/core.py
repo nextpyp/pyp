@@ -120,7 +120,7 @@ def guinier_plot(weights, filename="weights.png", pixel_size=1):
     a.set_frame_on(False)
     # a.set_xticks([]); a.set_yticks([])
     # plt.axis('off')
-    plt.xlabel("Frequency (1/$\mathregular{\AA}$)", fontsize=20, fontweight='semibold', labelpad=10)
+    plt.xlabel("Frequency (1/$\\mathregular{\\AA}$)", fontsize=20, fontweight='semibold', labelpad=10)
     plt.ylabel("Cumulative weights", fontsize=20, fontweight='semibold', labelpad=10)
     
     ticks = [(0, "0"), (0.1, "1/10"), (0.2, "1/5"), (0.3, "1/3.0"), (0.5, "1/2.0"), (1.0 / (pixel_size * 2.0), f"1/{pixel_size * 2.0}") ]
