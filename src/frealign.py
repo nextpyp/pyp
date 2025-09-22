@@ -16,7 +16,7 @@ import subprocess
 import shutil
 import time
 import toml
-from pathlib import Path, PosixPath
+from pathlib import Path
 
 from pyp.inout.image import mrc
 from pyp.inout.metadata import get_particles_from_par

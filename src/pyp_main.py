@@ -4461,9 +4461,6 @@ if __name__ == "__main__":
         except:
             pass
  
-        # make sure we use the correct library path
-        os.environ['LD_LIBRARY_PATH'] = f"/opt/conda/envs/pyp/lib:{os.environ['LD_LIBRARY_PATH']}"
-
         os.environ["OMP_NUM_THREADS"] = os.environ["IMOD_PROCESSORS"] = "1"
 
         os.environ["PYTHONDIR"] = "{0}/src".format(os.environ["PYP_DIR"])
