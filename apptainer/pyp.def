@@ -30,7 +30,7 @@ IncludeCmd: no
 	# somehow, after all that installation trouble, conda *STILL* doesn't manage to make the packages available to python
 	# probably because we don't have any way to "activate" the conda environment inside the container
 	# so we'll have to do it manually... sigh
-	export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/opt/conda/envs/pyp/lib:/usr/local/lib:$LD_LIBRARY_PATH
+	export LD_LIBRARY_PATH=/opt/conda/envs/pyp/lib:/lib/x86_64-linux-gnu:/usr/local/lib:$LD_LIBRARY_PATH
 	export PATH=$PYP_DIR/bin:/opt/conda/envs/pyp/bin:/usr/local/bin:$PATH
 	export PYTHONPATH=/opt/pyp/src
 	export IMOD_DIR=/opt/IMOD
