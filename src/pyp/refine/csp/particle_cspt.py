@@ -779,7 +779,10 @@ def run_reconstruction(
     # TODO this is not 100% matching the projection data, since only link one image's extended.cistem as decoy
     # But we're not actually using the num_tilts for reconstruct_3d 
     num_tilts = alignment_parameters.get_extended_data().get_num_tilts()
-    frames_per_tilt = alignment_parameters.get_num_frames()
+    if fp['data_mode'] == "spr":
+        frames_per_tilt = 1
+    else:
+        frames_per_tilt = alignment_parameters.get_num_frames()
 
     commands, count = local_run.create_split_commands(
         mp,

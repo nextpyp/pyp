@@ -79,12 +79,12 @@ def plot_mean_score_tomo(filename, scores, num_frames=1):
     ax.scatter(x, y, s=10)
     ax.scatter(tilt_x, tilt_y, s=50, alpha=0.2, color="green")
     ax.set_xticks(xticks)
-    ax.set_xticklabels([int(frame / num_frames) for frame in xticks], fontsize=10, rotation = 45)
+    ax.set_xticklabels([int(frame / num_frames)+1 for frame in xticks], fontsize=10, rotation = 45)
 
     ax.set_xlabel('Order of acquisition', fontsize=15, fontweight='semibold', labelpad=10 )
     ax.set_ylabel('Normalized mean score', fontsize=15, fontweight='semibold', labelpad=10 )
 
-    plt.tight_layout()  
+    plt.tight_layout()
     plt.savefig(filename)
 
 
