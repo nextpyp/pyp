@@ -665,24 +665,30 @@ def merge_fast(inputfiles, outputfile, remove=False):
     # TODO: use divide-and-conquer to take advantage of parallel processing (same for local_merge3d & merge3d)
     append_stacks = f"{get_frealign_paths()['cistem2']}/append_stacks"
     first = True
-    for stack in inputfiles[1:]:
-        command = f"""
+    from tqdm import tqdm
+    from pyp.streampyp.logging import TQDMLogger
+    from pyp.system.logging import logger
+    logger.info(f"Merging {len(inputfiles)} stacks")
+    with tqdm(desc="Progress", total=len(inputfiles)-1, file=TQDMLogger()) as pbar:
+        for stack in inputfiles[1:]:
+            command = f"""
 {append_stacks} << EOF
 {inputfiles[0]}
 {stack}
 EOF
-        """
-        if first:
-            log_level = logging.DEBUG
-            first = False
-        else:
-            log_level = logging.NOTSET
-        run_shell_command(command, log_level)
-        if remove:
-            try:
-                os.remove(stack)
-            except:
-                pass
+            """
+            if first:
+                log_level = logging.DEBUG
+                first = False
+            else:
+                log_level = logging.NOTSET
+            run_shell_command(command, log_level)
+            if remove:
+                try:
+                    os.remove(stack)
+                except:
+                    pass
+            pbar.update(1)
 
     if remove:
         shutil.move(inputfiles[0],outputfile)
