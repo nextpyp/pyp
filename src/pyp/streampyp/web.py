@@ -59,7 +59,7 @@ class Web:
             response = requests.post(self.url, data=json.dumps(payload), headers=headers)
             parsed = parse(response.json())
             if isinstance(parsed, Ok):
-                return parsed.text
+                return parsed.result
         except Exception as ex:
             print(
                 f"\tfailed to send message to web server: {type(ex).__name__}: {ex}"
