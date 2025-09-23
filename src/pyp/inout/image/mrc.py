@@ -668,7 +668,7 @@ def merge_fast(inputfiles, outputfile, remove=False):
     from tqdm import tqdm
     from pyp.streampyp.logging import TQDMLogger
     from pyp.system.logging import logger
-    logger.info(f"Merging {len(inputfiles)} stacks")
+    logger.info(f"Merging {len(inputfiles):,} stacks")
     with tqdm(desc="Progress", total=len(inputfiles)-1, file=TQDMLogger()) as pbar:
         for stack in inputfiles[1:]:
             command = f"""
