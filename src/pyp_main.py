@@ -4372,7 +4372,7 @@ def sync_parameters(parameters):
     specifications = toml.load("/opt/pyp/config/pyp_config.toml")
 
     # copy tomo_pick_vir to tomo_vir and tomo_spk_vir
-    if parameters["micromon_block"] != "tomo-preprocessing" and parameters["micromon_block"] != "" and parameters["micromon_block"] != "tomo-pure-preprocessing":
+    if parameters["micromon_block"] != "tomo-preprocessing" and parameters["micromon_block"] != "" and parameters["micromon_block"] != "tomo-pure-preprocessing" and parameters.get('data_mode') != "spr":
         new_parameters = parameters.copy()
         for k in parameters.keys():
             if k.startswith("tomo_pick_vir_"):
