@@ -1560,12 +1560,11 @@ def get_scale_for_trajectory(local_trajectories, coordinates) -> float:
 
     # get the mean shortest distance for each particle
     dists_particles = distance.cdist(coordinates, coordinates, 'euclidean')
+    if mean_length > 0 and np.mean(dists_particles) > 0:
+        min_dists = [min([dist for dist in particle if dist > 0.0]) for particle in dists_particles]
+        dist = np.percentile(min_dists, 75)
 
-    min_dists = [min([dist for dist in particle if dist > 0.0]) for particle in dists_particles]
-    dist = np.percentile(min_dists, 75)
-
-    # 0.6 is meant to leave some space, so it won't look too crowded
-    if mean_length > 0:
+        # 0.6 is meant to leave some space, so it won't look too crowded
         return dist / mean_length * 0.6
     else:
         return 1
