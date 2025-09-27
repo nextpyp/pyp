@@ -10,7 +10,7 @@ v0.7.3
    
    :fa:`star` **New features**
    
-   -  New block for running traditional sub-volume averaging. This block can be used for ab-initio alignment through classification, as described in `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_.
+   - New block for running traditional sub-volume averaging. This block can be used for ab-initio alignment through classification, as described in `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_.
 
    - New logger allows users to select one of three levels of verbosity for greater control over program output.
    
@@ -22,7 +22,15 @@ v0.7.3
 
    - Improve efficiency during tomography refinement by avoiding unnecessary linking of subtomogram files.
 
-   - Visualization of 3D correlation volume and diagnostic plots when doing template matching using pytom-match-pick.
+   - Visualization of 3D correlation volume and diagnostic plots when running template matching using pytom-match-pick.
+
+   - Add progress bar when merging particle stacks to improve reponsiveness.
+
+   - Upgrade PYP codebase to Python 3.12 and CUDA 12.8, and jsonrpcclient to version 4.0.
+
+   - Remove various unnecessary messages from logger output.
+
+   - Display available GPU information in the logger window at the start of each job.
 
    :fa:`bug` **Bug fixes**
    
@@ -37,6 +45,12 @@ v0.7.3
    - Fix bug when producing .bild files for some types of symmetries.
 
    - Remove inconsistencies when clearing up temporary scratch folders after jobs finish running.
+
+   - Fix bug caused by string buffer overruns during 3D refinement.
+
+   - Fix bug when importing single particle projects from an existing block.
+
+   - Fix x-axis labels when plotting frame scores during single particle movie frame refinement.
 
 v0.7.2
 ------

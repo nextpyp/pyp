@@ -266,7 +266,7 @@ This section is used to configure properties of the SLURM_ cluster.
 :Required: no
 :Default: ``8``
 :Description:
-	The maximum number of simuntaneous connections to use to SSH into the SLURM login node.
+	The maximum number of simultaneous connections to use to SSH into the SLURM login node.
 	Many SSH daemons allow up to 10 connetions by default.
 	Using more connections that that may require special configuration of the SSH daemon.
 :Examples:
