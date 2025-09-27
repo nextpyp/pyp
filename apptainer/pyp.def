@@ -51,12 +51,12 @@ IncludeCmd: no
 	ln -s /usr/lib/x86_64-linux-gnu/libtiff.so.6 /usr/lib/x86_64-linux-gnu/libtiff.so.5
 
 	# increase ImageMagick resource limits
-	sed -i -E 's/name="disk" value=".+"/name="disk" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
-	sed -i -E 's/name="memory" value=".+"/name="memory" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
-	sed -i -E 's/name="width" value=".+"/name="width" value="64KP"/g' /etc/ImageMagick-6/policy.xml
-	sed -i -E 's/name="height" value=".+"/name="heigth" value="64KP"/g' /etc/ImageMagick-6/policy.xml
-	sed -i -E 's/name="map" value=".+"/name="map" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
-	sed -i -E 's/name="area" value=".+"/name="area" value="8GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="disk" value=".+"/name="disk" value="32GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="memory" value=".+"/name="memory" value="32GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="width" value=".+"/name="width" value="256KP"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="height" value=".+"/name="heigth" value="256KP"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="map" value=".+"/name="map" value="16GiB"/g' /etc/ImageMagick-6/policy.xml
+	sed -i -E 's/name="area" value=".+"/name="area" value="16GiB"/g' /etc/ImageMagick-6/policy.xml
 
 	dpkg --configure -a
  
@@ -108,25 +108,26 @@ IncludeCmd: no
 	sh ${IMOD_FILE} -yes -skip -name IMOD -dir /opt
 	rm -rf ${IMOD_FILE}
 
-	# install CUDA-12.5
-	CUDA_HOME=/usr/local/cuda-12.5
-	wget https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/cuda-keyring_1.1-1_all.deb
+	# install CUDA-12.8
+	CUDA_HOME=/usr/local/cuda-12.8
+	wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb
 	dpkg -i cuda-keyring_1.1-1_all.deb
 	add-apt-repository contrib
 	apt-get update
-	apt-get -y install cuda-toolkit-12-5
-	apt-get -y install libcudnn8
+	apt-get -y install cuda-toolkit-12-8
+
+	apt-get -y install cudnn9-cuda-12
 	apt-get -y install libcu++-dev
 
 	# add symlink to cuda library needed by MotionCor3 and AreTomo
-	ln -s /usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs/libcuda.so /usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs/libcuda.so.1
+	ln -s /usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs/libcuda.so /usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs/libcuda.so.1
 
 	# load AreTomo2
 	cd /opt/pyp/external/AreTomo2
 	# git clone https://github.com/czimaginginstitute/AreTomo2.git --depth 1
 	# cd AreTomo2
 	rm -rf .git/
-	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "AreTomo2" -type f -exec rm -f {} \;
 	cd -
 
@@ -134,7 +135,7 @@ IncludeCmd: no
 	# git clone https://github.com/czimaginginstitute/AreTomo3.git --depth 1
 	cd /opt/pyp/external/AreTomo3
 	rm -rf .git/
-	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "AreTomo3" -type f -exec rm -f {} \;
 	cd -
 
@@ -143,7 +144,7 @@ IncludeCmd: no
 	cd /opt/pyp/external/MotionCor3
 	# git clone https://github.com/czimaginginstitute/AreTomo2.git
 	rm -rf .git/
-	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.5/targets/x86_64-linux/lib/stubs -j 4
+	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "MotionCor3" -type f -exec rm -f {} \;
 	cd -
 
