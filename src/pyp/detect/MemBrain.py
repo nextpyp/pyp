@@ -9,7 +9,7 @@ from pyp.system import local_run, project_params
 from pyp.system.logging import logger
 
 def get_membrane_path():
-    command_base = 'export PYTHONPATH=/opt/conda/envs/membrain/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n membrain /opt/conda/envs/membrain/bin/'
+    command_base = 'export LD_LIBRARY_PATH=/opt/conda/envs/membrain/lib/python3.9/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PYTHONPATH=/opt/conda/envs/membrain/lib/python3.11/site-packages:$PYTHONPATH; micromamba run -n membrain /opt/conda/envs/membrain/bin/'
     return command_base
 
 def membrain_preprocessing(parameters, input):
