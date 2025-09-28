@@ -439,9 +439,9 @@ Step 10: Movie frame refinement
 
       .. md-tab-item:: Refinement
 
-        - Select the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_07.mrc`
+        - Select the ``Initial model`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_08.mrc`
 
-        - Select the ``Input parameter file`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_07.par.bz2`
+        - Select the ``Input parameter file`` by clicking on the icon :fa:`search` and selecting the file `sp-coarse-refinement-*_r01_08.par.bz2`
 
         - Set ``Max resolution (A)`` to 3
 
