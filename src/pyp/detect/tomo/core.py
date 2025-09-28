@@ -1826,7 +1826,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             command = f"{get_imod_path()}/bin/newstack -mode 2 {scores_file} {scores_file}~; mv {scores_file}~ {scores_file}"
             local_run.run_shell_command(command)
         scores_webp_file = scores_file.replace(".mrc","_bw_rec.webp")
-        plot.tomo_slicer_gif( scores_file, scores_webp_file, flipyz=True, averagezslices=2, clipping=False )
+        plot.tomo_slicer_gif( scores_file, scores_webp_file, flipyz=True, clipping=False )
         plot.false_color(scores_webp_file, os.path.join( current_dir, name + '_score.webp'))
         os.chdir(current_dir)
 
