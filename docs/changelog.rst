@@ -32,6 +32,8 @@ v0.7.3
 
    - Display available GPU information in the logger window at the start of each job.
 
+   - Improve efficiency and responsiveness when reconstructing very large tomograms.
+
    :fa:`bug` **Bug fixes**
    
    - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
