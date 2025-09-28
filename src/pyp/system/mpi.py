@@ -168,7 +168,7 @@ def submit_function_to_workers(function, arguments, log_level=logging.INFO):
     # first, detect if we are using MPI
     num_cpus = get_process_information()
 
-    if num_cpus > 1:
+    if num_cpus > 1 and num_processes > 1:
         # NOTE: be aware of the current working directory for all the workers, as they might be initiated in a different place
         def wrapper(func, *arg, current_directory=os.getcwd()):
            os.chdir(current_directory)
