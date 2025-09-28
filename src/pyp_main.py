@@ -2098,11 +2098,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(ctf_mod.plot_ctffind_tilt)
         mpi_args.append( [(name,parameters,ctf)] )
 
-    if not os.path.exists(f"{name}.webp"):
-        mpi_funcs.append(plot.plot_tomo_ctf)
-        mpi_args.append( [(name,)] )
-
-    if not os.path.exists(f"{name}_rec.webp") or parameters["tomo_rec_force"]:
+    if not os.path.exists(f"{name}_rec.webp") or not os.path.exists(f"{name}.webp") or parameters["tomo_rec_force"]:
         mpi_funcs.append(plot.tomo_slicer_gif)
         mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True, 2)] )
 
