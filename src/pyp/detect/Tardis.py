@@ -11,7 +11,7 @@ from pyp.system import local_run, project_params
 from pyp.system.logging import logger
 
 def get_tardis_path():
-    command_base = 'export PYTHONPATH=/opt/conda/envs/tardis/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n tardis /opt/conda/envs/tardis/bin/'
+    command_base = 'export PYTHONPATH=/opt/conda/envs/tardis/lib/python3.11/site-packages:$PYTHONPATH; micromamba run -n tardis /opt/conda/envs/tardis/bin/'
     return command_base
 
 def membrain_preprocessing(parameters, input):
