@@ -1979,6 +1979,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         ctf[7] = y
         ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
         ctf[11] = parameters['tomo_rec_binning']
+        ctf[12] = 0
+        ctf[13] = plot.calculate_z_binning_from_size(x/parameters['tomo_rec_binning'],y/parameters['tomo_rec_binning'],parameters['tomo_rec_thickness']/parameters['tomo_rec_binning'])
         np.savetxt("{}.ctf".format(name), ctf)
 
     if len(mpi_funcs) > 0:
@@ -2100,7 +2102,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     if not os.path.exists(f"{name}_rec.webp") or not os.path.exists(f"{name}.webp") or parameters["tomo_rec_force"]:
         mpi_funcs.append(plot.tomo_slicer_gif)
-        mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True, 2)] )
+        mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True)] )
 
     if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp") or parameters["tomo_ali_force"]:
         mpi_funcs.append(plot.tomo_montage)
@@ -4138,7 +4140,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
         pyp parameters
     """    
     # generate webp files for visualization
-    plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True, 2 )
+    plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True )
     
     # copy outputs to project folder
     if segmentation:

@@ -1158,8 +1158,25 @@ def plot_local_alignment(
     plt.savefig("{0}_field.pdf".format(name), bbox_inches="tight", pad_inches=0)
     plt.close()
 
+# calculate necessary binning in z to keep montage within the webp max size of 16383
+def calculate_z_binning_from_size(x,y,z):
 
-def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, clipping=True):
+    # figure out binning in Z
+    square_size = int(math.ceil(math.sqrt(z/2)))
+    if max(x,y) * square_size > 16383:
+        calculated_z_binning = math.ceil(z / math.floor(16383/max(x,y))**2)
+    else:
+        calculated_z_binning = 2.0
+
+    return calculated_z_binning
+
+def calculate_z_binning(tomogram):
+
+    # figure out binning in Z
+    x, z, y = imageio.get_image_dimensions(tomogram)
+    return calculate_z_binning_from_size(x,y,z)
+
+def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
     """tomo_slicer_gif - Generate a GIF animation from a tomogram navigating through its z slices 
 
     Parameters
@@ -1173,6 +1190,8 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, clipping=Tr
     dimensions : int, optional
         Dimensions of output GIF, by default 256
     """
+    
+    averagezslices = calculate_z_binning(tomogram)
     
     extension = Path(tomogram).suffix
 
@@ -1247,20 +1266,19 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, clipping=Tr
 
     # clean up pngs and flipped tomogram
     [os.remove(png) for png in pngList]
-    os.remove(tomogram_avg)
-    os.remove(tomogram_flip)
 
     # generate central slice
-    rec = imageio.mrc.read(tomogram)
-    # x, z, y shape of rec in array shape is y,z,x
-    rec_x = rec.shape[2]
-    rec_z = rec.shape[1]
-    avg_start = rec_z // 2 - 5
-    avg_end = rec_z // 2 + 5
-    
-    imageio.writepng(np.average(rec[:, avg_start:avg_end, :], 1), "image.png")
+    rec = imageio.mrc.read(tomogram_flip)
+    rec_x = rec.shape[1]
+    rec_z = rec.shape[0]
+    avg_start = rec_z // 2 - int(averagezslices) // 2
+    avg_end = rec_z // 2 + int(averagezslices) // 2
+    imageio.writepng(np.average(rec[avg_start:avg_end, :, :], 0), "image.png")
     # commands.getstatusoutput('{0}/convert image.png -contrast-stretch 1%x98% image.png'.format( os.environ['IMAGICDIR'] ) )
     contrast_stretch("image.png")
+
+    os.remove(tomogram_avg)
+    os.remove(tomogram_flip)
 
     # compose quad-plot
     command = "{0}/convert image.png {1}".format(
@@ -1271,8 +1289,9 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, averagezslices=8, clipping=Tr
     # generate side projections
     x_middle = rec_x // 2
     
-    imageio.writepng(np.average(rec[:x_middle, :, :], 0), "side1.png")
-    imageio.writepng(np.average(rec[x_middle + 1:, :, :], 0), "side2.png")
+    from skimage.transform import resize
+    imageio.writepng(resize(np.average(rec[:,:x_middle, :], 1),(averagezslices*rec_z,rec_x)), "side1.png")
+    imageio.writepng(resize(np.average(rec[:,x_middle + 1:, :], 1),(averagezslices*rec_z,rec_x)), "side2.png")
     contrast_stretch("side1.png")
     contrast_stretch("side2.png")
     run_shell_command(

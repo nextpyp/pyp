@@ -1,4 +1,5 @@
 from .core import (
+    calculate_z_binning_from_size,
     contact_sheet,
     generate_plots,
     generate_plots_relion,
