@@ -564,7 +564,7 @@ def read_tilt_series(
         else:
             assert len(mdocs) > 0, f"Do not detect any mdoc files, please put mdoc files with movie frames"
             # use mdoc file to get corresponding tilted images
-            tilts = frames_from_mdoc(mdocs, parameters)
+            tilts = frames_from_mdoc(mdocs, parameters,first=False)
             file_format = Path(tilts[0][0]).suffix
 
             dims = get_image_dimensions(tilts[0][0])
