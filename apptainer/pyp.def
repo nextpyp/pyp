@@ -373,7 +373,7 @@ cat << EOF > /root/tardis.sh
 
 	# install the python packages we need
 
-	pip install tardis-em
+	pip install tardis-em==0.3.19
 
 	micromamba clean --all -y
 	
