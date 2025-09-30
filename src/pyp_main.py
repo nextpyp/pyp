@@ -2653,14 +2653,14 @@ def sva_initialize_and_run(parameters,dataset,iter,mode=0):
     sva_parameters['dataset'] = dataset
     sva_parameters['classes'] = parameters['sva_class_num']
     sva_parameters['symmetry'] = parameters['sva_symmetry']
-    if mode == 1:
+    if mode == "1":
         if iter == 1:
             filter_map = f"{dataset}_global_average.mrc"
         else:
             filter_map = f"{dataset}_iteration_{iter-1:03d}_refined_selected_average_0.mrc"
-    elif mode == 2:
+    elif mode == "2":
         filter_map = f"{dataset}_iteration_{iter:03d}_level_{parameters['sva_class_num']}_average_000.mrc"
-    elif mode == 3:
+    elif mode == "3":
         filter_map = f"{dataset}_iteration_{iter:03d}_refined_level_{parameters['sva_class_num']}_average_000.mrc"
     else:
         filter_map = ""
