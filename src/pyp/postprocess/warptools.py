@@ -17,7 +17,6 @@ def warptools_noise2map(half1, parameters):
     Will take all the *half1.rec from mrc folder as list to train and run denoise
     """
 
-    logger.warning(f"CHECKIN IF INPUT EXISTS {half1}, {os.path.exists(half1)}")
     assert os.path.exists(half1), "Cannot proceed without a valid half map"
             
     """
@@ -67,7 +66,6 @@ def warptools_noise2map(half1, parameters):
         extra_options += f" --lowpass {parameters.get('reconstruct_denoise_lowpass')}"
 
     command = f"{get_warptools_path()}Noise2Map --half1 {half1} --half2 {half1.replace('half1','half2')} {extra_options}"
-    logger.warning(command)
     #local_run.stream_shell_command(command,observer=obs)
     local_run.stream_shell_command(command)
 
