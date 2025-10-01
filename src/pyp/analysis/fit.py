@@ -1,5 +1,6 @@
 import os
 import subprocess
+import typing as t
 
 import numpy as np
 
@@ -238,8 +239,10 @@ def regularize_image(
     parameters: dict,
     actual_pixel: float,
     tilt_count: int,
-    xf_frames: np.ndarray = np.array([])
+    xf_frames: t.Optional[np.ndarray] = None,
 ):
+    if xf_frames is None:
+        xf_frames = np.array([])
 
     prev_arr = prev_alignment_parameters.get_data()
     input_arr = alignment_parameters.get_data()
