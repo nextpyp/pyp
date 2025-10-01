@@ -2638,7 +2638,7 @@ def csp_extract_frames(
             return particles
 
 
-def sva_initialize_and_run(parameters,dataset,iter,mode=0):
+def sva_initialize_and_run(parameters,dataset,iter,mode="0"):
     
     # Create directories if needed
     prepare_3davg_dir()
@@ -2673,18 +2673,18 @@ def sva_initialize_and_run(parameters,dataset,iter,mode=0):
         sva_parameters['slurm_tasks'] = parameters.get('slurm_launch_tasks')
     
     # create xml file in protocol folder
-    if mode != 3:
-        if mode == 1 and iter > 1:
+    if mode != "3":
+        if mode == "1" and iter > 1:
             volumes = f"{dataset}_iteration_{iter-1:03d}_alignments_to_reference_0.txt"
         else:
             volumes = None
         '''
-        if mode == 3:
+        if mode == "3":
             volumes = f"{dataset}_iteration_{iter:03d}_refined_volumes.txt"
-        elif mode == 2:
+        elif mode == "2":
             volumes = f"{dataset}_iteration_{iter:03d}_volumes.txt"
-        elif mode == 1:
-            if iter == 1:
+        elif mode == "1":
+            if iter == "1":
                 volumes = f"{dataset}_volumes_pre_centered_clean_1.txt"
             else:
                 volumes = f"{dataset}_iteration_{iter-1:03d}_alignments_to_reference_0.txt"
@@ -2854,7 +2854,7 @@ def sva_swarm(filename, parameters, iteration):
             parameters=parameters,
             dataset=dataset,
             iter=iteration,
-            mode=3
+            mode="3"
             )
 
         # save results to project folder        
