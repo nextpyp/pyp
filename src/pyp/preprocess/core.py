@@ -813,7 +813,7 @@ def resize_initial_model(mparameters, initial_model, frealign_initial_model):
             source = initial_model
 
         logger.info(f"Rescaling reference {frealign_initial_model} {1/scaling:.2f}x to {model_pixel_size/scaling:.2f} A/pix")
-        command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}".format(
+        command = "{0}/bin/matchvol -size {1},{1},{1} -3dxform {3},0,0,0,0,{3},0,0,0,0,{3},0 '{4}' {2}; rm -f {2}~".format(
             get_imod_path(), int(mparameters["extract_box"]), frealign_initial_model, scaling, source,
         )
         local_run.run_shell_command(command)
