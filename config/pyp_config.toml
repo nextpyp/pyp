@@ -7273,7 +7273,7 @@ name = "Apply offset (binned voxels)"
 description = "Shift position of sub-volumes along positive/negative normal direction"
 type = "int"
 default = 0
-condition = { arg='mode', value="0" }
+condition = { arg='mode', value=["0","1"] }
 
 [tabs.sva.class_num]
 name = "Classes"
