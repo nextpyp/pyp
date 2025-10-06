@@ -4159,9 +4159,10 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
         shutil.copy2( name + "_seg.rec", target )
 
     for pattern in [ "_rec.webp", "_sides.webp", ".webp" ]:
-        target = os.path.join( project_path, 'webp', name + pattern )
-        if os.path.exists(target):
-            os.remove(target)
+        if os.path.exists(name + pattern):
+            target = os.path.join( project_path, 'webp', name + pattern )
+            if os.path.exists(target):
+                os.remove(target)
             shutil.copy2( name + pattern, target )
 
     # read metadata from pickle file
