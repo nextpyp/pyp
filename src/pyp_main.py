@@ -1918,7 +1918,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # generate full-size aligned tiltseries only if we do not yet have binned tomogram OR 
     # we need .ali for either sub-volume or virion extraction
     tilt_metadata["tilt_axis_angle"] = get_tilt_axis_angle(name)
-    logger.info(f"Detected tilt-axis angle = {tilt_metadata['tilt_axis_angle']}")
+    logger.info(f"Detected tilt-axis angle: {tilt_metadata['tilt_axis_angle']} degree(s)")
 
     # Resize aligned tilt-seres depending on tilt-axis orientation
     if tilt_metadata["tilt_axis_angle"] % 180 > 45 and tilt_metadata["tilt_axis_angle"] % 180 < 135 and not parameters.get("tomo_ali_square"):
@@ -2144,7 +2144,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     
         commands = []
         if "preprocessing" in parameters.get("micromon_block"):
-            if parameters.get("movie_depth"):
+            if parameters.get("movie_depth") and not parameters.get("movie_no_frames"):
                 logger.info("Converting tilt-series to 16-bits")
                 command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), name + ".mrc"

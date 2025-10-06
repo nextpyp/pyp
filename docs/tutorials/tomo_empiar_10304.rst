@@ -104,7 +104,7 @@ Step 3: Pre-processing
 
       .. md-tab-item:: Frame alignment
 
-        - Check ``Single-file tilt-series``
+        - Check ``No movie frames``
 
         - Click on the **CTF determination** tab
 

@@ -60,7 +60,7 @@ Step 1: Create a new session
 
       .. md-tab-item:: Frame alignment
 
-        * Select ``Single-file tilt-series`` if acquiring tilt-series as a single file. Otherwise, provide the ``Frame pattern`` to let ``nextPYP`` know what files to look for
+        * Select ``No movie frames`` if acquiring tilt-series as a single file. Otherwise, provide the ``Frame pattern`` to let ``nextPYP`` know what files to look for
 
         * Click on the **Resources** tab
 

@@ -561,11 +561,10 @@ _name = "Frame alignment"
 _description = "Movie frame parameters"
 
 [tabs.movie.no_frames]
-name = "Single-file tilt-series"
-description = "Select this option if all tilts are in a single file"
+name = "No movie frames"
+description = "Select if your data does not have frames"
 type = "bool"
 default = false
-hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
 
 [tabs.movie.mdoc]
 name = "Read metadata from mdoc files"
@@ -603,6 +602,7 @@ description = "Method used for frame alignment"
 type = "enum"
 enum = { unblur="unblur", motioncor="motioncor3 (GPU required)", skip="no alignment" }
 default = "unblur"
+condition = { arg="no_frames", value="false" }
 hidden = ["spr_import_star","tomo_import_star"]
 
 [tabs.movie.eer_reduce]
