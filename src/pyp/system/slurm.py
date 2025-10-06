@@ -690,7 +690,7 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
     jobname = "Iteration %d (merge)" % parameters["refine_iter"] if Web.exists else "cspmerge"
 
     # use a GPU if running noise2map
-    if parameters.get("reconstruct_denoise_method") == "noise2map":
+    if parameters.get("reconstruct_denoise_method") == "noise2map" or parameters.get("tomo_denoise_method") == "noise2map":
         gpu = True
         jobname = jobname.replace("merge)","merge, gpu)")
     else:

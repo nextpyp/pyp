@@ -105,6 +105,7 @@ from pyp.system.singularity import (
 from pyp.system.utils import get_imod_path, get_topaz_path, get_multirun_path, get_parameter_files_path, get_gpu_queue, parse_logger_level
 from pyp.postprocess import warptools
 from pyp.utils import timer, symlink_relative, symlink_relative_pattern
+from pyp.postprocess.warptools import warptools_noise2map
 
 from pyp.refine.tomo_avg import sub_tomo_avg as sub_tomo_avg
 from pyp.system.set_up import prepare_3davg_dir, prepare_3davg_xml
@@ -1170,6 +1171,7 @@ def split(parameters):
         isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
         membrain = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-segmentation-open"
         topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising-eval"
+        noise2map = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "noise2map" and parameters["micromon_block"] == "tomo-denoising-eval"
 
         if cryocare_predict:
             run_mode = "cryocare"
@@ -1183,6 +1185,9 @@ def split(parameters):
         elif topaz:
             run_mode = "topaz"
             job_type = "topazswarm"
+        elif noise2map:
+            run_mode = "noise2map"
+            job_type = "noise2mapswarm"
         else:
             run_mode = parameters["data_mode"]
             job_type = parameters["data_mode"] + "swarm"
@@ -5685,6 +5690,30 @@ if __name__ == "__main__":
                     logger.info("nextPYP (cryocare) finished successfully")
                 except:
                     logger.error("nextPYP (cryocare) failed")
+                    raise
+
+            elif "noise2mapswarm" in os.environ:
+
+                try:
+                    del os.environ["noise2mapswarm"]
+
+                    args, name, project_path, working_path, parameters = tomoswarm_prologue()
+
+                    os.chdir(working_path)
+
+                    # generate half-tomograms and save to train/ folder, if needed
+                    first_half = name + "_half1.rec"
+                    second_half = first_half.replace("_half1.rec","_half2.rec")
+                    logger.info(f"## Generating half-tomograms ##")
+                    cryocare.tomo_swarm_halves( name, project_path, working_path, parameters, tomogram=True)
+                    
+                    output = warptools_noise2map(first_half,parameters,tomogram=True)
+                    
+                    tomoswarm_epilogue( output, name, project_path, working_path, parameters)
+                    logger.info("nextPYP (noise2map) finished successfully")
+                    
+                except:
+                    logger.error("nextPYP (noise2map) failed")
                     raise
 
             elif "isonettrain" in os.environ:

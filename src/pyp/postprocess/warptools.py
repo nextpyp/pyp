@@ -1,7 +1,9 @@
+import glob
 import os
 import numpy as np
 from pathlib import Path
 
+from pyp.inout.image import mrc
 from pyp.system.logging import logger
 from pyp.system import local_run
 from pyp.system import project_params
@@ -11,7 +13,7 @@ def get_warptools_path():
     warptools_path = '/opt/conda/envs/warp'
     return f"export LD_LIBRARY_PATH=/opt/conda/envs/warp/lib:$LD_LIBRARY_PATH; micromamba run -n warp {warptools_path}/bin/"
 
-def warptools_noise2map(half1, parameters):
+def warptools_noise2map(half1, parameters, tomogram=False):
     """
     Noise2Map training
     Will take all the *half1.rec from mrc folder as list to train and run denoise
@@ -58,49 +60,68 @@ def warptools_noise2map(half1, parameters):
     def obs(line):
         output.append(line)
     
-    extra_options = ""
-    if not parameters.get("reconstruct_denoise_flatten_spectrum"):
-        extra_options += f" --dont_flatten_spectrum --angpix {parameters.get('scope_pixel')*parameters.get('extract_bin')}"
-    extra_options += f" --overflatten_factor {parameters.get('reconstruct_denoise_overflatten_factor')}"
-    if parameters.get("reconstruct_denoise_lowpass"):
-        extra_options += f" --lowpass {parameters.get('reconstruct_denoise_lowpass')}"
+    options = ""
 
-    command = f"{get_warptools_path()}Noise2Map --half1 {half1} --half2 {half1.replace('half1','half2')} {extra_options}"
-    #local_run.stream_shell_command(command,observer=obs)
+    if tomogram:
+            
+        options += " --dont_flatten_spectrum"
+
+        if parameters.get('tomo_denoise_denoise_separately',False):
+            options += " --denoise_separately"
+
+        if parameters.get('tomo_denoise_mini_model',False):
+            options += " --mini_model"
+
+        if parameters.get('tomo_denoise_start_model',False):
+            options += f" --start_model {project_params.resolve_path(parameters['tomo_denoise_start_model'])}"
+
+        if parameters.get('tomo_denoise_old_model',False):
+            options += f" --old_model {project_params.resolve_path(parameters['tomo_denoise_old_model'])}"
+
+        if parameters.get('tomo_denoise_learningrate_start',False):
+            options += f" --learningrate_start {parameters['tomo_denoise_learningrate_start']}"
+
+        if parameters.get('tomo_denoise_learningrate_finish',False):
+            options += f" --learningrate_finish {parameters['tomo_denoise_learningrate_finish']}"
+
+        if parameters.get('tomo_denoise_window',False):
+            options += f" --window {parameters['tomo_denoise_window']}"
+
+        if parameters.get('tomo_denoise_dont_augment',False):
+            options += " --dont_augment"
+
+        if parameters.get('tomo_denoise_lowpass',False) and parameters.get('tomo_denoise_lowpass') >= 0:
+            options += f" --lowpass {parameters['tomo_denoise_lowpass']}"
+
+        if parameters.get('tomo_denoise_iterations',False):
+            options += f" --iterations {parameters['tomo_denoise_iterations']}"
+
+        if parameters.get('tomo_denoise_batchsize',False):
+            options += f" --batchsize {parameters['tomo_denoise_batchsize']}"
+
+        # Now, the 'options' string will contain the flags based on the parameters provided.
+    else:
+        if not parameters.get(f"reconstruct_denoise_flatten_spectrum"):
+            options += f" --dont_flatten_spectrum --angpix {parameters.get('scope_pixel')*parameters.get('extract_bin')}"
+        options += f" --overflatten_factor {parameters.get(f'reconstruct_denoise_overflatten_factor')}"
+
+    if tomogram:
+        prefix = "tomo_denoise"
+    else:
+        prefix = "reconstruct_denoise"
+    if parameters.get(f"{prefix}_lowpass"):
+        options += f" --lowpass {parameters.get(f'{prefix}_lowpass')}"
+
+    command = f"{get_warptools_path()}Noise2Map --half1 {half1} --half2 {half1.replace('half1','half2')} {options}"
     local_run.stream_shell_command(command)
 
-    # parse output
-    """
-    loss = [ line.split("loss:")[1].split()[0] for line in output if "ETA:" in line]
-    mse = [ line.split("mse:")[1].split()[0] for line in output if "ETA:" in line]
-    
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    sns.set_style("dark")
-
-    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6], sharex=True)
-
-    ax[0].set_title("cryoCARE training loss")
-    ax[0].plot(np.array(loss).astype('f'),".-",color="blue",label="Loss")
-    ax[0].set_ylabel("Loss")
-    ax[0].legend()
-    ax[1].plot(np.array(mse).astype('f'),".-",color="red",label="Mean Squared Error")
-    ax[1].set_ylabel("MSE")
-    ax[1].set_xlabel("Step")
-    ax[1].legend()
-    plt.xlabel("Step")
-    plt.savefig(os.path.join(project_dir,"train","training_loss.svgz"))
-    plt.close()
-    """
-    
-    result = f"./denoised/{Path(half1).name}"
+    result = f"./denoised/{Path(half1).stem}.mrc"
     
     # convert to 32 bits for compatibility
     command = f"{get_imod_path()}/bin/newstack -mode 2 {result} {result}~ && mv {result}~ {result}"
     local_run.run_shell_command(command)
     
-    # save trained model to project folder
-    return f"./denoised/{Path(half1).name}"
+    return result
 
 
 def create_settings(parameters):
