@@ -504,8 +504,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
     # half 1 movies
     arguments = []
     for i, f in enumerate(raw_image):
-        output_half1 = f.replace(name, name + "_half1").replace(".mrc", "")
-
+        output_half1 = Path(f).stem + "_half1"
         drifts = metadata["drift"][i].to_numpy()
         half1_drift = drifts[even_list]
         np.savetxt(output_half1 + ".xf", half1_drift, fmt="%s", delimiter='\t')
@@ -517,7 +516,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
     # half 2 movies
     arguments = []
     for i, f in enumerate(raw_image):
-        output_half2 = f.replace(name, name + "_half2").replace(".mrc", "")
+        output_half2 = Path(f).stem + "_half2"
 
         drifts = metadata["drift"][i].to_numpy()
         half2_drift = drifts[odd_list]
@@ -530,7 +529,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
     # generate half tomograms from half movies    
     for i in [1, 2]:
         newname = name + f"_half{i}"
-        new_filelist = [file.replace(name, newname) for file in raw_image]
+        new_filelist = [Path(file).stem + f"_half{i}" + Path(file).suffix for file in raw_image]
         # copy the tilt aignment and angle files
         shutil.copy2(f"{name}.xf", newname + ".xf")
         shutil.copy2(f"{name}.tlt", newname + ".tlt")

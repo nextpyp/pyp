@@ -1480,7 +1480,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
     
     # generate pngs for the middle slices
     starting_slice, ending_slice = 0, num_z_slices - 1
-    output_pattern = tomogram_flip.replace(".rec", "")
+    output_pattern = Path(tomogram_flip).stem
     check_env()
     command = "{0}/bin/mrc2tif -z {1},{2} -p -S {3},{4} {5} {6}".format(
         get_imod_path(),
