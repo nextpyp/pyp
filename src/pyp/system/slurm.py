@@ -235,6 +235,17 @@ def create_sva_run_swarm_file(parameters, swarm_file="svarun.swarm"):
 
     return swarm_file
 
+def create_relion_refine_swarm_file(parameters, swarm_file="relion_refine.swarm"):
+    f = open(swarm_file, "w")
+    f.write("cd '{0}'; export relion_refine=relion_refine; {1} 2>&1 | tee ../log/relion_refine.log\n".format(
+                    os.getcwd(),
+                    run_pyp(command="rln", script=True, cpus=parameters["slurm_tasks"])
+                )
+    )
+    f.close()
+
+    return swarm_file
+
 def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swarm"):
     f = open(swarm_file, "w")
     f.write(
@@ -795,4 +806,45 @@ def launch_sva_run(parameters: dict):
         walltime=parameters["slurm_walltime"],
         tasks_per_arr=parameters["slurm_bundle_size"],
         csp_no_stacks=parameters["csp_no_stacks"]
+    )
+
+def launch_relion_refine(parameters: dict):
+    """launch_sva Launch relion refinement
+
+    Parameters
+    ----------
+    parameters : dict
+        PYP parameters
+    swarm_folder : Path
+        Path to the swarm folder
+    """
+
+    swarm_file = create_relion_refine_swarm_file(
+        parameters, "relionrefine.swarm"
+    )
+
+    jobtype = "relion_refine"
+    if Web.exists:
+        if parameters.get('relion_refine_computation_gpu',False):
+            jobname = "Relion refine (gpu)"
+        else:
+            jobname = "Relion refine"
+    else:
+        jobname = "relion_refine"
+
+    # submit jobs to batch system
+    id = submit_jobs(
+        ".",
+        swarm_file,
+        jobtype,
+        jobname,
+        queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
+        threads=parameters["slurm_tasks"],
+        memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+        gres=parameters["slurm_gres"],
+        account=parameters.get("slurm_account"),
+        walltime=parameters["slurm_walltime"],
+        tasks_per_arr=parameters["slurm_bundle_size"],
+        csp_no_stacks=parameters["csp_no_stacks"],
+        use_gpu=parameters.get('relion_refine_computation_gpu',False)
     )

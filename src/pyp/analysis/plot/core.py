@@ -20,6 +20,8 @@ from pyp.analysis.image import contrast_stretch
 from pyp.system import project_params
 from pyp.system.local_run import run_shell_command
 from pyp.system.utils import get_imod_path, check_env
+from pyp.inout.metadata import pyp_metadata
+from pyp.inout.metadata.pyp_metadata import Relion
 
 from pyp.system.logging import logger
 
@@ -596,7 +598,7 @@ def generate_plots(
     for g in range(angles):
         if input.shape[0] > 0:
             angular_values[g] = np.where(
-                np.logical_and(angular_group == g, np.isfinite(input[:, field])),
+                np.logical_and(angular_group == g, np.isfinite(input[:, field].astype('float'))),
                 input[:, df1_col],
                 0,
             ).max()
@@ -884,6 +886,254 @@ def generate_plots(
     with open(meta_file, 'wb') as f2:
         pickle.dump(metadata, f2)
     # return output, metadata
+
+
+def generate_plots_relion_tomo(
+    refine_star_file, particles_star_file, output_name, angles=25, defocuses=25, scores=False, is_tomo=False, dump=False, tilt_min=0, tilt_max=0,
+):
+    star_metadata = pyp_metadata.parse_star_tables(refine_star_file)
+    refinemeta = star_metadata[Relion.PARTICLEDATA]
+    optics = star_metadata[Relion.OPTICDATA]
+
+    ptl_num = refinemeta.shape[0]
+    initials = [100, -500, 1, 20] # occ, logp, sigma, score
+    stats = np.tile(initials, (ptl_num, 1))
+
+    if "rlnLogLikeliContribution" in refinemeta.keys():
+        stats[:,1] = refinemeta["rlnLogLikeliContribution"].to_numpy()
+
+    if "rlnMaxValueProbDistribution" in refinemeta.keys():
+        stats[:,-1] = refinemeta["rlnMaxValueProbDistribution"].to_numpy()
+
+    if Relion.TOMONAME in refinemeta.columns:
+        imagelist = np.unique(refinemeta[Relion.TOMONAME].apply(os.path.basename).values)
+        newfilm = refinemeta[Relion.TOMONAME].values
+    else:
+        imagelist = [0]
+
+    # image name to FILM id
+    if len(imagelist) > 1:
+        for id, image in enumerate(imagelist):
+            mask = refinemeta[Relion.TOMONAME].str.contains(image).to_numpy()
+            newfilm = np.where(mask, id, newfilm)
+        newfilm = newfilm.reshape(-1, 1)   
+    else:
+        newfilm = np.array([0] * ptl_num).reshape(-1, 1)
+    
+    # parse ctf parameters from tomograms file
+    star_metadata = pyp_metadata.parse_star_tables(particles_star_file)
+    ctf = star_metadata[Relion.PARTICLEDATA][[Relion.DEFOCUSU, Relion.DEFOCUSV, Relion.DEFOCUSANGLE, Relion.PHASESHIFT]].to_numpy()[:ptl_num,:]
+
+    alignment = Relion.ANGLES + Relion.ORIGINSANGST
+    for align in alignment:
+        if align not in refinemeta.columns:
+            refinemeta[[align]] = pd.DataFrame(np.array([0]*ptl_num).reshape(-1, 1))
+    
+    angles = refinemeta[[Relion.ANGLEPSI, Relion.ANGLETILT, Relion.ANGLEROT]].to_numpy()
+    shifts = refinemeta[[Relion.ORIGINXANGST, Relion.ORIGINYANGST]].to_numpy()
+    shifts = - shifts
+
+    pid = np.arange(1, ptl_num + 1).reshape(-1, 1)
+
+    opt = optics[[Relion.IMAGEPIXELSIZE, Relion.VOLTAGE, Relion.CS, Relion.AC]].to_numpy()
+    optics_data = np.tile(opt, (ptl_num, 1))   # pixel_size, voltage, cs, ac
+
+    if Relion.BEAMTILTX in refinemeta.columns:
+        beam_tilt = refinemeta[[Relion.BEAMTILTX, Relion.BEAMTILTY]].to_numpy()
+    else:
+        beam_tilt = np.tile([0, 0], (ptl_num, 1))
+    
+    number_of_angular_groups = 25
+    number_of_defocus_groups = 25
+    
+    coords = refinemeta[[Relion.COORDX, Relion.COORDY]].to_numpy()
+    image_shifts = np.tile([0, 0], (ptl_num, 1))
+    image_id = np.array([0]*ptl_num).reshape(-1, 1)
+    all_zeros = np.tile([0, 0, 0, 0, 0], (ptl_num, 1))
+    pardata = np.hstack((pid, angles, shifts, ctf[:ptl_num,:], newfilm, stats, optics_data[:ptl_num,:], beam_tilt, image_shifts, coords, image_id, pid, all_zeros))
+    (
+        angular_group,
+        defocus_group,
+    ) = pyp.analysis.scores.assign_angular_defocus_groups(
+        pardata, number_of_angular_groups, number_of_defocus_groups
+    )
+    input = pardata
+
+    par_obj = cistem_star_file.Parameters()
+    field = par_obj.get_index_of_column(cistem_star_file.SCORE)
+
+    ptlindex = par_obj.get_index_of_column(cistem_star_file.PIND)
+    film_id = par_obj.get_index_of_column(cistem_star_file.IMAGE_IS_ACTIVE)
+    occ_col = par_obj.get_index_of_column(cistem_star_file.OCCUPANCY)
+    tind_col = par_obj.get_index_of_column(cistem_star_file.TIND)
+    df1_col = par_obj.get_index_of_column(cistem_star_file.DEFOCUS_1)
+    theta_col = par_obj.get_index_of_column(cistem_star_file.THETA)
+    lgp_col = par_obj.get_index_of_column(cistem_star_file.LOGP)
+    sgm_col = par_obj.get_index_of_column(cistem_star_file.SIGMA)
+
+    defocus_values = np.zeros(number_of_defocus_groups)
+    for f in range(defocuses):
+        if input.shape[0] > 0:
+            defocus_values[f] = np.where(
+                np.logical_and(defocus_group == f, np.isfinite(input[:, field].astype('float'))),
+                input[:, df1_col],
+                0,
+            ).max()
+        else:
+            defocus_values[f] = 0
+
+    angular_values = np.zeros(number_of_angular_groups)
+    for g in range(number_of_angular_groups):
+        if input.shape[0] > 0:
+            angular_values[g] = np.where(
+                np.logical_and(angular_group == g, np.isfinite(input[:, field].astype('float'))),
+                input[:, df1_col],
+                0,
+            ).max()
+        else:
+            angular_values[g] = 0
+
+    # defocus-orientation PR plots
+    plot = np.empty([number_of_angular_groups, number_of_defocus_groups])
+    count = np.empty(plot.shape)
+    thresholds = np.zeros(plot.shape)
+    summation = np.empty(plot.shape)
+    for g in range(number_of_angular_groups):
+        for f in range(number_of_defocus_groups):
+            
+            cluster = np.logical_and(
+                np.logical_and(angular_group == g, defocus_group == f),
+                np.isfinite(input[:, field].astype('float')),
+            )
+            count[g, f] = np.where(cluster, 1, 0).sum()
+            summation[g, f] = np.where(cluster, input[:, field], 0).sum()
+            if count[g, f] > 0:
+                plot[g, f] = summation[g, f] / count[g, f]
+            else:
+                plot[g, f] = 0
+
+    if scores:
+        # number of particles in this class (Occ>50%)
+        total = int(np.where(np.isfinite(input[:, field].astype('float')), input[:, occ_col], 0).sum() / 100)
+    else:
+        total = count.sum()
+
+    metadata = {}
+    metadata["particles_total"] = angular_group.shape[0]
+    metadata["particles_used"] = total
+
+    angular_group = np.floor(np.mod(input[:, theta_col], 180) * number_of_angular_groups / 180)
+    if input.shape[0] > 0:
+        mind, maxd = (
+            int(math.floor(input[:, df1_col].min())),
+            int(math.ceil(input[:, df1_col].max())),
+        )
+    else:
+        mind = maxd = 0
+    if maxd == mind:
+        defocus_group = np.zeros(angular_group.shape)
+    else:
+        defocus_group = np.round(((input[:, df1_col] - mind) / (maxd - mind) * (number_of_defocus_groups - 1)).astype('float'))
+
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(2, 3, figsize=(8, 4))
+    rot_n, rot_bins, rot_patches = ax[0, 0].hist(
+        angular_group, number_of_angular_groups, density=1, facecolor="green", alpha=0.75
+    )
+    ax[0, 0].set_title("Orientations")
+    ax[0, 0].set_yticks([])
+    def_n, def_bins, def_patches = ax[0, 1].hist(
+        defocus_group, number_of_defocus_groups, density=1, facecolor="red", alpha=0.75
+    )
+    ax[0, 1].set_title("Defocus")
+    ax[0, 1].set_yticks([])
+
+    prs = sorted(input[:, field])
+
+    scores_n, scores_bins, scores_patches = ax[0, 2].hist(
+        np.array(prs, dtype=float), number_of_angular_groups, density=1, facecolor="blue", alpha=0.75
+    )
+    phase_residual = 0
+    if len(prs) > 0:
+        phase_residual = np.array(prs, dtype=float).min()
+        ax[0, 2].set_title("Phase Residuals (%.2f)" % phase_residual )
+    else:
+        ax[0, 2].set_title("Phase Residuals")
+    ax[0, 2].set_yticks([])
+    metadata["phase_residual"] = phase_residual
+
+    # particle score plot for tomo
+    try:
+        if is_tomo:
+            used_mask = np.logical_and(
+                input[:, occ_col] > 50, 
+                np.logical_and(
+                    np.abs(input[:, tind_col]) <= tilt_max, 
+                    np.abs(input[:, tind_col]) >= tilt_min
+                    )
+                )
+            
+            used_sub_data = pd.DataFrame(input[used_mask], columns=cistem_star_file.Parameters.HEADER_STRS)
+            
+            mean_score = used_sub_data.groupby(["IMAGE_IS_ACTIVE","PIND"])["SCORE"].mean()
+
+            histogram_particle_tomo(mean_score, threshold=0, tiltseries=output_name, save_path="../maps")
+    except:
+        logger.info("Unable to produce particle score plot, too few particles maybe?")
+        pass
+
+    occ_n, occ_bins, occ_patches = ax[1, 0].hist(
+        input[:, occ_col], number_of_angular_groups, density=1, facecolor="yellow", alpha=0.75
+    )
+    occupancies = input[:, occ_col].mean()
+    metadata["occ"] = occupancies
+
+    logp_n, logp_bins, logp_patches = ax[1, 1].hist(
+        input[:, lgp_col], number_of_angular_groups, density=1, facecolor="cyan", alpha=0.75
+    )
+    logp = input[:, lgp_col].mean()
+    metadata["logp"] = logp
+
+    sigma_n, sigma_bins, sigma_patches = ax[1, 2].hist(
+        input[:, sgm_col], number_of_angular_groups, density=1, facecolor="magenta", alpha=0.75
+    )
+    sigma = input[:, sgm_col].mean()
+    metadata["sigma"] = sigma
+
+    # outputs: counts, plot, orientations, defocus, scores, occ, logp and sigma (n, bins)
+    output = {}
+    output["def_rot_histogram"] = count.tolist()
+    output["def_rot_scores"] = plot.tolist()
+
+    output["rot_hist"] = {}
+    output["rot_hist"]["n"] = rot_n.tolist()
+    output["rot_hist"]["bins"] = rot_bins.tolist()
+    output["def_hist"] = {}
+    output["def_hist"]["n"] = def_n.tolist()
+    output["def_hist"]["bins"] = def_bins.tolist()
+    output["scores_hist"] = {}
+    output["scores_hist"]["n"] = scores_n.tolist()
+    output["scores_hist"]["bins"] = scores_bins.tolist()
+    output["occ_hist"] = {}
+    output["occ_hist"]["n"] = occ_n.tolist()
+    output["occ_hist"]["bins"] = occ_bins.tolist()
+    output["logp_hist"] = {}
+    output["logp_hist"]["n"] = logp_n.tolist()
+    output["logp_hist"]["bins"] = logp_bins.tolist()
+    output["sigma_hist"] = {}
+    output["sigma_hist"]["n"] = sigma_n.tolist()
+    output["sigma_hist"]["bins"] = sigma_bins.tolist()
+    if occupancies < 100:
+        spacing = math.ceil(input.shape[0] / 512.0)
+        output["occ_plot"] = np.sort(input[::spacing, 11])[::-1].tolist()
+
+    # save dict to pikle for parallel run
+    output_file = output_name + "_temp.pkl"
+    meta_file = output_name + "_meta_temp.pkl"
+    with open(output_file, 'wb') as f1:
+        pickle.dump(output, f1)
+    with open(meta_file, 'wb') as f2:
+        pickle.dump(metadata, f2)
 
 
 def generate_plots_relion(parfile, angles=25, defocuses=25):

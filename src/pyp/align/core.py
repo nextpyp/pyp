@@ -975,32 +975,33 @@ def csp_run_refinement(
                 grids[i] = 1 # it shouldn't be 0 
 
     # map CSP modes into codes
-    if 'tomo' in parameters["data_mode"].lower():
-        if parameters["csp_refine_micrographs"]:
-            if patch_refinement:
-                csp_modes += [5]
-            else:
-                csp_modes += [3]
-        if parameters["csp_refine_particles"]:
-            if patch_refinement:  
-                csp_modes += [7] 
-            else: 
-                csp_modes += [2] 
-        if parameters["csp_refine_ctf"]:
-            csp_modes += [4]
+    if parameters.get("micromon_block") != "tomo-relion-refinement":
+        if 'tomo' in parameters["data_mode"].lower():
+            if parameters["csp_refine_micrographs"]:
+                if patch_refinement:
+                    csp_modes += [5]
+                else:
+                    csp_modes += [3]
+            if parameters["csp_refine_particles"]:
+                if patch_refinement:  
+                    csp_modes += [7] 
+                else: 
+                    csp_modes += [2] 
+            if parameters["csp_refine_ctf"]:
+                csp_modes += [4]
 
-        if use_frames and parameters["csp_frame_refinement"]:
-            csp_modes += [5]
-    else:
-        if parameters["csp_refine_ctf"] and not use_frames:
-            csp_modes += [4]
-        if use_frames:
-            if parameters["csp_produce_running_average"]:
-                csp_modes += [-2.1]
-            if parameters["csp_frame_refinement"]:
+            if use_frames and parameters["csp_frame_refinement"]:
                 csp_modes += [5]
-            if not parameters["refine_skip"] and parameters["class_num"] == 1:
-                csp_modes += [3]
+        else:
+            if parameters["csp_refine_ctf"] and not use_frames:
+                csp_modes += [4]
+            if use_frames:
+                if parameters["csp_produce_running_average"]:
+                    csp_modes += [-2.1]
+                if parameters["csp_frame_refinement"]:
+                    csp_modes += [5]
+                if not parameters["refine_skip"] and parameters["class_num"] == 1:
+                    csp_modes += [3]
 
     for i in range(1):
 

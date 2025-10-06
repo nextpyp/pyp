@@ -4940,6 +4940,30 @@ if __name__ == "__main__":
                     logger.error("nextPYP (export_star) failed")
                     raise
 
+            elif "relion_refine" in os.environ:
+                
+                try:
+                    del os.environ["relion_refine"]
+
+                    parameters = parse_arguments("relion_refine")
+
+                    if parameters != 0:
+
+                        if "particle_rad" not in parameters.keys() and not "import_mode" in parameters.keys() or parameters["extract_box"] == 0:
+                            logger.error("You need to pick particles before running refinement")
+                            raise
+
+                        # run relion refinement
+                        from pyp.refine.relion import relion5
+                        os.chdir("relion")
+                        os.makedirs("Refine3D/job001", exist_ok=True)
+                        relion5.relion_refine(parameters)
+
+                    logger.info("nextPYP (relion_refine) finished successfully")
+                except:
+                    logger.error("nextPYP (relion_refine) failed")
+                    raise
+
             elif "csp" in os.environ:
 
                 try:
@@ -5153,6 +5177,16 @@ if __name__ == "__main__":
                             # turn off frame refinement
                             parameters['csp_frame_refinement'] = False
                             
+                        # check if relion stacks exist
+                        relion_stacks_exist = len(glob.glob("relion/stacks/*.mrcs")) > 0
+
+                        if parameters.get("micromon_block") == "tomo-relion-refinement":
+                            parameters["refine_model"] = project_params.resolve_path(parameters.get("relion_refine_init_ref"))
+                            parameters["refine_parfile"] = "auto"
+                            parameters["extract_stacks"] = True
+                            parameters["reconstruct_export_enable"] = True
+                            parameters["refine_iter"] = 2
+
                         # transfer metric parameters from new tomo pipeline to old one
                         if parameters.get("data_mode") == "tomo" and parameters.get("micromon_block") != "tomo_coarse_refinement":
                             for key in parameters_copy.keys():
@@ -5224,7 +5258,7 @@ if __name__ == "__main__":
 
                         if parameters.get("refine_model") is None:
                             raise Exception(
-                                f"No reference provided. Cannot run refinement without an initial reference."
+                                "No reference provided. Cannot run refinement without an initial reference."
                             )
                         elif not Path(project_params.resolve_path(parameters["refine_model"])).exists():
                             raise Exception(
@@ -5257,7 +5291,10 @@ if __name__ == "__main__":
                             if not os.path.isfile(stackfile) or not os.path.isfile(
                                 parxfile
                             ):
-                                csp_split(parameters, iteration)
+                                if relion_stacks_exist and parameters.get("micromon_block") == "tomo-relion-refinement":
+                                    slurm.launch_relion_refine(parameters)
+                                else:
+                                    csp_split(parameters, iteration)
                             else:
                                 logger.warning(
                                     "CSPT files already exist. Please delete if you want to re-create them."

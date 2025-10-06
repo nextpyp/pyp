@@ -3099,7 +3099,7 @@ _rlnClassNumber #12"""
         # output_array = np.hstack((clean_box, alignment_array))
 
         if not os.path.exists(output_path):
-            os.makedirs(output_path)
+            os.makedirs(output_path, exist_ok=True)
 
         np.savetxt(os.path.join(output_path, name + "_K%d.star" % cls), alignment_array, fmt="%s", header=header, delimiter="\t", comments="")
 

@@ -265,7 +265,7 @@ def assign_angular_defocus_groups(
     if maxd == mind:
         defocus_group = np.zeros(angular_group.shape)
     else:
-        defocus_group = np.round((input[:, defocus_1] - mind) / (maxd - mind) * (defocuses - 1))
+        defocus_group = np.round(((input[:, defocus_1] - mind) / (maxd - mind) * (defocuses - 1)).astype('float'))
 
     # return input, angular_group, defocus_group
     return angular_group, defocus_group

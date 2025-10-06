@@ -189,7 +189,7 @@ tabs = [ "sva", "slurm" ]
 [blocks.tomo_relion_refine]
 name = "Relion Refinement"
 description = "3D refinement (relion)"
-tabs = [ "relion_refine_general", "relion_refine_init", "relion_refine_orientations", "relion_refine_corrections", "relion_refine_sgd", "relion_refine_resources", "slurm" ]
+tabs = [ "particle", "extract", "relion_refine_general", "relion_refine_init", "relion_refine_orientations", "relion_refine_corrections", "relion_refine_stochastic_grad_desc", "relion_refine_subtomogram_averaging", "relion_refine_computation", "relion_refine_expert", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_mcore_refine]
@@ -8156,7 +8156,7 @@ default = 0
 
 
 [tabs.relion_refine_general]
-_name = "Auto-refine"
+_name = "General"
 _description = "General options"
 
 #====== General options =====
@@ -8210,13 +8210,13 @@ default = 1
 name = "Set background to zero"
 description = "Mask surrounding background in particles to zero (by default the solvent area is filled with random noise)"
 type = "bool"
-default = false
+default = true
 
 [tabs.relion_refine_general.flatten_solvent]
 name = "Mask references"
 description = "Perform masking on the references as well?"
 type = "bool"
-default = false
+default = true
 
 [tabs.relion_refine_general.solvent_mask]
 name = "Solvent mask (*.mrc)"
@@ -8240,7 +8240,7 @@ path = { type="files" }
 input = { type="initialModel" }
 
 [tabs.relion_refine_general.lowpass]
-name = "Lowpass filter (?)"
+name = "Lowpass filter"
 description = "User-provided cutoff for region specified above"
 type = "float"
 default = 0
@@ -8262,7 +8262,8 @@ path = { type="files" }
 name = "Split random halves"
 description = "Refine two random halves of the data completely separately"
 type = "bool"
-default = false
+default = true
+hidden = true
 
 [tabs.relion_refine_general.low_resol_join_halves]
 name = "Split random halves resolution (A)"
@@ -8277,7 +8278,7 @@ type = "bool"
 default = false
 
 [tabs.relion_refine_init]
-_name = "Auto-refine (init)"
+_name = "Initialization"
 _description = "Initialization"
 
 #====== Initialisation =====
@@ -8287,14 +8288,40 @@ _description = "Initialization"
 #             --firstiter_cc (false) : Perform CC-calculation in the first iteration (use this if references are not on the absolute intensity scale)
 #                    --ini_high (-1) : Resolution (in Angstroms) to which to limit refinement in the first iteration
 
-[tabs.relion_refine_init.dummy]
-name = "Half-map 1"
-description = "First half-map (mrc file)"
+[tabs.relion_refine_init.denovo_3dref]
+name = "Denovo 3D reference"
+description = "Make an initial 3D model from randomly oriented 2D particles"
 type = "bool"
-default = true
+default = false
+
+[tabs.relion_refine_init.ref]
+name = "Initial model (*.mrc)"
+description = "Initial model used for refinement"
+type = "path"
+path = { type="files" }
+input = { type="initialModel" }
+condition = { arg="denovo_3dref", value="false" }
+
+[tabs.relion_refine_init.offset]
+name = "Offset stddev (A)"
+description = "Initial estimated stddev for the origin offsets"
+type = "float"
+default = 10
+
+[tabs.relion_refine_init.firstiter_cc]
+name = "First iter CC"
+description = "Calculate CC in the first iteration (use this if references are not on the absolute intensity scale)"
+type = "bool"
+default = false
+
+[tabs.relion_refine_init.ini_high]
+name = "First iteration high resolution limit (A)"
+description = "Resolution to which to limit refinement in the first iteration"
+type = "float"
+default = -1
 
 [tabs.relion_refine_orientations]
-_name = "Auto-refine"
+_name = "Orientations"
 _description = "Orientations"
 
 #====== Orientations =====
@@ -8322,14 +8349,140 @@ _description = "Orientations"
 #              --skip_rotate (false) : Skip rotational assignment (only translate and classify)?
 #              --bimodal_psi (false) : Do bimodal searches of psi angle?
 
-[tabs.relion_refine_orientations.dummy]
-name = "Half-map 1"
-description = "First half-map (mrc file)"
+[tabs.relion_refine_orientations.oversampling]
+name = "Oversampling"
+description = "Adaptive oversampling order to speed-up calculations (0=no oversampling, 1=2x, 2=4x, etc)"
+type = "int"
+default = 1
+
+[tabs.relion_refine_orientations.healpix_order]
+name = "Healpix order"
+description = "Healpix order for the angular sampling (before oversampling) on the (3D) sphere: hp2=15deg, hp3=7.5deg, etc"
+type = "int"
+default = 2
+
+[tabs.relion_refine_orientations.psi_step]
+name = "Psi step"
+description = "Sampling rate (before oversampling) for the in-plane angle (default=10deg for 2D, hp sampling for 3D)"
+type = "int"
+default = -1
+
+[tabs.relion_refine_orientations.limit_tilt]
+name = "Limit tilt"
+description = "Limited tilt angle: positive for keeping side views, negative for keeping top views"
+type = "int"
+default = -91
+
+[tabs.relion_refine_orientations.relax_sym]
+name = "Relax symmetry"
+description = "Symmetry to be relaxed"
+type = "str"
+default = ""
+
+[tabs.relion_refine_orientations.offset_range]
+name = "Offset range (pixels)"
+description = "Search range for origin offsets"
+type = "int"
+default = 6
+
+[tabs.relion_refine_orientations.offset_step]
+name = "Offset step (pixels)"
+description = "Sampling rate (before oversampling) for origin offsets"
+type = "int"
+default = 2
+
+[tabs.relion_refine_orientations.offset_range_x]
+name = "Offset Range X"
+description = "Range for sampling offsets in X-direction (in Angstrom; default=auto)"
+type = "int"
+default = -1
+
+[tabs.relion_refine_orientations.offset_range_y]
+name = "Offset range Y (A)"
+description = "Range for sampling offsets in Y-direction (-1=auto)"
+type = "float"
+default = -1
+
+[tabs.relion_refine_orientations.offset_range_z]
+name = "Offset range Z (A)"
+description = "Range for sampling offsets in Z-direction (-1=auto)"
+type = "float"
+default = -1
+
+[tabs.relion_refine_orientations.helical_offset_step]
+name = "Helical offset step (A)"
+description = "Sampling rate (before oversampling) for offsets along helical axis"
+type = "float"
+default = -1
+
+[tabs.relion_refine_orientations.perturb]
+name = "Perturbation"
+description = "Perturbation factor for the angular sampling (0=no perturb; 0.5=perturb)"
+type = "float"
+default = 0.5
+
+[tabs.relion_refine_orientations.auto_refine]
+name = "Auto refine"
+description = "Perform 3D auto-refine procedure?"
 type = "bool"
 default = true
 
+[tabs.relion_refine_orientations.auto_sampling]
+name = "Auto sampling"
+description = "Perform auto-sampling (outside the 3D auto-refine procedure)?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_orientations.auto_local_healpix_order]
+name = "Auto local healpix order"
+description = "Minimum healpix order (before oversampling) from which autosampling procedure will use local searches"
+type = "int"
+default = 4
+
+[tabs.relion_refine_orientations.sigma_ang]
+name = "Sigma ang"
+description = "Stddev on all three Euler angles for local angular searches (of +/- 3 stddev)"
+type = "float"
+default = -1
+
+[tabs.relion_refine_orientations.sigma_rot]
+name = "Sigma rot"
+description = "Stddev on the first Euler angle for local angular searches (of +/- 3 stddev)"
+type = "float"
+default = -1
+
+[tabs.relion_refine_orientations.sigma_tilt]
+name = "Sigma tilt"
+description = "Stddev on the second Euler angle for local angular searches (of +/- 3 stddev)"
+type = "float"
+default = -1
+
+[tabs.relion_refine_orientations.sigma_psi]
+name = "Sigma psi"
+description = "Stddev on the in-plane angle for local angular searches (of +/- 3 stddev)"
+type = "float"
+default = -1
+
+[tabs.relion_refine_orientations.skip_align]
+name = "Skip align"
+description = "Skip orientational assignment (only classify)?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_orientations.skip_rotate]
+name = "Skip rotate"
+description = "Skip rotational assignment (only translate and classify)?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_orientations.bimodal_psi]
+name = "Bimodal psi"
+description = "Do bimodal searches of psi angle?"
+type = "bool"
+default = false
+
 [tabs.relion_refine_corrections]
-_name = "Auto-refine"
+_name = "Corrections"
 _description = "Corrections"
 
 #====== Corrections =====
@@ -8344,14 +8497,68 @@ _description = "Corrections"
 #                  --no_norm (false) : Switch off normalisation-error correction?
 #                 --no_scale (false) : Switch off intensity-scale corrections on image groups?
 
-[tabs.relion_refine_corrections.dummy]
-name = "Half-map 1"
-description = "First half-map (mrc file)"
+[tabs.relion_refine_corrections.ctf]
+name = "CTF correction"
+description = "Perform CTF correction?"
 type = "bool"
 default = true
 
-[tabs.relion_refine_sgd]
-_name = "Auto-refine"
+[tabs.relion_refine_corrections.pad_ctf]
+name = "CTF padding"
+description = "Perform CTF padding to treat CTF aliasing better?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_corrections.ctf_intact_first_peak]
+name = "CTF intact firstpeak"
+description = "Ignore CTFs until their first peak?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_corrections.ctf_uncorrected_ref]
+name = "CTF uncorrected ref"
+description = "Have the input references not been CTF-amplitude corrected?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_corrections.ctf_phase_flipped]
+name = "CTF phase flipped"
+description = "Have the data been CTF phase-flipped?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_corrections.only_flip_phases]
+name = "Only flip phases"
+description = "Only perform CTF phase-flipping? (default is full amplitude-correction)"
+type = "bool"
+default = false
+
+[tabs.relion_refine_corrections.norm]
+name = "Normalisation error correction"
+description = "Perform normalisation-error correction?"
+type = "bool"
+default = true
+
+[tabs.relion_refine_corrections.scale]
+name = "Intensity scale correction"
+description = "Perform intensity-scale corrections on image groups?"
+type = "bool"
+default = true
+
+[tabs.relion_refine_corrections.no_norm]
+name = "No normalisation error correction"
+description = "Switch off normalisation-error correction?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_corrections.no_scale]
+name = "No intensity scale correction"
+description = "Switch off intensity-scale corrections on image groups?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_stochastic_grad_desc]
+_name = "Stochastic gradient descent"
 _description = "Stochastic gradient descent"
 
 #====== Stochastic Gradient Descent =====
@@ -8377,14 +8584,134 @@ _description = "Stochastic gradient descent"
 #         --som_neighbour_pull (0.2) : Portion of gradient applied to connected nodes.
 #   --class_inactivity_threshold (0) : Replace classes with little activity during gradient based classification.
 
-[tabs.relion_refine_sgd.dummy]
-name = "Half-map 1"
-description = "First half-map (mrc file)"
+[tabs.relion_refine_stochastic_grad_desc.grad]
+name = "Grad"
+description = "Perform gradient based optimisation (instead of default expectation-maximization)"
 type = "bool"
-default = true
+default = false
 
-[tabs.relion_refine_sva]
-_name = "Auto-refine"
+[tabs.relion_refine_stochastic_grad_desc.grad_em_iters]
+name = "Grad EM iters"
+description = "Number of iterations at the end of a gradient refinement using Expectation-Maximization"
+type = "int"
+default = 0
+
+[tabs.relion_refine_stochastic_grad_desc.grad_ini_frac]
+name = "Grad ini frac"
+description = "Fraction of iterations in the initial phase of refinement"
+type = "float"
+default = 0.3
+
+[tabs.relion_refine_stochastic_grad_desc.grad_fin_frac]
+name = "Grad fin frac"
+description = "Fraction of iterations in the final phase of refinement"
+type = "float"
+default = 0.2
+
+[tabs.relion_refine_stochastic_grad_desc.grad_min_resol]
+name = "Grad min resol"
+description = "Adjusting the signal under-estimation during gradient optimization to this resolution"
+type = "float"
+default = 20.0
+
+[tabs.relion_refine_stochastic_grad_desc.grad_ini_resol]
+name = "Grad ini resol (A)"
+description = "Resolution cutoff during the initial gradient refinement iterations"
+type = "float"
+default = -1
+
+[tabs.relion_refine_stochastic_grad_desc.grad_fin_resol]
+name = "Grad fin resol (A)"
+description = "Resolution cutoff during the final gradient refinement iterations"
+type = "float"
+default = -1
+
+[tabs.relion_refine_stochastic_grad_desc.grad_ini_subset]
+name = "Grad ini subset"
+description = "Mini-batch size during the initial gradient refinement iterations"
+type = "int"
+default = -1
+
+[tabs.relion_refine_stochastic_grad_desc.grad_fin_subset]
+name = "Grad fin subset"
+description = "Mini-batch size during the final gradient refinement iterations"
+type = "int"
+default = -1
+
+[tabs.relion_refine_stochastic_grad_desc.mu]
+name = "Mu"
+description = "Momentum parameter for gradient refinement updates"
+type = "float"
+default = 0.9
+
+[tabs.relion_refine_stochastic_grad_desc.grad_stepsize]
+name = "Grad stepsize"
+description = "Step size parameter for gradient optimisation"
+type = "float"
+default = -1
+
+[tabs.relion_refine_stochastic_grad_desc.grad_stepsize_scheme]
+name = "Grad stepsize scheme"
+description = "Gradient step size updates scheme. Valid values are plain or <inflate>-step. Where <inflate> is the initial inflate."
+type = "str"
+default = ""
+
+[tabs.relion_refine_stochastic_grad_desc.grad_write_iter]
+name = "Grad write iter"
+description = "Write out model every so many iterations in SGD (default is writing out all iters)"
+type = "int"
+default = 10
+
+[tabs.relion_refine_stochastic_grad_desc.maxsig]
+name = "Maxsig"
+description = "Maximum number of most significant poses & translations to consider"
+type = "int"
+default = -1
+
+[tabs.relion_refine_stochastic_grad_desc.no_init_blobs]
+name = "No init blobs"
+description = "Use this to switch off initializing models with random Gaussians (which is new in relion-4.0)"
+type = "bool"
+default = false
+
+[tabs.relion_refine_stochastic_grad_desc.som]
+name = "Som"
+description = "Calculate self-organizing map instead of classification"
+type = "bool"
+default = false
+
+[tabs.relion_refine_stochastic_grad_desc.som_ini_nodes]
+name = "Som ini nodes"
+description = "Number of initial SOM nodes"
+type = "int"
+default = 2
+
+[tabs.relion_refine_stochastic_grad_desc.som_connectivity]
+name = "Som connectivity"
+description = "Number of average active neighbour connections"
+type = "float"
+default = 5.0
+
+[tabs.relion_refine_stochastic_grad_desc.som_inactivity_threshold]
+name = "Som inactivity threshold"
+description = "Threshold for inactivity before node is dropped"
+type = "float"
+default = 0.01
+
+[tabs.relion_refine_stochastic_grad_desc.som_neighbour_pull]
+name = "Som neighbour pull"
+description = "Portion of gradient applied to connected nodes"
+type = "float"
+default = 0.2
+
+[tabs.relion_refine_stochastic_grad_desc.class_inactivity_threshold]
+name = "Class inactivity threshold"
+description = "Replace classes with little activity during gradient based classification"
+type = "float"
+default = 0.0
+
+[tabs.relion_refine_subtomogram_averaging]
+_name = "Sub-volume averaging"
 _description = "Sub-volume averaging"
 
 #====== Subtomogram averaging =====
@@ -8393,14 +8720,32 @@ _description = "Sub-volume averaging"
 #        --ctf3d_not_squared (false) : CTF3D files contain sqrt(CTF^2) patterns
 #         --subtomo_multi_thr (0.01) : Threshold to remove marginal voxels during expectation
 
-[tabs.relion_refine_sva.dummy]
-name = "Half-map 1"
-description = "First half-map (mrc file)"
+[tabs.relion_refine_subtomogram_averaging.normalised_subtomo]
+name = "Normalised subtomo"
+description = "Have subtomograms been multiplicity normalised?"
 type = "bool"
-default = true
+default = false
 
-[tabs.relion_refine_resources]
-_name = "Auto-refine"
+[tabs.relion_refine_subtomogram_averaging.skip_subtomo_multi]
+name = "Skip subtomo multi"
+description = "Skip subtomo multiplicity correction"
+type = "bool"
+default = false
+
+[tabs.relion_refine_subtomogram_averaging.ctf3d_not_squared]
+name = "CTF3D not squared"
+description = "CTF3D files contain sqrt(CTF^2) patterns"
+type = "bool"
+default = false
+
+[tabs.relion_refine_subtomogram_averaging.subtomo_multi_thr]
+name = "Subtomo multi thr"
+description = "Threshold to remove marginal voxels during expectation"
+type = "float"
+default = 0.01
+
+[tabs.relion_refine_computation]
+_name = "Computation"
 _description = "General options"
 
 #====== Computation =====
@@ -8418,14 +8763,86 @@ _description = "General options"
 #                      --gpu (false) : Use available gpu resources for some calculations
 #              --free_gpu_memory (0) : GPU device memory (in Mb) to leave free after allocation.
 
-[tabs.relion_refine_resources.dummy]
-name = "Half-map 1"
-description = "First half-map (mrc file)"
+[tabs.relion_refine_computation.pool]
+name = "Pool"
+description = "Number of images to pool for each thread task"
+type = "int"
+default = 1
+
+[tabs.relion_refine_computation.j]
+name = "J"
+description = "Number of threads to run in parallel (only useful on multi-core machines)"
+type = "int"
+default = 2
+
+[tabs.relion_refine_computation.dont_combine_weights_via_disc]
+name = "Dont combine weights via disc"
+description = "Send the large arrays of summed weights through the MPI network, instead of writing large files to disc"
 type = "bool"
-default = true
+default = false
+
+[tabs.relion_refine_computation.onthefly_shifts]
+name = "On-the-fly shifts"
+description = "Calculate shifted images on-the-fly, do not store precalculated ones in memory"
+type = "bool"
+default = false
+
+[tabs.relion_refine_computation.no_parallel_disc_io]
+name = "No parallel disc IO"
+description = "Do NOT let parallel (MPI) processes access the disc simultaneously (use this option with NFS)"
+type = "bool"
+default = false
+
+[tabs.relion_refine_computation.preread_images]
+name = "Pre-read images"
+description = "Use this to let the leader process read all particles into memory. Be careful you have enough RAM for large data sets!"
+type = "bool"
+default = false
+
+[tabs.relion_refine_computation.scratch_dir]
+name = "Scratch dir"
+description = "If provided, particle stacks will be copied to this local scratch disk prior to refinement"
+type = "str"
+default = ""
+
+[tabs.relion_refine_computation.keep_free_scratch]
+name = "Keep free scratch"
+description = "Space available for copying particle stacks (in Gb)"
+type = "int"
+default = 10
+
+[tabs.relion_refine_computation.reuse_scratch]
+name = "Reuse scratch"
+description = "Re-use data on scratchdir, instead of wiping it and re-copying all data"
+type = "bool"
+default = false
+
+[tabs.relion_refine_computation.keep_scratch]
+name = "Keep scratch"
+description = "Don't remove scratch after convergence. Following jobs that use EXACTLY the same particles should use --reuse_scratch"
+type = "bool"
+default = false
+
+[tabs.relion_refine_computation.fast_subsets]
+name = "Fast subsets"
+description = "Use faster optimisation by using subsets of the data in the first 15 iterations"
+type = "bool"
+default = false
+
+[tabs.relion_refine_computation.gpu]
+name = "Use GPU"
+description = "Use available gpu resources for some calculations"
+type = "bool"
+default = false
+
+[tabs.relion_refine_computation.free_gpu_memory]
+name = "Free GPU memory"
+description = "GPU device memory (in Mb) to leave free after allocation"
+type = "int"
+default = 0
 
 [tabs.relion_refine_expert]
-_name = "Auto-refine"
+_name = "Expert options"
 _description = "Expert options"
 
 #====== Expert options =====
@@ -8465,11 +8882,189 @@ _description = "Expert options"
 #  --keep_debug_reconstruct_files (false) : For debugging: keep temporary data and weight files for debug-reconstructions.
 #                          --version : Print RELION version and exit
 
-[tabs.relion_refine_expert.dummy]
-name = "Half-map 1"
-description = "First half-map (mrc file)"
+[tabs.relion_refine_expert.pad]
+name = "Pad"
+description = "Oversampling factor for the Fourier transforms of the references"
+type = "int"
+default = 2
+
+[tabs.relion_refine_expert.ref_angpix]
+name = "Ref angpix (A)"
+description = "Pixel size for the input reference (default is to read from header)"
+type = "float"
+default = -1.0
+
+[tabs.relion_refine_expert.nn]
+name = "Nearest-neighbour interpolation"
+description = "Perform nearest-neighbour instead of linear Fourier-space interpolation?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.r_min_nn]
+name = "R min NN"
+description = "Minimum number of Fourier shells to perform linear Fourier-space interpolation"
+type = "int"
+default = 10
+
+[tabs.relion_refine_expert.random_seed]
+name = "Random seed"
+description = "Number for the random seed generator"
+type = "int"
+default = -1
+
+[tabs.relion_refine_expert.coarse_size]
+name = "Coarse size"
+description = "Maximum image size for the first pass of the adaptive sampling approach"
+type = "int"
+default = -1
+
+[tabs.relion_refine_expert.adaptive_fraction]
+name = "Adaptive fraction"
+description = "Fraction of the weights to be considered in the first pass of adaptive oversampling"
+type = "float"
+default = 0.999
+
+[tabs.relion_refine_expert.maskedge]
+name = "Maskedge (pixels)"
+description = "Width of the soft edge of the spherical mask"
+type = "int"
+default = 5
+
+[tabs.relion_refine_expert.fix_sigma_noise]
+name = "Fix sigma noise"
+description = "Fix the experimental noise spectra?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.fix_sigma_offset]
+name = "Fix sigma offset"
+description = "Fix the stddev in the origin offsets?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.incr_size]
+name = "Incr size"
+description = "Number of Fourier shells beyond the current resolution to be included in refinement"
+type = "int"
+default = 10
+
+[tabs.relion_refine_expert.print_metadata_labels]
+name = "Print metadata labels"
+description = "Print a table with definitions of all metadata labels, and exit"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.relion_refine_expert.print_symmetry_ops]
+name = "Print symmetry ops"
+description = "Print all symmetry transformation matrices, and exit"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.relion_refine_expert.strict_highres_exp]
+name = "Strict highres exp (A)"
+description = "High resolution limit to restrict probability calculations in the expectation step"
+type = "float"
+default = -1.0
+
+[tabs.relion_refine_expert.strict_lowres_exp]
+name = "Strict lowres exp (A)"
+description = "Low resolution limit to restrict probability calculations in the expectation step"
+type = "float"
+default = -1.0
+
+[tabs.relion_refine_expert.dont_check_norm]
+name = "Don't check norm"
+description = "Skip the check whether the images are normalised correctly"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.always_cc]
+name = "Always CC"
+description = "Perform CC-calculation in all iterations (useful for faster denovo model generation)?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.solvent_correct_fsc]
+name = "Solvent correct FSC"
+description = "Correct FSC curve for the effects of the solvent mask?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.skip_maximize]
+name = "Skip maximize"
+description = "Skip maximization step (only write out data.star file)?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.failsafe_threshold]
+name = "Failsafe threshold"
+description = "Maximum number of particles permitted to be handled by fail-safe mode, due to zero sum of weights, before exiting with an error (GPU only)"
+type = "int"
+default = 40
+
+[tabs.relion_refine_expert.blush]
+name = "Blush"
+description = "Perform the reconstruction with the Blush algorithm"
+type = "bool"
+default = false
+hidden = true
+
+[tabs.relion_refine_expert.blush_skip_spectral_trailing]
+name = "Blush skip spectral trailing"
+description = "Skip spectral trailing during Blush reconstruction (WARNING: This may inflate resolution estimates)"
+type = "bool"
+default = false
+condition = { arg="blush", value="true" }
+
+[tabs.relion_refine_expert.external_reconstruct]
+name = "External reconstruct"
+description = "Perform the reconstruction step outside relion_refine, e.g. for learned priors?"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.auto_iter_max]
+name = "Auto iter max"
+description = "In auto-refinement, stop at this iteration"
+type = "int"
+default = 999
+
+[tabs.relion_refine_expert.auto_ignore_angles]
+name = "Auto ignore angles"
+description = "In auto-refinement, update angular sampling regardless of changes in orientations for convergence. This makes convergence faster"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.auto_resol_angles]
+name = "Auto resol angles"
+description = "In auto-refinement, update angular sampling based on resolution-based required sampling. This makes convergence faster"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.allow_coarser_sampling]
+name = "Allow coarser sampling"
+description = "In 2D/3D classification, allow coarser angular and translational samplings if accuracies are bad (typically in earlier iterations)"
+type = "bool"
+default = false
+
+[tabs.relion_refine_expert.trust_ref_size]
+name = "Trust ref size"
+description = "Trust the pixel and box size of the input reference; by default the program will die if these are different from the first optics group of the data"
 type = "bool"
 default = true
+
+[tabs.relion_refine_expert.nr_parts_sigma2noise]
+name = "Nr parts sigma2noise"
+description = "Number of particles (per optics group) for initial noise spectra estimation (default 1000 for SPA and 100 for STA)"
+type = "int"
+default = -1
+
+[tabs.relion_refine_expert.dont_skip_gridding]
+name = "Don't skip gridding"
+description = "Perform gridding in the reconstruction step (obsolete)?"
+type = "bool"
+default = false
 
 ####################
 # Mask parameters

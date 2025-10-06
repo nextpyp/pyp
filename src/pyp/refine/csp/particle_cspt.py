@@ -366,7 +366,7 @@ def merge_movie_files_in_job_arr(
 
         if fp["extract_stacks"]:
 
-            saved_path =os.path.join(
+            saved_path = os.path.join(
                         project_path, "relion", "stacks",
                     )
 
@@ -1366,8 +1366,11 @@ def run_merge(input_dir="scratch", ordering_file="ordering.txt"):
             # cleanup
             shutil.rmtree(Path(parfile), ignore_errors=True)
 
+    # launch relion refinement if needed
+    if mp.get("micromon_block") == "tomo-relion-refinement":
+        slurm.launch_relion_refine(mp)
     # launch next iteration if needed
-    if iteration < maxiter:
+    elif iteration < maxiter:
         if not standalone_mode():
             logger.info("Now launching iteration " + str(iteration + 1))
             csp_split(fp, iteration + 1)

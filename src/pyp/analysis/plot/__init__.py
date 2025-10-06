@@ -3,6 +3,7 @@ from .core import (
     contact_sheet,
     generate_plots,
     generate_plots_relion,
+    generate_plots_relion_tomo,
     guinier_plot,
     plot_angular_trajectory,
     plot_ccc,
