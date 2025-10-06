@@ -8,7 +8,7 @@ import glob
 from pyp import preprocess, merge
 from pyp.inout.metadata import pyp_metadata
 from pyp.inout.image import get_image_dimensions, mrc
-from pyp.inout.image.core import generate_aligned_tiltseries
+from pyp.inout.image.core import generate_aligned_tiltseries, get_tilt_axis_angle
 from pyp.system import local_run, project_params, mpi, project_params
 from pyp.system.utils import get_imod_path, get_gpu_ids
 from pyp.system.db_comm import load_tomo_results, load_config_files
@@ -549,6 +549,12 @@ def tomo_swarm_halves( name, project_path, working_path, parameters,tomogram=Fal
         headers = mrc.readHeaderFromFile(newname + ".mrc")
         x = int(headers["nx"])
         y = int(headers["ny"])
+
+        # Resize aligned tilt-seres depending on tilt-axis orientation
+        tilt_axis_angle = get_tilt_axis_angle(name)
+        if tilt_axis_angle % 180 > 45 and tilt_axis_angle % 180 < 135 and not parameters.get("tomo_ali_square"):
+            x, y = y, x
+            logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
 
         # binned reconstruction
         binning = parameters["tomo_rec_binning"]
