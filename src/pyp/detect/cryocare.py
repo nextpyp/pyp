@@ -417,7 +417,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
     
     return output
 
-def tomo_swarm_halves( name, project_path, working_path, parameters):
+def tomo_swarm_halves( name, project_path, working_path, parameters,tomogram=False):
     """
         Generate half tomograms for cryoCARE training
     """
@@ -578,15 +578,19 @@ def tomo_swarm_halves( name, project_path, working_path, parameters):
             merge.reconstruct_tomo(parameters, newname, x, y, binning, zfact, tilt_options, force=True)
 
         # save the half tomogram to the train/ folder
-        logger.info(f"Half-tomogram {newname}.rec saved to {os.path.join(project_path, 'train')}")
-        if parameters.get("tomo_rec_depth"):
+        if tomogram:
+            output = os.path.join( Path.cwd().parent,newname + ".rec")
+        else:
+            output = os.path.join(project_path, "train", newname + ".rec")
+            logger.info(f"Half-tomogram {newname}.rec saved to {os.path.join(project_path, 'train')}")
+        if parameters.get("tomo_rec_depth") and not tomogram:
             logger.info("Converting tomogram to 16-bits")
             command = "{0}/bin/newstack -mode 12 {1} {2}".format(
-                get_imod_path(), newname + ".rec", os.path.join(project_path, "train", newname + ".rec")
+                get_imod_path(), newname + ".rec", output
             )
             local_run.run_shell_command(command)
         else:
-            shutil.move(newname + ".rec", os.path.join(project_path, "train", newname + ".rec"))
+            shutil.move(newname + ".rec", output)
         
     # go up one level and cleanup
     os.chdir(current_dir)
