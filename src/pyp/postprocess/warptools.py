@@ -63,54 +63,51 @@ def warptools_noise2map(half1, parameters, tomogram=False):
     options = ""
 
     if tomogram:
-            
-        options += " --dont_flatten_spectrum"
-
-        if parameters.get('tomo_denoise_denoise_separately',False):
-            options += " --denoise_separately"
-
-        if parameters.get('tomo_denoise_mini_model',False):
-            options += " --mini_model"
-
-        if parameters.get('tomo_denoise_start_model',False):
-            options += f" --start_model {project_params.resolve_path(parameters['tomo_denoise_start_model'])}"
-
-        if parameters.get('tomo_denoise_old_model',False):
-            options += f" --old_model {project_params.resolve_path(parameters['tomo_denoise_old_model'])}"
-
-        if parameters.get('tomo_denoise_learningrate_start',False):
-            options += f" --learningrate_start {parameters['tomo_denoise_learningrate_start']}"
-
-        if parameters.get('tomo_denoise_learningrate_finish',False):
-            options += f" --learningrate_finish {parameters['tomo_denoise_learningrate_finish']}"
-
-        if parameters.get('tomo_denoise_window',False):
-            options += f" --window {parameters['tomo_denoise_window']}"
-
-        if parameters.get('tomo_denoise_dont_augment',False):
-            options += " --dont_augment"
-
-        if parameters.get('tomo_denoise_lowpass',False) and parameters.get('tomo_denoise_lowpass') >= 0:
-            options += f" --lowpass {parameters['tomo_denoise_lowpass']}"
-
-        if parameters.get('tomo_denoise_iterations',False):
-            options += f" --iterations {parameters['tomo_denoise_iterations']}"
-
-        if parameters.get('tomo_denoise_batchsize',False):
-            options += f" --batchsize {parameters['tomo_denoise_batchsize']}"
-
-        # Now, the 'options' string will contain the flags based on the parameters provided.
-    else:
-        if not parameters.get(f"reconstruct_denoise_flatten_spectrum"):
-            options += f" --dont_flatten_spectrum --angpix {parameters.get('scope_pixel')*parameters.get('extract_bin')}"
-        options += f" --overflatten_factor {parameters.get(f'reconstruct_denoise_overflatten_factor')}"
-
-    if tomogram:
         prefix = "tomo_denoise"
+        options += " --dont_flatten_spectrum"
     else:
         prefix = "reconstruct_denoise"
+        if not parameters.get(f"reconstruct_denoise_flatten_spectrum"):
+            options += f" --dont_flatten_spectrum"
+        else:
+            options += f" --angpix {parameters.get('scope_pixel')*parameters.get('extract_bin')}"
+            options += f" --overflatten_factor {parameters.get(f'reconstruct_denoise_overflatten_factor')}"
+
     if parameters.get(f"{prefix}_lowpass"):
         options += f" --lowpass {parameters.get(f'{prefix}_lowpass')}"
+
+    if parameters.get(f"{prefix}_denoise_separately",False):
+        options += " --denoise_separately"
+
+    if parameters.get(f"{prefix}_mini_model",False):
+        options += " --mini_model"
+
+    if parameters.get(f"{prefix}_start_model",False):
+        options += f" --start_model {project_params.resolve_path(parameters[f'{prefix}_start_model'])}"
+
+    if parameters.get(f"{prefix}_old_model",False):
+        options += f" --old_model {project_params.resolve_path(parameters[f'{prefix}_old_model'])}"
+
+    if parameters.get(f"{prefix}_learningrate_start",False):
+        options += f" --learningrate_start {parameters[f'{prefix}_learningrate_start']}"
+
+    if parameters.get(f"{prefix}_learningrate_finish",False):
+        options += f" --learningrate_finish {parameters[f'{prefix}_learningrate_finish']}"
+
+    if parameters.get(f"{prefix}_window",False):
+        options += f" --window {parameters[f'{prefix}_window']}"
+
+    if parameters.get(f"{prefix}_dont_augment",False):
+        options += " --dont_augment"
+
+    if parameters.get(f"{prefix}_lowpass",False) and parameters.get(f'{prefix}_lowpass') > 0:
+        options += f" --lowpass {parameters[f'{prefix}_lowpass']}"
+
+    if parameters.get(f"{prefix}_iterations",False):
+        options += f" --iterations {parameters[f'{prefix}_iterations']}"
+
+    if parameters.get(f"{prefix}_batchsize",False):
+        options += f" --batchsize {parameters[f'{prefix}_batchsize']}"
 
     command = f"{get_warptools_path()}Noise2Map --half1 {half1} --half2 {half1.replace('half1','half2')} {options}"
     local_run.stream_shell_command(command)

@@ -2308,7 +2308,7 @@ condition = { arg="method", value="noise2map" }
 name = "Old model"
 description = "Name of the folder with the pre-trained model. Leave empty to train a new one"
 type = "path"
-path = { type="files" }
+path = { type="folders" }
 condition = { arg="method", value="noise2map" }
 
 [tabs.tomo_denoise.learningrate_start]
@@ -2340,15 +2340,15 @@ default = false
 condition = { arg="method", value="noise2map" }
 
 [tabs.tomo_denoise.lowpass]
-name = "lowpass"
-description = "Low-pass filter to be applied to denoised maps (in Angstroms)"
+name = "Lowpass (A)"
+description = "Low-pass filter to be applied to denoised maps (-1 = no filtering)"
 type = "float"
 default = -1
 condition = { arg="method", value="noise2map" }
 
 [tabs.tomo_denoise.iterations]
 name = "Iterations"
-description = "Number of iterations. 600–1200 for SPA half-maps, 10 000+ for raw tomograms."
+description = "Number of iterations. 10,000+ for raw tomograms"
 type = "int"
 default = 1500
 condition = { arg="method", value="noise2map" }
@@ -4544,26 +4544,96 @@ type = "float"
 default = 0.25
 condition = { arg="denoise_method", value="bm4d" }
 
+[tabs.reconstruct.denoise_separately]
+name = "Denoise separately"
+description = "If true, both observations will be denoised separately in the end. If false, their average will be denoised"
+type = "bool"
+default = false
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_mini_model]
+name = "Mini model"
+description = "Use a really shallow and slim model to avoid overfitting with very little data"
+type = "bool"
+default = false
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_start_model]
+name = "Start model"
+description = "Name of the file with the initial (pre-trained) model"
+type = "path"
+path = { type="files" }
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_old_model]
+name = "Old model"
+description = "Name of the folder with the pre-trained model. Leave empty to train a new one"
+type = "path"
+path = { type="folders" }
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_learningrate_start]
+name = "Initial learning rate"
+description = "Initial learning rate that will be decreased exponentially to reach the final learning rate"
+type = "float"
+default = 0.0001
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_learningrate_finish]
+name = "Final learning rate"
+description = "Final learning rate, after exponential decrease from the initial rate"
+type = "float"
+default = 0.000001
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_window]
+name = "Window size"
+description = "Size of the cubic window used during training and denoising. Should be a multiple of 16. Bigger = needs more memory"
+type = "int"
+default = 64
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_dont_augment]
+name = "No random augmentations"
+description = "Don't augment data through random rotations. Only rotations by multiples of 180 degrees will be used"
+type = "bool"
+default = false
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_lowpass]
+name = "Lowpass (A)"
+description = "Low-pass filter to be applied to denoised maps (-1 = no filtering)"
+type = "float"
+default = -1
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_iterations]
+name = "Iterations"
+description = "Number of iterations. 600–1200 for SPA half-maps"
+type = "int"
+default = 1500
+condition = { arg="denoise_method", value="noise2map" }
+
+[tabs.reconstruct.denoise_batchsize]
+name = "batchsize"
+description = "Batch size for model training. Decrease if you run out of memory. The number of iterations will be adjusted automatically. Should be a multiple of the number of GPUs used in training"
+type = "int"
+default = 4
+condition = { arg="denoise_method", value="noise2map" }
+
 [tabs.reconstruct.denoise_flatten_spectrum]
 name = "Amplitude spectrum flattening"
-description = "Flatten the spectrum of the maps beyond 10 Angstrom to sharpen them."
+description = "Flatten the spectrum of the maps beyond 10 Angstrom to sharpen them"
 type = "bool"
 default = true
 condition = { arg="denoise_method", value="noise2map" }
 
 [tabs.reconstruct.denoise_overflatten_factor]
 name = "Degree of flattening"
-description = "Overflattening (oversharpening) factor in case a flat spectrum isn't enough. 1.0 = flat"
+description = "Overflattening (oversharpening) factor in case a flat spectrum isn't enough (1.0 = flat)"
 type = "float"
 default = 1.0
-condition = { arg="denoise_method", value="noise2map" }
-
-[tabs.reconstruct.denoise_lowpass]
-name = "Low-pass filtering"
-description = "Low-pass filter to be applied to denoised maps (in Angstroms)"
-type = "float"
-default = -1
-condition = { arg="denoise_method", value="noise2map" }
+condition = { arg="denoise_flatten_spectrum", value="true" }
 
 [tabs.reconstruct.export_enable]
 name = "Export metadata (*.star)"
