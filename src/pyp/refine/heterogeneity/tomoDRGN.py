@@ -790,8 +790,6 @@ def tomodrgn_analyze_volumes(parameters, output_dir, vol_dir, parent):
             if parameters.get('tomodrgn_analyze_volumes_dist') > 0:
                 options += f" --dist {parameters.get('tomodrgn_analyze_volumes_dist')}"
 
-    logger.warning(f"CURRENT DIRECTORY = {os.getcwd()}")
-    logger.warning(f"CURRENT DIRECTORY FILES = {glob.glob('*_stack.mrcs')}")
     command = f"{get_tomodrgn_path()} analyze_volumes --outdir {output_dir} --config {parent}/config.pkl --voldir {vol_dir} {options}"
 
     local_run.stream_shell_command(command)
