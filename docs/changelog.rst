@@ -14,6 +14,8 @@ v0.7.3
 
    - New logger allows users to select one of three levels of verbosity for greater control over program output.
    
+   - New wrappers for `Noise2Map <https://warpem.github.io/warp/reference/noise2map/noise2map/?h=noise2map>`_ to denoise tomograms and half-maps (during refinement).
+
    :fa:`plus-square` **Improvements**
 
    - Improve pre-processing efficiency by skipping gold fiducial detection when they won't be erased during reconstruction.
@@ -34,6 +36,12 @@ v0.7.3
 
    - Improve efficiency and responsiveness when reconstructing very large tomograms.
 
+   - Better error reporting when runing tomoCARE training on tomograms with narrow size in Z.
+
+   - Ability to turn off 16-bit mrc file saving during single-particle pre-processing.
+
+   - Rebuild binaries for AreTomo2, AreTomo3, and MotionCor2 to improve compatibility with latest NVIDIA Blackwell cards.
+
    :fa:`bug` **Bug fixes**
    
    - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
@@ -53,6 +61,8 @@ v0.7.3
    - Fix bug when importing single particle projects from an existing block.
 
    - Fix x-axis labels when plotting frame scores during single particle movie frame refinement.
+
+   - Fix bugs during creation of half-tomograms for denoising when importing metadata from *.mdoc files.
 
 v0.7.2
 ------
