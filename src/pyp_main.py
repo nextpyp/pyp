@@ -5663,6 +5663,13 @@ if __name__ == "__main__":
                     working_path.mkdir(parents=True, exist_ok=True)
                     os.chdir(working_path)
 
+                    # try to catch cryocare errors early
+                    assert len(micrograph_list) > 0, "No tomograms found, please run pre-processing first"
+                    sample_tomogram = os.path.join(project_path,"mrc",micrograph_list[0] + ".rec")
+                    assert os.path.exists(sample_tomogram), f"Tomogram {sample_tomogram} not found, please run pre-processing first"
+                    x, y, z = get_image_dimensions(sample_tomogram)
+                    assert y > 2 * parameters.get("tomo_denoise_cryocare_patch"), f"Tomogram depth is smaller than twice the patch size ({y}<={2*parameters.get('tomo_denoise_cryocare_patch')}), please reduce the cryoCARE patch size"
+
                     # generate half-tomograms and save to train/ folder, if needed
                     for name in micrograph_list:
                         first_half = os.path.join(project_path,"train",name+"_half1.rec")
