@@ -5958,6 +5958,10 @@ EOF
             np.savetxt("{0}_bin.xf".format(name), rot2D, fmt="%13.7f")
             shutil.copy2("%s.rawtlt" % name, "%s.tlt" % name)
 
+        residuals = [line for line in output.split("\n") if "Residual error mean and sd" in line]
+        if len(residuals) > 0:
+            logger.info(residuals[0])
+
         shutil.copy2("%s.fid" % name, "%s.fid.txt" % name)
 
     # compose pre alignment with fiducial/patch based alignments
