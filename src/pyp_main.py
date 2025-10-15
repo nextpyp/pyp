@@ -299,7 +299,10 @@ def parse_arguments(block):
                     parameters_existing["micromon_block"] = parameters["micromon_block"]
 
                 parameters = project_params.parse_parameters(parameters_existing, block, parameters_existing["data_mode"] ) 
-            
+
+                if parameters.get('micromon_block') == "tomo-import-pure":
+                    parameters = project_params.inherit_from_parent(parameters, params_file_path )
+
             elif parameters_existing and 'micromon_block' in parameters_existing and parameters_existing['micromon_block'].endswith("-session"):
                 parameters = project_params.inherit_from_parent(parameters_existing, params_file_path )
                 parameters['csp_no_stacks'] = dummy_parameters['csp_no_stacks']
@@ -688,7 +691,13 @@ def parse_arguments(block):
                 
     # enable _force depending on parameter changes
     if parameters_existing != 0 and block == "pre_process":
-        parameters = project_params.parameter_force_check(parameters_existing, parameters)
+        if parameters.get('micromon_block') == "tomo-import-pure":
+            parent_parameters['data_mode'] = data_mode
+            for key in ['scope_pixel','scope_voltage','scope_tilt_axis','gain_reference']:
+                parent_parameters[key] = parameters_existing[key]
+            parameters = project_params.parameter_force_check(parent_parameters, parameters)            
+        else:
+            parameters = project_params.parameter_force_check(parameters_existing, parameters)
 
     if "extract_use_clean" in parameters.keys() and parameters["extract_use_clean"]:
         parameters["extract_cls"] = 1
