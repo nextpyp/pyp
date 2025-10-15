@@ -537,6 +537,7 @@ def submit_jobs(
         )
 
     if id != "standalone":
+        assert id is not None, "Error submitting job"
         logger.info(f"Submitting {procs:,} job(s) ({id.strip()})")
 
     return id if jobtype != "cspswarm" and jobtype != "classmerge" else (id, procs)
