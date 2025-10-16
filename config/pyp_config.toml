@@ -2538,6 +2538,14 @@ default = true
 condition = { arg="method_train", value="isonet" }
 hidden = [ "tomo_denoise_eval" ]
 
+[tabs.tomo_denoise.isonet_predict_CTFdeconvol]
+name = "CTF deconvolution"
+description = "Do CTF deconvolution for tomograms"
+type = "bool"
+default = true
+condition = { arg="method", value="isonet" }
+hidden = [ "tomo_denoise_train" ]
+
 [tabs.tomo_denoise.isonet_snrfalloff]
 name = "SNR falloff"
 description = "SNR fall rate with the frequency. High values means losing more high frequency"
@@ -2600,7 +2608,7 @@ description = "Trained model (.h5)"
 type = "path"
 path = { type="files" }
 input = { type="isonetTrainedModel" }
-condition = { arg="method_train", value=["isonet"] }
+condition = { arg="method", value=["isonet"] }
 hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.isonet_pretrained_model]
@@ -2629,6 +2637,22 @@ default = 64
 condition = { arg="method_train", value="isonet" }
 hidden = [ "tomo_denoise_eval" ]
 
+[tabs.tomo_denoise.isonet_predict_cubesize]
+name = "Cube size"
+description = "The tomogram is divided into cubes to predict due to the memory limitation of GPUs"
+type = "int"
+default = 64
+condition = { arg="method", value="isonet" }
+hidden = [ "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.isonet_predict_cropsize]
+name = "Crop size"
+description = "Side-length of cubes cropping from tomogram in an overlapping patch strategy (use larger values if you see patchy artifacts)"
+type = "int"
+default = 96
+condition = { arg="method", value="isonet" }
+hidden = [ "tomo_denoise_train" ]
+
 [tabs.tomo_denoise.isonet_iters]
 name = "Training iterations"
 description = "Number of training iterations"
@@ -2651,6 +2675,15 @@ description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be div
 type = "int"
 default = 4
 condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_predict_batchsize]
+name = "Mini-batch size"
+description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be divisible by the number of gpus"
+type = "int"
+default = 4
+condition = { arg="method", value="isonet" }
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.isonet_steps]
 name = "Steps per epoch"
@@ -2755,6 +2788,15 @@ description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1
 type = "bool"
 default = true
 condition = { arg="method_train", value="isonet" }
+hidden = [ "tomo_denoise_eval" ]
+
+[tabs.tomo_denoise.isonet_predict_threshold]
+name = "Use percent thresholding"
+description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1 respectively. Otherwise, normalize input to 0 mean and unit standard deviation"
+type = "bool"
+default = true
+condition = { arg="method", value="isonet" }
+hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.isonet_debug]
 name = "Debug"

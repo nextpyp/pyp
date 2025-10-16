@@ -282,7 +282,7 @@ def isonet_refine(input_star, output, parameters):
     plt.savefig("training_loss.svgz")
     plt.close()
 
-def isonet_predict_command(input_star, model, output, batch_size, use_deconv, threshold_norm, parameters):
+def isonet_predict_command(input_star, model, output, batch_size, cube_size, crop_size, use_deconv, threshold_norm, parameters):
     """
     Predict tomograms using trained model
     isonet.py predict star_file model [--gpuID] [--output_dir] [--cube_size] [--crop_size] [--batch_size] [--tomo_idx]
@@ -304,6 +304,8 @@ def isonet_predict_command(input_star, model, output, batch_size, use_deconv, th
 --model {model} \\
 --output_dir {output} \\
 --batch_size {batch_size} \\
+--cube_size {cube_size} \\
+--crop_size {crop_size} \\
 --use_deconv_tomo {use_deconv} \\
 --normalize_percentile {threshold_norm} \\
 --gpuID {get_gpu_ids(parameters)}
@@ -461,13 +463,15 @@ def isonet_predict( name, project_dir, parameters ):
     isonet_generate_star( tomogram_source, initial_star, parameters, name_list=[name])
 
     # predict
-    if parameters["tomo_denoise_isonet_CTFdeconvol"]:
+    if parameters["tomo_denoise_isonet_predict_CTFdeconvol"]:
         use_deconvol = "True"
     else:
         use_deconvol = "False"
 
-    use_threshold = parameters["tomo_denoise_isonet_threshold"]
-    batch_size = parameters["tomo_denoise_isonet_batchsize"]
+    use_threshold = parameters["tomo_denoise_isonet_predict_threshold"]
+    batch_size = parameters["tomo_denoise_isonet_predict_batchsize"]
+    cube_size = parameters["tomo_denoise_isonet_predict_cubesize"]
+    crop_size = parameters["tomo_denoise_isonet_predict_cropsize"]
 
     if parameters.get("tomo_denoise_isonet_model") == "auto":
         model = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "train", "isonet", "*.h5" )))[-1]
@@ -486,10 +490,13 @@ def isonet_predict( name, project_dir, parameters ):
         model,
         os.getcwd(),
         batch_size,
+        cube_size,
+        crop_size,
         use_deconvol,
         use_threshold,
         parameters=parameters
     )
        
+    assert len(glob.glob( "*_corrected.*" )) > 0, "IsoNet failed to run"
     output = glob.glob( "*_corrected.*" )[0]
     return output
