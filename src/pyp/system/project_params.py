@@ -876,7 +876,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             inputlist = [line.strip() for line in f]
 
         # initialize all _force parameters if previous run was successful
-        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False)) == 0:
+        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False)) == 0 or new_parameters.get("micromon_block") == "tomo-import-pure":
             new_parameters["movie_force"] = False
             new_parameters["ctf_force"] = False
             new_parameters["detect_force"] = False

@@ -301,7 +301,7 @@ def parse_arguments(block):
                 parameters = project_params.parse_parameters(parameters_existing, block, parameters_existing["data_mode"] ) 
 
                 if parameters.get('micromon_block') == "tomo-import-pure":
-                    parameters = project_params.inherit_from_parent(parameters, params_file_path )
+                    parameters = project_params.inherit_from_parent(parameters_existing, params_file_path )
 
             elif parameters_existing and 'micromon_block' in parameters_existing and parameters_existing['micromon_block'].endswith("-session"):
                 parameters = project_params.inherit_from_parent(parameters_existing, params_file_path )
@@ -693,9 +693,9 @@ def parse_arguments(block):
     if parameters_existing != 0 and block == "pre_process":
         if parameters.get('micromon_block') == "tomo-import-pure":
             parent_parameters['data_mode'] = data_mode
-            for key in ['scope_pixel','scope_voltage','scope_tilt_axis','gain_reference']:
+            for key in ['scope_pixel','scope_voltage','scope_tilt_axis','gain_reference', 'data_path', 'data_set']:
                 parent_parameters[key] = parameters_existing[key]
-            parameters = project_params.parameter_force_check(parent_parameters, parameters)            
+            parameters = project_params.parameter_force_check(parameters_existing,parent_parameters)
         else:
             parameters = project_params.parameter_force_check(parameters_existing, parameters)
 
