@@ -19,6 +19,13 @@ def get_cryocare_path():
     cryocare_path = '/opt/conda/envs/cryocare'
     return f"export LD_LIBRARY_PATH={cryocare_path}/lib:/opt/conda/envs/isonet/lib:$LD_LIBRARY_PATH; micromamba run -n cryocare {cryocare_path}/bin/"
 
+def get_gpu_ids_cryocare(parameters):
+    gpus = get_gpu_ids(parameters)
+    if isinstance(gpus,str):
+        return [int(i) for i in get_gpu_ids(parameters).split(',')]
+    else:
+        return gpus
+
 def cryocare_train(project_dir, output, parameters):
     """
     cryoCARE training
@@ -60,7 +67,7 @@ def cryocare_train(project_dir, output, parameters):
     "train_data": "./train_data",
     "model_name": "cryocare_model",
     "path": "./train_model",
-    "gpu_id": get_gpu_ids(parameters)
+    "gpu_id": get_gpu_ids_cryocare(parameters)
     }
     
     train_config["epochs"] = parameters["tomo_denoise_cryocare_epochs"]
@@ -133,7 +140,7 @@ def cryocare_predict(working_path, project_path, name, parameters):
     "even": half1_list,
     "odd": half2_list,
     "n_tiles": [parameters["tomo_denoise_cryocare_tiles"]] * 3,
-    "gpu_id": get_gpu_ids(parameters)
+    "gpu_id": get_gpu_ids_cryocare(parameters)
     }
 
     predcit_config["output"] = str(working_path)
@@ -194,7 +201,7 @@ def cryocare(working_path, project_path, name, parameters):
     "train_data": "./train_data",
     "model_name": "cryocare_model",
     "path": "./train_model",
-    "gpu_id": get_gpu_ids(parameters)
+    "gpu_id": get_gpu_ids_cryocare(parameters)
     }
     
     train_config["epochs"] = parameters["tomo_denoise_cryocare_epochs"]
@@ -220,7 +227,7 @@ def cryocare(working_path, project_path, name, parameters):
     "even": half1_list,
     "odd": half2_list,
     "n_tiles": [parameters["tomo_denoise_cryocare_tiles"]] * 3,
-    "gpu_id": get_gpu_ids(parameters)
+    "gpu_id": get_gpu_ids_cryocare(parameters)
     }
 
     output_path = os.path.join( working_path, "denoised" )
