@@ -1565,6 +1565,45 @@ default = false
 advanced = true
 hidden = ["stream_tomo", "tomo_particles_train"]
 
+[tabs.detect_nn3d.use_masking]
+name = "Use masking"
+description = "Enable segmentation masking"
+type = "bool"
+default = false
+hidden = ["stream_tomo"]
+
+[tabs.detect_nn3d.segmentation_dir]
+name = "Segmentation directory"
+description = "Location of *_seg.rec files"
+type = "path"
+path = { type="folders" }
+condition = { arg="use_masking", value="true" }
+hidden = ["stream_tomo"]
+
+[tabs.detect_nn3d.mask_radius]
+name = "Mask radius"
+description = "Radius to use for the masks"
+type = "float"
+default = 25.0
+condition = { arg="use_masking", value="true" }
+hidden = ["stream_tomo"]
+
+[tabs.detect_nn3d.mask_segmentation]
+name = "Mask segmentation"
+description = "Add the segmentation to the mask"
+type = "bool"
+default = false
+condition = { arg="use_masking", value="true" }
+hidden = ["stream_tomo"]
+
+[tabs.detect_nn3d.impute_tomograms]
+name = "Impute tomograms"
+description = "Fill unmasked voxels with the median of the masked voxels"
+type = "bool"
+default = false
+condition = { arg="use_masking", value="true" }
+hidden = ["stream_tomo"]
+
 [tabs.detect_nn3d.use_gpu_train]
 name = "Use GPU"
 description = "Run on GPU"
@@ -1693,6 +1732,136 @@ name = "Blend ratio"
 description = "Mixing ratio to use for 3D visualization (0=less color, 1=more color)"
 type = "float"
 default = 0.2
+hidden = [ "tomo_milo_train" ]
+
+[tabs.detect_milo.surface]
+name = "Surface constrained"
+description = "Surface constrained"
+type = "bool"
+default = false
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.segmentation_dir]
+name = "Segmentation directory"
+description = "Location of *_seg.rec files"
+type = "path"
+condition = { arg="surface", value="true" }
+path = { type="folders" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.use_dog]
+name = "Use DoG"
+description = "Mode for calculating the patch centers. 0 uses offsets from the segmentation vertices, 1 centers patches at the coordinate given by DoG, 2 uses offset from the closest segmentation vertex for each DoG particle"
+type = "enum"
+enum = { 0="offsets", 1="DoG", 2="Closest" }
+default = "1"
+condition = { arg="surface", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.bidirectional_extract]
+name = "Bi-directional extract"
+description = "Extract patches from both sides of the segmentation"
+type = "bool"
+default = false
+hidden = [ "tomo_milo_eval" ]
+condition = { arg="use_dog", value="0" }
+
+[tabs.detect_milo.offset]
+name = "Patch offset"
+description = "Offset for patch center calculation"
+type = "float"
+default = 0.0
+condition = { arg="use_dog", value=["0", "2"] }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.dog_min_distance]
+name = "Min distance"
+description = "Allowed minimum distance from the segmentation"
+type = "float"
+default = 0.0
+condition = { arg="use_dog", value="1" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.dog_max_distance]
+name = "Max distance"
+description = "Allowed maximum distance from the segmentation"
+type = "float"
+default = 25.0
+condition = { arg="use_dog", value="1" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.use_vector_normal]
+name = "Use vector normal"
+description = "Use the difference vector from the closest segmentation vertex rather than the surface normal"
+type = "bool"
+default = true
+condition = { arg="surface", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.boundary_factor]
+name = "Boundary factor"
+description = "Patch size scaling factor for out of bounds filtering. A patch is filtered out if any part of it is outside the tomogram"
+type = "float"
+default = 1
+condition = { arg="surface", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.use_iterative]
+name = "Iterate"
+description = "Use iterative exploration"
+type = "bool"
+default = false
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.patch_coordinates]
+name = "Patch coordinate location"
+description = "Path to the parquet file containing patch coordinates for iterative exploration"
+type = "path"
+path = { type="folders" }
+condition = { arg="use_iterative", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.labels]
+name = "Class labels"
+description = "Comma separated list of labels to filter the given patch coordinates using these labels"
+type = "str"
+condition = { arg="use_iterative", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.exclude_labels]
+name = "Exclude labels"
+description = "Exclude the given labels rather than including them"
+type = "bool"
+default = false
+condition = { arg="use_iterative", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.save_patches]
+name = "Save patches"
+description = "Save extracted patches for future usage"
+type = "bool"
+default = false
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.read_patches]
+name = "Read patches"
+description = "Path to previously saved patches. Parameters related to patch extraction should be the same as used in that extraction"
+type = "path"
+path = { type="folders" }
+hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.imgs_per_label]
+name = "Images per label"
+description = "The number of patches per label to show in the matrix"
+type = "int"
+default = 10
+hidden = [ "tomo_milo_train" ]
+
+[tabs.detect_milo.use_2d]
+name = "Plot 2D patches"
+description = "Use 2D instead of 3D patches"
+type = "bool"
+default = false
 hidden = [ "tomo_milo_train" ]
 
 [tabs.detect_milo.use_gpu]
