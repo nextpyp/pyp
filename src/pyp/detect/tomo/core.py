@@ -4,9 +4,14 @@ import math
 import random
 import os
 import shutil
+import pickle
+import mrcfile
+import trimesh
 
 import numpy as np
+import pandas as pd
 from skimage import measure
+from scipy.spatial import KDTree
 
 from pyp import detect
 from pyp.detect import joint
@@ -2029,14 +2034,58 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         t = timer.Timer(text="Sub-volume extraction took: {}", logger=logger.info)
         t.start()
         extract_spk_direct(
-            parameters, name, x, y, binning, zfact, tilt_angles, tilt_options
+            parameters, name, x, y, binning, zfact, tilt_angles, tilt_options, calculate_normals = True
         )
         t.stop()
 
     return virion_coordinates, spike_coordinates, virion_mode, spike_mode, surface_mode
 
+
+def get_normals(name, segmentation_dir, coords, use_vector_normal = True, vector_normal_threshold = 5):
+
+    segmentation_path = os.path.join(segmentation_dir, name + "_seg.rec")
+
+    with mrcfile.open(segmentation_path, permissive=True) as mrc:
+        segmentation = mrc.data.transpose(2, 0, 1)
+
+        if segmentation.min() == segmentation.max():
+            raise ValueError(f"Segmentation for {name} is degenerate.")
+
+    marching_cubes_vertices, marching_cubes_mesh_faces, _, _ = measure.marching_cubes(segmentation, 0.5)
+    mesh = trimesh.Trimesh(vertices=marching_cubes_vertices, faces=marching_cubes_mesh_faces)
+    mesh_vertices = mesh.vertices
+    mesh_normals = -mesh.vertex_normals
+
+    if len(coords) == 0:
+        raise ValueError(f"No box coordinates found in {pkl_path}.")
+
+    kd_tree = KDTree(mesh_vertices)
+    __, closest_index = kd_tree.query(coords, workers=-1)
+
+    closest_voxels = mesh_vertices[closest_index]
+    normals = mesh_normals[closest_index]
+    vector_normals = coords - closest_voxels
+
+    if use_vector_normal:
+        norms = np.linalg.norm(vector_normals, axis=1)
+        mask = norms >= vector_normal_threshold
+        normals[mask] = vector_normals[mask]
+
+    all_norms = np.linalg.norm(normals, axis=1, keepdims=True)
+    normals /= all_norms
+
+    flip = np.sum(vector_normals * normals, axis=1) < 0
+    normals[flip] *= -1
+
+    normX = np.degrees(np.arcsin(-normals[:, 2])) - 90.0
+    normY = np.zeros_like(normX, dtype=np.float32)
+    normZ = np.degrees(np.arctan2(-normals[:, 0], normals[:, 1]))
+
+    return np.column_stack((normX, normY, normZ))
+
+
 def extract_spk_direct(
-    parameters, name, x, y, binning, zfact, tilt_angles, tilt_options
+    parameters, name, x, y, binning, zfact, tilt_angles, tilt_options, calculate_normals = False
 ):
     """Performs spike detection/extraction directly from tomo volume.
 
@@ -2292,6 +2341,7 @@ EOF
                     result = np.dot(normX_m, np.dot(normZ_m, vector))
                     # result should be ( 0,0,1 )
                     logger.info("Vector after normZ & normX rotation is " + result)
+
             elif 'normals' in locals():
                 
                 # pytom convention
@@ -2361,11 +2411,39 @@ EOF
                     spike_name + ".rec",
                 )
             )
+
         if detect.tomo_subvolume_extract_is_required(parameters):
             if len(arguments) > 0:
                 mpi.submit_function_to_workers(spk_extract_and_process, arguments)
             else:
                 logger.warning("No spikes to extract")
+
+    # extract normals from segmentation, if needed
+    if calculate_normals and parameters.get('tomo_ext_extract_normals'):
+
+        segmentation_dir = project_params.resolve_path(parameters.get('tomo_ext_segmentation_path'))
+        segmentation_file = os.path.join(segmentation_dir,name+"_seg.rec")
+        assert os.path.exists(segmentation_dir), f"Path to segmentation must be specified"
+        assert os.path.exists(segmentation_file), f"File not found: {segmentation_file}"
+
+        # read alignments, assign normals, and save alignments
+        alignments_file = "%s_vir0000.txt" % name
+
+        cols = ["number", "lwedge", "uwedge", "posX", "posY", "posZ",
+            "geomX", "geomY", "geomZ",
+            "normalX", "normalY", "normalZ",
+            *[f"matrix[{i}]" for i in range(16)],
+            *[f"magnification[{i}]" for i in range(3)],
+            "cutOffset", "filename"]
+        df = pd.read_csv(alignments_file, sep='\t', names=cols)
+
+        # calculate normals from segmentations        
+        normals = get_normals(name, segmentation_dir = segmentation_dir, coords = spikes[:,:3], use_vector_normal = parameters.get("tomo_ext_use_vector_normals"), vector_normal_threshold = 5)
+        df[["normalX", "normalY", "normalZ"]] = normals.round(decimals=2)
+
+        # save new alignments
+        df.to_csv(alignments_file, sep = '\t', index = False)
+
 
 def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth, z_dim = 2):
 
