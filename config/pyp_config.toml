@@ -1046,7 +1046,7 @@ description = "Path to 3D template"
 type = "path"
 path = { type="files" }
 input = { type="initialModel" }
-hidden = [ "stream_tomo", "stream_spr", "spr_pre_process", "spr_picking" ]
+hidden = [ "stream_tomo", "stream_spr", "spr_pre_process", "spr_picking", "spr_import" ]
 
 [tabs.detect.dist]
 name = "Min distance (pixels)"
@@ -1074,14 +1074,14 @@ name = "Height offset for 3D picking (binned voxels)"
 description = "Offset particle positions above membrane by this amount. Useful when the segmentation is not located at the base of the particles"
 type = "int"
 default = 0
-hidden = [ "spr_pre_process", "spr_picking", "stream_spr" ]
+hidden = [ "spr_pre_process", "spr_picking", "stream_spr", "spr_import" ]
 
 [tabs.detect.rand]
 name = "Randomize in-plane particle rotation"
 description = "Randomize particle orientations around surface normal to reduce missing wegde effects"
 type = "bool"
 default = true
-hidden = [ "spr_pre_process", "spr_picking", "stream_spr" ]
+hidden = [ "spr_pre_process", "spr_picking", "stream_spr", "spr_import" ]
 
 [tabs.detect_nn2d]
 _name = "Training/Evaluation (pyp)"
