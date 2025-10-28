@@ -715,11 +715,13 @@ def miloeval(args):
         local_run.run_shell_command(command)             
 
         # copy results to project folder
-        for file in [ 'interactive_info_parquet.gzip', "2d_visualization_labels.webp", "2d_visualization_out.webp" ]:
+        for file in [ 'interactive_info_parquet.gzip', "2d_visualization_labels.webp", "2d_visualization_out.webp", "2d_visualization_matrix.webp" ]:
+            source = os.path.join(output_folder, file)
             target = os.path.join( train_folder, file )
             if os.path.exists(target) or os.path.islink(target):
                 os.remove(target)
-            shutil.copy2( os.path.join(output_folder, file), target )
+            if os.path.exists(source):
+                shutil.copy2(source,target)
             
         # pack images and metadata into single file
         command = f"cd {output_folder}; tar cvfz {train_folder}/milopyp_interactive.tbz interactive_info_parquet.gzip imgs/"
