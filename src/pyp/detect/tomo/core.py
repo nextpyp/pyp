@@ -2057,7 +2057,7 @@ def get_normals(name, segmentation_dir, coords, use_vector_normal = True, vector
     mesh_normals = -mesh.vertex_normals
 
     if len(coords) == 0:
-        raise ValueError(f"No box coordinates found in {pkl_path}.")
+        raise ValueError(f"No box coordinates found.")
 
     kd_tree = KDTree(mesh_vertices)
     __, closest_index = kd_tree.query(coords, workers=-1)
