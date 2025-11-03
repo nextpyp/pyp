@@ -185,7 +185,7 @@ def read_tilt_series(
     mdoc_path = Path(resolve_path(parameters["data_path_mdoc"])).parent if "data_path_mdoc" in parameters and parameters["data_path_mdoc"] != None else None
     project_raw_path = Path(filename).parent
 
-    name = os.path.basename(filename)
+    name = Path(filename).stem.split('*')[0]
     mdoc_pattern = "*.mdoc"
 
     mdocs = []
