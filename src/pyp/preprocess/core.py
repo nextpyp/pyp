@@ -243,6 +243,12 @@ def read_tilt_series(
         except:
             # ignore if file already exists
             pass
+    elif os.path.exists(filename + ".mrcs"):
+        try:
+            shutil.copy2(filename + ".mrcs", Path(filename).stem+".mrc")
+        except:
+            # ignore if file already exists
+            pass
     elif os.path.exists(filename + ".st"):
         try:
             shutil.copy2(filename + ".st", Path(filename).name + ".mrc")

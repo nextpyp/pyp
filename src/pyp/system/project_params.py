@@ -223,6 +223,7 @@ def create_micrographs_list(parameters):
             for s in (
                 "*.dm?",
                 "*.mrc",
+                "*.mrcs",
                 "*.tgz",
                 "*.bz2",
                 "*.tbz",
