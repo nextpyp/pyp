@@ -3651,9 +3651,31 @@ type = "bool"
 condition = { arg="method", value="auto" }
 default = false
 
+[tabs.tomo_pick.normals]
+name = "Initial particle orientation(s)"
+description = "Strategy to use for assigning particle orientations"
+type = "enum"
+enum = { none="parallel to z-axis", random="random", surface="from segmentation(s)" }
+default = "none"
+condition = { arg="method", value=["auto","import","manual"] }
+
+[tabs.tomo_pick.segmentation_path]
+name = "Path to segmentation(s)"
+description = "Path to *_seg.mrc files containing 3D segmentations (must have same dimensions as tomograms)"
+type = "path"
+path = { type="folders" }
+condition = { arg="normals", value="surface" }
+
+[tabs.tomo_pick.use_vector_normals]
+name = "Use surface normals"
+description = "Use surface normals instead of direction to closest point on surface"
+type = "bool"
+default = false
+condition = { arg="normals", value="surface" }
+
 [tabs.tomo_pick.rand]
-name = "Randomize particle rotations"
-description = "Randomize particle orientations during extraction to reduce mising wegde effects"
+name = "Randomize in-plane rotations"
+description = "Randomize in-plane particle orientations to reduce mising wegde effects"
 type = "bool"
 default = true
 condition = { arg="method", value=["auto","import","manual"] }
@@ -3943,26 +3965,6 @@ description = "Binning factor used to extract sub-tomgrams"
 type = "int"
 default = 1
 condition = { arg="fmt", value=["eman","3DAVG"] }
-
-[tabs.tomo_ext.extract_normals]
-name = "Extract normals from segmentation"
-description = "Extract normals at particle positions using surfaces from segmentation"
-type = "bool"
-default = false
-
-[tabs.tomo_ext.segmentation_path]
-name = "Path to segmentations"
-description = "Path to _seg.mrc files containing 3D segmentations (must have same dimensions as tomograms)"
-type = "path"
-path = { type="folders" }
-condition = { arg="extract_normals", value="true" }
-
-[tabs.tomo_ext.use_vector_normals]
-name = "Use surface normals"
-description = "Use surface normals instead of direction to closest point on surface"
-type = "bool"
-default = false
-condition = { arg="extract_normals", value="true" }
 
 [tabs.tomo_ext.coords]
 name = "Export coordinates"

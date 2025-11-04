@@ -2108,6 +2108,8 @@ def extract_spk_direct(
     # load spike coordinates
     if os.path.isfile("%s.spk" % name):
         spikes = imod.coordinates_from_mod_file("%s.spk" % name)
+        if parameters.get("micromon_block") != "tomo-picking":
+            spikes = spikes[:, [0, 2, 1]]
     # if there's txt file from Wendy and Ye (particles picked in cryolo)
     elif os.path.isfile("%s.txt" % name):
         spikes = np.loadtxt(
@@ -2366,7 +2368,7 @@ EOF
                 m = np.dot(np.dot(mpsi, np.dot(mtilt, mrot)),rotate)
                 normZ = normY = normX = 0
                 
-            elif parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"] or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]:
+            elif parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"] or parameters["tomo_pick_rad"] > 0 and parameters.get("tomo_pick_normals") == "random":
                 # random normx normz, normy will be changed during merge
                 normX = 360 * (random.random() - 0.5)
                 normZ = 360 * (random.random() - 0.5)
@@ -2419,9 +2421,9 @@ EOF
                 logger.warning("No spikes to extract")
 
     # extract normals from segmentation, if needed
-    if calculate_normals and parameters.get('tomo_ext_extract_normals'):
+    if calculate_normals and parameters.get('tomo_pick_normals') == "surface":
 
-        segmentation_dir = project_params.resolve_path(parameters.get('tomo_ext_segmentation_path'))
+        segmentation_dir = project_params.resolve_path(parameters.get('tomo_pick_segmentation_path'))
         segmentation_file = os.path.join(segmentation_dir,name+"_seg.rec")
         assert os.path.exists(segmentation_dir), f"Path to segmentation must be specified"
         assert os.path.exists(segmentation_file), f"File not found: {segmentation_file}"
@@ -2438,7 +2440,7 @@ EOF
         df = pd.read_csv(alignments_file, sep='\t', names=cols)
 
         # calculate normals from segmentations        
-        normals = get_normals(name, segmentation_dir = segmentation_dir, coords = spikes[:,:3], use_vector_normal = parameters.get("tomo_ext_use_vector_normals"), vector_normal_threshold = 5)
+        normals = get_normals(name, segmentation_dir = segmentation_dir, coords = spikes[:,:3], use_vector_normal = parameters.get("tomo_pick_use_vector_normals"), vector_normal_threshold = 5)
         df[["normalX", "normalY", "normalZ"]] = normals.round(decimals=2)
 
         # save new alignments

@@ -4345,7 +4345,8 @@ def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
                     binning=parameters.get("tomo_rec_binning"), 
                     zfact="", 
                     tilt_angles=metadata.data["tlt"].to_numpy(),
-                    tilt_options="-MODE 2 -OFFSET 0.00 -PERPENDICULAR -RADIAL {0},{1} -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {2}".format(parameters["tomo_rec_lpradial_cutoff"], parameters["tomo_rec_lpradial_falloff"], excluded_views)
+                    tilt_options="-MODE 2 -OFFSET 0.00 -PERPENDICULAR -RADIAL {0},{1} -SCALE 0.0,0.002 -SUBSETSTART 0,0 -XAXISTILT 0.0 -FlatFilterFraction 0.0 {2}".format(parameters["tomo_rec_lpradial_cutoff"], parameters["tomo_rec_lpradial_falloff"], excluded_views),
+                    calculate_normals=True
                 )
                 
                 # save txt files to sva/

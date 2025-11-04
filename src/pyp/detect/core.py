@@ -19,14 +19,33 @@ from pyp.system.logging import logger
 
 def tomo_spk_is_required(parameters):
     """Whether to detect and extract spikes."""
-    return "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 or parameters.get("tomo_vir_detect_method") != "none" or parameters.get("micromon_block") == "tomo-picking"
+    return ( 
+            "tomo_spk_rad" in parameters and parameters["tomo_spk_rad"] > 0 
+            or parameters.get("tomo_vir_detect_method") != "none"
+            or parameters.get("micromon_block") == "tomo-picking"
+            or ( parameters.get("tomo_pick_rad") > 0 and parameters.get("tomo_pick_method") == "manual" )
+    )
 
 def tomo_subvolume_extract_is_required(parameters):
-    return "tomo_ext_size" in parameters and parameters["tomo_ext_size"] > 0 and parameters["tomo_ext_fmt"] != "none" and parameters.get("micromon_block") != "tomo-initial-reconstruct" and parameters.get("micromon_block") != "tomo-reference-refinement" and parameters.get("micromon_block") != "tomo-initial-refinement"
+    return (
+        "tomo_ext_size" in parameters 
+        and parameters["tomo_ext_size"] > 0 
+        and parameters["tomo_ext_fmt"] != "none" 
+        and parameters.get("micromon_block") != "tomo-initial-reconstruct" 
+        and parameters.get("micromon_block") != "tomo-reference-refinement" 
+        and parameters.get("micromon_block") != "tomo-initial-refinement"
+    )
 
 def tomo_vir_is_required(parameters):
     """Whether to detect and extract virions."""
-    force = "tomo_vir_method" in parameters and parameters["tomo_vir_method"] != "none" and parameters["tomo_vir_method"] != "pyp-train" and "tomo_vir_rad" in parameters and parameters["tomo_vir_rad"] > 0 and not ( "tomo_vir_force" in parameters and not parameters["tomo_vir_force"] )
+    force = ( 
+             "tomo_vir_method" in parameters 
+             and parameters["tomo_vir_method"] != "none" 
+             and parameters["tomo_vir_method"] != "pyp-train" 
+             and "tomo_vir_rad" in parameters 
+             and parameters["tomo_vir_rad"] > 0 
+             and not ( "tomo_vir_force" in parameters and not parameters["tomo_vir_force"] )
+    )
     return force or parameters["micromon_block"] == "tomo-picking-closed" or parameters["micromon_block"] == "tomo-segmentation-closed"
 
 
