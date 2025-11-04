@@ -5101,12 +5101,12 @@ if __name__ == "__main__":
                                 parameters["refine_parfile"] = project_params.resolve_path(parameters["csp_tomo_free_parfile"])
                             elif parameters.get("csp_tomo_free_format") == "txt":
                                 parameters["refine_parfile_tomo"] = project_params.resolve_path(parameters.get("csp_tomo_free_parfile_tomo"))
-                                assert os.path.exists(parameters["refine_parfile_tomo"]), f"Metadata file is missing!"
+                                assert os.path.exists(parameters["refine_parfile_tomo"]), f"3DAVG parameter file is missing!"
                             else:
                                 # find *.txt file from parent block
                                 parfile, _ = project_params.get_latest_refinement_reference(project_params.resolve_path(parameters["data_parent"]))
                                 parameters["refine_parfile_tomo"] = project_params.resolve_path(parfile)
-                                assert os.path.exists(parameters["refine_parfile_tomo"]), f"Metadata file is missing!"
+                                assert os.path.exists(parameters["refine_parfile_tomo"]), f"3DAVG parameter file is missing!"
                                 
                         elif parameters.get("micromon_block") == "tomo-new-coarse-refinement":
 
