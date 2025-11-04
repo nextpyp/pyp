@@ -961,7 +961,7 @@ def generate_list_of_all_subvolumes(parameters):
     Returns:
         _type_: _description_
     """
-    if detect.tomo_spk_is_required(parameters) > 0:
+    if detect.tomo_spk_is_required(parameters):
         # produce .txt file for 3DAVG
         timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
             "%Y%m%d_%H%M%S"
@@ -978,6 +978,13 @@ def generate_list_of_all_subvolumes(parameters):
         # combine projections into one stack if they exist
         proj_stack = []
 
+        randomize_in_plane_rotations = ( parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
+                                        or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
+                                        or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]
+                                        ) and not parameters.get("tomo_pick_method") == "pytom"
+        if randomize_in_plane_rotations:
+            logger.info(f"Randomizing in-plane rotations")
+
         for file in sorted(glob.glob("sva/*_vir????.txt")):
             for volume in [
                 line
@@ -985,14 +992,9 @@ def generate_list_of_all_subvolumes(parameters):
                 if not line.startswith("number") and line != ""
             ]:
                 vector = volume.split("\t")
-                # print vector
                 vector[0] = str(count)
-                # randomize phi angle in +/- 180
-                if  ( 
-                     parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
-                     or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
-                     or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]
-                ) and not parameters.get("tomo_pick_method") == "pytom":
+                if randomize_in_plane_rotations:
+                    # randomize phi angle in +/- 180
                     vector[10] = "%.4f" % (360 * (random.random() - 0.5))
                 vector[-1] = os.getcwd() + "/sva/" + vector[-1]
                 f.write("\t".join([v for v in vector]) + "\n")
