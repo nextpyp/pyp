@@ -2561,7 +2561,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         cols = len(column_widths)
         # column 2 has the frequencies and column 5 the FSC values
         current_fsc = (
-            np.array(Afsc.split())
+            np.genfromtxt(StringIO(Afsc), delimiter=column_widths)
             .reshape((rows, cols))[:, list(range(1, 4, 2))]
             .astype("float")
         )
