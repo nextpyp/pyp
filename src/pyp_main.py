@@ -2155,7 +2155,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.remove(f"{name}.rec")
     
         commands = []
-        if "preprocessing" in parameters.get("micromon_block"):
+        if "preprocessing" in parameters.get("micromon_block") or parameters.get("micromon_block") == "":
             if parameters.get("movie_depth") and not parameters.get("movie_no_frames"):
                 logger.info("Converting tilt-series to 16-bits")
                 command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
