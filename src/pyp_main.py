@@ -6006,7 +6006,10 @@ if __name__ == "__main__":
                                 os.remove("www/image.small.jpg")
                                 
                             project_params.save_parameters(parameters,website=False)
-                            
+                        else:
+                            message = f"No files found matching pattern: {project_params.resolve_path(parameters['data_path'])}"
+                            logger.error(message)
+                            raise
                     logger.info("nextPYP (pypgain) finished successfully")
                 except:
                     logger.error("nextPYP (pypgain) failed")
