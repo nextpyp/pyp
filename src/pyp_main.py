@@ -4392,7 +4392,7 @@ def sync_parameters(parameters):
     if parameters["micromon_block"] != "tomo-preprocessing" and parameters["micromon_block"] != "" and parameters["micromon_block"] != "tomo-pure-preprocessing" and parameters.get('data_mode') != "spr":
         new_parameters = parameters.copy()
         for k in parameters.keys():
-            if k.startswith("tomo_pick_vir_") and k.replace("tomo_pick_","") in specifications.get("tabs").get("tomo_pick"):
+            if k.startswith("tomo_pick_vir_") and k.replace("tomo_pick_","") in specifications.get("tabs").get("tomo_pick") and parameters.get("tomo_pick_method") == "virions":
                 default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
                 if parameters[k] != default:
                     logger.trace(f"Replacing {k.replace('tomo_pick_vir_','tomo_vir_')} <- {k} with value {parameters[k]}")
@@ -4402,7 +4402,7 @@ def sync_parameters(parameters):
                 if parameters[k] != "virions" and parameters[k] != "pytom":
                     new_parameters["tomo_spk_method"] = parameters[k]
             # copy tomo_pick_ to tomo_spk
-            elif k.startswith("tomo_pick_") and k.replace("tomo_pick_","") in specifications.get("tabs").get("tomo_pick"):
+            elif k.startswith("tomo_pick_") and k.replace("tomo_pick_","") in specifications.get("tabs").get("tomo_pick") and ( "_vir_" not in k or parameters.get("tomo_pick_method") == "virions" ):
                 default = specifications.get("tabs").get("tomo_pick").get(k.replace("tomo_pick_","")).get("default")
                 if parameters[k] != default and not k.endswith('_method'):
                     logger.trace(f"Replacing {k.replace('tomo_pick_','tomo_spk_')} <- {k} with value {parameters[k]}")
