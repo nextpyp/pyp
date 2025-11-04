@@ -980,7 +980,7 @@ def generate_list_of_all_subvolumes(parameters):
 
         randomize_in_plane_rotations = ( parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
                                         or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
-                                        or parameters["tomo_pick_rad"] > 0 and parameters["tomo_pick_rand"]
+                                        or parameters["tomo_pick_rad"] > 0 and parameters.get("tomo_pick_rand")
                                         ) and not parameters.get("tomo_pick_method") == "pytom"
         if randomize_in_plane_rotations:
             logger.info(f"Randomizing in-plane rotations")
@@ -5247,9 +5247,13 @@ if __name__ == "__main__":
                             if parameters.get("data_parent"):
                                 parent_parameters = project_params.load_pyp_parameters(project_params.resolve_path(parameters.get("data_parent")))
                                 if len(glob.glob("next/*.next")) > 1 and parameters.get("data_mode") == "tomo" and parent_parameters.get("micromon_block") == "tomo-picking":
-                                    update_metadata_coordinates_and_merge(project_path=os.getcwd(),working_path=os.environ["PYP_SCRATCH"],parameters=parameters)
-                                    # set the volumes files we just calculated as reference
-                                    parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
+                                    if parameters.get("csp_tomo_free_format") == "txt":
+                                        refinement_file = project_params.resolve_path(parameters.get("csp_tomo_free_parfile_tomo"))
+                                        assert os.path.exists(refinement_file), f"File not found: {refinement_file}"
+                                    else:
+                                        update_metadata_coordinates_and_merge(project_path=os.getcwd(),working_path=os.environ["PYP_SCRATCH"],parameters=parameters)
+                                        # set the volumes files we just calculated as reference
+                                        parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
 
                                 latest_parfile, latest_reference = None, None
                                 # data_parent is None if running CLI
