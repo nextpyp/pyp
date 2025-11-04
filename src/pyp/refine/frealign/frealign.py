@@ -13,7 +13,7 @@ import re
 import time
 
 import matplotlib
-
+from io import StringIO
 from pyp.system.singularity import run_pyp
 
 matplotlib.use("Agg")
@@ -2556,8 +2556,9 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
         )
     else:
         Afsc = A[A.find("Rec_SSNR") + 9 : A.find("Merge3D: Normal termination") - 3]
+        column_widths = [5, 8, 10, 10, 10, 10, 10 ]
         rows = len(Afsc.split("\n"))
-        cols = len(Afsc.split()) // rows
+        cols = len(column_widths)
         # column 2 has the frequencies and column 5 the FSC values
         current_fsc = (
             np.array(Afsc.split())
