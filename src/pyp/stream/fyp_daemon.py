@@ -106,14 +106,21 @@ def get_positions_and_new_particle_count_from_box_files(
         number_of_particles_changed = False
 
         check_list = get_file_indicator(mrc_dir=mrc_dir)
-        pkl_files = [
-            pkl_file
-            for pkl_file in get_pkl_files(meta_dir=meta_dir)
-            if pkl_file.stem not in boxes_lists and pkl_file.stem in check_list
-            and get_max_resolution(pkl_file.stem,path=meta_dir) < parameters['class2d_ctf_min_res']
-        ]
+        if parameters.get("data_mode") == "spr":
+            pkl_files = [
+                pkl_file
+                for pkl_file in get_pkl_files(meta_dir=meta_dir)
+                if pkl_file.stem not in boxes_lists and pkl_file.stem in check_list
+                and get_max_resolution(pkl_file.stem,path=meta_dir) < parameters['class2d_ctf_min_res']
+            ]
+        else:
+            pkl_files = [
+                pkl_file
+                for pkl_file in get_pkl_files(meta_dir=meta_dir)
+                if pkl_file.stem not in boxes_lists and pkl_file.stem in check_list
+            ]
 
-        if len(pkl_files) > 0:
+        if len(pkl_files) > 0 and parameters.get("data_mode") == "spr":
             logger.info(f"Processing {len(pkl_files):,} new images with estimated CTF resolution better than {parameters['class2d_ctf_min_res']} A")
 
             # generate allparx files from new micrographs

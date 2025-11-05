@@ -2454,7 +2454,7 @@ description = "Denoise tomograms with selected method"
 type = "enum"
 enum = {isonet="isonet", cryocare="cryocare"}
 default = "isonet"
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.denoise_separately]
 name = "Denoise separately"
@@ -2580,7 +2580,7 @@ description = "Mask shape in x,y,z covering the center of tomogram"
 type = "str"
 default = "0,0,0"
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_use_gpu]
 name = "Use GPU"
@@ -2588,7 +2588,7 @@ description = "Run cryoCARE denoise in a GPU"
 type = "bool"
 default = true
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_patch]
 name = "Patch shape"
@@ -2596,7 +2596,7 @@ description = "Per dimension size of the sub-volumes used for training (cubic sh
 type = "int"
 default = 72
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_slices]
 name = "Number of slices"
@@ -2604,7 +2604,7 @@ description = "Number of sub-volumes extracted per tomogram"
 type = "int"
 default = 500
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_split]
 name = "Split ratio"
@@ -2612,7 +2612,7 @@ description = "Train/validation ratio"
 type = "float"
 default = 0.9
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_samples]
 name = "Sub-tomograms for statistics"
@@ -2620,7 +2620,7 @@ description = "Number of sub-volumes per tomogram used to compute mean and stand
 type = "int"
 default = 400
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_epochs]
 name = "Number of epochs"
@@ -2628,7 +2628,7 @@ description = "Number of epochs used to train the network"
 type = "int"
 default = 60
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_steps]
 name = "Gradient steps"
@@ -2636,7 +2636,7 @@ description = "Number of gradient steps performed per epoch"
 type = "int"
 default = 200
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_batchsize]
 name = "Batch size"
@@ -2644,7 +2644,7 @@ description = "Number of training samples to use before the model parameters are
 type = "int"
 default = 16
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_kern]
 name = "Kernel size"
@@ -2652,7 +2652,7 @@ description = "Convolution kernel size of the U-Net. Has to be an odd number"
 type = "int"
 default = 3
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_depth]
 name = "Unet depth (train)"
@@ -2660,7 +2660,7 @@ description = "Depth of the U-Net"
 type = "int"
 default = 3
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_nfirst]
 name = "Initial feature channels"
@@ -2668,7 +2668,7 @@ description = "Number of initial feature channels"
 type = "int"
 default = 16
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_lr]
 name = "Learning rate"
@@ -2676,7 +2676,7 @@ description = "Learning rate of the model training"
 type = "float"
 default = 0.0004
 condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.cryocare_model]
 name = "Trained model"
@@ -2709,7 +2709,7 @@ description = "Do CTF deconvolution for tomograms"
 type = "bool"
 default = true
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_predict_CTFdeconvol]
 name = "CTF deconvolution"
@@ -2725,7 +2725,7 @@ description = "SNR fall rate with the frequency. High values means losing more h
 type = "float"
 default = 1.0
 condition = { arg="isonet_CTFdeconvol", value="true" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_hp]
 name = "Highpass filter"
@@ -2733,7 +2733,7 @@ description = "Highpass filter for at very low frequency"
 type = "float"
 default = 0.02
 condition = { arg="isonet_CTFdeconvol", value="true" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_mask]
 name = "Use masking"
@@ -2741,7 +2741,7 @@ description = "Mask out background areas"
 type = "bool"
 default = true
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_densityPercent]
 name = "Density percentage"
@@ -2749,7 +2749,7 @@ description = "The approximate percentage of pixels to keep based on their local
 type = "int"
 default = 50
 condition = { arg="isonet_mask", value="true" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_stdPercent]
 name = "Standard deviation percentage"
@@ -2757,7 +2757,7 @@ description = "The approximate percentage of pixels to keep based on their local
 type = "int"
 default = 50
 condition = { arg="isonet_mask", value="true" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_patchsize]
 name = "Patch size for statistics"
@@ -2765,7 +2765,7 @@ description = "Size of box from which the max-filter and std-filter are calculat
 type = "int"
 default = 4
 condition = { arg="isonet_mask", value="true" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_zcrop]
 name = "Z-crop fraction"
@@ -2773,7 +2773,7 @@ description = "Exclude top and bottom regions of tomogram along Z (0.2 will mask
 type = "float"
 default = 0.2
 condition = { arg="isonet_mask", value="true" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_model]
 name = "Trained model"
@@ -2791,7 +2791,7 @@ type = "path"
 path = { type="files" }
 input = { type="isonetTrainedModel" }
 condition = { arg="method_train", value=["isonet"] }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_json]
 name = "Continue from (.json)"
@@ -2808,7 +2808,7 @@ description = "Should be divisible by 8. Actual sizes are this value plus 16"
 type = "int"
 default = 64
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_predict_cubesize]
 name = "Cube size"
@@ -2832,7 +2832,7 @@ description = "Number of training iterations"
 type = "int"
 default = 30
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_epochs]
 name = "Training epochs"
@@ -2840,7 +2840,7 @@ description = "Number of epochs for each iteraction"
 type = "int"
 default = 10
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_batchsize]
 name = "Mini-batch size"
@@ -2848,7 +2848,7 @@ description = "0 corresponds to max(2 * number_of_gpu,4). Batch size must be div
 type = "int"
 default = 4
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_predict_batchsize]
 name = "Mini-batch size"
@@ -2864,7 +2864,7 @@ description = "Steps per epoch. 0 corresponds to: min(num_of_subtomograms * 6 / 
 type = "int"
 default = 0
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_nl]
 name = "Noise level"
@@ -2872,7 +2872,7 @@ description = "Level of noise STD(added noise)/STD(data) after the iteration def
 type = "str"
 default = "0.05,0.1,0.15,0.2"
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_ns]
 name = "Noise start iteration"
@@ -2880,7 +2880,7 @@ description = "Iteration that start to add noise of corresponding noise level"
 type = "str"
 default = "11,16,21,26"
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_nm]
 name = "Noise mode"
@@ -2889,7 +2889,7 @@ type = "enum"
 enum = {ramp="ramp", hamming="hamming", noFilter="noFilter", none="none"}
 default = "none"
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_dropout]
 name = "Dropout rate"
@@ -2897,7 +2897,7 @@ description = "Dropout rate to reduce overfitting"
 type = "float"
 default = 0.3
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_lr]
 name = "Learning rate"
@@ -2905,7 +2905,7 @@ description = "learning rate for network training"
 type = "float"
 default = 0.0004
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_layers]
 name = "Convolution layers"
@@ -2913,7 +2913,7 @@ description = "Number of convolution layers for each depth"
 type = "int"
 default = 3
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_kernel]
 name = "Convolution kernel size"
@@ -2921,7 +2921,7 @@ description = "Kernel size for convolution"
 type = "str"
 default = "3,3,3"
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_depth]
 name = "U-Net depth"
@@ -2929,7 +2929,7 @@ description = "Depth of U-Net"
 type = "int"
 default = 3
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_base]
 name = "Filter base"
@@ -2937,7 +2937,7 @@ description = "The base number of channels after convolution"
 type = "int"
 default = 64
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_normalization]
 name = "Use batch normalization"
@@ -2945,7 +2945,7 @@ description = "Use batch normalization layer"
 type = "bool"
 default = true
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_pool]
 name = "Use pooling"
@@ -2953,7 +2953,7 @@ description = "Use pooling layer instead of stride convolution layer"
 type = "str"
 default = ""
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_threshold]
 name = "Use percent thresholding"
@@ -2961,7 +2961,7 @@ description = "Normalize the 5 percent and 95 percent pixel intensity to 0 and 1
 type = "bool"
 default = true
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_predict_threshold]
 name = "Use percent thresholding"
@@ -2977,7 +2977,7 @@ description = "Save intermediate files to results directory"
 type = "bool"
 default = false
 condition = { arg="method_train", value="isonet" }
-hidden = [ "tomo_denoise_eval" ]
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_mem]
 _name = "Segmentation"
@@ -3978,23 +3978,32 @@ default = false
 _name = "2D classification"
 _description = "Settings for particle classification"
 
+[tabs.class2d.enable]
+name = "Run 2D classification"
+description = "Enable 2D classification during streaming"
+type = "bool"
+default = false
+
 [tabs.class2d.min]
-name = "Minimum particles for 2D classification"
+name = "Minimum number of particles"
 description = "Minimum number of particles required for 2D classification"
 type = "int"
 default = 5000
+condition = { arg="enable", value=true }
 
 [tabs.class2d.inc]
-name = "Incremental particles for 2D classification"
+name = "Incremental number of particles"
 description = "Incremental number of particles required for 2D classification"
 type = "int"
 default = 5000
+condition = { arg="enable", value=true }
 
 [tabs.class2d.num]
 name = "Number of classes"
 description = "Number of classes to use during classification"
 type = "int"
 default = 20
+condition = { arg="enable", value=true }
 
 [tabs.class2d.box]
 name = "Box size (pixels)"
@@ -4002,18 +4011,21 @@ description = "Box size used for extraction"
 type = "int"
 hidden = ["spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after"]
 default = 96
+condition = { arg="enable", value=true }
 
 [tabs.class2d.bin]
 name = "Image binning"
 description = "Binning used during particle extraction"
 type = "int"
 default = 4
+condition = { arg="enable", value=true }
 
 [tabs.class2d.ctf_min_res]
-name = "Exclude low resolution micrographs"
-description = "Only use micrographs with information beyond this resolution"
+name = "Exclude low resolution micrographs/tilt-series"
+description = "Only use micrographs/tilt-series with information beyond this resolution"
 type = "float"
 default = 10.0
+condition = { arg="enable", value=true }
 
 [tabs.class2d.fraction]
 name = "Fraction of particles to use"
@@ -4021,6 +4033,7 @@ description = "What fraction of particles to use for classification"
 type = "float"
 default = 0.5
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.rlref]
 name = "Min resolution (A)"
@@ -4028,6 +4041,7 @@ description = "Minimum resolution used during refinement"
 type = "float"
 default = 100.0
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.rhini]
 name = "Starting high-resolution"
@@ -4035,6 +4049,7 @@ description = "Resolution limit for first refinement iteration"
 type = "float"
 default = 40.0
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.rhref]
 name = "Max resolution (A)"
@@ -4042,6 +4057,7 @@ description = "Maximum resolution used during refinement"
 type = "float"
 default = 8.0
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.iters_init]
 name = "Number of iterations for ab-initio"
@@ -4049,6 +4065,7 @@ description = "Iterations for ab-initio refinement"
 type = "int"
 default = 15
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.iters_seed]
 name = "Number of iterations for seeded-startup"
@@ -4056,6 +4073,7 @@ description = "Iterations for seeded-startup refinement"
 type = "int"
 default = 10
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.iters_refine]
 name = "Number of iterations during refinement"
@@ -4063,6 +4081,7 @@ description = "Iterations for refinement"
 type = "int"
 default = 3
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.max_ab_initio]
 name = "Max particles for ab-initio"
@@ -4070,6 +4089,7 @@ description = "Max number of particles to use during ab-initio"
 type = "int"
 default = 10000
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.max_seeded]
 name = "Max particles for seeded startup"
@@ -4077,6 +4097,7 @@ description = "Max number of particles to use during seeded startup"
 type = "int"
 default = 50000
 advanced = true
+condition = { arg="enable", value=true }
 
 [tabs.class2d.max_refinement]
 name = "Max particles for refinement"
@@ -4084,6 +4105,7 @@ description = "Max number of particles to use during refinement"
 type = "int"
 default = 100000
 advanced = true
+condition = { arg="enable", value=true }
 
 # Classification parameters
 

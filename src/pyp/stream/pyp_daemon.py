@@ -156,35 +156,34 @@ def pyp_daemon(args):
         "chmod g+w '%s'" % pyp_config_file, log_level=logging.TRACE
     )
 
-    # SKIP: launch incremental 2D classification
-    if True:
-        # launch 2D classification and 3D refinement daemons
-        if args["data_mode"] == "spr": # if "extract_box" in args.keys() and args["extract_box"] > 0:
+    # launch incremental 2D classification
+    if args["data_mode"] == "spr":
+        set_up.prepare_spr_daemon_dir()
+    else:
+        set_up.prepare_tomo_daemon_dir()
 
-            set_up.prepare_spr_daemon_dir()
+    arguments = " -mode 1 -cutoff .75 -metric cc3m -maxiter 8 -daemon={0} -mindef 10000 -maxdef 35000".format(
+        args["class2d_min"]
+    )
 
-            arguments = " -mode 1 -cutoff .75 -metric cc3m -maxiter 8 -daemon={0} -mindef 10000 -maxdef 35000".format(
-                args["class2d_min"]
-            )
+    if args["slurm_class2d_queue"] == "None":
+        queue = ""
+    else:
+        queue = args["slurm_class2d_queue"]
 
-            if args["slurm_class2d_queue"] == "None":
-                queue = ""
-            else:
-                queue = args["slurm_class2d_queue"]
-
-            slurm.submit_jobs(
-                os.path.join( session_dir, "class2d"),
-                run_pyp(command="fyp" + arguments, script=True),
-                jobtype="sess_ref",
-                jobname="pyp_sess_ref",
-                queue=queue,
-                scratch=0,
-                threads=parameters["slurm_class2d_tasks"],
-                memory=parameters["slurm_class2d_tasks"]*parameters["slurm_class2d_memory_per_task"],
-                gres=parameters["slurm_class2d_gres"],
-                account=parameters.get("slurm_class2d_account"),
-                walltime=parameters["slurm_class2d_walltime"]
-            )
+    slurm.submit_jobs(
+        os.path.join( session_dir, "class2d"),
+        run_pyp(command="fyp" + arguments, script=True),
+        jobtype="sess_ref",
+        jobname="pyp_sess_ref",
+        queue=queue,
+        scratch=0,
+        threads=parameters["slurm_class2d_tasks"],
+        memory=parameters["slurm_class2d_tasks"]*parameters["slurm_class2d_memory_per_task"],
+        gres=parameters["slurm_class2d_gres"],
+        account=parameters.get("slurm_class2d_account"),
+        walltime=parameters["slurm_class2d_walltime"]
+    )
 
     alreadysubmitted = []
 

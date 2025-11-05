@@ -62,6 +62,22 @@ def prepare_tomo_dir():
     ]
     makedirs_list(folders)
 
+def prepare_tomo_daemon_dir():
+    folders = [
+        os.getcwd() + "/" + s
+        for s in (
+            "raw",
+            "mrc",
+            "webp",
+            "sva",
+            "log",
+            "pkl",
+            "swarm",
+            "frealign",
+            "class2d",
+        )
+    ]
+    makedirs_list(folders)
 
 def prepare_frealign_dir():
     folders = ["scratch", "maps", "swarm", "log", "data"]
