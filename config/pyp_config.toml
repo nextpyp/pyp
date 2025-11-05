@@ -1469,6 +1469,13 @@ type = "int"
 default = 16
 hidden = ["spr_pre_process", "stream_spr", "stream_tomo", "tomo_particles_eval" ]
 
+[tabs.detect_nn3d.translation_ratio]
+name = "Image translation range"
+description = "Translation range used for data augmentation (fraction of bounding box)"
+type = "float"
+default = 0.5
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_eval"]
+
 [tabs.detect_nn3d.thresh]
 name = "Threshold for soft/hard positives"
 description = "Higher values give fewer particles, lower values give more particles"
@@ -1671,19 +1678,13 @@ name = "Clusters"
 description = "Number of clusters used during training"
 type = "int"
 default = 60
+hidden = [ "tomo_milo_train" ]
 
 [tabs.detect_milo.bbox]
 name = "Bounding box (binned voxels)"
 description = "Bounding box for cropped patches, must be bigger than particle size"
 type = "int"
 default = 36
-hidden = ["stream_spr", "stream_tomo"]
-
-[tabs.detect_milo.translation_ratio]
-name = "Image translation range"
-description = "Translation range used for data augmentation (fraction of bounding box)"
-type = "float"
-default = 0.5
 hidden = ["stream_spr", "stream_tomo"]
 
 [tabs.detect_milo.lr]
@@ -1720,13 +1721,6 @@ type = "str"
 default = "3,5"
 hidden = ["stream_spr", "stream_tomo"]
 
-[tabs.detect_milo.last_k]
-name = "Last kernel size"
-description = "Kernel size for the last convolution layer prior to projection operation"
-type = "int"
-default = 3
-hidden = [ "tomo_milo_eval" ]
-
 [tabs.detect_milo.blend_ratio]
 name = "Blend ratio"
 description = "Mixing ratio to use for 3D visualization (0=less color, 1=more color)"
@@ -1743,7 +1737,7 @@ hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.segmentation_dir]
 name = "Segmentation directory"
-description = "Location of *_seg.rec files"
+description = "Location of the *_seg.rec files"
 type = "path"
 condition = { arg="surface", value="true" }
 path = { type="folders" }
@@ -1779,7 +1773,7 @@ name = "Min distance"
 description = "Allowed minimum distance from the segmentation"
 type = "float"
 default = 0.0
-condition = { arg="use_dog", value="1" }
+condition = { arg="use_dog", value=["1", "2"] }
 hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.dog_max_distance]
@@ -1787,7 +1781,7 @@ name = "Max distance"
 description = "Allowed maximum distance from the segmentation"
 type = "float"
 default = 25.0
-condition = { arg="use_dog", value="1" }
+condition = { arg="use_dog", value=["1", "2"] }
 hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.use_vector_normal]
@@ -1806,6 +1800,15 @@ default = 1
 condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
+[tabs.detect_milo.interp_order]
+name = "Interpolation order"
+description = "The order of the interpolation used for patch extraction, needs to be between 0 and 5"
+type = "enum"
+enum = { 0="nearest-neighbor", 1="linear", 2="quadratic", 3="cubic", 4="quartic", 5="quintic" }
+default = "1"
+condition = { arg="surface", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
 [tabs.detect_milo.use_iterative]
 name = "Iterate"
 description = "Use iterative exploration"
@@ -1817,13 +1820,14 @@ hidden = [ "tomo_milo_eval" ]
 name = "Patch coordinate location"
 description = "Path to the parquet file containing patch coordinates for iterative exploration"
 type = "path"
-path = { type="folders" }
+path = { type="files" }
+input = { type="parquetfile" }
 condition = { arg="use_iterative", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.labels]
 name = "Class labels"
-description = "Comma separated list of labels to filter the given patch coordinates using these labels"
+description = "Comma separated list of labels to filter the given patch coordinates with"
 type = "str"
 condition = { arg="use_iterative", value="true" }
 hidden = [ "tomo_milo_eval" ]
@@ -1847,7 +1851,7 @@ hidden = [ "tomo_milo_eval" ]
 name = "Read patches"
 description = "Path to previously saved patches. Parameters related to patch extraction should be the same as used in that extraction"
 type = "path"
-path = { type="folders" }
+path = { type="files" }
 hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.imgs_per_label]
