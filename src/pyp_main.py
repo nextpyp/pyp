@@ -2085,6 +2085,43 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     elif parameters.get("micromon_block") == "tomo-picking-closed" and parameters.get("tomo_pick_method") == "manual":
         parameters["tomo_pick_vir_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
 
+    # if in sessions or legacy pre-processing
+    if parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "":
+
+        match parameters.get("tomo_denoise_method"):
+            case "isonet":
+                if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet_model"))):
+                    new_reconstruction = isonet_tools.isonet_predict( name, project_path, parameters)
+                else:
+                    logger.info("IsoNET model not found, skipping denoising")
+            case "topaz":
+                new_reconstruction = topaz_tools.topaz_tomo_denoise( name, project)
+            case "cryocare":
+                if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_cryocare_model"))):
+                    new_reconstruction = cryocare_tools.cryocare_tomo_denoise( name, project_path, parameters)
+                else:
+                    logger.info("cryoCARE model not found, skipping denoising")
+            case "noise2map":
+                new_reconstruction = noise2map_tools.noise2map_tomo_denoise( name, project_path, parameters)
+            case _:
+                pass
+
+        if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
+            match parameters.get("tomo_mem_method"):
+                case "membrain":
+                    if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
+                        new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
+                    else:
+                        logger.info("MemBrain model not found, skipping segmentation")
+                case _:
+                    new_reconstruction = Tardis.run_tardis( name, parameters )
+        
+        # if in sessions
+        if parameters.get("micromon_block") == "": 
+            parameters["tomo_ext_fmt"] = "3DAVG"
+            parameters["tomo_ext_box"] = parameters["class2d_box"]
+            parameters["tomo_ext_bin"] = parameters["class2d_bin"]
+ 
     # particle detection and extraction
     virion_coordinates, spike_coordinates, virion_mode, spike_mode, surface_mode = detect_tomo.detect_and_extract_particles( 
         name,

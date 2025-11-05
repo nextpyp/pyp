@@ -106,7 +106,7 @@ tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect
 [blocks.tomo_pre_process]
 name = "TOMO Pre-processing (legacy)"
 description = "Frame/tilt-series alignment, CTF, and particle picking"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_denoise", "tomo_mem", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "gain" ]
 
 [blocks.tomo_pure_preprocess]
@@ -304,7 +304,7 @@ tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "detect", "detect_nn
 [blocks.stream_tomo]
 name= "Tomography Streaming"
 description = "Data streaming mode for tomography sessions"
-tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "data", "gain", "scope", "stream", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_denoise", "tomo_mem", "tomo_vir", "tomo_spk", "detect_nn3d", "class2d", "slurm" ]
 
 ########
 # Tabs #
@@ -2980,14 +2980,14 @@ condition = { arg="method_train", value="isonet" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_mem]
-_name = "Segmentation"
+_name = "Tomogram segmentation"
 _description = "Parameters for tomogram segmentation"
 
 [tabs.tomo_mem.method]
 name = "Method"
 description = "Segmentation method"
 type = "enum"
-enum = { membrain="membrain_seg (membranes)", tardis_mem="tardis_mem (membranes)", tardis_actin="tardis_actin (actin filaments)", tardis_mt="tardins_mt (microtubules)" } 
+enum = { membrain="membrain-seg (membranes)", tardis_mem="tardis (membranes)", tardis_actin="tardis (actin filaments)", tardis_mt="tardins (microtubules)" } 
 default = "membrain"
 
 [tabs.tomo_mem.tardis_mem_patch_size]
