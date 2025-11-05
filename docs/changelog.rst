@@ -16,6 +16,8 @@ v0.7.3
    
    - New wrappers for `Noise2Map <https://warpem.github.io/warp/reference/noise2map/noise2map/?h=noise2map>`_ to denoise tomograms and half-maps (during refinement).
 
+   - Use normal vectors to tomogram segmentations to assign initial particle orientations when picking membrane proteins.
+
    :fa:`plus-square` **Improvements**
 
    - Improve pre-processing efficiency by skipping gold fiducial detection when they won't be erased during reconstruction.
@@ -42,6 +44,10 @@ v0.7.3
 
    - Rebuild binaries for AreTomo2, AreTomo3, and MotionCor2 to improve compatibility with latest NVIDIA Blackwell cards.
 
+   - Better support for wildcard characters when specifying input file patterns in data import blocks.
+
+   - Add support to import tilt-series with *.mrcs extentions.
+
    :fa:`bug` **Bug fixes**
    
    - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
@@ -65,6 +71,8 @@ v0.7.3
    - Fix bugs during creation of half-tomograms for denoising when importing metadata from *.mdoc files.
 
    - Correctly parse SLURM's gres option when using multiple GPUs for cryoCARE training.
+
+   - Fix bug that prevented saving tomograms and tilt-series in 16-bit format during sessions.
 
 v0.7.2
 ------
