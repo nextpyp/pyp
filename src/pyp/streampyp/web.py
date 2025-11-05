@@ -40,7 +40,7 @@ class Web:
             parsed = parse(response.json())
             if isinstance(parsed, Ok):
                 return parsed.result
-            elif isinstance(parse, Error):
+            elif isinstance(parsed, Error):
                 raise Exception(parsed.message)
             return None
         except Exception as ex:

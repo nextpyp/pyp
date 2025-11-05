@@ -64,6 +64,8 @@ v0.7.3
 
    - Fix bugs during creation of half-tomograms for denoising when importing metadata from *.mdoc files.
 
+   - Correctly parse SLURM's gres option when using multiple GPUs for cryoCARE training.
+
 v0.7.2
 ------
 

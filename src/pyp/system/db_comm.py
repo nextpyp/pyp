@@ -18,6 +18,46 @@ from pyp.inout.metadata import pyp_metadata
 
 from pyp.system.logging import logger
 
+def parameters_type_check(parameters):
+    """
+    Ensures that the types of the given parameters match the specifications defined in the configuration file.
+    This function reads a TOML configuration file to retrieve the expected types for parameters. 
+    It then checks the types of the provided parameters and converts them to the expected types if necessary. Supported types for conversion are 'int', 'float', and 'str'.
+    Args:
+        parameters (dict): A dictionary of parameters where keys are parameter names and values are their corresponding values.
+    Returns:
+        dict: The updated dictionary of parameters with corrected types where applicable.
+    Notes:
+        - The configuration file is expected to be located at "/opt/pyp/config/pyp_config.toml".
+        - The configuration file should define parameter types under the "tabs" section.
+        - Parameters with keys starting with "_" are ignored.
+        - If a parameter's type does not match the expected type, it is converted and a trace log is generated.
+    Raises:
+        toml.TomlDecodeError: If the configuration file cannot be parsed.
+        KeyError: If the expected structure of the configuration file is not met.
+        ValueError: If a parameter cannot be converted to the expected type.
+    """
+    
+    # read specification file
+    import toml
+    specifications = toml.load("/opt/pyp/config/pyp_config.toml")
+
+    # make sure parameter types are up to date
+    for t in specifications["tabs"].keys():
+        if not t.startswith("_"):
+            for p in specifications["tabs"][t].keys():
+                if not p.startswith("_"):
+                    ptype = specifications["tabs"][t][p]["type"]
+                    if ptype in {'int','float','str'} and parameters.get(f"{t}_{p}") and type(parameters[f"{t}_{p}"]) != eval(ptype):
+                        logger.trace(f"Converting parameter {t}_{p} with value {parameters[f'{t}_{p}']} from {type(parameters[f'{t}_{p}'])} to {ptype}")
+                        if ptype == "int":
+                            parameters[f"{t}_{p}"] = int(parameters[f"{t}_{p}"])
+                        elif ptype == "float":
+                            parameters[f"{t}_{p}"] = float(parameters[f"{t}_{p}"])
+                        elif ptype == "str":
+                            parameters[f"{t}_{p}"] = str(parameters[f"{t}_{p}"])
+    return parameters
+
 def save_parameters_to_website(parameters):
 
     # if there's no website, don't bother saving anything
@@ -25,6 +65,8 @@ def save_parameters_to_website(parameters):
         return
     elif "data_set" in parameters:
         try:
+            parameters = parameters_type_check(parameters)
+
             # actually send the micrograph to the website
             Web().write_parameters(parameter_id=parameters["data_set"], parameters=parameters)
 
