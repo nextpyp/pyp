@@ -97,8 +97,6 @@ IncludeCmd: no
 	# install IMOD (legacy version without 16-bit support)
 	IMOD_FILE=imod_4.11.24_RHEL7-64_CUDA8.0.sh
 	wget --no-check-certificate https://bio3d.colorado.edu/imod/AMD64-RHEL5/${IMOD_FILE}
-	# IMOD_FILE=imod_4.12.62_RHEL8-64_CUDA12.0.sh
-	# wget --no-check-certificate https://bio3d.colorado.edu/ftp/latestIMOD/RHEL8-64_CUDA12.0/${IMOD_FILE}
 	sh ${IMOD_FILE} -yes -skip -name IMOD -dir /opt -name IMOD_4.11.24
 	rm -rf ${IMOD_FILE}
 	
@@ -124,25 +122,18 @@ IncludeCmd: no
 
 	# load AreTomo2
 	cd /opt/pyp/external/AreTomo2
-	# git clone https://github.com/czimaginginstitute/AreTomo2.git --depth 1
-	# cd AreTomo2
 	rm -rf .git/
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "AreTomo2" -type f -exec rm -f {} \;
 	cd -
 
-	# cd /opt/pyp/external/AreTomo3
-	# git clone https://github.com/czimaginginstitute/AreTomo3.git --depth 1
 	cd /opt/pyp/external/AreTomo3
 	rm -rf .git/
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "AreTomo3" -type f -exec rm -f {} \;
 	cd -
 
-	# git clone https://github.com/czimaginginstitute/MotionCor3.git --depth 1
-	# cd MotionCor3
 	cd /opt/pyp/external/MotionCor3
-	# git clone https://github.com/czimaginginstitute/AreTomo2.git
 	rm -rf .git/
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "MotionCor3" -type f -exec rm -f {} \;
@@ -229,11 +220,11 @@ EOF
 	
 	# Topaz
 	cd /opt/pyp/external
-        git clone https://github.com/tbepler/topaz.git
-        cd topaz
-        git checkout v0.2.5
-        pip install .
-        rm -rf .git/
+	git clone https://github.com/tbepler/topaz.git
+	cd topaz
+	git checkout v0.2.5
+	pip install .
+	rm -rf .git/
 	cd -
 
 	# do all the pip installs (on the base environment?)
@@ -419,8 +410,8 @@ EOF
 	micromamba run -n isonet /bin/bash -c "/root/isonet.sh > /proc/$$/fd/1 2>&1"
 	rm -rf /root/isonet.sh
 
-        ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer_plugin.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer_plugin.so.7
-        ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.7
+	ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer_plugin.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer_plugin.so.7
+	ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.7
 
 	# Install WarpTools
 cat << EOF > /root/warpem.sh
