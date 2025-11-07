@@ -10,6 +10,7 @@ IncludeCmd: no
 	bin/* /opt/pyp/bin/
 	config/ /opt/pyp
 	src/ /opt/pyp
+	requirements.txt /opt/pyp
 	LICENSE  /opt/pyp
 	nextpyp.toml /opt/pyp
  	pyproject.toml /opt/pyp
@@ -187,10 +188,8 @@ cat << EOF > /root/pyp.sh
 
 	micromamba update --all
 	
-	# install the python packages we need
-	micromamba install -c conda-forge pymongo pillow toml seaborn requests pytest scikit-learn scikit-image numexpr htop matplotlib pandas conda-pack jsonrpcclient overrides colorlog opencv click ncurses colored-traceback torchio==0.18.92
-
-	micromamba update numpy
+	# install utilities we need
+	micromamba install -c conda-forge htop conda-pack
 	
 	micromamba install -c conda-forge faiss-gpu==1.8.0
 	micromamba update libstdcxx-ng
@@ -207,7 +206,7 @@ EOF
 	# https://github.com/conda/conda/issues/9367#issuecomment-558863143
 	# alas, we can't actually "activate" this environment, because conda fails saying the envrionment is unsupported
 	#micromamba update mamba
-	micromamba create --name pyp python=3.12 -c conda-forge
+	micromamba create --name pyp python=3.12 -c conda-forge pytorch -c pytorch
 
 	# run the conda script in the pyp environment
 	# tragically conda buffers stdout and stderr, which is basically terrible
@@ -222,18 +221,49 @@ EOF
 
 	# make fontconfig cache persistent to prevent the infamous warning: "Fontconfig error: No writable cache directories"
 	fc-cache
-	
-	# Topaz
-	cd /opt/pyp/external
-	git clone https://github.com/tbepler/topaz.git
-	cd topaz
-	git checkout v0.2.5
-	pip --no-cache-dir install .
-	rm -rf .git/
-	cd -
 
-	# do all the pip installs (on the base environment?)
-	pip --no-cache-dir install torch==2.2.0 torchvision==0.17.0 tensorboard h5py imagesize tqdm healpy phoenix==0.9.1 dataset==1.6.2 Pillow==10.0.1 pyarrow scikit_network mrcfile pytorch_metric_learning progress nptyping==2.5.0 umap_learn==0.5.3 nibabel numba dipy bm4d filelock
+	# Install milopyp
+cat << EOF > /root/milopyp.sh
+
+	# cet_pick dependencies
+	pip --no-cache-dir install -r /opt/pyp/external/cet_pick/requirements.txt
+	pip --no-cache-dir install --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.9.0 torchvision==0.24.0
+
+	micromamba clean --all --force-pkgs-dirs --yes
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/milopyp -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name milopyp python=3.12 -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/milopyp.sh
+	micromamba run -n milopyp /bin/bash -c "/root/milopyp.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/milopyp.sh
+
+	# Install topaz
+cat << EOF > /root/topaz.sh
+
+	# install topaz
+	pip3 --no-cache-dir install topaz-em==0.3.16
+
+	micromamba clean --all --force-pkgs-dirs --yes
+	
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/topaz -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name topaz "python=3" -c conda-forge
+
+	# run the conda script in the new environment
+	chmod +x /root/topaz.sh
+	micromamba run -n topaz /bin/bash -c "/root/topaz.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/topaz.sh
 
 	# Install pytom-match-pick
 cat << EOF > /root/pytom.sh
