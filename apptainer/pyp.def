@@ -38,7 +38,7 @@ IncludeCmd: no
 	export PATH=$PATH:/opt/potrace-1.16.linux-x86_64
 
 %post
-	# remove .git directory to save space
+	# remove pyp's .git directory to save space
 	rm -rf /opt/pyp/.git
 	# install packages required by ETTK
 	apt-get -y update
@@ -120,26 +120,28 @@ IncludeCmd: no
 	# add symlink to cuda library needed by MotionCor3 and AreTomo
 	ln -s /usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs/libcuda.so /usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs/libcuda.so.1
 
-	# load AreTomo2
+	# build AreTomo2
 	cd /opt/pyp/external/AreTomo2
 	rm -rf .git/
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "AreTomo2" -type f -exec rm -f {} \;
 	cd -
 
+	# build AreTomo3
 	cd /opt/pyp/external/AreTomo3
 	rm -rf .git/
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "AreTomo3" -type f -exec rm -f {} \;
 	cd -
 
+	# build MotionCor3
 	cd /opt/pyp/external/MotionCor3
 	rm -rf .git/
 	make exe -f makefile11 CUDAHOME=${CUDA_HOME} CUDALIB=/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs -j 4
 	find . ! -name "MotionCor3" -type f -exec rm -f {} \;
 	cd -
 
-	# install relion-5.0
+	# build relion-5.0
 	current=`pwd`
 	cd /opt
 	git clone https://github.com/3dem/relion.git
@@ -214,6 +216,9 @@ EOF
 	chmod +x /root/pyp.sh
 	micromamba run -n pyp /bin/bash -c "/root/pyp.sh > /proc/$$/fd/1 2>&1"
 	export PATH=/opt/conda/envs/pyp/bin:$PATH
+
+	# install pyp dependencies
+	pip --no-cache-dir install -r /opt/pyp/requirements.txt
 
 	# make fontconfig cache persistent to prevent the infamous warning: "Fontconfig error: No writable cache directories"
 	fc-cache
@@ -429,6 +434,9 @@ EOF
 	chmod +x /root/warpem.sh
 	micromamba run -n warp /bin/bash -c "/root/warpem.sh > /proc/$$/fd/1 2>&1"
 	rm -rf /root/warpem.sh
+
+	# remove nvidia artifacts to save space
+	rm -rf /opt/nvidia
 
 %startscript
 
