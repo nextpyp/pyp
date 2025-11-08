@@ -249,7 +249,7 @@ EOF
 cat << EOF > /root/topaz.sh
 
 	# install topaz
-	pip3 --no-cache-dir install topaz-em==0.3.16
+	pip3 --no-cache-dir install topaz-em==0.3.1
 
 	micromamba clean --all --force-pkgs-dirs --yes
 	
@@ -259,7 +259,7 @@ cat << EOF > /root/topaz.sh
 		rm /tmp/env.tar
 	/venv/bin/conda-unpack
 EOF
-	micromamba create --name topaz "python=3" -c conda-forge
+	micromamba create --name topaz "python=3.8" -c conda-forge
 
 	# run the conda script in the new environment
 	chmod +x /root/topaz.sh
