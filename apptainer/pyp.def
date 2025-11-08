@@ -192,7 +192,6 @@ cat << EOF > /root/pyp.sh
 	# install utilities we need
 	micromamba install -c conda-forge htop conda-pack
 	
-	micromamba install -c conda-forge faiss-gpu==1.8.0
 	micromamba update libstdcxx-ng
 	micromamba clean --all --force-pkgs-dirs --yes
 
@@ -207,7 +206,7 @@ EOF
 	# https://github.com/conda/conda/issues/9367#issuecomment-558863143
 	# alas, we can't actually "activate" this environment, because conda fails saying the envrionment is unsupported
 	#micromamba update mamba
-	micromamba create --name pyp python=3.12 -c conda-forge pytorch -c pytorch
+	micromamba create --name pyp python=3.12 -c conda-forge
 
 	# run the conda script in the pyp environment
 	# tragically conda buffers stdout and stderr, which is basically terrible
@@ -445,9 +444,6 @@ EOF
 	chmod +x /root/isonet.sh
 	micromamba run -n isonet /bin/bash -c "/root/isonet.sh > /proc/$$/fd/1 2>&1"
 	rm -rf /root/isonet.sh
-
-	ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer_plugin.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer_plugin.so.7
-	ln -s /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.10 /opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs/libnvinfer.so.7
 
 	# Install WarpTools
 cat << EOF > /root/warpem.sh
