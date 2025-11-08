@@ -104,7 +104,7 @@ from pyp.system.singularity import (
 )
 from pyp.system.utils import get_imod_path, get_topaz_path, get_multirun_path, get_parameter_files_path, get_gpu_queue, parse_logger_level
 from pyp.postprocess import warptools
-from pyp.utils import timer, symlink_relative, symlink_relative_pattern
+from pyp.utils import timer, symlink_relative, symlink_relative_pattern, cuda_info
 from pyp.postprocess.warptools import warptools_noise2map
 
 from pyp.refine.tomo_avg import sub_tomo_avg as sub_tomo_avg
@@ -4500,20 +4500,8 @@ if __name__ == "__main__":
 
         config = get_pyp_configuration()
         
-        try:
-            import torch
-            if torch.cuda.is_available():               
-                num_gpus = torch.cuda.device_count()
-                logger.info(f"Number of GPUs available: {num_gpus}")
-                for i in range(num_gpus):
-                    logger.info(f"\t--- GPU {i} ---")
-                    logger.info(f"\tName: {torch.cuda.get_device_name(i)}")
-                    logger.info(f"\tTotal Memory: {torch.cuda.get_device_properties(i).total_memory / (1024**3):.2f} GB")
-                    logger.info(f"\tMulti-processor Count: {torch.cuda.get_device_properties(i).multi_processor_count}")
-                    logger.info(f"\tCUDA Cores: {torch.cuda.get_device_properties(i).max_threads_per_multi_processor * torch.cuda.get_device_properties(i).multi_processor_count}")
-                    logger.info(f"\tMax Threads per Multi-processor: {torch.cuda.get_device_properties(i).max_threads_per_multi_processor}")
-        except:
-            pass
+        # display GPU info, if available
+        cuda_info.get_gpu_info()
  
         os.environ["OMP_NUM_THREADS"] = os.environ["IMOD_PROCESSORS"] = "1"
 
