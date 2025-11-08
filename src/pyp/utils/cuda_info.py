@@ -110,13 +110,13 @@ def get_gpu_info():
                 logger.info(f"\tName: {name.split(b'\0', 1)[0].decode()}")
             if cuda.cuDeviceGetAttribute(ctypes.byref(cores), CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, device) == CUDA_SUCCESS:
                 logger.info(f"\tMultiprocessors: {cores.value}")
-                logger.info(f"\tCUDA Cores: {threads_per_core.value}")
                 if cuda.cuDeviceGetAttribute(ctypes.byref(threads_per_core), CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR, device) == CUDA_SUCCESS:
+                    logger.info(f"\tCUDA Cores: {threads_per_core.value:,}")
                     logger.info(f"\tConcurrent threads: {(cores.value * threads_per_core.value):,}")
             if cuda.cuDeviceGetAttribute(ctypes.byref(clockrate), CU_DEVICE_ATTRIBUTE_CLOCK_RATE, device) == CUDA_SUCCESS:
-                logger.info(f"\tGPU clock: {clockrate.value / 1000.} MHz")
+                logger.info(f"\tGPU clock: {clockrate.value / 10000.} GHz")
             if cuda.cuDeviceGetAttribute(ctypes.byref(clockrate), CU_DEVICE_ATTRIBUTE_MEMORY_CLOCK_RATE, device) == CUDA_SUCCESS:
-                logger.info(f"\tMemory clock: {clockrate.value / 1000.} MHz")
+                logger.info(f"\tMemory clock: {clockrate.value / 10000.} GHz")
             try:
                 result = cuda.cuCtxCreate_v2(ctypes.byref(context), 0, device)
             except AttributeError:
