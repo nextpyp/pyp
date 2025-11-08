@@ -37,6 +37,7 @@ IncludeCmd: no
 	export IMOD_DIR=/opt/IMOD
 	export PATH=$PATH:$IMOD_DIR/bin
 	export PATH=$PATH:/opt/potrace-1.16.linux-x86_64
+	export XDG_CACHE_HOME=/tmp
 
 %post
 	# remove pyp's .git directory to save space
@@ -220,7 +221,7 @@ EOF
 	pip --no-cache-dir install -r /opt/pyp/requirements.txt
 
 	# make fontconfig cache persistent to prevent the infamous warning: "Fontconfig error: No writable cache directories"
-	fc-cache
+	fc-cache -fv
 
 	# Install milopyp
 cat << EOF > /root/milopyp.sh
