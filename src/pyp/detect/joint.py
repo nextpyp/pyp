@@ -715,7 +715,7 @@ def miloeval(args):
         local_run.run_shell_command(command)             
 
         # copy results to project folder
-        for file in [ 'interactive_info_parquet.gzip', "2d_visualization_labels.webp", "2d_visualization_out.webp", "2d_visualization_matrix.webp" ]:
+        for file in [ 'interactive_info_parquet.gzip', "2d_visualization_labels.webp", "2d_visualization_out.webp", "2d_visualization_labels_matrix.webp" ]:
             source = os.path.join(output_folder, file)
             target = os.path.join( train_folder, file )
             if os.path.exists(target) or os.path.islink(target):
