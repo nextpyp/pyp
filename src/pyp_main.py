@@ -5833,41 +5833,7 @@ if __name__ == "__main__":
                     raw_rec_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc"
                     denoised_rec_location = project_path / "mrc"
 
-                    """
-                    usage: denoise3d [-h] [-o OUTPUT] [--suffix SUFFIX] [-m MODEL]
-                                [-a EVEN_TRAIN_PATH] [-b ODD_TRAIN_PATH] [--N-train N_TRAIN]
-                                [--N-test N_TEST] [-c CROP]
-                                [--base-kernel-width BASE_KERNEL_WIDTH]
-                                [--optim {adam,adagrad,sgd}] [--lr LR] [--criteria {L1,L2}]
-                                [--momentum MOMENTUM] [--batch-size BATCH_SIZE]
-                                [--num-epochs NUM_EPOCHS] [-w WEIGHT_DECAY]
-                                [--save-interval SAVE_INTERVAL] [--save-prefix SAVE_PREFIX]
-                                [--num-workers NUM_WORKERS] [-j NUM_THREADS] [-g GAUSSIAN]
-                                [-s PATCH_SIZE] [-p PATCH_PADDING] [-d DEVICE]
-                                [volumes ...]
-                    """
-
-                    # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
-                    import torch
-                    if torch.cuda.is_available():
-                        devices = 0
-                    else:
-                        devices = -1
-
-                    time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
-
-                    logger.info("Denoising tomogram using: Topaz")
-                    command = f"{get_topaz_path()}/topaz denoise3d \
-{raw_rec_location / name}.rec \
---model {parameters['tomo_denoise_topaz_model']} \
---device {devices} \
---gaussian {parameters['tomo_denoise_topaz_gaussian']} \
---patch-size {parameters['tomo_denoise_topaz_patch_size']} \
---patch-padding {parameters['tomo_denoise_topaz_patch_padding']} \
---output {working_path} \
-2>&1 | tee {time_stamp}_topaz_denoise3d.log"
-
-                    local_run.stream_shell_command(command)
+                    topaz.topaz_tomo_denoise(name, parameters, raw_rec_location, working_path)
 
                     tomoswarm_epilogue( name + ".rec", name, project_path, working_path, parameters)
 

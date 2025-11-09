@@ -22,7 +22,7 @@ from pyp.system import local_run, mpi, project_params
 from pyp.system.utils import get_imod_path
 from pyp.system.wrapper_functions import avgstack, cistem_rescale, cistem_resize
 from pyp.system.project_params import resolve_path
-from pyp.utils import movie2regex, timer
+from pyp.utils import movie2regex, timer, cuda_info
 from pyp.streampyp.logging import TQDMLogger
 
 from pyp.system.logging import logger
@@ -627,8 +627,7 @@ def read_tilt_series(
             t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
             t.start()
             logger.info(f"Processing movie frames using: {parameters['movie_ali']}")
-            import torch
-            if torch.cuda.is_available() and 'motioncor' in parameters["movie_ali"]:
+            if cuda_info.is_gpu_available() and 'motioncor' in parameters["movie_ali"]:
                 with tqdm(desc="Progress", total=len(sorted_tilts), file=TQDMLogger()) as pbar:
                     for tilt in sorted_tilts:
                         frame_name = tilt[0].replace(file_format, "")

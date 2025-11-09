@@ -59,8 +59,7 @@ def ConvertSMVer2Cores(major, minor):
             (9, 0): 128,  # Hopper
             }.get((major, minor), 0)
 
-
-def get_gpu_info():
+def get_cuda():
     try:
         libnames = ('libcuda.so', 'libcuda.dylib', 'nvcuda.dll', 'cuda.dll')
         for libname in libnames:
@@ -72,7 +71,25 @@ def get_gpu_info():
                 break
         else:
             raise OSError("could not load any of: " + ' '.join(libnames))
+        result = cuda.cuInit(0)
+        if result != CUDA_SUCCESS:
+            cuda.cuGetErrorString(result, ctypes.byref(error_str))
+            logger.error("cuInit failed with error code %d: %s" % (result, error_str.value.decode()))
+            return None
+        else:
+            return cuda
+    except:
+        return None
 
+def is_gpu_available():
+    cuda = get_cuda()
+    if cuda is None:
+        return False
+    else:
+        return cuda.cuInit(0) == CUDA_SUCCESS
+
+def get_gpu_info():
+    try:
         nGpus = ctypes.c_int()
         name = b' ' * 100
         cc_major = ctypes.c_int()
@@ -88,6 +105,7 @@ def get_gpu_info():
         context = ctypes.c_void_p()
         error_str = ctypes.c_char_p()
 
+        cuda = get_cuda()
         result = cuda.cuInit(0)
         if result != CUDA_SUCCESS:
             cuda.cuGetErrorString(result, ctypes.byref(error_str))
