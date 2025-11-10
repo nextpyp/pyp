@@ -655,12 +655,12 @@ def parse_arguments(block):
 
             # create relative symlinks in raw/ folder
             raw_path = Path(project_params.resolve_path(parameters['data_path']))
-            raw_path_stem = raw_path.stem.split('*')[0]
-            for ext in [ raw_path.name, raw_path_stem+'.order', raw_path_stem+'.rawtlt', raw_path_stem+'.xml' ]: 
+            raw_path_suffix = raw_path.suffix
+            for ext in [ raw_path.name, raw_path.name.replace(raw_path_suffix,'.order'), raw_path.name.replace(raw_path_suffix,'.rawtlt'), raw_path.name.replace(raw_path_suffix,'.xml') ]: 
                 path = os.path.join(raw_path.parent,ext)
                 number_of_files = len(glob.glob(path))
                 if number_of_files:
-                    logger.info(f"Linking {number_of_files:,} files into raw/*{Path(ext).suffix}")
+                    logger.info(f"Linking {number_of_files:,} files into raw/{Path(ext).name}")
                     symlink_relative_pattern(path,os.path.join(os.getcwd(),"raw"))                    
                 if parameters.get("data_mode") == "spr":
                     break
