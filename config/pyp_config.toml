@@ -1852,7 +1852,6 @@ name = "Read patches"
 description = "Path to previously saved patches. Parameters related to patch extraction should be the same as used in that extraction"
 type = "path"
 path = { type="files" }
-hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.imgs_per_label]
 name = "Images per label"
