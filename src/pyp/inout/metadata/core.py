@@ -2184,13 +2184,13 @@ def tomo_extract_coordinates(
     
     # get metadata from pickle
     pkl = Path("pkl") / f"{name}.pkl"
-    assert (os.path.exists(pkl)), f"{pkl} does not exist, please re-run tomoswarm"
+    assert (os.path.exists(pkl)), f"{pkl} does not exist, please re-run pre-processing"
     metadata_object = pyp_metadata.LocalMetadata(pkl)
     metadata = metadata_object.data
 
     # check if we have all required data
     for key in ["image", "tomo", "order", "ali", "tlt", "ctf"]:
-        assert (key in metadata), f"{key} is not included in {pkl}, please re-run tomoswarm"
+        assert (key in metadata), f"{key} is not included in {pkl}, please re-run pre-processing"
 
     # Decompress
     # refinement = frealign_parfile.Parameters.decompress_parameter_file(

@@ -452,7 +452,7 @@ def tomo_swarm_halves( name, project_path, working_path, parameters,tomogram=Fal
         # convert metadata to files
         metadata_object.meta2PYP(path=working_path / name,data_path=os.path.join(project_path,"raw/"))
     else:
-        raise Exception("Please run normal preprocessing first")
+        raise Exception(f"Cannot find file: {name}.pkl")
 
     assert "drift" in metadata, "No drift metadata found?"
 
