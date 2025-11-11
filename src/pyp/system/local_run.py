@@ -39,7 +39,7 @@ def create_pyp_multirun_file(
         )
         f.write("mkdir -p %s\n" % Path(os.environ["PYP_SCRATCH"]) / str(i))
         f.write(
-            "{0}/pyp_main.py --file raw/{2} > ../log/{1}_{2}.log".format(
+            "{0}/pyp_main.py --file 'raw/{2}' > '../log/{1}_{2}.log'".format(
                 os.environ["PYTHONDIR"], timestamp, i
             )
         )

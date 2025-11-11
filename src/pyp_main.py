@@ -1458,7 +1458,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
 
         # convert frame average to 32-bits
         if parameters.get("movie_depth") and os.path.exists(name+".avg"):
-            command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
+            command = "{0}/bin/newstack -mode 2 '{1}' '{1}~' && mv '{1}~' '{1}'".format(
                 get_imod_path(), name + ".avg"
             )
             local_run.run_shell_command(command)
@@ -1522,7 +1522,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
             # we can't really deal with dm4's properly, so we just convert to mrc and continue on (not the most efficient, but it works)
             if extension == ".dm4":
                 stem = Path(filename).stem
-                local_run.run_shell_command(f"{get_imod_path()}/bin/newstack {stem}.dm4 {stem}.mrc")
+                local_run.run_shell_command(f"{get_imod_path()}/bin/newstack '{stem}.dm4' '{stem}.mrc'")
                 os.remove(stem+".dm4")
                 extension = ".mrc"
                 raw_name = stem + extension
@@ -1644,7 +1644,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
     if not os.path.exists(name + ".mrc") or not os.path.samefile(name + ".avg", name + ".mrc"):
         if parameters.get("movie_depth"):
             logger.info("Converting average to 16-bits")
-            command = "{0}/bin/newstack -mode 12 {1}.avg {1}.mrc && rm -f {1}.mrc~".format(
+            command = "{0}/bin/newstack -mode 12 '{1}.avg' '{1}.mrc' && rm -f '{1}.mrc~'".format(
                 get_imod_path(), name
             )
             local_run.run_shell_command(command)

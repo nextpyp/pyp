@@ -50,13 +50,12 @@ def transfer_files(project_path,d,file):
             logger.info("Saving %s" % Path(target).name)
             shutil.copy2(file, target)
 
-def save_results(files, project_path):
+def save_results(name, files, project_path):
     """Save processing results"""
-
     arguments = []
     for d in files.keys():
-        for f in files[d].split():
-            for file in glob.glob(f):
+        for f in files[d]:
+            for file in glob.glob(name+f):
                 arguments.append(
                     (
                         project_path,

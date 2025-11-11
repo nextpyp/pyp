@@ -1213,7 +1213,7 @@ def spk_extract_and_process(
         local_run.run_shell_command(command)
 
     # make projection for cleaning particles by 2D classification
-    command = "{0}/bin/xyzproj -input {1}.rec -axis Y -angles 0,0,0 -output {1}.proj".format(
+        command = "{0}/bin/xyzproj -input '{1}.rec' -axis Y -angles 0,0,0 -output '{1}.proj'; rm '{1}.rec'".format(
         get_imod_path(), spike_name
     )
     # local_run.run_shell_command(command)
