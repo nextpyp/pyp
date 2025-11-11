@@ -2987,7 +2987,7 @@ _description = "Parameters for tomogram segmentation"
 name = "Method"
 description = "Segmentation method"
 type = "enum"
-enum = { membrain="membrain-seg (membranes)", tardis_mem="tardis (membranes)", tardis_actin="tardis (actin filaments)", tardis_mt="tardins (microtubules)" } 
+enum = { membrain="membrain-seg (membranes)", tardis_mem="tardis (membranes)", tardis_actin="tardis (actin filaments)", tardis_mt="tardis (microtubules)" } 
 default = "membrain"
 
 [tabs.tomo_mem.tardis_mem_patch_size]
