@@ -1821,7 +1821,6 @@ name = "Patch coordinate location"
 description = "Path to the parquet file containing patch coordinates for iterative exploration"
 type = "path"
 path = { type="files" }
-input = { type="parquetfile" }
 condition = { arg="use_iterative", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
