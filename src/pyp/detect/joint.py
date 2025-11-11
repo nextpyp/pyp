@@ -313,11 +313,24 @@ def tomotrain(args):
         compress = ""
 
     if args.get('detect_nn3d_use_gpu_train'):
+        # TODO: Support multiple GPUs
         gpu = "--gpus 0"
     else:
         gpu = "--gpus -1"
 
-    command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} {gpu} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --save_all --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --train_img_txt '{train_images}' --train_coord_txt '{train_coords}' --val_img_txt '{validation_images}' --val_coord_txt '{validation_coords}' --test_img_txt '{validation_images}' --test_coord_txt '{validation_coords}' 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
+    masking = ""
+    if args['detect_nn3d_use_masking']:
+        if 'detect_milo_segmentation_dir' not in args:
+            raise Exception("Segmentation directory not provided")
+
+        masking = f"--use_masking --segmentation_dir {args['detect_nn3d_segmentation_dir']} --mask_radius {args['detect_nn3d_mask_radius']} "
+
+        if args['detect_nn3d_mask_segmentation']:
+            masking += "--mask_segmentation "
+        if args['detect_nn3d_impute_tomograms']:
+            masking += "--impute_tomograms "
+
+    command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} {gpu} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --save_all --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} {masking}--train_img_txt '{train_images}' --train_coord_txt '{train_coords}' --val_img_txt '{validation_images}' --val_coord_txt '{validation_coords}' --test_img_txt '{validation_images}' --test_coord_txt '{validation_coords}' 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
     local_run.stream_shell_command(command)
 
     # display log if available
@@ -419,11 +432,24 @@ def tomoeval(args,name):
             compress = ""
 
         if args.get('detect_nn3d_use_gpu_eval'):
+            # TODO: Support multiple GPUs
             gpu = "--gpus 0"
         else:
             gpu = "--gpus -1"
 
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {gpu} {fiber} --down_ratio 2 --contrastive --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} --test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
+        masking = ""
+        if args['detect_nn3d_use_masking']:
+            if 'detect_milo_segmentation_dir' not in args:
+                raise Exception("Segmentation directory not provided")
+
+            masking = f"--use_masking --segmentation_dir {args['detect_nn3d_segmentation_dir']} --mask_radius {args['detect_nn3d_mask_radius']} "
+
+            if args['detect_nn3d_mask_segmentation']:
+                masking += "--mask_segmentation "
+            if args['detect_nn3d_impute_tomograms']:
+                masking += "--impute_tomograms "
+
+        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {gpu} {fiber} --down_ratio 2 --contrastive --translation_ratio {args['detect_nn3d_translation_ratio']} --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} {masking}--test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
         local_run.stream_shell_command(command)
         results_folder = os.getcwd()
 
@@ -542,19 +568,82 @@ def milotrain(args):
         compress = ""
 
     if args.get('detect_milo_use_gpu'):
+        # TODO: Support multiple GPUs
         gpu = "--gpus 0"
     else:
         gpu = "--gpus -1"
 
-    logger.info(f"Training MiLoPYP's exploration module")
-    if 'detect_milo_mode' in args and '2d' in args['detect_milo_mode']:
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+    if 'detect_milo_surface' in args:
+        logger.info(f"Training MiLoPYP's exploration module with surface constraint")
 
-        output_path = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample")
+        if 'detect_milo_segmentation_dir' not in args:
+            raise Exception("Segmentation directory not provided")
+
+        bidirectional_extract = "--bidirectional_extract " if args['detect_milo_bidirectional_extract'] else ""
+        offset = f"--offset {args['detect_milo_offset']} " if args['detect_milo_use_dog'] != 1 else ""
+        min_distance = f"--dog_min_distance {args['detect_milo_dog_min_distance']} " if args['detect_milo_use_dog'] != 0 else ""
+        max_distance = f"--dog_max_distance {args['detect_milo_dog_max_distance']} " if args['detect_milo_use_dog'] != 0 else ""
+        use_vector_normal = "--use_vector_normal " if args['detect_milo_use_vector_normal'] else ""
+
+        iterative = ""
+        if args['detect_milo_use_iterative']:
+            iterative = f"--patch_coordinates {args['detect_milo_patch_coordinates']} --labels {args['detect_milo_labels']} "
+
+            if args['detect_milo_exclude_labels']:
+                iterative += "--exclude_labels "
+
+        save_patches = "--save_patches " if args['detect_milo_save_patches'] else ""
+        read_patches = f"--read_patches {args['detect_milo_read_patches']} " if 'detect_milo_read_patches' in args else ""
+
+        if 'detect_milo_mode' in args and '2d' in args['detect_milo_mode']:
+            command = (f"{NN_INIT_COMMANDS_3D} "
+                       f"python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d "
+                       f"--num_epochs {args['detect_milo_num_epochs']} "
+                       f"--exp_id test_sample "
+                       f"--bbox {args['detect_milo_bbox']} "
+                       f"--dataset surface_constrained "
+                       f"--arch simsiam2d3d_18  "
+                       f"--lr {args['detect_milo_lr']} "
+                       f"--train_img_txt {train_images} "
+                       f"--batch_size {args['detect_milo_batch_size']} "
+                       f"--val_intervals {args['detect_milo_val_interval']} "
+                       f"--save_all "
+                       f"--gauss {args['detect_milo_gauss']} "
+                       f"--dog {args['detect_milo_dog']} "
+                       f"{compress} "
+                       f"{gpu} "
+                       f"--segmentation_dir {args['detect_milo_segmentation_dir']} "
+                       f"--use_dog {args['detect_milo_use_dog']} "
+                       f"{bidirectional_extract}"
+                       f"{offset}"
+                       f"{min_distance}"
+                       f"{max_distance}"
+                       f"{use_vector_normal}"
+                       f"--boundary_factor {args['detect_milo_boundary_factor']} "
+                       # f"--interp_order {args['detect_milo_interp_order']} "
+                       f"{iterative}"
+                       f"{save_patches}"
+                       f"{read_patches}"
+                       f"2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}")
+
+            output_path = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample")
+        else:
+            raise Exception("3d not implemented yet")
+            # command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+
+            output_path = Path(os.getcwd() + "/exp/simsiam3d/test_sample")
+
     else:
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+        logger.info(f"Training MiLoPYP's exploration module")
+        if 'detect_milo_mode' in args and '2d' in args['detect_milo_mode']:
+            command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam2d3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
 
-        output_path = Path(os.getcwd() + "/exp/simsiam3d/test_sample")
+            output_path = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample")
+        else:
+            # Todo: Why is the 3D version taking simsiam2d3d as dataset?
+            command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+
+            output_path = Path(os.getcwd() + "/exp/simsiam3d/test_sample")
 
     local_run.stream_shell_command(command)
 
@@ -568,6 +657,10 @@ def milotrain(args):
         shutil.copy2( path, output_folder )
     for path in output_path.rglob('log.txt'):
         shutil.copy2( path, os.getcwd() )
+
+    # copy saved patches to train folder
+    for path in output_path.rglob('*.npz'):
+        shutil.copy2( path, train_folder)
 
     # parse output
     with open("log.txt") as f:
@@ -667,9 +760,6 @@ def miloeval(args):
         args["detect_milo_model"] = model
 
     if 'detect_milo_model' in args.keys() and os.path.exists( project_params.resolve_path(args['detect_milo_model']) ):
-
-        logger.info(f"Evaluating MiLoPYP's exploration module using {Path(project_params.resolve_path(args['detect_milo_model'])).name}")
-        
         # setup local scratch area
         scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "eval" )
         os.makedirs(scratch_train)
@@ -685,19 +775,80 @@ def miloeval(args):
         input_model = project_params.resolve_path(args['detect_milo_model'])
 
         if args.get('detect_milo_use_gpu'):
+            # TODO: Support multiple GPUs
             gpu = "--gpus 0"
         else:
             gpu = "--gpus -1"
-            
-        if '2d' in args['detect_milo_mode']:
-            command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {scratch_train + '_testing.log'}"
 
-            output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
+        if 'detect_milo_surface' in args:
+            logger.info(f"Evaluating MiLoPYP's exploration module with surface constraint using {Path(project_params.resolve_path(args['detect_milo_model'])).name}")
+
+            if 'detect_milo_segmentation_dir' not in args:
+                raise Exception("Segmentation directory not provided")
+
+            bidirectional_extract = "--bidirectional_extract " if args['detect_milo_bidirectional_extract'] else ""
+            offset = f"--offset {args['detect_milo_offset']} " if args['detect_milo_use_dog'] != 1 else ""
+            min_distance = f"--dog_min_distance {args['detect_milo_dog_min_distance']} " if args['detect_milo_use_dog'] != 0 else ""
+            max_distance = f"--dog_max_distance {args['detect_milo_dog_max_distance']} " if args['detect_milo_use_dog'] != 0 else ""
+            use_vector_normal = "--use_vector_normal " if args['detect_milo_use_vector_normal'] else ""
+
+            iterative = ""
+            if args['detect_milo_use_iterative']:
+                iterative = f"--patch_coordinates {args['detect_milo_patch_coordinates']} --labels {args['detect_milo_labels']} "
+
+                if args['detect_milo_exclude_labels']:
+                    iterative += "--exclude_labels "
+
+            save_patches = "--save_patches " if args['detect_milo_save_patches'] else ""
+            read_patches = f"--read_patches {args['detect_milo_read_patches']} " if 'detect_milo_read_patches' in args else ""
+
+            if 'detect_milo_mode' in args and '2d' in args['detect_milo_mode']:
+                command = (f"{NN_INIT_COMMANDS_3D} "
+                           f"python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d "
+                           f"--num_epochs {args['detect_milo_num_epochs']} "
+                           f"--exp_id test_sample "
+                           f"--bbox {args['detect_milo_bbox']} "
+                           f"--dataset surface_constrained "
+                           f"--arch simsiam2d3d_18  "
+                           f"--test_img_txt {imgs_file} "
+                           f"--load_model {input_model} "
+                           f"--gauss {args['detect_milo_gauss']} "
+                           f"--dog {args['detect_milo_dog']} "
+                           f"{compress} "
+                           f"{gpu} "
+                           f"--segmentation_dir {args['detect_milo_segmentation_dir']} "
+                           f"--use_dog {args['detect_milo_use_dog']} "
+                           f"{bidirectional_extract}"
+                           f"{offset}"
+                           f"{min_distance}"
+                           f"{max_distance}"
+                           f"{use_vector_normal}"
+                           f"--boundary_factor {args['detect_milo_boundary_factor']} "
+                           # f"--interp_order {args['detect_milo_interp_order']} "
+                           f"{iterative}"
+                           f"{save_patches}"
+                           f"{read_patches}"
+                           f"2>&1 | tee {scratch_train + '_testing.log'}")
+
+                output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
+            else:
+                raise Exception("3d not implemented yet")
+                # command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+
+                output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
         else:
-            command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {scratch_train + '_testing.log'}"
+            logger.info(f"Evaluating MiLoPYP's exploration module using {Path(project_params.resolve_path(args['detect_milo_model'])).name}")
 
-            output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
+            if '2d' in args['detect_milo_mode']:
+                command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_2d3d.py simsiam2d3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam2d3d --arch simsiam2d3d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {scratch_train + '_testing.log'}"
+
+                output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
+
+            else:
+                command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d --exp_id test_sample --bbox {args['detect_milo_bbox']} --dataset simsiam3d --arch simsiam2d_18 --test_img_txt {imgs_file} --load_model {input_model} --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {scratch_train + '_testing.log'}"
+
+                output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
         local_run.stream_shell_command(command)
         
@@ -710,7 +861,8 @@ def miloeval(args):
         os.makedirs( output_folder )
         
         # generate 2D visualization plots
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 2>&1 | tee {scratch_train +  '_plot2d.log'}"
+        use_2d = "--use_2d " if args['detect_milo_use_2d'] else ""
+        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 --imgs_per_label {args['detect_milo_imgs_per_label']} {use_2d}2>&1 | tee {scratch_train +  '_plot2d.log'}"
 
         local_run.run_shell_command(command)             
 
