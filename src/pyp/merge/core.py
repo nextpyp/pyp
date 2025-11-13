@@ -13,7 +13,7 @@ from pyp.inout.image.core import get_image_dimensions
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.merge import weights as pyp_weights
 from pyp.system import project_params
-from pyp.system.local_run import run_shell_command
+from pyp.system.local_run import run_shell_command, stream_shell_command
 from pyp.system.utils import get_imod_path, get_aretomo_path, get_aretomo3_path, get_gpu_ids
 
 from pyp.system.logging import logger
@@ -338,7 +338,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
         )
         run_shell_command(command)
 
-    elif "aretomo" in parameters["tomo_rec_method"].lower() and ( "aretomo" not in parameters["tomo_ali_method"].lower() or force):
+    elif "aretomo" in parameters["tomo_rec_method"].lower() and ( parameters["tomo_ali_method"].lower() != parameters["tomo_rec_method"].lower() or force):
 
         if Path(f"{name}_aretomo.rec").exists():
             os.rename(f"{name}_aretomo.rec", f"{name}.rec")
@@ -660,9 +660,9 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -VolZ {int(1.0 * thickness)} \
 -Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
-                run_shell_command(command)
+                stream_shell_command(command)
                 
-                assert os.path.exists(f"{name}_aligned_Vol.mrc"), "AreTomo3 reconstruction failed, no output file found"
+                assert os.path.exists(f"{name}_aligned_Vol.mrc"), "AreTomo3 reconstruction failed"
 
                 # rename output from {name}_aligned_Vol.mrc to {name}.rec
                 # rename output from {name}_Vol.mrc to {name}.rec
@@ -675,3 +675,6 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 os.remove(f"{name}_aligned.mrc")
                 os.remove(f"{name}_aligned.rawtlt")
                 os.remove(f"{name}_aligned.aln")
+
+    else:
+        logger.warning(f"Skipping reconstruction because {parameters["tomo_rec_method"].lower()} was already used for alignment")

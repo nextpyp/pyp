@@ -2087,6 +2087,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # if in sessions or legacy pre-processing
     if parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "":
+        output = ""
+
+        # pack all metadata and save into one pickle file
+        local_metadata = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)
+        local_metadata.loadFiles()
 
         match parameters.get("tomo_denoise_method"):
             case "isonet":
