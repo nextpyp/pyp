@@ -2096,22 +2096,29 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         match parameters.get("tomo_denoise_method"):
             case "isonet":
                 if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet_model"))):
-                    new_reconstruction = isonet_tools.isonet_predict( name, project_path, parameters)
+                    output = isonet_tools.isonet_predict( name, project_path, parameters)
                 else:
                     logger.info("IsoNET model not found, skipping denoising")
             case "topaz":
-                new_reconstruction = topaz_tools.topaz_tomo_denoise( name, project)
+                topaz.topaz_tomo_denoise(name, parameters, raw_rec_location=Path.cwd(), working_path=working_path)
             case "cryocare":
                 if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_cryocare_model"))):
-                    new_reconstruction = cryocare_tools.cryocare_tomo_denoise( name, project_path, parameters)
+                    output = cryocare.cryocare_predict( working_path, project_path, name, parameters)
                 else:
                     logger.info("cryoCARE model not found, skipping denoising")
             case "noise2map":
-                new_reconstruction = noise2map_tools.noise2map_tomo_denoise( name, project_path, parameters)
+                first_half = name + "_half1.rec"
+                second_half = first_half.replace("_half1.rec","_half2.rec")
+                logger.info(f"## Generating half-tomograms ##")
+                cryocare.tomo_swarm_halves( name, Path(project_path), working_path, parameters, tomogram=True)                
+                output = warptools_noise2map(first_half, parameters, tomogram=True)
             case _:
                 pass
+        if os.path.exists(output):
+            tomoswarm_epilogue( output, name, project_path, working_path, parameters)
 
         if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
+            new_reconstruction = ""
             match parameters.get("tomo_mem_method"):
                 case "membrain":
                     if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
@@ -2120,6 +2127,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                         logger.info("MemBrain model not found, skipping segmentation")
                 case _:
                     new_reconstruction = Tardis.run_tardis( name, parameters )
+            if os.path.exists(new_reconstruction):
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
         
         # if in sessions
         if parameters.get("micromon_block") == "": 
