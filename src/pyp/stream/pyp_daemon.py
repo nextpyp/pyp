@@ -362,9 +362,17 @@ def pyp_daemon(args):
                 filelist += glob.glob( os.path.join( session_dir, "csp", "*.*" ) )
                 filelist += glob.glob( os.path.join( session_dir, "sva", "*.*" ) )
                 filelist += glob.glob( os.path.join( session_dir, "tomo", "*.*" ) )
-                [ os.remove(f) for f in filelist ]
-                os.remove(clear_flag)
-                logger.info(f"Removed {len(filelist)} file(s)")
+                # TODO: Add progress bar to improve responsiveness since these deletions can take a while
+                try:
+                    logger.info(f"Removing {len(filelist):,} file(s) from {session_dir}")
+                    with tqdm(desc="Progress", total=len(filelist), file=TQDMLogger()) as pbar:
+                        for f in filelist:
+                            os.remove(f)
+                            pbar.update(1)
+                    os.remove(clear_flag)
+                except:
+                    logger.warning("Failed to remove files")
+                    pass
 
             except:
                 logger.info("Cannot remove clear file")
