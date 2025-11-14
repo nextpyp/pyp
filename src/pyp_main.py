@@ -2085,11 +2085,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     elif parameters.get("micromon_block") == "tomo-picking-closed" and parameters.get("tomo_pick_method") == "manual":
         parameters["tomo_pick_vir_rad"] = parameters["tomo_vir_rad"] = parameters["tomo_spk_vir_rad"] = parameters["tomo_pick_rad"]
 
-    # if in sessions or legacy pre-processing
+    # if in sessions or legacy pre-processing, run tomogram denoising and/or segmentation
     if parameters.get("micromon_block") == "tomo-preprocessing" or parameters.get("micromon_block") == "":
         output = ""
 
-        # pack all metadata and save into one pickle file
+        # pack all metadata we have so far and save into a pickle file
         local_metadata = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)
         local_metadata.loadFiles()
 
@@ -2100,7 +2100,9 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 else:
                     logger.info("IsoNET model not found, skipping denoising")
             case "topaz":
-                topaz.topaz_tomo_denoise(name, parameters, raw_rec_location=Path.cwd(), working_path=working_path)
+                topaz_temp = working_path / "topaz_temp"
+                os.makedirs( topaz_temp, exist_ok=True)
+                output = topaz.topaz_tomo_denoise(name, parameters, raw_rec_location=Path.cwd(), working_path=topaz_temp)
             case "cryocare":
                 if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_cryocare_model"))):
                     output = cryocare.cryocare_predict( working_path, project_path, name, parameters)
@@ -2110,12 +2112,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 first_half = name + "_half1.rec"
                 second_half = first_half.replace("_half1.rec","_half2.rec")
                 logger.info(f"## Generating half-tomograms ##")
-                cryocare.tomo_swarm_halves( name, Path(project_path), working_path, parameters, tomogram=True)                
+                cryocare.tomo_swarm_halves( name, Path(project_path), working_path, parameters, tomogram = True, inplace = True )                
                 output = warptools_noise2map(first_half, parameters, tomogram=True)
             case _:
                 pass
         if os.path.exists(output):
-            tomoswarm_epilogue( output, name, project_path, working_path, parameters)
+            tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise = True )
 
         if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
             new_reconstruction = ""
@@ -4191,7 +4193,7 @@ def tomoswarm_prologue():
     
     return args, name, project_path, working_path, parameters
     
-def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation=False ):
+def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=False, segmentation=False ):
     """ Save resulting tomogram and update corresponding images and metadata
 
     Parameters
@@ -4207,26 +4209,43 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
     parameters :
         pyp parameters
     """    
+    
+    if denoise:
+        ext = "_den"
+    elif segmentation:
+        ext = "_seg"
+    else:
+        ext = "_rec"
+    
     # generate webp files for visualization
     plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True )
     
     # copy outputs to project folder
-    if segmentation:
-        target = os.path.join( project_path, "mrc", name + "_seg.rec" )
-    else:
-        target = os.path.join( project_path, "mrc", name + ".rec" )
+    target = os.path.join( project_path, "mrc", name + ext + ".rec" )
 
     if os.path.exists(target):
         os.remove(target)
 
-    if parameters.get("tomo_rec_depth") and not segmentation:
+    if parameters.get("tomo_rec_depth") and not segmentation and not denoise:
         logger.info("Converting tomogram to 16-bits")
         command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
         local_run.run_shell_command(command)
     else:
-        shutil.copy2( name + "_seg.rec", target )
+        shutil.copy2( new_reconstruction, target )
 
-    for pattern in [ "_rec.webp", "_sides.webp", ".webp" ]:
+    if denoise:
+        target = os.path.join( project_path, 'webp', name + '_den.webp' )
+        if os.path.exists(target):
+            os.remove(target)
+        shutil.copy2( name + '_rec.webp', target )
+    elif segmentation:
+        target = os.path.join( project_path, 'webp', name + '_seg.webp' )
+        if os.path.exists(target):
+            os.remove(target)
+        shutil.copy2( name + '_rec.webp', target )
+    else:
+        extensions = [ "_rec.webp", "_sides.webp", ".webp" ]
+        for pattern in extensions:
         if os.path.exists(name + pattern):
             target = os.path.join( project_path, 'webp', name + pattern )
             if os.path.exists(target):
@@ -4234,6 +4253,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
             shutil.copy2( name + pattern, target )
 
     # read metadata from pickle file
+    if not denoise and not segmentation:
     metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
     
     # dump files to local scratch
@@ -5847,9 +5867,9 @@ if __name__ == "__main__":
                     raw_rec_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc"
                     denoised_rec_location = project_path / "mrc"
 
-                    topaz.topaz_tomo_denoise(name, parameters, raw_rec_location, working_path)
+                    new_reconstruction = topaz.topaz_tomo_denoise(name, parameters, raw_rec_location, working_path)
 
-                    tomoswarm_epilogue( name + ".rec", name, project_path, working_path, parameters)
+                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
 
                     logger.info("nextPYP (topaz denoising) finished successfully")
                 except:

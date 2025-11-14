@@ -250,3 +250,5 @@ def topaz_tomo_denoise(name,parameters,raw_rec_location,working_path):
 2>&1 | tee {time_stamp}_topaz_denoise3d.log"
 
     local_run.stream_shell_command(command)
+    
+    return os.path.join( working_path, name + ".rec")

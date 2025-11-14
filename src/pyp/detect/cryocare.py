@@ -424,7 +424,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
     
     return output
 
-def tomo_swarm_halves( name, project_path, working_path, parameters,tomogram=False):
+def tomo_swarm_halves( name, project_path, working_path, parameters, tomogram=False, inplace = False):
     """
         Generate half tomograms for cryoCARE training
     """
@@ -442,8 +442,11 @@ def tomo_swarm_halves( name, project_path, working_path, parameters,tomogram=Fal
     else:
         raise Exception("Unknown dataset or session name")
     
-    load_config_files( dataset, project_path, working_path / name)
-    load_tomo_results( name, parameters, project_path, working_path / name)
+    if inplace:
+        shutil.copy2( os.path.join(current_dir, f"{name}.pkl"), f"{name}.pkl" )
+    else:
+        load_config_files( dataset, project_path, working_path / name)
+        load_tomo_results( name, parameters, project_path, working_path / name)
 
     # unpack pkl file
     if os.path.exists(f"{name}.pkl"):
