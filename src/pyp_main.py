@@ -4218,7 +4218,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
         ext = "_rec"
     
     # generate webp files for visualization
-    plot.tomo_slicer_gif( new_reconstruction, name + "_rec.webp", True )
+    plot.tomo_slicer_gif( new_reconstruction, name + ext + ".webp", True )
     
     # copy outputs to project folder
     target = os.path.join( project_path, "mrc", name + ext + ".rec" )
@@ -4237,12 +4237,12 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
         target = os.path.join( project_path, 'webp', name + '_den.webp' )
         if os.path.exists(target):
             os.remove(target)
-        shutil.copy2( name + '_rec.webp', target )
+        shutil.copy2( name + ext + '.webp', target )
     elif segmentation:
         target = os.path.join( project_path, 'webp', name + '_seg.webp' )
         if os.path.exists(target):
             os.remove(target)
-        shutil.copy2( name + '_rec.webp', target )
+        shutil.copy2( name + ext + '.webp', target )
     else:
         extensions = [ "_rec.webp", "_sides.webp", ".webp" ]
         for pattern in extensions:
@@ -5845,7 +5845,7 @@ if __name__ == "__main__":
                     else:
                         new_reconstruction = Tardis.run_tardis( name, parameters )
                     
-                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
+                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters )
 
                     logger.info("nextPYP (segmentation) finished successfully")
                 except:
