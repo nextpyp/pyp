@@ -49,7 +49,6 @@ Data pre-processing consists of doing movie frame alignment, CTF estimation and 
         -slurm_merge_tasks 7                                     \
         -slurm_merge_memory 70
 
-
 The parameters for all pre-processing operations can be controlled using option groups of the form:
   - ``--movie_*``: options for movie frame alignment
   - ``--ctf_*``: options for estimation of the CTF
