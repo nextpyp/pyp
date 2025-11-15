@@ -46,7 +46,6 @@ def get_slurm_path():
 
 def get_imod_path():
     return "/opt/IMOD"
-    # return "export LD_LIBRARY_PATH=/opt/IMOD/qtlib:/opt/IMOD/lib:$LD_LIBRARY_PATH /opt/IMOD"
 
 def get_legacy_imod_path():
     return "/opt/IMOD_4.11.24"
