@@ -4246,19 +4246,19 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
     else:
         extensions = [ "_rec.webp", "_sides.webp", ".webp" ]
         for pattern in extensions:
-        if os.path.exists(name + pattern):
-            target = os.path.join( project_path, 'webp', name + pattern )
-            if os.path.exists(target):
-                os.remove(target)
-            shutil.copy2( name + pattern, target )
+            if os.path.exists(name + pattern):
+                target = os.path.join( project_path, 'webp', name + pattern )
+                if os.path.exists(target):
+                    os.remove(target)
+                shutil.copy2( name + pattern, target )
 
     # read metadata from pickle file
     if not denoise and not segmentation:
-    metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
+        metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
     
-    # dump files to local scratch
-    metadata_object.meta2PYP( path=working_path, data_path=os.path.join(project_path, "raw/"))
-    [ os.remove(i) for i in glob.glob(f"{name}*.*") if Path(i).suffix != ".ctf" ]
+        # dump files to local scratch
+        metadata_object.meta2PYP( path=working_path, data_path=os.path.join(project_path, "raw/"))
+        [ os.remove(i) for i in glob.glob(f"{name}*.*") if Path(i).suffix != ".ctf" ]
 
     # read metadata from pickle file and sent to website
     import pandas as pd
