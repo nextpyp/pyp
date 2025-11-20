@@ -34,7 +34,7 @@ def membrain_preprocessing(parameters, input):
     else:
         output_rescale = input
 
-    template = project_params.resolve_path(parameters["tomo_mem_target"])
+    template = project_params.resolve_path(parameters.get("tomo_mem_target"))
     if parameters["tomo_mem_match_ps"] and os.path.exists(template):
         
         
