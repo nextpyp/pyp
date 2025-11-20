@@ -4228,7 +4228,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
     if os.path.exists(target):
         os.remove(target)
 
-    if parameters.get("tomo_rec_depth") and not segmentation and not denoise:
+    if parameters.get("tomo_rec_depth") and not segmentation:
         logger.info("Converting tomogram to 16-bits")
         command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
         local_run.run_shell_command(command)
