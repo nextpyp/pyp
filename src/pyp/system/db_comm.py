@@ -373,7 +373,7 @@ def load_spr_results(name, parameters, project_path, working_path):
 
     # convert to mrc
     if os.path.exists("{0}.tif".format(name)):
-        command = "{0}/bin/newstack {1}.tif {1}.mrc; rm -f {1}.tif".format(
+        command = "{0}/bin/newstack '{1}.tif' '{1}.mrc'; rm -f '{1}.tif'".format(
             get_imod_path(), name
         )
         run_shell_command(command)
@@ -388,24 +388,20 @@ def save_spr_results(name, parameters, project_path, has_frames):
     # TODO: reorganize in a similar way to load_spr_results
     files = dict()
 
-    files["pkl"] = "{0}.pkl".format(name)
+    files["pkl"] = [ '.pkl' ]
 
     # save frame averages only if raw data has frames
     if has_frames:
         files[
             "mrc"
-        ] = "{0}.mrc {0}_DW.mrc {0}_DW.tif".format(
-            name
-        )
+        ] = [ '.mrc', '_DW.mrc', '_DW.tif' ]
 
     # files['ali'] = '{0}_xray.mod {0}.xf {0}.prexgraw {0}.ccc {0}.blr {0}.mrc {0}_weights.txt {0}_P????_frames.xf {0}_P????_frames_ccc.png {0}_P????_frames.blr {0}_P????_frames_frc.png {0}_frames_matches.gif {0}_P0000_frames_weights_new.png {0}_field.pdf'.format(name)
     files[
         "webp"
-    ] = "{0}.webp {0}_boxed.webp {0}_ctffit.webp".format(
-        name
-    )
+    ] = [ '.webp', '_boxed.webp', '_ctffit.webp' ]
 
-    save_results(files, project_path)
+    save_results(name, files, project_path)
 
 
 def save_spr_results_lean(name, project_path, has_frames):
@@ -413,14 +409,14 @@ def save_spr_results_lean(name, project_path, has_frames):
     # TODO: reorganize in a similar way to load_spr_results
     files = dict()
 
-    files["webp"] = "{0}.webp {0}_ctffit.webp".format(name)
+    files["webp"] = [ '.webp',  '_ctffit.webp' ]
 
     # save frame averages only if raw data has frames
     if has_frames:
-        files["mrc"] = "{0}.mrc".format(name)
-    files["pkl"] = "{0}.pkl".format(name)
+        files["mrc"] = [ '.mrc' ]
+    files["pkl"] = [ '.pkl' ]
 
-    save_results(files, project_path)
+    save_results(name, files, project_path)
 
 
 def load_tomo_results(name, parameters, project_path, working_path):
@@ -521,9 +517,7 @@ def save_tomo_results(name, parameters, current_path):
 
     files[
         "mrc"
-    ] = "{0}.rec {0}_bin.mrc {0}_bin.ali {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
-        name
-    )
+    ] = [ '.rec', '_bin.mrc', '_bin.ali', '_vir????_binned_nad.mrc', '_vir????_ccc_0.vtp', '_vir????_binned_nad_seg.mrc' ]
 
     if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")) and not os.path.exists(os.path.join(current_path,"mrc",name+".mrc")):
         symlink_relative(
@@ -531,23 +525,21 @@ def save_tomo_results(name, parameters, current_path):
             os.path.join(current_path,"mrc",name+".mrc")
         )
     else:
-        files["mrc"] = "{0}.mrc ".format(name) + files["mrc"]
+        files["mrc"].append('.mrc')
     files[
         "webp"
-    ] = "{0}_view.webp {0}_?D_ctftilt.webp {0}_raw.webp {0}_ali.webp {0}_sides.webp {0}_rec.webp {0}_vir????_binned_nad.webp".format(
-        name
-    )
+    ] = [ '_view.webp', '_?D_ctftilt.webp', '_raw.webp', '_ali.webp', '_sides.webp', '_rec.webp', '_vir????_binned_nad.webp' ]
+
     files[
         "sva"
-    ] = "{0}_region_*.rec {0}_spk????.rec {0}_vir????_spk????.mrc {0}_vir????.txt {0}_vir????_cut.txt {0}_spk????.proj".format(
-        name
-    )
-    files["pkl"] = "{0}.pkl".format(name)
-    if parameters.get("tomo_ali_export"):
-        files["ali"] = "{0}.tlt {0}.xf".format(name)
-    files["raw"] = "{0}.rawtlt {0}.order".format(name)
+    ] = [ '_region_*.rec', '_spk????.rec', '_vir????_spk????.mrc', '_vir????.txt', '_vir????_cut.txt', '_spk????.proj' ]
 
-    save_results(files, current_path)
+    files["pkl"] = [ '.pkl' ]
+    if parameters.get("tomo_ali_export"):
+        files["ali"] = [ '.tlt', '.xf' ]
+    files["raw"] = [ '.rawtlt', '.order' ]
+
+    save_results(name, files, current_path)
 
 
 def save_tomo_results_lean(name, parameters, current_path):
@@ -557,9 +549,7 @@ def save_tomo_results_lean(name, parameters, current_path):
 
     files[
         "mrc"
-    ] = "{0}.rec {0}_bin.ali {0}_vir????_binned_nad.mrc {0}_vir????_ccc_0.vtp {0}_vir????_binned_nad_seg.mrc".format(
-        name
-    )
+    ] = [ '.rec', '_bin.ali', '_vir????_binned_nad.mrc', '_vir????_ccc_0.vtp', '_vir????_binned_nad_seg.mrc' ]
 
     if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")) and not os.path.exists(os.path.join(current_path,"mrc",name+".mrc")):
         symlink_relative(
@@ -567,26 +557,23 @@ def save_tomo_results_lean(name, parameters, current_path):
             os.path.join(current_path,"mrc",name+".mrc")
         )
     else:
-        files["mrc"] = "{0}.mrc ".format(name) + files["mrc"]
+        files["mrc"].append( '.mrc' )
 
     files[
         "webp"
-    ] = "{0}.webp {0}_?D_ctftilt.webp {0}_raw.webp {0}_ali.webp {0}_sides.webp {0}_rec.webp {0}_score.webp {0}_rec.png {0}_vir????_binned_nad.webp".format(
-        name
-    )
+    ] = [ '.webp', '_?D_ctftilt.webp', '_raw.webp', '_ali.webp', '_sides.webp', '_rec.webp', '_score.webp', '_rec.png', '_vir????_binned_nad.webp' ]
     files[
         "sva"
-    ] = "{0}_region_*.rec {0}_spk????.rec {0}_vir????_spk????.mrc {0}_vir????.txt {0}_vir????_cut.txt {0}_spk????.proj {0}_vir0000.rec".format(
-        name
-    )
+    ] = [ '_region_*.rec', '_spk????.rec', '_vir????_spk????.mrc', '_vir????.txt', '_vir????_cut.txt', '_spk????.proj', '_vir0000.rec' ]
+
     if parameters.get("tomo_ext_coords"):
-        files["sva"] += " {0}.spk".format(name)
+        files["sva"].append( '.spk' )
 
-    files["pkl"] = "{0}.pkl".format(name)
+    files["pkl"] = [ '.pkl' ]
     if parameters.get("tomo_ali_export"):
-        files["ali"] = "{0}.tlt {0}.xf".format(name)
+        files["ali"] = [ '.tlt', '.xf' ]
 
-    save_results(files, current_path)
+    save_results(name, files, current_path)
 
 def load_csp_results(name, parameters, project_path, working_path):
     """Load existing results from previous runs and standard project parameter files
@@ -607,6 +594,6 @@ def save_csp_results(name, parameters, current_path):
     """Save sp swarm run results into original file path."""
     # TODO: follow sprswarm -- refactor to function
     files = dict()
-    files["csp"] = " {0}_local.webp {0}_*_P0000_combined.webp".format(name)
+    files["csp"] = [ '_local.webp',  '_*_P0000_combined.webp' ] 
 
-    save_results(files, current_path)
+    save_results(name, files, current_path)

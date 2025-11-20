@@ -92,7 +92,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, run_mode, swarm_file="pr
             f.write(
                 "\n".join(
                     [
-                        "cd '{3}/swarm'; export {2}swarm={2}swarm; {0} --keep --file raw/{1} --path '{3}' 2>&1 | tee ../log/{1}_per_particle_refinement.log".format(
+                        "cd '{3}/swarm'; export {2}swarm={2}swarm; {0} --keep --file 'raw/{1}' --path '{3}' 2>&1 | tee '../log/{1}_per_particle_refinement.log'".format(
                             run_pyp(command="pyp", script=True, gpu=gpu),
                             s,
                             parameters["data_mode"],
@@ -107,7 +107,7 @@ def create_pyp_swarm_file(parameters, files, timestamp, run_mode, swarm_file="pr
             f.write(
                 "\n".join(
                     [
-                        "cd '{4}/swarm'; export {3}swarm={3}swarm; {0} --file raw/{2} --path '{4}' 2>&1 | tee ../log/{2}.log".format(
+                        "cd '{4}/swarm'; export {3}swarm={3}swarm; {0} --file 'raw/{2}' --path '{4}' 2>&1 | tee '../log/{2}.log'".format(
                             run_pyp(
                                 command="pyp",
                                 script=True,
@@ -183,7 +183,7 @@ def create_tomohalf_swarm_file(parameters, files, timestamp, swarm_file="cryocar
         f.write(
             "\n".join(
                 [
-                    "cd '{4}/swarm'; export {3}={3}; {0} --file {2} --path '{4}' 2>&1 | tee ../log/{2}.log".format(
+                    "cd '{4}/swarm'; export {3}={3}; {0} --file '{2}' --path '{4}' 2>&1 | tee '../log/{2}.log'".format(
                         run_pyp(
                             command="pyp",
                             script=True,
@@ -209,7 +209,7 @@ def create_sva_mra_swarm_file(files, parameters, iteration, swarm_file="svaswarm
     f.write(
         "\n".join(
             [
-                "cd '{0}'; export svaswarm=svaswarm; {1} --file {2} --iter {3} --no-skip --no-debug 2>&1 | tee ../log/{2}_sva.log".format(
+                "cd '{0}'; export svaswarm=svaswarm; {1} --file '{2}' --iter {3} --no-skip --no-debug 2>&1 | tee '../log/{2}_sva.log'".format(
                     os.getcwd(),
                     run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"]),
                     s,
@@ -251,7 +251,7 @@ def create_csp_swarm_file(files, parameters, iteration, swarm_file="cspswarm.swa
     f.write(
         "\n".join(
             [
-                "cd '{0}'; export cspswarm=cspswarm; {1} --file {2} --iter {3} --no-skip --no-debug 2>&1 | tee ../log/{2}_csp.log".format(
+                "cd '{0}'; export cspswarm=cspswarm; {1} --file '{2}' --iter {3} --no-skip --no-debug 2>&1 | tee '../log/{2}_csp.log'".format(
                     os.getcwd(),
                     run_pyp(command="pyp", script=True, cpus=parameters["slurm_tasks"]),
                     s,

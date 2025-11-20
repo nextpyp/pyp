@@ -23,6 +23,45 @@ from pyp.inout.metadata import pyp_metadata
 
 from pyp.system.logging import logger
 
+def needs_gpu_job(parameters,session_dir):
+    """
+    Determines whether a GPU is required for a specific job based on the provided parameters 
+    and session directory.
+    Args:
+        parameters (dict): A dictionary containing job parameters. Expected keys include:
+            - "data_mode" (str): Specifies the data mode, "spr" or "tomo".
+            - "movie_no_frames" (bool): Indicates whether the data has no frames.
+            - "movie_ali" (str): Specifies the movie alignment method, e.g., "motioncor".
+            - "tomo_ali_method" (str): Specifies the tomogram alignment method, e.g., "aretomo".
+            - "tomo_rec_method" (str): Specifies the tomogram reconstruction method, e.g., "aretomo".
+        session_dir (str): The path to the session directory containing metadata files.
+    Returns:
+        bool: True if a GPU is required for the job, False otherwise.
+    Notes:
+        - The function checks for the presence of `.pkl` files in the session directory's "pkl" subfolder.
+        - If `.pkl` files are found, metadata is loaded to determine GPU requirements based on the 
+            presence of "drift" or "ali" keys and the specified alignment or reconstruction methods.
+        - If no `.pkl` files are found, GPU requirements are determined solely based on the parameters.
+    """
+    
+    gpu = needs_gpu(parameters)
+    
+    pkl_files = glob.glob(os.path.join(session_dir,"pkl","*.pkl"))
+    if len(pkl_files) > 0:
+        pklname = pkl_files[0]
+
+        metadata_object = pyp_metadata.LocalMetadata(pklname, "spr" in parameters["data_mode"])
+        metadata = metadata_object.data
+
+        if not "drift" in metadata and not parameters.get("movie_no_frames") and parameters.get('movie_ali') == "motioncor":
+            gpu = True
+        elif not "ali" in metadata and "aretomo" in parameters.get("tomo_ali_method"):
+            gpu = True
+    elif not parameters.get("movie_no_frames") and parameters.get('movie_ali') == "motioncor" or "aretomo" in parameters.get("tomo_ali_method") or "aretomo" in parameters.get("tomo_rec_method"):
+        gpu = True
+
+    return gpu
+
 def pyp_daemon(args):
     if "refine_model" in args.keys() and args["refine_model"] != None:
         print(args["refine_model"])
@@ -323,9 +362,17 @@ def pyp_daemon(args):
                 filelist += glob.glob( os.path.join( session_dir, "csp", "*.*" ) )
                 filelist += glob.glob( os.path.join( session_dir, "sva", "*.*" ) )
                 filelist += glob.glob( os.path.join( session_dir, "tomo", "*.*" ) )
-                [ os.remove(f) for f in filelist ]
-                os.remove(clear_flag)
-                logger.info(f"Removed {len(filelist)} file(s)")
+                # TODO: Add progress bar to improve responsiveness since these deletions can take a while
+                try:
+                    logger.info(f"Removing {len(filelist):,} file(s) from {session_dir}")
+                    with tqdm(desc="Progress", total=len(filelist), file=TQDMLogger()) as pbar:
+                        for f in filelist:
+                            os.remove(f)
+                            pbar.update(1)
+                    os.remove(clear_flag)
+                except:
+                    logger.warning("Failed to remove files")
+                    pass
 
             except:
                 logger.info("Cannot remove clear file")
@@ -489,7 +536,7 @@ def pyp_daemon(args):
             run_shell_command("chmod u+x '{0}'".format(swarm_file), log_level=logging.NOTSET)
 
             # submit jobs to batch system
-            gpu = needs_gpu(parameters)
+            gpu = needs_gpu_job(parameters,session_dir)
             if gpu:
                 queue = get_gpu_queue(parameters)
             else:

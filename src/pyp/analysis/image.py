@@ -259,7 +259,7 @@ def contrast_stretch(input, output="", resize=100):
         commands.getoutput('{0}/convert {1} -resize {3}% -contrast-stretch 1%x98% {2}'.format(os.environ['IMAGICDIR'], input, output, resize ) )
     """
     run_shell_command(
-        "{0}/convert {1} -resize {3}% -contrast-stretch 1%x2% {2}".format(
+        "{0}/convert '{1}' -resize {3}% -contrast-stretch 1%x2% '{2}'".format(
             os.environ["IMAGICDIR"], input, output, resize
         ), log_level=logging.TRACE
     )

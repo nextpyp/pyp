@@ -178,7 +178,7 @@ done
                 ),
             )
 
-    if slurm_bundle_size > 1 and net_processes > slurm_bundle_size:
+    if slurm_bundle_size >= 1 and net_processes > slurm_bundle_size:
         if Web.exists:
             bundle = int(slurm_bundle_size)
         else:

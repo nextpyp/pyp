@@ -5171,7 +5171,9 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
                 shutil.copy2(f"{name}_aretomo_Imod/{name}_aretomo_st.xf", f"{name}.xf")
                 shutil.copy2(f"{name}_aretomo_Imod/{name}_aretomo_st.tlt", f"{name}.tlt")
                 
-                if os.path.exists(f"{name}_aretomo.rec"):
+                if os.path.exists(f"{name}_aretomo.rec") and parameters.get("tomo_rec_method","") == "aretomo":
+                    if os.path.exists(f"{name}.rec"):
+                        os.remove(f"{name}.rec")
                     os.symlink(f"{name}_aretomo.rec", f"{name}.rec")
 
             except:
@@ -5521,6 +5523,8 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             stream_shell_command(command, observer=obs)
 
+            assert os.path.exists(f"{name}_aretomo_Vol.mrc"), "AreTomo3 reconstruction failed"
+
             # detect removed images and add them to excluded views
             formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
             excluded_tilt_indexes = []
@@ -5570,13 +5574,16 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             stream_shell_command(command)
              
+            assert os.path.exists(f"{name}_aretomo_Vol.mrc"), "AreTomo3 reconstruction failed"
+
             # save output
             try:
                 shutil.copy2(f"{name}_aretomo_Imod/{name}_aretomo_st.xf", f"{name}.xf")
                 shutil.copy2(f"{name}_aretomo_Imod/{name}_aretomo_st.tlt", f"{name}.tlt")
-                
-                if os.path.exists(f"{name}_aretomo.rec"):
-                    os.symlink(f"{name}_aretomo.rec", f"{name}.rec")
+                if os.path.exists(f"{name}_aretomo_Vol.mrc") and parameters.get("tomo_rec_method","") == "aretomo3":
+                    if os.path.exists(f"{name}.rec"):
+                        os.remove(f"{name}.rec")
+                    os.symlink(f"{name}_aretomo_Vol.mrc", f"{name}.rec")
 
             except:
                 if 'Error: GPU' in output:
