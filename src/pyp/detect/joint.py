@@ -449,7 +449,7 @@ def tomoeval(args,name):
             if args['detect_nn3d_impute_tomograms']:
                 masking += "--impute_tomograms "
 
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --arch unet_4 --dataset semi_test {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {gpu} {fiber} --down_ratio 2 --contrastive --translation_ratio {args['detect_nn3d_translation_ratio']} --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} {masking}--test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
+        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --arch unet_4 --dataset semi {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {gpu} {fiber} --down_ratio 2 --contrastive --translation_ratio {args['detect_nn3d_translation_ratio']} --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} {masking}--test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
         local_run.stream_shell_command(command)
         results_folder = os.getcwd()
 
