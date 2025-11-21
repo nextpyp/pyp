@@ -1611,6 +1611,20 @@ default = false
 condition = { arg="use_masking", value="true" }
 hidden = ["stream_tomo"]
 
+[tabs.detect_nn3d.compile]
+name = "Enable Compilation"
+description = "Compile the model with torch.compile. It's recommended to use the same options for training and evaluation."
+type = "bool"
+default = true
+
+[tabs.detect_nn3d.compile_mode]
+name = "Compile mode"
+description = "Mode option for compilation. default for balance between performance and overhead, reduce overhead to reduce overhead possibly at cost of higher memory usage, max autotune for longer but more efficient compilation."
+type = "enum"
+enum = { 0="default", 1="reduce overhead", 2="max autotune" }
+default = "0"
+condition = { arg="compile", value="true" }
+
 [tabs.detect_nn3d.use_gpu_train]
 name = "Use GPU"
 description = "Run on GPU"
@@ -1821,7 +1835,6 @@ name = "Patch coordinate location"
 description = "Path to the parquet file containing patch coordinates for iterative exploration"
 type = "path"
 path = { type="files" }
-input = { type="parquetfile" }
 condition = { arg="use_iterative", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
@@ -1852,7 +1865,20 @@ name = "Read patches"
 description = "Path to previously saved patches. Parameters related to patch extraction should be the same as used in that extraction"
 type = "path"
 path = { type="files" }
-hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.compile]
+name = "Enable Compilation"
+description = "Compile the model with torch.compile. It's recommended to use the same options for training and evaluation."
+type = "bool"
+default = true
+
+[tabs.detect_milo.compile_mode]
+name = "Compile mode"
+description = "Mode option for compilation. default for balance between performance and overhead, reduce overhead to reduce overhead possibly at cost of higher memory usage, max autotune for longer but more efficient compilation."
+type = "enum"
+enum = { 0="default", 1="reduce overhead", 2="max autotune" }
+default = "0"
+condition = { arg="compile", value="true" }
 
 [tabs.detect_milo.imgs_per_label]
 name = "Images per label"

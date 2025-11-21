@@ -136,7 +136,7 @@ def membrain_segmentation(parameters, input, local_output):
         if parameters["tomo_mem_connected_map"] == "number":
             # keep max_number largest components after leaving out min_number largest components
             logger.info(f"Keeping {parameters['tomo_mem_connected_max_number']} largest components after {parameters['tomo_mem_connected_min_number']}")
-            for i in range(1+parameters["tomo_mem_connected_min_number"],1+parameters["tomo_mem_connected_min_number"]+parameters["tomo_mem_connected_max_number"]):
+            for i in range(1+parameters["tomo_mem_connected_min_number"],min(len(sizes), 1+parameters["tomo_mem_connected_min_number"]+parameters["tomo_mem_connected_max_number"])):
                 clean[ label_ids == indexes_by_size[i] ] = 1
         elif parameters["tomo_mem_connected_map"] == "size":
             # remove objects smaller than threshold
