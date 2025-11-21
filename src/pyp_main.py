@@ -4210,7 +4210,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
         Location to save the result in the project folder
     parameters :
         pyp parameters
-    """    
+    """
     
     if denoise:
         ext = "_den"
@@ -4240,8 +4240,8 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
         for pattern in extensions:
             if os.path.exists(name + pattern):
                 target = os.path.join( project_path, 'webp', name + pattern )
-        if os.path.exists(target):
-            os.remove(target)
+                if os.path.exists(target):
+                    os.remove(target)
                 shutil.copy2( name + pattern, target )
     else:
         extensions = [ "_rec.webp", "_sides.webp", ".webp" ]
@@ -4260,10 +4260,10 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
         metadata_object.meta2PYP( path=working_path, data_path=os.path.join(project_path, "raw/"))
         [ os.remove(i) for i in glob.glob(f"{name}*.*") if Path(i).suffix != ".ctf" ]
 
-    # read metadata from pickle file and sent to website
-    import pandas as pd
-    tilt_metadata = pd.read_pickle(f"{os.path.join(project_path,'pkl',name)}.pkl")
-    save_tiltseries_to_website(name, tilt_metadata['web'])
+        # read metadata from pickle file and sent to website
+        import pandas as pd
+        tilt_metadata = pd.read_pickle(f"{os.path.join(project_path,'pkl',name)}.pkl")
+        save_tiltseries_to_website(name, tilt_metadata['web'])
 
 # update particle metadata
 def update_metadata_coordinates(parameters):
