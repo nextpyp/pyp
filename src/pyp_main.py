@@ -2116,6 +2116,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 output = warptools_noise2map(first_half, parameters, tomogram=True)
             case _:
                 pass
+        os.chdir(working_path)
         if os.path.exists(output):
             tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise = True )
 
@@ -2124,11 +2125,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             match parameters.get("tomo_mem_method"):
                 case "membrain":
                     if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
-                        new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
+                        new_reconstruction = MemBrain.run_membrain( project_path, name, parameters, standalone = False )
                     else:
                         logger.info("MemBrain model not found, skipping segmentation")
                 case _:
                     new_reconstruction = Tardis.run_tardis( name, parameters )
+            os.chdir(working_path)
             if os.path.exists(new_reconstruction):
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
         
@@ -4226,23 +4228,21 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
     if os.path.exists(target):
         os.remove(target)
 
-    if parameters.get("tomo_rec_depth") and not segmentation and not denoise:
+    if parameters.get("tomo_rec_depth") and not segmentation:
         logger.info("Converting tomogram to 16-bits")
         command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
         local_run.run_shell_command(command)
     else:
         shutil.copy2( new_reconstruction, target )
 
-    if denoise:
-        target = os.path.join( project_path, 'webp', name + '_den.webp' )
+    if denoise or segmentation:
+        extensions = [ ext + "_rec.webp", ext + "_sides.webp", ext + ".webp" ]
+        for pattern in extensions:
+            if os.path.exists(name + pattern):
+                target = os.path.join( project_path, 'webp', name + pattern )
         if os.path.exists(target):
             os.remove(target)
-        shutil.copy2( name + ext + '.webp', target )
-    elif segmentation:
-        target = os.path.join( project_path, 'webp', name + '_seg.webp' )
-        if os.path.exists(target):
-            os.remove(target)
-        shutil.copy2( name + ext + '.webp', target )
+                shutil.copy2( name + pattern, target )
     else:
         extensions = [ "_rec.webp", "_sides.webp", ".webp" ]
         for pattern in extensions:

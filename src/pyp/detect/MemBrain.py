@@ -34,7 +34,7 @@ def membrain_preprocessing(parameters, input):
     else:
         output_rescale = input
 
-    template = project_params.resolve_path(parameters["tomo_mem_target"])
+    template = project_params.resolve_path(parameters.get("tomo_mem_target"))
     if parameters["tomo_mem_match_ps"] and os.path.exists(template):
         
         
@@ -150,7 +150,7 @@ def membrain_segmentation(parameters, input, local_output):
         # save result
         mrc.write(clean, segmentation)
 
-def run_membrain(project_dir, name, parameters ):
+def run_membrain(project_dir, name, parameters, standalone=True ):
 
     # always try to look for tomograms from parent project
     if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):
@@ -184,12 +184,14 @@ def run_membrain(project_dir, name, parameters ):
         target = glob.glob(f"./{local_output}/*.mrc")[0]
         shutil.move(target, output)
 
-    # produce poor man's visualization
-    reconstruction = mrc.read(local_input)
-    segmentation = mrc.read(output)
-    max = np.max(reconstruction)
-    threshold = segmentation.max()
-    visualization = np.where( segmentation == threshold, max, reconstruction )
-    mrc.write(visualization,local_input)
-
-    return local_input
+    if standalone:
+        # produce poor man's visualization
+        reconstruction = mrc.read(local_input)
+        segmentation = mrc.read(output)
+        max = np.max(reconstruction)
+        threshold = segmentation.max()
+        visualization = np.where( segmentation == threshold, max, reconstruction )
+        mrc.write(visualization,local_input)
+        return local_input
+    else:
+        return output

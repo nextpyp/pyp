@@ -1441,13 +1441,25 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
         Dimensions of output GIF, by default 256
     """
     
+    # _rec.webp -> .webp, _sides.webp, _rec.webp
+    # _seg.webp -> _seg.webp, _seg_sides.webp, _seg_rec.webp
+    # _den.webp -> _den.webp, _den_sides.webp, _den_rec.webp
+    if output.endswith("_rec.webp"):
+        output_image = output.replace("_rec.webp",".webp")
+        output_sides = output.replace("_rec.webp","_sides.webp")
+        output_montage = output
+    else:
+        output_image = output
+        output_sides = output.replace(".webp","_sides.webp")
+        output_montage = output.replace(".webp","_rec.webp")
+         
     averagezslices = calculate_z_binning(tomogram)
     
     extension = Path(tomogram).suffix
 
     tomogram_avg = tomogram.replace(extension,".avg")
     if averagezslices > 1:
-        command = f"{get_imod_path()}/bin/binvol {tomogram} {tomogram_avg}"
+        command = f"{get_imod_path()}/bin/binvol {tomogram} {tomogram_avg} -mode 2"
         if flipyz:
             command += f" -ybinning {averagezslices} -xbinning 1 -zbinning 1"
         else:
@@ -1506,9 +1518,9 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
     # generate a GIF using these pngs
     square_size = int(math.ceil(math.sqrt(len(pngList))))
     if max(dimensions[1:]) * square_size > 16383:
-        rec_output = output.replace(".webp",".png")
+        rec_output = output_montage.replace(".webp",".png")
     else:
-        rec_output = output
+        rec_output = output_montage
     command = "/usr/bin/montage -resize {0}x{1} -geometry +0+0 -tile {2}x {3} {4}".format(
         dimensions[2], dimensions[1], square_size, " ".join(pngList), rec_output
     )
@@ -1517,46 +1529,44 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
     # clean up pngs and flipped tomogram
     [os.remove(png) for png in pngList]
 
-    if output.endswith("_rec.webp"):
+    # generate central slice
+    rec = imageio.mrc.read(tomogram_flip)
+    rec_x = rec.shape[1]
+    rec_z = rec.shape[0]
+    avg_start = rec_z // 2 - int(averagezslices) // 2
+    avg_end = rec_z // 2 + int(averagezslices) // 2
+    imageio.writepng(np.average(rec[avg_start:avg_end, :, :], 0), "image.png")
+    # commands.getstatusoutput('{0}/convert image.png -contrast-stretch 1%x98% image.png'.format( os.environ['IMAGICDIR'] ) )
+    contrast_stretch("image.png")
 
-        # generate central slice
-        rec = imageio.mrc.read(tomogram_flip)
-        rec_x = rec.shape[1]
-        rec_z = rec.shape[0]
-        avg_start = rec_z // 2 - int(averagezslices) // 2
-        avg_end = rec_z // 2 + int(averagezslices) // 2
-        imageio.writepng(np.average(rec[avg_start:avg_end, :, :], 0), "image.png")
-        # commands.getstatusoutput('{0}/convert image.png -contrast-stretch 1%x98% image.png'.format( os.environ['IMAGICDIR'] ) )
-        contrast_stretch("image.png")
+    os.remove(tomogram_avg)
+    os.remove(tomogram_flip)
 
-        os.remove(tomogram_avg)
-        os.remove(tomogram_flip)
+    # compose quad-plot
+    command = "{0}/convert image.png {1}".format(
+        os.environ["IMAGICDIR"], output_image
+    )
+    run_shell_command(command)
 
-        # compose quad-plot
-        command = "{0}/convert image.png {1}".format(
-            os.environ["IMAGICDIR"], output.replace("_rec.webp",".webp")
-        )
-        run_shell_command(command)
+    # generate side projections
+    x_middle = rec_x // 2
 
-        # generate side projections
-        x_middle = rec_x // 2
-    
-        from skimage.transform import resize
-        imageio.writepng(resize(np.average(rec[:,:x_middle, :], 1),(averagezslices*rec_z,rec_x)), "side1.png")
-        imageio.writepng(resize(np.average(rec[:,x_middle + 1:, :], 1),(averagezslices*rec_z,rec_x)), "side2.png")
-        contrast_stretch("side1.png")
-        contrast_stretch("side2.png")
-        run_shell_command(
-            "%s/montage side1.png side2.png -mode concatenate -tile 1x %s"
-            % ( os.environ["IMAGICDIR"], output.replace("_rec.webp","_sides.webp") )
-        )
-        # clean up side pngs
-        pngList = [
-            png
-            for png in os.listdir(".")
-            if png.startswith("side") and png.endswith(".png")
-        ]
-        [os.remove(png) for png in pngList]
+    from skimage.transform import resize
+    imageio.writepng(resize(np.average(rec[:,:x_middle, :], 1),(averagezslices*rec_z,rec_x)), "side1.png")
+    imageio.writepng(resize(np.average(rec[:,x_middle + 1:, :], 1),(averagezslices*rec_z,rec_x)), "side2.png")
+    contrast_stretch("side1.png")
+    contrast_stretch("side2.png")
+    run_shell_command(
+        "%s/montage side1.png side2.png -mode concatenate -tile 1x %s"
+        % ( os.environ["IMAGICDIR"], output_sides )
+    )
+    # clean up side pngs
+    pngList = [
+        png
+        for png in os.listdir(".")
+        if png.startswith("side") and png.endswith(".png")
+    ]
+    [os.remove(png) for png in pngList]
 
 def false_color(input, output):
     
