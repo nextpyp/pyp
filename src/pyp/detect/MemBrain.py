@@ -184,14 +184,4 @@ def run_membrain(project_dir, name, parameters, standalone=True ):
         target = glob.glob(f"./{local_output}/*.mrc")[0]
         shutil.move(target, output)
 
-    if standalone:
-        # produce poor man's visualization
-        reconstruction = mrc.read(local_input)
-        segmentation = mrc.read(output)
-        max = np.max(reconstruction)
-        threshold = segmentation.max()
-        visualization = np.where( segmentation == threshold, max, reconstruction )
-        mrc.write(visualization,local_input)
-        return local_input
-    else:
-        return output
+    return output
