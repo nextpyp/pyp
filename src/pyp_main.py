@@ -2125,7 +2125,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             match parameters.get("tomo_mem_method"):
                 case "membrain":
                     if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
-                        new_reconstruction = MemBrain.run_membrain( project_path, name, parameters, standalone = False )
+                        new_reconstruction = MemBrain.run_membrain( project_path, name, parameters )
                     else:
                         logger.info("MemBrain model not found, skipping segmentation")
                 case _:
@@ -4253,7 +4253,8 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
                 shutil.copy2( name + pattern, target )
 
     # read metadata from pickle file
-    if not denoise:
+    pkl_file = os.path.join( project_path, "pkl", f"{name}.pkl" )
+    if os.path.exists(pkl_file):
         metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
     
         # dump files to local scratch
@@ -5768,7 +5769,7 @@ if __name__ == "__main__":
 
                     new_reconstruction = cryocare.cryocare_predict( working_path, project_path, name, parameters)
 
-                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
+                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=True)
 
                     logger.info("nextPYP (cryocare) finished successfully")
                 except:
@@ -5792,7 +5793,7 @@ if __name__ == "__main__":
                     
                     output = warptools_noise2map(first_half,parameters,tomogram=True)
                     
-                    tomoswarm_epilogue( output, name, project_path, working_path, parameters)
+                    tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise=True)
                     logger.info("nextPYP (noise2map) finished successfully")
                     
                 except:
@@ -5826,7 +5827,7 @@ if __name__ == "__main__":
 
                     new_reconstruction = isonet_tools.isonet_predict( name, project_path, parameters)
 
-                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
+                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=True)
 
                     logger.info("nextPYP (isonet predict) finished successfully")
                 except:
@@ -5868,7 +5869,7 @@ if __name__ == "__main__":
 
                     new_reconstruction = topaz.topaz_tomo_denoise(name, parameters, raw_rec_location, working_path)
 
-                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters)
+                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=True)
 
                     logger.info("nextPYP (topaz denoising) finished successfully")
                 except:

@@ -150,7 +150,7 @@ def membrain_segmentation(parameters, input, local_output):
         # save result
         mrc.write(clean, segmentation)
 
-def run_membrain(project_dir, name, parameters, standalone=True ):
+def run_membrain(project_dir, name, parameters ):
 
     # always try to look for tomograms from parent project
     if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):

@@ -114,26 +114,48 @@ def needs_gpu(parameters):
     
     gpu_for_reconstruction = parameters.get("tomo_rec_force") and "aretomo" in parameters.get("tomo_rec_method")
     
+    block = parameters.get("micromon_block")
+
     gpu_for_denoising = (
-        parameters.get("micromon_block") == "tomo-denoising-train"
-        and not ( parameters.get("tomo_denoise_method_train") == "cryocare" and not parameters.get("tomo_denoise_cryocare_use_gpu") )
-        or parameters.get("micromon_block") == "tomo-denoising-eval" 
-        and not ( parameters.get("tomo_denoise_method") == "topaz" and not parameters.get("tomo_denoise_topaz_use_gpu") )
+        (
+            block == "tomo-denoising-train"
+            and not (
+                parameters.get("tomo_denoise_method_train") == "cryocare"
+                and not parameters.get("tomo_denoise_cryocare_use_gpu")
+            )
+        )
+        or (
+            block in ("tomo-denoising-eval", "tomo-preprocessing")
+            and not (
+                parameters.get("tomo_denoise_method") == "topaz"
+                and not parameters.get("tomo_denoise_topaz_use_gpu")
+            )
+        )
     )
 
-    gpu_for_segmentation = parameters.get("micromon_block") == "tomo-segmentation-open" and parameters.get("tomo_mem_use_gpu")
+    gpu_for_segmentation = (
+        (
+            block == "tomo-segmentation-open" 
+            and parameters.get("tomo_mem_use_gpu")
+        ) or 
+        (
+            block == "tomo-preprocessing"
+            and parameters.get("tomo_mem_model")
+            and os.path.exists(parameters.get("tomo_mem_model"))
+        )
+    )
 
-    gpu_for_mining = "tomo-milo" in parameters.get("micromon_block") and parameters.get("detect_milo_use_gpu", True)
+    gpu_for_mining = "tomo-milo" in block and parameters.get("detect_milo_use_gpu", True)
 
-    gpu_for_picking = ( parameters.get("micromon_block") == "tomo-particles-train" and parameters["detect_nn3d_use_gpu_train"]
-                       or parameters.get("micromon_block") == "tomo-particles-eval" and parameters["detect_nn3d_use_gpu_eval"]
+    gpu_for_picking = ( block == "tomo-particles-train" and parameters["detect_nn3d_use_gpu_train"]
+                       or block == "tomo-particles-eval" and parameters["detect_nn3d_use_gpu_eval"]
                        or parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
                        or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_vir_method"] 
                        or parameters["data_mode"] == "tomo" and "train" in parameters["tomo_spk_method"] and parameters["tomo_vir_method"] == "none"
                        or parameters["data_mode"] == "tomo" and "pytom" in parameters["tomo_pick_method"] and parameters["tomo_vir_method"] == "none"
                        )
     
-    gpu_for_heterogeneity = "drgn" in parameters.get("micromon_block")
+    gpu_for_heterogeneity = "drgn" in block
 
     return (
         gpu_for_movies
