@@ -2168,7 +2168,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         logger.debug(f"Particle coordinates = \n{spike_coordinates}")
 
     mpi_funcs, mpi_args = [ ], [ ]
-    if ctffind_tilt and not Web.exists:
+    if ctffind_tilt:
         mpi_funcs.append(ctf_mod.plot_ctffind_tilt)
         mpi_args.append( [(name,parameters,ctf)] )
 
