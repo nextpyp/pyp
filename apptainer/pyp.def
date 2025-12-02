@@ -247,18 +247,21 @@ EOF
 	# Install topaz
 cat << EOF > /root/topaz.sh
 
-	# install topaz
-	pip3 --no-cache-dir install topaz-em==0.3.1
+	# install topaz from source
+    cd /opt/pyp/external
+    git clone https://github.com/tbepler/topaz.git
+    cd topaz
+    git checkout v0.2.5
+    pip install .
+    rm -rf .git/
+    cd -
+
+	pip install torch==2.2.0 torchvision==0.17.0 h5py tqdm -c conda-forge
 
 	micromamba clean --all --force-pkgs-dirs --yes
 	
-	rm -rf /tmp/env.tar
-	conda-pack -p /opt/conda/envs/topaz -o /tmp/env.tar && \
-		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
-		rm /tmp/env.tar
-	/venv/bin/conda-unpack
 EOF
-	micromamba create --name topaz "python=3.8" -c conda-forge
+	micromamba create --name topaz "python=3.8"
 
 	# run the conda script in the new environment
 	chmod +x /root/topaz.sh
