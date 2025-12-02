@@ -4279,12 +4279,14 @@ def update_metadata_coordinates(parameters):
     # detect all .next files in next/
     next_files = [Path(f).stem for f in glob.glob(os.path.join("next", "*.next")) if Path(f).name != "virion_thresholds.next"]
 
+    is_spr = parameters.get("data_mode") == "spr"
+    
     total_virions = 0
     for tilt_series_name in micrograph_list:
         
         # retrieve metadata from pkl file
         pkl_file = os.path.join("pkl", tilt_series_name + ".pkl")
-        metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+        metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr)
         
         # clear virion/spike coordinates, if any
         metadata.data.pop("box", None)
@@ -4308,17 +4310,28 @@ def update_metadata_coordinates(parameters):
 
                 logger.debug(f"Reading {coordinates.shape[0]:,} particle coordinates from {next_file}")
 
-                # convert to binned coordinates
-                coordinates /= parameters.get("tomo_rec_binning")
-                
-                # swap y and z                
-                coordinates[:,-1] /= parameters.get("tomo_vir_binn")
+                if not is_spr:
+                    # convert to binned coordinates
+                    coordinates /= parameters.get("tomo_rec_binning")
+                    
+                    # swap y and z                
+                    coordinates[:,-1] /= parameters.get("tomo_vir_binn")
+                else:
+                    # add extra columns for SPR                    
+                    extra_columns = np.zeros( (coordinates.shape[0],3) )
+                    extra_columns[:,1] = 1.0 # inside
+                    coordinates = np.hstack( (coordinates, extra_columns) )
+                    coordinates[:,2] = 0.0 # reset particle radius
 
                 # add manual coordinates to metadata
                 header = metadata.files["box"]["header"]
                 import pandas as pd
                 df = pd.DataFrame(coordinates, columns=header)
-                metadata.updateData({'vir':df})
+                
+                if is_spr:
+                    metadata.updateData({'box':df})
+                else:
+                    metadata.updateData({'vir':df})
 
                 total_virions += coordinates.shape[0]
 
@@ -4328,7 +4341,7 @@ def update_metadata_coordinates(parameters):
         # save metadata to pkl file
         metadata.write()        
 
-    logger.info(f"Detected a total of {total_virions:,} manually picked virions")
+    logger.info(f"Detected a total of {total_virions:,} manually picked particles/virions")
                 
 def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
 
@@ -5316,6 +5329,12 @@ if __name__ == "__main__":
                                         # set the volumes files we just calculated as reference
                                         parameters["refine_parfile_tomo"] = glob.glob("frealign/*_volumes.txt")[0]
 
+                                elif len(glob.glob(os.path.join(project_params.resolve_path(parameters.get("data_parent")),"next","*.next"))) > 1 and parameters.get("data_mode") == "spr" and parent_parameters.get("micromon_block") == "sp-preprocessing":
+                                    os.makedirs( "next", exist_ok=True )
+                                    for i in glob.glob(os.path.join(project_params.resolve_path(parameters.get("data_parent")),"next","*.next")):
+                                        shutil.copy2(i, os.path.join( "next", Path(i).name ))
+                                    update_metadata_coordinates(parameters=parameters)
+ 
                                 latest_parfile, latest_reference = None, None
                                 # data_parent is None if running CLI
                                 if "data_parent" in parameters and parameters["data_parent"] is not None:
