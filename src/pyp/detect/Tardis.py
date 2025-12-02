@@ -170,7 +170,5 @@ def run_tardis(name, parameters ):
     if reconstruction.shape != segmentation.shape:
         segmentation = np.swapaxes(segmentation, 0, 1)
         mrc.write(segmentation, output)
-    visualization = np.where( segmentation == threshold, max, reconstruction )
-    mrc.write(visualization,local_input)
 
-    return local_input
+    return output
