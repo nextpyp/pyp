@@ -5,6 +5,7 @@ joblib==1.5.2
 jsonrpcclient==4.0.3
 matplotlib==3.10.7
 mrcfile==1.5.4
+numba==0.62.1
 numexpr==2.14.1
 numpy==1.26.4
 pandas==2.3.3
