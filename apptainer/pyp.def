@@ -424,6 +424,7 @@ cat << EOF > /root/isonet.sh
 
 	# install the python packages we need
 
+	cd /opt/pyp/external
 	git clone --depth=1 https://github.com/IsoNet-cryoET/IsoNet.git
 	cd IsoNet
 	rm -rf .git
@@ -435,6 +436,7 @@ cat << EOF > /root/isonet.sh
 
 	micromamba clean --all --force-pkgs-dirs --yes
 	
+	cd -
 	rm -rf /tmp/env.tar
 	conda-pack -p /opt/conda/envs/isonet -o /tmp/env.tar && \
 		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
