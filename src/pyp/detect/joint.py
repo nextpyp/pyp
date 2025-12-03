@@ -821,7 +821,7 @@ def miloeval(args):
 
         compilation = get_compilation_flags('milo',args)
 
-        if arge.get('detect_milo_surface'):
+        if args.get('detect_milo_surface'):
             logger.info(f"Evaluating MiLoPYP's exploration module with surface constraint using {Path(project_params.resolve_path(args['detect_milo_model'])).name}")
 
             if not os.path.exists(project_params.resolve_path(args.get('detect_milo_segmentation_dir'))):
