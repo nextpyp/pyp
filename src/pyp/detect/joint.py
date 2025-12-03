@@ -350,9 +350,10 @@ def tomotrain(args):
         gpu = "--gpus -1"
 
     masking = ""
-    if args['detect_nn3d_use_masking']:
-        if 'detect_milo_segmentation_dir' not in args:
-            raise Exception("Segmentation directory not provided")
+    if args.get('detect_nn3d_use_masking'):
+
+        if not os.path.exists(project_params.resolve_path(args.get('detect_milo_segmentation_dir'))):
+            raise Exception("Please provide a valid segmentation directory")
 
         masking = f"--use_masking --segmentation_dir {args['detect_nn3d_segmentation_dir']} --mask_radius {args['detect_nn3d_mask_radius']} "
 
@@ -471,9 +472,10 @@ def tomoeval(args,name):
             gpu = "--gpus -1"
 
         masking = ""
-        if args['detect_nn3d_use_masking']:
-            if 'detect_milo_segmentation_dir' not in args:
-                raise Exception("Segmentation directory not provided")
+        if args.get('detect_nn3d_use_masking'):
+
+            if not os.path.exists(project_params.resolve_path(args.get('detect_milo_segmentation_dir'))):
+                raise Exception("Please provide a valid segmentation directory")
 
             masking = f"--use_masking --segmentation_dir {args['detect_nn3d_segmentation_dir']} --mask_radius {args['detect_nn3d_mask_radius']} "
 
@@ -610,11 +612,11 @@ def milotrain(args):
 
     compilation = get_compilation_flags('milo',args)
 
-    if 'detect_milo_surface' in args:
+    if args.get('detect_milo_surface'):
         logger.info(f"Training MiLoPYP's exploration module with surface constraint")
 
-        if 'detect_milo_segmentation_dir' not in args:
-            raise Exception("Segmentation directory not provided")
+        if not os.path.exists(project_params.resolve_path(args.get('detect_milo_segmentation_dir'))):
+            raise Exception("Please provide a valid segmentation directory")
 
         bidirectional_extract = "--bidirectional_extract " if args['detect_milo_bidirectional_extract'] else ""
         offset = f"--offset {args['detect_milo_offset']} " if args['detect_milo_use_dog'] != 1 else ""
@@ -819,11 +821,11 @@ def miloeval(args):
 
         compilation = get_compilation_flags('milo',args)
 
-        if 'detect_milo_surface' in args:
+        if arge.get('detect_milo_surface'):
             logger.info(f"Evaluating MiLoPYP's exploration module with surface constraint using {Path(project_params.resolve_path(args['detect_milo_model'])).name}")
 
-            if 'detect_milo_segmentation_dir' not in args:
-                raise Exception("Segmentation directory not provided")
+            if not os.path.exists(project_params.resolve_path(args.get('detect_milo_segmentation_dir'))):
+                raise Exception("Please provide a valid segmentation directory")
 
             bidirectional_extract = "--bidirectional_extract " if args['detect_milo_bidirectional_extract'] else ""
             offset = f"--offset {args['detect_milo_offset']} " if args['detect_milo_use_dog'] != 1 else ""
