@@ -352,7 +352,7 @@ def tomotrain(args):
     masking = ""
     if args.get('detect_nn3d_use_masking'):
 
-        if not os.path.exists(project_params.resolve_path(args.get('detect_milo_segmentation_dir'))):
+        if not os.path.exists(project_params.resolve_path(args.get('detect_nn3d_segmentation_dir'))):
             raise Exception("Please provide a valid segmentation directory")
 
         masking = f"--use_masking --segmentation_dir {args['detect_nn3d_segmentation_dir']} --mask_radius {args['detect_nn3d_mask_radius']} "
@@ -474,7 +474,7 @@ def tomoeval(args,name):
         masking = ""
         if args.get('detect_nn3d_use_masking'):
 
-            if not os.path.exists(project_params.resolve_path(args.get('detect_milo_segmentation_dir'))):
+            if not os.path.exists(project_params.resolve_path(args.get('detect_nn3d_segmentation_dir'))):
                 raise Exception("Please provide a valid segmentation directory")
 
             masking = f"--use_masking --segmentation_dir {args['detect_nn3d_segmentation_dir']} --mask_radius {args['detect_nn3d_mask_radius']} "
