@@ -149,6 +149,10 @@ def membrain_segmentation(parameters, input, local_output):
     
         # save result
         mrc.write(clean, segmentation)
+    else:
+        segmentation = glob.glob(local_output + '/*')[0]
+        cmask = (mrc.read(segmentation) > 0).astype('uint8')
+        mrc.write(cmask, segmentation)
 
 def run_membrain(project_dir, name, parameters ):
 
