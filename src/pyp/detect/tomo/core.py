@@ -1346,6 +1346,8 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
     elif parameters.get("tomo_pick_method") == "pytom":
 
+        assert os.path.exists(project_params.resolve_path(parameters.get('tomo_pick_pytom_template'))), "Please provide a valid template"
+        
         external_template = parameters['tomo_pick_pytom_template']
         assert os.path.exists(external_template), f"Cannot find {external_template}"
         template = "pytom_template.mrc"
@@ -1803,6 +1805,9 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         if not parameters['tomo_pick_pytom_estimate_cutoff']:
             options += f" --cut-off {parameters['tomo_pick_pytom_cutoff']}"
         
+        if parameters['tomo_pick_pytom_tophat']:
+            options += f" --tophat-filter --tophat-connectivity {parameters['tomo_pick_pytom_tophat_connectivity']}"
+
         command = f"{get_pytom_path()} pytom_extract_candidates.py --job-file pytom/{name}_job.json --number-of-particles {parameters['tomo_pick_pytom_number_of_particles']} --number-of-false-positives {parameters['tomo_pick_pytom_number_of_false_positives']} {options}"
         local_run.stream_shell_command(command=command)
         
