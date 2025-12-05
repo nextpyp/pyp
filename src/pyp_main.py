@@ -4577,8 +4577,11 @@ if __name__ == "__main__":
         KEEP_SCRATCH = False
 
         try:
-            os.makedirs(LOCAL_SCRATCH, exist_ok=True)
-            logger.info("Created temporary folder " + LOCAL_SCRATCH)
+            try:
+                os.makedirs(LOCAL_SCRATCH, exist_ok=True)
+                logger.info("Created temporary folder " + LOCAL_SCRATCH)
+            except:
+                logger.warning("Could not create temporary folder " + LOCAL_SCRATCH)
 
             # TODO: switch to pyp.system.utils.get_imod_path()
             os.environ["IMAGICDIR"] = "/usr/bin"
