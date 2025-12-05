@@ -1302,6 +1302,7 @@ def split(parameters):
                 scratch=0,
                 threads=parameters["slurm_tasks"],
                 memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+                gres=parameters["slurm_gres"],
                 walltime=parameters["slurm_walltime"],
                 tasks_per_arr=parameters["slurm_bundle_size"],
                 csp_no_stacks=parameters["csp_no_stacks"],
