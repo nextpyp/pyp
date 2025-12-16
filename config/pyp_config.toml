@@ -376,8 +376,8 @@ default = 0.0
 advanced = true
 
 [tabs.scope.dose_rate]
-name = "Dose rate (e^-/A^2)"
-description = "Number of electrons per unit area used during imaging"
+name = "Dose per exposure (e/A^2)"
+description = "Number of electrons per unit area in each exposure"
 type = "float"
 default = 1.0
 advanced = true

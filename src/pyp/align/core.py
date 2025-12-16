@@ -2062,7 +2062,8 @@ def apply_alignments_and_average(input_name, name, parameters, method="imod"):
 
         if parameters["movie_weights"]:
             weighted = "YES\n%s\n%s\n0" % (
-                str(parameters["scope_dose_rate"]),
+                # dose per frame = dose per exposure divided by number of frames
+                str(parameters["scope_dose_rate"]/t.shape[0]),
                 str(parameters["scope_voltage"]),
             )
         else:
@@ -2272,7 +2273,8 @@ def align_stack_super(
 
                 if "movie_weights" in parameters.keys() and parameters["movie_weights"]:
                     weighted = "YES\n%s\n%s\n0" % (
-                        parameters["scope_dose_rate"],
+                        # dose per frame = dose per exposure divided by number of frames
+                        parameters["scope_dose_rate"] / frames,
                         parameters["scope_voltage"],
                     )
                 else:
@@ -2478,7 +2480,7 @@ EOF
                     parameters["movie_bfactor"],
                     parameters["scope_pixel"],
                     parameters["scope_voltage"],
-                    parameters["scope_dose_rate"],
+                    parameters["scope_dose_rate"] / frames,
                     parameters["movie_patches"],
                 )
 
@@ -4161,7 +4163,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
 
         dose_weighting_options = ""
         if parameters["movie_weights"]:
-            dose_weighting_options += f" -InitDose {init_dose} -FmDose {dose_rate} -PixSize {pixel} -kV {voltage}" 
+            dose_weighting_options += f" -InitDose {init_dose} -FmDose {dose_rate/total_frames} -PixSize {pixel} -kV {voltage}" 
             dose_weighting_options += " -Cs 0" # NOT do CTF estimation
 
         mag_correction_options = ""
@@ -4502,7 +4504,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
         if "movie_weights" in parameters.keys() and parameters["movie_weights"]:
             weighted = "yes\n%s\n%s\n%s" % (
                 voltage,
-                dose_rate,
+                dose_rate/total_frames,
                 init_dose,
             )
             restore_Noise_power = "\nYES"
