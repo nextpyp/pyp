@@ -221,25 +221,21 @@ tabs = [ "tomodrgn_filter_star", "slurm" ]
 name = "MiLoPYP training"
 description = "Train MiLoPYP model for pattern mining"
 tabs = [ "detect_milo", "slurm" ]
-forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_milo_eval]
 name = "MiLoPYP evaluation"
 description = "Evaluate MiLoPYP (trained model required)"
 tabs = [ "detect_milo", "slurm" ]
-forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_particles_train]
 name = "TOMO Particles Training"
 description = "Train NN model for particle picking"
 tabs = [ "detect_nn3d", "slurm" ] # TODO ?
-forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_particles_eval]
 name = "TOMO Particles Evaluation"
 description = "NN-based picking (trained model required)"
 tabs = [ "detect_nn3d", "tomo_ext", "slurm" ]
-forwarded_tabs = [] # TODO ?
 
 [blocks.tomo_clean]
 name = "TOMO Particle Cleaning"
