@@ -313,7 +313,7 @@ def parse_arguments(block):
                             parameters[k] = parent_parameters[k]
             elif not parameters.get('scope_pixel'):
                 for k in parameters_existing.keys():
-                    if not parameters.get(k):
+                    if k not in parameters.keys() or not parameters.get(k) and ( k.startswith("scope_") or k.startswith("gain_") or k.startswith("slurm_") or k.startswith("data_") ):
                         parameters[k] = parameters_existing[k]
 
             if parameters_existing:
