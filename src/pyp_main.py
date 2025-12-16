@@ -5125,7 +5125,24 @@ if __name__ == "__main__":
                             parameters["refine_iter"] = parameters["refine_maxiter"] = 2
 
                             # calculate number of random iterations based on range and step size if doing reference-based alignment
-                            parameters['csp_NumberOfRandomIterations'] = int(2**4 * parameters.get("csp_tomo_reference_ToleranceParticlesPhi") * parameters.get("csp_tomo_reference_ToleranceParticlesPsi") * parameters.get("csp_tomo_reference_ToleranceParticlesTheta") * parameters.get("csp_tomo_reference_ToleranceParticlesShifts") / ( parameters.get("csp_tomo_reference_AngleStep") ** 3 ) / parameters.get("csp_tomo_reference_ShiftStep"))
+                            if parameters.get("csp_tomo_reference_ToleranceParticlesShifts") > 0 and parameters.get("csp_tomo_reference_ShiftStep") > 0:
+                                translations = 2 * parameters.get("csp_tomo_reference_ToleranceParticlesShifts") / parameters.get("csp_tomo_reference_ShiftStep")
+                            else:
+                                translations = 1
+                            if parameters.get("csp_tomo_reference_ToleranceParticlesPhi") > 0 and parameters.get("csp_tomo_reference_AngleStep") > 0:
+                                rotations_phi = 2 * parameters.get("csp_tomo_reference_ToleranceParticlesPhi") / parameters.get("csp_tomo_reference_AngleStep")
+                            else:
+                                rotations_phi = 1
+                            if parameters.get("csp_tomo_reference_ToleranceParticlesPsi") > 0 and parameters.get("csp_tomo_reference_AngleStep") > 0:
+                                rotations_psi = 2 * parameters.get("csp_tomo_reference_ToleranceParticlesPsi") / parameters.get("csp_tomo_reference_AngleStep")
+                            else:
+                                rotations_psi = 1
+                            if parameters.get("csp_tomo_reference_ToleranceParticlesTheta") > 0 and parameters.get("csp_tomo_reference_AngleStep") > 0:
+                                rotations_theta = 2 * parameters.get("csp_tomo_reference_ToleranceParticlesTheta") / parameters.get("csp_tomo_reference_AngleStep")
+                            else:
+                                rotations_theta = 1
+                            parameters['csp_NumberOfRandomIterations'] = math.ceil(rotations_phi * rotations_psi * rotations_theta * translations)
+                            
                             logger.warning(f"Number of exhaustive score evaluations based on search range and step size: {parameters.get('csp_NumberOfRandomIterations'):,}")
                             
                             # transfer refinement parameters
