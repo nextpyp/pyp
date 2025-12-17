@@ -681,13 +681,12 @@ class LocalMetadata:
                 del self.data["ctf_tilt"]
                 meta_update = True
 
-        if "movie_force" in parameters and parameters["movie_force"] and not ( parameters["data_mode"] == "tomo" and parameters["movie_no_frames"] ):
+        if "movie_force" in parameters and parameters["movie_force"] and not ( parameters["data_mode"] == "tomo" and parameters["movie_no_frames"] ) and "drift" in self.data:
             logger.info(
                 f"Movie drift parameters will be re-computed"
             )
-            if "drift" in self.data:
-                del self.data["drift"]
-                meta_update = True
+            del self.data["drift"]
+            meta_update = True
 
         if parameters["data_mode"] == "tomo":
             if "tomo_vir_force" in parameters and parameters["tomo_vir_force"]:
@@ -703,21 +702,19 @@ class LocalMetadata:
                     del self.data["box"]
                     meta_update = True
 
-            if "tomo_ali_force" in parameters and parameters["tomo_ali_force"] and parameters.get("tomo_ali_method") != "import":
+            if "tomo_ali_force" in parameters and parameters["tomo_ali_force"] and parameters.get("tomo_ali_method") != "import" and "ali" in self.data:
                 logger.info(
                     f"Tilt-series alignments will be re-computed"
                 )
-                if "ali" in self.data:
-                    del self.data["ali"]
-                    meta_update = True
+                del self.data["ali"]
+                meta_update = True
 
-        if "detect_force" in parameters and parameters["detect_force"] or update_virion:
+        if ( "detect_force" in parameters and parameters["detect_force"] or update_virion ) and 'box' in self.data:
             logger.info(
                 f"Particle detection will be re-computed"
             )
-            if "box" in self.data:
-                del self.data["box"]
-                meta_update = True
+            del self.data["box"]
+            meta_update = True
 
         # update current pkl file
         if meta_update:
