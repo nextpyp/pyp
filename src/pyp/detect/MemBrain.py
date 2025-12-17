@@ -4,6 +4,7 @@ import shutil
 import glob
 import numpy as np
 from pyp.inout.image import mrc
+from pyp.inout.metadata import pyp_metadata
 from pyp.system import local_run, project_params
 
 from pyp.system.logging import logger
@@ -12,7 +13,7 @@ def get_membrane_path():
     command_base = 'export LD_LIBRARY_PATH=/opt/conda/envs/membrain/lib/python3.9/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PYTHONPATH=/opt/conda/envs/membrain/lib/python3.11/site-packages:$PYTHONPATH; micromamba run -n membrain /opt/conda/envs/membrain/bin/'
     return command_base
 
-def membrain_preprocessing(parameters, input):
+def membrain_preprocessing(parameters, input, project_dir, name):
 
     output = input.replace(".rec", "_preprocessed.rec")
 
@@ -56,8 +57,19 @@ def membrain_preprocessing(parameters, input):
     if parameters["tomo_mem_deconvolve"]:
         output_deconvolve = input.replace(".rec", "_deconvolve.rec")
 
+        # retrieve defocus from tilt-series metadata
+        pkl_file = f"{project_dir}/pkl/{name}.pkl"
+        assert os.path.exists(pkl_file), f"There is no meta data for this tomogram, please check the input name: {pkl_file}."
+        metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+        ctf = metadata.data["global_ctf"].to_numpy()
+        df = np.squeeze(ctf[0])
+
+        boolean_options = ""
+        if parameters["tomo_mem_deconvolve_skip_lowpass"]:
+            boolean_options += " --skip-lowpass"
+            
         # TODO: Don't use default value for df, add remaining parameters
-        command = f"{get_membrane_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output_deconvolve} --pixel-size {tomo_pixelsize} --df 35000"
+        command = f"{get_membrane_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output_deconvolve} --pixel-size {tomo_pixelsize} --df {df} --strength {parameters['tomo_mem_deconvolve_strength']} --falloff {parameters['tomo_mem_deconvolve_falloff']} --hp-fraction {parameters['tomo_mem_deconvolve_hp_fraction']} {boolean_options}"
 
         local_run.stream_shell_command(command)
 
@@ -177,7 +189,7 @@ def run_membrain(project_dir, name, parameters ):
     output = name + "_seg.rec"
 
     if parameters["tomo_mem_preprocessing"]:
-        rescaled, preprocessed = membrain_preprocessing(parameters, input=local_input)
+        rescaled, preprocessed = membrain_preprocessing(parameters, input=local_input, project_dir=project_dir, name=name)
     else:
         rescaled = False
         preprocessed = local_input

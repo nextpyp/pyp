@@ -3112,6 +3112,34 @@ type = "bool"
 default = false
 condition = { arg="preprocessing", value="true" }
 
+[tabs.tomo_mem.deconvolve_strength]
+name = "Strength"
+description = "Strength parameter for the denoising filter"
+type = "float"
+default = 1.0
+condition = { arg="deconvolve", value="true" }
+
+[tabs.tomo_mem.deconvolve_falloff]
+name = "Falloff"
+description = "Falloff parameter for the denoising filter"
+type = "float"
+default = 1.0
+condition = { arg="deconvolve", value="true" }
+
+[tabs.tomo_mem.deconvolve_hp_fraction]
+name = "High-pass filter fraction"
+description = "Fraction of Nyquist frequency to be cut off on the lower end (since it will be boosted the most)"
+type = "float"
+default = 0.02
+condition = { arg="deconvolve", value="true" }
+
+[tabs.tomo_mem.deconvolve_skip_lowpass]
+name = "Skip low-pass filter"
+description = "Skip low pass that enforces filtering out information beyond the first CTF zero (not recommended)"
+type = "bool"
+default = false
+condition = { arg="deconvolve", value="true" }
+
 [tabs.tomo_mem.model]
 name = "Pre-trained model (*.ckpt)"
 description = "Available from https://github.com/teamtomo/membrain-seg"
