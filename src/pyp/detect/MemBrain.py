@@ -17,7 +17,9 @@ def membrain_preprocessing(parameters, input):
     output = input.replace(".rec", "_preprocessed.rec")
 
     tomo_pixelsize = parameters["scope_pixel"] * parameters["data_bin"] * parameters["tomo_rec_binning"]
-    
+
+    rescaled = False
+
     if parameters["tomo_mem_pixel"] > 0 and not parameters["tomo_mem_pixel"] == tomo_pixelsize:
 
         match_pixel = f"match_pixel_size --pixel-size-out {parameters['tomo_mem_pixel']} --pixel-size-in {tomo_pixelsize}"
@@ -37,7 +39,7 @@ def membrain_preprocessing(parameters, input):
     template = project_params.resolve_path(parameters.get("tomo_mem_target"))
     if parameters["tomo_mem_match_ps"] and os.path.exists(template):
         
-        
+
         output_match_spectrum = input.replace(".rec", "_match_spectrum.rec")
         
         command = f"{get_membrane_path()}tomo_preprocessing extract_spectrum --input-path {template} --output-path ./template_spectrum.mrc"
@@ -52,10 +54,14 @@ def membrain_preprocessing(parameters, input):
         output_match_spectrum = output_rescale
 
     if parameters["tomo_mem_deconvolve"]:
+        output_deconvolve = input.replace(".rec", "_deconvolve.rec")
 
-        command = f"{get_membrane_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output} --pixel-size {tomo_pixelsize}"
+        # TODO: Don't use default value for df, add remaining parameters
+        command = f"{get_membrane_path()}tomo_preprocessing deconvolve --input {output_match_spectrum} --output {output_deconvolve} --pixel-size {tomo_pixelsize} --df 35000"
 
         local_run.stream_shell_command(command)
+
+        output = output_deconvolve
     else:
         output = output_match_spectrum
 
