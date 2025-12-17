@@ -2186,7 +2186,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_args.append( [(name + '_bin.ali', name + "_ali.webp")] )
 
     if len(mpi_funcs):
-        t = timer.Timer(text="Ploting ctf and tomo webp's took: {}", logger=logger.info)
+        t = timer.Timer(text="Generating CTF and tomogram images took: {}", logger=logger.info)
         t.start()
         mpi.submit_function_to_workers(mpi_funcs, mpi_args, log_level=logging.NOTSET)
         t.stop()
