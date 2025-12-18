@@ -1557,7 +1557,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
     contrast_stretch("side1.png")
     contrast_stretch("side2.png")
     run_shell_command(
-        "%s/montage side1.png side2.png -mode concatenate -tile 1x %s"
+        "%s/montage side2.png side1.png -mode concatenate -tile 1x %s"
         % ( os.environ["IMAGICDIR"], output_sides )
     )
     # clean up side pngs
