@@ -3198,6 +3198,12 @@ type = "int"
 default = 1
 condition = { arg="connected_map", value="number" }
 
+[tabs.tomo_mem.connected_map_z_percent]
+name = "Middle Z fraction to keep"
+description = "Only keep connected components whose voxels lie entirely within the given central fraction of the tomogram along the Z axis."
+type = "float"
+default = 1.0
+
 [tabs.tomo_mem.augmentation]
 name = "Test time augmentation"
 description = "Use 8-fold augmentation during testing"
