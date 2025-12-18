@@ -206,4 +206,9 @@ def run_membrain(project_dir, name, parameters ):
         target = glob.glob(f"./{local_output}/*.mrc")[0]
         shutil.move(target, output)
 
+    if parameters["tomo_mem_store_probabilities"]:
+        target = glob.glob(f"./{local_output}/*_scores.mrc")[0]
+        output_scores = name + "_scores.rec"
+        shutil.move(target, output_scores)
+
     return output
