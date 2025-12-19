@@ -1819,6 +1819,14 @@ default = "1"
 condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
+[tabs.detect_milo.remove_segmentation]
+name = "Remove Segmentation"
+description = "Remove the segmentation from the tomograms to increase the signal from the surfaces"
+type = "bool"
+default = true
+condition = { arg="surface", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
 [tabs.detect_milo.use_iterative]
 name = "Iterate"
 description = "Use iterative exploration"

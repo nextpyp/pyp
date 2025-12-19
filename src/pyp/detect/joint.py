@@ -623,6 +623,7 @@ def milotrain(args):
         min_distance = f"--dog_min_distance {args['detect_milo_dog_min_distance']} " if args['detect_milo_use_dog'] != 0 else ""
         max_distance = f"--dog_max_distance {args['detect_milo_dog_max_distance']} " if args['detect_milo_use_dog'] != 0 else ""
         use_vector_normal = "--use_vector_normal " if args['detect_milo_use_vector_normal'] else ""
+        remove_segmentation = "--remove_segmentation " if args['detect_milo_remove_segmentation'] else ""
 
         iterative = ""
         if args['detect_milo_use_iterative']:
@@ -658,6 +659,7 @@ def milotrain(args):
                        f"{min_distance}"
                        f"{max_distance}"
                        f"{use_vector_normal}"
+                       f"{remove_segmentation}"
                        f"--boundary_factor {args['detect_milo_boundary_factor']} "
                        # f"--interp_order {args['detect_milo_interp_order']} "
                        f"{iterative}"
@@ -832,6 +834,7 @@ def miloeval(args):
             min_distance = f"--dog_min_distance {args['detect_milo_dog_min_distance']} " if args['detect_milo_use_dog'] != 0 else ""
             max_distance = f"--dog_max_distance {args['detect_milo_dog_max_distance']} " if args['detect_milo_use_dog'] != 0 else ""
             use_vector_normal = "--use_vector_normal " if args['detect_milo_use_vector_normal'] else ""
+            remove_segmentation = "--remove_segmentation " if args['detect_milo_remove_segmentation'] else ""
 
             iterative = ""
             if args['detect_milo_use_iterative']:
@@ -864,6 +867,7 @@ def miloeval(args):
                            f"{min_distance}"
                            f"{max_distance}"
                            f"{use_vector_normal}"
+                           f"{remove_segmentation}"
                            f"--boundary_factor {args['detect_milo_boundary_factor']} "
                            # f"--interp_order {args['detect_milo_interp_order']} "
                            f"{iterative}"
