@@ -459,6 +459,10 @@ def regularize_image(
             box.shape[0] == particle_num
         ), f"boxx file selected particles and par file number of particles don't match: {box.shape[0]} vs. {particle_num}"
 
+        metadata = pyp_metadata.LocalMetadata(name + ".pkl", is_spr=False).data
+        zero_tilt_index = np.argmin(np.array([abs(i) for i in sorted(metadata["tlt"].values)]))            
+        order_of_zero_tilt = metadata["order"].values[zero_tilt_index]
+
     else:
 
         micrograph_drift = np.round(np.loadtxt(ali_path.replace(".mrc", ".xf"), ndmin=2))
@@ -479,6 +483,7 @@ def regularize_image(
             box.shape[0] == particle_num
         ), f"boxx file selected particles and par file number of particles don't match: {box.shape[0]} vs. {particle_num}"
 
+        order_of_zero_tilt = 0
 
     import scipy.spatial.distance
 
@@ -822,7 +827,7 @@ def regularize_image(
     
 
     # show sample trajectories
-    if tilt_count == 0:
+    if tilt_count == order_of_zero_tilt:
 
         if "tomo" in parameters["data_mode"].lower():
             # use positions of the middle frame to plot trajectories
@@ -879,7 +884,7 @@ def regularize(
         )
         if "tomo" in parameters["data_mode"].lower():
 
-            metadata = pyp_metadata.LocalMetadata(f"{filename}.pkl").data
+            metadata = pyp_metadata.LocalMetadata(f"{filename}.pkl", is_spr=False).data
             xf_frames = [metadata["drift"][tilt_idx].to_numpy() for tilt_idx in sorted(metadata["drift"].keys())]
 
         else: xf_frames = np.array([])

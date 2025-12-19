@@ -5774,12 +5774,14 @@ name = "Spatial sigma"
 description = "Sigma to use for spatial regularization (pixels/voxels)"
 type = "float"
 default = 500.0
+condition = { arg="transreg", value = "true" }
 
 [tabs.csp_tomo_movie.time_sigma]
 name = "Time sigma"
 description = "Sigma to use for time regularization (number of frames)"
 type = "int"
 default = 21
+condition = { arg="transreg", value = "true" }
 
 # Constrained movie refinement after
 
