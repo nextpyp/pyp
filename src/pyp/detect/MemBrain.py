@@ -125,9 +125,9 @@ def membrain_segmentation(parameters, input, local_output):
     except:
         raise RuntimeError(f"Membrain-seg failed. Please check the logs for errors or increase the memory per thread allocated to the job.")
 
-    z_percent = parameters["tomo_mem_connected_map_z_percent"]
+    z_thickness = parameters["tomo_mem_connected_map_z_thickness"]
 
-    if parameters[tm + "_connected_map"] != "none" or not np.isclose(z_percent, 1.0):
+    if parameters[tm + "_connected_map"] != "none" or z_thickness != -1:
 
         segmentation = glob.glob(local_output+'/*')[0]
             
@@ -150,14 +150,17 @@ def membrain_segmentation(parameters, input, local_output):
         from skimage.measure import label
         label_ids = label(cmask, connectivity=2)
 
-        if not np.isclose(z_percent, 1.0):
-            if not (0.0 <= z_percent <= 1.0):
-                raise ValueError("z_percent must be between 0 and 1.")
+        if z_thickness != -1:
+            if not (0.0 <= z_thickness <= parameters["tomo_rec_thickness"]):
+                raise ValueError(f"z_thickness must be between 0 and {parameters["tomo_rec_thickness"]}.")
+
+            z_thickness /= float(parameters["tomo_rec_binning"])
+            if parameters["tomo_mem_pixel"] > 0 and not parameters["tomo_mem_pixel"] == tomo_pixelsize:
+                z_thickness *= tomo_pixelsize / parameters["tomo_mem_pixel"]
 
             zlen = label_ids.shape[1]
 
-            margin = (1 - z_percent) / 2
-            z0 = int(np.ceil(margin * zlen))
+            z0 = int((zlen - z_thickness) / 2)
             z1 = zlen - z0
 
             outside = np.ones(label_ids.shape, dtype=bool)
