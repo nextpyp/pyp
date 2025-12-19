@@ -125,7 +125,9 @@ def membrain_segmentation(parameters, input, local_output):
     except:
         raise RuntimeError(f"Membrain-seg failed. Please check the logs for errors or increase the memory per thread allocated to the job.")
 
-    if parameters[tm + "_connected_map"] != "none":
+    z_thickness = parameters["tomo_mem_connected_map_z_thickness"]
+
+    if parameters[tm + "_connected_map"] != "none" or z_thickness != -1:
 
         segmentation = glob.glob(local_output+'/*')[0]
             
@@ -147,6 +149,30 @@ def membrain_segmentation(parameters, input, local_output):
         # find all connected regions, calculate sizes, and ranking 
         from skimage.measure import label
         label_ids = label(cmask, connectivity=2)
+
+        if z_thickness != -1:
+            if not (0.0 <= z_thickness <= parameters["tomo_rec_thickness"]):
+                raise ValueError(f"z_thickness must be between 0 and {parameters["tomo_rec_thickness"]}.")
+
+            z_thickness /= float(parameters["tomo_rec_binning"])
+            if parameters["tomo_mem_pixel"] > 0 and not parameters["tomo_mem_pixel"] == tomo_pixelsize:
+                z_thickness *= tomo_pixelsize / parameters["tomo_mem_pixel"]
+
+            zlen = label_ids.shape[1]
+
+            z0 = int((zlen - z_thickness) / 2)
+            z1 = zlen - z0
+
+            outside = np.ones(label_ids.shape, dtype=bool)
+            outside[:, z0:z1, :] = False
+
+            bad_labels = np.unique(label_ids[outside])
+            bad_labels = bad_labels[bad_labels != 0]
+
+            if bad_labels.size:
+                cmask[np.isin(label_ids, bad_labels)] = 0
+                label_ids = label(cmask, connectivity=2)
+
         sizes = np.bincount(label_ids.ravel())
         indexes_by_size = np.argsort(sizes)[::-1]
 
@@ -205,5 +231,10 @@ def run_membrain(project_dir, name, parameters ):
     else:
         target = glob.glob(f"./{local_output}/*.mrc")[0]
         shutil.move(target, output)
+
+    if parameters["tomo_mem_store_probabilities"]:
+        target = glob.glob(f"./{local_output}/*_scores.mrc")[0]
+        output_scores = name + "_scores.rec"
+        shutil.move(target, output_scores)
 
     return output

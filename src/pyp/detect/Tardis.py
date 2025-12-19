@@ -112,7 +112,9 @@ def tardis_segmentation(parameters, input, local_output):
     except:
         raise RuntimeError(f"Tardis failed or produced no output. Please check the logs for errors or decrease the threshold for semantic prediction")
 
-    if parameters[tm + "_connected_map"] != "none":
+    z_thickness = parameters["tomo_mem_connected_map_z_thickness"]
+
+    if parameters[tm + "_connected_map"] != "none" or z_thickness != -1:
 
         segmentation = glob.glob('Predictions/*_semantic.mrc')[0]
             
@@ -122,6 +124,28 @@ def tardis_segmentation(parameters, input, local_output):
         # find all connected regions, calculate sizes, and ranking 
         from skimage.measure import label
         label_ids = label(cmask, connectivity=2)
+
+        if z_thickness != -1:
+            if not (0.0 <= z_thickness <= parameters["tomo_rec_thickness"]):
+                raise ValueError(f"z_thickness must be between 0 and {parameters["tomo_rec_thickness"]}.")
+
+            z_thickness /= float(parameters["tomo_rec_binning"])
+
+            zlen = label_ids.shape[1]
+
+            z0 = int((zlen - z_thickness) / 2)
+            z1 = zlen - z0
+
+            outside = np.ones(label_ids.shape, dtype=bool)
+            outside[:, z0:z1, :] = False
+
+            bad_labels = np.unique(label_ids[outside])
+            bad_labels = bad_labels[bad_labels != 0]
+
+            if bad_labels.size:
+                cmask[np.isin(label_ids, bad_labels)] = 0
+                label_ids = label(cmask, connectivity=2)
+
         sizes = np.bincount(label_ids.ravel())
         indexes_by_size = np.argsort(sizes)[::-1]
 

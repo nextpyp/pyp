@@ -4236,6 +4236,12 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
     else:
         shutil.copy2( new_reconstruction, target )
 
+    if segmentation and parameters.get("tomo_mem_store_probabilities"):
+        scores_name = name + "_scores.rec"
+        scores_target = os.path.join(project_path, "mrc", name + ext + "_scores.rec")
+
+        shutil.copy2(scores_name, scores_target)
+
     if denoise or segmentation:
         extensions = [ ext + "_rec.webp", ext + "_sides.webp", ext + ".webp" ]
         for pattern in extensions:
