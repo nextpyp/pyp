@@ -3207,8 +3207,8 @@ default = 1
 condition = { arg="connected_map", value="number" }
 
 [tabs.tomo_mem.connected_map_z_thickness]
-name = "Center Z thickness to keep"
-description = "Only keep connected components whose voxels lie entirely within the central slab of given thickness measured in unbinned voxels. -1 for no filtering."
+name = "Thickness of slab to keep (unbinned voxels)"
+description = "Only keep connected components whose voxels lie entirely within a central slab of given thickness. -1 for no filtering."
 type = "int"
 default = -1
 
