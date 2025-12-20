@@ -4754,7 +4754,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
     # save a copy of the original .rawtlt file
     tltfile = f"{name}.rawtlt"
     shutil.copy2( tltfile, tltfile+"_original")
-    tilt_angles = np.loadtxt(tltfile)
+    tilt_angles = original_tilt_angles = np.loadtxt(tltfile)
     
     if len(excluded_views) > 0:
         # exclude views from binned tilt-series
@@ -5146,7 +5146,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             stream_shell_command(command, observer=obs)
 
             # detect removed images and add them to excluded views
-            formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
+            formatted_tilt_angles = np.array(["%.2f" % x for x in original_tilt_angles])
             tilt_offset = 0.0
             for line in output:
                 if "Remove image at" in line:
@@ -5529,7 +5529,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             assert os.path.exists(f"{name}_aretomo_Vol.mrc"), "AreTomo3 reconstruction failed"
 
             # detect removed images and add them to excluded views
-            formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
+            formatted_tilt_angles = np.array(["%.2f" % x for x in original_tilt_angles])
             excluded_tilt_indexes = []
             for line in output:
                 # Remove image 40 at 60.00 deg 
