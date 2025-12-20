@@ -6000,9 +6000,12 @@ EOF
         # compose new transformations file
         with open(f"{name}.xf", "r") as f:
             alignments = f.read().split("\n")
-
+        
+        # remove empty lines
+        alignments = [x for x in alignments if len(x) > 0]
         tilts = int(mrc.readHeaderFromFile(name + ".st")["nz"])
-        assert len(alignments) == tilts, f"Alignment file {name}.xf contains fewer rows than tilt angles ({len(alignments)} != {tilts}). This can occur when too many tilts are automatically excluded by AreTomo ({len(excluded_tilts)} images excluded)."
+ 
+        assert len(alignments) + len(set(excluded_tilts)) == tilts, f"Number of alignments doesn't add up to {tilts} != {len(alignments)} (calculated) + {len(set(excluded_tilts))} (excluded). This can occur when too many tilts are automatically excluded by AreTomo. Try reducing the threshold to remove dark images."
 
         sec = 0
         with open(f"{name}.xf", "w") as newf:
