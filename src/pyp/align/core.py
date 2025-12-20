@@ -5996,13 +5996,16 @@ EOF
         
         assert os.path.exists(f"{name}.xf"), f"File {name}.xf not found"
         assert os.path.exists(f"{name}.tlt"), f"File {name}.tlt not found"
-         
+        
         # compose new transformations file
         with open(f"{name}.xf", "r") as f:
             alignments = f.read().split("\n")
+
+        tilts = int(mrc.readHeaderFromFile(name + ".st")["nz"])
+        assert len(alignments) == tilts, f"Alignment file {name}.xf contains fewer rows than tilt angles ({len(alignments)} != {tilts}). This can occur when too many tilts are automatically excluded by AreTomo ({len(excluded_tilts)} images excluded)."
+
         sec = 0
         with open(f"{name}.xf", "w") as newf:
-            tilts = int(mrc.readHeaderFromFile(name + ".st")["nz"])
             for tilt in range(tilts):
                 if str(tilt + 1) in excluded_tilts:
                     newf.write(identity_line)
