@@ -8307,6 +8307,40 @@ type = "bool"
 default = false
 hidden = true
 
+[tabs.sharpen.resmap]
+name = "Estimate local resolution"
+description = "Local resolution calculation using ResMap"
+type = "bool"
+default = true
+
+[tabs.sharpen.resmap_pval]
+name = "P-value"
+description = "P-value for likelihood ratio test"
+type = "float"
+default = 0.05
+condition = { arg="resmap", value="true" }
+
+[tabs.sharpen.resmap_min_res]
+name = "Min resolution (A)"
+description = "Minimum local resolution"
+type = "float"
+default = 0.0
+condition = { arg="resmap", value="true" }
+
+[tabs.sharpen.resmap_max_res]
+name = "Max resolution (A)"
+description = "Maximum local resolution"
+type = "float"
+default = 0.0
+condition = { arg="resmap", value="true" }
+
+[tabs.sharpen.resmap_step_size]
+name = "Step size (A)"
+description = "Resolution step size"
+type = "float"
+default = 1.0
+condition = { arg="resmap", value="true" }
+
 # Input reconstruction statistics
 # [statistics_r01.txt]                               :
 
