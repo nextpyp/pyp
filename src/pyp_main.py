@@ -464,16 +464,17 @@ def parse_arguments(block):
                     symlink_relative(source, f)
 
             # always link indivdual files in the pkl/, csp/, and sva/ folders
-            for folder in ["pkl", "csp", "sva"]:
-                os.makedirs(folder,exist_ok=True)
-                if folder == "sva":
-                    pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.txt")
-                else:
-                    pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.*")
-                number_of_files = len(glob.glob(pattern))
-                if number_of_files > 0:
-                    logger.info(f"Linking {number_of_files:,} files to {folder}/ folder")
-                    symlink_relative_pattern(pattern,os.path.join(os.getcwd(),folder))
+            if not parameters["micromon_block"].endswith("-postprocessing"):
+                for folder in ["pkl", "csp", "sva"]:
+                    os.makedirs(folder,exist_ok=True)
+                    if folder == "sva":
+                        pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.txt")
+                    else:
+                        pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.*")
+                    number_of_files = len(glob.glob(pattern))
+                    if number_of_files > 0:
+                        logger.info(f"Linking {number_of_files:,} files to {folder}/ folder")
+                        symlink_relative_pattern(pattern,os.path.join(os.getcwd(),folder))
 
             # link mrc/ and webp/ folders for blocks that don't change files in these folders
             if (
