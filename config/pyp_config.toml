@@ -1898,6 +1898,13 @@ type = "bool"
 default = false
 hidden = [ "tomo_milo_train" ]
 
+[tabs.detect_milo.calculate_metrics]
+name = "Calculate Metrics"
+description = "Calculate and print embedding and clustering metrics"
+type = "bool"
+default = true
+hidden = [ "tomo_milo_train" ]
+
 [tabs.detect_milo.use_gpu]
 name = "Use GPU"
 description = "Run on GPU"

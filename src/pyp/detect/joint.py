@@ -963,7 +963,8 @@ def miloeval(args):
         
         # generate 2D visualization plots
         use_2d = "--use_2d " if args['detect_milo_use_2d'] else ""
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 --imgs_per_label {args['detect_milo_imgs_per_label']} {use_2d}2>&1 | tee {scratch_train +  '_plot2d.log'}"
+        calculate_metrics = "--calculate_metrics " if args['detect_milo_calculate_metrics'] else ""
+        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 --imgs_per_label {args['detect_milo_imgs_per_label']} {use_2d}{calculate_metrics}2>&1 | tee {scratch_train +  '_plot2d.log'}"
 
         local_run.run_shell_command(command)             
 
