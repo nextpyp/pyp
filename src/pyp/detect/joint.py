@@ -670,8 +670,37 @@ def milotrain(args):
 
             output_path = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample")
         else:
-            raise Exception("3d not implemented yet")
-            # command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+            command = (f"{NN_INIT_COMMANDS_3D} "
+                       f"python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d "
+                       f"--num_epochs {args['detect_milo_num_epochs']} "
+                       f"--exp_id test_sample "
+                       f"--bbox {args['detect_milo_bbox']} "
+                       f"--dataset surface_constrained3d "
+                       f"--arch simsiam2d_18  "
+                       f"--lr {args['detect_milo_lr']} "
+                       f"--train_img_txt {train_images} "
+                       f"--batch_size {args['detect_milo_batch_size']} "
+                       f"--val_intervals {args['detect_milo_val_interval']} "
+                       f"--save_all "
+                       f"--gauss {args['detect_milo_gauss']} "
+                       f"--dog {args['detect_milo_dog']} "
+                       f"{compress} "
+                       f"{gpu} "
+                       f"--segmentation_dir {args['detect_milo_segmentation_dir']} "
+                       f"--use_dog {args['detect_milo_use_dog']} "
+                       f"{bidirectional_extract}"
+                       f"{offset}"
+                       f"{min_distance}"
+                       f"{max_distance}"
+                       f"{use_vector_normal}"
+                       f"{remove_segmentation}"
+                       f"--boundary_factor {args['detect_milo_boundary_factor']} "
+                       # f"--interp_order {args['detect_milo_interp_order']} "
+                       f"{iterative}"
+                       f"{save_patches}"
+                       f"{read_patches}"
+                       f"{compilation}"
+                       f"2>&1 | tee {os.path.join(train_folder, time_stamp + '_train.log')}")
 
             output_path = Path(os.getcwd() + "/exp/simsiam3d/test_sample")
 
@@ -878,8 +907,34 @@ def miloeval(args):
 
                 output_file = Path(os.getcwd() + "/exp/simsiam2d3d/test_sample/all_output_info.npz")
             else:
-                raise Exception("3d not implemented yet")
-                # command = f"{NN_INIT_COMMANDS_3D}; python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_main.py simsiam3d --num_epochs {args['detect_milo_num_epochs']} --exp_id test_sample --bbox {args['detect_milo_bbox']} --translation_ratio {args['detect_milo_translation_ratio']} --dataset simsiam2d3d --arch simsiam2d_18  --nclusters {args['detect_milo_num_clusters']} --lr {args['detect_milo_lr']} --train_img_txt {train_images} --batch_size {args['detect_milo_batch_size']} --val_intervals {args['detect_milo_val_interval']} --save_all --gauss {args['detect_milo_gauss']} --dog {args['detect_milo_dog']} {compress} {gpu} 2>&1 | tee {os.path.join( train_folder, time_stamp + '_train.log')}"
+                command = (f"{NN_INIT_COMMANDS_3D} "
+                           f"python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/simsiam_test_hm_3d.py simsiam3d "
+                           f"--num_epochs {args['detect_milo_num_epochs']} "
+                           f"--exp_id test_sample "
+                           f"--bbox {args['detect_milo_bbox']} "
+                           f"--dataset surface_constrained3d "
+                           f"--arch simsiam2d_18  "
+                           f"--test_img_txt {imgs_file} "
+                           f"--load_model {input_model} "
+                           f"--gauss {args['detect_milo_gauss']} "
+                           f"--dog {args['detect_milo_dog']} "
+                           f"{compress} "
+                           f"{gpu} "
+                           f"--segmentation_dir {args['detect_milo_segmentation_dir']} "
+                           f"--use_dog {args['detect_milo_use_dog']} "
+                           f"{bidirectional_extract}"
+                           f"{offset}"
+                           f"{min_distance}"
+                           f"{max_distance}"
+                           f"{use_vector_normal}"
+                           f"{remove_segmentation}"
+                           f"--boundary_factor {args['detect_milo_boundary_factor']} "
+                           # f"--interp_order {args['detect_milo_interp_order']} "
+                           f"{iterative}"
+                           f"{save_patches}"
+                           f"{read_patches}"
+                           f"{compilation}"
+                           f"2>&1 | tee {scratch_train + '_testing.log'}")
 
                 output_file = Path(os.getcwd() + "/exp/simsiam3d/test_sample/all_output_info.npz")
 
