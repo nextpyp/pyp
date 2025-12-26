@@ -464,16 +464,17 @@ def parse_arguments(block):
                     symlink_relative(source, f)
 
             # always link indivdual files in the pkl/, csp/, and sva/ folders
-            for folder in ["pkl", "csp", "sva"]:
-                os.makedirs(folder,exist_ok=True)
-                if folder == "sva":
-                    pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.txt")
-                else:
-                    pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.*")
-                number_of_files = len(glob.glob(pattern))
-                if number_of_files > 0:
-                    logger.info(f"Linking {number_of_files:,} files to {folder}/ folder")
-                    symlink_relative_pattern(pattern,os.path.join(os.getcwd(),folder))
+            if not parameters["micromon_block"].endswith("-postprocessing"):
+                for folder in ["pkl", "csp", "sva"]:
+                    os.makedirs(folder,exist_ok=True)
+                    if folder == "sva":
+                        pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.txt")
+                    else:
+                        pattern = os.path.join(project_params.resolve_path(parameters["data_parent"]), folder, "*.*")
+                    number_of_files = len(glob.glob(pattern))
+                    if number_of_files > 0:
+                        logger.info(f"Linking {number_of_files:,} files to {folder}/ folder")
+                        symlink_relative_pattern(pattern,os.path.join(os.getcwd(),folder))
 
             # link mrc/ and webp/ folders for blocks that don't change files in these folders
             if (
@@ -2186,7 +2187,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_args.append( [(name + '_bin.ali', name + "_ali.webp")] )
 
     if len(mpi_funcs):
-        t = timer.Timer(text="Ploting ctf and tomo webp's took: {}", logger=logger.info)
+        t = timer.Timer(text="Generating CTF and tomogram images took: {}", logger=logger.info)
         t.start()
         mpi.submit_function_to_workers(mpi_funcs, mpi_args, log_level=logging.NOTSET)
         t.stop()
@@ -6467,6 +6468,38 @@ EOF
                     masked_fsc = np.loadtxt(output + '_data.fsc', comments="#")[:,[0,2,3,4,5]]
 
                     cutoff = fsc_cutoff(masked_fsc[:,[0,-1]], 0.143)
+
+                    # Estimate local resolution using ResMap
+                    if parameters["sharpen_resmap"]:
+                        if os.path.exists(project_params.resolve_path(parameters["sharpen_mask"])):
+                            mask_option = f"--maskVol {project_params.resolve_path(parameters['sharpen_mask'])}"
+                        else:
+                            mask_option = ""
+                            
+                        with open('resmap.sh','w') as bash_script:
+                            bash_script.write("#!/bin/bash\n")
+                            bash_script.write("Xvfb -shmem -screen 0 1280x1024x24 > /dev/null 2>&1 &\n")
+                            bash_script.write("export DISPLAY=':0'\n")  
+                            command = f"/opt/pyp/external/ResMap/ResMap-1.95-cuda-Centos7x64 --noguiSplit --vxSize {pixel_size} --doBenchMarking --pVal {parameters['sharpen_resmap_pval']} --minRes={parameters['sharpen_resmap_min_res']} --maxRes={parameters['sharpen_resmap_max_res']} --stepRes={parameters['sharpen_resmap_step_size']} {mask_option} {half1} {half2}\n"
+                            bash_script.write(command)
+                            
+                        logger.info(command)
+                        local_run.stream_shell_command(". ./resmap.sh")
+
+                        local_res = half1.replace(Path(half1).suffix,"_ori_resmap"+Path(half1).suffix)
+
+                        # set correct pixel size in mrc header
+                        command = "{0}/bin/alterheader -o 0,0,0 -del {1},{1},{1} {2}".format(get_imod_path(), "%.2f" % (pixel_size), local_res)
+                        [ output, error ] = local_run.run_shell_command(command)
+
+                        assert os.path.exists(local_res), f"ResMap did not generate the expected output file {local_res}"
+                        shutil.move( local_res, os.path.join( output_path, name + "_resmap.mrc") )
+
+                        chimera = half1.replace(Path(half1).suffix,"_ori_resmap_chimera.cmd")
+                        with open(chimera) as f:
+                            chimera_script = f.read()
+                        logger.info(f"ResMap Chimera script:\n{chimera_script}")
+
                     logger.info(f"FINAL RESOLUTION (after mask correction) = {1/cutoff:.1f} A ({1/cutoff:.3f} A)")
 
                     save_reconstruction_to_website( name, masked_fsc, plots, metadata )

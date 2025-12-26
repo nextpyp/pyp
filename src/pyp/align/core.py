@@ -4754,7 +4754,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
     # save a copy of the original .rawtlt file
     tltfile = f"{name}.rawtlt"
     shutil.copy2( tltfile, tltfile+"_original")
-    tilt_angles = np.loadtxt(tltfile)
+    tilt_angles = original_tilt_angles = np.loadtxt(tltfile)
     
     if len(excluded_views) > 0:
         # exclude views from binned tilt-series
@@ -4823,12 +4823,13 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         
         """
         
-        logger.info(f"Adding tilt-axis offset of {parameters['tomo_ali_tiltoff']} degrees")
-        # overwrite rawtlt files to reflect the angles offset changes
-        rawtlt_file = f"{name}.rawtlt"
-        tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
-        tiltangles += parameters["tomo_ali_tiltoff"]
-        np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
+        if parameters['tomo_ali_tiltoff'] > 0:
+            logger.info(f"Adding tilt-axis offset of {parameters['tomo_ali_tiltoff']} degrees")
+            # overwrite rawtlt files to reflect the angles offset changes
+            rawtlt_file = f"{name}.rawtlt"
+            tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
+            tiltangles += parameters["tomo_ali_tiltoff"]
+            np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
 
         tiltxcorr_options = f"-tiltfile {name}.rawtlt -binning {parameters['movie_bin']} -rotation {rotation} -radius1 {radius1} -sigma1 {sigma1} -radius2 {radius2} -sigma2 {sigma2} -iterate {iterate} {border_tapper}"
 
@@ -5145,7 +5146,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             stream_shell_command(command, observer=obs)
 
             # detect removed images and add them to excluded views
-            formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
+            formatted_tilt_angles = np.array(["%.2f" % x for x in original_tilt_angles])
             tilt_offset = 0.0
             for line in output:
                 if "Remove image at" in line:
@@ -5528,7 +5529,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             assert os.path.exists(f"{name}_aretomo_Vol.mrc"), "AreTomo3 reconstruction failed"
 
             # detect removed images and add them to excluded views
-            formatted_tilt_angles = np.array(["%.2f" % x for x in tilt_angles])
+            formatted_tilt_angles = np.array(["%.2f" % x for x in original_tilt_angles])
             excluded_tilt_indexes = []
             for line in output:
                 # Remove image 40 at 60.00 deg 
@@ -5995,13 +5996,19 @@ EOF
         
         assert os.path.exists(f"{name}.xf"), f"File {name}.xf not found"
         assert os.path.exists(f"{name}.tlt"), f"File {name}.tlt not found"
-         
+        
         # compose new transformations file
         with open(f"{name}.xf", "r") as f:
             alignments = f.read().split("\n")
+        
+        # remove empty lines
+        alignments = [x for x in alignments if len(x) > 0]
+        tilts = int(mrc.readHeaderFromFile(name + ".st")["nz"])
+ 
+        assert len(alignments) + len(set(excluded_tilts)) == tilts, f"Number of alignments doesn't add up to {tilts} != {len(alignments)} (calculated) + {len(set(excluded_tilts))} (excluded). This can occur when too many tilts are automatically excluded by AreTomo. Try reducing the threshold to remove dark images."
+
         sec = 0
         with open(f"{name}.xf", "w") as newf:
-            tilts = int(mrc.readHeaderFromFile(name + ".st")["nz"])
             for tilt in range(tilts):
                 if str(tilt + 1) in excluded_tilts:
                     newf.write(identity_line)

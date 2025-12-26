@@ -3214,8 +3214,8 @@ default = 1
 condition = { arg="connected_map", value="number" }
 
 [tabs.tomo_mem.connected_map_z_thickness]
-name = "Center Z thickness to keep"
-description = "Only keep connected components whose voxels lie entirely within the central slab of given thickness measured in unbinned voxels. -1 for no filtering."
+name = "Thickness of slab to keep (unbinned voxels)"
+description = "Only keep connected components whose voxels lie entirely within a central slab of given thickness. -1 for no filtering."
 type = "int"
 default = -1
 
@@ -5795,12 +5795,14 @@ name = "Spatial sigma"
 description = "Sigma to use for spatial regularization (pixels/voxels)"
 type = "float"
 default = 500.0
+condition = { arg="transreg", value = "true" }
 
 [tabs.csp_tomo_movie.time_sigma]
 name = "Time sigma"
 description = "Sigma to use for time regularization (number of frames)"
 type = "int"
 default = 21
+condition = { arg="transreg", value = "true" }
 
 # Constrained movie refinement after
 
@@ -8311,6 +8313,40 @@ description = "Resolution limit in Angstroms used during refinement, to be displ
 type = "bool"
 default = false
 hidden = true
+
+[tabs.sharpen.resmap]
+name = "Estimate local resolution"
+description = "Local resolution calculation using ResMap"
+type = "bool"
+default = true
+
+[tabs.sharpen.resmap_pval]
+name = "P-value"
+description = "P-value for likelihood ratio test"
+type = "float"
+default = 0.05
+condition = { arg="resmap", value="true" }
+
+[tabs.sharpen.resmap_min_res]
+name = "Min resolution (A)"
+description = "Minimum local resolution"
+type = "float"
+default = 0.0
+condition = { arg="resmap", value="true" }
+
+[tabs.sharpen.resmap_max_res]
+name = "Max resolution (A)"
+description = "Maximum local resolution"
+type = "float"
+default = 0.0
+condition = { arg="resmap", value="true" }
+
+[tabs.sharpen.resmap_step_size]
+name = "Step size (A)"
+description = "Resolution step size"
+type = "float"
+default = 1.0
+condition = { arg="resmap", value="true" }
 
 # Input reconstruction statistics
 # [statistics_r01.txt]                               :

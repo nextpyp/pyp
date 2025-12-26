@@ -53,7 +53,7 @@ class Timer(ContextDecorator):
         elapsed_time = time.perf_counter() - self._start_time
         self._start_time = None
 
-        if self.logger:
+        if self.logger and elapsed_time > 0.1:
             days = elapsed_time // (24 * 3600)
             timed = elapsed_time % (24 * 3600)
             hours = timed // 3600

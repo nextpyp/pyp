@@ -125,7 +125,7 @@ def guinier_plot(weights, filename="weights.png", pixel_size=1):
     plt.xlabel("Frequency (1/$\\mathregular{\\AA}$)", fontsize=20, fontweight='semibold', labelpad=10)
     plt.ylabel("Cumulative weights", fontsize=20, fontweight='semibold', labelpad=10)
     
-    ticks = [(0, "0"), (0.1, "1/10"), (0.2, "1/5"), (0.3, "1/3.0"), (0.5, "1/2.0"), (1.0 / (pixel_size * 2.0), f"1/{pixel_size * 2.0}") ]
+    ticks = [(0, "0"), (0.1, "1/10"), (0.2, "1/5"), (0.3, "1/3.0"), (0.5, "1/2.0"), (1.0 / (pixel_size * 2.0), f"1/{pixel_size * 2.0:.1f}") ]
     ticks = [ _ for _ in ticks if _[0] <= 1.0 / (pixel_size * 2.0) ]
     
     xticks = [_[0] for _ in ticks]
@@ -1557,7 +1557,7 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
     contrast_stretch("side1.png")
     contrast_stretch("side2.png")
     run_shell_command(
-        "%s/montage side1.png side2.png -mode concatenate -tile 1x %s"
+        "%s/montage side2.png side1.png -mode concatenate -tile 1x %s"
         % ( os.environ["IMAGICDIR"], output_sides )
     )
     # clean up side pngs
@@ -1705,13 +1705,14 @@ def plot_trajectories(
 
     # only draw 0 degree tilt 
     if "tomo" in parameters["data_mode"].lower():
-        try:
+        if os.path.exists(f"{name}.pkl"):        
+            metadata = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False).data
+            zero_tilt_index = np.argmin(np.array([abs(i) for i in sorted(metadata["tlt"].values)]))
+        elif os.path.exists(f"{name}.tlt"):
             tilts = np.loadtxt(f"{name}.tlt")
-        except:
-            metadata = pyp_metadata.LocalMetadata(f"{name}.pkl").data
-            tilts = metadata["tlt"].to_numpy()
-
-        zero_tilt_index = np.argmin(abs(tilts))
+            zero_tilt_index = np.argmin(abs(tilts))
+        else:
+            raise Exception("Unable to figure out index of zero-tilt image")
 
         com = "{0}/bin/newstack -secs {1} {2}.avg {2}.avg~ && mv {2}.avg~ {2}.avg".format(
                 get_imod_path(), zero_tilt_index, scratch_name
@@ -1793,7 +1794,7 @@ def plot_trajectories(
 
     # workaround ImageMagic's error caused by security policy used to convert PDF files
     run_shell_command(f"gs -dSAFER -r500 -sDEVICE=pngalpha -o {name_png}.png {name_png}.pdf")
-    run_shell_command(f"convert {name_png}.png {name_png}_local.webp")
+    run_shell_command(f"convert -flip {name_png}.png {name_png}_local.webp")
 
 
 def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, save_path: str):
