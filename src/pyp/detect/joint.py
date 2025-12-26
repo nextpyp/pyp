@@ -627,7 +627,7 @@ def milotrain(args):
 
         iterative = ""
         if args['detect_milo_use_iterative']:
-            iterative = f"--patch_coordinates {args['detect_milo_patch_coordinates']} --labels {args['detect_milo_labels']} "
+            iterative = f"--patch_coordinates {args['detect_milo_patch_coordinates']} --labels \"{args['detect_milo_labels']}\" "
 
             if args['detect_milo_exclude_labels']:
                 iterative += "--exclude_labels "
@@ -867,7 +867,7 @@ def miloeval(args):
 
             iterative = ""
             if args['detect_milo_use_iterative']:
-                iterative = f"--patch_coordinates {args['detect_milo_patch_coordinates']} --labels {args['detect_milo_labels']} "
+                iterative = f"--patch_coordinates {args['detect_milo_patch_coordinates']} --labels \"{args['detect_milo_labels']}\" "
 
                 if args['detect_milo_exclude_labels']:
                     iterative += "--exclude_labels "
