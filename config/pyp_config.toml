@@ -1443,7 +1443,7 @@ name = "Additional binning for training"
 description = "Bin data by this factor before training"
 type = "int"
 default = 2
-hidden = [ "tomo_particles_eval", "stream_tomo" ]
+hidden = true
 
 [tabs.detect_nn3d.compress]
 name = "Additional binning in Z"
