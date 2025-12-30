@@ -361,10 +361,12 @@ def tomotrain(args):
             masking += "--mask_segmentation "
         if args['detect_nn3d_impute_tomograms']:
             masking += "--impute_tomograms "
+        if args['detect_nn3d_mask_loss']:
+            masking += "--mask_loss "
 
     compilation = get_compilation_flags('nn3d',args)
 
-    command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} {gpu} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --save_all --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} {masking}{compilation}--train_img_txt '{train_images}' --train_coord_txt '{train_coords}' --val_img_txt '{validation_images}' --val_coord_txt '{validation_coords}' --test_img_txt '{validation_images}' --test_coord_txt '{validation_coords}' 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
+    command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} {gpu} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --save_all --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --patch_size {args['detect_nn3d_patch_size']} --patch_height {args['detect_nn3d_patch_height']} --loss_size_downscale {args['detect_nn3d_loss_size_downscale']} --loss_height_downscale {args['detect_nn3d_loss_height_downscale']} {masking}{compilation}--train_img_txt '{train_images}' --train_coord_txt '{train_coords}' --val_img_txt '{validation_images}' --val_coord_txt '{validation_coords}' --test_img_txt '{validation_images}' --test_coord_txt '{validation_coords}' 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
     local_run.stream_shell_command(command)
 
     # display log if available
@@ -483,10 +485,12 @@ def tomoeval(args,name):
                 masking += "--mask_segmentation "
             if args['detect_nn3d_impute_tomograms']:
                 masking += "--impute_tomograms "
+            if args['detect_nn3d_mask_loss']:
+                masking += "--mask_loss "
 
         compilation = get_compilation_flags('nn3d',args)
 
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --arch unet_4 --dataset semi {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {gpu} {fiber} --down_ratio 2 --contrastive --translation_ratio {args['detect_nn3d_translation_ratio']} --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']} {masking}{compilation}--test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
+        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/test.py semi --arch unet_4 --dataset semi {with_score} --exp_id test_reprod --load_model '{project_params.resolve_path(args['detect_nn3d_ref'])}' {compress} {gpu} {fiber} --down_ratio 2 --contrastive --translation_ratio {args['detect_nn3d_translation_ratio']} --K {args['detect_nn3d_max_objects']} --out_thresh {args['detect_nn3d_thresh']}  --patch_size {args['detect_nn3d_patch_size']} --patch_height {args['detect_nn3d_patch_height']} --loss_size_downscale {args['detect_nn3d_loss_size_downscale']} --loss_height_downscale {args['detect_nn3d_loss_height_downscale']} {masking}{compilation}--test_img_txt '{os.path.join( os.getcwd(), imgs_file)}' --test_coord_txt '{os.path.join( os.getcwd(), test_file)}' 2>&1 | tee '{os.path.join(project_folder, 'train', name + '_testing.log')}'"
         local_run.stream_shell_command(command)
         results_folder = os.getcwd()
 

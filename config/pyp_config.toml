@@ -1607,6 +1607,42 @@ default = false
 condition = { arg="use_masking", value="true" }
 hidden = ["stream_tomo"]
 
+[tabs.detect_nn3d.mask_loss]
+name = "Mask PU Loss"
+description = "Enable masking of the PU loss"
+type = "bool"
+default = false
+condition = { arg="use_masking", value="true" }
+hidden = ["stream_tomo"]
+
+[tabs.detect_nn3d.patch_size]
+name = "Patch Size"
+description = "Size of patches used for training, must be multiple for 4"
+type = "int"
+default = 64
+hidden = ["tomo_particles_eval", "stream_tomo"]
+
+[tabs.detect_nn3d.patch_height]
+name = "Patch Height"
+description = "Height of patches used for training, must be odd"
+type = "int"
+default = 7
+hidden = ["tomo_particles_eval", "stream_tomo"]
+
+[tabs.detect_nn3d.loss_size_downscale]
+name = "Patch Size Downscaling"
+description = "Downscaling ratio of patches in X/Y dimensions for the contrastive loss"
+type = "int"
+default = 2
+hidden = ["tomo_particles_eval", "stream_tomo"]
+
+[tabs.detect_nn3d.loss_height_downscale]
+name = "Patch Height Downscaling"
+description = "Downscaling ratio of patches in X dimension for the contrastive loss"
+type = "int"
+default = 1
+hidden = ["tomo_particles_eval", "stream_tomo"]
+
 [tabs.detect_nn3d.compile]
 name = "Enable Compilation"
 description = "Compile the model with torch.compile. It's recommended to use the same options for training and evaluation."
