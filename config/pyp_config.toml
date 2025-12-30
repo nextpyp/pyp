@@ -1636,13 +1636,6 @@ default = false
 advanced = true
 hidden = ["tomo_particles_train", "stream_tomo"]
 
-[tabs.detect_nn3d.debug]
-name = "Debug mode"
-description = "Save diagnostic results to train/ folder"
-type = "bool"
-default = false
-hidden = ["tomo_particles_eval", "stream_tomo"]
-
 #feature detect with milo
 [tabs.detect_milo]
 _name = "Pattern mining"

@@ -335,10 +335,7 @@ def tomotrain(args):
 
     logger.info(f"Training NN model")
 
-    if args.get("detect_nn3d_debug"):
-        debug = "--debug 4"
-    else:
-        debug = ""
+    debug = "--debug 4"
 
     if args.get("detect_nn3d_compress"):
         compress = "--compress"
@@ -421,7 +418,7 @@ def tomotrain(args):
     for path in Path(os.getcwd()).rglob('*.pth'):
         shutil.copy2( path, output_folder )
 
-    if args["detect_nn3d_debug"]:
+    if len(list(Path(os.getcwd()).rglob('*.png'))) > 0:
         
         micrographs = os.path.join( Path(train_folder).parents[0], f"{args['data_set']}.micrographs")
         if not os.path.exists(micrographs):
@@ -443,6 +440,9 @@ def tomotrain(args):
                     if series + ext in str(png) and str(png).endswith(".png")
                 ]
 
+                if len(rawPngList) == 0:
+                    continue
+
                 numericList = [ int( Path(png).stem.split(ext)[-1] ) for png in rawPngList ]
                 ordered_indexes = np.argsort( numericList )
                 pngList = [ rawPngList[i] for i in ordered_indexes ]
@@ -457,16 +457,17 @@ def tomotrain(args):
             
                 # clean up pngs
                 [os.remove(png) for png in pngList]
-                
-            # convert metadata to files
-            pkl_file = f"{os.path.join(project_folder,'pkl',series)}.pkl"
 
-            metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
-            metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_folder,"raw/"))
-            os.remove(f'{series}_avgrot.txt')
- 
-            tilt_metadata = pd.read_pickle(pkl_file)
-            save_tiltseries_to_website(series, tilt_metadata['web'])
+            if os.path.exists(os.path.join( train_folder, f"{series}_pred_hm.webp")):
+                # convert metadata to files
+                pkl_file = f"{os.path.join(project_folder,'pkl',series)}.pkl"
+
+                metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+                metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_folder,"raw/"))
+                os.remove(f'{series}_avgrot.txt')
+    
+                tilt_metadata = pd.read_pickle(pkl_file)
+                save_tiltseries_to_website(series, tilt_metadata['web'])
 
 def tomoeval(args,name):
     # bin data by 8
