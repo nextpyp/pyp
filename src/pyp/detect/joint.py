@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import glob
+import math
 import time
 import numpy as np
 from pathlib import Path
@@ -207,6 +208,7 @@ def tomotrain(args):
     args : args
         pyp parameters
     """
+    project_folder = os.getcwd()
     train_folder = os.path.join( os.getcwd(), "train" )
 
     train_coords = os.path.join(train_folder, 'training_coordinates.txt')
@@ -420,11 +422,51 @@ def tomotrain(args):
         shutil.copy2( path, output_folder )
 
     if args["detect_nn3d_debug"]:
-        debug_folder = os.path.join( output_folder, "debug" )
-        os.makedirs( debug_folder )
-        logger.info(f"Saving intermediate results to {debug_folder}")
-        for path in Path(os.getcwd()).rglob('*.png'):
-            shutil.copy2( path, debug_folder )
+        
+        micrographs = os.path.join( Path(train_folder).parents[0], f"{args['data_set']}.micrographs")
+        if not os.path.exists(micrographs):
+            raise Exception('No micrographs file in ' + os.getcwd())
+        else:
+            input_list = [line.strip() for line in open(micrographs)]
+
+        import pandas as pd
+
+        for series in input_list:
+            for ext in [ "pred_hm"]: # "gt_out", "gt_hm", "pred_out"
+
+                output = os.path.join( train_folder, f"{series}_{ext}.webp" )
+ 
+                # sorting the pngs and create a loop by appending a reverse list
+                rawPngList = [
+                    str(png)
+                    for png in Path(os.getcwd()).rglob('*.png')
+                    if series + ext in str(png) and str(png).endswith(".png")
+                ]
+
+                numericList = [ int( Path(png).stem.split(ext)[-1] ) for png in rawPngList ]
+                ordered_indexes = np.argsort( numericList )
+                pngList = [ rawPngList[i] for i in ordered_indexes ]
+
+                # generate a GIF using these pngs
+                dimensions = 384
+                tiles = int(math.ceil(math.sqrt(len(pngList))))
+                command = "/usr/bin/montage -resize {0}x{0} -flip -geometry +0+0 -tile {1}x {2} {3}".format(
+                    dimensions, tiles, " ".join(pngList), os.path.join( os.getcwd(), output )
+                )
+                local_run.stream_shell_command(command)
+            
+                # clean up pngs
+                [os.remove(png) for png in pngList]
+                
+            # convert metadata to files
+            pkl_file = f"{os.path.join(project_folder,'pkl',series)}.pkl"
+
+            metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+            metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_folder,"raw/"))
+            os.remove(f'{series}_avgrot.txt')
+ 
+            tilt_metadata = pd.read_pickle(pkl_file)
+            save_tiltseries_to_website(series, tilt_metadata['web'])
 
 def tomoeval(args,name):
     # bin data by 8
