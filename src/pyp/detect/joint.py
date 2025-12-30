@@ -363,8 +363,74 @@ def tomotrain(args):
 
     compilation = get_compilation_flags('nn3d',args)
 
+    epoch = [1]
+    number_of_slices = int(args['tomo_rec_thickness'] / args['tomo_rec_binning'] / args['detect_nn3d_down_ratio'] )
+    if not args['detect_nn3d_compress']:
+        number_of_slices *= 2
+    def obs(line):
+        epoch_number = epoch[-1]
+        # ################################val: [1][0/2]
+        if '#val:' in line:
+            current_epoch = int(line.split('][')[0].split('[')[-1])
+            
+            import pandas as pd
+
+            for series in image_names:
+                for ext in [ "pred_hm"]: # "gt_out", "gt_hm", "pred_out"
+
+                    # make sure all pngs are written before continuing
+                    while len(list(Path(os.getcwd()).rglob(f'{epoch_number}_{series}{ext}*.png'))) < number_of_slices:
+                        time.sleep(10)
+
+                    # wait some more to give the filesystem time to catch up
+                    time.sleep(10)
+
+                    # sorting the pngs and create a loop by appending a reverse list
+                    rawPngList = [
+                        str(png)
+                        for png in Path(os.getcwd()).rglob(f'{epoch_number}_*.png')
+                        if series + ext in str(png) and str(png).endswith(".png")
+                    ]
+
+                    if len(rawPngList) == 0:
+                        continue
+
+                    numericList = [ int( Path(png).stem.split(ext)[-1] ) for png in rawPngList ]
+                    ordered_indexes = np.argsort( numericList )
+                    pngList = [ rawPngList[i] for i in ordered_indexes ]
+                    
+                    if not args['detect_nn3d_compress']:
+                        pngList = pngList[::2]
+
+                    output = os.path.join( train_folder, f"{series}_{ext}.webp" )
+    
+                    # generate a GIF using these pngs
+                    dimensions = 384
+                    tiles = int(math.ceil(math.sqrt(len(pngList))))
+                    command = "/usr/bin/montage -resize {0}x{0} -flip -geometry +0+0 -tile {1}x {2} {3}".format(
+                        dimensions, tiles, " ".join(pngList), os.path.join( os.getcwd(), output )
+                    )
+                    local_run.stream_shell_command(command)
+                
+                    # clean up pngs
+                    [os.remove(png) for png in pngList]
+
+                if os.path.exists(os.path.join( train_folder, f"{series}_pred_hm.webp")):
+                    # convert metadata to files
+                    pkl_file = f"{os.path.join(project_folder,'pkl',series)}.pkl"
+
+                    metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+                    metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_folder,"raw/"))
+                    os.remove(f'{series}_avgrot.txt')
+        
+                    tilt_metadata = pd.read_pickle(pkl_file)
+                    save_tiltseries_to_website(series, tilt_metadata['web'])
+            
+            # increment epoch counter
+            epoch.append(epoch_number + 1)
+
     command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} {gpu} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --save_all --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} {masking}{compilation}--train_img_txt '{train_images}' --train_coord_txt '{train_coords}' --val_img_txt '{validation_images}' --val_coord_txt '{validation_coords}' --test_img_txt '{validation_images}' --test_coord_txt '{validation_coords}' 2>&1 | tee {os.path.join( os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
-    local_run.stream_shell_command(command)
+    local_run.stream_shell_command(command,observer=obs)
 
     # display log if available
     try:
@@ -417,57 +483,6 @@ def tomotrain(args):
     logger.info(f"Copying results to {output_folder}")
     for path in Path(os.getcwd()).rglob('*.pth'):
         shutil.copy2( path, output_folder )
-
-    if len(list(Path(os.getcwd()).rglob('*.png'))) > 0:
-        
-        micrographs = os.path.join( Path(train_folder).parents[0], f"{args['data_set']}.micrographs")
-        if not os.path.exists(micrographs):
-            raise Exception('No micrographs file in ' + os.getcwd())
-        else:
-            input_list = [line.strip() for line in open(micrographs)]
-
-        import pandas as pd
-
-        for series in input_list:
-            for ext in [ "pred_hm"]: # "gt_out", "gt_hm", "pred_out"
-
-                output = os.path.join( train_folder, f"{series}_{ext}.webp" )
- 
-                # sorting the pngs and create a loop by appending a reverse list
-                rawPngList = [
-                    str(png)
-                    for png in Path(os.getcwd()).rglob('*.png')
-                    if series + ext in str(png) and str(png).endswith(".png")
-                ]
-
-                if len(rawPngList) == 0:
-                    continue
-
-                numericList = [ int( Path(png).stem.split(ext)[-1] ) for png in rawPngList ]
-                ordered_indexes = np.argsort( numericList )
-                pngList = [ rawPngList[i] for i in ordered_indexes ]
-
-                # generate a GIF using these pngs
-                dimensions = 384
-                tiles = int(math.ceil(math.sqrt(len(pngList))))
-                command = "/usr/bin/montage -resize {0}x{0} -flip -geometry +0+0 -tile {1}x {2} {3}".format(
-                    dimensions, tiles, " ".join(pngList), os.path.join( os.getcwd(), output )
-                )
-                local_run.stream_shell_command(command)
-            
-                # clean up pngs
-                [os.remove(png) for png in pngList]
-
-            if os.path.exists(os.path.join( train_folder, f"{series}_pred_hm.webp")):
-                # convert metadata to files
-                pkl_file = f"{os.path.join(project_folder,'pkl',series)}.pkl"
-
-                metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
-                metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_folder,"raw/"))
-                os.remove(f'{series}_avgrot.txt')
-    
-                tilt_metadata = pd.read_pickle(pkl_file)
-                save_tiltseries_to_website(series, tilt_metadata['web'])
 
 def tomoeval(args,name):
     # bin data by 8
