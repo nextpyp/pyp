@@ -308,11 +308,15 @@ def tomotrain(args):
                                 key = "box"
                             else:
                                 key = "vir"
+                            assert key in metadata.data.keys(), f"Metadata key '{key}' not found in {pkl_file}"
                             if len(metadata.data.get(key)) > 0:
                                 f.write( file + "\t" + os.path.join( os.getcwd(), 'mrc', file + ".rec") + "\n" )
                                 particle_data = metadata.data.get(key).to_numpy()
                                 for particle in range(particle_data.shape[0]):
                                     coords.write( file + "\t" + str(int(particle_data[particle,0])) + "\t" + str(int(particle_data[particle,2])) + "\t" + str(int(particle_data[particle,1])) + "\n" )
+
+    train_data = np.loadtxt(train_coords, dtype=str, ndmin=2, comments="image_name")
+    image_names = np.unique(train_data[:,0])
 
     validation_images = train_images
     validation_coords = train_coords
@@ -365,14 +369,19 @@ def tomotrain(args):
 
     compilation = get_compilation_flags('nn3d',args)
 
-    epoch = [1]
+    epoch = [args['detect_nn3d_val_interval']]
     number_of_slices = int(args['tomo_rec_thickness'] / args['tomo_rec_binning'] / args['detect_nn3d_down_ratio'] )
     if not args['detect_nn3d_compress']:
         number_of_slices *= 2
+
+    if args['detect_nn3d_val_interval'] > args['detect_nn3d_num_epochs']:
+        logger.warning(f"Evaluation interval ({args['detect_nn3d_val_interval']}) is larger than number of epochs ({args['detect_nn3d_num_epochs']})!")
+
     def obs(line):
         epoch_number = epoch[-1]
+        # This is the output we need to parse:
         # ################################val: [1][0/2]
-        if '#val:' in line:
+        if '#val:' in line and args['detect_nn3d_val_interval'] <= args['detect_nn3d_num_epochs']:
             current_epoch = int(line.split('][')[0].split('[')[-1])
 
             import pandas as pd
@@ -429,7 +438,7 @@ def tomotrain(args):
                     save_tiltseries_to_website(series, tilt_metadata['web'])
 
             # increment epoch counter
-            epoch.append(epoch_number + 1)
+            epoch.append(epoch_number + args['detect_nn3d_val_interval'])
 
     command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/main.py semi --down_ratio {args['detect_nn3d_down_ratio']} {compress} {gpu} --num_epochs {args['detect_nn3d_num_epochs']} --bbox {args['detect_nn3d_bbox']} --translation_ratio {args['detect_nn3d_translation_ratio']} --contrastive --exp_id test_reprod --dataset semi --arch unet_4 {debug} --val_interval {args['detect_nn3d_val_interval']} --save_all --thresh {args['detect_nn3d_thresh']} --cr_weight {args['detect_nn3d_cr_weight']} --temp {args['detect_nn3d_temp']} --tau {args['detect_nn3d_tau']} --K {args['detect_nn3d_max_objects']} --lr {args['detect_nn3d_lr']} --patch_size {args['detect_nn3d_patch_size']} --patch_height {args['detect_nn3d_patch_height']} --loss_size_downscale {args['detect_nn3d_loss_size_downscale']} --loss_height_downscale {args['detect_nn3d_loss_height_downscale']} {masking}{compilation}--train_img_txt '{train_images}' --train_coord_txt '{train_coords}' --val_img_txt '{validation_images}' --val_coord_txt '{validation_coords}' --test_img_txt '{validation_images}' --test_coord_txt '{validation_coords}' 2>&1 | tee {os.path.join(os.getcwd(), 'log', time_stamp + '_cet_pick_train.log')}"
     local_run.stream_shell_command(command, observer=obs)
