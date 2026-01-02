@@ -549,7 +549,7 @@ def save_tomo_results_lean(name, parameters, current_path):
 
     files[
         "mrc"
-    ] = [ '.rec', '_bin.ali', '_vir????_binned_nad.mrc', '_vir????_ccc_0.vtp', '_vir????_binned_nad_seg.mrc' ]
+    ] = [ '.rec', '_bin.ali' ]
 
     if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")) and not os.path.exists(os.path.join(current_path,"mrc",name+".mrc")):
         symlink_relative(
@@ -562,9 +562,14 @@ def save_tomo_results_lean(name, parameters, current_path):
     files[
         "webp"
     ] = [ '.webp', '_?D_ctftilt.webp', '_raw.webp', '_ali.webp', '_sides.webp', '_rec.webp', '_score.webp', '_rec.png', '_vir????_binned_nad.webp' ]
-    files[
-        "sva"
-    ] = [ '_region_*.rec', '_spk????.rec', '_vir????_spk????.mrc', '_vir????.txt', '_vir????_cut.txt', '_spk????.proj', '_vir0000.rec' ]
+    
+    # do not save virions and spikes during sessions
+    if not Web.exists or len(parameters.get("micromon_block")) > 0:
+        files[
+            "sva"
+        ] = [ '_region_*.rec', '_spk????.rec', '_vir????_spk????.mrc', '_vir????.txt', '_vir????_cut.txt', '_spk????.proj', '_vir0000.rec' ]
+        
+        files["mrc"].append([ '_vir????_binned_nad.mrc', '_vir????_ccc_0.vtp', '_vir????_binned_nad_seg.mrc' ])
 
     if parameters.get("tomo_ext_coords"):
         files["sva"].append( '.spk' )
