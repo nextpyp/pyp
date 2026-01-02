@@ -13,7 +13,7 @@ import numpy as np
 
 from pyp.inout.image import mrc
 from pyp.inout.metadata import frealign_parfile, pyp_metadata, generateRelionParFileNew
-from pyp.inout.metadata.core import spa_extract_coordinates_legacy, get_max_resolution
+from pyp.inout.metadata.core import spa_extract_coordinates_legacy, get_max_resolution, tomo_extract_coordinates_2d
 from pyp.refine.frealign import frealign
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import mpi, project_params
@@ -51,14 +51,19 @@ def get_allboxes_and_allparxs_from_box(
     current_directory = Path.cwd()
     os.chdir(project_folder)
     try:
-        [allboxes, allparxs] = spa_extract_coordinates_legacy(
-            filename=pkl_file.stem,
-            parameters=parameters,
-            only_inside=False,
-            use_frames=False,
-            use_existing_frame_alignments=False,
-            path=meta_dir
-        )
+        if parameters.get("data_mode") == "spr":
+            [allboxes, allparxs] = spa_extract_coordinates_legacy(
+                filename=pkl_file.stem,
+                parameters=parameters,
+                only_inside=False,
+                use_frames=False,
+                use_existing_frame_alignments=False,
+                path=meta_dir
+            )
+        elif parameters.get("data_mode") == "tomo":
+            [allboxes, allparxs] = tomo_extract_coordinates_2d(
+                filename=pkl_file.stem, parameters=parameters, path=meta_dir
+            )
     except:
         type, value, traceback = sys.exc_info()
         sys.__excepthook__(type, value, traceback)
@@ -120,43 +125,80 @@ def get_positions_and_new_particle_count_from_box_files(
                 if pkl_file.stem not in boxes_lists and pkl_file.stem in check_list
             ]
 
-        if len(pkl_files) > 0 and parameters.get("data_mode") == "spr":
-            logger.info(f"Processing {len(pkl_files):,} new images with estimated CTF resolution better than {parameters['class2d_ctf_min_res']} A")
+        if len(pkl_files) > 0:
+            if parameters.get("data_mode") == "spr":
+                logger.info(f"Processing {len(pkl_files):,} new images with estimated CTF resolution better than {parameters['class2d_ctf_min_res']} A")
 
-            # generate allparx files from new micrographs
-            with tqdm(desc="Progress", total=len(pkl_files), file=TQDMLogger()) as pbar:
-                for file in pkl_files:
-                    allboxes, allparxs = get_allboxes_and_allparxs_from_box(file, parameters)
-                    film_name = file.stem
-                    allparxs_fpath = allparxs_dir / f"{film_name}.allparxs"
-                    write_allparxs_to_file(output_path=allparxs_fpath, allparxs=allparxs)
+                # generate allparx files from new micrographs
+                with tqdm(desc="Progress", total=len(pkl_files), file=TQDMLogger()) as pbar:
+                    for file in pkl_files:
+                        allboxes, allparxs = get_allboxes_and_allparxs_from_box(file, parameters)
+                        film_name = file.stem
+                        allparxs_fpath = allparxs_dir / f"{film_name}.allparxs"
+                        write_allparxs_to_file(output_path=allparxs_fpath, allparxs=allparxs)
 
-                    # Validate the file we just created
-                    with open(allparxs_fpath, "r") as fh:
-                        lines = fh.readlines()
+                        # Validate the file we just created
+                        with open(allparxs_fpath, "r") as fh:
+                            lines = fh.readlines()
 
-                        if "nan" in lines:
-                            logger.warning(
-                                f"Frealign parameter file contains NANs. Removing {allparxs_fpath}"
-                            )
-                            os.remove(allparxs_fpath)
-                        else:
-                            logger.debug(f"Number of particles from {film_name}: {len(lines)}")
-                            if len(lines) != len(allboxes):
-                                logger.error(
-                                    "Number of particles does not match number of coordinates to extract"
-                                    f"Removing {allparxs_fpath}"
+                            if "nan" in lines:
+                                logger.warning(
+                                    f"Frealign parameter file contains NANs. Removing {allparxs_fpath}"
                                 )
                                 os.remove(allparxs_fpath)
                             else:
-                                boxes_lists[film_name] = allboxes
-                                new_particles += len(lines)
+                                logger.debug(f"Number of particles from {film_name}: {len(lines)}")
+                                if len(lines) != len(allboxes):
+                                    logger.error(
+                                        "Number of particles does not match number of coordinates to extract"
+                                        f"Removing {allparxs_fpath}"
+                                    )
+                                    os.remove(allparxs_fpath)
+                                else:
+                                    boxes_lists[film_name] = allboxes
+                                    new_particles += len(lines)
 
-                                number_of_particles_changed = True
-                    pbar.update(1)
+                                    number_of_particles_changed = True
+                        pbar.update(1)
+                    
+            elif parameters.get("data_mode") == "tomo":
+                logger.info(f"Processing {len(pkl_files):,} new tomograms with estimated CTF resolution better than {parameters['class2d_ctf_min_res']} A")
+
+                # generate allparx files from new tomograms
+                with tqdm(desc="Progress", total=len(pkl_files), file=TQDMLogger()) as pbar:
+                    for file in pkl_files:
+                        allboxes, allparxs = get_allboxes_and_allparxs_from_box(file, parameters)
+                        if len(allparxs) > 0:
+                            film_name = file.stem
+                            allparxs_fpath = allparxs_dir / f"{film_name}.allparxs"
+                            write_allparxs_to_file(output_path=allparxs_fpath, allparxs=allparxs)
+
+                            # Validate the file we just created
+                            with open(allparxs_fpath, "r") as fh:
+                                lines = fh.readlines()
+
+                                if "nan" in lines:
+                                    logger.warning(
+                                        f"Frealign parameter file contains NANs. Removing {allparxs_fpath}"
+                                    )
+                                    os.remove(allparxs_fpath)
+                                else:
+                                    logger.debug(f"Number of particles from {film_name}: {len(lines)}")
+                                    if len(lines) != len(allboxes):
+                                        logger.error(
+                                            "Number of particles does not match number of coordinates to extract"
+                                            f"Removing {allparxs_fpath}"
+                                        )
+                                        os.remove(allparxs_fpath)
+                                    else:
+                                        boxes_lists[film_name] = allboxes
+                                        new_particles += len(lines)
+
+                                        number_of_particles_changed = True
+                        pbar.update(1)
 
         if len(boxes_lists) and (len(boxes_lists)-len(old_boxes_lists)) > 0 and number_of_particles_changed:
-            logger.info(f"{new_particles:,} particles detected (~{int(new_particles/(len(boxes_lists)-len(old_boxes_lists)))} particles per micrograph)")
+            logger.info(f"{new_particles:,} particles detected (~{int(new_particles/(len(boxes_lists)-len(old_boxes_lists)))} particles per micrograph/tilt-series)")
 
         flag = detect_flags(existing_unique_name=prev_name, project_directory=project_directory, existing_boxes_lists=old_boxes_lists)
         if not "None" in flag.values():
@@ -293,24 +335,29 @@ def write_stacks_to_file(
     mpi_funcs, mpi_args = [], []
 
     for film_name in new_films:
-        if not os.path.exists(stack_dir / f"one-micrograph-stack-{film_name}.mrc"):
-            mpi_funcs.append(extract_particles)
-            mpi_args.append([(
-                str(ali_dir / film_name)+".mrc",
-                str(stack_dir / f"one-micrograph-stack-{film_name}.mrc"),
-                boxes_lists[film_name],
-                parameters["detect_rad"],   # radius
-                parameters["class2d_box"],  # box size
-                parameters["class2d_bin"],  # binning
-                parameters["scope_pixel"],
-                1, # cpus
-                parameters,
-                True,
-                True,
-                "imod",
-                False,
-                False
-            )])
+        if parameters.get("data_mode") == "spr":
+            stack_file = stack_dir / f"one-micrograph-stack-{film_name}.mrc"
+            if not os.path.exists(stack_file):
+                mpi_funcs.append(extract_particles)
+                mpi_args.append([(
+                    str(ali_dir / film_name)+".mrc",
+                    str(stack_dir / f"one-micrograph-stack-{film_name}.mrc"),
+                    boxes_lists[film_name],
+                    parameters["detect_rad"],   # radius
+                    parameters["class2d_box"],  # box size
+                    parameters["class2d_bin"],  # binning
+                    parameters["scope_pixel"],
+                    1, # cpus
+                    parameters,
+                    True,
+                    True,
+                    "imod",
+                    False,
+                    False
+                )])
+        else:
+            stack_file = ali_dir / f"{film_name}_stack.mrc"
+            assert os.path.exists(stack_file), f"File not found: {stack_file}"
     try:
         t = timer.Timer(text="Extract particles took: {}", logger=logger.info)
         t.start()
@@ -324,19 +371,25 @@ def write_stacks_to_file(
 
         t.stop()
 
-        new_stacks = [
-            str(stack_dir / f"one-micrograph-stack-{film_name}.mrc")
-            for film_name in new_films
-        ]
+        if parameters.get("data_mode") == "spr":
+            new_stacks = [
+                str(stack_dir / f"one-micrograph-stack-{film_name}.mrc")
+                for film_name in new_films
+            ]
+        else:
+            new_stacks = [
+                str(ali_dir / f"{film_name}_stack.mrc")
+                for film_name in new_films
+            ]
         new_stack = str(stack_dir / f"{new_name}_stack.mrc")
         previous_stack = str(stack_dir / f"{previous_name}_stack.mrc")
 
         logger.info(f"Generating merged particle stack {new_stack}")
 
         if previous_name is None or not os.path.exists(previous_stack):
-            mrc.merge_fast(new_stacks, new_stack, remove=True)
+            mrc.merge_fast(new_stacks, new_stack, remove=parameters.get("data_mode") == "spr")
         else:
-            mrc.merge_fast([previous_stack] + new_stacks, new_stack, remove=True)
+            mrc.merge_fast([previous_stack] + new_stacks, new_stack, remove=parameters.get("data_mode") == "spr")
 
     except:
         type, value, traceback = sys.exc_info()
@@ -690,7 +743,6 @@ def get_num_particles_classes(output_parfile: str, num_classes: int):
         particles_class = data[data[:, 7] == class_ind+1]
         num_particles = particles_class.shape[0]
         total_scores = np.sum(particles_class[:, 15])
-        mean_score = total_scores / num_particles
 
         num_particles_classes[class_ind+1] = num_particles
 
@@ -721,12 +773,17 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
     stream_session_dir = frealign_dir.parent
     ali_dir = stream_session_dir / "mrc"
     meta_dir = stream_session_dir / "pkl"
+    particles_dir = stream_session_dir / "sva"
     local_scratch_dir = Path(os.environ["PYP_SCRATCH"])
 
     # Set up parameters for the steps that follow
     mparameters = project_params.load_parameters("..")
     mparameters["extract_box"] = mparameters["class2d_box"]
     mparameters["extract_bin"] = mparameters["class2d_bin"]
+
+    # set particle radius
+    if mparameters.get("data_mode") == "tomo":
+        mparameters['detect_rad'] = mparameters['tomo_spk_rad']
 
     incremental_threshold_2D = mparameters["class2d_inc"]
 
@@ -767,7 +824,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                         parameters=mparameters,
                         new_name=new_name,
                         allparxs_dir=local_scratch_dir,
-                        ali_dir=ali_dir,
+                        ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
                         stack_dir=local_scratch_dir
                         )
                 logger.info(f"Class2D status is {new_status}")
@@ -907,7 +964,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                             parameters=mparameters,
                             new_name=new_name,
                             allparxs_dir=local_scratch_dir,
-                            ali_dir=ali_dir,
+                            ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
                             stack_dir=local_scratch_dir
                             )
                     logger.info(f"Class2D status is {new_status}")
@@ -948,7 +1005,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                             new_name=new_name,
                             previous_name=previous_name,
                             boxes_lists=new_boxes_lists,
-                            ali_dir=ali_dir,
+                            ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
                             allparxs_dir=local_scratch_dir,
                             stack_dir=local_scratch_dir,
                             parameters=mparameters
@@ -1008,7 +1065,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                         different_values.remove("gain_reference")
 
                 logger.info(f"Parameters changed: {different_values}")
-                # update paramters from new parameters
+                # update parameters from new parameters
                 for key in different_values:
                     mparameters[key] = new_parameters[key]
 
@@ -1057,7 +1114,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                         parameters=mparameters,
                         new_name=new_name,
                         allparxs_dir=local_scratch_dir,
-                        ali_dir=ali_dir,
+                        ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
                         stack_dir=local_scratch_dir
                         )
                 logger.info(f"Class2D status is {new_status}")
@@ -1096,7 +1153,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     new_name=new_name,
                     previous_name=previous_name,
                     boxes_lists=new_boxes_lists,
-                    ali_dir=ali_dir,
+                    ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
                     allparxs_dir=local_scratch_dir,
                     stack_dir=local_scratch_dir,
                     parameters=mparameters

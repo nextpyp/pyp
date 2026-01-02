@@ -23,6 +23,7 @@ from pyp.inout.image.core import get_image_dimensions
 from pyp.inout.metadata import pyp_metadata
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.utils import timer
+from pyp.streampyp.web import Web
 from pyp.system import local_run, mpi, project_params
 from pyp.system.logging import get_verbose_level
 from pyp.system.utils import (
@@ -1145,7 +1146,8 @@ def spk_extract_and_process(
     ypad_dn,
     ypad_up,
     pad_factor,
-    parameters
+    parameters,
+    calculate_projections=False,
 ):
 
     # get tomogram dimensions directly from aligned tilt-series
@@ -1213,10 +1215,9 @@ def spk_extract_and_process(
         local_run.run_shell_command(command)
 
     # make projection for cleaning particles by 2D classification
-        command = "{0}/bin/xyzproj -input '{1}.rec' -axis Y -angles 0,0,0 -output '{1}.proj'; rm '{1}.rec'".format(
-        get_imod_path(), spike_name
-    )
-    # local_run.run_shell_command(command)
+    if calculate_projections:
+        command = "{0}/bin/xyzproj -input '{1}.rec' -axis Y -angles 0,0,0 -output '{1}_proj.mrc'; rm '{1}.rec'".format(get_imod_path(), spike_name)
+        local_run.run_shell_command(command)
 
 def detect_and_extract_particles( name, parameters, current_path, binning, x, y, zfact, tilt_angles, tilt_options, exclude_virions ):
 
@@ -2035,13 +2036,18 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         os.path.isfile("%s.spk" % name)
         or os.path.isfile("%s.txt" % name)
         or os.path.isfile("%s.openmod" % name)
-    ) and parameters.get("tomo_vir_method") == "none" and parameters.get("micromon_block") != "tomo-picking-closed" and parameters.get("micromon_block") != "tomo-picking-open":
+    ) and parameters["tomo_ext_size"] > 0 and parameters.get("micromon_block") != "tomo-picking-closed" and parameters.get("micromon_block") != "tomo-picking-open":
         t = timer.Timer(text="Sub-volume extraction took: {}", logger=logger.info)
         t.start()
         extract_spk_direct(
             parameters, name, x, y, binning, zfact, tilt_angles, tilt_options, calculate_normals = True
         )
         t.stop()
+
+        # save stack to sva/ in project directory
+        proj_files = glob.glob("*_stack.mrc") + glob.glob("*_cut.txt")
+        for proj_file in proj_files:
+            shutil.copy2( proj_file, os.path.join(current_path, "sva", proj_file))
 
     return virion_coordinates, spike_coordinates, virion_mode, spike_mode, surface_mode
 
@@ -2164,7 +2170,6 @@ EOF
             local_run.run_shell_command(command)
 
         arguments = []
-        first_element = True
 
         normals_file = f"{name}_normals.txt"
         if os.path.exists(normals_file):
@@ -2309,7 +2314,8 @@ EOF
                     ypad_dn,
                     ypad_up,
                     pad_factor,
-                    parameters
+                    parameters,
+                    Web.exists and parameters.get('data_mode') == 'tomo' and len(parameters.get('micromon_block')) == 0 and parameters.get('class2d_enable'),
                 )
             )
 
@@ -2422,6 +2428,13 @@ EOF
         if detect.tomo_subvolume_extract_is_required(parameters):
             if len(arguments) > 0:
                 mpi.submit_function_to_workers(spk_extract_and_process, arguments)
+
+                # merge all projections into one stack
+                proj_stack = []
+                from pathlib import Path
+                proj_stack = [ str(f) for f in sorted(list(Path(os.getcwd()).rglob("*_spk????_proj.mrc")))]
+                if len(proj_stack) > 0:
+                    mrc.merge_fast(proj_stack, "%s_stack.mrc" % (name), remove=True)
             else:
                 logger.warning("No spikes to extract")
 
