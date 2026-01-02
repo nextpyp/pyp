@@ -45,7 +45,7 @@ def contact_sheet(Y, cols=25, rescale=True, order: list = None):
             sliceM, sliceN = j * m, k * n
             class_id = image_id if order is None else order[image_id]
             data = np.flipud(X[class_id, :, :])
-            if rescale:
+            if rescale and math.fabs(data.max() - data.min()) > np.finfo(float).eps:
                 rescaled = (
                     255.0 * (data - data.min()) / (data.max() - data.min())
                 ).astype(np.uint8)

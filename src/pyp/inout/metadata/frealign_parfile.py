@@ -801,7 +801,7 @@ class Parameters:
         for idx, parfile in enumerate(inputlist):
 
             # read only film column from files 
-            films_df = pd.read_csv(parfile + '.tmp', header=None, delim_whitespace=True, usecols=[film_col])
+            films_df = pd.read_csv(parfile + '.tmp', header=None, sep=r'\s+', usecols=[film_col])
             num_rows = films_df.shape[0]
 
             films_arr = films_df.to_numpy()
@@ -1556,12 +1556,12 @@ class Parameters:
             data_df = pd.read_csv(par_filename, 
                             comment='C', 
                             header=None, 
-                            delim_whitespace=True)
+                            sep=r'\s+')
         else:
              data_df = pd.read_csv(par_filename, 
                             comment='C', 
                             header=None, 
-                            delim_whitespace=True,
+                            sep=r'\s+',
                             usecols=[col for col in range(0,toColumn+1,1)])
 
         data = data_df.to_numpy()

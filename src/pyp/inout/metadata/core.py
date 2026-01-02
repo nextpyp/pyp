@@ -2054,6 +2054,197 @@ def spa_extract_coordinates_legacy(
 
     return allboxes, allparxs
 
+def tomo_extract_coordinates_2d(
+    filename, parameters, path="."
+):
+    """Extract per-frame box and parx for SPR.
+
+    Parameters
+    ----------
+    filename : str, Path
+        Movie filename
+    parameters : dict
+        Main configurations taken from .pyp_config
+    only_inside : bool, optional
+        Whether to only extract particles inside image boundary, by default False
+    use_frames : bool, optional
+        Whether to use frames for coordinate extraction, by default False
+    use_existing_frame_alignments : bool, optional
+        Whether to use local trajectories saved from in ali/, by default False
+
+    Returns
+    ----------
+    allboxes
+        Box array for all frames in all particles
+    allparxs
+        Parx strings for all frames in all particles
+    """
+
+    name = os.path.basename(filename)
+
+    pkl = os.path.join(path, filename + ".pkl")
+    assert (os.path.exists(pkl)), f"{pkl} does not exist, please re-run tomoswarm"
+    metadata_object = pyp_metadata.LocalMetadata(pkl)
+    metadata = metadata_object.data
+
+    # check if we have all required data
+    for key in ["image", "tomo", "order", "ali", "tlt", "global_ctf"]:
+        assert (key in metadata), f"{key} is not included in {pkl}, please re-run pre-processing"
+
+    ctf = metadata["global_ctf"].to_numpy()
+    dims = np.array([ctf[6], ctf[7]])
+
+    allboxes = []
+    allparxs = []
+    allparxs.append([])
+
+    magnification = 10000.0
+
+    if "ctf_use_ast" in parameters.keys() and not parameters["ctf_use_ast"]:
+        df1 = df2 = ctf[0]  # TOMOCTFFIND
+        angast = 45.0
+    else:
+        df1 = ctf[2]  # CTFFIND3
+        df2 = ctf[3]  # CTFFIND3
+        angast = ctf[4]  # CTFFIND3
+
+    # global .parx parameters
+    dose = tilt = ppsi = ptheta = pphi = 0
+    norm0 = norm1 = norm2 = 0
+    a00 = a05 = a10 = a15 = 1
+    a01 = a02 = a04 = a06 = a08 = a09 = 0
+    a03 = a07 = a11 = a12 = a13 = a14 = 0
+
+    mag = magnification
+    film = 0
+    occ = 100
+    sigma = 0.5
+    logp = change = 0
+    score = 0.5
+
+    local_frame = 0
+
+    if "vir" in metadata:
+        virion_coordinates = metadata["vir"].to_numpy()
+    elif os.path.exists("mod/%s.txt" % name):
+        virion_coordinates = np.loadtxt(
+            "mod/%s.txt" % name,
+            comments="particle_x",
+            usecols=(list(range(10))),
+            ndmin=2,
+        )
+    elif "box" in metadata:
+        virion_coordinates = metadata["box"].to_numpy()
+    else:
+        virion_coordinates = np.empty( shape=(0, 0) )
+
+    axis = 0
+
+    local_particle = 0
+
+    for vir in range(virion_coordinates.shape[0]):
+
+        # check if we have picked spikes for this virion
+        virion_file = "sva/%s_vir%04d_cut.txt" % (name, vir)
+        if os.path.isfile(virion_file):
+            spikes_in_virion = np.loadtxt(
+                virion_file, comments="number", usecols=(list(range(32))), ndmin=2
+            )
+            if spikes_in_virion.shape[0] == 0:
+                logger.warning(
+                    "File {0} contains no spikes. Skipping".format(virion_file)
+                )
+                continue
+        elif ("box" in metadata or os.path.exists("mod/%s.spk" % name) or os.path.exists("mod/%s.txt" % name) ) and not "vir" in metadata:
+            # use origin if we are using isolated particles
+            spikes_in_virion = np.zeros([1, 7])
+        else:
+            logger.warning(f"File {virion_file} not found. Skipping")
+            continue
+
+        # for all spikes in current virion
+        for spike in range(spikes_in_virion.shape[0]):
+
+            # extract local spike coordinates [0-479]
+            spike_x, spike_y, spike_z = spikes_in_virion[spike, 3:6]
+                    
+            # particle's coordinates with respect to center of micrograph
+            coordinates = np.array([spike_x, spike_y, spike_z])
+
+            pos = coordinates[0:2]
+
+            pos = pos + dims / 2.0
+            box_pos = pos.round()
+
+            psi, the, phi = 0, 0, 0
+
+            # correct for .box quantization error
+            xshift, yshift = 0, 0
+
+            scan_order, confidence, ptl_CCX = (
+                local_frame,
+                -local_frame,
+                local_frame + 1,
+            )
+
+            allboxes.append([box_pos[0], box_pos[1], local_frame])
+
+            """C     1       2       3       4         5         6       7     8        9       10      11      12        13         14      15      16       17        18        19        20        21        22        23        24        25        26        27        28        29        30        31        32        33        34        35        36        37        38        39        40        41        42        43        44        45"""
+            """C    NO     PSI   THETA     PHI       SHX       SHY     MAG  FILM      DF1      DF2  ANGAST     OCC      LOGP      SIGMA   SCORE  CHANGE   PTLIND    TILTAN    DOSEXX    SCANOR    CNFDNC    PTLCCX      AXIS     NORM0     NORM1     NORM2  MATRIX00  MATRIX01  MATRIX02  MATRIX03  MATRIX04  MATRIX05  MATRIX06  MATRIX07  MATRIX08  MATRIX09  MATRIX10  MATRIX11  MATRIX12  MATRIX13  MATRIX14  MATRIX15      PPSI    PTHETA      PPHI"""
+
+            allparxs[0].append(
+                frealign_parfile.EXTENDED_NEW_PAR_STRING_TEMPLATE_WO_NO
+                % (
+                    psi,
+                    the,
+                    phi,
+                    xshift,
+                    yshift,
+                    mag,
+                    film,
+                    df1,
+                    df2,
+                    angast,
+                    occ,
+                    logp,
+                    sigma,
+                    score,
+                    change,
+                    local_particle,
+                    tilt,
+                    dose,
+                    scan_order,
+                    confidence,
+                    ptl_CCX,
+                    axis,
+                    norm0,
+                    norm1,
+                    norm2,
+                    a00,
+                    a01,
+                    a02,
+                    a03,
+                    a04,
+                    a05,
+                    a06,
+                    a07,
+                    a08,
+                    a09,
+                    a10,
+                    a11,
+                    a12,
+                    a13,
+                    a14,
+                    a15,
+                    ppsi,
+                    ptheta,
+                    pphi,
+                )
+            )
+        local_particle += 1
+
+    return allboxes, allparxs
+
 @timer.Timer(
     "csp_extract_coordinates", text="Reading and converting coordinates took: {}", logger=logger.info
 )
@@ -2889,7 +3080,6 @@ EOF
 
     allparxs = [parameters_obj]
 
-    # return allboxes, allparxs
     return allparxs
 
 @timer.Timer(

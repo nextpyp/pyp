@@ -4427,7 +4427,7 @@ def update_metadata_coordinates_and_merge(project_path,working_path,parameters):
                 if os.path.exists(mrc_file):
                     x, y, _ = get_image_dimensions(mrc_file)
                 else:
-                    raise Exception(f"Cannot find raw tilt-series {mrc_file} to extract dimentions")
+                    raise Exception(f"Cannot find raw tilt-series {mrc_file} to extract dimensions")
 
                 # create txt files
                 detect_tomo.extract_spk_direct(

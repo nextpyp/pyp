@@ -1456,7 +1456,7 @@ def read_star(star_file):
             if line.startswith('_'):
                 columns.append(line.split()[0][1:])
 
-        data = pd.read_csv(file, delim_whitespace=True, names=columns, comment='#')
+        data = pd.read_csv(file, sep=r'\s+', names=columns, comment='#')
 
     return data
 
