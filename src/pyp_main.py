@@ -696,7 +696,8 @@ def parse_arguments(block):
         if parameters.get('micromon_block') == "tomo-import-pure":
             parent_parameters['data_mode'] = data_mode
             for key in ['scope_pixel','scope_voltage','scope_tilt_axis','gain_reference', 'data_path', 'data_set']:
-                parent_parameters[key] = parameters_existing[key]
+                if key in parameters_existing.keys():
+                    parent_parameters[key] = parameters_existing[key]
             parameters = project_params.parameter_force_check(parameters_existing,parent_parameters)
         else:
             parameters = project_params.parameter_force_check(parameters_existing, parameters)
