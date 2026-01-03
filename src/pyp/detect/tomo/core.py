@@ -1345,6 +1345,12 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         else:
             logger.warning("No particles were detected")
 
+        # prepare scores for display
+        scores_file = name + "_scores.mrc"
+        scores_webp_file = scores_file.replace(".mrc","_bw_rec.webp")
+        plot.tomo_slicer_gif( scores_file, scores_webp_file, flipyz=True, clipping=False )
+        os.rename(scores_webp_file, name + '_score.webp')
+
     elif parameters.get("tomo_pick_method") == "pytom":
 
         assert os.path.exists(project_params.resolve_path(parameters.get('tomo_pick_pytom_template'))), "Please provide a valid template"

@@ -280,6 +280,17 @@ def pick(name,radius=100,pixelsize=2.1,auto_binning = 12,contract_times=1,gaussi
     p=Picker(name,radius=radius,pixelsize=pixelsize,auto_binning = auto_binning,show=show)
     area=p.getcont(contract_times=contract_times,gaussian=gaussian,sigma=sigma,stdtimes=stdtimes_cont,min_size=min_size,dilation=dilation,show=show)
 
+    # create score map for visualization
+    bp = mrc.read("bp.mrc")
+    
+    # overlay discarded areas
+    from scipy import ndimage
+    gradient = ndimage.gaussian_gradient_magnitude(area.astype('float'), sigma=.25)
+    if gradient.max() - gradient.min() > np.finfo(float).eps:
+        gradient_normalized = ( gradient - gradient.min() ) / ( gradient.max() - gradient.min() )
+        bp = np.where(gradient_normalized>.5, bp.min(), bp)
+    mrc.write(bp, name+"_scores.mrc")
+
     boxes,raw_particles=p.detect(area,contract_times=contract_times,radius_times=radius_times,inhibit=False,detection_width=detection_width,show=show)
     particles_metrics,stdthreshold=p.prefilt(raw_particles,stdtimes=stdtimes_filt)
     if inhibit:
