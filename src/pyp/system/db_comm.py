@@ -569,7 +569,7 @@ def save_tomo_results_lean(name, parameters, current_path):
             "sva"
         ] = [ '_region_*.rec', '_spk????.rec', '_vir????_spk????.mrc', '_vir????.txt', '_vir????_cut.txt', '_spk????.proj', '_vir0000.rec' ]
         
-        files["mrc"].append([ '_vir????_binned_nad.mrc', '_vir????_ccc_0.vtp', '_vir????_binned_nad_seg.mrc' ])
+        files["mrc"] += [ '_vir????_binned_nad.mrc', '_vir????_ccc_0.vtp', '_vir????_binned_nad_seg.mrc' ]
 
     if parameters.get("tomo_ext_coords"):
         files["sva"].append( '.spk' )
