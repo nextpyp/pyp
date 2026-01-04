@@ -833,26 +833,54 @@ def generate_3d_plots(rec_file, train_folder, args, project_dir ):
     import matplotlib.image
 
     name = Path(rec_file).stem.replace('_rec3d','')
+    output_montage = os.path.join(train_folder,name + '_3d_visualization_montage.webp')
     
-    # get corresponding volume slice from pyp reconstruction
-    slice_rec = matplotlib.image.imread( os.path.join( Path(train_folder).parents[0] / 'webp', name + '.webp' ))
-
+    rec = np.load(rec_file)
     hm = np.load(rec_file.replace('_rec3d.npy','_hm3d_simsiam.npy'))
     
-    # extract middle slice from colormap (considering binning)
-    med_slice_index = 4 if args.get("detect_milo_compress") else 2
-    slice_color = hm[int(hm.shape[0]/med_slice_index),:,:,:]
+    dimensions = rec.shape
 
-    # produce weighted image
     weight = args.get('detect_milo_blend_ratio')
-    slice = ( 1 - weight ) * slice_rec + weight * np.flip(slice_color,0)
+
+    med_slice_index = 4 if args.get("detect_milo_compress") else 2
+
+    for slice in range(int(rec.shape[0]/med_slice_index)):
+        # produce weighted image
+        current_slice = ( 1 - weight ) * rec[slice*med_slice_index,:,:] + weight * hm[slice*2,:,:,:]
+        matplotlib.image.imsave(f'{name}_rec_slice_{slice:04d}.webp', current_slice.astype('uint8'))
     
-    # save result as webp
-    matplotlib.image.imsave(os.path.join(train_folder,name + '_3d_visualization.webp'), slice.astype('uint8') )
+     # sorting the webps and create a loop by appending a reverse list
+    image_list = sorted(glob.glob(f"{name}_rec_slice_????.webp"))
     
+    shutil.copy2(image_list[len(image_list)//2], os.path.join(train_folder,name + '_3d_visualization.webp'))
+ 
+    # generate a GIF using these pngs
+    square_size = int(math.ceil(math.sqrt(len(image_list))))
+    if max(dimensions[1:]) * square_size > 16383:
+        rec_output = output_montage.replace(".webp",".png")
+    else:
+        rec_output = output_montage
+    command = "/usr/bin/montage -flip -resize {0}x{1} -geometry +0+0 -tile {2}x {3} {4}".format(
+        dimensions[2], dimensions[1], square_size, " ".join(image_list), rec_output
+    )
+    local_run.run_shell_command(command)
+
+    # clean up pngs and flipped tomogram
+    [shutil.copy2(image,train_folder) for image in image_list]
+    [os.remove(image) for image in image_list]
+
     # TODO: send tilt-series to website (may not need to send the CTF data, try with and without)
-    tilt_metadata = pd.read_pickle(f"{os.path.join(project_dir,'pkl',name)}.pkl")
-    save_tiltseries_to_website(name, tilt_metadata['web'])
+    if os.path.exists(rec_output):
+        # convert metadata to files
+        pkl_file = f"{os.path.join(project_dir,'pkl',name)}.pkl"
+
+        metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+        metadata_object.data['global_ctf'].values[8] = metadata_object.data['global_ctf'].values[8] // 2
+        metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_dir,"raw/"))
+        os.remove(f'{name}_avgrot.txt')
+
+        tilt_metadata = pd.read_pickle(pkl_file)
+        save_tiltseries_to_website(name, tilt_metadata['web'])
 
 def miloeval(args):
 
