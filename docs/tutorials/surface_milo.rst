@@ -214,7 +214,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Bounding box (binned voxels)`` to 72
 
-        - Set ``Learning rate`` to 0.0001
+        - Set ``Learning rate`` to 0.00001
 
         - Set ``Interval to perform validation`` to 5
 
@@ -232,9 +232,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Enable Compilation``
 
-        - Set ``Compile mode`` to *"reduce overhead"*
-
-      After we run the block, we can see that we initially have 5214 patches.
+      After we run the block, we can see that we initially have 4937 patches.
 
     .. md-tab-item:: Evaluation
 
@@ -269,17 +267,17 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         Cluster Embeddings
 
-      Here we can see the clusters. Out of all these clusters, we want to keep only the ones that have a membrane at the bottom. However, we need to be conservative at filtering, as we do not want to filter out a cluster that might have good patches. We can look at these cluster embeddings to better understand how close the clusters are, which can help us not remove clusters that are too close to a good clusters. However, in general, the cluster matrix is the main tool we will use (the whole matrix is not shown due to its large size).
+      Here we can see the clusters. Out of all these clusters, we want to keep only the ones that have a membrane at the bottom. However, we need to be conservative at filtering, as we do not want to filter out a cluster that might have good patches this early. We can look at these cluster embeddings to better understand how close the clusters are, which can help us not remove clusters that are too close to a good clusters. However, in general, the cluster matrix is the main tool we will use (the whole matrix is not shown due to its large size).
 
       .. figure:: ../images/surface_milo/iteration_1_matrix_example.webp
 
         Example Clusters
 
-      Here, we can see that the cluster 10 mostly has background patches while 13 mostly has carbon edges. This means we would prefer to filter them out. Cluster 14 seems to mostly have bad patches as well. However, it also has some patches that seem to be centered at spike proteins, such as 4th and 8th patches. We will act conservative and keep this cluster, since even though we could eliminate those bad patches in a future iteration, we cannot recover back good patches.
+      Here, we can see that the cluster 15 mostly has patches centered inside the membrane while 16 mostly has background. This means we would prefer to filter them out. Cluster 13 seems to have bad patches as well. However, it also has some patches that seem to be centered at spike proteins. Since we can eliminate bad patches in a future iteration but we cannot recover filtered out good patches, we will act conservatively and keep this cluster.
 
-      To not waste too much time, it is easier to simply keep all clusters that have a membrane at the bottom, without looking for a spike protein. After checking all rows of the matrix, we decide to only keep these clusters::
+      To not waste too much time, it can be easier to simply keep all clusters that have a membrane at the bottom, without looking at the center. After checking all rows of the matrix, we decide to only keep these clusters::
 
-        1, 2, 5, 6, 8, 9, 11, 12, 14, 17, 18, 19, 21, 23, 25, 26
+        2, 4, 5, 6, 8, 9, 11, 12, 13, 14, 19, 23, 27, 28
 
 .. nextpyp:: Iteration 2
   :collapsible: closed
@@ -302,9 +300,9 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Patch coordinate location`` to the location of the ``/train/interactive_info_parquet.gzip`` file in the **first** **evaluation** block.
 
-        - Set ``Class labels`` to ``1, 2, 5, 6, 8, 9, 11, 12, 14, 17, 18, 19, 21, 23, 25, 26``
+        - Set ``Class labels`` to ``2, 4, 5, 6, 8, 9, 11, 12, 13, 14, 19, 23, 27, 28``
 
-        After we run the block, we can see that we decreased our patch count from 5214 to 2401.
+        After we run the block, we can see that we decreased our patch count from 4937 to 1919.
 
     .. md-tab-item:: Evaluation
 
@@ -320,11 +318,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         UMAP embedding
 
-      We can see that we eliminated a good amount of bad patches and the good patches take up much more space. However, the bad patches still exist, and we can filter them out further. Since good patches seem to be the majority now, this time we look for clusters to eliminate rather than keep like we did last time.
-
-      After checking all rows of the matrix, we decide to filter out these clusters::
-
-        1, 3, 11, 15, 20, 22, 25, 26, 36, 37, 39
+      We can see that we eliminated a significant amount of bad patches and the good patches take up much more space. There are still some patches that do not seem to have a membrane at the bottom, but they are very scarce, which makes it difficult to filter them out. It is possible to choose a few clusters if filtering out a few true positives is not considered important. However, we will instead skip filtering for this iteration and zoom in to the patch centers in the next iteration.
 
 .. nextpyp:: Iteration 3
   :collapsible: closed
@@ -341,21 +335,23 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       * On the **Pattern Mining** tab:
 
-        - Set ``Epochs`` to 150
+        - Set ``Epochs`` to 200
 
-        - Set ``Bounding box (binned voxels)`` to 54
+        - Set ``Bounding box (binned voxels)`` to 36
 
         - Set ``Learning rate`` to 0.001
 
-        - Set ``Interval to perform validation`` to 15
+        - Set ``Interval to perform validation`` to 20
+
+        - Disable ``Remove Segmentation``
 
         - Set ``Patch coordinate location`` to the location of the ``/train/interactive_info_parquet.gzip`` file in the **second** **evaluation** block.
 
-        - Set ``Class labels`` to ``1, 3, 11, 15, 20, 22, 25, 26, 36, 37, 39``
+        - Keep ``Class labels`` empty
 
         - Enable `Exclude labels`
 
-        After we run the block, we can see that we further decreased our patch count from 2401 to 1639.
+        After we run the block, we can see that our patch count is still 1919, as we did not do any filtering.
 
     .. md-tab-item:: Evaluation
 
@@ -371,21 +367,21 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         UMAP embedding
 
-      We can see that almost all patches have a membrane at the bottom now. Our task now becomes trying to eliminate patches by focusing on their centers. Specifically, we want to eliminate patches that have a carbon edge or gold particle or simply nothing at all, latter of which is more difficult.
+      Our task now is trying to eliminate patches by focusing on their centers. Specifically, we want to eliminate patches that have a carbon edge, gold particle, artifact, or simply nothing at all, latter of which can be more difficult.
 
       When we look at the cluster matrix, we see that there are a lot of clusters that seem to have bad patches but also some patches with spike proteins, which we would like to keep. As such, we have three options:
 
-      #. Stop the iterations and continue with what we have.
+      #. Stop the iterations and continue to refinement phase with what we have.
 
-      #. Continue iterations while still being filtering conservatively, at the cost of having to spend more time.
+      #. Continue iterations while still filtering conservatively, at the cost of having to spend more time.
 
-      #. Continue iterations but become less conservative at filtering, hoping that eliminating more false positives will outweigh the cost of eliminating true positives.
+      #. Continue iterations but become less conservative at filtering, hoping that we do not filter out too many good patches.
 
       We will do the third option to save time while also showing one more iteration.
 
       After checking all rows of the matrix, we decide to filter out these clusters::
 
-        6, 18, 20, 22, 29, 35, 42, 47
+        0, 1, 3, 5, 9, 12, 16, 17, 20, 21, 24, 25, 28, 32, 33, 35, 38, 39, 41, 49
 
 .. nextpyp:: Iteration 4
   :collapsible: closed
@@ -402,21 +398,13 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       * On the **Pattern Mining** tab:
 
-        - Set ``Epochs`` to 200
-
-        - Set ``Bounding box (binned voxels)`` to 36
-
-        - Set ``Learning rate`` to 0.01
-
-        - Set ``Interval to perform validation`` to 20
-
-        - Disable ``Remove Segmentation``
+        - Set ``Bounding box (binned voxels)`` to 24
 
         - Set ``Patch coordinate location`` to the location of the ``/train/interactive_info_parquet.gzip`` file in the **third** **evaluation** block.
 
-        - Set ``Class labels`` to ``6, 18, 20, 22, 29, 35, 42, 47``
+        - Set ``Class labels`` to ``0, 1, 3, 5, 9, 12, 16, 17, 20, 21, 24, 25, 28, 32, 33, 35, 38, 39, 41, 49``
 
-        After we run the block, we can see that we further decreased our patch count from 1639 to 1368.
+        After we run the block, we can see that we further decreased our patch count from 1919 to 1159.
 
     .. md-tab-item:: Evaluation
 
@@ -432,11 +420,11 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         UMAP embedding
 
-      We successfully eliminated all patches that were obviously bad. We can still see some patches with no obvious spike protein, but it's not easy to discriminate if they are actually background or just faint or noisy spikes. Nevertheless, we get to filter clusters once more before moving onto the refinement phase (without doing one more iteration), so we try to eliminate those we can.
+      We successfully eliminated all patches that were clearly bad. We can still see some patches with no obvious spike protein, but it's not easy to discriminate if they are actually background or just faint or noisy spikes. Nevertheless, we get to filter clusters once more without doing one more iteration before moving onto the refinement phase, so we try to eliminate as much as we can, including patches with carbon edges and artifacts.
 
       After checking all rows of the matrix, we decide to filter out these clusters::
 
-        9, 28, 31, 32, 35, 36, 38, 44, 52, 56
+        6, 7, 15, 17
 
 .. nextpyp:: Exploration Phase Summary
   :collapsible: closed
@@ -509,15 +497,15 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
         - Set ``Coordinates for training`` to *"class labels from MiLoPYP"*
 
-          - Set ``Class IDs`` to ``0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29, 30, 33, 34, 37, 39, 40, 41, 42, 43, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55, 57, 58, 59``
+          - Set ``Class IDs`` to ``0,1,2,3,4,5,8,9,10,11,12,13,14,16,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59``
 
-        - Set ``Epochs`` to 3
+        - Set ``Epochs`` to 25
 
-        - Set ``Max number of particles`` to 600
+        - Set ``Max number of particles`` to 300
 
         - Set ``Learning rate`` to 0.001
 
-        - Set ``Validation interval (epochs)`` to 1
+        - Set ``Validation interval (epochs)`` to 3
 
         - Enable ``Use masking``
 
@@ -529,11 +517,9 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
           - Set ``Compile mode`` to *"max autotune"*
 
-        - Enable ``Debug mode``
+      After we run the block, we can see that we further decreased our patch count from 1159 to 1083.
 
-      After we run the block, we can see that we further decreased our patch count from 1368 to 1116.
-
-      This block usually takes a while to run. However, it gives relatively good results even after a single epoch. You can increase or decrease the epoch count based on available time.
+      This block usually takes a while to run. You can increase or decrease the epoch count or the patch downscaling based on available time.
 
     .. md-tab-item:: Evaluation
 
@@ -545,7 +531,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
         - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate
 
-        - Set ``Particle radius (A)`` to 120
+        - Set ``Particle radius (A)`` to 80
 
         - Set ``Threshold for soft/hard positives`` 0.85
 
