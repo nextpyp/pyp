@@ -1,11 +1,11 @@
-####################################
-Surface constrained MiLoPYP tutorial
-####################################
+###########################################
+Surface constrained MiLoPYP tutorial (beta)
+###########################################
 
 This tutorial explains the workflow for surface-constrained MiLoPYP and demonstrates the full pipeline by detecting spike proteins from SARS-CoV-2 virions.
 
 Dataset
-=======
+-------
 
 We will use 10 tilt-series from `EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_ . The data were acquired using a Titan Krios with a K2 detector in counting mode. The pixel size is 1.329 Å and the tilt range is from -60° to +60° with a 3° increment.
 
@@ -22,8 +22,8 @@ To download the subset of 10 tilt-series, run the following command in your term
 
   The subset of tilt-series was chosen randomly, you are free to hand-pick other tomograms or use less/more.
 
-Data pre-processing
-===================
+Preparation
+-----------
 
 .. nextpyp:: Step 1. Import raw tilt-series
   :collapsible: open
@@ -87,7 +87,7 @@ Data pre-processing
 
 
 Segmentation
-============
+------------
 
 Segmentation quality is very important and can affect all downstream tasks as we use binary segmentations for surface constraints.
 
@@ -141,7 +141,7 @@ Segmentation quality is very important and can affect all downstream tasks as we
         .. figure:: ../images/surface_milo/segmentation_filtered.webp
 
 .. nextpyp:: Improving segmentations
-  :collapsible: open
+  :collapsible: closed
 
   Sometimes the segmentations might not be as good as preferred. This mainly happens in two different ways. Either an actual membrane does not get segmented or non-membrane features get segmented. It is possible to experiment with different parameters to improve the results.
 
@@ -186,7 +186,7 @@ Segmentation quality is very important and can affect all downstream tasks as we
       This can have different effects depending on the dataset. While it is better to try different values, we find 96 to be good for this dataset. Lowering this value also reduces the memory requirements.
 
 Exploration phase
-=================
+-----------------
 
 In the exploration phase, we use the segmentations to automatically filter out the candidate particle locations that are too close or too distant to any surface. We also orient the patches so that they are normal to the surface, making all the spike proteins aligned.
 
@@ -267,7 +267,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       .. figure:: ../images/surface_milo/iteration_1_matrix_example.webp
 
-        Example Clusters
+        Example clusters
 
       Here, we can see that the cluster 15 mostly has patches centered inside the membrane while 16 mostly has background. This means we would prefer to filter them out. Cluster 13 seems to have bad patches as well. However, it also has some patches that seem to be centered at spike proteins. Since we can eliminate bad patches in a future iteration but we cannot recover filtered out good patches, we will act conservatively and keep this cluster.
 
@@ -476,7 +476,7 @@ We also use a feature called **iterative exploration**, which is one of the main
       .. figure:: ../images/surface_milo/iteration_4_tomogram.webp
 
 Refinement phase
-================
+----------------
 
 Refinement phase also uses the segmentations to constrain particle picking to surfaces. This is done by creating a binary mask based on the distance from the segmentation. This binary mask is then used to filter input and output coordinates, in the loss function, or to modify the input tomograms to directly remove any signal outside the mask.
 
@@ -532,7 +532,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
         - Set ``Threshold for soft/hard positives`` 0.85
 
 Metrics
-=======
+-------
 
 .. nextpyp:: Exploration metrics
   :collapsible: open
@@ -591,4 +591,4 @@ Metrics
 
       * **ari_std:**
 
-        Standard deviation of Adjusted Rand Index across repeated clusterings. Lower values indicate more consistent clustering.=
+        Standard deviation of Adjusted Rand Index across repeated clusterings. Lower values indicate more consistent clustering.
