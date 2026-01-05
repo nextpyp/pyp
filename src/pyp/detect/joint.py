@@ -842,13 +842,13 @@ def generate_3d_plots(rec_file, train_folder, args, project_dir ):
 
     weight = args.get('detect_milo_blend_ratio')
 
-    med_slice_index = 4 if args.get("detect_milo_compress") else 2
+    med_slice_index = 2 if args.get("detect_milo_compress") else 1
 
-    for slice in range(int(rec.shape[0]/med_slice_index)):
+    for slice in range(int(rec.shape[0]//med_slice_index)):
         # produce weighted image
-        current_slice = ( 1 - weight ) * rec[slice*med_slice_index,:,:] + weight * hm[slice*2,:,:,:]
-        matplotlib.image.imsave(f'{name}_rec_slice_{slice:04d}.webp', current_slice.astype('uint8'))
-    
+        current_slice = ( 1 - weight ) * rec[slice*med_slice_index,:,:] + weight * hm[slice,:,:,:]
+        matplotlib.image.imsave(f'{name}_rec_slice_{slice:04d}.webp', current_slice.astype('uint8')[::-1,:])
+
      # sorting the webps and create a loop by appending a reverse list
     image_list = sorted(glob.glob(f"{name}_rec_slice_????.webp"))
     
@@ -860,7 +860,7 @@ def generate_3d_plots(rec_file, train_folder, args, project_dir ):
         rec_output = output_montage.replace(".webp",".png")
     else:
         rec_output = output_montage
-    command = "/usr/bin/montage -flip -resize {0}x{1} -geometry +0+0 -tile {2}x {3} {4}".format(
+    command = "/usr/bin/montage -resize {0}x{1} -geometry +0+0 -tile {2}x {3} {4}".format(
         dimensions[2], dimensions[1], square_size, " ".join(image_list), rec_output
     )
     local_run.run_shell_command(command)
@@ -875,7 +875,7 @@ def generate_3d_plots(rec_file, train_folder, args, project_dir ):
         pkl_file = f"{os.path.join(project_dir,'pkl',name)}.pkl"
 
         metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
-        metadata_object.data['global_ctf'].values[8] = metadata_object.data['global_ctf'].values[8] // 2
+        metadata_object.data['global_ctf'].values[8] = metadata_object.data['global_ctf'].values[8] * 2 // med_slice_index
         metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_dir,"raw/"))
         os.remove(f'{name}_avgrot.txt')
 
