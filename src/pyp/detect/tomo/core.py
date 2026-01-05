@@ -1318,7 +1318,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         logger.info("Doing size-based picking")
 
         from pyp.detect.tomo import picker
-        picker.pick( 
+        area = picker.pick( 
                     name,
                     radius = parameters["tomo_spk_rad"],
                     pixelsize = parameters["scope_pixel"],
@@ -1346,10 +1346,16 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             logger.warning("No particles were detected")
 
         # prepare scores for display
-        scores_file = name + "_scores.mrc"
-        scores_webp_file = scores_file.replace(".mrc","_bw_rec.webp")
-        plot.tomo_slicer_gif( scores_file, scores_webp_file, flipyz=True, clipping=False )
-        os.rename(scores_webp_file, name + '_score.webp')
+        
+        # calculate contamination contours using gradient magnitude
+        from scipy import ndimage
+        gradient = ndimage.gaussian_gradient_magnitude(area.astype('float'), sigma=.25)
+        if gradient.max() - gradient.min() > np.finfo(float).eps:
+            mrc.write((( gradient - gradient.min() ) / ( gradient.max() - gradient.min() ))[::-1,:,:], "area.mrc")
+            plot.tomo_slicer_gif( "bp.mrc", name + '.webp', flipyz=True, clipping=True, labels='area.mrc', threshold=0.5 )
+        else:
+            plot.tomo_slicer_gif( "bp.mrc", name + '.webp', flipyz=True, clipping=True )
+        os.rename(name + '_rec.webp', name + '_score.webp')
 
     elif parameters.get("tomo_pick_method") == "pytom":
 

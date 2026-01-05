@@ -1426,7 +1426,7 @@ def calculate_z_binning(tomogram):
     x, z, y = imageio.get_image_dimensions(tomogram)
     return calculate_z_binning_from_size(x,y,z)
 
-def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
+def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True, labels="", threshold=0):
     """tomo_slicer_gif - Generate a GIF animation from a tomogram navigating through its z slices 
 
     Parameters
@@ -1457,27 +1457,37 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
     
     extension = Path(tomogram).suffix
 
-    tomogram_avg = tomogram.replace(extension,".avg")
-    if averagezslices > 1:
-        command = f"{get_imod_path()}/bin/binvol {tomogram} {tomogram_avg} -mode 2"
-        if flipyz:
-            command += f" -ybinning {averagezslices} -xbinning 1 -zbinning 1"
-        else:
-            command += f" -zbinning {averagezslices} -ybinning 1 -xbinning 1"
-        
-        run_shell_command(command)
-    else:
-        os.symlink( tomogram, tomogram_avg)
+    list_of_volumes = [tomogram]
+    labels_flip = ""
+    if len(labels) > 0 and os.path.exists(labels):
+        list_of_volumes.append(labels)
+        labels_flip = labels.replace(extension,"_flip.rec")
 
-    # flip yz - convert tomogram from 512 x 256 x 512 to 512 x 512 x 256
+    for vol in list_of_volumes:
+        vol_avg = vol.replace(extension,".avg")
+        if averagezslices > 1:
+            command = f"{get_imod_path()}/bin/binvol {vol} {vol_avg} -mode 2"
+            if flipyz:
+                command += f" -ybinning {averagezslices} -xbinning 1 -zbinning 1"
+            else:
+                command += f" -zbinning {averagezslices} -ybinning 1 -xbinning 1"
+            run_shell_command(command)
+        else:
+            os.symlink( vol, vol_avg)
+
+
+        # flip yz - convert tomogram from 512 x 256 x 512 to 512 x 512 x 256
+        vol_flip = vol.replace(extension, "_flip.rec")
+        if flipyz:
+            command = "{0}/bin/clip flipyz {1} {2}".format(
+                get_imod_path(), vol_avg, vol_flip
+            )
+            run_shell_command(command)
+        else:
+            os.symlink( vol_avg, vol_flip )
+
+    tomogram_avg = tomogram.replace(extension,".avg")
     tomogram_flip = tomogram.replace(extension, "_flip.rec")
-    if flipyz:
-        command = "{0}/bin/clip flipyz {1} {2}".format(
-            get_imod_path(), tomogram_avg, tomogram_flip
-        )
-        run_shell_command(command)
-    else:
-        os.symlink( tomogram_avg, tomogram_flip )
  
     # get the mean and std from original tomogram 
     volume = imageio.mrc.read(tomogram_flip)
@@ -1511,9 +1521,33 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True):
         for png in os.listdir(".")
         if png.startswith(Path(output_pattern).name) and png.endswith(".png")
     ]
-    # pngList.sort(key=lambda x: int(x.replace(".png", "").split(".")[-1]))
     pngList.sort()
-    # loop_pngList = pngList + pngList[-2:0:-1]
+
+    if len(labels) > 0:
+        assert os.path.exists(labels_flip) and imageio.mrc.read(labels_flip).shape == volume.shape, f"Labels array shape must match tomogram shape: {imageio.mrc.read(labels_flip).shape} != {volume.shape}"
+        
+        mask = imageio.mrc.read(labels_flip)
+
+        # add labels to pngs
+        for i, png in enumerate(pngList):
+            from PIL import Image
+
+            image = Image.open(png)
+            image = image.convert('RGB')
+            image_array = np.array(image)
+
+            # Iterate over the preset set of voxels and modify the red channel
+            voxels = np.argwhere(mask[i,:,:] > threshold)
+            for voxel in voxels:
+                x, y = voxel  # unpack voxel coordinates
+                # Modify the red channel (index 0 in RGB tuple)
+                image_array[x, y, :] = [255, 0, 255]
+            
+            # Convert the numpy array back to an image
+            modified_image = Image.fromarray(image_array)
+            
+            # Save the modified image to a new file
+            modified_image.save(png, 'PNG')
 
     # generate a GIF using these pngs
     square_size = int(math.ceil(math.sqrt(len(pngList))))
