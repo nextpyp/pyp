@@ -1638,7 +1638,7 @@ hidden = ["tomo_particles_eval", "stream_tomo"]
 
 [tabs.detect_nn3d.loss_height_downscale]
 name = "Patch Height Downscaling"
-description = "Downscaling ratio of patches in X dimension for the contrastive loss"
+description = "Downscaling ratio of patches in Z dimension for the contrastive loss"
 type = "int"
 default = 1
 hidden = ["tomo_particles_eval", "stream_tomo"]
