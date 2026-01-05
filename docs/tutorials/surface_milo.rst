@@ -1,24 +1,38 @@
-======================
-Surface Constrained MiLoPYP Tutorial
-======================
+####################################
+Surface constrained MiLoPYP tutorial
+####################################
 
-This tutorial explains the workflow for Surface-Constrained MiLoPYP and demonstrates the full pipeline by detecting spike proteins of SARS-CoV-2.
+This tutorial explains the workflow for surface-constrained MiLoPYP and demonstrates the full pipeline by detecting spike proteins from SARS-CoV-2 virions.
 
 Dataset
-==========
-* `EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_
+=======
 
-Data Pre-processing
-==========
+We will use 10 tilt-series from `EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_ . The data were acquired using a Titan Krios with a K2 detector in counting mode. The pixel size is 1.329 Å and the tilt range is from -60° to +60° with a 3° increment.
 
-.. nextpyp:: Step 1. Import Raw Tilt-Series
-  :collapsible: closed
+To download the subset of 10 tilt-series, run the following command in your terminal:
+
+.. code-block:: bash
+
+  for i in 049 050 071 121 162 244 271 288 291 297;
+  do
+      wget --no-directories ftp://ftp.ebi.ac.uk/empiar/world_availability/10453/data/tilt_series/TS_${i}.mrc;
+  done
+
+.. note::
+
+  The subset of tilt-series was chosen randomly, you are free to hand-pick other tomograms or use less/more.
+
+Data pre-processing
+===================
+
+.. nextpyp:: Step 1. Import raw tilt-series
+  :collapsible: open
 
   * Click :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Raw Data)`
 
   * On the **Raw data** tab:
 
-    - Set the ``Location`` by clicking on the :fa:`search` icon and browsing to ``/nfs/bartesaghilab/micromon/research-bartesaghilab-05/shared/users/yz533@duke.edu/projects/EMPIAR11462-6kqOmPBTLN9teaY/tomo-preprocessing-eggvDsBJq8Ob2FY9/raw/``
+    - Set the ``Location`` by clicking on the :fa:`search` icon and browsing to the folder where you downloaded the tilt-series
 
     - Type ``*.mrc`` into the filter box (lower right) and click the :fa:`filter` icon
 
@@ -33,7 +47,7 @@ Data Pre-processing
   * Click :bdg-primary:`Save` and :bdg-primary:`Run` the block.
 
 .. nextpyp:: Step 2. Pre-processing
-  :collapsible: closed
+  :collapsible: open
 
   We will create two pre-processing blocks with slightly different parameters as the best parameters for segmentation quality and particle picking can be different.
 
@@ -71,32 +85,14 @@ Data Pre-processing
 
       - Set ``Radial filtering`` to *"fakeSIRT (mimic SIRT reconstruction)"*
 
-.. nextpyp:: Step 3. Filtering
-  :collapsible: closed
-
-  We will only use a subset of the tilt-series in this tutorial via the filtering feature of the :bdg-secondary:`Pre-processing` block as explained in the :doc:`filtering<../guide/filters>` guide.
-
-  The list of tilt series used in this tutorial::
-      - TS_049
-      - TS_050
-      - TS_071
-      - TS_121
-      - TS_162
-      - TS_244
-      - TS_271
-      - TS_288
-      - TS_291
-      - TS_297
-
-  This list is chosen randomly, but you are free to hand-pick good tomograms or use less/more.
 
 Segmentation
-==========
+============
 
 Segmentation quality is very important and can affect all downstream tasks as we use binary segmentations for surface constraints.
 
-.. nextpyp:: Calculating Segmentations
-  :collapsible: closed
+.. nextpyp:: Calculating segmentations
+  :collapsible: open
 
   We will again create two different blocks. One of them will not have any filtering while the other one will filter out unwanted connected components. We are doing this because it can be beneficial to keep unfiltered segmentations as filtering can also remove good components.
 
@@ -132,7 +128,7 @@ Segmentation quality is very important and can affect all downstream tasks as we
 
       - Set ``Thickness of slab to keep (unbinned voxels)`` to 1228
 
-  * **Example Segmentation:**
+  * **Example segmentation:**
 
     .. md-tab-set::
 
@@ -144,20 +140,20 @@ Segmentation quality is very important and can affect all downstream tasks as we
 
         .. figure:: ../images/surface_milo/segmentation_filtered.webp
 
-.. nextpyp:: Improving Segmentations
-  :collapsible: closed
+.. nextpyp:: Improving segmentations
+  :collapsible: open
 
   Sometimes the segmentations might not be as good as preferred. This mainly happens in two different ways. Either an actual membrane does not get segmented or non-membrane features get segmented. It is possible to experiment with different parameters to improve the results.
 
-  * **Pre-Processing Block:**
+  * **Pre-processing block:**
 
     Sometimes the parameters that make the particles more prominent actually hurt the segmentation. Because of this, as we did in this tutorial, it can be useful to try different reconstruction methods for segmentation. ``imod`` is usually a safe choice, with ``hamming`` high-frequency filtering usually improving things even further. Another choice can be to use ``fakeSIRT`` with higher number of iterations than the block used for particle picking.
 
-  * **Segmentation Block:**
+  * **Segmentation block:**
 
     Our suggestions for the segmentation parameters are:
 
-    * **Pre-Processing:**
+    * **Pre-processing:**
 
       - Pixel size rescaling:
 
@@ -187,10 +183,10 @@ Segmentation quality is very important and can affect all downstream tasks as we
 
     * **Sliding window size:**
 
-      This can have different effects depending on the dataset. While it is better to try different values, we find 96 to be good for this dataset. Lowering this value also reduces the memory need.
+      This can have different effects depending on the dataset. While it is better to try different values, we find 96 to be good for this dataset. Lowering this value also reduces the memory requirements.
 
-Exploration Phase
-==========
+Exploration phase
+=================
 
 In the exploration phase, we use the segmentations to automatically filter out the candidate particle locations that are too close or too distant to any surface. We also orient the patches so that they are normal to the surface, making all the spike proteins aligned.
 
@@ -198,7 +194,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
 
 .. nextpyp:: Iteration 1
-  :collapsible: closed
+  :collapsible: open
 
   .. md-tab-set::
 
@@ -232,13 +228,13 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Enable Compilation``
 
-      After we run the block, we can see that we initially have 4937 patches.
+      After we run the block, we can see that we initially have 4,937 patches.
 
     .. md-tab-item:: Evaluation
 
       * Click on ``MiLoPYP Model`` (output of the **first** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
 
-      * On the **Pattern Mining** tab:
+      * On the **Pattern mining** tab:
 
         - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate
 
@@ -247,7 +243,7 @@ We also use a feature called **iterative exploration**, which is one of the main
       .. tip::
         If you want to see metrics to evaluate the performance of the model:
 
-        * On the **Pattern Mining** tab:
+        * On the **Pattern mining** tab:
 
           - Enable ``Calculate metrics``
 
@@ -255,7 +251,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
           - Set ``Logging level`` to *"diagnostic (debug)"*
 
-        Then you will be able to see many different metrics in the logs. Refer to the end of the tutorial for their descriptions.
+        Then you will be able to see many different metrics in the logs. Refer to the end of this tutorial for their descriptions.
 
       .. figure:: ../images/surface_milo/iteration_1_embedding.webp
 
@@ -265,7 +261,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       .. figure:: ../images/surface_milo/iteration_1_labels.webp
 
-        Cluster Embeddings
+        Cluster embeddings
 
       Here we can see the clusters. Out of all these clusters, we want to keep only the ones that have a membrane at the bottom. However, we need to be conservative at filtering, as we do not want to filter out a cluster that might have good patches this early. We can look at these cluster embeddings to better understand how close the clusters are, which can help us not remove clusters that are too close to a good clusters. However, in general, the cluster matrix is the main tool we will use (the whole matrix is not shown due to its large size).
 
@@ -290,7 +286,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       Use the same parameters as the previous block except:
 
-      * On the **Pattern Mining** tab:
+      * On the **Pattern mining** tab:
 
         - Set ``Epochs`` to 100
 
@@ -302,13 +298,13 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Class labels`` to ``2, 4, 5, 6, 8, 9, 11, 12, 13, 14, 19, 23, 27, 28``
 
-        After we run the block, we can see that we decreased our patch count from 4937 to 1919.
+        After we run the block, we can see that we decreased our patch count from 4,937 to 1,919.
 
     .. md-tab-item:: Evaluation
 
       * Click on ``MiLoPYP Model`` (output of the **second** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
 
-      * On the **Pattern Mining** tab:
+      * On the **Pattern mining** tab:
 
         - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate
 
@@ -333,7 +329,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       Use the same parameters as the previous block except:
 
-      * On the **Pattern Mining** tab:
+      * On the **Pattern mining** tab:
 
         - Set ``Epochs`` to 200
 
@@ -343,7 +339,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Interval to perform validation`` to 20
 
-        - Disable ``Remove Segmentation``
+        - Disable ``Remove segmentation``
 
         - Set ``Patch coordinate location`` to the location of the ``/train/interactive_info_parquet.gzip`` file in the **second** **evaluation** block.
 
@@ -351,11 +347,11 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable `Exclude labels`
 
-        After we run the block, we can see that our patch count is still 1919, as we did not do any filtering.
+        After we run the block, we can see that our patch count is still 1,919, as we did not do any filtering.
 
     .. md-tab-item:: Evaluation
 
-      * Click on ``MiLoPYP Model`` (output of the **third** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
+      * Click on ``MiLoPYP model`` (output of the **third** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
 
       * On the **Pattern Mining** tab:
 
@@ -396,7 +392,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       Use the same parameters as the previous block except:
 
-      * On the **Pattern Mining** tab:
+      * On the **Pattern mining** tab:
 
         - Set ``Bounding box (binned voxels)`` to 24
 
@@ -404,13 +400,13 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Class labels`` to ``0, 1, 3, 5, 9, 12, 16, 17, 20, 21, 24, 25, 28, 32, 33, 35, 38, 39, 41, 49``
 
-        After we run the block, we can see that we further decreased our patch count from 1919 to 1159.
+        After we run the block, we can see that we further decreased our patch count from 1,919 to 1,159.
 
     .. md-tab-item:: Evaluation
 
-      * Click on ``MiLoPYP Model`` (output of the **fourth** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
+      * Click on ``MiLoPYP model`` (output of the **fourth** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
 
-      * On the **Pattern Mining** tab:
+      * On the **Pattern mining** tab:
 
         - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate
 
@@ -426,8 +422,8 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         6, 7, 15, 17
 
-.. nextpyp:: Exploration Phase Summary
-  :collapsible: closed
+.. nextpyp:: Exploration phase summary
+  :collapsible: open
 
   We did 4 iterations for the exploration phase in this tutorial. However, the strategies can be changed depending on the preferred trade off between time and accuracy. If the refinement phase is going to be used, then it is less problematic to delete some amount of true positives or keep small amount of false positives. If not, then it is likely better to be more careful during the iterations, and possibly change the parameters such as ``min/max distance`` or ``DoG sizes`` to start with more candidate locations.
 
@@ -435,7 +431,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
   .. md-tab-set::
 
-    .. md-tab-item:: No Surface Constraint
+    .. md-tab-item:: No surface constraint
 
       .. figure:: ../images/surface_milo/no_surface_embedding.webp
 
@@ -459,7 +455,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
   .. md-tab-set::
 
-    .. md-tab-item:: No Surface Constraint
+    .. md-tab-item:: No surface constraint
 
       .. figure:: ../images/surface_milo/no_surface_tomogram.webp
 
@@ -479,19 +475,19 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       .. figure:: ../images/surface_milo/iteration_4_tomogram.webp
 
-Refinement Phase
-==========
+Refinement phase
+================
 
 Refinement phase also uses the segmentations to constrain particle picking to surfaces. This is done by creating a binary mask based on the distance from the segmentation. This binary mask is then used to filter input and output coordinates, in the loss function, or to modify the input tomograms to directly remove any signal outside the mask.
 
 .. nextpyp:: Refinement
-  :collapsible: closed
+  :collapsible: open
 
   .. md-tab-set::
 
     .. md-tab-item:: Training
 
-      * Click on ``MiLoPYP Particles`` (output of the **fourth** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (train)`
+      * Click on ``MiLoPYP particles`` (output of the **fourth** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (train)`
 
       * On the **Training/Evaluation** tab:
 
@@ -513,17 +509,17 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
           - Set ``Mask radius`` to 25
 
-        - Enable ``Enable Compilation``
+        - Enable ``Enable compilation``
 
           - Set ``Compile mode`` to *"max autotune"*
 
-      After we run the block, we can see that we further decreased our patch count from 1159 to 1083.
+      After we run the block, we can see that we further decreased our patch count from 1,159 to 1,083.
 
       This block usually takes a while to run. You can increase or decrease the epoch count or the patch downscaling based on available time.
 
     .. md-tab-item:: Evaluation
 
-      * Click on ``Particles Model`` (output of the :bdg-secondary:`Particle picking (train)` block) and select :bdg-primary:`Particle picking (eval)`
+      * Click on ``Particles model`` (output of the :bdg-secondary:`Particle picking (train)` block) and select :bdg-primary:`Particle picking (eval)`
 
       Use the same parameters as the previous block except:
 
@@ -536,10 +532,10 @@ Refinement phase also uses the segmentations to constrain particle picking to su
         - Set ``Threshold for soft/hard positives`` 0.85
 
 Metrics
-==========
+=======
 
-.. nextpyp:: Exploration Metrics
-  :collapsible: closed
+.. nextpyp:: Exploration metrics
+  :collapsible: open
 
   .. md-tab-set::
 

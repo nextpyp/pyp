@@ -1608,7 +1608,7 @@ condition = { arg="use_masking", value="true" }
 hidden = ["stream_tomo"]
 
 [tabs.detect_nn3d.mask_loss]
-name = "Mask PU Loss"
+name = "Mask PU loss"
 description = "Enable masking of the PU loss"
 type = "bool"
 default = false
@@ -1616,35 +1616,35 @@ condition = { arg="use_masking", value="true" }
 hidden = ["stream_tomo"]
 
 [tabs.detect_nn3d.patch_size]
-name = "Patch Size"
+name = "Patch size"
 description = "Size of patches used for training, must be multiple for 4"
 type = "int"
 default = 64
 hidden = ["tomo_particles_eval", "stream_tomo"]
 
 [tabs.detect_nn3d.patch_height]
-name = "Patch Height"
+name = "Patch height"
 description = "Height of patches used for training, must be odd"
 type = "int"
 default = 7
 hidden = ["tomo_particles_eval", "stream_tomo"]
 
 [tabs.detect_nn3d.loss_size_downscale]
-name = "Patch Size Downscaling"
+name = "Patch size downscaling"
 description = "Downscaling ratio of patches in X/Y dimensions for the contrastive loss"
 type = "int"
 default = 2
 hidden = ["tomo_particles_eval", "stream_tomo"]
 
 [tabs.detect_nn3d.loss_height_downscale]
-name = "Patch Height Downscaling"
+name = "Patch height downscaling"
 description = "Downscaling ratio of patches in Z dimension for the contrastive loss"
 type = "int"
 default = 1
 hidden = ["tomo_particles_eval", "stream_tomo"]
 
 [tabs.detect_nn3d.compile]
-name = "Enable Compilation"
+name = "Enable compilation"
 description = "Compile the model with torch.compile. It's recommended to use the same options for training and evaluation."
 type = "bool"
 default = true
@@ -1786,7 +1786,7 @@ hidden = [ "tomo_milo_eval" ]
 name = "Use DoG"
 description = "Mode for calculating the patch centers. 0 uses offsets from the segmentation vertices, 1 centers patches at the coordinate given by DoG, 2 uses offset from the closest segmentation vertex for each DoG particle"
 type = "enum"
-enum = { 0="offsets", 1="DoG", 2="Closest" }
+enum = { 0="offsets", 1="DoG", 2="closest" }
 default = "1"
 condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
@@ -1849,7 +1849,7 @@ condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.remove_segmentation]
-name = "Remove Segmentation"
+name = "Remove segmentation"
 description = "Remove the segmentation from the tomograms to increase the signal from the surfaces"
 type = "bool"
 default = true
