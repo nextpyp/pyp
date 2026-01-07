@@ -631,7 +631,7 @@ class LocalMetadata:
 
         path = path % self.micrograph
 
-        tmp = os.path.join( os.environ["PYP_SCRATCH"], "tmp.txt" )
+        tmp = os.path.join( os.environ["PYP_SCRATCH"], f"{self.micrograph}_tmp.txt" )
 
         # swap y and z
         c = data.columns
@@ -651,7 +651,6 @@ class LocalMetadata:
         # label yz-swap in the model file
         command = f"{get_imod_path()}/bin/imodtrans -Y -T {path} {path}~ && mv {path}~ {path}"
         run_shell_command(command, log_level=logging.TRACE)
-
 
 
     def getMissings(self):
