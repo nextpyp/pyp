@@ -1181,7 +1181,7 @@ def split(parameters):
     # launch pre-processing
     if not os.path.isfile("frealign/mpirun.mynodes"):
 
-        cryocare_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-eval"
+        cryocare_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-eval"
         isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
         membrain = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-segmentation-open"
         topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising-eval"
@@ -5814,6 +5814,12 @@ if __name__ == "__main__":
                     del os.environ["cryocareswarm"]
 
                     args, name, project_path, working_path, parameters = tomoswarm_prologue()
+
+                    first_half = os.path.join(project_path,"train",name+"_half1.rec")
+                    second_half = first_half.replace("_half1.rec","_half2.rec")
+                    if not os.path.exists(first_half) or not os.path.exists(second_half):
+                        logger.info(f"## Generating half-tomograms for {name} ##")
+                        cryocare.tomo_swarm_halves( name, project_path, working_path, parameters)
 
                     new_reconstruction = cryocare.cryocare_predict( working_path, project_path, name, parameters)
 
