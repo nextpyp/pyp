@@ -5517,6 +5517,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -AlignZ {specimen_thickness} \
 -VolZ {thickness} \
 -TiltAxis {rotation} \
+{patches} \
 -Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
 
