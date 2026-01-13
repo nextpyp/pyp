@@ -5203,7 +5203,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             if parameters.get('tomo_ali_aretomo_estimate_zheight'):
                 specimen_thickness = 0
             else:
-                specimen_thickness = parameters["tomo_ali_aretomo_zheight"] / binning
+                specimen_thickness = parameters["tomo_ali_aretomo3_zheight"] / binning
 
             if "aretomo3" not in parameters["tomo_rec_method"]:
                 # skip reconstruction if using IMOD
@@ -5573,6 +5573,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -AlignZ {specimen_thickness} \
 -VolZ {thickness} \
 -TiltAxis {rotation} \
+{patches} \
 -Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
 

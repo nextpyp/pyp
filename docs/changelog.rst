@@ -74,6 +74,8 @@ v0.7.3
 
    - Fix bug that prevented saving tomograms and tilt-series in 16-bit format during sessions.
 
+   - Fix bug during parsing of tomogram thickness when running AreTomo2/3.
+
 v0.7.2
 ------
 
