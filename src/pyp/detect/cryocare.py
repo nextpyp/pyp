@@ -127,7 +127,7 @@ def cryocare_predict(working_path, project_path, name, parameters):
     
     # if half maps are not found in parent folder, use current project folder
     if not os.path.exists( os.path.join( parent_train, name + "_half1.rec" ) ):
-        parent_train = os.path.join( project_path, "train")
+        parent_train = os.path.join( project_path, "mrc")
 
     half1_list = [os.path.join(parent_train, name + "_half1.rec")]
     half2_list = [os.path.join(parent_train, name + "_half2.rec")]
