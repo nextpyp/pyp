@@ -17,6 +17,7 @@ v0.7.3
    - New wrappers for `Noise2Map <https://warpem.github.io/warp/reference/noise2map/noise2map/?h=noise2map>`_ to denoise tomograms and half-maps (during refinement).
 
    - Use normal vectors to tomogram segmentations to assign initial particle orientations when picking membrane proteins.
+   - Tomogram denoising using `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet2>`_.
 
    :fa:`plus-square` **Improvements**
 

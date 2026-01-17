@@ -7,12 +7,13 @@ from pathlib import Path
 import numpy as np
 
 from pyp import utils
+from pyp import preprocess
 from pyp.analysis import plot
 from pyp.inout.image import mrc
-from pyp.inout.image.core import get_image_dimensions
+from pyp.inout.image.core import get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.merge import weights as pyp_weights
-from pyp.system import project_params
+from pyp.system import project_params, mpi
 from pyp.system.local_run import run_shell_command, stream_shell_command
 from pyp.system.utils import get_imod_path, get_aretomo_path, get_aretomo3_path, get_gpu_ids
 
@@ -678,3 +679,132 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     else:
         logger.warning(f"Skipping reconstruction because {parameters["tomo_rec_method"].lower()} was already used for alignment")
+        
+        
+def reconstruct_tomo_halves( name, parameters, project_path):
+    """
+        Generate half tomograms for N2N training
+    """
+    
+    if not os.path.exists("frame_list.txt"):
+        logger.warning(f"Could not calculate half-tomograms because no frame data was found!")
+        return
+        
+    with open("frame_list.txt", "r") as f:
+        frame_list = f.read().split("\n")
+
+    raw_image = frame_list
+
+    # retrieve, pre-process, and split the raw frames into even/odd stacks, if needed
+    if not os.path.exists(Path(frame_list[0]).stem + "_half1.avg"):
+        arguments = []
+        for f in frame_list:
+            arguments.append((str(project_path) + "/raw/" + f, f))
+        mpi.submit_function_to_workers(shutil.copy2, arguments)
+
+        # convert eer files to mrc using movie_eer_reduce and movie_eer_frames parameters (flipping in x is required to match unblur/motioncorr convention)
+        if frame_list[0].lower().endswith(".eer"):
+            full_frame = get_image_dimensions(frame_list[0])[2]
+            valid_averages = np.floor(full_frame / parameters['movie_eer_frames'])
+            eer = True
+            arguments = []
+            for f in frame_list:
+                # average eer frames
+                command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {parameters['movie_eer_frames']} {f} {f.replace('.eer','.mrc')}; rm -f {f}"
+                arguments.append(command)
+            mpi.submit_jobs_to_workers(arguments)
+
+            raw_image = [ Path(i).stem + '.mrc' for i in frame_list ]
+        else:
+            raw_image = frame_list
+            eer = False
+
+        # convert tif movies to mrc files
+        if ".tif" in raw_image[0].lower():
+            commands = [] 
+            for f in raw_image:
+                com = "{0}/bin/newstack -mode 2 {1} {2}; rm -f {1}".format(
+                    get_imod_path(), f, Path(f).stem + ".mrc"
+                )
+                commands.append(com)
+            mpi.submit_jobs_to_workers(commands)
+            
+            raw_image = [Path(f).stem + ".mrc" for f in frame_list]
+    
+        # get dimensions
+        dims = get_image_dimensions(raw_image[0])
+        if eer:
+            z_slices = int(valid_averages) - 1
+        else:
+            z_slices = dims[2] - 1
+
+        # create half stacks
+        arguments = []
+        for _, f in enumerate(raw_image):
+            with open(Path(f).stem+'.xf') as frame_alignments_file:
+                frame_alignments = frame_alignments_file.read().split('\n')
+            for half in [1, 2]:
+                subset = np.arange(half-1, z_slices + 1, 2)
+                if not os.path.exists(f"{Path(f).stem}_half{half}.mrc"):
+                    command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, subset))} -output {Path(f).stem}_half{half}.mrc"
+                    arguments.append(command)
+                    with open(Path(f).stem+f"_half{half}.xf",'w') as output_half_xf:
+                        for index in subset:
+                            output_half_xf.write(f"{frame_alignments[index]}\n")
+                    
+        if len(arguments) > 0:
+            mpi.submit_jobs_to_workers(arguments)
+    
+    elif frame_list[0].lower().endswith(".eer") or ".tif" in raw_image[0].lower():
+        raw_image = [Path(f).stem + ".mrc" for f in frame_list]
+
+    # generate half tomograms from half stacks
+    dims = get_image_dimensions(name+'.mrc')
+    for i in [1, 2]:
+        newname = name + f"_half{i}"
+        new_filelist = [Path(file).stem + f"_half{i}" + Path(file).suffix for file in raw_image]
+
+        # copy the tilt alignment and angle files
+        shutil.copy2(f"{name}.xf", newname + ".xf")
+        shutil.copy2(f"{name}.tlt", newname + ".tlt")
+        shutil.copy2(f"{name}.order", newname + ".order")
+
+        # generate averages using existing xf
+        preprocess.regenerate_average_quick(
+            newname,
+            parameters,
+            dims,
+            new_filelist,
+        )
+
+        os.symlink(newname + ".mrc", newname + ".st")
+
+        # actual stack sizes
+        headers = mrc.readHeaderFromFile(newname + ".mrc")
+        x = int(headers["nx"])
+        y = int(headers["ny"])
+
+        # Resize aligned tilt-series depending on tilt-axis orientation
+        tilt_axis_angle = get_tilt_axis_angle(name)
+        if tilt_axis_angle % 180 > 45 and tilt_axis_angle % 180 < 135 and not parameters.get("tomo_ali_square"):
+            x, y = y, x
+            logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
+
+        # binned reconstruction
+        binning = parameters["tomo_rec_binning"]
+        zfact = ""
+
+        # regenerate aligned tilt-series
+        generate_aligned_tiltseries(newname, parameters, x, y)
+
+        exclude_views = do_exclude_views(newname)
+
+        # Reconstruction options
+        tilt_options = get_tilt_options(parameters,exclude_views)
+
+        # produce binned tomograms
+        if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"]:
+            # erase fiducials if needed
+            preprocess.erase_gold_beads(newname, parameters, tilt_options, binning, zfact, x, y)
+        else:
+            reconstruct_tomo(parameters, newname, x, y, binning, zfact, tilt_options, force=True)

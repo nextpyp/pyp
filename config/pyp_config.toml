@@ -2161,14 +2161,14 @@ default = -1
 
 [tabs.tomo_ali.radius1]
 name = "Low-frequency cutoff"
-description = "Highpass filter frequency cutoff (FilterRadius1)"
+description = "High-pass filter frequency cutoff (FilterRadius1)"
 type = "float"
 condition = { arg="method", value="imod_gold" }
 default = 0.05
 
 [tabs.tomo_ali.sigma1]
 name = "Low-frequency rolloff"
-description = "Highpass filter frequency rolloff (FilterSigma1)"
+description = "High-pass filter frequency rolloff (FilterSigma1)"
 type = "float"
 condition = { arg="method", value="imod_gold" }
 default = 0.03
@@ -2502,6 +2502,13 @@ default = 0.05
 condition = { arg="filtering_method", value="hamming" }
 hidden = [ "tomo_import_star" ]
 
+[tabs.tomo_rec.generate_halves]
+name = "Generate half-tomograms"
+description = "Split even and odd frames for each tilt and generate two half-tomograms"
+type = "bool"
+default = false
+hidden = [ "tomo_import_star" ]
+
 [tabs.tomo_rec.depth]
 name = "Save tomograms in 16-bits"
 description = "Files saved in this format will require 50 percent less storage"
@@ -2517,17 +2524,9 @@ _description = "Parameters for tomograms denoising"
 name = "Method"
 description = "Denoise tomograms with selected method"
 type = "enum"
-enum = {isonet="isonet", cryocare="cryocare", topaz="topaz", noise2map="noise2map"}
+enum = {isonet="isonet", isonet2="isonet2", cryocare="cryocare", topaz="topaz", noise2map="noise2map"}
 default = "isonet"
 hidden = [ "tomo_denoise_train" ]
-
-[tabs.tomo_denoise.method_train]
-name = "Method"
-description = "Denoise tomograms with selected method"
-type = "enum"
-enum = {isonet="isonet", cryocare="cryocare"}
-default = "isonet"
-hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.denoise_separately]
 name = "Denoise separately"
@@ -2646,6 +2645,14 @@ type = "bool"
 default = false
 condition = { arg="method", value="topaz" }
 hidden = [ "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.method_train]
+name = "Method"
+description = "Denoise tomograms with selected method"
+type = "enum"
+enum = {isonet="isonet", isonet2="isonet2", cryocare="cryocare"}
+default = "isonet"
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.masksize]
 name = "Mask shape"
@@ -2784,14 +2791,6 @@ default = true
 condition = { arg="method_train", value="isonet" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
-[tabs.tomo_denoise.isonet_predict_CTFdeconvol]
-name = "CTF deconvolution"
-description = "Do CTF deconvolution for tomograms"
-type = "bool"
-default = true
-condition = { arg="method", value="isonet" }
-hidden = [ "tomo_denoise_train" ]
-
 [tabs.tomo_denoise.isonet_snrfalloff]
 name = "SNR falloff"
 description = "SNR fall rate with the frequency. High values means losing more high frequency"
@@ -2801,8 +2800,8 @@ condition = { arg="isonet_CTFdeconvol", value="true" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet_hp]
-name = "Highpass filter"
-description = "Highpass filter for at very low frequency"
+name = "High-pass filter"
+description = "High-pass filter for at very low frequency"
 type = "float"
 default = 0.02
 condition = { arg="isonet_CTFdeconvol", value="true" }
@@ -3044,12 +3043,548 @@ default = true
 condition = { arg="method", value="isonet" }
 hidden = [ "tomo_denoise_train" ]
 
+###########
+# ISONET2 #
+###########
+
+# ISONET2 PREDICT
+
+[tabs.tomo_denoise.isonet2_predict_model]
+name = "Trained model"
+description = "Trained model (*.pt)"
+type = "path"
+path = { type="files" }
+input = { type="isonet2TrainedModel" }
+condition = { arg="method", value=["isonet2"] }
+hidden = [ "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.isonet2_predict_input_column]
+name = "Input column"
+description = "Column name in STAR file to use as input tomograms"
+type = "str"
+default = "rlnDeconvTomoName"
+condition = { arg = "method", value = "isonet2" }
+hidden = [ "tomo_denoise_train" ]
+advanced = true
+
+[tabs.tomo_denoise.isonet2_predict_apply_mw_x1]
+name = "Apply missing wedge"
+description = "Whether to apply missing wedge to subtomograms at the beginning"
+type = "bool"
+default = true
+condition = { arg = "method", value = "isonet2" }
+hidden = [ "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.isonet2_predict_isCTFflipped]
+name = "Is CTF flipped"
+description = "Whether input tomograms are phase flipped"
+type = "bool"
+default = false
+condition = { arg = "method", value = "isonet2" }
+hidden = [ "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.isonet2_predict_padding_factor]
+name = "Padding factor"
+description = "Used during tiling to reduce edge effects (larger values reduce seams, increase computation)"
+type = "float"
+default = 1.5
+condition = { arg = "method", value = "isonet2" }
+hidden = [ "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.isonet2_predict_tomo_idx]
+name = "Previous tomogram indices"
+description = "If set, process only the tomograms listed by these indices (e.g., 1,2,4 or 5-10,15,16)"
+type = "str"
+default = ""
+condition = { arg = "method", value = "isonet2" }
+hidden = [ "tomo_denoise_train" ]
+advanced = true
+
+[tabs.tomo_denoise.isonet2_predict_output_prefix]
+name = "Predict prefix"
+description = "Prefix to append to predicted MRC files"
+type = "str"
+default = ""
+condition = { arg = "method", value = "isonet2" }
+hidden = [ "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.isonet2_predict_save_slices]
+name = "Save slices"
+description = "Save slices"
+type = "bool"
+default = true
+condition = { arg = "method", value = "isonet2" }
+hidden = [ "tomo_denoise_train" ]
+
+# ISONET2 MASKING
+
+[tabs.tomo_denoise.isonet2_mask]
+name = "Use masking"
+description = "Mask out background areas"
+type = "bool"
+default = false
+condition = { arg="method_train", value="isonet2" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+# ISONET2 MAKE MASK
+
+[tabs.tomo_denoise.isonet2_make_mask_patch_size]
+name = "Patch size"
+description = "Used for max/std local filters; larger values smooth detection of specimen regions"
+type = "int"
+default = 4
+condition = { arg = "isonet2_mask", value = "true" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_make_mask_density_percentage]
+name = "Density percentage"
+description = "Percentage of voxels retained based on local density ranking; lower values create stricter masks (keep fewer voxels)"
+type = "int"
+default = 50
+condition = { arg = "isonet2_mask", value = "true" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_make_mask_std_percentage]
+name = "STD percentage"
+description = "Percentage retained based on local standard-deviation ranking; lower values emphasize textured regions"
+type = "int"
+default = 50
+condition = { arg = "isonet2_mask", value = "true" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_make_mask_z_crop]
+name = "Fraction of tomogram Z to crop from both ends"
+description = "Masks out top and bottom 10% each when set to 0.2. Use to avoid sampling low-quality reconstruction edges"
+type = "float"
+default = 0.2
+condition = { arg = "isonet2_mask", value = "true" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_make_mask_tomo_idx]
+name = "Previous tomogram indices"
+description = "If set, process only the tomograms listed by these indices (e.g., 1,2,4 or 5-10,15,16)"
+type = "str"
+default = ""
+condition = { arg = "isonet2_mask", value = "true" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+advanced = true
+
+[tabs.tomo_denoise.isonet2_mask_preprocessing]
+name = "Preprocessing method"
+description = "Method to use before generating masks"
+type = "enum"
+enum = { denoise="denoise (requires even/odd halves)", deconv="deconv (IsoNet1 style)"}
+default = "denoise"
+condition = { arg="isonet2_mask", value="true" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+# ISONET2 CTF DECONV
+
+[tabs.tomo_denoise.isonet2_deconv_input_column]
+name = "Input column"
+description = "Column name in STAR file to use as input tomograms"
+type = "str"
+default = "rlnTomoName"
+condition = { arg="isonet2_mask_preprocessing", value="deconv" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+advanced = true
+
+[tabs.tomo_denoise.isonet2_deconv_snrfalloff]
+name = "SNR falloff"
+description = "Controls frequency-dependent SNR attenuation applied during deconvolution"
+type = "float"
+default = 1
+condition = { arg="isonet2_mask_preprocessing", value="deconv" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_deconv_deconvstrength]
+name = "Deconvolution strength"
+description = "Scalar multiplier for deconvolution strength"
+type = "float"
+default = 1
+condition = { arg="isonet2_mask_preprocessing", value="deconv" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_deconv_highpassnyquist]
+name = "High-pass cutoff"
+description = "Fraction of the Nyquist used as a very-low-frequency high-pass cutoff"
+type = "float"
+default = 0.02
+condition = { arg="isonet2_mask_preprocessing", value="deconv" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_deconv_chunk_size]
+name = "Sub-volume size for training (voxels)"
+description = "Must be compatible with the network (divisible by the network downsampling factors)"
+type = "int"
+default = 96
+condition = { arg="isonet2_mask_preprocessing", value="deconv" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_deconv_overlap_rate]
+name = "Overlap rate)"
+description = "Fractional overlap between adjacent chunks; larger overlaps reduce edge artifacts at cost of extra computation"
+type = "float"
+default = 0.25
+condition = { arg="isonet2_mask_preprocessing", value="deconv" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_deconv_phaseflipped]
+name = "Phase flipped input"
+description = "Input is assumed to be already phase-flipped, if not, defocus and CTF info ise used to apply phase handling"
+type = "bool"
+default = false
+condition = { arg="isonet2_mask_preprocessing", value="deconv" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_deconv_tomo_idx]
+name = "Previous tomogram indices"
+description = "If set, process only the tomograms listed by these indices (e.g., 1,2,4 or 5-10,15,16)"
+type = "str"
+default = ""
+condition = { arg="isonet2_mask_preprocessing", value="deconv" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+advanced = true
+
+# ISONET2 DENOISE
+
+[tabs.tomo_denoise.isonet2_denoise_arch]
+name = "Network architecture"
+description = "Determines model capacity and VRAM requirements"
+type = "enum"
+enum = { unet-small="unet-small", unet-medium="unet-medium", uner-large="unet-large", scunet-fast="scunet-fast"}
+default = "unet-medium"
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_pretrained_model]
+name = "Pre-trained model (*.pt)"
+description = "Path to pre-trained model (previous method, arch, cube_size, CTF_mode, and metrics will be loaded)"
+type = "path"
+path = { type="files" }
+input = { type="isonet2TrainedModel" }
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_cube_size]
+name = "Sub-volume size for training (voxels)"
+description = "Must be compatible with the network (divisible by the network downsampling factors)"
+type = "int"
+default = 96
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_epochs]
+name = "Epochs for training"
+description = "Number of training epochs"
+type = "int"
+default = 50
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_batch_size]
+name = "Batch size"
+description = "Sub-tomograms per optimization step. If 0, this is automatically determined by multiplying the number of available GPUs by 2. If the number of GPUs is 1, batch size is 4"
+type = "int"
+default = 0
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_loss_func]
+name = "Loss function"
+description = "Loss function to use during training"
+type = "enum"
+enum = { L2="L2", Huber="Huber", L1="L1"}
+default = "L2"
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_save_interval]
+name = "Save interval"
+description = "Interval to save model checkpoints"
+type = "int"
+default = 10
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_learning_rate]
+name = "Learning rate"
+description = "Initial learning rate for scheduler"
+type = "float"
+default = 0.0003
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_learning_rate_min]
+name = "Minimum learning rate"
+description = "Minimum learning rate for scheduler"
+type = "float"
+default = 0.0003
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_mixed_precision]
+name = "Use mixed precision"
+description = "Uses float16/mixed precision to reduce VRAM and speed up training"
+type = "bool"
+default = true
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_CTF_mode]
+name = "CTF mode"
+description = "CTF handling mode"
+type = "enum"
+enum = { none='None', phase_only='phase_only', network='network', wiener='wiener'} 
+default = "network"
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_isCTFflipped]
+name = "Is CTF flipped"
+description = "Whether input tomograms are already phase flipped"
+type = "bool"
+default = false
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_do_phaseflip_input]
+name = "Apply phase-flipping"
+description = "Whether to apply phase flip during training"
+type = "bool"
+default = true
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_bfactor]
+name = "B-factor"
+description = "B-factor applied during training/prediction to boost high-frequency content"
+type = "float"
+default = 0
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_clip_first_peak_mode]
+name = "Clip first peak mode"
+description = "Controls attenuation of overrepresented very-low-frequency CTF peak"
+type = "int"
+default = 1
+condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet_denoise_snrfalloff]
+name = "SNR falloff"
+description = "SNR fall rate with the frequency. High values means losing more high frequency"
+type = "float"
+default = 1.0
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+# ISONET2 REFINE
+
+[tabs.tomo_denoise.isonet2_refine_method]
+name = "Method"
+description = "Denoising method"
+type = "enum"
+enum = { isonet2-n2n="isonet2-n2n (even/odd halves)", isonet2="isonet2 (single-map)" }
+default = "isonet2-n2n"
+condition = { arg="method_train", value="isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_arch]
+name = "Network architecture"
+description = "Determines model capacity and VRAM requirements"
+type = "enum"
+enum = { unet-small="unet-small", unet-medium="unet-medium", uner-large="unet-large", scunet-fast="scunet-fast"}
+default = "unet-medium"
+condition = { arg="method_train", value="isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_pretrained_model]
+name = "Pre-trained model (.pt)"
+description = "Path to pre-trained model (previous method, arch, cube_size, CTF_mode, and metrics will be loaded)"
+type = "path"
+path = { type="files" }
+input = { type="isonet2TrainedModel" }
+condition = { arg="method_train", value="isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_cube_size]
+name = "Sub-volume size (voxels)"
+description = "Must be compatible with the network (divisible by the network downsampling factors)"
+type = "int"
+default = 96
+condition = { arg="method_train", value="isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_epochs]
+name = "Epochs for training"
+description = "Number of training epochs"
+type = "int"
+default = 50
+condition = { arg="method_train", value="isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_input_column]
+name = "Input column"
+description = "Column name in STAR file to use as input tomograms"
+type = "str"
+default = "rlnDeconvTomoName"
+condition = { arg = "method_train", value = "isonet2" }
+advanced = true
+
+[tabs.tomo_denoise.isonet2_refine_batch_size]
+name = "Batch size"
+description = "Number of subtomograms per optimization step. If 0, this is automatically determined by multiplying the number of available GPUs by 2. If the number of GPUs is 1, batch size is 4"
+type = "int"
+default = 0
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_loss_func]
+name = "Loss function"
+description = "Loss function to use during training"
+type = "enum"
+enum = { L2="L2", Huber="Huber", L1="L1"}
+default = "L2"
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_learning_rate]
+name = "Learning rate"
+description = "Initial learning rate for scheduler"
+type = "float"
+default = 0.0003
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_learning_rate_min]
+name = "Minimum learning rate"
+description = "Minimum learning rate for scheduler"
+type = "float"
+default = 0.0003
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_save_interval]
+name = "Save interval"
+description = "Interval to save model checkpoints"
+type = "int"
+default = 10
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_mw_weight]
+name = "Missing wedge weight in loss"
+description = "Higher values correspond to stronger emphasis on missing wedge regions"
+type = "float"
+default = -1
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_apply_mw_x1]
+name = "Apply missing wedge"
+description = "Whether to apply missing wedge to sub-tomograms at the beginning"
+type = "bool"
+default = true
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_mixed_precision]
+name = "Use mixed precision"
+description = "Uses float16/mixed precision to reduce VRAM and speed up training"
+type = "bool"
+default = true
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_CTF_mode]
+name = "CTF mode"
+description = "CTF handling mode"
+type = "enum"
+enum = { none='none', phase_only='phase_only', network='network', wiener='wiener'} 
+default = "none"
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_clip_first_peak_mode]
+name = "Clip first peak mode"
+description = "Controls attenuation of overrepresented very-low-frequency CTF peak"
+type = "int"
+default = 1
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_bfactor]
+name = "B-factor"
+description = "B-factor applied during training/prediction to boost high-frequency content"
+type = "float"
+default = 0
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_isCTFflipped]
+name = "Is CTF flipped"
+description = "Whether input tomograms are already phase flipped"
+type = "bool"
+default = false
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_do_phaseflip_input]
+name = "Apply phase-flipping"
+description = "Whether to apply phase flip during training"
+type = "bool"
+default = true
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_noise_level]
+name = "Noise level"
+description = "Adds artificial noise during training"
+type = "float"
+default = 0
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_noise_mode]
+name = "Noise mode"
+description = "Controls filter applied when generating synthetic noise"
+type = "enum"
+enum = { nofilter="no filter", ramp="ramp", hamming="hamming" }
+default = "nofilter"
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_random_rot_weight]
+name = "Random rotation weight"
+description = "Fraction of rotations applied as random augmentation"
+type = "float"
+default = 0.2
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_with_preview]
+name = "Generate preview"
+description = "Run prediction using the final checkpoint(s) after training"
+type = "bool"
+default = true
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_prev_tomo_idx]
+name = "Previous tomogram indices"
+description = "If set, automatically predict only the tomograms listed by these indices (e.g., 1,2,4 or 5-10,15,16)."
+type = "str"
+default = ""
+condition = { arg = "method_train", value = "isonet2" }
+advanced = true
+
+[tabs.tomo_denoise.isonet2_refine_snrfalloff]
+name = "SNR falloff"
+description = "Controls frequency-dependent SNR attenuation applied during deconvolution"
+type = "float"
+default = 0
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_deconvstrength]
+name = "Deconvolution strength"
+description = "Scalar multiplier for deconvolution strength"
+type = "float"
+default = 1
+condition = { arg = "method_train", value = "isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_highpassnyquist]
+name = "High-pass cutoff"
+description = "Fraction of Nyquist used as a very-low-frequency high-pass cutoff"
+type = "float"
+default = 0.02
+condition = { arg = "method_train", value = "isonet2" }
+
 [tabs.tomo_denoise.isonet_debug]
 name = "Debug"
 description = "Save intermediate files to results directory"
 type = "bool"
 default = false
-condition = { arg="method_train", value="isonet" }
+condition = { arg = "method_train", value = ["isonet","isonet2"] }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_mem]
@@ -8248,8 +8783,8 @@ default = "auto"
 condition = { arg="gaussian", value="true" }
 
 [tabs.sharpen.highpass]
-name = "Highpass cutoff (A)"
-description = "Highpass frequency cutoff (-1.0 = Nyquist)"
+name = "High-pass cutoff (A)"
+description = "High-pass frequency cutoff (-1.0 = Nyquist)"
 type = "float"
 default = -1.0
 condition = { arg="gaussian", value="true" }

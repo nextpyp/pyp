@@ -25,7 +25,6 @@ from pyp.analysis.image import (
     extract_background,
     normalize_volume,
 )
-from pyp.analysis.scores import per_frame_scoring
 from pyp.inout.image import mrc, writepng, img2webp, get_gain_reference
 from pyp.inout.image.core import get_image_dimensions, get_image_mean
 from pyp.inout.metadata import (
@@ -417,6 +416,8 @@ def align_spr_local(
             )
             if not os.path.exists(averaged_file):
                 logger.error(f"{averaged_file} not found.")
+
+    from pyp.analysis.scores import per_frame_scoring
 
     per_frame_scoring(
         parameters, name, current_path, allboxes, allparxs, particle_filenames
@@ -4169,6 +4170,9 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
         mag_correction_options = ""
         if parameters["movie_magcorr"]:
             mag_correction_options += f" -Mag {mag_major} {mag_minor} {distort_angle}"
+            
+        if parameters["tomo_rec_generate_halves"]:
+            frame_options += " -SplitSum 1"
 
         """
         Usage: MotionCor3 Tags
@@ -4451,6 +4455,10 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
         else:
             shutil.move( name + ".mrc", f"../{aligned_average}")
 
+        if os.path.exists(name + "_ODD.mrc") and os.path.exists(name + "_EVN.mrc"):
+            shutil.move( name + "_ODD.mrc", f"../{name}_half1.avg")
+            shutil.move( name + "_EVN.mrc", f"../{name}_half2.avg")
+
         # read shifts and save in txt format
         newf = open(f"{name}_clean.aln", "w")
 
@@ -4512,7 +4520,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
             weighted = "NO"
             restore_Noise_power = ""
 
-        save_aligned_frames = False
+        save_aligned_frames = parameters.get("tomo_rec_generate_halves", False)
 
         if save_aligned_frames:
             save_frames = "yes\n%s_aligned_frames.mrc" % name
@@ -4623,14 +4631,38 @@ EOF
         if "Segmentation fault" in error or "Killed" in error:
             logger.error("Try increasing the value of 'Split, Memory per thread (GB)' in the Resources tab (or the --slurm_memory parameter in the CLI)")
             raise Exception(error)
+        
+        if os.path.exists(f"{name}_aligned_frames.mrc"):
+            _, _, total_frames = get_image_dimensions(f"{name}_aligned_frames.mrc")
+            for i in [1,2]:
+                list = np.arange(i-1, total_frames, 2)
+                run_shell_command(f"{get_imod_path()}/bin/newstack {name}_aligned_frames.mrc -secs {','.join(map(str, list))} {name}_half{i}.mrc")
+                avgstack(f"{name}_half{i}.mrc",f"../{name}_half{i}.avg")
+            # cleanup
+            [ os.remove(f) for f in [ f"{name}_aligned_frames.mrc", f"{name}_half1.mrc", f"{name}_half2.mrc" ] ]
 
     elif 'skip' in parameters["movie_ali"]:
 
         # write identity matrix for null shifts
-        x, y, total_frames = get_image_dimensions(f"../{movie_file}")
+        _, _, total_frames = get_image_dimensions(f"../{movie_file}")
         shifts = np.zeros([total_frames,2])
         np.savetxt(f"../{name}_shifts.txt",shifts,fmt="%.4f")
         sum_gain_correct_frames(f"../{movie_file}", f"../{aligned_average}", parameters)
+
+        if parameters.get('tomo_rec_generate_halves'):
+            average = Path(movie_file).stem + '.mrc'
+            if movie_file.lower().endswith(".eer"):
+                command = f"{get_imod_path()}/bin/clip flipx -es 0 -ez {total_frames // 2} ../{movie_file} ../{average}"
+                output, _ = run_shell_command(command)
+                movie_file = average
+            total_frames = 2
+                
+            for i in [1,2]:
+                list = np.arange(i-1, total_frames, 2)
+                run_shell_command(f"{get_imod_path()}/bin/newstack ../{movie_file} -secs {','.join(map(str, list))} {name}_half{i}.mrc")
+                # run_shell_command(f"{get_imod_path()}/bin/newstack ../{movie_file} {' '.join([f'-secs {i}' for i in map(str, list)])} {name}_half{i}.mrc")
+                avgstack(f"{name}_half{i}.mrc",f"../{name}_half{i}.avg")
+                os.remove(f"{name}_half{i}.mrc")
 
     # go back to parent directory and cleanup
     os.chdir("..")

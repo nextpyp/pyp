@@ -12,7 +12,6 @@ from tqdm import tqdm
 import numpy as np
 
 import pyp.inout.image as imageio
-from pyp.detect import tomo_subvolume_extract_is_required, tomo_vir_is_required, detect_gold_beads
 from pyp import align, preprocess, merge
 from pyp import ctf as ctf_mod
 from pyp.inout.image import digital_micrograph as dm4
@@ -724,6 +723,8 @@ def read_tilt_series(
 
     parameters["detect_force"] = need_recalculation_for_sessions(name=name,parameters=parameters)
 
+    from pyp.detect import tomo_subvolume_extract_is_required, tomo_vir_is_required
+
     # only need squared tilt-series when: 
     # 1. tiltseries alignment is not done yet
     # 2. squared aligned tiltseries needs to be generated (for producing downsampled tomogram or subvolume/virion extraction)
@@ -900,7 +901,21 @@ def frames_from_mdoc(mdoc_files: list, parameters: dict, first=True):
 def regenerate_average_quick(
     filename, parameters, dims, frame_list
 ):
+    """Generate single tilt-series file from raw frames using existing frame alignments.
 
+       Steps executed:
+       1. read raw frames
+       2. apply gain reference (if applicable)
+       3. apply existing frame alignments
+       4. calculate frame averages (using dose weighting, if applicable)
+       5. collate all tilts into a single .mrc file
+
+    Args:
+        filename (_type_): _description_
+        parameters (_type_): _description_
+        dims (_type_): _description_
+        frame_list (_type_): _description_
+    """
     binning = int(parameters["data_bin"])
     aligned_tilts = []
 
@@ -909,34 +924,37 @@ def regenerate_average_quick(
     # escape special character in case it contains [
     filename = glob.escape(filename)
 
-    # generate gain reference
-    _, gain_reference_file = get_gain_reference(
-        parameters, dims[0], dims[1],
-    )
+    # generate frame averages, if needed
+    if not os.path.exists( os.path.join( Path(frame_list[0]).stem + '.avg') ):
 
-    if gain_reference_file is not None:
-        commands = []
+        # generate gain reference
+        _, gain_reference_file = get_gain_reference(
+            parameters, dims[0], dims[1],
+        )
 
+        if gain_reference_file is not None:
+            commands = []
+
+            for movie in frame_list:
+                com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}~; mv {1}~ {1}'.format(
+                    get_imod_path(), movie, gain_reference_file,
+                )
+                commands.append(com)
+
+            mpi.submit_jobs_to_workers(commands)
+
+        # regenerate average in each tilt
+        t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
+        t.start()
+        logger.info(f"Processing movie frames using existing alignments")
+        arguments = []
         for movie in frame_list:
-            com = '{0}/bin/clip multiply -m 2 {1} "{2}" {1}~; mv {1}~ {1}'.format(
-                get_imod_path(), movie, gain_reference_file,
-            )
-            commands.append(com)
+            m_name = movie.replace(".mrc", "")
+            arguments.append((movie, m_name, parameters, "imod"))
+    
+        mpi.submit_function_to_workers(align.apply_alignments_and_average, arguments)
 
-        mpi.submit_jobs_to_workers(commands)
-
-    # regenerate average in each tilt
-    t = timer.Timer(text="Gain correction + frame alignment took: {}", logger=logger.info)
-    t.start()
-    logger.info(f"Processing movie frames using existing alignments")
-    arguments = []
-    for movie in frame_list:
-        m_name = movie.replace(".mrc", "")
-        arguments.append((movie, m_name, parameters, "imod"))
-  
-    mpi.submit_function_to_workers(align.apply_alignments_and_average, arguments)
-
-    t.stop()
+        t.stop()
 
     # compose drift-corrected tilt-series
     aligned_tilts = [frame.replace(".mrc", ".avg") for frame in frame_list]
@@ -950,10 +968,7 @@ def regenerate_average_quick(
     local_run.run_shell_command(command, log_level=logging.TRACE)
 
     # read image dimensions
-    [micrographinfo, error] = local_run.run_shell_command(
-        "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.NOTSET
-    )
-    x, y, z = list(map(int, micrographinfo.split()))
+    x, y, z = get_image_dimensions(f"{name}.mrc")
     
     if parameters["tomo_ali_format"]:
         squarex = math.ceil(x / 512.0) * 512

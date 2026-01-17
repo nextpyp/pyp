@@ -450,6 +450,31 @@ EOF
 	micromamba run -n isonet /bin/bash -c "/root/isonet.sh > /proc/$$/fd/1 2>&1"
 	rm -rf /root/isonet.sh
 
+	cd /opt/pyp/external
+	git clone --depth=1 https://github.com/IsoNet-cryoET/IsoNet2.git
+	cd IsoNet2
+	rm -rf .git
+
+	# Install IsoNet2
+cat << EOF > /root/isonet2.sh
+
+	# install the python packages we need
+	micromamba clean --all --force-pkgs-dirs --yes
+	
+	cd /opt/pyp/external
+	rm -rf /tmp/env.tar
+	conda-pack -p /opt/conda/envs/isonet2 -o /tmp/env.tar && \
+		mkdir -p /venv && cd /venv && tar xf /tmp/env.tar && \
+		rm /tmp/env.tar
+	/venv/bin/conda-unpack
+EOF
+	micromamba create --name isonet2 --file isonet2_environment.yml
+
+	# run the conda script in the new environment
+	chmod +x /root/isonet2.sh
+	micromamba run -n isonet2 /bin/bash -c "/root/isonet2.sh > /proc/$$/fd/1 2>&1"
+	rm -rf /root/isonet2.sh
+
 	# Install WarpTools
 cat << EOF > /root/warpem.sh
 	micromamba update warp -c warpem -c nvidia/label/cuda-11.8.0 -c pytorch -c conda-forge

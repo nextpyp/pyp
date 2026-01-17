@@ -517,7 +517,7 @@ def save_tomo_results(name, parameters, current_path):
 
     files[
         "mrc"
-    ] = [ '.rec', '_bin.mrc', '_bin.ali', '_vir????_binned_nad.mrc', '_vir????_ccc_0.vtp', '_vir????_binned_nad_seg.mrc' ]
+    ] = [ '.rec', '_bin.mrc', '_bin.ali', '_vir????_binned_nad.mrc', '_vir????_ccc_0.vtp', '_vir????_binned_nad_seg.mrc', '_half1.rec', '_half2.rec' ]
 
     if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")) and not os.path.exists(os.path.join(current_path,"mrc",name+".mrc")):
         symlink_relative(
@@ -549,7 +549,7 @@ def save_tomo_results_lean(name, parameters, current_path):
 
     files[
         "mrc"
-    ] = [ '.rec', '_bin.ali' ]
+    ] = [ '.rec', '_bin.ali', '_half1.rec', '_half2.rec' ]
 
     if parameters["movie_no_frames"] and os.path.exists(os.path.join(current_path,"raw",name+".mrc")) and not os.path.exists(os.path.join(current_path,"mrc",name+".mrc")):
         symlink_relative(

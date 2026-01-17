@@ -21,7 +21,6 @@ from pyp.analysis import plot, statistics
 from pyp.analysis.geometry import divide2regions, findSpecimenBounds, get_tomo_binning
 from pyp.analysis.geometry.pyp_convert_coord import read_3dbox
 from pyp.analysis.occupancies import occupancy_extended
-from pyp.analysis.scores import call_shape_phase_residuals
 from pyp.analysis.plot import pyp_frealign_plot_weights
 from pyp.inout.image import mrc, img2webp
 from pyp.inout.metadata import frealign_parfile, isfrealignx, pyp_metadata, generate_ministar
@@ -749,6 +748,8 @@ def run_reconstruction(
     parameter_file = name + "_r%02d.cistem" % (ref)
 
     alignment_parameters = Parameters.from_file(parameter_file)
+
+    from pyp.analysis.scores import call_shape_phase_residuals
 
     # create shaped _used par file
     call_shape_phase_residuals(

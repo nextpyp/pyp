@@ -46,9 +46,8 @@ from pyp.analysis.image import (
     normalize_frames,
 )
 from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
-from pyp.analysis.scores import particle_cleaning
 from pyp.ctf import utils as ctf_utils
-from pyp.detect import joint, topaz, tomo_subvolume_extract_is_required, cryocare, isonet_tools, MemBrain, Tardis
+from pyp.detect import joint, topaz, cryocare, isonet_tools, MemBrain, Tardis
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
 from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
@@ -1183,6 +1182,7 @@ def split(parameters):
 
         cryocare_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-eval"
         isonet_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-eval"
+        isonet2_predict = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method"] == "isonet2" and parameters["micromon_block"] == "tomo-denoising-eval"
         membrain = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-segmentation-open"
         topaz = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "topaz" and parameters["micromon_block"] == "tomo-denoising-eval"
         noise2map = parameters["data_mode"] == "tomo" and parameters.get("tomo_denoise_method") == "noise2map" and parameters["micromon_block"] == "tomo-denoising-eval"
@@ -1193,6 +1193,9 @@ def split(parameters):
         elif isonet_predict:
             run_mode = "isonet"
             job_type = "isonetswarm"
+        elif isonet2_predict:
+            run_mode = "isonet2"
+            job_type = "isonet2swarm"
         elif membrain:
             run_mode = "membrain"
             job_type = "membrainswarm"
@@ -1225,6 +1228,7 @@ def split(parameters):
         milo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo-train"
         milo_eval = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo"
         isonet_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet" and parameters["micromon_block"] == "tomo-denoising-train" 
+        isonet2_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "isonet2" and parameters["micromon_block"] == "tomo-denoising-train" 
         cryocare_train = parameters["data_mode"] == "tomo" and parameters["tomo_denoise_method_train"] == "cryocare" and parameters["micromon_block"] == "tomo-denoising-train" 
         heterogeneity = "drgn" in parameters.get("micromon_block")
 
@@ -1237,7 +1241,7 @@ def split(parameters):
             partition_name = parameters["slurm_queue"]
             job_name = "Split (cpu)"
 
-        if ( tomo_train or spr_train or isonet_train or cryocare_train or heterogeneity or milo_train ):
+        if ( tomo_train or spr_train or isonet_train or isonet2_train or cryocare_train or heterogeneity or milo_train ):
 
             if not heterogeneity:
                 # operate on all files in the .micrographs list since this is now a standalone block
@@ -1254,6 +1258,9 @@ def split(parameters):
                     elif isonet_train:
                         train_type = "isonet"
                         train_jobtype = "isonettrain"
+                    elif isonet2_train:
+                        train_type = "isonet2"
+                        train_jobtype = "isonet2train"
                     elif cryocare_train:
                         train_type = "cryocare"
                         train_jobtype = "cryocaretrain"
@@ -1943,6 +1950,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # force generation of aligned tilt-series for sessions since we aren't using the force parameters in this case
     parameters["detect_force"] = preprocess.need_recalculation_for_sessions(name,parameters)
     
+    from pyp.detect import topaz, tomo_subvolume_extract_is_required
+
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or \
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
         parameters["tomo_vir_force"] or \
@@ -1977,9 +1986,11 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
     # produce binned tomograms
     need_recalculation = parameters["tomo_rec_force"]
+    need_half_tomogram_recalculation = False
     if not merge.tomo_is_done(name, os.path.join(project_path, "mrc")) or need_recalculation:
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options, need_recalculation)] )
+        need_half_tomogram_recalculation = True
 
     ctffind_tilt = False
     if ctf_mod.is_required_3d(parameters):
@@ -2046,6 +2057,10 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
 
         merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True, erase_fiducials=True)
 
+    # calculate/re-calculate half-tomograms, if needed
+    if ( need_half_tomogram_recalculation or not os.path.exists(os.path.join(project_path,'mrc',name+'_half1.rec')) ) and parameters.get("tomo_rec_generate_halves"):
+        merge.reconstruct_tomo_halves( name, parameters, project_path=project_path )
+
     # link binned tomogram to local scratch in case we need it for particle picking
     if not os.path.exists(f"{name}.rec"):
         symlink_relative(os.path.join(project_path, "mrc", f"{name}.rec"), f"{name}.rec")
@@ -2101,7 +2116,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet_model"))):
                     output = isonet_tools.isonet_predict( name, project_path, parameters)
                 else:
-                    logger.info("IsoNET model not found, skipping denoising")
+                    logger.info("IsoNet model not found, skipping denoising")
+            case "isonet2":
+                if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet2_predict_model"))):
+                    output = isonet_tools.isonet2_predict( name, project_path, parameters)
+                else:
+                    logger.info("IsoNet2 model not found, skipping denoising")
             case "topaz":
                 topaz_temp = working_path / "topaz_temp"
                 os.makedirs( topaz_temp, exist_ok=True)
@@ -2114,8 +2134,14 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             case "noise2map":
                 first_half = name + "_half1.rec"
                 second_half = first_half.replace("_half1.rec","_half2.rec")
-                logger.info(f"## Generating half-tomograms ##")
-                cryocare.tomo_swarm_halves( name, Path(project_path), working_path, parameters, tomogram = True, inplace = True )                
+
+                for half_map in [first_half, second_half]:
+                    if not os.path.exists(half_map):
+                        parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
+                        assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running Noise2Map"
+
+                        # link half tomogram to mrc/ directory
+                        symlink_relative( parent_mrc_location, half_map )
                 output = warptools_noise2map(first_half, parameters, tomogram=True)
             case _:
                 pass
@@ -2214,16 +2240,21 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     
         commands = []
         if "preprocessing" in parameters.get("micromon_block") or parameters.get("micromon_block") == "":
+            files_to_process = []
             if parameters.get("movie_depth") and not parameters.get("movie_no_frames"):
                 logger.info("Converting tilt-series to 16-bits")
-                command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
-                    get_imod_path(), name + ".mrc"
-                )
-                commands.append(command)
+                files_to_process.append(name + ".mrc")
             if parameters.get("tomo_rec_depth"):
-                logger.info("Converting tomogram to 16-bits")
+                files_to_process.append(name + ".rec")
+                if parameters.get("tomo_rec_generate_halves"):
+                    logger.info("Converting tomogram and half-tomograms to 16-bits")
+                    files_to_process.append(name + "_half1.rec")
+                    files_to_process.append(name + "_half2.rec")
+                else:
+                    logger.info("Converting tomogram to 16-bits")
+            for file in files_to_process:
                 command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
-                    get_imod_path(), name + ".rec"
+                    get_imod_path(), file
                 )
                 commands.append(command)
             mpi.submit_jobs_to_workers(commands)
@@ -5797,11 +5828,16 @@ if __name__ == "__main__":
 
                     # generate half-tomograms and save to train/ folder, if needed
                     for name in micrograph_list:
-                        first_half = os.path.join(project_path,"train",name+"_half1.rec")
+                        first_half = os.path.join(project_path,"mrc",name+"_half1.rec")
                         second_half = first_half.replace("_half1.rec","_half2.rec")
-                        if not os.path.exists(first_half) or not os.path.exists(second_half):
-                            logger.info(f"## Generating half-tomograms for {name} ##")
-                            cryocare.tomo_swarm_halves( name, project_path, working_path, parameters)
+
+                        for half_map in [first_half, second_half]:
+                            if not os.path.exists(half_map):
+                                parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
+                                assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running CryoCARE"
+
+                                # link half tomogram to mrc/ directory
+                                symlink_relative( parent_mrc_location, half_map )
                     
                     cryocare.cryocare_train(project_path, output=output, parameters=parameters)
                     logger.info("nextPYP (cryocare train) finished successfully")
@@ -5815,11 +5851,16 @@ if __name__ == "__main__":
 
                     args, name, project_path, working_path, parameters = tomoswarm_prologue()
 
-                    first_half = os.path.join(project_path,"train",name+"_half1.rec")
+                    first_half = os.path.join(project_path,"mrc",name+"_half1.rec")
                     second_half = first_half.replace("_half1.rec","_half2.rec")
-                    if not os.path.exists(first_half) or not os.path.exists(second_half):
-                        logger.info(f"## Generating half-tomograms for {name} ##")
-                        cryocare.tomo_swarm_halves( name, project_path, working_path, parameters)
+
+                    for half_map in [first_half, second_half]:
+                        if not os.path.exists(half_map):
+                            parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
+                            assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running CryoCARE"
+
+                            # link half tomogram to mrc/ directory
+                            symlink_relative( parent_mrc_location, half_map )
 
                     new_reconstruction = cryocare.cryocare_predict( working_path, project_path, name, parameters)
 
@@ -5840,10 +5881,16 @@ if __name__ == "__main__":
                     os.chdir(working_path)
 
                     # generate half-tomograms and save to train/ folder, if needed
-                    first_half = name + "_half1.rec"
+                    first_half = os.path.join( project_path, "mrc", name + "_half1.rec" )
                     second_half = first_half.replace("_half1.rec","_half2.rec")
-                    logger.info(f"## Generating half-tomograms ##")
-                    cryocare.tomo_swarm_halves( name, project_path, working_path, parameters, tomogram=True)
+
+                    for half_map in [first_half, second_half]:
+                        if not os.path.exists(half_map):
+                            parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
+                            assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running Noise2Map"
+
+                            # link half tomogram to mrc/ directory
+                            symlink_relative( parent_mrc_location, half_map )
                     
                     output = warptools_noise2map(first_half,parameters,tomogram=True)
                     
@@ -5888,6 +5935,84 @@ if __name__ == "__main__":
                     logger.error("nextPYP (isonet predict) failed")
                     raise
             
+            elif "isonet2train" in os.environ:
+
+                try:
+                    del os.environ["isonet2train"]
+
+                    # clear local scratch and report free space
+                    clear_scratch(Path(os.environ["PYP_SCRATCH"]).parents[0])
+                    get_free_space(Path(os.environ["PYP_SCRATCH"]).parents[0])
+
+                    parameters = project_params.load_pyp_parameters()
+                    project_dir = Path.cwd()
+
+                    micrographs = "{}.micrographs".format(parameters.get("data_set"))
+                    micrograph_list = [line.strip() for line in open(micrographs, "r") if line.strip()]
+
+                    working_path = Path(os.environ["PYP_SCRATCH"])
+                    shutil.rmtree(working_path, "True")
+                    working_path.mkdir(parents=True, exist_ok=True)
+                    os.chdir(working_path)
+
+                    # generate half-tomograms and save to train/ folder, if needed
+                    for name in micrograph_list:
+                        first_half = os.path.join(project_dir,"train",name+"_half1.rec")
+                        second_half = first_half.replace("_half1.rec","_half2.rec")
+
+                        for half_map in [first_half, second_half]:
+                            if not os.path.exists(half_map):
+                                parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
+                                assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running IsoNet2"
+
+                                # flip yz coordinates to match isonet2 convention
+                                command = f"{get_imod_path()}/bin/clip flipyz {parent_mrc_location} {half_map}"
+                                local_run.run_shell_command(command)
+
+                    output = os.path.join(project_dir, "train")
+                    isonet_tools.isonet2_train(project_dir, parameters=parameters)
+                    logger.info("nextPYP (isonet2 train) finished successfully")
+                except:
+                    logger.error("nextPYP (isonet2 train) failed")
+                    raise
+                    
+            elif "isonet2swarm" in os.environ:
+
+                try:
+                    del os.environ["isonet2swarm"]
+
+                    project_dir = Path.cwd().parents[0]
+                    working_path = Path(os.environ["PYP_SCRATCH"])
+                    shutil.rmtree(working_path, "True")
+
+                    args, name, project_path, working_path, parameters = tomoswarm_prologue()
+
+                    # generate half-tomograms and save to train/ folder, if needed
+                    first_half = os.path.join(project_dir,"train",name+"_half1.rec")
+                    second_half = first_half.replace("_half1.rec","_half2.rec")
+
+                    for half_map in [first_half, second_half]:
+                        if not os.path.exists(half_map):
+                            parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
+                            assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running IsoNet2"
+
+                            # flip yz coordinates to match isonet2 convention
+                            command = f"{get_imod_path()}/bin/clip flipyz {parent_mrc_location} {half_map}"
+                            local_run.run_shell_command(command)
+
+                    new_reconstruction = isonet_tools.isonet2_predict( name, project_path, parameters)
+
+                    # flip zy back to undo matching of isonet2 convention
+                    command = f"{get_imod_path()}/bin/clip flipzy {new_reconstruction} {new_reconstruction}~; mv {new_reconstruction}~ {new_reconstruction}"
+                    local_run.run_shell_command(command)
+
+                    tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=True)
+
+                    logger.info("nextPYP (isonet2 predict) finished successfully")
+                except:
+                    logger.error("nextPYP (isonet2 predict) failed")
+                    raise
+
             elif "membrainswarm" in os.environ:
 
                 try:
@@ -6152,6 +6277,8 @@ if __name__ == "__main__":
                             shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
                         else:
                             raise Exception(f"Cannot find reference file {reference}")
+
+                        from pyp.analysis.scores import particle_cleaning
 
                         # do the actual cleaning
                         parameters = particle_cleaning(parameters)
