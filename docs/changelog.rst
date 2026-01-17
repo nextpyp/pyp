@@ -17,6 +17,9 @@ v0.7.3
    - New wrappers for `Noise2Map <https://warpem.github.io/warp/reference/noise2map/noise2map/?h=noise2map>`_ to denoise tomograms and half-maps (during refinement).
 
    - Use normal vectors to tomogram segmentations to assign initial particle orientations when picking membrane proteins.
+
+   - Local resolution calculation during post-processing using `ResMap <https://resmap.sourceforge.net/>`_.
+
    - Tomogram denoising using `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet2>`_.
 
    :fa:`plus-square` **Improvements**
@@ -49,6 +52,22 @@ v0.7.3
 
    - Add support to import tilt-series with *.mrcs extentions.
 
+   - Updated AreTomo3 version to 2.2.2.
+
+   - Consistently use "dose per exposure" parameter for all frame weighting calculations.
+
+   - Filter/restrict output of membrain-seg and tardis to a slab of specified thickness.
+
+   - Update MotionCor3 to run on newer NVIDIA Blackwell cards.
+
+   - Expose filtering parameters to control tomogram deconvolution when running membrain-seg.
+
+   - Expose option to control top-hat filtering during 3D template matching using pytom-match-pick.
+
+   - Add visualization of heat maps during deep learning-based particle picking in tomography pipeline.
+
+   - Add visualization of contamination masks during size-based particle picking in tomography pipeline.
+
    :fa:`bug` **Bug fixes**
    
    - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
@@ -74,6 +93,12 @@ v0.7.3
    - Correctly parse SLURM's gres option when using multiple GPUs for cryoCARE training.
 
    - Fix bug that prevented saving tomograms and tilt-series in 16-bit format during sessions.
+
+   - Handle files with special characters in their names more gracefully.
+
+   - Fix bug when manually removing tilts followed by automatic tilt exclusion by AreTomo2/3.
+
+   - Fix bug when plotting motion trajectories after reference-based movie-frame refinement.
 
    - Fix bug during parsing of tomogram thickness when running AreTomo2/3.
 
