@@ -125,7 +125,7 @@ def needs_gpu(parameters):
             )
         )
         or (
-            block in ("tomo-denoising-eval", "tomo-preprocessing")
+            block in ("tomo-denoising-eval", "tomo-preprocessing", "")
             and not (
                 parameters.get("tomo_denoise_method") == "topaz"
                 and not parameters.get("tomo_denoise_topaz_use_gpu")
@@ -135,11 +135,11 @@ def needs_gpu(parameters):
 
     gpu_for_segmentation = (
         (
-            block == "tomo-segmentation-open" 
+            block in ("tomo-segmentation-open", "")
             and parameters.get("tomo_mem_use_gpu")
         ) or 
         (
-            block == "tomo-preprocessing"
+            block in ("tomo-preprocessing", "")
             and parameters.get("tomo_mem_model")
             and os.path.exists(parameters.get("tomo_mem_model"))
         )
