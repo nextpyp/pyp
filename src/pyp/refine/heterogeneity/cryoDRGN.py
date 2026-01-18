@@ -8,7 +8,6 @@ from tqdm import tqdm
 from pyp.streampyp.logging import TQDMLogger
 from pyp.system import local_run, project_params, mpi
 from pyp.system.logging import get_verbose_level
-from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
 
 from pyp.system.logging import logger
 
@@ -468,6 +467,7 @@ def run_cryodrgn_eval(project_dir, parameters):
             arguments.append((file, radius, file.replace(Path(file).suffix,".webp")))
     for file in glob.glob( os.path.join(analyze_output,f"kmeans{parameters['cryodrgn_analysis_ksample']}","*.mrc")):
         arguments.append((file, radius, file.replace(Path(file).suffix,'.webp')))
+    from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
     mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
 
     shutil.copytree((working_path / "analyze_output"), Path(final_output), dirs_exist_ok=True)

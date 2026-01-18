@@ -108,7 +108,6 @@ from pyp.postprocess.warptools import warptools_noise2map
 
 from pyp.refine.tomo_avg import sub_tomo_avg as sub_tomo_avg
 from pyp.system.set_up import prepare_3davg_dir, prepare_3davg_xml
-from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
 
 __author__ = "Alberto Bartesaghi"
 __maintainer__ = "Alberto Bartesaghi"
@@ -2803,6 +2802,7 @@ def sva_initialize_and_run(parameters,dataset,iter,mode="0"):
     
     if os.path.exists(filter_map+'.filtered.mrc'):
         os.rename(filter_map+'.filtered.mrc',dataset+'_test_metric_filtered.mrc')
+        from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
         generate_map_thumbnail(dataset + '_test_metric_filtered.mrc', 0, dataset + '_test_metric_filtered.webp')
 
     # cleanup
@@ -2887,6 +2887,7 @@ def sva_run(parameters,threed_avg_dir):
             arguments.append((file, 0, file.replace(Path(file).suffix,'.webp'),pixel_size))
         
     logger.info(f"Producing webp files from each volume")
+    from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
     mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)                    
 
 @timer.Timer(
