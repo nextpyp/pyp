@@ -163,6 +163,12 @@ def pyp_daemon(args):
         # load and set default PYP parameters
         parameters = project_params.load_pyp_parameters(session_dir)
 
+    # set parameters for particle extraction
+    if "tomo" in args["data_mode"].lower() and args.get('class2d_enable'):
+        parameters["tomo_ext_size"] = args["class2d_box"]
+        parameters["tomo_ext_binn"] = args["class2d_bin"]
+        parameters["tomo_ext_fmt"] = "3DAVG"
+
     for key in parameters:
         if key.endswith("_force") and parameters[key]:
             parameters[key] = False

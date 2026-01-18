@@ -2131,7 +2131,7 @@ def extract_spk_direct(
     # load spike coordinates
     if os.path.isfile("%s.spk" % name):
         spikes = imod.coordinates_from_mod_file("%s.spk" % name)
-        if parameters.get("micromon_block") != "tomo-picking":
+        if parameters.get("micromon_block") not in [ "tomo-picking", ""]:
             spikes = spikes[:, [0, 2, 1]]
     # if there's txt file from Wendy and Ye (particles picked in cryolo)
     elif os.path.isfile("%s.txt" % name):
