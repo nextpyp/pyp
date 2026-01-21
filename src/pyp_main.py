@@ -2162,7 +2162,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             if os.path.exists(new_reconstruction):
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
         
-        # if in sessions
+        # if in sessions, set information for particle extraction according to current 2D classification settings
         if parameters.get("micromon_block") == "": 
             parameters["tomo_ext_fmt"] = "3DAVG"
             parameters["tomo_ext_box"] = parameters["class2d_box"]

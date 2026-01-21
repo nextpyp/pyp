@@ -167,7 +167,6 @@ def pyp_daemon(args):
     if "tomo" in args["data_mode"].lower() and args.get('class2d_enable'):
         parameters["tomo_ext_size"] = args["class2d_box"]
         parameters["tomo_ext_binn"] = args["class2d_bin"]
-        parameters["tomo_ext_fmt"] = "eman"
 
     for key in parameters:
         if key.endswith("_force") and parameters[key]:
@@ -395,7 +394,6 @@ def pyp_daemon(args):
             if new_parameters.get("data_mode") == "tomo":
                 args["tomo_ext_size"] = new_parameters["class2d_box"]
                 args["tomo_ext_binn"] = new_parameters["class2d_bin"]
-                args["tomo_ext_fmt"] = "eman"
 
             # disable the _force parameters in the configure file
             for key in args:
