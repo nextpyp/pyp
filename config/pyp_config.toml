@@ -1659,14 +1659,14 @@ condition = { arg="compile", value="true" }
 
 [tabs.detect_nn3d.use_gpu_train]
 name = "Use GPU"
-description = "Run on GPU"
+description = "Use GPU acceleration"
 type = "bool"
 default = true
 hidden = ["tomo_particles_eval", "stream_tomo"]
 
 [tabs.detect_nn3d.use_gpu_eval]
 name = "Use GPU"
-description = "Run on GPU"
+description = "Use GPU acceleration"
 type = "bool"
 default = false
 advanced = true
@@ -1936,7 +1936,7 @@ hidden = [ "tomo_milo_train" ]
 
 [tabs.detect_milo.use_gpu]
 name = "Use GPU"
-description = "Run on GPU"
+description = "Use GPU acceleration"
 type = "bool"
 default = true
 
@@ -2640,7 +2640,7 @@ hidden = [ "tomo_denoise_train" ]
 
 [tabs.tomo_denoise.topaz_use_gpu]
 name = "Use GPU"
-description = "Run Topaz denoise in a GPU"
+description = "Use GPU acceleration"
 type = "bool"
 default = false
 condition = { arg="method", value="topaz" }
@@ -2659,14 +2659,6 @@ name = "Mask shape"
 description = "Mask shape in x,y,z covering the center of tomogram"
 type = "str"
 default = "0,0,0"
-condition = { arg="method_train", value="cryocare" }
-hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
-
-[tabs.tomo_denoise.cryocare_use_gpu]
-name = "Use GPU"
-description = "Run cryoCARE denoise in a GPU"
-type = "bool"
-default = true
 condition = { arg="method_train", value="cryocare" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
@@ -2758,6 +2750,14 @@ default = 0.0004
 condition = { arg="method_train", value="cryocare" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
+[tabs.tomo_denoise.cryocare_use_gpu]
+name = "Use GPU"
+description = "Use GPU acceleration"
+type = "bool"
+default = true
+condition = { arg="method_train", value="cryocare" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
 [tabs.tomo_denoise.cryocare_model]
 name = "Trained model"
 description = "Trained model (.tar.gz)"
@@ -2772,6 +2772,14 @@ name = "Initial tiles per dimension"
 description = "Increase if the tiles do not fit on the GPU"
 type = "int"
 default = 1
+condition = { arg="method", value="cryocare" }
+hidden = [ "tomo_denoise_train" ]
+
+[tabs.tomo_denoise.cryocare_eval_use_gpu]
+name = "Use GPU"
+description = "Use GPU acceleration"
+type = "bool"
+default = true
 condition = { arg="method", value="cryocare" }
 hidden = [ "tomo_denoise_train" ]
 
@@ -3813,7 +3821,7 @@ condition = { arg="method", value="membrain" }
 
 [tabs.tomo_mem.use_gpu]
 name = "Use GPU"
-description = "Select for faster speeds"
+description = "Use GPU acceleration"
 type = "bool"
 default = true
 condition = { arg="method", value=["membrain","tardis_mem","tardis_mt","tardis_actin"] }

@@ -116,35 +116,53 @@ def needs_gpu(parameters):
     
     block = parameters.get("micromon_block")
 
-    gpu_for_denoising = (
-        (
-            block == "tomo-denoising-train"
-            and not (
-                parameters.get("tomo_denoise_method_train") == "cryocare"
+    gpu_for_denoising = False
+    match block:
+        case "tomo-denoising-train":
+            if not (
+                parameters.get("tomo_denoise_method_train") == "cryocare" 
                 and not parameters.get("tomo_denoise_cryocare_use_gpu")
-            )
-        )
-        or (
-            block in ("tomo-denoising-eval", "tomo-preprocessing", "")
-            and not (
+                ):
+                gpu_for_denoising = True
+        case "tomo-denoising-eval" | "tomo-preprocessing":
+            if not (
+                parameters.get("tomo_denoise_method") == "topaz" 
+                and not parameters.get("tomo_denoise_topaz_use_gpu")
+                or parameters.get("tomo_denoise_method") == "cryocare"
+                and (
+                    not os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_cryocare_model")))
+                    or not parameters.get("tomo_denoise_cryocare_eval_use_gpu")
+                )
+            ):
+                gpu_for_denoising = True
+        case "":
+            if not (
                 parameters.get("tomo_denoise_method") == "topaz"
                 and not parameters.get("tomo_denoise_topaz_use_gpu")
-            )
-        )
-    )
+                or parameters.get("tomo_denoise_method") == "isonet"
+                and not os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet_model")))
+                or parameters.get("tomo_denoise_method") == "isonet2"
+                and not os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet2_predict_model")))
+                or parameters.get("tomo_denoise_method") == "cryocare"
+                and (
+                    not os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_cryocare_model")))
+                    or not parameters.get("tomo_denoise_cryocare_eval_use_gpu")
+                )
+            ):
+                gpu_for_denoising = True
 
-    gpu_for_segmentation = (
-        (
-            block in ("tomo-segmentation-open", "")
-            and parameters.get("tomo_mem_use_gpu")
-        ) or 
-        (
-            block in ("tomo-preprocessing", "")
-            and parameters.get("tomo_mem_model")
-            and os.path.exists(parameters.get("tomo_mem_model"))
-        )
-    )
-
+    gpu_for_segmentation = False
+    match block:
+        case "tomo-segmentation-open" | "":
+            if parameters.get("tomo_mem_use_gpu") and not (
+                    parameters["tomo_mem_method"] == "membrain"
+                    and not os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model")))
+                ):
+                gpu_for_segmentation = True
+ 
+    print(f"gpu_for_segmentaion = {gpu_for_segmentation}")
+    print(f"gpu_for_denoising = {gpu_for_denoising}")
+ 
     gpu_for_mining = "tomo-milo" in block and parameters.get("detect_milo_use_gpu", True)
 
     gpu_for_picking = ( block == "tomo-particles-train" and parameters["detect_nn3d_use_gpu_train"]
