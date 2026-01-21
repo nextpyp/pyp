@@ -61,9 +61,9 @@ def get_allboxes_and_allparxs_from_box(
                 path=meta_dir
             )
         elif parameters.get("data_mode") == "tomo":
-            [allboxes, allparxs] = tomo_extract_coordinates_2d(
-                filename=pkl_file.stem, parameters=parameters, path=meta_dir
-            )
+            from pyp.inout.image.core import get_image_dimensions
+            num_particles = get_image_dimensions(os.path.join(project_folder,'sva',pkl_file.stem+"_stack.mrc"))[-1]
+            [allboxes, allparxs] = tomo_extract_coordinates_2d(num_particles)
     except:
         type, value, traceback = sys.exc_info()
         sys.__excepthook__(type, value, traceback)
@@ -418,6 +418,8 @@ def run_refinement(  # rename to daemon2D after testing
     # sort the new films to make sure allparxs and particle stacks are in the same order
     new_films = sorted(list(boxes_lists.keys()))
 
+    classification_type: str
+    
     if "ab-initio" in classification_status.keys() and classification_status["ab-initio"] <= parameters['class2d_iters_init']:
         classification_type = "ab initio"
         start_iteration = classification_status["ab-initio"]
