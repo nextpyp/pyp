@@ -4670,6 +4670,14 @@ type = "int"
 default = 4
 condition = { arg="enable", value=true }
 
+[tabs.class2d.rad]
+name = "Mask radius (A)"
+description = "Radius of circular mask used during refinement (0 = boxsize/2)"
+type = "float"
+hidden = ["spr_flexible_refine", "tomo_flexible_refine", "tomo_flexible_refine_after"]
+default = 0.0
+condition = { arg="enable", value=true }
+
 [tabs.class2d.ctf_min_res]
 name = "Exclude low resolution micrographs/tilt-series"
 description = "Only use micrographs/tilt-series with information beyond this resolution"

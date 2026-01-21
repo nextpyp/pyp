@@ -4078,7 +4078,7 @@ def refine2d(
         f"{parameters['scope_voltage']}\n"
         f"{parameters['scope_cs']}\n"
         f"{parameters['scope_wgh']}\n"
-        f"{parameters['detect_rad']}\n" # TODO: fix
+        f"{parameters['class2d_rad'] if parameters['class2d_rad'] > 0 else parameters['class2d_box'] / 2.0 * parameters['scope_pixel'] * parameters['class2d_bin']}\n" # TODO: fix
         f"{low_res_limit}\n"  # low resolution limit
         f"{high_res_limit}\n"  # high resolution limit
         "0\n"
@@ -4208,7 +4208,7 @@ def refine2d_mpi(
             f"{parameters['scope_voltage']}\n"
             f"{parameters['scope_cs']}\n"
             f"{parameters['scope_wgh']}\n"
-            f"{parameters['detect_rad']}\n" # TODO: fix
+            f"{parameters['class2d_rad'] if parameters['class2d_rad'] > 0 else parameters['class2d_box'] / 2.0 * parameters['scope_pixel'] * parameters['class2d_bin']}\n" # TODO: fix
             f"{low_res_limit}\n"  # low resolution limit
             f"{high_res_limit}\n"  # high resolution limit
             "0\n"
