@@ -2057,7 +2057,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         t.stop()
 
         # save stack to sva/ in project directory
-        proj_files = glob.glob("*_stack.mrc") + glob.glob("*_cut.txt")
+        proj_files = glob.glob("*_stack.mrc")
         for proj_file in proj_files:
             shutil.copy2( proj_file, os.path.join(current_path, "sva", proj_file))
 
