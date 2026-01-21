@@ -682,7 +682,9 @@ EOF
                 first = False
             else:
                 log_level = logging.NOTSET
-            run_shell_command(command, log_level)
+            output, _ = run_shell_command(command, log_level)
+            if "Error:" in output:
+                raise Exception(f"Can't merge stacks {inputfiles[0]} and {stack} with different dimensions!")
             if remove:
                 try:
                     os.remove(stack)
