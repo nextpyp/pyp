@@ -491,7 +491,7 @@ class LocalMetadata:
         header = self.files[key]["header"]
 
         command = f"{get_imod_path()}/bin/imodinfo -a {file}"
-        [output, error] = run_shell_command(command, log_level=logging.TRACE)
+        [output, _] = run_shell_command(command, log_level=logging.NOTSET)
 
         modfile = output.split("contour")
         indexes = []

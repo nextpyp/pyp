@@ -821,7 +821,7 @@ class Parameters:
             # concatenate first column, film column with the rest of parfiles
             command = "paste -d '' {0} > '{1}'".format(" ".join([ 'indexes.tmp', f"{idx}_1.tmp", 'films.tmp', f"{idx}_2.tmp"]), 
                                                     parfile)
-            run_shell_command(command, log_level=logging.TRACE)
+            run_shell_command(command, log_level=logging.NOTSET)
 
             # remove tmp files
             os.remove('films.tmp')
@@ -837,10 +837,10 @@ class Parameters:
             splits = [inputlist[i:i+batch_size] for i in range(0, len(inputlist), batch_size)]
             for batch in splits:
                 command = "cat {0} >> {1}".format(" ".join(f'"{w}"' for w in batch), filename)
-                run_shell_command(command, log_level=logging.TRACE)
+                run_shell_command(command, log_level=logging.NOTSET)
         else:
             command = "cat {0} >> '{1}'".format(" ".join(f'"{w}"' for w in inputlist), filename)
-            run_shell_command(command, log_level=logging.TRACE)
+            run_shell_command(command, log_level=logging.NOTSET)
 
         [os.remove(f) for f in os.listdir(".") if f.endswith(".tmp")]
 

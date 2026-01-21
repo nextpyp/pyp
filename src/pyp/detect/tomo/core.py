@@ -2162,7 +2162,7 @@ EOF
         name,
         inversexf,
     )
-    [output, error] = local_run.run_shell_command(command, log_level=logging.TRACE)
+    local_run.run_shell_command(command, log_level=logging.TRACE)
 
     inversexf_file = np.loadtxt(inversexf, ndmin=2)
     tilts = np.loadtxt("%s.tlt" % name)

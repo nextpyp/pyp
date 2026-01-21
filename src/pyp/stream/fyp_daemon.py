@@ -147,7 +147,7 @@ def get_positions_and_new_particle_count_from_box_files(
                                 )
                                 os.remove(allparxs_fpath)
                             else:
-                                logger.debug(f"Number of particles from {film_name}: {len(lines)}")
+                                logger.debug(f"Number of particles from {film_name}: {len(lines):,}")
                                 if len(lines) != len(allboxes):
                                     logger.error(
                                         "Number of particles does not match number of coordinates to extract"
@@ -183,7 +183,7 @@ def get_positions_and_new_particle_count_from_box_files(
                                     )
                                     os.remove(allparxs_fpath)
                                 else:
-                                    logger.debug(f"Number of particles from {film_name}: {len(lines)}")
+                                    logger.debug(f"Number of particles from {film_name}: {len(lines):,}")
                                     if len(lines) != len(allboxes):
                                         logger.error(
                                             "Number of particles does not match number of coordinates to extract"
@@ -198,7 +198,7 @@ def get_positions_and_new_particle_count_from_box_files(
                         pbar.update(1)
 
         if len(boxes_lists) and (len(boxes_lists)-len(old_boxes_lists)) > 0 and number_of_particles_changed:
-            logger.info(f"{new_particles:,} particles detected (~{int(new_particles/(len(boxes_lists)-len(old_boxes_lists)))} particles per micrograph/tilt-series)")
+            logger.info(f"{new_particles:,} particles detected (~{int(new_particles/(len(boxes_lists)-len(old_boxes_lists))):,} particles per micrograph/tilt-series)")
 
         flag = detect_flags(existing_unique_name=prev_name, project_directory=project_directory, existing_boxes_lists=old_boxes_lists)
         if not "None" in flag.values():
