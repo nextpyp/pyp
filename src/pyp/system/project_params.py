@@ -972,7 +972,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                         clean_picking_files(project_dir)
                         new_parameters["ctf_force"] = True
 
-                    elif "tomo_rec" in k and 'generate_halves' not in k:
+                    elif "tomo_rec" in k and 'generate_halves' not in k or k in ("class2d_box","class2d_bin"):
                         logger.info(
                             f"Tomograms will be re-computed to reflect change in parameter {k}"
                         )
