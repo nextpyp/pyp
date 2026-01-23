@@ -5157,6 +5157,8 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             """
 
+            logfile = f"{name}_aretomo2.log"
+            
             command = f"{get_aretomo_path()} \
 -InMrc {name}_aretomo.mrc \
 -OutMrc {name}_aretomo.rec \
@@ -5169,7 +5171,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
 -OutImod 2 {patches} \
--Gpu {get_gpu_ids(parameters,separator=' ')}"
+-Gpu {get_gpu_ids(parameters,separator=' ')} 2>&1 | tee {logfile}"
 
             output = []
             def obs(line):
@@ -5180,19 +5182,21 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             # detect removed images and add them to excluded views
             formatted_tilt_angles = np.array(["%.2f" % x for x in original_tilt_angles])
             tilt_offset = 0.0
-            for line in output:
-                if "Remove image at" in line:
-                    angle = line.split(" ")[3]
-                    index = int(np.where(formatted_tilt_angles==angle)[0][0]) + 1
-                    if len(excluded_views) > 0:
-                        excluded_views += f",{index}"
-                    else:
-                        excluded_views = f"-EXCLUDELIST2 {index}"
-                
-                if "Tilt offset" in line:
-                    # Tilt offset:    -2.00,  CC: 0.0001
-                    tilt_offset = float(line.split(",")[0].split("Tilt offset:")[1])
-                    logger.info(f"Tilt offset detected: {tilt_offset} degrees")
+            with open(logfile) as f:
+                output = f.read().split('\n')
+                for line in output:
+                    if "Remove image at" in line:
+                        angle = line.split(" ")[3]
+                        index = int(np.where(formatted_tilt_angles==angle)[0][0]) + 1
+                        if len(excluded_views) > 0:
+                            excluded_views += f",{index}"
+                        else:
+                            excluded_views = f"-EXCLUDELIST2 {index}"
+                    
+                    if "Tilt offset" in line:
+                        # Tilt offset:    -2.00,  CC: 0.0001
+                        tilt_offset = float(line.split(",")[0].split("Tilt offset:")[1])
+                        logger.info(f"Tilt offset detected: {tilt_offset} degrees")
             
             if math.fabs(tilt_offset) > 0:
                 # overwrite rawtlt files to reflect the angles offset changes
@@ -5532,6 +5536,8 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             """
 
+            logfile = f"{name}_aretomo3.log"
+
             command = f"{get_aretomo3_path()} \
 -InPrefix {name}_aretomo.mrc \
 -OutDir ./ \
@@ -5551,7 +5557,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -TiltAxis {rotation} \
 {patches} \
 -Gpu {get_gpu_ids(parameters,separator=' ')} \
--TmpDir {os.environ['PYP_SCRATCH']}"
+-TmpDir {os.environ['PYP_SCRATCH']} 2>&1 | tee {logfile}"
 
             output = []
             def obs(line):
@@ -5564,27 +5570,30 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
             # detect removed images and add them to excluded views
             formatted_tilt_angles = np.array(["%.2f" % x for x in original_tilt_angles])
             excluded_tilt_indexes = []
-            for line in output:
-                # Remove image 40 at 60.00 deg 
-                if line.startswith("Remove image "):
-                    angle = line.split(" ")[4]
-                    index = int(np.where(formatted_tilt_angles==angle)[0][0]) + 1
-                    if index not in excluded_tilt_indexes:
-                        excluded_tilt_indexes.append(index)
-                        if len(excluded_views) > 0:
-                            excluded_views += f",{index}"
-                        else:
-                            excluded_views = f"-EXCLUDELIST2 {index}"
-                if "tilt and beta offsets" in line:
-                    # tilt and beta offsets:     0.00     -8.20
-                    tilt_offset = float(line.split()[4])
-                    logger.info(f"Tilt offset detected: {tilt_offset} degrees")
-                    if math.fabs(tilt_offset) > 0:
-                        # overwrite rawtlt files to reflect the angles offset changes
-                        rawtlt_file = f"{name}.rawtlt"
-                        tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
-                        tiltangles += tilt_offset
-                        np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
+
+            with open(logfile) as f:
+                output = f.read().split('\n')
+                for line in output:
+                    # Remove image 40 at 60.00 deg 
+                    if line.startswith("Remove image "):
+                        angle = line.split(" ")[4]
+                        index = int(np.where(formatted_tilt_angles==angle)[0][0]) + 1
+                        if index not in excluded_tilt_indexes:
+                            excluded_tilt_indexes.append(index)
+                            if len(excluded_views) > 0:
+                                excluded_views += f",{index}"
+                            else:
+                                excluded_views = f"-EXCLUDELIST2 {index}"
+                    if "tilt and beta offsets" in line:
+                        # tilt and beta offsets:     0.00     -8.20
+                        tilt_offset = float(line.split()[4])
+                        logger.info(f"Tilt offset detected: {tilt_offset} degrees")
+                        if math.fabs(tilt_offset) > 0:
+                            # overwrite rawtlt files to reflect the angles offset changes
+                            rawtlt_file = f"{name}.rawtlt"
+                            tiltangles = np.loadtxt(rawtlt_file, dtype='float', ndmin=2)
+                            tiltangles += tilt_offset
+                            np.savetxt(rawtlt_file, tiltangles, fmt='%.2f')
   
             # run AreTomo3 with option "-Cmd 4" to Rotate tilt axis by 180 degrees
          
