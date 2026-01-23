@@ -317,12 +317,12 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 except:
                     logger.error(f"Failed to erase gold from tilt-series")
 
-    if binning > 1:
-        size_x = round(x / binning)
-        size_x -= size_x % 2
-        size_y = round(y / binning)
-        size_y -= size_y % 2
+    size_x = round(x / binning)
+    size_x -= size_x % 2
+    size_y = round(y / binning)
+    size_y -= size_y % 2
 
+    if binning > 1:
         # create binned raw stack
         command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -shrink {2} -size {3},{4}".format(
             get_imod_path(), name, binning, size_x, size_y
