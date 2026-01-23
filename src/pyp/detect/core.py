@@ -70,7 +70,7 @@ def gold_beads_is_done(name):
     text="Detecting gold beads took: {}",
     logger=logger.info,
 )
-def detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options):
+def detect_gold_beads(parameters, name, binning, zfact, tilt_options):
     """Detect and project gold beads in 3D reconstruction."""
 
     # find gold beads in 3D reconstruction
@@ -83,13 +83,11 @@ def detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options):
     thickness = parameters["tomo_rec_thickness"]
     # project gold beads into raw tilt-series
     
-    # get tomogram dimensions directly from aligned tilt-series
-    x, y, _ = get_image_dimensions(f"{name}_bin.ali")
-    x *= binning
-    y *= binning
-        
-    command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0  -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7} -ProjectModel {1}_gold3d.mod".format(
-        get_imod_path(), name, thickness, binning, x, y, tilt_options, zfact,
+    thickness = round(thickness/binning)
+    thickness -= thickness % 2
+
+    command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} {4} -ProjectModel {1}_gold3d.mod".format(
+        get_imod_path(), name, thickness, binning, tilt_options, zfact,
     )
     local_run.run_shell_command(command)
 

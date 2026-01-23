@@ -188,15 +188,18 @@ def bin_stack(input, output, binning, method, threads = 1):
 
     # IMOD's antialias filtering
     elif "imod" in method:
-        env = "export OMP_NUM_THREADS={0}; export NCPUS={0}; IMOD_FORCE_OMP_THREADS={0}; ".format(threads)
-        if "antialias" in method:
-            option = "-antialias 6"
+        if binning > 1:
+            env = "export OMP_NUM_THREADS={0}; export NCPUS={0}; IMOD_FORCE_OMP_THREADS={0}; ".format(threads)
+            if "antialias" in method:
+                option = "-antialias 6"
+            else:
+                option = ""
+            command = env + "{0}/bin/newstack -shrink {1} {4} {2} {3}".format(
+                get_imod_path(), binning, input, output, option
+            )
+            run_shell_command(command)
         else:
-            option = ""
-        command = env + "{0}/bin/newstack -bin {1} {4} {2} {3}".format(
-            get_imod_path(), int(binning), input, output, option
-        )
-        run_shell_command(command)
+            shutil.copy2(input,output)
         # remove backup to save space
         try:
             os.remove(output + "~")

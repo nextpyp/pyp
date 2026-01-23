@@ -8,7 +8,7 @@ import numpy as np
 
 from pyp import utils
 from pyp import preprocess
-from pyp.analysis import plot
+from pyp.utils import symlink_force
 from pyp.inout.image import mrc
 from pyp.inout.image.core import get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle
 from pyp.inout.utils import pyp_edit_box_files as imod
@@ -16,6 +16,7 @@ from pyp.merge import weights as pyp_weights
 from pyp.system import project_params, mpi
 from pyp.system.local_run import run_shell_command, stream_shell_command
 from pyp.system.utils import get_imod_path, get_aretomo_path, get_aretomo3_path, get_gpu_ids
+from pyp.analysis import plot
 
 from pyp.system.logging import logger
 
@@ -251,8 +252,13 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
         if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
             # create binned aligned stack, if needed
             if not os.path.exists(f'{name}_bin.ali'):
-                command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
-                    get_imod_path(), name, binning
+                imod_binning_option = f"-shrink {binning}" if binning > 1 else ""
+                size_x = round(x / binning)
+                size_x -= size_x % 2
+                size_y = round(y / binning)
+                size_y -= size_y % 2
+                command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
+                    get_imod_path(), name, imod_binning_option, size_x, size_y
                 )
                 run_shell_command(command)
                 
@@ -260,7 +266,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
     
             if not os.path.exists(gold_mod):
                 from pyp.detect import detect_gold_beads
-                detect_gold_beads(parameters, name, x, y, binning, zfact, tilt_options)
+                detect_gold_beads(parameters, name, binning, zfact, tilt_options)
             
             if not os.path.exists(gold_mod):
                 logger.error(f"Failed to erase gold because no fiducials were found in tomogram")
@@ -311,15 +317,24 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 except:
                     logger.error(f"Failed to erase gold from tilt-series")
 
-    # create binned raw stack
-    command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -bin {2}".format(
-        get_imod_path(), name, binning
-    )
-    run_shell_command(command)
+    if binning > 1:
+        size_x = round(x / binning)
+        size_x -= size_x % 2
+        size_y = round(y / binning)
+        size_y -= size_y % 2
 
+        # create binned raw stack
+        command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -shrink {2} -size {3},{4}".format(
+            get_imod_path(), name, binning, size_x, size_y
+        )
+        run_shell_command(command)
+    else:
+        shutil.copy2(name+'.st',name+'_bin.mrc')
+
+    imod_binning_option = f"-shrink {binning}" if binning > 1 else ""
     # create binned aligned stack
-    command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
-        get_imod_path(), name, binning
+    command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
+        get_imod_path(), name, imod_binning_option, size_x, size_y
     )
     run_shell_command(command)
 
@@ -329,13 +344,11 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     if 'imod' in parameters["tomo_rec_method"].lower():
 
-        # get tomogram dimensions directly from aligned tilt-series
-        x, y, _ = get_image_dimensions(f"{name}_bin.ali")
-        x *= binning
-        y *= binning
+        thickness = round(thickness/binning)
+        thickness -= thickness % 2
 
-        command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} -IMAGEBINNED {3} -FULLIMAGE {4},{5} {6} {7}".format(
-            get_imod_path(), name, thickness, binning,  x, y, tilt_options, zfact,
+        command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} {4}".format(
+            get_imod_path(), name, thickness, tilt_options, zfact,
         )
         run_shell_command(command)
 
@@ -378,10 +391,15 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 
             elif "aretomo3" == parameters["tomo_rec_method"].lower():
 
-                # rename all the files because aretomo3 expects an mrc extension for the input
-                os.symlink( f"{name}.ali", f"{name}_aligned.mrc")
-                os.symlink( f"{name}.rawtlt", f"{name}_aligned.rawtlt")
-                os.symlink( f"{name}.aln", f"{name}_aligned.aln")
+                # rename all the files as required by aretomo3
+
+                symlink_force( f"{name}.rawtlt", f"{name}_aligned.rawtlt")
+                symlink_force( f"{name}.aln", f"{name}_aligned.aln")
+                
+                # aligned tilt series must have mrc extension
+                # we also add a small constant to each image to trick AreTomo3's mass normalization because it fails when there are blank images
+                command = f"{get_imod_path()}/bin/newstack {name}.ali {name}_aligned.mrc -multadd 1,1"
+                run_shell_command(command)
                 
                 """ Usage: AreTomo3 Tags
 
@@ -661,7 +679,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -VolZ {int(1.0 * thickness)} \
 -Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
-                stream_shell_command(command)
+                run_shell_command(command)
                 
                 assert os.path.exists(f"{name}_aligned_Vol.mrc"), "AreTomo3 reconstruction failed"
 

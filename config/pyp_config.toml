@@ -2333,8 +2333,8 @@ hidden = [ "tomo_import_star" ]
 [tabs.tomo_rec.binning]
 name = "Binning factor"
 description = "Produce binned tomograms (applies to dimensions x, y and z)"
-type = "int"
-default = 8
+type = "float"
+default = 8.0
 hidden = [ "tomo_import_star" ]
 
 [tabs.tomo_rec.2d_filtering_method]

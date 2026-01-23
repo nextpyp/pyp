@@ -998,8 +998,13 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
     if not os.path.exists(gold_mod) and parameters["tomo_rec_force"]:
         # create binned aligned stack, if needed
         if not os.path.exists(f'{name}_bin.ali'):
-            command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear -bin {2}".format(
-                get_imod_path(), name, binning
+            imod_binning_option = f"-shrink {binning}" if binning > 1 else ""
+            size_x = round(x / binning)
+            size_x -= size_x % 2
+            size_y = round(y / binning)
+            size_y -= size_y % 2
+            command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3,{4}".format(
+                get_imod_path(), name, imod_binning_option, size_x, size_y
             )
             local_run.run_shell_command(command)
 

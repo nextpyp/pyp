@@ -1415,28 +1415,30 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
     else:
         square_enabled = False
     
+    imod_binning_option = f"-shrink {binning}" if binning > 1 else ""
+    
     fill_option = f"-fill {get_image_mean(name+'.mrc')}"
     if len(aligned_tilts) > 0:
         # make individual tilted images squares
         for i, tilt in enumerate(aligned_tilts):
             if square_enabled:
-                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4} {6}".format(
-                    get_imod_path(), tilt, name, int(square / binning), binning, i, fill_option
+                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 {4} {6}".format(
+                    get_imod_path(), tilt, name, int(square / binning), imod_binning_option, i, fill_option
                 )
             else:
-                command = "{0}/bin/newstack {1} {2}_{4:04d}_square.mrc -taper 1,1 -bin {3} {5}".format(
-                    get_imod_path(), tilt, name, binning, i, fill_option
+                command = "{0}/bin/newstack {1} {2}_{4:04d}_square.mrc -taper 1,1 {3} {5}".format(
+                    get_imod_path(), tilt, name, imod_binning_option, i, fill_option
                 )
             commands.append(command)
     else:
         for tilt_idx in range(z):
             if square_enabled:
-                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -size {3},{3} -taper 1,1 -bin {4} {5}".format(
-                    get_imod_path(), tilt_idx, name, int(square / binning), binning, fill_option
+                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -size {3},{3} -taper 1,1 {4} {5}".format(
+                    get_imod_path(), tilt_idx, name, int(square / binning), imod_binning_option, fill_option
                 )
             else:
-                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -taper 1,1 -bin {3} {4}".format(
-                    get_imod_path(), tilt_idx, name, binning, fill_option
+                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -taper 1,1 {3} {4}".format(
+                    get_imod_path(), tilt_idx, name, imod_binning_option, fill_option
                 )
             commands.append(command)
 
@@ -1505,11 +1507,19 @@ def generate_aligned_tiltseries(name, parameters, x, y):
     run_shell_command(command, log_level=logging.TRACE)
     [os.remove(f) for f in aligned_images]
 
-    # generate binned version also
-    command = "{0}/bin/newstack {1}.ali {1}_bin.ali -bin {2}; rm -rf {1}_bin.ali~".format(
-        get_imod_path(), name, parameters["tomo_rec_binning"]
-    )
-    run_shell_command(command)
+    binning = parameters["tomo_rec_binning"]
+    if binning > 1:
+        size_x = round(x / binning)
+        size_x -= size_x % 2
+        size_y = round(y / binning)
+        size_y -= size_y % 2
+        # generate binned version also
+        command = "{0}/bin/newstack {1}.ali {1}_bin.ali -shrink {2} -size {3},{4}; rm -rf {1}_bin.ali~".format(
+            get_imod_path(), name, binning, size_x, size_y
+        )
+        run_shell_command(command)
+    else:
+        shutil.copy2(name+".ali",name+"_bin.ali")
 
 def cistem_mask_create(parameters: dict, model: str, output: str):
     """

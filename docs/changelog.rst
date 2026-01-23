@@ -68,6 +68,8 @@ v0.7.3
 
    - Add visualization of contamination masks during size-based particle picking in tomography pipeline.
 
+   - Allow non-integer binning factors during tomogram reconstruction.
+
    :fa:`bug` **Bug fixes**
    
    - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
