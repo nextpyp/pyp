@@ -372,8 +372,7 @@ def run_tomodrgn_train(project_dir, parameters):
         logger.info(f"convergence_vae finished successfully, results saved to {convergence_folder}")
 
 def generate_map_thumbnail( map, radius, output, pixel_size=0):
-    name = Path(map).stem + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(10)) + "_map.png"
-    output_png = os.path.join( os.environ['PYP_SCRATCH'], name )
+    output_png = os.path.join( os.environ['PYP_SCRATCH'], f"{Path(map).parents[0]}_{Path(map).stem}_map.png" )
     frealign.build_map_montage( map, radius, output_png )
     img2webp(output_png,output,"-resize 1024x")
     os.remove(output_png)
