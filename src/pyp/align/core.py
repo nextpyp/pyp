@@ -4044,6 +4044,8 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
         * float(parameters["data_bin"])
     )
 
+    x, y, total_frames = get_image_dimensions(f"../{movie_file}")
+
     if 'motioncor' in parameters["movie_ali"]:
 
         # patch tracking
@@ -4141,7 +4143,6 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
             gain = ""
 
         frame_options = ""
-        x, y, total_frames = get_image_dimensions(f"../{movie_file}")
         if parameters["movie_first"] > 0:
             frame_options += f" -Throw {parameters['movie_first']}"
         if parameters["movie_last"] != -1:
