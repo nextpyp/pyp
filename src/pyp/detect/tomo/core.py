@@ -1242,7 +1242,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
     )
 
     # initialize coordinate variables
-    coordinates = virion_coordinates = spike_coordinates = np.array([])
+    coordinates = virion_coordinates = spike_coordinates = np.array([],dtype=float)
 
     # use this radius when no estimation is available
     unbinned_virion_radius = parameters["tomo_vir_rad"] / parameters["scope_pixel"] / parameters['data_bin'] * parameters["tomo_vir_binn"]
@@ -1251,7 +1251,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
     binned_spike_radius = int(unbinned_spike_radius / binning)
 
     if parameters.get("micromon_block") == "tomo-import" and os.path.exists(f"{name}.spk"):
-        coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
+        coordinates = imod.coordinates_from_mod_file(f"{name}.spk").astype('float')
         if coordinates.size > 0:
             coordinates *= binning
             coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
@@ -1278,7 +1278,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         if not os.path.exists( project_params.resolve_path(parameters["detect_nn3d_ref"]) ):
             raise Exception(f"Trained model not found: {project_params.resolve_path(parameters['detect_nn3d_ref'])}")
         else:
-            coordinates = joint.tomoeval(parameters,name)
+            coordinates = joint.tomoeval(parameters,name).astype('float')
             if coordinates.size > 0:
                 coordinates = coordinates[:,[0,2,1]]
                 # calculate unbinned coordinates
@@ -1305,7 +1305,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         detect_virions(parameters, virion_size, parameters["tomo_rec_binning"], name)
         
         # read output and convert to unbinned coordinates
-        coordinates = imod.coordinates_from_mod_file(f"{name}.vir")
+        coordinates = imod.coordinates_from_mod_file(f"{name}.vir").astype('float')
         if coordinates.size > 0:
             coordinates *= binning
             coordinates[:,-1] *= parameters['tomo_vir_binn']
@@ -1338,7 +1338,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                     )
 
         # read and convert output to unbinned coordinates
-        coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
+        coordinates = imod.coordinates_from_mod_file(f"{name}.spk").astype('float')
         if coordinates.size > 0:
             coordinates *= binning
             coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
@@ -1859,7 +1859,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         logger.info("Importing particle coordinates from .spk file")
 
         # read and convert output to unbinned coordinates
-        coordinates = imod.coordinates_from_mod_file(f"{name}.spk")
+        coordinates = imod.coordinates_from_mod_file(f"{name}.spk").astype('float')
         if coordinates.size > 0:
             coordinates *= binning
             if coordinates.shape[1] == 5:
@@ -1890,7 +1890,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         if os.path.exists( name + ".next" ):
             # read unbinned coordinates from website
-            coordinates = np.loadtxt(f"{name}.next",ndmin=2)
+            coordinates = np.loadtxt(f"{name}.next",ndmin=2,dtype='float')
             
             # clean up
             remote_next_file = os.path.join( current_path, 'next', name + '.next' )
@@ -1925,7 +1925,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
 
         # read virion coordinates and convert to unbinned, if needed
         if coordinates.size == 0 and os.path.exists(f"{name}.vir"):
-            coordinates = imod.coordinates_from_mod_file(f"{name}.vir")
+            coordinates = imod.coordinates_from_mod_file(f"{name}.vir").astype('float')
             coordinates *= binning
             coordinates[:,-1] *= parameters["tomo_vir_binn"]
 
@@ -1941,14 +1941,14 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
             or parameters.get("tomo_vir_detect_method") != "none"
         ):
             if os.path.exists(f"{name}.spk"):
-                coordinates = imod.coordinates_from_mod_file("%s.spk" % name)
+                coordinates = imod.coordinates_from_mod_file("%s.spk" % name).astype('float')
                 if coordinates.size > 0:
                     _, rec_z, _ = get_image_dimensions(f"{name}.rec")
                     coordinates[:,2] = rec_z - coordinates[:,2]
                     coordinates *= binning
                     coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
             else:
-                coordinates = np.array([])
+                coordinates = np.array([],dtype='float')
 
     elif surface_mode:
 
@@ -2019,7 +2019,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 os.remove(f"{name}_all_spikes.txt")
 
         if os.path.exists(f"{name}.spk"):
-            coordinates = imod.coordinates_from_mod_file("%s.spk" % name)
+            coordinates = imod.coordinates_from_mod_file("%s.spk" % name).astype('float')
 
             if coordinates.size > 0:
                 _, rec_z, _ = get_image_dimensions(f"{name}.rec")
@@ -2030,7 +2030,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
                 coordinates = np.hstack( ( coordinates.copy(), parameters.get("tomo_vir_detect_rad") * np.ones((coordinates.shape[0],1)) ) )
             # coordinates = coordinates.copy()[:,[1,0,2,3]]
         else:
-            coordinates = np.array([])
+            coordinates = np.array([],dtype='float')
 
         # cleanup unnecesary files
         [ os.remove(i) for i in [ name + "_vir0000.rec" ] if os.path.exists(i) ]
