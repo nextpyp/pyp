@@ -425,31 +425,32 @@ def load_tomo_results(name, parameters, project_path, working_path):
 
     initial_files = [
         "raw/{0}.rawtlt",
-        "webp/{0}.webp",
-        "webp/{0}_rec.webp",
-        "webp/{0}_rec.png",
-        "webp/{0}_ali.webp",
-        "webp/{0}_sides.webp",
-        "webp/{0}_raw.webp",
-        "mrc/{0}.mrc",
-        "mrc/{0}.rec",
-        "mrc/{0}_seg.rec",
         "next/{0}.next",
         "next/{0}_exclude_views.next",
         "next/virion_thresholds.next",
         "pkl/{0}.pkl",
     ]
 
-    # no need to transfer composed tilt-series if re-doing frame alignment
-    if 'movie_force' in parameters and parameters['movie_force']:
-        initial_files.remove("mrc/{0}.mrc")
-        initial_files.remove("mrc/{0}.rec")
+    #  transfer tomogram files if not re-doing reconstruction
+    if not parameters.get('movie_force') and not parameters.get('tomo_rec_force'):
+        initial_files.append("mrc/{0}.rec")
+        initial_files.append("mrc/{0}_seg.rec")
+        initial_files.append("webp/{0}.webp")
+        initial_files.append("webp/{0}_rec.webp")
+        initial_files.append("webp/{0}_rec.png")
+        initial_files.append("webp/{0}_sides.webp")
+    
+    # transfer aligned tilt-series files if not re-doing alignment
+    if not parameters.get('movie_force') and not parameters.get('tomo_ali_force'):
+        initial_files.append("mrc/{0}_bin.ali")
+        initial_files.append("webp/{0}_ali.webp")
+        
+    # transfer composed tilt-series if not re-doing frame alignment
+    if not parameters.get('movie_force'):
+        initial_files.append("mrc/{0}.mrc")
+        initial_files.append("webp/{0}_raw.webp")
 
-    # no need to transfer tomogram if re-doing reconstruction
-    elif 'tomo_rec_force' in parameters and parameters['tomo_rec_force']:
-        initial_files.remove("mrc/{0}.rec")
-
-    if parameters.get("tomo_ali_method") == "import" and os.path.exists(project_params.resolve_path(parameters["tomo_ali_import"])):
+    if parameters.get("tomo_ali_method") == "import" and os.path.exists(project_params.resolve_path(parameters["tomo_ali_import"])) and parameters.get('tomo_ali_force'):
         # cp .tlt .xf 
         raw_tlt_file = name + ".rawtlt"
         tlt_file = name + ".tlt"

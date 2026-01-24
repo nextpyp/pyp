@@ -2210,16 +2210,16 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.tomo_slicer_gif)
         mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True)] )
 
-    if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp") or parameters["tomo_ali_force"]:
+    if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp"):
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.mrc', name + "_raw.webp")] )
 
-    if os.path.exists(f"{name}_bin.ali"):
+    if os.path.exists(f"{name}_bin.ali") and ( not os.path.exists(name + "_ali.webp") or parameters["tomo_ali_force"] ):
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.ali', name + "_ali.webp")] )
 
     if len(mpi_funcs):
-        t = timer.Timer(text="Generating CTF and tomogram images took: {}", logger=logger.info)
+        t = timer.Timer(text="Generating tilt-series and tomogram previews took: {}", logger=logger.info)
         t.start()
         mpi.submit_function_to_workers(mpi_funcs, mpi_args, log_level=logging.NOTSET)
         t.stop()
