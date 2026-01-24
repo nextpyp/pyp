@@ -160,9 +160,6 @@ def needs_gpu(parameters):
                 ):
                 gpu_for_segmentation = True
  
-    print(f"gpu_for_segmentaion = {gpu_for_segmentation}")
-    print(f"gpu_for_denoising = {gpu_for_denoising}")
- 
     gpu_for_mining = "tomo-milo" in block and parameters.get("detect_milo_use_gpu", True)
 
     gpu_for_picking = ( block == "tomo-particles-train" and parameters["detect_nn3d_use_gpu_train"]

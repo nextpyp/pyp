@@ -1942,7 +1942,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     logger.info(f"Detected tilt-axis angle: {tilt_metadata['tilt_axis_angle']} degree(s)")
 
     # Resize aligned tilt-seres depending on tilt-axis orientation
-    if tilt_metadata["tilt_axis_angle"] % 180 > 45 and tilt_metadata["tilt_axis_angle"] % 180 < 135 and not parameters.get("tomo_ali_square"):
+    if tilt_metadata["tilt_axis_angle"] % 180 > 45 and tilt_metadata["tilt_axis_angle"] % 180 < 135 and not parameters.get("tomo_ali_square") and x != y:
         x, y = y, x
         logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
 

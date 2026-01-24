@@ -804,7 +804,7 @@ def reconstruct_tomo_halves( name, parameters, project_path):
 
         # Resize aligned tilt-series depending on tilt-axis orientation
         tilt_axis_angle = get_tilt_axis_angle(name)
-        if tilt_axis_angle % 180 > 45 and tilt_axis_angle % 180 < 135 and not parameters.get("tomo_ali_square"):
+        if tilt_axis_angle % 180 > 45 and tilt_axis_angle % 180 < 135 and not parameters.get("tomo_ali_square") and x != y:
             x, y = y, x
             logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
 
