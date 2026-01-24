@@ -322,7 +322,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
     size_y = round(y / binning)
     size_y -= size_y % 2
 
-    if binning > 1:
+    if binning > 1 and not os.path.exists(f"{name}_bin.mrc"):
         # create binned raw stack
         command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -shrink {2} -size {3},{4}".format(
             get_imod_path(), name, binning, size_x, size_y
@@ -331,12 +331,13 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
     else:
         shutil.copy2(name+'.st',name+'_bin.mrc')
 
-    imod_binning_option = f"-shrink {binning}" if binning > 1 else ""
-    # create binned aligned stack
-    command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
-        get_imod_path(), name, imod_binning_option, size_x, size_y
-    )
-    run_shell_command(command)
+    if parameters["tomo_ali_force"] or not os.path.exits(f"{name}_bin.ali"):
+        imod_binning_option = f"-shrink {binning}" if binning > 1 else ""
+        # create binned aligned stack
+        command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
+            get_imod_path(), name, imod_binning_option, size_x, size_y
+        )
+        run_shell_command(command)
 
     # create binned reconstruction
     # only reconstruct tomograms if we're not using aretomo2

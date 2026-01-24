@@ -440,14 +440,15 @@ def read_tilt_series(
                 command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -scale 0,32767 -mode 1 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
-            else:
+            elif parameters.get("movie_depth"):
+                logger.info("Converting micrograph/tilt-series to 32-bits")
                 command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 2 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
             local_run.run_shell_command(command)
 
             # read image dimensions
-            [micrographinfo, error] = local_run.run_shell_command(
+            [micrographinfo, _] = local_run.run_shell_command(
                 "{0}/bin/header -size '{1}.mrc'".format(get_imod_path(), name), log_level=logging.NOTSET
             )
             x, y, z = list(map(int, micrographinfo.split()))
