@@ -331,7 +331,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
     else:
         shutil.copy2(name+'.st',name+'_bin.mrc')
 
-    if parameters["tomo_ali_force"] or not os.path.exits(f"{name}_bin.ali"):
+    if parameters["tomo_ali_force"] or not os.path.exists(f"{name}_bin.ali"):
         imod_binning_option = f"-shrink {binning}" if binning > 1 else ""
         # create binned aligned stack
         command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
