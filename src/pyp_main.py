@@ -2014,7 +2014,13 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         np.savetxt("{}.ctf".format(name), ctf)
 
     if len(mpi_funcs) > 0:
-        t = timer.Timer(text="Tomogram reconstruction + ctffind tilt took: {}", logger=logger.info)
+        if need_half_tomogram_recalculation and ctffind_tilt:
+            message = "Tomogram reconstruction + per-tilt CTF estimation took: {}"
+        elif need_half_tomogram_recalculation:
+            message = "Tomogram reconstruction took: {}"
+        else:
+            message = "Per-tilt CTF estimation took: {}"
+        t = timer.Timer(text=message, logger=logger.info)
         t.start()
         mpi.submit_function_to_workers(mpi_funcs, mpi_args)
         t.stop()
