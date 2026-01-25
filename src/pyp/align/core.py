@@ -4642,7 +4642,7 @@ EOF
         if parameters.get('tomo_rec_generate_halves'):
             average = Path(movie_file).stem + '.mrc'
             if movie_file.lower().endswith(".eer"):
-                command = f"{get_imod_path()}/bin/clip flipx -es 0 -ez {total_frames // 2} ../{movie_file} ../{average}"
+                command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {total_frames // 2} ../{movie_file} ../{average}"
                 output, _ = run_shell_command(command)
                 movie_file = average
             total_frames = 2
