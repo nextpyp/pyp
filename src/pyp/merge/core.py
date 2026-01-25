@@ -303,7 +303,6 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                         erase_order = 3
                     erase_iterations = parameters['tomo_rec_erase_iterations']
 
-                    run_shell_command(f"{get_imod_path()}/bin/clip stat {name}.ali")
                     com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
                     [ output, _ ] = run_shell_command(com)
                     if "The largest circle radius is too big for the arrays" in output:

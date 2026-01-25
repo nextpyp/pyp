@@ -1358,10 +1358,6 @@ def refineCtftilt(
     maxdefocus,
     tilt_angle,
     tilt_axis,
-    angle_tolerance,
-    axis_tolerance,
-    angle_step,
-    axis_step,
 ):
 
     best_angle, best_axis, best_df1, best_df2, best_angast, best_ccc, best_res = (
@@ -1495,48 +1491,6 @@ EOF
         tilt_angle,
         tilt_axis,
     )
-
-    if False:
-        command_not_determine_tilt = """
-%s > %s 2>&1 << EOF
-%s.mrc
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-No
-No
-No
-No
-No
-Yes
-Yes
-No
-1
-EOF
-    """ % (
-            timeout_command(ctffind_exe, 600, full_path=True),
-            logfile_notilt,
-            imagefile,
-            output_spectra_notilt,
-            float(parameters["data_bin"]) * float(parameters["scope_pixel"]),
-            parameters["scope_voltage"],
-            parameters["scope_cs"],
-            parameters["scope_wgh"],
-            parameters["ctf_tile"],
-            parameters["ctf_min_res"],
-            parameters["ctf_max_res"],
-            mindefocus,
-            maxdefocus,
-            parameters["ctf_fstep"],
-        )
 
     if "ctffind5" in parameters["ctf_method"]:
         ctffind_command = f"{get_frealign_paths()['cistem2']}/ctffind5"
@@ -1694,26 +1648,14 @@ def run_ctffind_tilt(
         angle_step, axis_step = 1.0, 1.0
 
     # refine CTF by locally searching the best tilt axis and tilt angle
-    [
-        best_df1,
-        best_df2,
-        best_angast,
-        best_ccc,
-        best_res,
-        best_angle,
-        best_axis,
-    ] = refineCtftilt(
+    refineCtftilt(
         image_file,
         parameters,
         ctffind_command,
         mindefocus,
         maxdefocus,
         tilt_angle,
-        tilt_axis,
-        angle_tolerance,
-        axis_tolerance,
-        angle_step,
-        axis_step,
+        tilt_axis
     )
 
     import matplotlib.pyplot as plt
@@ -1742,6 +1684,11 @@ def run_ctffind_tilt(
                 )[[1, 2, 3, 5, 6]]
 
                 est_tilt_axis, est_tilt_angle, est_thickness = 0, 0, 0
+
+            if not parameters["ctf_use_ast"]:
+                mean_df = ( df1 + df2 ) / 2.0
+                df1 = df2 = mean_df
+                angast = 45.0
 
             axarr.set_title(
                 image_file + " (CC=%0.2f, Res=%0.2f A)" % (ccc, est_res), fontsize=10
