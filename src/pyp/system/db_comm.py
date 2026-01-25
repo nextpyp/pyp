@@ -432,7 +432,7 @@ def load_tomo_results(name, parameters, project_path, working_path):
     ]
 
     #  transfer tomogram files if not re-doing reconstruction
-    if not parameters.get('movie_force') and not parameters.get('tomo_rec_force'):
+    if not ( parameters.get('movie_force') or parameters.get('tomo_rec_force') or parameters.get('tomo_ali_force') ):
         initial_files.append("mrc/{0}.rec")
         initial_files.append("mrc/{0}_seg.rec")
         initial_files.append("webp/{0}.webp")
@@ -441,7 +441,7 @@ def load_tomo_results(name, parameters, project_path, working_path):
         initial_files.append("webp/{0}_sides.webp")
     
     # transfer aligned tilt-series files if not re-doing alignment
-    if not parameters.get('movie_force') and not parameters.get('tomo_ali_force'):
+    if not ( parameters.get('movie_force') or parameters.get('tomo_ali_force') ):
         initial_files.append("mrc/{0}_bin.ali")
         initial_files.append("webp/{0}_ali.webp")
         
