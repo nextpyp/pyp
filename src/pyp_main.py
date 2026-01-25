@@ -45,12 +45,12 @@ from pyp.analysis.image import (
     contrast_stretch,
     normalize_frames,
 )
-from pyp.analysis.occupancies import occupancy_extended, classification_initialization, get_statistics_from_par
+from pyp.analysis.occupancies import occupancy_extended, classification_initialization
 from pyp.ctf import utils as ctf_utils
 from pyp.detect import joint, topaz, cryocare, isonet_tools, MemBrain, Tardis
 from pyp.detect import tomo as detect_tomo
 from pyp.inout.image import mergeImagicFiles, mergeRelionFiles, mrc, img2webp, decompress
-from pyp.inout.image.core import get_gain_reference, get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
+from pyp.inout.image.core import get_gain_reference, get_image_dimensions, get_image_mode, generate_aligned_tiltseries, get_tilt_axis_angle, cistem_mask_create
 from pyp.inout.metadata import (
     compileDatabase,
     csp_extract_coordinates,
@@ -2249,7 +2249,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             if parameters.get("movie_depth") and not parameters.get("movie_no_frames"):
                 logger.info("Converting tilt-series to 16-bits")
                 files_to_process.append(name + ".mrc")
-            if parameters.get("tomo_rec_depth"):
+            if get_image_mode(name + ".rec") != 12 and parameters.get("tomo_rec_depth"):
                 files_to_process.append(name + ".rec")
                 if parameters.get("tomo_rec_generate_halves"):
                     logger.info("Converting tomogram and half-tomograms to 16-bits")
