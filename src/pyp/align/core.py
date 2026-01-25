@@ -3971,7 +3971,7 @@ def sum_gain_correct_frames(movie, average, parameters):
     # average frames in the specified range
     if Path(movie).suffix.lower() == ".eer":
         # for eer movies, average using clip for faster speed
-        command = f"{get_imod_path()}/bin/clip flipx -es 0 -ez {z} {movie} {average}"
+        command = f"{get_imod_path()}/bin/clip flipx -es {parameters['movie_eer_reduce']-1} -ez {z} {movie} {average}"
         output, _ = run_shell_command(command)
         x, y, z = get_image_dimensions(average)
     else:
@@ -3995,17 +3995,6 @@ def sum_gain_correct_frames(movie, average, parameters):
     else:
         gain_reference_file = None
 
-    # if using eer format, figure out the reduce factor
-    if movie.endswith(".eer"):
-        binning = 1
-        if gain_reference_file != None:
-            gain_x, gain_y, gain_z = get_image_dimensions(gain_reference_file)
-            binning = int(x / gain_x)
-        elif 'movie_eer_reduce' in parameters:
-            binning = int(4/parameters['movie_eer_reduce'])
-        if binning > 1:
-            com = f"{get_imod_path()}/bin/newstack {average} {average}~ -bin {binning} && mv {average}~ {average}"
-            run_shell_command(com)
 
     # apply gain reference if we are using one
     if gain_reference_file != None:
