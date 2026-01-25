@@ -932,7 +932,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
 
             # specific ones
             else:
-                if "ctf_" in k and not "_ctf" in k and not "use" in k:
+                if k.startswith("ctf_"):
                     # assume we are recomputing CTF
                     logger.info(
                         f"CTF parameters will be re-computed to reflect change in parameter {k}"
