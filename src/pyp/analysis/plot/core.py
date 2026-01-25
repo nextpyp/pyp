@@ -1633,9 +1633,7 @@ def tomo_montage(input, output, dimensions=384):
     """
 
     # get the mean and std from original tomogram
-    volume = imageio.mrc.read(input)
-    num_z_slices = volume.shape[0]
-    mean, std = volume.mean(), volume.std()
+    mean, std = imageio.get_image_mean_and_std(input)
     min_cutoff, max_cutoff = mean - 2 * std, mean + 2 * std
 
     current_dir = os.getcwd()

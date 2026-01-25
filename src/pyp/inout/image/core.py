@@ -893,6 +893,16 @@ def get_image_mean(name):
         logger.error(output)
     return float(output)
 
+def get_image_mean_and_std(name):
+    
+    assert Path(name), f"{name} does not exist."
+
+    command = f"""{get_imod_path()}/bin/clip stats '{name}' | grep all | awk '{{print $11" "$12}}'"""
+    [output, _] = run_shell_command(command, log_level=logging.NOTSET)
+    if "ERROR" in output:
+        logger.error(output)
+    return [float(x) for x in output.split(" ")]
+
 def get_image_mode(name):
 
     command = "{0}/bin/header -mode {1}".format(get_imod_path(), name)

@@ -5,6 +5,7 @@ from .core import (
     get_gain_reference,
     get_image_dimensions,
     get_image_mean,
+    get_image_mean_and_std,
     mergeImagicFiles,
     mergeMrcFiles,
     mergeRelionFiles,
