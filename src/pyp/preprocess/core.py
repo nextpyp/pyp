@@ -216,7 +216,7 @@ def read_tilt_series(
         local_run.run_shell_command(command)
     elif not parameters["movie_no_frames"]:
         arguments = []
-        if parameters["movie_mdoc"]:
+        if parameters["movie_source"] == "mdoc":
             tilts = frames_from_mdoc(mdocs, parameters)
             for tilt_image in tilts:
                 tilt_image_filename = tilt_image[0]
@@ -386,12 +386,12 @@ def read_tilt_series(
 
         elif os.path.isfile(name + ".mrc"):
 
-            if not parameters["movie_mdoc"]:
+            if parameters["movie_source"] != "mdoc":
                 # .rawtlt and .order should be moved to the local scratch at this point
                 assert Path(f"{name}.rawtlt").exists(), "Please provide .rawtlt file containing the initial tilt angles."
                 assert Path(f"{name}.order").exists(), "Please provide .order file containing the acquisition order."
 
-            elif len(mdocs) > 0 and parameters["movie_mdoc"]:
+            elif len(mdocs) > 0 and parameters["movie_source"] == "mdoc":
 
                 tilts = frames_from_mdoc(mdocs, parameters,first=False)
                 tilts.sort(key=lambda x: x[1])
@@ -483,7 +483,7 @@ def read_tilt_series(
         # use either movie pattern OR mdoc file to find corresponding tilted images 
 
         pattern = parameters["movie_pattern"]
-        metadata_from_mdoc = parameters["movie_mdoc"] 
+        metadata_from_mdoc = parameters["movie_source"] == "mdoc"
 
         order_from_file = []
         tilt_angles_from_file = []

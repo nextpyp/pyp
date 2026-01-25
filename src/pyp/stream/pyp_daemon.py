@@ -425,7 +425,7 @@ def pyp_daemon(args):
 
         if True:
             # find list of un-processed data
-            if parameters["movie_mdoc"] and "data_path_mdoc" in parameters and len(parameters["data_path_mdoc"]) > 0 and Path(project_params.resolve_path(parameters["data_path_mdoc"])).parents[0].exists():
+            if parameters["movie_source"] == "mdoc" and "data_path_mdoc" in parameters and len(parameters["data_path_mdoc"]) > 0 and Path(project_params.resolve_path(parameters["data_path_mdoc"])).parents[0].exists():
                 all_files = [ Path(s).name for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path_mdoc"])).suffix ) ) ]
             else:
                 all_files = [ Path(s).stem for s in glob.glob( os.path.join( session_dir, "raw", "*" + Path(project_params.resolve_path(parameters["data_path"])).suffix ) ) ]
@@ -443,7 +443,7 @@ def pyp_daemon(args):
                     # check if transfer complete
                     condition = True
 
-                    if parameters["movie_mdoc"]:
+                    if parameters["movie_source"] == "mdoc":
                         from pyp.preprocess import frames_from_mdoc
                         fileset = frames_from_mdoc([os.path.join( session_dir, "raw",f)], parameters)
                         for tilt in fileset:
@@ -476,7 +476,7 @@ def pyp_daemon(args):
 
                     if "tomo" in args["data_mode"]:
                         # figure out tilt-series name
-                        if args["movie_mdoc"]:
+                        if args["movie_source"] == "mdoc":
                             name = Path(f).stem.replace(".mrc", "")
                         elif not args["movie_no_frames"]:
                             regex = movie2regex(args["movie_pattern"].split(".")[0], filename="*")
@@ -492,7 +492,7 @@ def pyp_daemon(args):
                             number_of_files = 0
                         else:
                             number_of_files = len(args["stream_transfer_fileset"].split(","))
-                        if not args["movie_mdoc"]:
+                        if args["movie_source"] != "mdoc":
                             condition = len(glob.glob( os.path.join( raw_dir, "." + name + "*" ))) == args["stream_num_tilts"] * ( number_of_files + 1 )
                         condition_plus = condition and not os.path.isfile( os.path.join( session_dir, "mrc", name + ".rec" ) )
                     else:

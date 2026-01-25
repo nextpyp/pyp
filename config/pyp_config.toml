@@ -562,11 +562,12 @@ description = "Select if your data does not have frames"
 type = "bool"
 default = false
 
-[tabs.movie.mdoc]
-name = "Read metadata from mdoc files"
-description = "Extract parameters from mdoc files (tilt angles, tilt axis rotation angles and scan order) if available"
-type = "bool"
-default = false
+[tabs.movie.source]
+name = "Movie metadata"
+description = "Method for extracting tilt angles, tilt axis and scan order information"
+type = "enum"
+enum = { mdoc="read from *.mdoc files", pattern="infer based on filenames" }
+default = "pattern"
 hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
 condition = { arg="no_frames", value="false" }
 
@@ -576,14 +577,7 @@ description = "Pattern to describe frame data (tilt-series name, acquisition ord
 type = "str"
 default = "TILTSERIES_SCANORD_ANGLE.tif"
 hidden = ["spr_pre_process", "spr_pure_preprocess", "spr_import_star", "spr_import", "stream_spr" ]
-condition = { arg="mdoc", value="false" }
-
-[tabs.movie.depth]
-name = "Save frame averages in 16-bits"
-description = "Files saved in this format will require 50 percent less storage"
-type = "bool"
-default = true
-condition = { arg="no_frames", value="false" }
+condition = { arg="source", value="pattern" }
 
 [tabs.movie.force]
 name = "Force recalculation"
@@ -815,6 +809,13 @@ type = "float"
 default = 25.0
 condition = { arg="ali", value="motioncor" }
 hidden = ["spr_import_star","tomo_import_star"]
+
+[tabs.movie.depth]
+name = "Save frame averages in 16-bits"
+description = "Files saved in this format will require 50 percent less storage"
+type = "bool"
+default = true
+condition = { arg="no_frames", value="false" }
 
 # Contrast transfer function parameters
 
