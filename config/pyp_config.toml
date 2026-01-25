@@ -2085,11 +2085,19 @@ hidden = true
 _name = "Tilt-series alignment"
 _description = "Parameters for tilt-series alignment"
 
+[tabs.tomo_ali.method]
+name = "Alignment method"
+description = "Method to use for tilt-series alignment"
+type = "enum"
+enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)", aretomo3="aretomo3 (GPU required)", import="import (from path)" }
+default = "imod_gold"
+
 [tabs.tomo_ali.auto_bin]
 name = "Auto binning"
 description = "Automatically determine binning factor to use for alignment"
 type = "bool"
 default = true
+condition = { arg="method", value=["imod_gold","imod_patch","aretomo","aretomo3"] }
 
 [tabs.tomo_ali.binning]
 name = "Binning for tilt-series alignment"
@@ -2103,6 +2111,7 @@ name = "Reshape tilt-images into squares"
 description = "Tilt images will be reshaped into squares before processing"
 type = "bool"
 default = true
+condition = { arg="method", value=["imod_gold","imod_patch","aretomo","aretomo3"] }
 
 [tabs.tomo_ali.format]
 name = "Resize squares to closest multiple of 512"
@@ -2110,13 +2119,6 @@ description = "Tilt images will be reshaped into squares using the closest multi
 type = "bool"
 default = true
 condition = { arg="square", value="true" }
-
-[tabs.tomo_ali.method]
-name = "Alignment method"
-description = "Method to use for tilt-series alignment"
-type = "enum"
-enum = { imod_gold="imod (fiducials)", imod_patch="imod (patch tracking)", aretomo="aretomo2 (GPU required)", aretomo3="aretomo3 (GPU required)", import="import (from path)" }
-default = "imod_gold"
 
 [tabs.tomo_ali.import]
 name = "Import path"
@@ -2312,6 +2314,7 @@ name = "Export alignments"
 description = "Export tilt-series alignments to *.xf and *.tlt files"
 type = "bool"
 default = false
+condition = { arg="method", value=["imod_gold","imod_patch","aretomo","aretomo3"] }
 
 [tabs.tomo_rec]
 _name = "Tomogram reconstruction"
