@@ -1685,11 +1685,6 @@ def run_ctffind_tilt(
 
                 est_tilt_axis, est_tilt_angle, est_thickness = 0, 0, 0
 
-            if not parameters["ctf_use_ast"]:
-                mean_df = ( df1 + df2 ) / 2.0
-                df1 = df2 = mean_df
-                angast = 45.0
-
             axarr.set_title(
                 image_file + " (CC=%0.2f, Res=%0.2f A)" % (ccc, est_res), fontsize=10
             )
