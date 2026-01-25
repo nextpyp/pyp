@@ -2010,7 +2010,15 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         ctf[8] = parameters['tomo_rec_thickness'] + parameters['tomo_rec_thickness'] % 2
         ctf[11] = parameters['tomo_rec_binning']
         ctf[12] = 0
-        ctf[13] = plot.calculate_z_binning_from_size(x/parameters['tomo_rec_binning'],y/parameters['tomo_rec_binning'],parameters['tomo_rec_thickness']/parameters['tomo_rec_binning'])
+        
+        binning = parameters['tomo_rec_binning']
+        size_x = round(x / binning)
+        size_x -= size_x % 2
+        size_y = round(y / binning)
+        size_y -= size_y % 2
+        thickness = round(parameters['tomo_rec_thickness'] / binning)
+        thickness -= thickness % 2
+        ctf[13] = plot.calculate_z_binning_from_size(size_x,size_y,thickness)
         np.savetxt("{}.ctf".format(name), ctf)
 
     if len(mpi_funcs) > 0:
