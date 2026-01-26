@@ -16,7 +16,7 @@ from pyp import align, preprocess, merge
 from pyp import ctf as ctf_mod
 from pyp.inout.image import digital_micrograph as dm4
 from pyp.inout.image import mrc
-from pyp.inout.image.core import get_gain_reference, get_image_dimensions, get_image_mean
+from pyp.inout.image.core import get_gain_reference, get_image_dimensions, get_image_mean, get_image_mode
 from pyp.system import local_run, mpi, project_params
 from pyp.system.utils import get_imod_path
 from pyp.system.wrapper_functions import avgstack, cistem_rescale, cistem_resize
@@ -440,12 +440,13 @@ def read_tilt_series(
                 command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -scale 0,32767 -mode 1 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
-            elif parameters.get("movie_depth"):
+                local_run.run_shell_command(command)
+            elif parameters.get("movie_depth") and not ( parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_pick_method") != "virions" ) and os.path.exists(name + ".mrc") and get_image_mode(name + ".mrc") != 2:
                 logger.info("Converting micrograph/tilt-series to 32-bits")
                 command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 2 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
-            local_run.run_shell_command(command)
+                local_run.run_shell_command(command)
 
             # read image dimensions
             [micrographinfo, _] = local_run.run_shell_command(
