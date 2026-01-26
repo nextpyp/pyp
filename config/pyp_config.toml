@@ -1616,6 +1616,14 @@ default = false
 condition = { arg="use_masking", value="true" }
 hidden = ["stream_tomo"]
 
+[tabs.detect_nn3d.directional_filtering]
+name = "Enable directional filtering"
+description = "Removes coordinates whose surface-normal direction does not match the majority normal direction"
+type = "bool"
+default = false
+condition = { arg="use_masking", value="true" }
+hidden = ["tomo_particles_train", "stream_tomo"]
+
 [tabs.detect_nn3d.patch_size]
 name = "Patch size"
 description = "Size of patches used for training, must be multiple for 4"
@@ -1761,6 +1769,27 @@ type = "str"
 default = "3,5"
 hidden = ["stream_spr", "stream_tomo"]
 
+[tabs.detect_milo.dog_std_multiplier]
+name = "DoG cutoff (std multiplier)"
+description = "Std multiplier in the score cutoff. Higher values yield fewer DoG coordinates."
+type = "float"
+default = 0.5
+hidden = ["stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.dog_diameter]
+name = "DoG diameter (binned voxels)"
+description = "Sphere diameter used for DoG coordinate filtering"
+type = "int"
+default = 14
+hidden = ["stream_spr", "stream_tomo"]
+
+[tabs.detect_milo.dog_boundary]
+name = "DoG boundary margin (binned voxels)"
+description = "Boundary margin used for DoG coordinate filtering"
+type = "int"
+default = 30
+hidden = ["stream_spr", "stream_tomo"]
+
 [tabs.detect_milo.blend_ratio]
 name = "Blend ratio"
 description = "Mixing ratio to use for 3D visualization (0=less color, 1=more color)"
@@ -1856,6 +1885,13 @@ type = "bool"
 default = true
 condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
+
+[tabs.detect_milo.directional_filtering]
+name = "Enable directional filtering"
+description = "Removes coordinates whose surface-normal direction does not match the majority normal direction"
+type = "bool"
+default = false
+condition = { arg="surface", value="true" }
 
 [tabs.detect_milo.use_iterative]
 name = "Iterate"
