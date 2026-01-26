@@ -2224,7 +2224,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.mrc', name + "_raw.webp")] )
 
-    if os.path.exists(f"{name}_bin.ali") and ( not os.path.exists(name + "_ali.webp") or parameters["tomo_ali_force"] ):
+    if os.path.exists(f"{name}_bin.ali") and ( not os.path.exists(name + "_ali.webp") or parameters["tomo_ali_force"] or parameters["tomo_rec_erase_fiducials"] ):
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.ali', name + "_ali.webp")] )
 
