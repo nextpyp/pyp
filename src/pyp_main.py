@@ -4235,7 +4235,7 @@ def tomoswarm_prologue():
     
     rec = os.path.join(project_path, "mrc", name + ".rec")
     if os.path.exists(rec):
-        if parameters.get("tomo_rec_depth") and os.path.exists(name + ".rec") and get_image_mode(name + ".rec") != 2:
+        if parameters.get("tomo_rec_depth") and get_image_mode(rec) != 2:
             logger.info("Converting tomogram to 32-bits")
             command = "{0}/bin/newstack -mode 2 {1} {2} && rm -f {1}~".format(
                 get_imod_path(), rec, name + ".rec"
