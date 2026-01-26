@@ -478,6 +478,7 @@ def parse_arguments(block):
             if (
                 not parameters["data_import"] 
                 and parameters["micromon_block"] != "tomo-denoising-eval" 
+                and parameters["micromon_block"] != "tomo-picking-open"
                 and parameters["micromon_block"] != "tomo-picking-closed" 
                 and parameters["micromon_block"] != "tomo-segmentation-closed"
                 and parameters["micromon_block"] != "tomo-segmentation-open"
@@ -2249,10 +2250,14 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.rename(f"{name}.raw.mrc", f"{name}.mrc") 
 
         # do not save .mrc and .rec if in tomo-picking and segmentation blocks
-        if parameters.get("micromon_block") == "tomo-picking" or parameters.get("micromon_block") == "tomo-segmentation-closed" or parameters.get("micromon_block") == "tomo-picking-closed":
+        if parameters.get("micromon_block") in ( "tomo-picking", "tomo-segmentation-closed", "tomo-picking-closed", "tomo-picking-open", "tomo-particles-eval"):
             os.remove(f"{name}.mrc")
             os.remove(f"{name}.rec")
     
+        segmentation = f"{name}_vir0000_binned_nad_seg.mrc"
+        if os.path.exists(segmentation) and parameters.get("micromon_block") in ( "tomo-picking-open"):
+            os.remove(segmentation)
+
         commands = []
         if "preprocessing" in parameters.get("micromon_block") or parameters.get("micromon_block") == "":
             files_to_process = []

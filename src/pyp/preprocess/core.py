@@ -441,7 +441,7 @@ def read_tilt_series(
                     get_imod_path(), name
                 )
                 local_run.run_shell_command(command)
-            elif parameters.get("movie_depth") and not ( parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_pick_method") != "virions" ) and os.path.exists(name + ".mrc") and get_image_mode(name + ".mrc") != 2:
+            elif parameters.get("movie_depth") and os.path.exists(name + ".mrc") and get_image_mode(name + ".mrc") != 2 and not ( parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_pick_method") != "virions" ) and parameters.get("micromon_block") not in ( "tomo-particles-eval", "tomo-picking-open", "tomo-picking-closed"):
                 logger.info("Converting micrograph/tilt-series to 32-bits")
                 command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 2 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
