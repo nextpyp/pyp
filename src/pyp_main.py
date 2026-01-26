@@ -1653,7 +1653,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
 
     # save average as mrc file
     if not os.path.exists(name + ".mrc") or not os.path.samefile(name + ".avg", name + ".mrc"):
-        if parameters.get("movie_depth"):
+        if parameters.get("movie_depth") and os.path.exists(name + ".avg") and get_image_mode(name + ".avg") != 12:
             logger.info("Converting average to 16-bits")
             command = "{0}/bin/newstack -mode 12 '{1}.avg' '{1}.mrc' && rm -f '{1}.mrc~'".format(
                 get_imod_path(), name
@@ -1770,7 +1770,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         load_tomo_results(name, parameters, current_path, working_path)
 
         if parameters.get("tomo_rec_depth"):
-            if os.path.exists(name + ".rec"):
+            if os.path.exists(name + ".rec") and os.path.exists(name + ".rec") and get_image_mode(name + ".rec") != 2:
                 logger.info("Converting tomogram to 32-bits")
                 command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), name + ".rec"
@@ -2256,12 +2256,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         commands = []
         if "preprocessing" in parameters.get("micromon_block") or parameters.get("micromon_block") == "":
             files_to_process = []
-            if parameters.get("movie_depth") and not parameters.get("movie_no_frames"):
+            if parameters.get("movie_depth") and not parameters.get("movie_no_frames") and os.path.exists(name + ".mrc") and get_image_mode(name + ".mrc") != 12:
                 logger.info("Converting tilt-series to 16-bits")
                 files_to_process.append(name + ".mrc")
             if get_image_mode(name + ".rec") != 12 and parameters.get("tomo_rec_depth"):
                 files_to_process.append(name + ".rec")
-                if parameters.get("tomo_rec_generate_halves"):
+                if parameters.get("tomo_rec_generate_halves") and ( os.path.exists(name + "_half1.rec") and get_image_mode(name + "_half1.rec") != 12 or os.path.exists(name + "_half2.rec") and get_image_mode(name + "_half2.rec") != 12 ):
                     logger.info("Converting tomogram and half-tomograms to 16-bits")
                     files_to_process.append(name + "_half1.rec")
                     files_to_process.append(name + "_half2.rec")
@@ -4235,7 +4235,7 @@ def tomoswarm_prologue():
     
     rec = os.path.join(project_path, "mrc", name + ".rec")
     if os.path.exists(rec):
-        if parameters.get("tomo_rec_depth"):
+        if parameters.get("tomo_rec_depth") and os.path.exists(name + ".rec") and get_image_mode(name + ".rec") != 2:
             logger.info("Converting tomogram to 32-bits")
             command = "{0}/bin/newstack -mode 2 {1} {2} && rm -f {1}~".format(
                 get_imod_path(), rec, name + ".rec"
