@@ -614,6 +614,8 @@ def isonet2_train(project_dir, parameters):
     # refine (train)
     output_dir = os.path.join(working_path, "isonet_maps")
 
+    assert parameters['tomo_denoise_isonet2_refine_epochs'] >= parameters['tomo_denoise_isonet2_refine_save_interval'], f"IsoNet2 requires the save interval ({parameters['tomo_denoise_isonet2_refine_save_interval']}) to be less than number of epochs ({parameters['tomo_denoise_isonet2_refine_epochs']})!"
+    
     isonet2_refine(
         initial_star, 
         parameters=parameters
