@@ -4242,7 +4242,7 @@ def tomoswarm_prologue():
     if os.path.exists(rec):
         if parameters.get("tomo_rec_depth") and get_image_mode(rec) != 2:
             logger.info("Converting tomogram to 32-bits")
-            command = "{0}/bin/newstack -mode 2 {1} {2} && rm -f {1}~".format(
+            command = "{0}/bin/newstack -mode 2 {1} {2}".format(
                 get_imod_path(), rec, name + ".rec"
             )
             local_run.run_shell_command(command)
@@ -5934,8 +5934,7 @@ if __name__ == "__main__":
 
                     parameters = project_params.load_pyp_parameters()
                     project_dir = os.getcwd()
-                    output = os.path.join(project_dir, "train")
-                    isonet_tools.isonet_train(project_dir, output=output, parameters=parameters)
+                    isonet_tools.isonet_train(project_dir, parameters=parameters)
                     logger.info("nextPYP (isonet train) finished successfully")
                 except:
                     logger.error("nextPYP (isonet train) failed")
@@ -5977,21 +5976,20 @@ if __name__ == "__main__":
                     working_path.mkdir(parents=True, exist_ok=True)
                     os.chdir(working_path)
 
-                    # generate half-tomograms and save to train/ folder, if needed
+                    # copy/generate tomograms and half-tomograms to scratch folder
                     for name in micrograph_list:
-                        first_half = os.path.join(project_dir,"train",name+"_half1.rec")
+                        if parameters["tomo_denoise_isonet2_mask"]:
+                            tomogram = os.path.join(project_dir,"mrc",name+".rec")
+                            shutil.copy2(tomogram,os.getcwd())
+                        first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
                         second_half = first_half.replace("_half1.rec","_half2.rec")
 
                         for half_map in [first_half, second_half]:
-                            if not os.path.exists(half_map):
-                                parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
-                                assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running IsoNet2"
+                            assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms in the pre-processing block first"
+                            # flip yz coordinates to match isonet2 convention
+                            command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
+                            local_run.run_shell_command(command)
 
-                                # flip yz coordinates to match isonet2 convention
-                                command = f"{get_imod_path()}/bin/clip flipyz {parent_mrc_location} {half_map}"
-                                local_run.run_shell_command(command)
-
-                    output = os.path.join(project_dir, "train")
                     isonet_tools.isonet2_train(project_dir, parameters=parameters)
                     logger.info("nextPYP (isonet2 train) finished successfully")
                 except:
@@ -6010,17 +6008,17 @@ if __name__ == "__main__":
                     args, name, project_path, working_path, parameters = tomoswarm_prologue()
 
                     # generate half-tomograms and save to train/ folder, if needed
-                    first_half = os.path.join(project_dir,"train",name+"_half1.rec")
+                    first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
                     second_half = first_half.replace("_half1.rec","_half2.rec")
 
-                    for half_map in [first_half, second_half]:
-                        if not os.path.exists(half_map):
-                            parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
-                            assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running IsoNet2"
+                    os.chdir(working_path)
 
-                            # flip yz coordinates to match isonet2 convention
-                            command = f"{get_imod_path()}/bin/clip flipyz {parent_mrc_location} {half_map}"
-                            local_run.run_shell_command(command)
+                    for half_map in [first_half, second_half]:
+                        assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms before running IsoNet2 from the pre-processing block"
+
+                        # flip yz coordinates to match isonet2 convention
+                        command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
+                        local_run.run_shell_command(command)
 
                     new_reconstruction = isonet_tools.isonet2_predict( name, project_path, parameters)
 

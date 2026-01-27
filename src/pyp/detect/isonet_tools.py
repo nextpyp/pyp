@@ -316,13 +316,13 @@ def isonet_predict_command(input_star, model, output, batch_size, cube_size, cro
     
     local_run.stream_shell_command(command)
 
-def convert_and_transfer_tomograms(train_name,project_dir,parameters):
+def convert_and_transfer_tomograms(train_name,project_dir, parameters):
     # transfer/convert tomograms to local scratch
     commands = []
     for rec in train_name:
         absolute_rec = os.path.join(project_dir, "mrc", rec + ".rec")
         if parameters.get("tomo_rec_depth"):
-            command = "{0}/bin/newstack -mode 2 {1} {2} && rm -f {1}~".format(
+            command = "{0}/bin/newstack -mode 2 {1} {2}".format(
                 get_imod_path(), absolute_rec, rec + ".rec"
             )
         else:
@@ -330,13 +330,10 @@ def convert_and_transfer_tomograms(train_name,project_dir,parameters):
         commands.append(command)
     mpi.submit_jobs_to_workers(commands)
 
-def isonet_train(project_dir, output, parameters):
+def isonet_train(project_dir, parameters):
     
-    # always try to look for tomograms from parent project
-    tomogram_source = project_dir
-
     # get the train list
-    train_folder = os.path.join(tomogram_source, "train")
+    train_folder = os.path.join(project_dir, "train")
     train_name = np.loadtxt( os.path.join( train_folder, "current_list.txt" ), dtype=str, skiprows=0, usecols=0, ndmin=2)[:, 0]
 
     # initialize path
@@ -507,21 +504,14 @@ def isonet_predict( name, project_dir, parameters ):
 
 def isonet2_predict( name, project_dir, parameters ):
     
-    # always try to look for tomograms from parent project
-    if "data_parent" in parameters and os.path.exists(project_params.resolve_path(parameters["data_parent"])):
-        tomogram_source = project_params.resolve_path(parameters["data_parent"])
-    else:
-        tomogram_source = project_dir
-        logger.warning("Using current project tomograms for isonet denoising")
-
     # transfer/convert tomogram to local scratch
-    convert_and_transfer_tomograms([name],project_dir,parameters)
+    convert_and_transfer_tomograms( [name], project_dir, parameters)
 
     initial_star = f"{name}_tomograms.star"
-    isonet2_generate_star( tomogram_source, initial_star, parameters, name_list=[name])
+    isonet2_generate_star( project_dir, initial_star, parameters, name_list=[name])
 
     if parameters.get("tomo_denoise_isonet2_predict_model") == "auto":
-        model = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "train", "isonet", "*.pt" )))[-1]
+        model = sorted(glob.glob( os.path.join( project_params.resolve_path(parameters.get("data_parent")), "train", "isonet2", "*.pt" )))[-1]
         parameters["tomo_denoise_isonet2_predict_model"] = model
 
     if os.path.exists(project_params.resolve_path(parameters["tomo_denoise_isonet2_predict_model"])):
@@ -538,37 +528,20 @@ def isonet2_predict( name, project_dir, parameters ):
         parameters=parameters
     )
        
-    logger.warning(glob.glob( "*" ))
-    logger.warning(glob.glob( "corrected_tomos/*" ))
     assert len(glob.glob( "corrected_tomos/*_half1.mrc" )) > 0, "IsoNet2 failed to run"
     output = glob.glob( "corrected_tomos/*_half1.mrc" )[0]
     return output
 
-def isonet2_train(project_dir, parameters):
+def isonet2_train( project_dir, parameters):
     
-    # always try to look for tomograms from parent project
-    tomogram_source = project_dir
-
-    # get the train list
-    train_folder = os.path.join(tomogram_source, "train")
+        # get the train list
+    train_folder = os.path.join(project_dir, "train")
     train_name = np.loadtxt( os.path.join( train_folder, "current_list.txt" ), dtype=str, skiprows=0, usecols=0, ndmin=2)[:, 0]
-
-    # initialize path
-    working_path = Path(os.environ["PYP_SCRATCH"]) / "isonet"
-
-    logger.info(f"Using temporary folder {working_path}")
     
-    working_path.mkdir(parents=True, exist_ok=True)
-
-    os.chdir(working_path)
-
-    # transfer/convert tomograms to local scratch
-    convert_and_transfer_tomograms(train_name,project_dir,parameters)
-
     # generate input tomo.star
     initial_star = "tomograms.star" 
     isonet2_generate_star(
-        tomogram_source, 
+        project_dir,
         initial_star, 
         parameters, 
         train_name
@@ -583,6 +556,9 @@ def isonet2_train(project_dir, parameters):
     # masking
     if parameters["tomo_denoise_isonet2_mask"]:
         
+        # transfer/convert tomograms to local scratch
+        convert_and_transfer_tomograms( train_name, project_dir, parameters)
+    
         if parameters["tomo_denoise_isonet2_mask_preprocessing"] == "deconv":
 
             isonet2_ctf_deconvolve(
@@ -591,6 +567,8 @@ def isonet2_train(project_dir, parameters):
                 )
 
         elif parameters["tomo_denoise_isonet2_mask_preprocessing"] == "denoise":
+
+            assert parameters['tomo_denoise_isonet2_denoise_epochs'] >= parameters['tomo_denoise_isonet2_denoise_save_interval'], f"IsoNet2 requires the save interval ({parameters['tomo_denoise_isonet2_denoise_save_interval']}) to be less than number of epochs ({parameters['tomo_denoise_isonet2_denoise_epochs']})!"
 
             isonet2_denoise(
                 initial_star,
@@ -612,7 +590,7 @@ def isonet2_train(project_dir, parameters):
             )
 
     # refine (train)
-    output_dir = os.path.join(working_path, "isonet_maps")
+    output_dir = os.path.join( os.getcwd(), "isonet_maps")
 
     assert parameters['tomo_denoise_isonet2_refine_epochs'] >= parameters['tomo_denoise_isonet2_refine_save_interval'], f"IsoNet2 requires the save interval ({parameters['tomo_denoise_isonet2_refine_save_interval']}) to be less than number of epochs ({parameters['tomo_denoise_isonet2_refine_epochs']})!"
     
@@ -624,15 +602,14 @@ def isonet2_train(project_dir, parameters):
     assert len(glob.glob( os.path.join( output_dir, "*.pt") )) > 0, "IsoNet2 failed to run"
     
     # copy resulting h5 models to project directory
-    save_dir = os.path.join( project_dir, "train", "isonet" )
+    save_dir = os.path.join( project_dir, "train", "isonet2" )
     os.makedirs(save_dir,exist_ok=True)
     shutil.copy2( "training_loss.svgz", os.path.join( project_dir, "train" ) )
     for f in glob.glob( os.path.join( output_dir, "*.pt") ):
         shutil.copy2( f, os.path.join( save_dir, "isonet_" + Path(f).name) )
 
     if debug:
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        os.makedirs(save_dir, exist_ok=True)
 
         # Copy each file and directory to the result directory
         for item in os.listdir("./"):
@@ -644,6 +621,7 @@ def isonet2_train(project_dir, parameters):
                 shutil.copy2(s, d)
     
     # go back to project directory and clean local scratch
+    working_path = os.getcwd()
     os.chdir(project_dir)
     shutil.rmtree(working_path, "True")
     
@@ -922,9 +900,9 @@ def isonet2_generate_mask(tomo_star, parameters, output = "./mask"):
 
     isonet_make_mask_parameters = build_command_options( parameters, prefix, values, booleans, strings )
 
-    if parameters.get(f"{prefix}_isonet2_mask_preprocessing") == "deconv":
+    if parameters.get("tomo_denoise_isonet2_mask_preprocessing") == "deconv":
         isonet_make_mask_parameters += " --input_column rlnDeconvTomoName"
-    elif parameters.get(f"{prefix}_isonet2_mask_preprocessing") == "denoise":
+    elif parameters.get("tomo_denoise_isonet2_mask_preprocessing") == "denoise":
         isonet_make_mask_parameters += " --input_column rlnDenoisedTomoName"
     else:
         isonet_make_mask_parameters += " --input_column rlnCorrectedTomoName"
@@ -1088,7 +1066,14 @@ FLAGS
 
     if parameters.get(f"{prefix}_batch_size") > 0:
         isonet_refine_parameters += f" --batch_size {parameters.get(f'{prefix}_batch_size')}"
-    
+    """
+    if parameters["tomo_denoise_isonet2_mask_preprocessing"] == "deconv":
+        isonet_refine_parameters += " --input_column rlnDeconvTomoName"
+    elif parameters["tomo_denoise_isonet2_mask_preprocessing"] == "denoise":
+        isonet_refine_parameters += " --input_column rlnDenoisedTomoName"
+    else:
+        isonet_refine_parameters += " --input_column rlnCorrectedTomoName"
+    """
     output_dir = "isonet_maps"
     
     command = get_isonet2_path() + f"""isonet.py refine {input_star} --output_dir {output_dir} {isonet_refine_parameters} --gpuID {get_gpu_ids(parameters)} --ncpus {parameters['slurm_tasks']}"""
@@ -1146,7 +1131,9 @@ _rlnTiltMin #12
 _rlnTiltMax #13
 _rlnBoxFile #14
 _rlnNumberSubtomo #15
-_rlnCorrectedTomoName #16"""
+_rlnCorrectedTomoName #16
+_rlnDeconvTomoName #17
+_rlnMicrographName #18"""
 
     # all_tomograms = glob.glob(f"{project_dir}/mrc/*.rec")
     # tomograms = [t for t in all_tomograms if not "denoised" in t]
@@ -1164,11 +1151,11 @@ _rlnCorrectedTomoName #16"""
             df = np.squeeze(ctf[0])
             min_tilt = metadata.data['tlt'].to_numpy().min()
             max_tilt = metadata.data['tlt'].to_numpy().max()
-            tomo_half1 = os.path.join( project_dir, "train", name + "_half1.rec")
-            tomo_half2 = os.path.join( project_dir, "train", name + "_half2.rec")
+            tomo_half1 = os.path.join( os.getcwd(), name + "_half1.rec")
+            tomo_half2 = os.path.join( os.getcwd(), name + "_half2.rec")
             
             sub_tomograms = 100
-            f.write(f"\n{i + 1}    {tomo}   {tomo_half1}    {tomo_half2}    {pixel_size}    {df}    {parameters['scope_voltage']}    {parameters['scope_cs']}    {parameters['scope_wgh']}   None    None    {min_tilt}    {max_tilt}    None {sub_tomograms}   None" )
+            f.write(f"\n{i + 1}    {tomo}   {tomo_half1}    {tomo_half2}    {pixel_size}    {df}    {parameters['scope_voltage']}    {parameters['scope_cs']}    {parameters['scope_wgh']}   None    None    {min_tilt}    {max_tilt}    None {sub_tomograms}   ./corrected_tomos/_n2n_{parameters.get("tomo_denoise_isonet2_denoise_arch")}_{name}_half1.mrc    ./deconv/{name}.rec   {tomo}")
 
 
 def isonet2_ctf_deconvolve(tomo_star, parameters, output = './deconv'):
@@ -1232,13 +1219,22 @@ def isonet2_ctf_deconvolve(tomo_star, parameters, output = './deconv'):
     NOTES
         You can also use flags syntax for POSITIONAL ARGUMENTS
     """
+ 
+ 
+    prefix = "tomo_denoise_isonet2_deconv"
+
+    # we always pass these parameters
+    values = [ "snrfalloff", "deconvstrength", "highpassnyquist", "chunk_size", "overlap_rate" ]
     
-    if len(parameters.get("tomo_denoise_isonet2_tomo_idx")) > 0:
-        tomo_idx = " --tomo_idx " + parameters.get("tomo_denoise_isonet2_tomo_idx")
-    else:
-        tomo_idx = ""
+    # we only pass these if True
+    booleans = [ "phaseflipped" ]
+
+    # we only pass these if not empty
+    strings = [ "tomo_idx" ]
+
+    isonet_deconv_parameters = build_command_options( parameters, prefix, values, booleans, strings ) 
     
-    command = isonet_command + f"isonet.py deconv {tomo_star}  --output_dir {output} --input_column {parameters.get("tomo_denoise_isonet2_input_column")} --snrfalloff {parameters.get("tomo_denoise_isonet2_snr_falloff")} --deconvstrength {parameters.get("tomo_denoise_isonet2_deconvstrength")} --highpassnyquist {parameters.get("tomo_denoise_isonet2_isonet2_highpassnyquist")} --chunk_size {parameters.get("tomo_denoise_isonet2_chunk_size")} --overlap_rate {parameters.get("tomo_denoise_isonet2_overlap_rate")} --phaseflipped {parameters.get("tomo_denoise_isonet2_phaseflipped")} {tomo_idx} --ncpu {parameters.get("slurm_tasks")}"
+    command = isonet_command + f"isonet.py deconv {tomo_star} {isonet_deconv_parameters} --ncpu {parameters.get("slurm_tasks")}"
     
     local_run.stream_shell_command(command)
 
