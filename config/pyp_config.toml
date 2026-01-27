@@ -3300,7 +3300,7 @@ advanced = true
 name = "Network architecture"
 description = "Determines model capacity and VRAM requirements"
 type = "enum"
-enum = { unet-small="unet-small", unet-medium="unet-medium", uner-large="unet-large", scunet-fast="scunet-fast"}
+enum = { unet-small="unet-small", unet-medium="unet-medium", unet-large="unet-large", scunet-fast="scunet-fast"}
 default = "unet-medium"
 condition = { arg="isonet2_mask_preprocessing", value="denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
@@ -3442,7 +3442,7 @@ condition = { arg="method_train", value="isonet2" }
 name = "Network architecture"
 description = "Determines model capacity and VRAM requirements"
 type = "enum"
-enum = { unet-small="unet-small", unet-medium="unet-medium", uner-large="unet-large", scunet-fast="scunet-fast"}
+enum = { unet-small="unet-small", unet-medium="unet-medium", unet-large="unet-large", scunet-fast="scunet-fast"}
 default = "unet-medium"
 condition = { arg="method_train", value="isonet2" }
 
