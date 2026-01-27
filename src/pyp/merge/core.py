@@ -347,9 +347,8 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
         thickness = round(thickness/binning)
         thickness -= thickness % 2
 
-        mode = "-mode 12" if parameters.get("tomo_rec_depth") else "-mode 2"
-        command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} {4} {5}".format(
-            get_imod_path(), name, thickness, tilt_options, zfact, mode
+        command = "{0}/bin/tilt -input {1}_bin.ali -output {1}.rec -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} {4}".format(
+            get_imod_path(), name, thickness, tilt_options, zfact
         )
         run_shell_command(command)
 
