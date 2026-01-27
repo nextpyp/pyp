@@ -1797,6 +1797,13 @@ type = "float"
 default = 0.2
 hidden = [ "tomo_milo_train" ]
 
+[tabs.detect_milo.visualization_sphere]
+name = "Visualization Sphere (binned voxels)"
+description = "Sphere parameters (radius, height) to use for 3D visualization, where height should be an odd number"
+type = "str"
+default = "12, 5"
+hidden = [ "tomo_milo_train" ]
+
 [tabs.detect_milo.surface]
 name = "Surface constrained"
 description = "Surface constrained"
