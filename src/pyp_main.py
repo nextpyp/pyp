@@ -1771,7 +1771,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         load_tomo_results(name, parameters, current_path, working_path)
 
         if parameters.get("tomo_rec_depth"):
-            if os.path.exists(name + ".rec") and os.path.exists(name + ".rec") and get_image_mode(name + ".rec") != 2:
+            if os.path.exists(name + ".rec") and get_image_mode(name + ".rec") != 2:
                 logger.info("Converting tomogram to 32-bits")
                 command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), name + ".rec"

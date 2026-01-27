@@ -350,7 +350,7 @@ def isonet_train(project_dir, parameters):
 
     # generate input tomo.star
     initial_star = "tomograms.star" 
-    isonet_generate_star(tomogram_source, initial_star, parameters, train_name)
+    isonet_generate_star(project_dir, initial_star, parameters, train_name)
     
     # display star file if in verbose mode
     with open(initial_star) as f:
