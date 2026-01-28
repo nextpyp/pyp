@@ -2254,9 +2254,12 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             os.remove(f"{name}.mrc")
             os.remove(f"{name}.rec")
     
-        segmentation = f"{name}_vir0000_binned_nad_seg.mrc"
-        if os.path.exists(segmentation) and parameters.get("micromon_block") in ( "tomo-picking-open"):
-            os.remove(segmentation)
+        if parameters.get("micromon_block") in ( "tomo-picking-open"):
+            file1 = f"{name}_vir0000_binned_nad_seg.mrc"
+            # file2 = f"{name}_vir0000_ccc_0.vtp"
+            for file in [ file1 ]:
+                if os.path.exists(file):
+                    os.remove(file)
 
         commands = []
         if "preprocessing" in parameters.get("micromon_block") or parameters.get("micromon_block") == "":
