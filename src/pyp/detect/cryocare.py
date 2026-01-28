@@ -32,7 +32,7 @@ def cryocare_train(project_dir, output, parameters):
     Will take all the *half1.rec from mrc folder as list to train and run denoise
     """
 
-    half1_list = glob.glob(os.path.join(project_dir, "mrc", "*half1.rec"))
+    half1_list = glob.glob("*half1.rec")
     half2_list = [f.replace("half1.rec", "half2.rec") for f in half1_list]
     
     # train_data.json

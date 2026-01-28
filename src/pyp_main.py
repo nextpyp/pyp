@@ -5852,17 +5852,22 @@ if __name__ == "__main__":
                     assert y > 2 * parameters.get("tomo_denoise_cryocare_patch"), f"Tomogram depth is smaller than twice the patch size ({y}<={2*parameters.get('tomo_denoise_cryocare_patch')}), please reduce the cryoCARE patch size"
 
                     # generate half-tomograms and save to train/ folder, if needed
+                    commands = []
                     for name in micrograph_list:
+                        
                         first_half = os.path.join(project_path,"mrc",name+"_half1.rec")
                         second_half = first_half.replace("_half1.rec","_half2.rec")
 
                         for half_map in [first_half, second_half]:
-                            if not os.path.exists(half_map):
-                                parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
-                                assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running CryoCARE"
 
-                                # link half tomogram to mrc/ directory
-                                symlink_relative( parent_mrc_location, half_map )
+                            # flip yz coordinates to match isonet2 convention
+                            if parameters.get("tomo_rec_depth") and os.path.exists(half_map) and get_image_mode(half_map) != 2:
+                                command = f"{get_imod_path()}/bin/newstack -mode 2 {half_map} {Path(half_map).name}"
+                                commands.append(command)
+                            else:
+                                command = f"cp -p {half_map} {Path(half_map).name}"
+                            
+                    mpi.submit_jobs_to_workers(commands)
                     
                     cryocare.cryocare_train(project_path, output=output, parameters=parameters)
                     logger.info("nextPYP (cryocare train) finished successfully")
@@ -5879,14 +5884,17 @@ if __name__ == "__main__":
                     first_half = os.path.join(project_path,"mrc",name+"_half1.rec")
                     second_half = first_half.replace("_half1.rec","_half2.rec")
 
+                    commands = []
                     for half_map in [first_half, second_half]:
-                        if not os.path.exists(half_map):
-                            parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
-                            assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running CryoCARE"
-
-                            # link half tomogram to mrc/ directory
-                            symlink_relative( parent_mrc_location, half_map )
-
+                        # flip yz coordinates to match isonet2 convention
+                        if parameters.get("tomo_rec_depth") and os.path.exists(half_map) and get_image_mode(half_map) != 2:
+                            command = f"{get_imod_path()}/bin/newstack -mode 2 {half_map} {Path(half_map).name}"
+                            commands.append(command)
+                        else:
+                            command = f"cp -p {half_map} {Path(half_map).name}"
+                            
+                    mpi.submit_jobs_to_workers(commands)
+                    
                     new_reconstruction = cryocare.cryocare_predict( working_path, project_path, name, parameters)
 
                     tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=True)
