@@ -15,32 +15,37 @@ from pyp.system.logging import logger
 
 def coordinates_from_mod_file(filename):
 
-    modfile = subprocess.getoutput(
-        "{0}/bin/imodinfo -a {1}".format(get_imod_path(), filename)
-    ).split("contour")
-
-    default_radius = (
-        subprocess.getoutput(
+    try:
+        modfile = subprocess.getoutput(
             "{0}/bin/imodinfo -a {1}".format(get_imod_path(), filename)
+        ).split("contour")
+
+        default_radius = (
+            subprocess.getoutput(
+                "{0}/bin/imodinfo -a {1}".format(get_imod_path(), filename)
+            )
+            .split("pointsize")[1]
+            .split("\n")[0]
         )
-        .split("pointsize")[1]
-        .split("\n")[0]
-    )
 
-    indexes = []
+        indexes = []
 
-    if len(modfile) > 1:
-        for c in range(1, len(modfile)):
-            points_in_contour = int(modfile[c].split()[2])
-            for point in range(points_in_contour):
+        if len(modfile) > 1:
+            for c in range(1, len(modfile)):
+                points_in_contour = int(modfile[c].split()[2])
+                for point in range(points_in_contour):
 
-                coord = modfile[c].split("\n")[point + 1].split()
+                    coord = modfile[c].split("\n")[point + 1].split()
 
-                if ".vir" in filename and len(coord) == 3:
-                    coord.append(default_radius)
+                    if ".vir" in filename and len(coord) == 3:
+                        coord.append(default_radius)
 
-                indexes.append(numpy.array(coord, dtype=float))
-    return numpy.absolute(numpy.array(indexes,ndmin=2))
+                    indexes.append(numpy.array(coord, dtype=float))
+        return numpy.absolute(numpy.array(indexes,ndmin=2))
+    except:
+        logger.warning(f"No points found in {filename}!")
+        pass
+    return numpy.array([])
 
 
 def coordinates_to_model_file(coordinates,filename,radius=50):

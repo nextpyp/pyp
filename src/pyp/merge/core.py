@@ -272,52 +272,52 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 detect_gold_beads(parameters, name, binning, zfact, tilt_options)
             
             if not os.path.exists(gold_mod):
-                logger.error(f"Failed to erase gold because no fiducials were found in tomogram")
-                return
+                logger.warning(f"Skipping gold erasure because no fiducials were detected")
+            else:
 
-            # save projected gold coordinates as txt file
-            com = f"{get_imod_path()}/bin/model2point {gold_mod} {name}_gold_ccderaser.txt"
-            run_shell_command(com)
-            
-            # convert to unbinned tilt-series coordinates, if needed
-            if os.path.exists(f"{name}_gold_ccderaser.txt"):
-                try:
-                    with open(f"{name}_gold_ccderaser.txt") as f:
-                        gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00        0.00        0.00" in line], dtype='f', ndmin=2)
-
-                    gold_coordinates[:,:2] *= binning
-                    np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
-
-                    # convert back to imod model using one point per contour
-                    com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
-                    run_shell_command(com)
-
-                    # erase gold on (unbinned) aligned tilt-series
-                    erase_factor = parameters["tomo_rec_erase_factor"]
-                    if parameters["tomo_rec_erase_order"] == "noise":
-                        erase_order = -1
-                    elif parameters["tomo_rec_erase_order"] == "mean":
-                        erase_order = 0
-                    elif parameters["tomo_rec_erase_order"] == "first":
-                        erase_order = 1
-                    elif parameters["tomo_rec_erase_order"] == "second":
-                        erase_order = 2
-                    elif parameters["tomo_rec_erase_order"] == "third":
-                        erase_order = 3
-                    erase_iterations = parameters['tomo_rec_erase_iterations']
-
-                    com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
-                    [ output, _ ] = run_shell_command(com)
-                    if "The largest circle radius is too big for the arrays" in output:
-                        raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")
-
+                # save projected gold coordinates as txt file
+                com = f"{get_imod_path()}/bin/model2point {gold_mod} {name}_gold_ccderaser.txt"
+                run_shell_command(com)
+                
+                # convert to unbinned tilt-series coordinates, if needed
+                if os.path.exists(f"{name}_gold_ccderaser.txt"):
                     try:
-                        os.remove(name + "_gold_ccderaser.txt")
-                        os.remove(name + "_gold_ccderaser.mod")
+                        with open(f"{name}_gold_ccderaser.txt") as f:
+                            gold_coordinates = np.array([line.split() for line in f.readlines() if '*' not in line and not "0.00        0.00        0.00" in line], dtype='f', ndmin=2)
+
+                        gold_coordinates[:,:2] *= binning
+                        np.savetxt(name + "_gold_ccderaser.txt",gold_coordinates)
+
+                        # convert back to imod model using one point per contour
+                        com = f"{get_imod_path()}/bin/point2model {name}_gold_ccderaser.txt {name}_gold_ccderaser.mod -scat -number 1"
+                        run_shell_command(com)
+
+                        # erase gold on (unbinned) aligned tilt-series
+                        erase_factor = parameters["tomo_rec_erase_factor"]
+                        if parameters["tomo_rec_erase_order"] == "noise":
+                            erase_order = -1
+                        elif parameters["tomo_rec_erase_order"] == "mean":
+                            erase_order = 0
+                        elif parameters["tomo_rec_erase_order"] == "first":
+                            erase_order = 1
+                        elif parameters["tomo_rec_erase_order"] == "second":
+                            erase_order = 2
+                        elif parameters["tomo_rec_erase_order"] == "third":
+                            erase_order = 3
+                        erase_iterations = parameters['tomo_rec_erase_iterations']
+
+                        com = f"{get_imod_path()}/bin/ccderaser -input {name}.ali -output {name}.ali~ -model {name}_gold_ccderaser.mod -expand {erase_iterations} -order {erase_order} -merge -exclude -circle 1 -better {parameters['tomo_ali_fiducial'] * erase_factor / parameters['scope_pixel']} -verbose && mv {name}.ali~ {name}.ali"
+                        [ output, _ ] = run_shell_command(com)
+                        if "The largest circle radius is too big for the arrays" in output:
+                            raise Exception("ccderaser error: The largest circle radius is too big for the arrays. Try reducing the Fiducial radius factor.")
+
+                        try:
+                            os.remove(name + "_gold_ccderaser.txt")
+                            os.remove(name + "_gold_ccderaser.mod")
+                        except:
+                            pass
                     except:
-                        pass
-                except:
-                    logger.error(f"Failed to erase gold from tilt-series")
+                        logger.warning(f"Failed to erase gold from tilt-series!")
 
     size_x = round(x / binning)
     size_x -= size_x % 2
@@ -881,7 +881,8 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
         newname = name + f"_half{i}"
 
         os.symlink(newname + ".mrc", newname + ".st")
-        os.symlink(name + "_gold3d.mod", newname + "_gold3d.mod")
+        if os.path.exists(name + "_gold3d.mod"):
+            os.symlink(name + "_gold3d.mod", newname + "_gold3d.mod")
 
         # actual stack sizes
         headers = mrc.readHeaderFromFile(newname + ".mrc")
@@ -918,7 +919,7 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
         exclude_views = do_exclude_views(name)
         exclude_views_half = ""
 
-        subset = np.arange(half-1, dims[2], 2)
+        subset = np.arange(i-1, dims[2], 2)
 
         if len(exclude_views) > 0:
             excluded_indexes = exclude_views.split(" ")
@@ -931,7 +932,7 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
         tilt_options = get_tilt_options(parameters,exclude_views_half)
 
         # produce binned tomograms, erase fiducials if needed
-        if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"]:
+        if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] and os.path.exists(newname+"_gold3d.mod") and len(imod.coordinates_from_mod_file(f"{newname}_gold3d.mod")) > 0:
 
             # first, project 3D gold coordiantes to respective aligned tilt-series
             thickness = parameters["tomo_rec_thickness"]
