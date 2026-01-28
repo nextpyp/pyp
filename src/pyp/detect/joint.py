@@ -17,6 +17,8 @@ from pyp.system.db_comm import save_tiltseries_to_website
 
 from pyp.system.logging import logger
 
+from skimage.color import rgb2hsv, hsv2rgb
+
 NN_INIT_COMMANDS = "export LD_LIBRARY_PATH=/opt/conda/envs/milopyp/lib/python3.12/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python"
 
 NN_INIT_COMMANDS_2D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; micromamba run -n milopyp"
@@ -863,9 +865,21 @@ def generate_3d_plots(rec_file, train_folder, args, project_dir ):
     med_slice_index = 2 if args.get("detect_milo_compress") else 1
 
     for slice in range(int(rec.shape[0]//med_slice_index)):
-        # produce weighted image
-        current_slice = ( 1 - weight ) * rec[slice*med_slice_index,:,:] + weight * hm[slice,:,:,:]
-        matplotlib.image.imsave(f'{name}_rec_slice_{slice:04d}.webp', current_slice.astype('uint8')[::-1,:])
+        rec_slice = rec[slice * med_slice_index, :, :] / 255.0
+        hm_slice = hm[slice, :, :, :]  / 255.0
+
+        mask = (np.sum(hm_slice, axis=2) > 0)
+
+        rec_hsv = rgb2hsv(rec_slice)
+        hm_hsv = rgb2hsv(hm_slice)
+
+        rec_hsv[mask, 0] = hm_hsv[mask, 0]
+        rec_hsv[mask, 1] = hm_hsv[mask, 1]
+
+        colored = hsv2rgb(rec_hsv)
+        current_slice = (1 - weight) * rec_slice + weight * colored
+
+        matplotlib.image.imsave(f'{name}_rec_slice_{slice:04d}.webp', current_slice[::-1,:])
 
      # sorting the webps and create a loop by appending a reverse list
     image_list = sorted(glob.glob(f"{name}_rec_slice_????.webp"))
@@ -1114,7 +1128,7 @@ def miloeval(args):
 
         # TODO: generate 3D tomogram visualization plots
         color_file = os.path.join(output_folder,'all_colors.npy')
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam {Path(output_file).parent} --rec_dir {rec_folder} 2>&1 | tee {scratch_train + '_plot3d.log'}"
+        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam {Path(output_file).parent} --rec_dir {rec_folder} --visualization_sphere \"{args['detect_milo_visualization_sphere']}\" 2>&1 | tee {scratch_train + '_plot3d.log'}"
         local_run.run_shell_command(command)
 
         rec_files = glob.glob(str(Path(output_file).parent / '*_rec3d.npy'))
