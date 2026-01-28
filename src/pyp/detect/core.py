@@ -8,11 +8,11 @@ from pyp import utils
 from pyp.analysis import plot
 from pyp.detect import joint, topaz
 from pyp.inout.image import mrc, writepng
-from pyp.inout.image.core import get_image_dimensions
 from pyp.inout.metadata import frealign_parfile
 from pyp.streampyp.web import Web
 from pyp.system import local_run, project_params
 from pyp.system.utils import get_imod_path, get_parameter_files_path
+from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.utils.timer import Timer
 
 from pyp.system.logging import logger
@@ -80,16 +80,19 @@ def detect_gold_beads(parameters, name, binning, zfact, tilt_options):
     )
     local_run.run_shell_command(command)
 
-    thickness = parameters["tomo_rec_thickness"]
-    # project gold beads into raw tilt-series
-    
-    thickness = round(thickness/binning)
-    thickness -= thickness % 2
+    if not os.path.exists(f"{name}_gold3d.mod") or len(imod.coordinates_from_mod_file(f"{name}_gold3d.mod")) == 0:
+        logger.warning(f"No fiducials found!")
+    else:
+        thickness = parameters["tomo_rec_thickness"]
+        # project gold beads into raw tilt-series
+        
+        thickness = round(thickness/binning)
+        thickness -= thickness % 2
 
-    command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} -ProjectModel {1}_gold3d.mod".format(
-        get_imod_path(), name, thickness, tilt_options
-    )
-    local_run.run_shell_command(command)
+        command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} -ProjectModel {1}_gold3d.mod".format(
+            get_imod_path(), name, thickness, tilt_options
+        )
+        local_run.run_shell_command(command)
 
 
 @Timer("detect", text="Particle picking took: {}", logger=logger.info)
