@@ -2262,7 +2262,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                     os.remove(file)
 
         commands = []
-        if "preprocessing" in parameters.get("micromon_block") or parameters.get("micromon_block") == "":
+        if parameters.get("micromon_block") in ( "tomo-pure-preprocessing", "tomo-preprocessing", "", "tomo-import-pure", "tomo-import", "tomo-import", "tomo-reliondata" ):
             files_to_process = []
             if parameters.get("movie_depth") and not parameters.get("movie_no_frames") and os.path.exists(name + ".mrc") and get_image_mode(name + ".mrc") != 12:
                 logger.info("Converting tilt-series to 16-bits")
