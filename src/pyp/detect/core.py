@@ -86,8 +86,8 @@ def detect_gold_beads(parameters, name, binning, zfact, tilt_options):
     thickness = round(thickness/binning)
     thickness -= thickness % 2
 
-    command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} {4} -ProjectModel {1}_gold3d.mod".format(
-        get_imod_path(), name, thickness, binning, tilt_options, zfact,
+    command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} -ProjectModel {1}_gold3d.mod".format(
+        get_imod_path(), name, thickness, tilt_options
     )
     local_run.run_shell_command(command)
 

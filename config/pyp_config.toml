@@ -2556,6 +2556,14 @@ type = "bool"
 default = false
 hidden = [ "tomo_import_star" ]
 
+[tabs.tomo_rec.generate_halves_use_frames]
+name = "Split using frames"
+description = "If available, generate half-tomogram from odd/even frames; otherwise, split the tilts into odd/even sets"
+type = "bool"
+default = true
+condition = { arg="generate_halves", value="true" }
+hidden = [ "tomo_import_star" ]
+
 [tabs.tomo_rec.depth]
 name = "Save tomograms in 16-bits"
 description = "Files saved in this format will require 50 percent less storage"

@@ -1013,4 +1013,4 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
     if parameters["tomo_rec_erase_fiducials"]:
 
         # re-calculate reconstruction using gold-erased tilt-series
-        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True)
+        merge.reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force=True, erase_fiducials=True)

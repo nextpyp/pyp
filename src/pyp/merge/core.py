@@ -1,4 +1,6 @@
+import glob
 import logging
+import math
 import os
 import shutil
 
@@ -11,6 +13,7 @@ from pyp import preprocess
 from pyp.utils import symlink_force
 from pyp.inout.image import mrc
 from pyp.inout.image.core import get_image_dimensions, generate_aligned_tiltseries, get_tilt_axis_angle
+import pyp.inout.image as imageio
 from pyp.inout.utils import pyp_edit_box_files as imod
 from pyp.merge import weights as pyp_weights
 from pyp.system import project_params, mpi
@@ -704,9 +707,17 @@ def reconstruct_tomo_halves( name, parameters, project_path):
         Generate half tomograms for N2N training
     """
     
-    if not os.path.exists("frame_list.txt"):
-        logger.warning(f"Could not calculate half-tomograms because no frame data was found!")
-        return
+    if os.path.exists("frame_list.txt") and parameters.get("tomo_rec_generate_halves_use_frames"):
+        logger.debug(f"Calculating half-tomograms from odd/even frames")
+        reconstruct_tomo_halves_from_frames( name, parameters, project_path )
+    else:
+        logger.debug(f"Calculating half-tomograms from odd/even tilts since no frame data was found")
+        reconstruct_tomo_halves_from_odd_even_tilts( name, parameters )
+
+def reconstruct_tomo_halves_from_frames( name, parameters, project_path):
+    """
+        Generate half tomograms for N2N training
+    """
         
     with open("frame_list.txt", "r") as f:
         frame_list = f.read().split("\n")
@@ -823,6 +834,123 @@ def reconstruct_tomo_halves( name, parameters, project_path):
         # produce binned tomograms
         if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"]:
             # erase fiducials if needed
+            preprocess.erase_gold_beads(newname, parameters, tilt_options, binning, zfact, x, y)
+        else:
+            reconstruct_tomo(parameters, newname, x, y, binning, zfact, tilt_options, force=True)
+
+def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
+    """
+        Generate half tomograms for denoising training
+    """
+    
+    # split tilt-series into even/odd stacks
+
+    # get dimensions of raw tilt-series
+    raw_tilt_series = name + ".mrc"
+    dims = get_image_dimensions(raw_tilt_series)
+
+    with open(name+'.tlt') as tilt_angles_file:
+        tilts = tilt_angles_file.read().split('\n')
+    with open(name+'.xf') as alignments_file:
+        alignments = alignments_file.read().split('\n')
+    with open(name+'.order') as order_file:
+        orders = order_file.read().split('\n')
+
+    # create half tilt-series and half tilt-angle, alignment, and order files
+    arguments = []
+    for half in [1, 2]:
+        subset = np.arange(half-1, dims[2], 2)
+        command = f"{get_imod_path()}/bin/newstack -input {raw_tilt_series} -secs {','.join(map(str, subset))} -output {name}_half{half}.mrc"
+        arguments.append(command)
+        with open(name+f"_half{half}.tlt",'w') as output_half_tlt:
+            for index in subset:
+                output_half_tlt.write(f"{tilts[index]}\n")
+        with open(name+f"_half{half}.xf",'w') as output_half_xf:
+            for index in subset:
+                output_half_xf.write(f"{alignments[index]}\n")
+        with open(name+f"_half{half}.order",'w') as output_half_order:
+            for index in subset:
+                output_half_order.write(f"{orders[index]}\n")
+        run_shell_command(command)
+            
+    if False and len(arguments) > 0:
+        mpi.submit_jobs_to_workers(arguments)
+    
+    # generate half tomograms from half stacks
+    for i in [1, 2]:
+        newname = name + f"_half{i}"
+
+        os.symlink(newname + ".mrc", newname + ".st")
+        os.symlink(name + "_gold3d.mod", newname + "_gold3d.mod")
+
+        # actual stack sizes
+        headers = mrc.readHeaderFromFile(newname + ".mrc")
+        x = int(headers["nx"])
+        y = int(headers["ny"])
+
+        # Resize aligned tilt-series depending on tilt-axis orientation
+        tilt_axis_angle = get_tilt_axis_angle(name)
+        if tilt_axis_angle % 180 > 45 and tilt_axis_angle % 180 < 135 and not parameters.get("tomo_ali_square") and x != y:
+            x, y = y, x
+            logger.info(f"Resizing aligned tilt-series to {x} x {y} to accomodate tilt-axis orientation")
+
+        # binned reconstruction
+        binning = parameters["tomo_rec_binning"]
+        zfact = ""
+
+        # convert to square
+        x, y, z = get_image_dimensions(newname + ".mrc")
+        if parameters["tomo_ali_format"]:
+            squarex = math.ceil(x / 512.0) * 512
+            squarey = math.ceil(y / 512.0) * 512
+        else:
+            squarex = x
+            squarey = y
+        square = max(squarex, squarey)
+        
+        aligned_tilts = [ Path(f).stem for f in glob.glob(f"{newname}_????.ali") ]
+        imageio.tiltseries_to_squares(newname, parameters, aligned_tilts, z, square, int(parameters["data_bin"]))
+
+        # regenerate aligned tilt-series
+        generate_aligned_tiltseries(newname, parameters, x, y)
+
+        # get list of excluded views
+        exclude_views = do_exclude_views(name)
+        exclude_views_half = ""
+
+        subset = np.arange(half-1, dims[2], 2)
+
+        if len(exclude_views) > 0:
+            excluded_indexes = exclude_views.split(" ")
+            if len(excluded_indexes) > 0:
+                exclude_views_half = "-EXCLUDELIST2 " + ",".join([ str(int(f)//2 + i % 2) for f in excluded_indexes[-1].split(",") if int(f) % 2 == i % 2 ])
+
+        # Reconstruction options
+        tilt_options = get_tilt_options(parameters,exclude_views_half)
+
+        # produce binned tomograms, erase fiducials if needed
+        if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"]:
+
+            # first, project 3D gold coordiantes to respective aligned tilt-series
+            thickness = parameters["tomo_rec_thickness"]
+            thickness = round(thickness/binning)
+            thickness -= thickness % 2
+
+            if not os.path.exists(newname + "_bin.ali"):
+                if binning > 1:
+                    command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -shrink {2}".format(
+                        get_imod_path(), newname, binning
+                    )
+                    run_shell_command(command)
+                else:
+                    shutil.copy2(newname+".ali",newname+"_bin.ali")
+
+            command = "{0}/bin/tilt -input {1}_bin.ali -output {1}_gold.mod -TILTFILE {1}.tlt -SHIFT 0.0,0.0 -THICKNESS {2} {3} -ProjectModel {1}_gold3d.mod".format(
+                get_imod_path(), newname, thickness, tilt_options
+            )
+            run_shell_command(command)
+
+            # delete gold and reconstruct
             preprocess.erase_gold_beads(newname, parameters, tilt_options, binning, zfact, x, y)
         else:
             reconstruct_tomo(parameters, newname, x, y, binning, zfact, tilt_options, force=True)
