@@ -881,7 +881,8 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
         newname = name + f"_half{i}"
 
         os.symlink(newname + ".mrc", newname + ".st")
-        os.symlink(name + "_gold3d.mod", newname + "_gold3d.mod")
+        if os.path.exists(name + "_gold3d.mod"):
+            os.symlink(name + "_gold3d.mod", newname + "_gold3d.mod")
 
         # actual stack sizes
         headers = mrc.readHeaderFromFile(newname + ".mrc")
@@ -931,7 +932,7 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
         tilt_options = get_tilt_options(parameters,exclude_views_half)
 
         # produce binned tomograms, erase fiducials if needed
-        if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"]:
+        if parameters["tomo_ali_method"] == "imod_gold" and parameters["tomo_rec_erase_fiducials"] and os.path.exists(newname+"_gold3d.mod") and len(imod.coordinates_from_mod_file(f"{newname}_gold3d.mod")) > 0:
 
             # first, project 3D gold coordiantes to respective aligned tilt-series
             thickness = parameters["tomo_rec_thickness"]
