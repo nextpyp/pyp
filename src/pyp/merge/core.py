@@ -924,6 +924,8 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
             excluded_indexes = exclude_views.split(" ")
             if len(excluded_indexes) > 0:
                 exclude_views_half = "-EXCLUDELIST2 " + ",".join([ str(int(f)//2 + i % 2) for f in excluded_indexes[-1].split(",") if int(f) % 2 == i % 2 ])
+                if len(exclude_views_half.split(" ")[-1]) == 0:
+                    exclude_views_half = ""
 
         # Reconstruction options
         tilt_options = get_tilt_options(parameters,exclude_views_half)
