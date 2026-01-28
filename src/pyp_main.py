@@ -5863,10 +5863,9 @@ if __name__ == "__main__":
                             # flip yz coordinates to match isonet2 convention
                             if parameters.get("tomo_rec_depth") and os.path.exists(half_map) and get_image_mode(half_map) != 2:
                                 command = f"{get_imod_path()}/bin/newstack -mode 2 {half_map} {Path(half_map).name}"
-                                commands.append(command)
                             else:
                                 command = f"cp -p {half_map} {Path(half_map).name}"
-                            
+                            commands.append(command)
                     mpi.submit_jobs_to_workers(commands)
                     
                     cryocare.cryocare_train(project_path, output=output, parameters=parameters)
