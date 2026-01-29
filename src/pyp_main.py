@@ -699,7 +699,7 @@ def parse_arguments(block):
             for key in ['scope_pixel','scope_voltage','scope_tilt_axis','gain_reference', 'data_path', 'data_set']:
                 if key in parameters_existing.keys():
                     parent_parameters[key] = parameters_existing[key]
-            parameters = project_params.parameter_force_check(parameters_existing,parent_parameters)
+            parameters = project_params.parameter_force_check(parameters_existing, parent_parameters)
         else:
             parameters = project_params.parameter_force_check(parameters_existing, parameters)
 
@@ -2225,7 +2225,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.mrc', name + "_raw.webp")] )
 
-    if os.path.exists(f"{name}_bin.ali") and ( not os.path.exists(name + "_ali.webp") or parameters["tomo_ali_force"] or parameters["tomo_rec_erase_fiducials"] ):
+    if os.path.exists(f"{name}_bin.ali") and ( not os.path.exists(name + "_ali.webp") or parameters["tomo_ali_force"] or parameters["tomo_rec_force"] and parameters["tomo_rec_erase_fiducials"] ):
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.ali', name + "_ali.webp")] )
 
