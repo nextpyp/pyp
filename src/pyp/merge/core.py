@@ -900,17 +900,17 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
         zfact = ""
 
         # convert to square
-        x, y, z = get_image_dimensions(newname + ".mrc")
+        size_x, size_y, size_z = get_image_dimensions(newname + ".mrc")
         if parameters["tomo_ali_format"]:
-            squarex = math.ceil(x / 512.0) * 512
-            squarey = math.ceil(y / 512.0) * 512
+            squarex = math.ceil(size_x / 512.0) * 512
+            squarey = math.ceil(size_y / 512.0) * 512
         else:
-            squarex = x
-            squarey = y
+            squarex = size_x
+            squarey = size_y
         square = max(squarex, squarey)
         
         aligned_tilts = [ Path(f).stem for f in glob.glob(f"{newname}_????.ali") ]
-        imageio.tiltseries_to_squares(newname, parameters, aligned_tilts, z, square, int(parameters["data_bin"]))
+        imageio.tiltseries_to_squares(newname, parameters, aligned_tilts, size_z, square, int(parameters["data_bin"]))
 
         # regenerate aligned tilt-series
         generate_aligned_tiltseries(newname, parameters, x, y)
