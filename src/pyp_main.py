@@ -2267,14 +2267,24 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             if parameters.get("movie_depth") and not parameters.get("movie_no_frames") and os.path.exists(name + ".mrc") and get_image_mode(name + ".mrc") != 12:
                 logger.info("Converting tilt-series to 16-bits")
                 files_to_process.append(name + ".mrc")
+            process_tomogram = False
+            process_half_tomogram = False
             if get_image_mode(name + ".rec") != 12 and parameters.get("tomo_rec_depth"):
                 files_to_process.append(name + ".rec")
-                if parameters.get("tomo_rec_generate_halves") and ( os.path.exists(name + "_half1.rec") and get_image_mode(name + "_half1.rec") != 12 or os.path.exists(name + "_half2.rec") and get_image_mode(name + "_half2.rec") != 12 ):
-                    logger.info("Converting tomogram and half-tomograms to 16-bits")
+                process_tomogram = True
+            if parameters.get("tomo_rec_generate_halves"):
+                if os.path.exists(name + "_half1.rec") and get_image_mode(name + "_half1.rec") != 12:
                     files_to_process.append(name + "_half1.rec")
+                    process_half_tomogram = True
+                if os.path.exists(name + "_half2.rec") and get_image_mode(name + "_half2.rec") != 12:
                     files_to_process.append(name + "_half2.rec")
-                else:
-                    logger.info("Converting tomogram to 16-bits")
+                    process_half_tomogram = True
+            if process_tomogram and process_half_tomogram:
+                logger.info("Converting tomogram and half-tomograms to 16-bits")
+            elif process_tomogram:
+                logger.info("Converting tomogram to 16-bits")
+            elif process_half_tomogram:
+                logger.info("Converting half-tomograms to 16-bits")
             for file in files_to_process:
                 command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), file
