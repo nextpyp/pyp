@@ -875,16 +875,18 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
     if os.path.exists(micrographs):
         with open(micrographs) as f:
             inputlist = [line.strip() for line in f]
+    else:
+        inputlist = []
 
-        # initialize all _force parameters if previous run was successful
-        if len(get_missing_files(previous_parameters, inputlist, exhaustive=False)) == 0 or new_parameters.get("micromon_block") == "tomo-import-pure":
-            new_parameters["movie_force"] = False
-            new_parameters["ctf_force"] = False
-            new_parameters["detect_force"] = False
-            if "tomo" in previous_parameters["data_mode"]:
-                new_parameters["tomo_ali_force"] = False
-                new_parameters["tomo_vir_force"] = False
-                new_parameters["tomo_rec_force"] = False
+    # initialize all _force parameters if previous run was successful
+    if len(inputlist) and len(get_missing_files(previous_parameters, inputlist, exhaustive=False)) == 0 or new_parameters.get("micromon_block") == "tomo-import-pure":
+        new_parameters["movie_force"] = False
+        new_parameters["ctf_force"] = False
+        new_parameters["detect_force"] = False
+        if "tomo" in previous_parameters["data_mode"]:
+            new_parameters["tomo_ali_force"] = False
+            new_parameters["tomo_vir_force"] = False
+            new_parameters["tomo_rec_force"] = False
 
     if len(differences) > 0 and new_parameters.get("micromon_block") != "tomo-particles-train":
 
