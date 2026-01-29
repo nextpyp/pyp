@@ -1838,6 +1838,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 # convert next file to imod model
                 com = f"{get_imod_path()}/bin/point2model {name}_exclude_views.next {name}_exclude_views.mod -scat"
                 local_run.run_shell_command(com)
+                shutil.copy2(name+"_exclude_views.mod",name+"_exclude_views_manual.mod")
                 new_angles = np.sort(np.loadtxt(f'{name}_exclude_views.next',ndmin=2)).astype('int')[:,2]+1
             elif os.path.exists(f"{name}_exclude_views.mod"):
                 os.remove(f"{name}_exclude_views.mod")
@@ -1847,9 +1848,15 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             angles = np.sort(metadata.get('exclude').to_numpy()[:,1].astype('int') + 1)
         else:
             angles = np.array([])
-            
-        if not np.array_equal(angles, np.sort(new_angles)) and "preprocessing" in parameters.get("micromon_block"):
-            logger.warning("Excluded tilts have changed, tilt-series will be re-processed")
+        
+        # detect if there were changes in the excluded tilts
+        if metadata and 'exclude_manual' in metadata:
+            previous_manual_angles = np.sort(metadata.get('exclude_manual').to_numpy()[:,1].astype('int') + 1)
+        else:
+            previous_manual_angles = np.array([])
+
+        if "preprocessing" in parameters.get("micromon_block") and not np.array_equal(np.sort(previous_manual_angles), np.sort(new_angles)):
+            logger.warning(f"Manually excluded tilts changed from: {previous_manual_angles} to: {new_angles}. Tilt-series will be re-aligned!")
             parameters["tomo_rec_force"] = True
             parameters["tomo_ali_force"] = True
             parameters["ctf_force"] = True
@@ -1924,7 +1931,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # determine excluded views from user input
     exclude_views = merge.do_exclude_views(name)
     if len(exclude_views) > 0:
-        logger.warning(f"The following tilts will be excluded: {exclude_views.split(' ')[-1]}")
+        logger.warning(f"The following manually selectefd tilts will be excluded: {exclude_views.split(' ')[-1]}")
 
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
@@ -2008,6 +2015,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(merge.reconstruct_tomo)
         mpi_args.append( [(parameters, name, x, y, binning, zfact, tilt_options, need_recalculation)] )
         need_half_tomogram_recalculation = True
+        need_recalculation = parameters["tomo_rec_erase_fiducials"]
 
     ctffind_tilt = False
     if ctf_mod.is_required_3d(parameters):
@@ -2240,7 +2248,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.mrc', name + "_raw.webp")] )
 
-    if os.path.exists(f"{name}_bin.ali") and ( not os.path.exists(name + "_ali.webp") or parameters["tomo_ali_force"] or parameters["tomo_rec_force"] and parameters["tomo_rec_erase_fiducials"] ):
+    if os.path.exists(f"{name}_bin.ali") and ( not os.path.exists(name + "_ali.webp") or parameters["tomo_ali_force"] or parameters["tomo_rec_force"] ):
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.ali', name + "_ali.webp")] )
 
