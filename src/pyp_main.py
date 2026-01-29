@@ -256,6 +256,11 @@ def check_and_update_parameters(parent_parameters, parameters_existing):
 
 def parse_arguments(block):
 
+    # detect and reset failed runs
+    if len(glob.glob("raw/*")) == 0 and os.path.exists(".pyp_config.toml"):
+        logger.warning("Re-starting failed run")
+        os.remove(".pyp_config.toml")
+        
     # read params from a params file instead of the CLI, if needed
     params_file_path = get_params_file_path()
     if params_file_path is not None:
@@ -459,6 +464,11 @@ def parse_arguments(block):
             for f in folders:
                 source = os.path.join(parameters["data_parent"], f)
                 if os.path.exists(source):
+                    if os.path.exists(f):
+                        if os.path.islink(f):
+                            os.unlink(f)
+                        else:
+                            shutil.rmtree(f)
                     symlink_relative(source, f)
 
             # always link indivdual files in the pkl/, csp/, and sva/ folders
@@ -491,6 +501,11 @@ def parse_arguments(block):
                 for f in folders:
                     source = os.path.join(parameters["data_parent"], f)
                     if os.path.exists(source):
+                        if os.path.exists(f):
+                            if os.path.islink(f):
+                                os.unlink(f)
+                            else:
+                                shutil.rmtree(f)
                         symlink_relative(source, f)
 
                 # create empty log folder
