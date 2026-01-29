@@ -881,7 +881,9 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
 
         os.symlink(newname + ".mrc", newname + ".st")
         if os.path.exists(name + "_gold3d.mod"):
-            os.symlink(name + "_gold3d.mod", newname + "_gold3d.mod")
+            # need to flip Y-Z for the model to be properly aligned!
+            command = f"{get_imod_path()}/bin/imodtrans -Y {name}_gold3d.mod {newname}_gold3d.mod"
+            run_shell_command(command)
 
         # actual stack sizes
         headers = mrc.readHeaderFromFile(newname + ".mrc")
