@@ -871,9 +871,8 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
         with open(name+f"_half{half}.order",'w') as output_half_order:
             for index in subset:
                 output_half_order.write(f"{orders[index]}\n")
-        run_shell_command(command)
             
-    if False and len(arguments) > 0:
+    if len(arguments) > 0:
         mpi.submit_jobs_to_workers(arguments)
     
     # generate half tomograms from half stacks
