@@ -1255,7 +1255,8 @@ def build_command_options( parameters, prefix, values, booleans, strings):
     
     # we only pass these if not empty
     for key in strings:
-        if len(str(parameters.get(prefix + '_' + key))) > 0:
-            isonet_parameters += f" --{key} {parameters.get(prefix + '_' + key)}"            
+        parameter = parameters.get(prefix + '_' + key)
+        if parameter is not None and len(str(parameter)) > 0:
+            isonet_parameters += f" --{key} {parameter}"
 
     return isonet_parameters
