@@ -177,6 +177,13 @@ FILES_TOMO= {"image":
                     "header": ["x","y","exclude_view"],
                     "index": None
                 }, 
+            "exclude_manual": 
+                {
+                    "path": "%s_exclude_views_manual.mod", 
+                    "format": "model", 
+                    "header": ["x","y","exclude_view"],
+                    "index": None
+                }, 
             "gold3d": 
                 {
                     "path": "%s_gold3d.mod", 
