@@ -3341,7 +3341,7 @@ hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet2_denoise_cube_size]
 name = "Sub-volume size for training (voxels)"
-description = "Must be compatible with the network (divisible by the network downsampling factors)"
+description = "Must be compatible with the network (any multiple of 16 >= 64)"
 type = "int"
 default = 96
 condition = { arg="isonet2_mask_preprocessing", value="denoise" }
@@ -3439,9 +3439,10 @@ hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet2_denoise_clip_first_peak_mode]
 name = "Clip first peak mode"
-description = "Controls attenuation of overrepresented very-low-frequency CTF peak"
-type = "int"
-default = 1
+description = "Controls attenuation of overrepresented very-low-frequency CTF peak. Options 2 and 3 might increase low-resolution contrast"
+type = "enum"
+enum = { 0='none', 1='constant clip', 2='negative sine', 3='cosine'}
+default = "1"
 condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
@@ -3514,7 +3515,7 @@ condition = { arg="method_train", value="isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_cube_size]
 name = "Sub-volume size (voxels)"
-description = "Must be compatible with the network (divisible by the network downsampling factors)"
+description = "Must be compatible with the network (any multiple of 16 >= 64)"
 type = "int"
 default = 96
 condition = { arg="method_train", value="isonet2" }
@@ -3601,9 +3602,10 @@ condition = { arg = "method_train", value = "isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_clip_first_peak_mode]
 name = "Clip first peak mode"
-description = "Controls attenuation of overrepresented very-low-frequency CTF peak"
-type = "int"
-default = 1
+description = "Controls attenuation of overrepresented very-low-frequency CTF peak. Options 2 and 3 might increase low-resolution contrast"
+type = "enum"
+enum = { 0='none', 1='constant clip', 2='negative sine', 3='cosine'}
+default = "1"
 condition = { arg = "method_train", value = "isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_bfactor]
