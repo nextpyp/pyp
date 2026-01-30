@@ -1143,6 +1143,8 @@ _rlnMicrographName #18"""
     # all_tomograms = glob.glob(f"{project_dir}/mrc/*.rec")
     # tomograms = [t for t in all_tomograms if not "denoised" in t]
 
+    sub_tomograms_per_tomo = parameters.get("tomo_denoise_isonet2_total_subtomos") // len(name_list)
+
     with open(outputname, 'w') as f:
         f.write(star_header)
         for i, name in enumerate(name_list):
@@ -1159,7 +1161,7 @@ _rlnMicrographName #18"""
             tomo_half1 = os.path.join( os.getcwd(), name + "_half1.rec")
             tomo_half2 = os.path.join( os.getcwd(), name + "_half2.rec")
             
-            sub_tomograms = 100
+            sub_tomograms = sub_tomograms_per_tomo
             f.write(f"\n{i + 1}    {tomo}   {tomo_half1}    {tomo_half2}    {pixel_size}    {df}    {parameters['scope_voltage']}    {parameters['scope_cs']}    {parameters['scope_wgh']}   None    None    {min_tilt}    {max_tilt}    None {sub_tomograms}   ./corrected_tomos/_n2n_{parameters.get("tomo_denoise_isonet2_denoise_arch")}_{name}_half1.mrc    ./deconv/{name}.rec   {tomo}")
 
 
