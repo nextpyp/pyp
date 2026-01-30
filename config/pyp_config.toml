@@ -3446,11 +3446,11 @@ default = "1"
 condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
-[tabs.tomo_denoise.isonet_denoise_snrfalloff]
+[tabs.tomo_denoise.isonet2_denoise_snrfalloff]
 name = "SNR falloff"
 description = "SNR fall rate with the frequency. High values means losing more high frequency"
 type = "float"
-default = 1.0
+default = 0.0
 condition = { arg="isonet2_mask_preprocessing", value="denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
@@ -3662,7 +3662,7 @@ condition = { arg = "method_train", value = "isonet2" }
 name = "Previous tomogram indices"
 description = "If set, automatically predict only the tomograms listed by these indices (e.g., 1,2,4 or 5-10,15,16)."
 type = "str"
-default = ""
+default = "1"
 condition = { arg = "method_train", value = "isonet2" }
 advanced = true
 
