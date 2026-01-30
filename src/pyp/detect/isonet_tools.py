@@ -521,6 +521,10 @@ def isonet2_predict( name, project_dir, parameters ):
         models = glob.glob(os.path.join(project_dir, "train", "isonet2", "isonet_network*_full.pt"))
         # get the most recent model 
         model = max(models, key=os.path.getmtime)
+
+    model_base = os.path.basename(model)
+    if "_isonet2_" in model_base and "_n2n_" not in model_base:
+        isonet2_ctf_deconvolve(initial_star, parameters=parameters)
     
     isonet2_predict_command(
         input_star=initial_star,
@@ -528,8 +532,8 @@ def isonet2_predict( name, project_dir, parameters ):
         parameters=parameters
     )
        
-    assert len(glob.glob( "corrected_tomos/*_half1.mrc" )) > 0, "IsoNet2 failed to run"
-    output = glob.glob( "corrected_tomos/*_half1.mrc" )[0]
+    assert len(glob.glob( "corrected_tomos/*.mrc" )) > 0, "IsoNet2 failed to run"
+    output = glob.glob( "corrected_tomos/*.mrc" )[0]
     return output
 
 def isonet2_train( project_dir, parameters):
@@ -589,6 +593,9 @@ def isonet2_train( project_dir, parameters):
             initial_star,
             parameters=parameters
             )
+
+    if (not parameters["tomo_denoise_isonet2_mask"]) and (parameters["tomo_denoise_isonet2_refine_method"] == "isonet2"):
+        convert_and_transfer_tomograms(train_name, project_dir, parameters)
 
     # refine (train)
     output_dir = os.path.join( os.getcwd(), "isonet_maps")
