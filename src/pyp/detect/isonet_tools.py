@@ -444,7 +444,7 @@ def isonet_train(project_dir, parameters):
     
     # go back to project directory and clean local scratch
     os.chdir(project_dir)
-    shutil.rmtree(working_path, "True")
+    shutil.rmtree(working_path, True)
     
  
 def isonet_predict( name, project_dir, parameters ):
@@ -623,7 +623,7 @@ def isonet2_train( project_dir, parameters):
     # go back to project directory and clean local scratch
     working_path = os.getcwd()
     os.chdir(project_dir)
-    shutil.rmtree(working_path, "True")
+    shutil.rmtree(working_path, True)
     
 def isonet2_denoise(input_star, parameters, output = "./denoise"):
 
