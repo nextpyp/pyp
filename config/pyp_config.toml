@@ -3287,10 +3287,10 @@ condition = { arg="isonet2_mask_preprocessing", value="deconv" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet2_deconv_chunk_size]
-name = "Sub-volume size for training (voxels)"
-description = "Must be compatible with the network (divisible by the network downsampling factors)"
+name = "Chunk size"
+description = "If set, tomograms are processed in smaller cubic chunks to reduce memory usage. May create edge artifacts if chunks are too small. Disabled if 0"
 type = "int"
-default = 96
+default = 0
 condition = { arg="isonet2_mask_preprocessing", value="deconv" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
