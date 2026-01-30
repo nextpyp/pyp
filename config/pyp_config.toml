@@ -1439,6 +1439,12 @@ type = "float"
 default = 0
 hidden = [ "tomo_particles_train", "tomo_pre_process" ]
 
+[tabs.detect_nn3d.use_denoised]
+name = "Use denoised"
+description = "Use denoised tomograms if available"
+type = "bool"
+default = true
+
 [tabs.detect_nn3d.down_ratio]
 name = "Additional binning for training"
 description = "Bin data by this factor before training"
@@ -1700,6 +1706,12 @@ description = "Use particle projections (2D) or subvolumes (3D)"
 type = "enum"
 enum = { 2d3d="2D + 3D", 3d="3D only" }
 default = "2d3d"
+
+[tabs.detect_milo.use_denoised]
+name = "Use denoised"
+description = "Use denoised tomograms if available"
+type = "bool"
+default = true
 
 [tabs.detect_milo.lightweight]
 name = "Use lighweight model"
