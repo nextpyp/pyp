@@ -3110,6 +3110,16 @@ hidden = [ "tomo_denoise_train" ]
 # ISONET2 #
 ###########
 
+# ISONET2 STAR
+
+[tabs.tomo_denoise.isonet2_total_subtomos]
+name = "Total subtomograms"
+description = "The total number of subtomograms to extract, divided evenly per tomogram"
+type = "int"
+default = 3000
+condition = { arg="method", value=["isonet2"] }
+hidden = [ "tomo_denoise_train" ]
+
 # ISONET2 PREDICT
 
 [tabs.tomo_denoise.isonet2_predict_model]
@@ -3442,6 +3452,39 @@ type = "float"
 default = 1.0
 condition = { arg="isonet2_mask_preprocessing", value="denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_deconvstrength]
+name = "Deconvolution strength"
+description = "Scalar multiplier for deconvolution strength; increasing this emphasizes correction and low-frequency recovery"
+type = "float"
+default = 1.0
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_highpassnyquist]
+name = "High-pass cutoff"
+description = "Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove large-scale intensity gradients and drift"
+type = "float"
+default = 0.02
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_with_preview]
+name = "Generate preview"
+description = "Run prediction using the final checkpoint(s) after training"
+type = "bool"
+default = false
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_prev_tomo_idx]
+name = "Previous tomogram indices"
+description = "If set, automatically predict only the tomograms listed by these indices (e.g., 1,2,4 or 5-10,15,16)."
+type = "str"
+default = "1"
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+advanced = true
 
 # ISONET2 REFINE
 
