@@ -1237,12 +1237,12 @@ def isonet2_ctf_deconvolve(tomo_star, parameters, output = './deconv'):
     # we only pass these if not empty
     strings = [ "tomo_idx" ]
 
-    command = isonet_command + f"isonet.py deconv {tomo_star} {isonet_deconv_parameters} --ncpu {parameters.get("slurm_tasks")}"
     isonet_deconv_parameters = build_command_options( parameters, prefix, values, booleans, strings )
 
     if parameters.get(f"{prefix}_chunk_size") > 0:
         isonet_deconv_parameters += f" --chunk_size {parameters.get(f'{prefix}_chunk_size')}"
     
+    command = get_isonet2_path() + f"isonet.py deconv {tomo_star} {isonet_deconv_parameters} --ncpus {parameters.get('slurm_tasks')}"
     
     local_run.stream_shell_command(command)
 
