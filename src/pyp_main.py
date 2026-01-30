@@ -6019,7 +6019,7 @@ if __name__ == "__main__":
                     working_path.mkdir(parents=True, exist_ok=True)
                     os.chdir(working_path)
 
-                    halves_needed = "_n2n_" in str(parameters.get("tomo_denoise_isonet2_refine_method", "isonet2-n2n"))
+                    halves_needed = "n2n" in str(parameters.get("tomo_denoise_isonet2_refine_method", "isonet2-n2n"))
 
                     # copy/generate tomograms and half-tomograms to scratch folder
                     for name in micrograph_list:
