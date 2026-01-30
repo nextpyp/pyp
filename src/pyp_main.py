@@ -4239,7 +4239,7 @@ def clear_scratch(scratch,timeout=60):
                     except:
                         pass
 
-def tomoswarm_prologue():
+def tomoswarm_prologue(convert_to_32 = True):
     """ Setup enviroment for running tasks that take a tomogram and produce another tomogram
 
     Returns
@@ -4276,7 +4276,7 @@ def tomoswarm_prologue():
     
     rec = os.path.join(project_path, "mrc", name + ".rec")
     if os.path.exists(rec):
-        if parameters.get("tomo_rec_depth") and get_image_mode(rec) != 2:
+        if parameters.get("tomo_rec_depth") and get_image_mode(rec) != 2 and convert_to_32:
             logger.info("Converting tomogram to 32-bits")
             command = "{0}/bin/newstack -mode 2 {1} {2}".format(
                 get_imod_path(), rec, name + ".rec"
@@ -6053,7 +6053,7 @@ if __name__ == "__main__":
                     working_path = Path(os.environ["PYP_SCRATCH"])
                     shutil.rmtree(working_path, "True")
 
-                    args, name, project_path, working_path, parameters = tomoswarm_prologue()
+                    args, name, project_path, working_path, parameters = tomoswarm_prologue(convert_to_32=False)
 
                     halves_needed = "n2n_" in os.path.basename(parameters.get("tomo_denoise_isonet2_predict_model", ""))
 
