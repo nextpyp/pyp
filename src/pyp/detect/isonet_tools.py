@@ -744,15 +744,19 @@ def isonet2_denoise(input_star, parameters, output = "./denoise"):
     prefix = "tomo_denoise_isonet2_denoise"
 
     # we always pass these parameters
-    values = [ "arch", "cube_size", "epochs", "loss_func", "save_interval", "learning_rate", "learning_rate_min", "mixed_precision", "isCTFflipped", "do_phaseflip_input", "bfactor", "clip_first_peak_mode", "snrfalloff", "deconvstrength", "highpassnyquist" ]
+    values = [ "arch", "cube_size", "epochs", "loss_func", "save_interval", "learning_rate", "learning_rate_min", "mixed_precision", "do_phaseflip_input", "bfactor", "clip_first_peak_mode", "snrfalloff", "deconvstrength", "highpassnyquist", "with_preview" ]
     
     # we only pass these if True
-    booleans = [ "with_preview" ]
+    booleans = [ "isCTFflipped"]
 
     # we only pass these if not empty
     strings = [ "CTF_mode", "prev_tomo_idx" ]
 
     isonet_denoise_parameters = build_command_options( parameters, prefix, values, booleans, strings )
+
+    pretrained_model = parameters.get(f"{prefix}_pretrained_model")
+    if pretrained_model and os.path.exists( project_params.resolve_path(pretrained_model) ):
+        isonet_denoise_parameters += f" --pretrained_model '{project_params.resolve_path(pretrained_model)}'"
 
     if parameters.get(f"{prefix}_batch_size") > 0:
         isonet_denoise_parameters += f" --batch_size {parameters.get(f'{prefix}_batch_size')}"
@@ -818,13 +822,13 @@ def isonet2_predict_command(input_star, model, parameters, output = "./corrected
     prefix = "tomo_denoise_isonet2_predict"
 
     # we always pass these parameters
-    values = [ "padding_factor" ]
-    
+    values = [ "apply_mw_x1", "padding_factor", "save_slices" ]
+
     # we only pass these if True
-    booleans = [ "apply_mw_x1", "isCTFflipped", "save_slices" ]
+    booleans = [ "isCTFflipped", ]
 
     # we only pass these if not empty
-    strings = [ "tomo_idx" ]
+    strings = [ "input_column", "tomo_idx", "output_prefix" ]
 
     isonet_predict_parameters = build_command_options( parameters, prefix, values, booleans, strings )
 
@@ -940,7 +944,7 @@ FLAGS
         Number of CPUs to use for data processing.
     --method=METHOD
         Type: str
-        Default: 'auto'
+        Default: 'isonet2-n2n'
         "isonet2" for single-map missing-wedge correction, "isonet2-n2n" for noise2noise when even/odd halves are present. If omitted, the code auto-detects the method from the STAR columns.
     --arch=ARCH
         Type: str
@@ -1051,10 +1055,10 @@ FLAGS
     prefix = "tomo_denoise_isonet2_refine"
 
     # we always pass these parameters
-    values = [ "method", "arch", "cube_size", "epochs", "loss_func", "save_interval", "learning_rate", "learning_rate_min", "mw_weight", "bfactor", "clip_first_peak_mode", "noise_level", "noise_mode", "random_rot_weight", "snrfalloff", "deconvstrength", "highpassnyquist" ]
+    values = [ "method", "arch", "cube_size", "epochs", "loss_func", "save_interval", "learning_rate", "learning_rate_min", "apply_mw_x1", "mixed_precision", "mw_weight", "bfactor", "clip_first_peak_mode", "do_phaseflip_input", "noise_level", "noise_mode", "random_rot_weight", "with_preview", "snrfalloff", "deconvstrength", "highpassnyquist" ]
     
     # we only pass these if True
-    booleans = [ "apply_mw_x1", "with_preview", "mixed_precision", "isCTFflipped", "do_phaseflip_input" ]
+    booleans = [ "isCTFflipped" ]
 
     # we only pass these if not empty
     strings = [ "CTF_mode", "prev_tomo_idx", "input_column" ]
@@ -1225,7 +1229,7 @@ def isonet2_ctf_deconvolve(tomo_star, parameters, output = './deconv'):
     prefix = "tomo_denoise_isonet2_deconv"
 
     # we always pass these parameters
-    values = [ "snrfalloff", "deconvstrength", "highpassnyquist", "chunk_size", "overlap_rate" ]
+    values = [ "input_column", "snrfalloff", "deconvstrength", "highpassnyquist", "overlap_rate" ]
     
     # we only pass these if True
     booleans = [ "phaseflipped" ]
@@ -1233,9 +1237,12 @@ def isonet2_ctf_deconvolve(tomo_star, parameters, output = './deconv'):
     # we only pass these if not empty
     strings = [ "tomo_idx" ]
 
-    isonet_deconv_parameters = build_command_options( parameters, prefix, values, booleans, strings ) 
-    
     command = isonet_command + f"isonet.py deconv {tomo_star} {isonet_deconv_parameters} --ncpu {parameters.get("slurm_tasks")}"
+    isonet_deconv_parameters = build_command_options( parameters, prefix, values, booleans, strings )
+
+    if parameters.get(f"{prefix}_chunk_size") > 0:
+        isonet_deconv_parameters += f" --chunk_size {parameters.get(f'{prefix}_chunk_size')}"
+    
     
     local_run.stream_shell_command(command)
 
