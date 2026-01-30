@@ -444,7 +444,7 @@ def isonet_train(project_dir, parameters):
     
     # go back to project directory and clean local scratch
     os.chdir(project_dir)
-    shutil.rmtree(working_path, "True")
+    shutil.rmtree(working_path, True)
     
  
 def isonet_predict( name, project_dir, parameters ):
@@ -517,10 +517,14 @@ def isonet2_predict( name, project_dir, parameters ):
     if os.path.exists(project_params.resolve_path(parameters["tomo_denoise_isonet2_predict_model"])):
         model = project_params.resolve_path(parameters["tomo_denoise_isonet2_predict_model"])
     else:
-        logger.warning("Trying to use the most recent trained model for isonet prediction")
-        models = glob.glob(os.path.join(project_dir, "train", "isonet", "isonet_network*_full.pt"))
+        logger.warning("Trying to use the most recent trained model for isonet2 prediction")
+        models = glob.glob(os.path.join(project_dir, "train", "isonet2", "isonet_network*_full.pt"))
         # get the most recent model 
         model = max(models, key=os.path.getmtime)
+
+    model_base = os.path.basename(model)
+    if "_isonet2_" in model_base and "_n2n_" not in model_base:
+        isonet2_ctf_deconvolve(initial_star, parameters=parameters)
     
     isonet2_predict_command(
         input_star=initial_star,
@@ -528,8 +532,8 @@ def isonet2_predict( name, project_dir, parameters ):
         parameters=parameters
     )
        
-    assert len(glob.glob( "corrected_tomos/*_half1.mrc" )) > 0, "IsoNet2 failed to run"
-    output = glob.glob( "corrected_tomos/*_half1.mrc" )[0]
+    assert len(glob.glob( "corrected_tomos/*.mrc" )) > 0, "IsoNet2 failed to run"
+    output = glob.glob( "corrected_tomos/*.mrc" )[0]
     return output
 
 def isonet2_train( project_dir, parameters):
@@ -575,8 +579,9 @@ def isonet2_train( project_dir, parameters):
                 parameters=parameters
                 )
 
-            model = glob.glob('denoise/*_full.pt')[0]
-            assert len(model) > 0, "IsoNet2 denoising failed"
+            models = glob.glob('denoise/*_full.pt')
+            assert len(models) > 0, "IsoNet2 denoising failed"
+            model = models[0]
 
             isonet2_predict_command(
                 initial_star,
@@ -588,6 +593,9 @@ def isonet2_train( project_dir, parameters):
             initial_star,
             parameters=parameters
             )
+
+    if (not parameters["tomo_denoise_isonet2_mask"]) and (parameters["tomo_denoise_isonet2_refine_method"] == "isonet2"):
+        convert_and_transfer_tomograms(train_name, project_dir, parameters)
 
     # refine (train)
     output_dir = os.path.join( os.getcwd(), "isonet_maps")
@@ -623,7 +631,7 @@ def isonet2_train( project_dir, parameters):
     # go back to project directory and clean local scratch
     working_path = os.getcwd()
     os.chdir(project_dir)
-    shutil.rmtree(working_path, "True")
+    shutil.rmtree(working_path, True)
     
 def isonet2_denoise(input_star, parameters, output = "./denoise"):
 
@@ -743,15 +751,19 @@ def isonet2_denoise(input_star, parameters, output = "./denoise"):
     prefix = "tomo_denoise_isonet2_denoise"
 
     # we always pass these parameters
-    values = [ "arch", "cube_size", "epochs", "loss_func", "save_interval", "learning_rate", "learning_rate_min", "mixed_precision", "isCTFflipped", "do_phaseflip_input", "bfactor", "clip_first_peak_mode", "snrfalloff", "deconvstrength", "highpassnyquist" ]
+    values = [ "arch", "cube_size", "epochs", "loss_func", "save_interval", "learning_rate", "learning_rate_min", "mixed_precision", "do_phaseflip_input", "bfactor", "clip_first_peak_mode", "snrfalloff", "deconvstrength", "highpassnyquist", "with_preview" ]
     
     # we only pass these if True
-    booleans = [ "with_preview" ]
+    booleans = [ "isCTFflipped"]
 
     # we only pass these if not empty
     strings = [ "CTF_mode", "prev_tomo_idx" ]
 
     isonet_denoise_parameters = build_command_options( parameters, prefix, values, booleans, strings )
+
+    pretrained_model = parameters.get(f"{prefix}_pretrained_model")
+    if pretrained_model and os.path.exists( project_params.resolve_path(pretrained_model) ):
+        isonet_denoise_parameters += f" --pretrained_model '{project_params.resolve_path(pretrained_model)}'"
 
     if parameters.get(f"{prefix}_batch_size") > 0:
         isonet_denoise_parameters += f" --batch_size {parameters.get(f'{prefix}_batch_size')}"
@@ -817,13 +829,13 @@ def isonet2_predict_command(input_star, model, parameters, output = "./corrected
     prefix = "tomo_denoise_isonet2_predict"
 
     # we always pass these parameters
-    values = [ "padding_factor" ]
-    
+    values = [ "apply_mw_x1", "padding_factor", "save_slices" ]
+
     # we only pass these if True
-    booleans = [ "apply_mw_x1", "isCTFflipped", "save_slices" ]
+    booleans = [ "isCTFflipped", ]
 
     # we only pass these if not empty
-    strings = [ "tomo_idx" ]
+    strings = [ "input_column", "tomo_idx", "output_prefix" ]
 
     isonet_predict_parameters = build_command_options( parameters, prefix, values, booleans, strings )
 
@@ -939,7 +951,7 @@ FLAGS
         Number of CPUs to use for data processing.
     --method=METHOD
         Type: str
-        Default: 'auto'
+        Default: 'isonet2-n2n'
         "isonet2" for single-map missing-wedge correction, "isonet2-n2n" for noise2noise when even/odd halves are present. If omitted, the code auto-detects the method from the STAR columns.
     --arch=ARCH
         Type: str
@@ -1050,10 +1062,10 @@ FLAGS
     prefix = "tomo_denoise_isonet2_refine"
 
     # we always pass these parameters
-    values = [ "method", "arch", "cube_size", "epochs", "loss_func", "save_interval", "learning_rate", "learning_rate_min", "mw_weight", "bfactor", "clip_first_peak_mode", "noise_level", "noise_mode", "random_rot_weight", "snrfalloff", "deconvstrength", "highpassnyquist" ]
+    values = [ "method", "arch", "cube_size", "epochs", "loss_func", "save_interval", "learning_rate", "learning_rate_min", "apply_mw_x1", "mixed_precision", "mw_weight", "bfactor", "clip_first_peak_mode", "do_phaseflip_input", "noise_level", "noise_mode", "random_rot_weight", "with_preview", "snrfalloff", "deconvstrength", "highpassnyquist" ]
     
     # we only pass these if True
-    booleans = [ "apply_mw_x1", "with_preview", "mixed_precision", "isCTFflipped", "do_phaseflip_input" ]
+    booleans = [ "isCTFflipped" ]
 
     # we only pass these if not empty
     strings = [ "CTF_mode", "prev_tomo_idx", "input_column" ]
@@ -1138,6 +1150,8 @@ _rlnMicrographName #18"""
     # all_tomograms = glob.glob(f"{project_dir}/mrc/*.rec")
     # tomograms = [t for t in all_tomograms if not "denoised" in t]
 
+    sub_tomograms_per_tomo = parameters.get("tomo_denoise_isonet2_total_subtomos") // len(name_list)
+
     with open(outputname, 'w') as f:
         f.write(star_header)
         for i, name in enumerate(name_list):
@@ -1154,7 +1168,7 @@ _rlnMicrographName #18"""
             tomo_half1 = os.path.join( os.getcwd(), name + "_half1.rec")
             tomo_half2 = os.path.join( os.getcwd(), name + "_half2.rec")
             
-            sub_tomograms = 100
+            sub_tomograms = sub_tomograms_per_tomo
             f.write(f"\n{i + 1}    {tomo}   {tomo_half1}    {tomo_half2}    {pixel_size}    {df}    {parameters['scope_voltage']}    {parameters['scope_cs']}    {parameters['scope_wgh']}   None    None    {min_tilt}    {max_tilt}    None {sub_tomograms}   ./corrected_tomos/_n2n_{parameters.get("tomo_denoise_isonet2_denoise_arch")}_{name}_half1.mrc    ./deconv/{name}.rec   {tomo}")
 
 
@@ -1224,7 +1238,7 @@ def isonet2_ctf_deconvolve(tomo_star, parameters, output = './deconv'):
     prefix = "tomo_denoise_isonet2_deconv"
 
     # we always pass these parameters
-    values = [ "snrfalloff", "deconvstrength", "highpassnyquist", "chunk_size", "overlap_rate" ]
+    values = [ "input_column", "snrfalloff", "deconvstrength", "highpassnyquist", "overlap_rate" ]
     
     # we only pass these if True
     booleans = [ "phaseflipped" ]
@@ -1232,9 +1246,12 @@ def isonet2_ctf_deconvolve(tomo_star, parameters, output = './deconv'):
     # we only pass these if not empty
     strings = [ "tomo_idx" ]
 
-    isonet_deconv_parameters = build_command_options( parameters, prefix, values, booleans, strings ) 
+    isonet_deconv_parameters = build_command_options( parameters, prefix, values, booleans, strings )
+
+    if parameters.get(f"{prefix}_chunk_size") > 0:
+        isonet_deconv_parameters += f" --chunk_size {parameters.get(f'{prefix}_chunk_size')}"
     
-    command = isonet_command + f"isonet.py deconv {tomo_star} {isonet_deconv_parameters} --ncpu {parameters.get("slurm_tasks")}"
+    command = get_isonet2_path() + f"isonet.py deconv {tomo_star} {isonet_deconv_parameters} --ncpus {parameters.get('slurm_tasks')}"
     
     local_run.stream_shell_command(command)
 
@@ -1254,7 +1271,8 @@ def build_command_options( parameters, prefix, values, booleans, strings):
     
     # we only pass these if not empty
     for key in strings:
-        if len(str(parameters.get(prefix + '_' + key))) > 0:
-            isonet_parameters += f" --{key} {parameters.get(prefix + '_' + key)}"            
+        parameter = parameters.get(prefix + '_' + key)
+        if parameter is not None and len(str(parameter)) > 0:
+            isonet_parameters += f" --{key} {parameter}"
 
     return isonet_parameters

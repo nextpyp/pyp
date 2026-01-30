@@ -3110,6 +3110,16 @@ hidden = [ "tomo_denoise_train" ]
 # ISONET2 #
 ###########
 
+# ISONET2 STAR
+
+[tabs.tomo_denoise.isonet2_total_subtomos]
+name = "Total subtomograms"
+description = "The total number of subtomograms to extract, divided evenly per tomogram"
+type = "int"
+default = 3000
+condition = { arg="method", value=["isonet2"] }
+hidden = [ "tomo_denoise_train" ]
+
 # ISONET2 PREDICT
 
 [tabs.tomo_denoise.isonet2_predict_model]
@@ -3175,7 +3185,7 @@ hidden = [ "tomo_denoise_train" ]
 name = "Save slices"
 description = "Save slices"
 type = "bool"
-default = true
+default = false
 condition = { arg = "method", value = "isonet2" }
 hidden = [ "tomo_denoise_train" ]
 
@@ -3277,10 +3287,10 @@ condition = { arg="isonet2_mask_preprocessing", value="deconv" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet2_deconv_chunk_size]
-name = "Sub-volume size for training (voxels)"
-description = "Must be compatible with the network (divisible by the network downsampling factors)"
+name = "Chunk size"
+description = "If set, tomograms are processed in smaller cubic chunks to reduce memory usage. May create edge artifacts if chunks are too small. Disabled if 0"
 type = "int"
-default = 96
+default = 0
 condition = { arg="isonet2_mask_preprocessing", value="deconv" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
@@ -3331,7 +3341,7 @@ hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet2_denoise_cube_size]
 name = "Sub-volume size for training (voxels)"
-description = "Must be compatible with the network (divisible by the network downsampling factors)"
+description = "Must be compatible with the network (any multiple of 16 >= 64)"
 type = "int"
 default = 96
 condition = { arg="isonet2_mask_preprocessing", value="denoise" }
@@ -3429,19 +3439,53 @@ hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
 [tabs.tomo_denoise.isonet2_denoise_clip_first_peak_mode]
 name = "Clip first peak mode"
-description = "Controls attenuation of overrepresented very-low-frequency CTF peak"
-type = "int"
-default = 1
+description = "Controls attenuation of overrepresented very-low-frequency CTF peak. Options 2 and 3 might increase low-resolution contrast"
+type = "enum"
+enum = { 0='none', 1='constant clip', 2='negative sine', 3='cosine'}
+default = "1"
 condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
-[tabs.tomo_denoise.isonet_denoise_snrfalloff]
+[tabs.tomo_denoise.isonet2_denoise_snrfalloff]
 name = "SNR falloff"
 description = "SNR fall rate with the frequency. High values means losing more high frequency"
+type = "float"
+default = 0.0
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_deconvstrength]
+name = "Deconvolution strength"
+description = "Scalar multiplier for deconvolution strength; increasing this emphasizes correction and low-frequency recovery"
 type = "float"
 default = 1.0
 condition = { arg="isonet2_mask_preprocessing", value="denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_highpassnyquist]
+name = "High-pass cutoff"
+description = "Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove large-scale intensity gradients and drift"
+type = "float"
+default = 0.02
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_with_preview]
+name = "Generate preview"
+description = "Run prediction using the final checkpoint(s) after training"
+type = "bool"
+default = false
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
+[tabs.tomo_denoise.isonet2_denoise_prev_tomo_idx]
+name = "Previous tomogram indices"
+description = "If set, automatically predict only the tomograms listed by these indices (e.g., 1,2,4 or 5-10,15,16)."
+type = "str"
+default = "1"
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+advanced = true
 
 # ISONET2 REFINE
 
@@ -3471,7 +3515,7 @@ condition = { arg="method_train", value="isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_cube_size]
 name = "Sub-volume size (voxels)"
-description = "Must be compatible with the network (divisible by the network downsampling factors)"
+description = "Must be compatible with the network (any multiple of 16 >= 64)"
 type = "int"
 default = 96
 condition = { arg="method_train", value="isonet2" }
@@ -3558,9 +3602,10 @@ condition = { arg = "method_train", value = "isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_clip_first_peak_mode]
 name = "Clip first peak mode"
-description = "Controls attenuation of overrepresented very-low-frequency CTF peak"
-type = "int"
-default = 1
+description = "Controls attenuation of overrepresented very-low-frequency CTF peak. Options 2 and 3 might increase low-resolution contrast"
+type = "enum"
+enum = { 0='none', 1='constant clip', 2='negative sine', 3='cosine'}
+default = "1"
 condition = { arg = "method_train", value = "isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_bfactor]
@@ -3610,14 +3655,14 @@ condition = { arg = "method_train", value = "isonet2" }
 name = "Generate preview"
 description = "Run prediction using the final checkpoint(s) after training"
 type = "bool"
-default = true
+default = false
 condition = { arg = "method_train", value = "isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_prev_tomo_idx]
 name = "Previous tomogram indices"
 description = "If set, automatically predict only the tomograms listed by these indices (e.g., 1,2,4 or 5-10,15,16)."
 type = "str"
-default = ""
+default = "1"
 condition = { arg = "method_train", value = "isonet2" }
 advanced = true
 

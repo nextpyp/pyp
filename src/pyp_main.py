@@ -6019,19 +6019,23 @@ if __name__ == "__main__":
                     working_path.mkdir(parents=True, exist_ok=True)
                     os.chdir(working_path)
 
+                    halves_needed = "n2n" in str(parameters.get("tomo_denoise_isonet2_refine_method", "isonet2-n2n"))
+
                     # copy/generate tomograms and half-tomograms to scratch folder
                     for name in micrograph_list:
                         if parameters["tomo_denoise_isonet2_mask"]:
                             tomogram = os.path.join(project_dir,"mrc",name+".rec")
                             shutil.copy2(tomogram,os.getcwd())
-                        first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
-                        second_half = first_half.replace("_half1.rec","_half2.rec")
 
-                        for half_map in [first_half, second_half]:
-                            assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms in the pre-processing block first"
-                            # flip yz coordinates to match isonet2 convention
-                            command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
-                            local_run.run_shell_command(command)
+                        if halves_needed:
+                            first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
+                            second_half = first_half.replace("_half1.rec","_half2.rec")
+
+                            for half_map in [first_half, second_half]:
+                                assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms in the pre-processing block first"
+                                # flip yz coordinates to match isonet2 convention
+                                command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
+                                local_run.run_shell_command(command)
 
                     isonet_tools.isonet2_train(project_dir, parameters=parameters)
                     logger.info("nextPYP (isonet2 train) finished successfully")
@@ -6050,24 +6054,27 @@ if __name__ == "__main__":
 
                     args, name, project_path, working_path, parameters = tomoswarm_prologue()
 
-                    # generate half-tomograms and save to train/ folder, if needed
-                    first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
-                    second_half = first_half.replace("_half1.rec","_half2.rec")
+                    halves_needed = "_n2n_" in os.path.basename(parameters.get("tomo_denoise_isonet2_predict_model", ""))
 
-                    os.chdir(working_path)
+                    if halves_needed:
+                        # generate half-tomograms and save to train/ folder, if needed
+                        first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
+                        second_half = first_half.replace("_half1.rec","_half2.rec")
 
-                    for half_map in [first_half, second_half]:
-                        assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms before running IsoNet2 from the pre-processing block"
+                        os.chdir(working_path)
 
-                        # flip yz coordinates to match isonet2 convention
-                        command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
-                        local_run.run_shell_command(command)
+                        for half_map in [first_half, second_half]:
+                            assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms before running IsoNet2 from the pre-processing block"
+
+                            # flip yz coordinates to match isonet2 convention
+                            command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
+                            local_run.run_shell_command(command)
 
                     new_reconstruction = isonet_tools.isonet2_predict( name, project_path, parameters)
 
-                    # flip zy back to undo matching of isonet2 convention
-                    command = f"{get_imod_path()}/bin/clip flipzy {new_reconstruction} {new_reconstruction}~; mv {new_reconstruction}~ {new_reconstruction}"
-                    local_run.run_shell_command(command)
+                    if halves_needed:
+                        command = f"{get_imod_path()}/bin/clip flipzy {new_reconstruction} {new_reconstruction}~; mv {new_reconstruction}~ {new_reconstruction}"
+                        local_run.run_shell_command(command)
 
                     tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=True)
 
