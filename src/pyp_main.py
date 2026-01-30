@@ -6023,9 +6023,10 @@ if __name__ == "__main__":
 
                     # copy/generate tomograms and half-tomograms to scratch folder
                     for name in micrograph_list:
-                        if parameters["tomo_denoise_isonet2_mask"]:
+                        if parameters["tomo_denoise_isonet2_mask"] or (not halves_needed):
                             tomogram = os.path.join(project_dir,"mrc",name+".rec")
-                            shutil.copy2(tomogram,os.getcwd())
+                            command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {Path(tomogram).name}"
+                            local_run.run_shell_command(command)
 
                         if halves_needed:
                             first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
@@ -6069,12 +6070,15 @@ if __name__ == "__main__":
                             # flip yz coordinates to match isonet2 convention
                             command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
                             local_run.run_shell_command(command)
+                    else:
+                        tomogram = os.path.join(project_dir, "mrc", name + ".rec")
+                        command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {Path(tomogram).name}"
+                        local_run.run_shell_command(command)
 
                     new_reconstruction = isonet_tools.isonet2_predict( name, project_path, parameters)
 
-                    if halves_needed:
-                        command = f"{get_imod_path()}/bin/clip flipzy {new_reconstruction} {new_reconstruction}~; mv {new_reconstruction}~ {new_reconstruction}"
-                        local_run.run_shell_command(command)
+                    command = f"{get_imod_path()}/bin/clip flipzy {new_reconstruction} {new_reconstruction}~; mv {new_reconstruction}~ {new_reconstruction}"
+                    local_run.run_shell_command(command)
 
                     tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=True)
 
