@@ -575,8 +575,9 @@ def isonet2_train( project_dir, parameters):
                 parameters=parameters
                 )
 
-            model = glob.glob('denoise/*_full.pt')[0]
-            assert len(model) > 0, "IsoNet2 denoising failed"
+            models = glob.glob('denoise/*_full.pt')
+            assert len(models) > 0, "IsoNet2 denoising failed"
+            model = models[0]
 
             isonet2_predict_command(
                 initial_star,
