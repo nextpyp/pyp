@@ -517,8 +517,8 @@ def isonet2_predict( name, project_dir, parameters ):
     if os.path.exists(project_params.resolve_path(parameters["tomo_denoise_isonet2_predict_model"])):
         model = project_params.resolve_path(parameters["tomo_denoise_isonet2_predict_model"])
     else:
-        logger.warning("Trying to use the most recent trained model for isonet prediction")
-        models = glob.glob(os.path.join(project_dir, "train", "isonet", "isonet_network*_full.pt"))
+        logger.warning("Trying to use the most recent trained model for isonet2 prediction")
+        models = glob.glob(os.path.join(project_dir, "train", "isonet2", "isonet_network*_full.pt"))
         # get the most recent model 
         model = max(models, key=os.path.getmtime)
     
