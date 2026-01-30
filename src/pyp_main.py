@@ -4278,7 +4278,7 @@ def tomoswarm_prologue(convert_to_32 = True):
     if os.path.exists(rec):
         if parameters.get("tomo_rec_depth") and get_image_mode(rec) != 2 and convert_to_32:
             logger.info("Converting tomogram to 32-bits")
-            command = "{0}/bin/newstack -mode 2 {1} {2}".format(
+            command = "{0}/bin/newstack -quiet -mode 2 {1} {2}".format(
                 get_imod_path(), rec, name + ".rec"
             )
             local_run.run_shell_command(command)
@@ -4322,7 +4322,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
 
     if parameters.get("tomo_rec_depth") and not segmentation:
         logger.info("Converting tomogram to 16-bits")
-        command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
+        command = f"{get_imod_path()}/bin/newstack -quiet -mode 12 {new_reconstruction} {target}"
         local_run.run_shell_command(command)
     else:
         shutil.copy2( new_reconstruction, target )
