@@ -6054,7 +6054,7 @@ if __name__ == "__main__":
 
                     args, name, project_path, working_path, parameters = tomoswarm_prologue()
 
-                    halves_needed = "_n2n_" in os.path.basename(parameters.get("tomo_denoise_isonet2_predict_model", ""))
+                    halves_needed = "n2n_" in os.path.basename(parameters.get("tomo_denoise_isonet2_predict_model", ""))
 
                     if halves_needed:
                         # generate half-tomograms and save to train/ folder, if needed
