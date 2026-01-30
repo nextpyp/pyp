@@ -3185,7 +3185,7 @@ hidden = [ "tomo_denoise_train" ]
 name = "Save slices"
 description = "Save slices"
 type = "bool"
-default = true
+default = false
 condition = { arg = "method", value = "isonet2" }
 hidden = [ "tomo_denoise_train" ]
 
@@ -3653,7 +3653,7 @@ condition = { arg = "method_train", value = "isonet2" }
 name = "Generate preview"
 description = "Run prediction using the final checkpoint(s) after training"
 type = "bool"
-default = true
+default = false
 condition = { arg = "method_train", value = "isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_prev_tomo_idx]
