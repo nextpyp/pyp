@@ -537,21 +537,24 @@ def isonet2_predict( name, project_dir, parameters ):
     return output
 
 def parse_loss(output, max_points=500):
-    loss = np.array([line.split("Loss:")[1].split()[0].split(',')[0] for line in output if "Learning rate:" in line]).astype('f')
-    epoch = np.array([line.split("Epoch")[1].split(":")[0] for line in output if "Learning rate:" in line]).astype('i')
+    lines = [l for l in output if "Learning rate:" in l]
 
-    _, inv = np.unique(epoch, return_inverse=True)
-    epoch_mean = np.bincount(inv, loss) / np.bincount(inv)
-    epoch_mean_per_step = epoch_mean[inv]
+    xy = np.array([l.split("[")[0].split()[-1] for l in lines])
+    keep = np.r_[False, xy[1:] == xy[:-1]] | np.r_[xy[:-1] != xy[1:], True]
 
-    binning_factor = max(loss.shape[0] // max_points, 1)
-    steps = np.arange(0, loss.shape[0], binning_factor)
+    loss = np.array([l.split("Loss:")[1].split()[0].split(",")[0] for l in lines], dtype="f")[keep]
+    x    = np.array([p.split("/")[0] for p in xy], dtype="i")[keep]
+    y0   = int(xy[0].split("/")[1])
 
-    if binning_factor > 1:
-        loss = loss[::binning_factor]
-        epoch_mean_per_step = epoch_mean_per_step[::binning_factor]
+    epoch_id = np.r_[0, np.cumsum(x[1:] < x[:-1])].astype("i")
+    steps = epoch_id * y0 + (x - 1)
 
-    return steps, loss, epoch_mean_per_step
+    epoch_mean = np.bincount(epoch_id, loss) / np.bincount(epoch_id)
+    epoch_mean_per_step = epoch_mean[epoch_id]
+
+    b = max(loss.shape[0] // max_points, 1)
+    return steps[::b], loss[::b], epoch_mean_per_step[::b]
+
 
 def plot_loss(ax, steps, loss, epoch_mean_per_step, title):
     ax.set_title(title)
