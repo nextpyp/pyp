@@ -3122,16 +3122,6 @@ hidden = [ "tomo_denoise_train" ]
 # ISONET2 #
 ###########
 
-# ISONET2 STAR
-
-[tabs.tomo_denoise.isonet2_total_subtomos]
-name = "Total subtomograms"
-description = "The total number of subtomograms to extract, divided evenly per tomogram"
-type = "int"
-default = 3000
-condition = { arg="method", value=["isonet2"] }
-hidden = [ "tomo_denoise_eval" ]
-
 # ISONET2 PREDICT
 
 [tabs.tomo_denoise.isonet2_predict_model]
@@ -3355,7 +3345,7 @@ hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 name = "Total subtomograms"
 description = "The total number of subtomograms to extract, divided evenly per tomogram"
 type = "int"
-default = 300
+default = 2000
 condition = { arg="isonet2_mask_preprocessing", value="denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
@@ -3537,7 +3527,7 @@ condition = { arg="method_train", value="isonet2" }
 name = "Total subtomograms"
 description = "The total number of subtomograms to extract, divided evenly per tomogram"
 type = "int"
-default = 500
+default = 3000
 condition = { arg="method_train", value="isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_cube_size]
