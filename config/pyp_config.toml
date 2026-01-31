@@ -3351,6 +3351,14 @@ input = { type="isonet2TrainedModel" }
 condition = { arg="isonet2_mask_preprocessing", value="denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 
+[tabs.tomo_denoise.isonet2_denoise_total_subtomos]
+name = "Total subtomograms"
+description = "The total number of subtomograms to extract, divided evenly per tomogram"
+type = "int"
+default = 300
+condition = { arg="isonet2_mask_preprocessing", value="denoise" }
+hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
+
 [tabs.tomo_denoise.isonet2_denoise_cube_size]
 name = "Sub-volume size for training (voxels)"
 description = "Must be compatible with the network (any multiple of 16 >= 64)"
@@ -3523,6 +3531,13 @@ description = "Path to pre-trained model (previous method, arch, cube_size, CTF_
 type = "path"
 path = { type="files" }
 input = { type="isonet2TrainedModel" }
+condition = { arg="method_train", value="isonet2" }
+
+[tabs.tomo_denoise.isonet2_refine_total_subtomos]
+name = "Total subtomograms"
+description = "The total number of subtomograms to extract, divided evenly per tomogram"
+type = "int"
+default = 500
 condition = { arg="method_train", value="isonet2" }
 
 [tabs.tomo_denoise.isonet2_refine_cube_size]
