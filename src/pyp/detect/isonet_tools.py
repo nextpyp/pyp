@@ -669,12 +669,24 @@ def isonet2_train( project_dir, parameters):
     if debug:
         os.makedirs(save_dir, exist_ok=True)
 
-        # Copy each file and directory to the result directory
+        extensions = [".mrc", ".rec"]
+        flip_dirs = {"deconv", "denoise", "corrected_tomos", "mask", "isonet_maps"}
+
         for item in os.listdir("./"):
             s = os.path.join("./", item)
             d = os.path.join(save_dir, item)
-            if os.path.isdir(s) and ( Path(s).stem == "deconv" or Path(s).stem == "denoise" or Path(s).stem == "corrected_tomos" or Path(s).stem == "mask" or Path(s).stem == "isonet_maps" ):
-                shutil.copytree(s, d, dirs_exist_ok=True) 
+
+            if os.path.isdir(s) and Path(s).stem in flip_dirs:
+                os.makedirs(d, exist_ok=True)
+                for f in os.listdir(s):
+                    src = os.path.join(s, f)
+                    dst = os.path.join(d, f)
+                    if Path(f).suffix.lower() in extensions:
+                        cmd = f'"{get_imod_path()}/bin/clip" flipyz "{src}" "{dst}"'
+                        local_run.run_shell_command(cmd)
+                    else:
+                        shutil.copy2(src, dst)
+
             elif Path(s).suffix == ".star":
                 shutil.copy2(s, d)
     
