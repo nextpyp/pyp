@@ -6019,11 +6019,19 @@ if __name__ == "__main__":
                     working_path.mkdir(parents=True, exist_ok=True)
                     os.chdir(working_path)
 
-                    halves_needed = "n2n" in str(parameters.get("tomo_denoise_isonet2_refine_method", "isonet2-n2n"))
+                    mask_mode = ""
+                    if parameters.get("tomo_denoise_isonet2_mask"):
+                        if str(parameters.get("tomo_denoise_isonet2_mask_preprocessing")) == "denoise":
+                            mask_mode = "denoise"
+                        else:
+                            mask_mode = "deconv"
+
+                    halves_needed = "n2n" in str(parameters.get("tomo_denoise_isonet2_refine_method")) or mask_mode == "denoise"
+                    original_needed = "n2n" not in str(parameters.get("tomo_denoise_isonet2_refine_method")) or mask_mode == "deconv"
 
                     # copy/generate tomograms and half-tomograms to scratch folder
                     for name in micrograph_list:
-                        if parameters["tomo_denoise_isonet2_mask"] or (not halves_needed):
+                        if original_needed:
                             tomogram = os.path.join(project_dir,"mrc",name+".rec")
                             command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {Path(tomogram).name}"
                             local_run.run_shell_command(command)
