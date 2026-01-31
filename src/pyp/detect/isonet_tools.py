@@ -617,6 +617,23 @@ def isonet2_train( project_dir, parameters):
             parameters=parameters
             )
 
+    with open(initial_star) as f:
+        logger.debug("Input star file:" + f.read())
+
+    sub_tomograms_per_tomo = parameters.get("tomo_denoise_isonet2_refine_total_subtomos") // len(train_name)
+
+    v = str(sub_tomograms_per_tomo)
+    lines = open(initial_star, "r", encoding="utf-8").read().splitlines(True)
+    for i, ln in enumerate(lines):
+        t = ln.split()
+        if t and t[0].isdigit() and len(t) >= 15:
+            t[14] = v
+            lines[i] = "\t".join(t) + "\n"
+    open(initial_star, "w", encoding="utf-8").writelines(lines)
+
+    with open(initial_star) as f:
+        logger.debug("Input star file:" + f.read())
+
     # refine (train)
     output_dir = os.path.join( os.getcwd(), "isonet_maps")
 
@@ -1189,7 +1206,7 @@ _rlnMicrographName #18"""
     # all_tomograms = glob.glob(f"{project_dir}/mrc/*.rec")
     # tomograms = [t for t in all_tomograms if not "denoised" in t]
 
-    sub_tomograms_per_tomo = parameters.get("tomo_denoise_isonet2_total_subtomos") // len(name_list)
+    sub_tomograms_per_tomo = parameters.get("tomo_denoise_isonet2_denoise_total_subtomos") // len(name_list)
 
     with open(outputname, 'w') as f:
         f.write(star_header)
