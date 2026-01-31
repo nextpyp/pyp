@@ -3130,7 +3130,7 @@ description = "The total number of subtomograms to extract, divided evenly per t
 type = "int"
 default = 3000
 condition = { arg="method", value=["isonet2"] }
-hidden = [ "tomo_denoise_train" ]
+hidden = [ "tomo_denoise_eval" ]
 
 # ISONET2 PREDICT
 
