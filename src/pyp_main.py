@@ -4239,7 +4239,7 @@ def clear_scratch(scratch,timeout=60):
                     except:
                         pass
 
-def tomoswarm_prologue():
+def tomoswarm_prologue(convert_to_32 = True):
     """ Setup enviroment for running tasks that take a tomogram and produce another tomogram
 
     Returns
@@ -4276,9 +4276,9 @@ def tomoswarm_prologue():
     
     rec = os.path.join(project_path, "mrc", name + ".rec")
     if os.path.exists(rec):
-        if parameters.get("tomo_rec_depth") and get_image_mode(rec) != 2:
+        if parameters.get("tomo_rec_depth") and get_image_mode(rec) != 2 and convert_to_32:
             logger.info("Converting tomogram to 32-bits")
-            command = "{0}/bin/newstack -mode 2 {1} {2}".format(
+            command = "{0}/bin/newstack -quiet -mode 2 {1} {2}".format(
                 get_imod_path(), rec, name + ".rec"
             )
             local_run.run_shell_command(command)
@@ -4322,7 +4322,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
 
     if parameters.get("tomo_rec_depth") and not segmentation:
         logger.info("Converting tomogram to 16-bits")
-        command = f"{get_imod_path()}/bin/newstack -mode 12 {new_reconstruction} {target}"
+        command = f"{get_imod_path()}/bin/newstack -quiet -mode 12 {new_reconstruction} {target}"
         local_run.run_shell_command(command)
     else:
         shutil.copy2( new_reconstruction, target )
@@ -6023,9 +6023,10 @@ if __name__ == "__main__":
 
                     # copy/generate tomograms and half-tomograms to scratch folder
                     for name in micrograph_list:
-                        if parameters["tomo_denoise_isonet2_mask"]:
+                        if parameters["tomo_denoise_isonet2_mask"] or (not halves_needed):
                             tomogram = os.path.join(project_dir,"mrc",name+".rec")
-                            shutil.copy2(tomogram,os.getcwd())
+                            command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {Path(tomogram).name}"
+                            local_run.run_shell_command(command)
 
                         if halves_needed:
                             first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
@@ -6052,9 +6053,9 @@ if __name__ == "__main__":
                     working_path = Path(os.environ["PYP_SCRATCH"])
                     shutil.rmtree(working_path, "True")
 
-                    args, name, project_path, working_path, parameters = tomoswarm_prologue()
+                    args, name, project_path, working_path, parameters = tomoswarm_prologue(convert_to_32=False)
 
-                    halves_needed = "_n2n_" in os.path.basename(parameters.get("tomo_denoise_isonet2_predict_model", ""))
+                    halves_needed = "n2n_" in os.path.basename(parameters.get("tomo_denoise_isonet2_predict_model", ""))
 
                     if halves_needed:
                         # generate half-tomograms and save to train/ folder, if needed
@@ -6069,12 +6070,15 @@ if __name__ == "__main__":
                             # flip yz coordinates to match isonet2 convention
                             command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
                             local_run.run_shell_command(command)
+                    else:
+                        tomogram = os.path.join(project_dir, "mrc", name + ".rec")
+                        command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {Path(tomogram).name}"
+                        local_run.run_shell_command(command)
 
                     new_reconstruction = isonet_tools.isonet2_predict( name, project_path, parameters)
 
-                    if halves_needed:
-                        command = f"{get_imod_path()}/bin/clip flipzy {new_reconstruction} {new_reconstruction}~; mv {new_reconstruction}~ {new_reconstruction}"
-                        local_run.run_shell_command(command)
+                    command = f"{get_imod_path()}/bin/clip flipzy {new_reconstruction} {new_reconstruction}~; mv {new_reconstruction}~ {new_reconstruction}"
+                    local_run.run_shell_command(command)
 
                     tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=True)
 
