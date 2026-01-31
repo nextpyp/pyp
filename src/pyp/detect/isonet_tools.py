@@ -520,7 +520,7 @@ def isonet2_predict( name, project_dir, parameters ):
         model = max(models, key=os.path.getmtime)
 
     model_base = os.path.basename(model)
-    if "_isonet2_" in model_base and "n2n_" not in model_base:
+    if ("n2n_" not in model_base) and parameters["tomo_denoise_isonet2_predict_input_column"] == "rlnDeconvTomoName":
         isonet2_ctf_deconvolve(initial_star, parameters=parameters)
     
     isonet2_predict_command(
