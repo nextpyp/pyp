@@ -533,6 +533,30 @@ def isonet2_predict( name, project_dir, parameters ):
     output = glob.glob( "corrected_tomos/*.mrc" )[0]
     return output
 
+def parse_loss(output, max_points=500):
+    loss = np.array([line.split("Loss:")[1].split()[0].split(',')[0] for line in output if "Learning rate:" in line]).astype('f')
+    epoch = np.array([line.split("Epoch")[1].split(":")[0] for line in output if "Learning rate:" in line]).astype('i')
+
+    _, inv = np.unique(epoch, return_inverse=True)
+    epoch_mean = np.bincount(inv, loss) / np.bincount(inv)
+    epoch_mean_per_step = epoch_mean[inv]
+
+    binning_factor = max(loss.shape[0] // max_points, 1)
+    steps = np.arange(0, loss.shape[0], binning_factor)
+
+    if binning_factor > 1:
+        loss = loss[::binning_factor]
+        epoch_mean_per_step = epoch_mean_per_step[::binning_factor]
+
+    return steps, loss, epoch_mean_per_step
+
+def plot_loss(ax, steps, loss, epoch_mean_per_step, title):
+    ax.set_title(title)
+    ax.plot(steps, loss, ".-", color="blue", label="Loss")
+    ax.plot(steps, epoch_mean_per_step, "-", drawstyle="steps-post", color="orange", label="Epoch Average")
+    ax.set_ylabel("Loss")
+    ax.legend()
+
 def isonet2_train( project_dir, parameters):
     
         # get the train list
@@ -553,6 +577,8 @@ def isonet2_train( project_dir, parameters):
         logger.debug("Input star file:"+f.read())
     
     debug = True if parameters.get("tomo_denoise_isonet_debug", False) else False
+
+    denoise_output = None
         
     # masking
     if parameters["tomo_denoise_isonet2_mask"]:
@@ -568,7 +594,7 @@ def isonet2_train( project_dir, parameters):
 
             assert parameters['tomo_denoise_isonet2_denoise_epochs'] >= parameters['tomo_denoise_isonet2_denoise_save_interval'], f"IsoNet2 requires the save interval ({parameters['tomo_denoise_isonet2_denoise_save_interval']}) to be less than number of epochs ({parameters['tomo_denoise_isonet2_denoise_epochs']})!"
 
-            isonet2_denoise(
+            denoise_output = isonet2_denoise(
                 initial_star,
                 parameters=parameters
                 )
@@ -593,12 +619,33 @@ def isonet2_train( project_dir, parameters):
 
     assert parameters['tomo_denoise_isonet2_refine_epochs'] >= parameters['tomo_denoise_isonet2_refine_save_interval'], f"IsoNet2 requires the save interval ({parameters['tomo_denoise_isonet2_refine_save_interval']}) to be less than number of epochs ({parameters['tomo_denoise_isonet2_refine_epochs']})!"
     
-    isonet2_refine(
+    refine_output = isonet2_refine(
         initial_star, 
         parameters=parameters
         )
     
     assert len(glob.glob( os.path.join( output_dir, "*.pt") )) > 0, "IsoNet2 failed to run"
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style("dark")
+
+    if denoise_output is not None:
+        steps_de, loss_de, epoch_mean_per_step_de = parse_loss(denoise_output)
+        steps_re, loss_re, epoch_mean_per_step_re = parse_loss(refine_output)
+
+        fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6], sharex=True)
+        plot_loss(ax[0], steps_de, loss_de, epoch_mean_per_step_de, "IsoNet2 training loss (denoise)")
+        plot_loss(ax[1], steps_re, loss_re, epoch_mean_per_step_re, "IsoNet2 training loss (refine)")
+    else:
+        steps_re, loss_re, epoch_mean_per_step_re = parse_loss(refine_output)
+
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[8, 6], sharex=True)
+        plot_loss(ax, steps_re, loss_re, epoch_mean_per_step_re, "IsoNet2 training loss (refine)")
+
+    plt.xlabel("Step")
+    plt.savefig("training_loss.svgz")
+    plt.close()
     
     # copy resulting h5 models to project directory
     save_dir = os.path.join( project_dir, "train", "isonet2" )
@@ -761,7 +808,14 @@ def isonet2_denoise(input_star, parameters, output = "./denoise"):
         
     command = get_isonet2_path() + f"isonet.py denoise {input_star} --output_dir {output} {isonet_denoise_parameters} --gpuID {get_gpu_ids(parameters)}"
 
-    local_run.stream_shell_command(command)
+    output = []
+
+    def obs(line):
+        output.append(line)
+
+    local_run.stream_shell_command(command, observer=obs)
+
+    return output
     
 def isonet2_predict_command(input_star, model, parameters, output = "./corrected_tomos"):
     """
@@ -1087,28 +1141,7 @@ FLAGS
     
     local_run.stream_shell_command(command,observer=obs)
 
-    # parse output
-    loss = np.array([ line.split("Loss:")[1].split()[0].split(',')[0] for line in output if "Learning rate:" in line]).astype('f')
-
-    max_points = 500
-    binning_factor = max(loss.shape[0] // max_points,1)
-    steps = np.arange(0, loss.shape[0], binning_factor)
-    if binning_factor > 1:
-        loss = loss[::binning_factor]
-    
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    sns.set_style("dark")
-
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[8, 6], sharex=True)
-
-    ax.set_title("IsoNet2 training loss (refine)")
-    ax.plot(steps,loss,".-",color="blue",label="Loss")
-    ax.set_ylabel("Loss")
-    ax.legend()
-    plt.xlabel("Step")
-    plt.savefig("training_loss.svgz")
-    plt.close()
+    return output
 
 def isonet2_generate_star(project_dir, outputname, parameters, name_list):
     """
