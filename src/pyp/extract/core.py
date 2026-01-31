@@ -424,18 +424,16 @@ def extract_particles_non_mpi(
             input_image_name = input + ".mrc"
             
         # convert to 32-bits, if necessary
-        delete_temp = False
         if get_image_mode(input) == 12:
-            input_image_name = Path(input_image_name).name
-            command = f"{get_imod_path()}/bin/newstack -mode 2 {input_image_name} {input_image_name}~; mv {input_image_name}~ {input_image_name}"
+            tmp_image_name = Path(input_image_name).name
+            command = f"{get_imod_path()}/bin/newstack -mode 2 {input_image_name} {tmp_image_name}"
             run_shell_command(command)
-            delete_temp = True
 
-        image = mrc.read(input_image_name)
+        image = mrc.read(tmp_image_name)
         
         # remove temporary file
-        if delete_temp:
-            os.remove(input_image_name)
+        if os.path.exists(tmp_image_name):
+            os.remove(tmp_image_name)
             
         nx, ny, frames = image.shape[-2], image.shape[-1], image.ndim - 1
     
