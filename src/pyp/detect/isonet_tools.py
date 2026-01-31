@@ -654,16 +654,17 @@ def isonet2_train( project_dir, parameters):
         steps_de, loss_de, epoch_mean_per_step_de = parse_loss(denoise_output)
         steps_re, loss_re, epoch_mean_per_step_re = parse_loss(refine_output)
 
-        fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6], sharex=True)
+        fig, ax = plt.subplots(nrows=2, ncols=1, figsize=[8, 6])
         plot_loss(ax[0], steps_de, loss_de, epoch_mean_per_step_de, "IsoNet2 training loss (denoise)")
         plot_loss(ax[1], steps_re, loss_re, epoch_mean_per_step_re, "IsoNet2 training loss (refine)")
     else:
         steps_re, loss_re, epoch_mean_per_step_re = parse_loss(refine_output)
 
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[8, 6], sharex=True)
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[8, 6])
         plot_loss(ax, steps_re, loss_re, epoch_mean_per_step_re, "IsoNet2 training loss (refine)")
 
-    plt.xlabel("Step")
+    fig.supxlabel("Step")
+    fig.tight_layout()
     plt.savefig("training_loss.svgz")
     plt.close()
 
