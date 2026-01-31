@@ -668,7 +668,12 @@ def milotrain(args):
                 except:
                     raise Exception("Can't find aligned tilt series images")
 
-            train_images_file.write( file + "\t" + os.path.join( os.getcwd(), 'mrc', file + ".rec") + "\t" + os.path.join( os.getcwd(), 'mrc', file + "_bin.ali") + "\t" + os.path.join( os.getcwd(), 'train', file + ".rawtlt") + "\n" )
+            # use denoised or raw tomograms
+            if args.get("detect_milo_use_denoised") and os.path.exists(os.path.join(os.getcwd(),"mrc", file + "_den.rec")):
+                suffix = "_den"
+            else:
+                suffix = ""
+            train_images_file.write( file + "\t" + os.path.join( os.getcwd(), 'mrc', file + suffix + ".rec") + "\t" + os.path.join( os.getcwd(), 'mrc', file + "_bin.ali") + "\t" + os.path.join( os.getcwd(), 'train', file + ".rawtlt") + "\n" )
 
     # setup local scratch area
     scratch_train = os.path.join( os.environ["PYP_SCRATCH"], "train" )
@@ -958,7 +963,13 @@ def miloeval(args):
                         except:
                             raise Exception("Can't find aligned tilt series images")
 
-                    f.write( file + "\t" + os.path.join( os.getcwd(), 'mrc', file + ".rec") + "\t" + os.path.join( os.getcwd(), 'mrc', file + "_bin.ali") + "\t" + os.path.join( os.getcwd(), 'train', file + ".rawtlt") + "\n" )                    
+                    # use denoised or raw tomograms
+                    if args.get("detect_nn3d_use_denoised") and os.path.exists(os.path.join(os.getcwd(),"mrc", file + "_den.rec")):
+                        suffix = "_den"
+                    else:
+                        suffix = ""
+
+                    f.write( file + "\t" + os.path.join( os.getcwd(), 'mrc', file + suffix + ".rec") + "\t" + os.path.join( os.getcwd(), 'mrc', file + "_bin.ali") + "\t" + os.path.join( os.getcwd(), 'train', file + ".rawtlt") + "\n" )                    
 
     if "detect_milo_model" in args and args.get("detect_milo_model") == "auto":
         training_folder = sorted(glob.glob( os.path.join( project_params.resolve_path(args.get("data_parent")), "train/*/" )))[-1]

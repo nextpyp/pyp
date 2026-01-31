@@ -503,9 +503,6 @@ def isonet_predict( name, project_dir, parameters ):
 
 
 def isonet2_predict( name, project_dir, parameters ):
-    
-    # transfer/convert tomogram to local scratch
-    # convert_and_transfer_tomograms( [name], project_dir, parameters)
 
     initial_star = f"{name}_tomograms.star"
     isonet2_generate_star( project_dir, initial_star, parameters, name_list=[name])
@@ -585,13 +582,10 @@ def isonet2_train( project_dir, parameters):
     debug = True if parameters.get("tomo_denoise_isonet_debug", False) else False
 
     denoise_output = None
-        
+
     # masking
     if parameters["tomo_denoise_isonet2_mask"]:
-        
-        # transfer/convert tomograms to local scratch
-        # convert_and_transfer_tomograms( train_name, project_dir, parameters)
-    
+
         if parameters["tomo_denoise_isonet2_mask_preprocessing"] == "deconv":
 
             isonet2_ctf_deconvolve(
@@ -622,9 +616,6 @@ def isonet2_train( project_dir, parameters):
             initial_star,
             parameters=parameters
             )
-
-    # if (not parameters["tomo_denoise_isonet2_mask"]) and (parameters["tomo_denoise_isonet2_refine_method"] == "isonet2"):
-    #     convert_and_transfer_tomograms(train_name, project_dir, parameters)
 
     # refine (train)
     output_dir = os.path.join( os.getcwd(), "isonet_maps")
@@ -658,7 +649,7 @@ def isonet2_train( project_dir, parameters):
     plt.xlabel("Step")
     plt.savefig("training_loss.svgz")
     plt.close()
-    
+
     # copy resulting h5 models to project directory
     save_dir = os.path.join( project_dir, "train", "isonet2" )
     os.makedirs(save_dir,exist_ok=True)

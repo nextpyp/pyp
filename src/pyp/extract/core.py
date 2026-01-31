@@ -18,6 +18,7 @@ from pyp.inout.image import (
     get_image_dimensions,
     mrc,
 )
+from pyp.inout.image.core import get_image_mode
 from pyp.inout.metadata import cistem_star_file
 from pyp.system import mpi
 from pyp.system.local_run import run_shell_command
@@ -418,9 +419,22 @@ def extract_particles_non_mpi(
     else:
         # read just one tiltseries
         if input[-4:] == ".mrc":
-            image = mrc.read(input)
+            input_image_name = input
         else:
-            image = mrc.read(input + ".mrc")
+            input_image_name = input + ".mrc"
+            
+        # convert to 32-bits, if necessary
+        if get_image_mode(input) == 12:
+            tmp_image_name = Path(input_image_name).name
+            command = f"{get_imod_path()}/bin/newstack -mode 2 {input_image_name} {tmp_image_name}"
+            run_shell_command(command)
+
+        image = mrc.read(tmp_image_name)
+        
+        # remove temporary file
+        if os.path.exists(tmp_image_name):
+            os.remove(tmp_image_name)
+            
         nx, ny, frames = image.shape[-2], image.shape[-1], image.ndim - 1
     
     if isinstance(cistem_obj,cistem_star_file.ExtendedParameters) or isinstance(cistem_obj[0],cistem_star_file.Parameters):
