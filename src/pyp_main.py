@@ -6061,6 +6061,7 @@ if __name__ == "__main__":
                     working_path = Path(os.environ["PYP_SCRATCH"])
                     shutil.rmtree(working_path, "True")
 
+                    # convert or transfer tomogram to local scratch and change directory to pyp_scratch/name
                     args, name, project_path, working_path, parameters = tomoswarm_prologue(convert_to_32=False)
 
                     halves_needed = "n2n_" in os.path.basename(parameters.get("tomo_denoise_isonet2_predict_model", ""))
@@ -6070,8 +6071,6 @@ if __name__ == "__main__":
                         first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
                         second_half = first_half.replace("_half1.rec","_half2.rec")
 
-                        os.chdir(working_path)
-
                         for half_map in [first_half, second_half]:
                             assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms before running IsoNet2 from the pre-processing block"
 
@@ -6079,8 +6078,9 @@ if __name__ == "__main__":
                             command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
                             local_run.run_shell_command(command)
                     else:
-                        tomogram = os.path.join(project_dir, "mrc", name + ".rec")
-                        command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {Path(tomogram).name}"
+                        # tomogram should already be in local scracth
+                        tomogram = name + ".rec"
+                        command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {tomogram}~; mv {tomogram}~ {tomogram}"
                         local_run.run_shell_command(command)
 
                     new_reconstruction = isonet_tools.isonet2_predict( name, project_path, parameters)
