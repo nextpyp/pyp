@@ -428,6 +428,8 @@ def extract_particles_non_mpi(
             tmp_image_name = Path(input_image_name).name
             command = f"{get_imod_path()}/bin/newstack -mode 2 {input_image_name} {tmp_image_name}"
             run_shell_command(command)
+        else:
+            tmp_image_name = input_image_name
 
         image = mrc.read(tmp_image_name)
         
