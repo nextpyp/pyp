@@ -680,12 +680,12 @@ def isonet2_train( project_dir, parameters):
     commands = []
     if parameters["tomo_denoise_isonet2_mask"]:    
         for file in glob.glob("corrected_tomos/*.mrc") + glob.glob("deconv/*.rec"):
-            current_name = [ f for f in train_name if f in file ][0]
+            current_name = next(f for f in train_name if f in file)
             # TODO: we are doing the flipping twice when debug is enabled, so this can be optimized
             commands.append(f"{get_imod_path()}/bin/clip flipyz '{file}' '{current_name}_deconv.mrc'")
             arguments.append((current_name+"_deconv.mrc", f"{current_name}_deconv.webp", True))
         for file in glob.glob("mask/*.mrc"):
-            current_name = [ f for f in train_name if f in file ][0]
+            current_name = next(f for f in train_name if f in file)
             commands.append(f"{get_imod_path()}/bin/clip flipyz '{file}' '{current_name}_mask.mrc'")
             arguments.append((current_name+"_mask.mrc", f"{current_name}_mask.webp", True))
             
