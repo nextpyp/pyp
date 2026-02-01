@@ -620,9 +620,6 @@ def isonet2_train( project_dir, parameters):
             parameters=parameters
             )
 
-    with open(initial_star) as f:
-        logger.debug("Input star file:" + f.read())
-
     sub_tomograms_per_tomo = parameters.get("tomo_denoise_isonet2_refine_total_subtomos") // len(train_name)
 
     v = str(sub_tomograms_per_tomo)
