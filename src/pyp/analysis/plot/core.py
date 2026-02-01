@@ -1563,22 +1563,27 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True, labels="", thr
     # clean up pngs and flipped tomogram
     [os.remove(png) for png in pngList]
 
+    tmp_prefix = Path(output_pattern).name
+    tmp_image_png = f"{tmp_prefix}_image.png"
+    tmp_side1_png = f"{tmp_prefix}_side1.png"
+    tmp_side2_png = f"{tmp_prefix}_side2.png"
+
     # generate central slice
     rec = imageio.mrc.read(tomogram_flip)
     rec_x = rec.shape[1]
     rec_z = rec.shape[0]
     avg_start = rec_z // 2 - int(averagezslices) // 2
     avg_end = rec_z // 2 + int(averagezslices) // 2
-    imageio.writepng(np.average(rec[avg_start:avg_end, :, :], 0), "image.png")
+    imageio.writepng(np.average(rec[avg_start:avg_end, :, :], 0), tmp_image_png)
     # commands.getstatusoutput('{0}/convert image.png -contrast-stretch 1%x98% image.png'.format( os.environ['IMAGICDIR'] ) )
-    contrast_stretch("image.png")
+    contrast_stretch(tmp_image_png)
 
     os.remove(tomogram_avg)
     os.remove(tomogram_flip)
 
     # compose quad-plot
-    command = "{0}/convert image.png {1}".format(
-        os.environ["IMAGICDIR"], output_image
+    command = "{0}/convert {1} {2}".format(
+        os.environ["IMAGICDIR"], tmp_image_png, output_image
     )
     run_shell_command(command)
 
@@ -1586,21 +1591,18 @@ def tomo_slicer_gif(tomogram, output, flipyz=True, clipping=True, labels="", thr
     x_middle = rec_x // 2
 
     from skimage.transform import resize
-    imageio.writepng(resize(np.average(rec[:,:x_middle, :], 1),(averagezslices*rec_z,rec_x)), "side1.png")
-    imageio.writepng(resize(np.average(rec[:,x_middle + 1:, :], 1),(averagezslices*rec_z,rec_x)), "side2.png")
-    contrast_stretch("side1.png")
-    contrast_stretch("side2.png")
+    imageio.writepng(resize(np.average(rec[:,:x_middle, :], 1),(averagezslices*rec_z,rec_x)), tmp_side1_png)
+    imageio.writepng(resize(np.average(rec[:,x_middle + 1:, :], 1),(averagezslices*rec_z,rec_x)), tmp_side2_png)
+    contrast_stretch(tmp_side1_png)
+    contrast_stretch(tmp_side2_png)
     run_shell_command(
-        "%s/montage side2.png side1.png -mode concatenate -tile 1x %s"
-        % ( os.environ["IMAGICDIR"], output_sides )
+        "%s/montage %s %s -mode concatenate -tile 1x %s"
+        % ( os.environ["IMAGICDIR"], tmp_side2_png, tmp_side1_png, output_sides )
     )
     # clean up side pngs
-    pngList = [
-        png
-        for png in os.listdir(".")
-        if png.startswith("side") and png.endswith(".png")
-    ]
-    [os.remove(png) for png in pngList]
+    for path in (tmp_side1_png, tmp_side2_png, tmp_image_png):
+        if os.path.exists(path):
+            os.remove(path)
 
 def false_color(input, output):
     
