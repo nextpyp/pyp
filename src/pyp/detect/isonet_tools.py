@@ -4,10 +4,13 @@ import glob
 import shutil
 import numpy as np
 from pathlib import Path
+import pandas as pd
 
+from pyp.analysis import plot
 from pyp.inout.metadata import pyp_metadata
 from pyp.system import local_run, project_params, mpi
 from pyp.system.utils import get_gpu_ids, get_imod_path
+from pyp.system.db_comm import save_tiltseries_to_website
 
 from pyp.system.logging import logger
 
@@ -675,6 +678,27 @@ def isonet2_train( project_dir, parameters):
     for f in glob.glob( os.path.join( output_dir, "*.pt") ):
         shutil.copy2( f, os.path.join( save_dir, "isonet_" + Path(f).name) )
 
+    # create montages
+    arguments = []
+    commands = []
+    if parameters["tomo_denoise_isonet2_mask"]:    
+        for file in glob.glob("corrected_tomos/*.mrc"):
+            current_name = [ f for f in train_name if f in file ][0]
+            # TODO: we are doing the flipping twice when debug is enabled, so this can be optimized
+            commands.append(f"{get_imod_path()}/bin/clip flipyz '{file}' '{current_name}_deconv.mrc'")
+            arguments.append((current_name+"_deconv.mrc", f"{current_name}_deconv.webp", True))
+        for file in glob.glob("mask/*.mrc"):
+            current_name = [ f for f in train_name if f in file ][0]
+            commands.append(f"{get_imod_path()}/bin/clip flipyz '{file}' '{current_name}_mask.mrc'")
+            arguments.append((current_name+"_mask.mrc", f"{current_name}_mask.webp", True))
+            
+    if len(arguments) > 0:
+        mpi.submit_jobs_to_workers(commands)
+        mpi.submit_function_to_workers(plot.tomo_slicer_gif, arguments=arguments)
+    
+    for f in glob.glob( "*.webp"):
+        shutil.copy2( f, os.path.join( project_dir, "train" ) )
+
     if debug:
         os.makedirs(save_dir, exist_ok=True)
 
@@ -699,6 +723,18 @@ def isonet2_train( project_dir, parameters):
             elif Path(s).suffix == ".star":
                 shutil.copy2(s, d)
     
+    for name in train_name:
+        # convert metadata to files
+        pkl_file = f"{os.path.join(project_dir,'pkl',name)}.pkl"
+
+        metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+        metadata_object.data['global_ctf'].values[8] = metadata_object.data['global_ctf'].values[8]
+        metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_dir,"raw/"))
+        os.remove(f'{name}_avgrot.txt')
+
+        tilt_metadata = pd.read_pickle(pkl_file)
+        save_tiltseries_to_website(name, tilt_metadata['web'])
+
     # go back to project directory and clean local scratch
     working_path = os.getcwd()
     os.chdir(project_dir)
