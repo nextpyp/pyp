@@ -26,7 +26,7 @@ NN_INIT_COMMANDS_3D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_D
 
 def bin_image( input, output, binning):
     if binning > 1:
-        command = f"{get_imod_path()}/bin/newstack '{input}' '{output}' -shrink {binning}; rm -f '{output}~'"
+        command = f"{get_imod_path()}/bin/newstack -quiet '{input}' '{output}' -shrink {binning}; rm -f '{output}~'"
         local_run.run_shell_command(command)
     else:
         shutil.copy2(input,output)
@@ -663,7 +663,7 @@ def milotrain(args):
                     size_x -= size_x % 2
                     size_y = round(y / binning)
                     size_y -= size_y % 2
-                    comm = "{0}/bin/newstack -input mrc/{1}.mrc -output mrc/{1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format( get_imod_path(), file, imod_binning_option, size_x, size_y )
+                    comm = "{0}/bin/newstack -quiet -input 'mrc/{1}.mrc' -output 'mrc/{1}_bin.ali' -mode 2 -origin -linear {2} -size {3},{4}".format( get_imod_path(), file, imod_binning_option, size_x, size_y )
                     [output, _] = local_run.run_shell_command(comm)
                 except:
                     raise Exception("Can't find aligned tilt series images")
@@ -958,7 +958,7 @@ def miloeval(args):
                             size_x -= size_x % 2
                             size_y = round(y / binning)
                             size_y -= size_y % 2
-                            comm = "{0}/bin/newstack -input mrc/{1}.mrc -output mrc/{1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format( get_imod_path(), file, imod_binning_option, size_x, size_y )
+                            comm = "{0}/bin/newstack -quiet -input mrc/{1}.mrc -output mrc/{1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format( get_imod_path(), file, imod_binning_option, size_x, size_y )
                             local_run.run_shell_command(comm)
                         except:
                             raise Exception("Can't find aligned tilt series images")

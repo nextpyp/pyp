@@ -1485,7 +1485,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
 
         # convert frame average to 32-bits
         if parameters.get("movie_depth") and os.path.exists(name+".avg"):
-            command = "{0}/bin/newstack -mode 2 '{1}' '{1}~' && mv '{1}~' '{1}'".format(
+            command = "{0}/bin/newstack -quiet -mode 2 '{1}' '{1}~' && mv '{1}~' '{1}'".format(
                 get_imod_path(), name + ".avg"
             )
             local_run.run_shell_command(command)
@@ -1549,7 +1549,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
             # we can't really deal with dm4's properly, so we just convert to mrc and continue on (not the most efficient, but it works)
             if extension == ".dm4":
                 stem = Path(filename).stem
-                local_run.run_shell_command(f"{get_imod_path()}/bin/newstack '{stem}.dm4' '{stem}.mrc'")
+                local_run.run_shell_command(f"{get_imod_path()}/bin/newstack -quiet '{stem}.dm4' '{stem}.mrc'")
                 os.remove(stem+".dm4")
                 extension = ".mrc"
                 raw_name = stem + extension
@@ -1671,7 +1671,7 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
     if not os.path.exists(name + ".mrc") or not os.path.samefile(name + ".avg", name + ".mrc"):
         if parameters.get("movie_depth") and os.path.exists(name + ".avg") and get_image_mode(name + ".avg") != 12:
             logger.info("Converting average to 16-bits")
-            command = "{0}/bin/newstack -mode 12 '{1}.avg' '{1}.mrc' && rm -f '{1}.mrc~'".format(
+            command = "{0}/bin/newstack -quiet -mode 12 '{1}.avg' '{1}.mrc' && rm -f '{1}.mrc~'".format(
                 get_imod_path(), name
             )
             local_run.run_shell_command(command)
@@ -1788,7 +1788,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if parameters.get("tomo_rec_depth") and "tomo-import" not in parameters.get("micromon_block"):
             if os.path.exists(name + ".rec") and get_image_mode(name + ".rec") != 2:
                 logger.info("Converting tomogram to 32-bits")
-                command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
+                command = "{0}/bin/newstack -quiet -mode 2 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), name + ".rec"
                 )
                 local_run.run_shell_command(command)
@@ -2309,7 +2309,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
             elif process_half_tomogram:
                 logger.info("Converting half-tomograms to 16-bits")
             for file in files_to_process:
-                command = "{0}/bin/newstack -mode 12 {1} {1}~ && mv {1}~ {1}".format(
+                command = "{0}/bin/newstack -quiet -mode 12 {1} {1}~ && mv {1}~ {1}".format(
                     get_imod_path(), file
                 )
                 commands.append(command)
@@ -2723,7 +2723,7 @@ def csp_extract_frames(
                     # convert to 32-bits, if needed
                     if parameters.get("movie_depth") and Path(raw_image).suffix == ".mrc":
                         logger.info("Converting micrograph/tilt-series to 32-bits")
-                        command = "{0}/bin/newstack -mode 2 {1} {1}~ && mv {1}~ {1}".format(
+                        command = "{0}/bin/newstack -quiet -mode 2 {1} {1}~ && mv {1}~ {1}".format(
                             get_imod_path(), raw_image
                         )
                         local_run.run_shell_command(command, log_level=logging.TRACE)
@@ -5027,7 +5027,7 @@ if __name__ == "__main__":
                             else:
                                 rotate = ""
                             slice = math.floor( slices / 2 )
-                            com = f"{get_imod_path()}/bin/newstack {input_file} {output_file} -bin {binning} -float 2 -secs {slice} {rotate}"
+                            com = f"{get_imod_path()}/bin/newstack -quiet {input_file} {output_file} -bin {binning} -float 2 -secs {slice} {rotate}"
                             local_run.run_shell_command(com)
                             com = f"{get_imod_path()}/bin/mrc2tif -j -q 100 {output_file} gain_corrected.jpg"
                             local_run.run_shell_command(com)
@@ -5895,7 +5895,7 @@ if __name__ == "__main__":
 
                             # flip yz coordinates to match isonet2 convention
                             if parameters.get("tomo_rec_depth") and os.path.exists(half_map) and get_image_mode(half_map) != 2:
-                                command = f"{get_imod_path()}/bin/newstack -mode 2 {half_map} {Path(half_map).name}"
+                                command = f"{get_imod_path()}/bin/newstack -quiet -mode 2 {half_map} {Path(half_map).name}"
                             else:
                                 command = f"cp -p {half_map} {Path(half_map).name}"
                             commands.append(command)
@@ -5920,7 +5920,7 @@ if __name__ == "__main__":
                     for half_map in [first_half, second_half]:
                         # flip yz coordinates to match isonet2 convention
                         if parameters.get("tomo_rec_depth") and os.path.exists(half_map) and get_image_mode(half_map) != 2:
-                            command = f"{get_imod_path()}/bin/newstack -mode 2 {half_map} {Path(half_map).name}"
+                            command = f"{get_imod_path()}/bin/newstack -quiet -mode 2 {half_map} {Path(half_map).name}"
                             commands.append(command)
                         else:
                             command = f"cp -p {half_map} {Path(half_map).name}"
@@ -6061,6 +6061,7 @@ if __name__ == "__main__":
                     working_path = Path(os.environ["PYP_SCRATCH"])
                     shutil.rmtree(working_path, "True")
 
+                    # convert or transfer tomogram to local scratch and change directory to pyp_scratch/name
                     args, name, project_path, working_path, parameters = tomoswarm_prologue(convert_to_32=False)
 
                     halves_needed = "n2n_" in os.path.basename(parameters.get("tomo_denoise_isonet2_predict_model", ""))
@@ -6070,8 +6071,6 @@ if __name__ == "__main__":
                         first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
                         second_half = first_half.replace("_half1.rec","_half2.rec")
 
-                        os.chdir(working_path)
-
                         for half_map in [first_half, second_half]:
                             assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms before running IsoNet2 from the pre-processing block"
 
@@ -6079,8 +6078,9 @@ if __name__ == "__main__":
                             command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
                             local_run.run_shell_command(command)
                     else:
-                        tomogram = os.path.join(project_dir, "mrc", name + ".rec")
-                        command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {Path(tomogram).name}"
+                        # tomogram should already be in local scracth
+                        tomogram = name + ".rec"
+                        command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {tomogram}~; mv {tomogram}~ {tomogram}"
                         local_run.run_shell_command(command)
 
                     new_reconstruction = isonet_tools.isonet2_predict( name, project_path, parameters)
@@ -6280,7 +6280,7 @@ if __name__ == "__main__":
 
                             x, y, z = get_image_dimensions(output_file)
                             binning = int(math.floor(x / 768))
-                            com = f"{get_imod_path()}/bin/newstack {output_file} {output_file}~ -bin {binning} -float 2 && mv {output_file}~ {output_file}"
+                            com = f"{get_imod_path()}/bin/newstack -quiet {output_file} {output_file}~ -bin {binning} -float 2 && mv {output_file}~ {output_file}"
                             local_run.run_shell_command(com)
                             com = f"{get_imod_path()}/bin/mrc2tif -j -q 100 {output_file} gain_corrected.jpg"
                             local_run.run_shell_command(com)

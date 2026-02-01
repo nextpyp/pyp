@@ -1268,7 +1268,7 @@ def plot_local_alignment(
         get_imod_path(), name
     )
     run_shell_command(com)
-    com = "{0}/bin/newstack {1}_mtf.mrc {1}_small.mrc -bin {2}".format(
+    com = "{0}/bin/newstack -quiet {1}_mtf.mrc {1}_small.mrc -bin {2}".format(
         get_imod_path(), name, display_binning
     )
     run_shell_command(com)
@@ -1746,7 +1746,7 @@ def plot_trajectories(
         else:
             raise Exception("Unable to figure out index of zero-tilt image")
 
-        com = "{0}/bin/newstack -secs {1} {2}.avg {2}.avg~ && mv {2}.avg~ {2}.avg".format(
+        com = "{0}/bin/newstack -quiet -secs {1} {2}.avg {2}.avg~ && mv {2}.avg~ {2}.avg".format(
                 get_imod_path(), zero_tilt_index, scratch_name
         )
         run_shell_command(com)
@@ -1760,7 +1760,7 @@ def plot_trajectories(
     )
     run_shell_command(com)
 
-    com = "{0}/bin/newstack {1}_mtf.mrc {1}_small.mrc -bin {2}".format(
+    com = "{0}/bin/newstack -quiet {1}_mtf.mrc {1}_small.mrc -bin {2}".format(
         get_imod_path(), scratch_name, display_binning
     )
     run_shell_command(com)

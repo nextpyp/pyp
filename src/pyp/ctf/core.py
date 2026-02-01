@@ -1120,7 +1120,7 @@ def ctffind_tomo_correct(parameters, name, tltfile, tilt_angles, nprocs):
         if idx > max_idx:
             idx = max_idx
 
-        command = "{0}/bin/newstack {1}.ali {1}_defocus_gradient_range.mrc -secs {2}-{3}".format(
+        command = "{0}/bin/newstack -quiet {1}.ali {1}_defocus_gradient_range.mrc -secs {2}-{3}".format(
             get_imod_path(), name, idx - 1, idx + 1
         )
         local_run.run_shell_command(command)
@@ -1232,7 +1232,7 @@ def periodogram_averaging(
             if True:
                 name = "".join(random.choice(string.ascii_letters) for i in range(20))
                 mrc.write(image, name + ".mrc")
-                command = "{0}/bin/newstack -bin 2 -antialias 6 {1}.mrc {1}_out.mrc".format(
+                command = "{0}/bin/newstack -quiet -bin 2 -antialias 6 {1}.mrc {1}_out.mrc".format(
                     get_imod_path(), name
                 )
                 local_run.run_shell_command(command)
@@ -1848,7 +1848,7 @@ def tomoctffind_multiprocessing(
     os.chdir(current + "/" + current_name)
 
     if not os.path.exists(current + "/" + current_name + ".dm4"):
-        com = "{0}/bin/newstack ../{1}.ali {2}.ali -secs {3}".format(
+        com = "{0}/bin/newstack -quiet ../{1}.ali {2}.ali -secs {3}".format(
             get_imod_path(), name, current_name, counter
         )
         local_run.run_shell_command(com)

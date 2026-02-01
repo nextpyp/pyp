@@ -259,7 +259,7 @@ def newstack(input_filename, output_filename, threads, **kwargs):
     """
     # add env for parallel run
     env = "export OMP_NUM_THREADS={0}; export NCPUS={0}; IMOD_FORCE_OMP_THREADS={0}; ".format(threads)
-    command = f"{env}{get_imod_path()}/bin/newstack {input_filename} {output_filename}"
+    command = f"{env}{get_imod_path()}/bin/newstack -quiet {input_filename} {output_filename}"
     for key, val in kwargs.items():
         # logger.info(f"key {key} val {val}")
         command += f" -{key} {val}"
@@ -281,7 +281,7 @@ def replace_sections(new_stack, original_stack, sections):
     sections : str
         List of section numbers
     """
-    command = "{0}/bin/newstack {1} {2} -replace {3}".format(
+    command = "{0}/bin/newstack -quiet {1} {2} -replace {3}".format(
         get_imod_path(), new_stack, original_stack, sections,
     )
     local_run.run_shell_command(command)
@@ -299,7 +299,7 @@ def write_current_particle(
         + "_P%04d" % (particle)
         + "_stack.mrc"
     )
-    command = "{0}/bin/newstack {1} {2} -secs {3}".format(
+    command = "{0}/bin/newstack -quiet {1} {2} -secs {3}".format(
         get_imod_path(), scratch_stackfile, particle_stack, sections,
     )
 

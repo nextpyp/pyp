@@ -316,7 +316,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         logger.info("Converting tif to mrc")
         commands = [] 
         for f in raw_image:
-            com = "{0}/bin/newstack -mode 2 {1} {2}".format(
+            com = "{0}/bin/newstack -quiet -mode 2 {1} {2}".format(
                 get_imod_path(), f, f.replace(".tiff", ".mrc").replace(".tif", ".mrc")
             )
             commands.append(com)
@@ -344,7 +344,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         half1_drift = drifts[even_list]
         np.savetxt(output_half1 + ".xf", half1_drift, fmt="%s", delimiter='\t')
         # read half slices 
-        command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, even_list))} -output {output_half1}.mrc"
+        command = f"{get_imod_path()}/bin/newstack -quiet -input {f} -secs {','.join(map(str, even_list))} -output {output_half1}.mrc"
         arguments.append(command)
     mpi.submit_jobs_to_workers(arguments)
 
@@ -357,7 +357,7 @@ def tomo_swarm_half( name, project_path, working_path, parameters):
         half2_drift = drifts[odd_list]
         np.savetxt(output_half2 + ".xf", half2_drift, fmt="%s", delimiter='\t')
         # read half slices and remove the original movie
-        command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, odd_list))} -output {output_half2}.mrc && rm -f {f}"
+        command = f"{get_imod_path()}/bin/newstack -quiet -input {f} -secs {','.join(map(str, odd_list))} -output {output_half2}.mrc && rm -f {f}"
         arguments.append(command)
     mpi.submit_jobs_to_workers(arguments)
 

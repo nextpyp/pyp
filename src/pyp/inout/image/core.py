@@ -1173,7 +1173,7 @@ def collate_and_compress(filename):
                 get_imod_path(), path, f
             )
             run_shell_command(com)
-            com = "{0}/bin/newstack {1}_test.mrc {1}.mrc -rotate -90".format(
+            com = "{0}/bin/newstack -quiet {1}_test.mrc {1}.mrc -rotate -90".format(
                 get_imod_path(), f
             )
             run_shell_command(com)
@@ -1184,13 +1184,13 @@ def collate_and_compress(filename):
             files_to_delete.extend(["{0}.mrc".format(f)])
             files_to_delete.extend(["{0}_test.mrc".format(f)])
 
-        com = "{0}/bin/newstack {1}_n?.mrc {1}_frames.mrc".format(get_imod_path(), name)
+        com = "{0}/bin/newstack -quiet {1}_n?.mrc {1}_frames.mrc".format(get_imod_path(), name)
         run_shell_command(com)
     elif os.path.exists("{0}/{1}_n0.Mrc".format(path, name)):
         frames = len(glob.glob(path + "/" + name + "_n*.Mrc"))
         for i in range(frames):
             f = name + "_n{}".format(i)
-            com = "{0}/bin/newstack {2}/{1}.Mrc {1}.mrc -rotate -90".format(
+            com = "{0}/bin/newstack -quiet {2}/{1}.Mrc {1}.mrc -rotate -90".format(
                 get_imod_path(), f, path
             )
             run_shell_command(com)
@@ -1203,13 +1203,13 @@ def collate_and_compress(filename):
 
         files_to_delete.extend(["{0}.mrc".format(name)])
 
-        com = "{0}/bin/newstack {1}_n*.mrc {1}_frames.mrc".format(get_imod_path(), name)
+        com = "{0}/bin/newstack -quiet {1}_n*.mrc {1}_frames.mrc".format(get_imod_path(), name)
         run_shell_command(com)
     elif os.path.exists("{0}/{1}_frames_n0.mrc".format(path, name)):
         frames = len(glob.glob(path + "/" + name + "_frames_n*.mrc"))
         for i in range(frames):
             f = name + "_frames_n{}".format(i)
-            com = "{0}/bin/newstack {2}/{1}.mrc {1}.mrc -rotate -90".format(
+            com = "{0}/bin/newstack -quiet {2}/{1}.mrc {1}.mrc -rotate -90".format(
                 get_imod_path(), f, path
             )
             run_shell_command(com)
@@ -1222,7 +1222,7 @@ def collate_and_compress(filename):
 
         files_to_delete.extend(["{0}.mrc".format(name)])
 
-        com = "{0}/bin/newstack {1}_frames_n*.mrc {1}_frames.mrc".format(
+        com = "{0}/bin/newstack -quiet {1}_frames_n*.mrc {1}_frames.mrc".format(
             get_imod_path(), name
         )
         run_shell_command(com)
@@ -1432,22 +1432,22 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
         # make individual tilted images squares
         for i, tilt in enumerate(aligned_tilts):
             if square_enabled:
-                command = "{0}/bin/newstack {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 {4} {6}".format(
+                command = "{0}/bin/newstack -quiet {1} {2}_{5:04d}_square.mrc -size {3},{3} -taper 1,1 {4} {6}".format(
                     get_imod_path(), tilt, name, int(square / binning), imod_binning_option, i, fill_option
                 )
             else:
-                command = "{0}/bin/newstack {1} {2}_{4:04d}_square.mrc -taper 1,1 {3} {5}".format(
+                command = "{0}/bin/newstack -quiet {1} {2}_{4:04d}_square.mrc -taper 1,1 {3} {5}".format(
                     get_imod_path(), tilt, name, imod_binning_option, i, fill_option
                 )
             commands.append(command)
     else:
         for tilt_idx in range(z):
             if square_enabled:
-                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -size {3},{3} -taper 1,1 {4} {5}".format(
+                command = "{0}/bin/newstack -quiet -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -size {3},{3} -taper 1,1 {4} {5}".format(
                     get_imod_path(), tilt_idx, name, int(square / binning), imod_binning_option, fill_option
                 )
             else:
-                command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -taper 1,1 {3} {4}".format(
+                command = "{0}/bin/newstack -quiet -secs {1} {2}.mrc {2}_{1:04d}_square.mrc -taper 1,1 {3} {4}".format(
                     get_imod_path(), tilt_idx, name, imod_binning_option, fill_option
                 )
             commands.append(command)
@@ -1457,7 +1457,7 @@ def tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning):
     from pyp.system import mpi
     mpi.submit_jobs_to_workers(commands)
     
-    command = "{0}/bin/newstack {1} {2}_square.mrc".format(
+    command = "{0}/bin/newstack -quiet {1} {2}_square.mrc".format(
         get_imod_path(), " ".join(squares) , name
     )
     # suppress long log
@@ -1501,7 +1501,7 @@ def generate_aligned_tiltseries(name, parameters, x, y):
     aligned_images = []
     fill_option = f"-fill {get_image_mean(name+'.mrc')}"
     for tilt in range(sec):
-        command = "{0}/bin/newstack -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs {5} -linear -taper 1,1 -size {3},{4} && rm -f {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
+        command = "{0}/bin/newstack -quiet -input {1}_{2:04d}_square.mrc -output {1}_{2:04d}.ali -xform {1}_{2:04d}.xfs {5} -linear -taper 1,1 -size {3},{4} && rm -f {1}_{2:04d}_square.mrc {1}_{2:04d}.xfs".format(
             get_imod_path(), name, tilt, x, y, fill_option
         )
         commands.append(command)
@@ -1510,7 +1510,7 @@ def generate_aligned_tiltseries(name, parameters, x, y):
     from pyp.system import mpi
     mpi.submit_jobs_to_workers(commands)
 
-    command = "{0}/bin/newstack {2} {1}.ali".format(
+    command = "{0}/bin/newstack -quiet {2} {1}.ali".format(
         get_imod_path(), name, " ".join(aligned_images)
     )
     # suppress long log
@@ -1524,7 +1524,7 @@ def generate_aligned_tiltseries(name, parameters, x, y):
         size_y = round(y / binning)
         size_y -= size_y % 2
         # generate binned version also
-        command = "{0}/bin/newstack {1}.ali {1}_bin.ali -shrink {2} -size {3},{4}; rm -rf {1}_bin.ali~".format(
+        command = "{0}/bin/newstack -quiet {1}.ali {1}_bin.ali -shrink {2} -size {3},{4}; rm -rf {1}_bin.ali~".format(
             get_imod_path(), name, binning, size_x, size_y
         )
         run_shell_command(command)

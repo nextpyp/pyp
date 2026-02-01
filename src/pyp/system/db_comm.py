@@ -373,7 +373,7 @@ def load_spr_results(name, parameters, project_path, working_path):
 
     # convert to mrc
     if os.path.exists("{0}.tif".format(name)):
-        command = "{0}/bin/newstack '{1}.tif' '{1}.mrc'; rm -f '{1}.tif'".format(
+        command = "{0}/bin/newstack -quiet '{1}.tif' '{1}.mrc'; rm -f '{1}.tif'".format(
             get_imod_path(), name
         )
         run_shell_command(command)
