@@ -115,7 +115,7 @@ def warptools_noise2map(half1, parameters, tomogram=False):
     result = f"./denoised/{Path(half1).stem}.mrc"
     
     # convert to 32 bits for compatibility
-    command = f"{get_imod_path()}/bin/newstack -mode 2 {result} {result}~ && mv {result}~ {result}"
+    command = f"{get_imod_path()}/bin/newstack -quiet -mode 2 {result} {result}~ && mv {result}~ {result}"
     local_run.run_shell_command(command)
     
     return result

@@ -27,7 +27,7 @@ from pyp.streampyp.logging import TQDMLogger
 from pyp.system.logging import logger
 
 def invert_contrast(name):
-    command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -multadd -1,0 && mv {1}.mrc~ {1}.mrc".format(
+    command = "{0}/bin/newstack -quiet {1}.mrc {1}.mrc~ -multadd -1,0 && mv {1}.mrc~ {1}.mrc".format(
         get_imod_path(), name
     )
     local_run.run_shell_command(command)
@@ -95,7 +95,7 @@ def remove_xrays_from_movie_file(name, inplace=False):
 def apply_alignment_to_frames(frame_name):
     # TODO: Why are we using linear interpolation and not using gain correction?
     fill_option = f"-fill {get_image_mean(frame_name + '.tif')}"
-    com = "{0}/bin/newstack -input {1}.tif -output {1}.mrc {2} -xform {1}.xf -linear".format(
+    com = "{0}/bin/newstack -quiet -input {1}.tif -output {1}.mrc {2} -xform {1}.xf -linear".format(
         get_imod_path(), frame_name, fill_option
     )
     local_run.run_shell_command(com, log_level=logging.TRACE)
@@ -338,7 +338,7 @@ def read_tilt_series(
                         # aligned_tilt = align.align_stack( frame_name, parameters )
                     else:
                         fill_option = f"-fill {get_image_mean(frame_name+'.mrc')}"
-                        com = "{0}/bin/newstack -input {1}.mrc -output {1}.ali {2} -xform {1}.xf -linear".format(
+                        com = "{0}/bin/newstack -quiet -input {1}.mrc -output {1}.ali {2} -xform {1}.xf -linear".format(
                             get_imod_path(), frame_name, fill_option
                         )
                         local_run.run_shell_command(com)
@@ -370,7 +370,7 @@ def read_tilt_series(
                     shifts[tilt] = np.hypot(s[:, 0], s[:, 1]).sum()
 
                 # compose drift-corrected tilt-series
-                command = "{0}/bin/newstack {1}_????.avg {1}.mrc".format(
+                command = "{0}/bin/newstack -quiet {1}_????.avg {1}.mrc".format(
                     get_imod_path(), name
                 )
                 local_run.run_shell_command(command)
@@ -434,16 +434,16 @@ def read_tilt_series(
             tilt_axis = parameters["scope_tilt_axis"]
 
             if "extract_fmt" in parameters.keys() and "frealign" not in parameters["extract_fmt"]:
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 1 -multadd 1,32768 && mv {1}.mrc~ {1}.mrc".format(
+                command = "{0}/bin/newstack -quiet {1}.mrc {1}.mrc~ -mode 1 -multadd 1,32768 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -scale 0,32767 -mode 1 && mv {1}.mrc~ {1}.mrc".format(
+                command = "{0}/bin/newstack -quiet {1}.mrc {1}.mrc~ -scale 0,32767 -mode 1 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
                 local_run.run_shell_command(command)
             elif parameters.get("movie_depth") and os.path.exists(name + ".mrc") and get_image_mode(name + ".mrc") != 2 and not ( parameters.get("micromon_block") == "tomo-picking" and parameters.get("tomo_pick_method") != "virions" ) and parameters.get("micromon_block") not in ( "tomo-particles-eval", "tomo-picking-open", "tomo-picking-closed"):
                 logger.info("Converting micrograph/tilt-series to 32-bits")
-                command = "{0}/bin/newstack {1}.mrc {1}.mrc~ -mode 2 && mv {1}.mrc~ {1}.mrc".format(
+                command = "{0}/bin/newstack -quiet {1}.mrc {1}.mrc~ -mode 2 && mv {1}.mrc~ {1}.mrc".format(
                     get_imod_path(), name
                 )
                 local_run.run_shell_command(command)
@@ -459,7 +459,7 @@ def read_tilt_series(
             if ctf_mod.is_required_3d(parameters) and not ctf_mod.is_done(metadata,parameters, name=name, project_dir=current_path):
                 commands = []
                 for idx in range(z):
-                    command = "{0}/bin/newstack -secs {1} {2}.mrc {2}_{1:04d}.mrc".format(
+                    command = "{0}/bin/newstack -quiet -secs {1} {2}.mrc {2}_{1:04d}.mrc".format(
                         get_imod_path(), idx, name, 
                     )
                     commands.append(command)
@@ -660,7 +660,7 @@ def read_tilt_series(
 
             t = timer.Timer(text="Combine into one tilt-series took: {}", logger=logger.info)
             t.start()
-            command = "{0}/bin/newstack {2} {1}.mrc".format(
+            command = "{0}/bin/newstack -quiet {2} {1}.mrc".format(
                 get_imod_path(), name, aligned_tilts_str
             )
 
@@ -962,7 +962,7 @@ def regenerate_average_quick(
     aligned_tilts = [frame.replace(".mrc", ".avg") for frame in frame_list]
     aligned_tilts_str = " ".join(aligned_tilts)
 
-    command = "{0}/bin/newstack {2} {1}.mrc".format(
+    command = "{0}/bin/newstack -quiet {2} {1}.mrc".format(
         get_imod_path(), name, aligned_tilts_str
     )
 
@@ -1005,7 +1005,7 @@ def erase_gold_beads(name, parameters, tilt_options, binning, zfact, x, y):
             size_x -= size_x % 2
             size_y = round(y / binning)
             size_y -= size_y % 2
-            command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3,{4}".format(
+            command = "{0}/bin/newstack -quiet -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3,{4}".format(
                 get_imod_path(), name, imod_binning_option, size_x, size_y
             )
             local_run.run_shell_command(command)

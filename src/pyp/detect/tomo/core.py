@@ -833,7 +833,7 @@ def process_virions(
 
             if virion_binning > 1:
                 # down-sample aligned tilt-series first before reconstructing virions
-                command = "%s/bin/newstack -ftreduce %d %s.ali %s_bin_vir.ali" % (get_imod_path(), virion_binning, name, name)
+                command = "%s/bin/newstack -quiet -ftreduce %d %s.ali %s_bin_vir.ali" % (get_imod_path(), virion_binning, name, name)
                 [output, error] = local_run.run_shell_command(command)
             else:
                 shutil.copy2( f'{name}.ali', f'{name}_bin_vir.ali' )
@@ -972,7 +972,7 @@ def build_virion(virion, binning, virion_size, x, y, tilt_options, name, virion_
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
-        command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec~ -blank && mv {3}.rec~ {3}.rec".format(
+        command = "{0}/bin/newstack -quiet -secs {1}-{2} -input {3}.rec -output {3}.rec~ -blank && mv {3}.rec~ {3}.rec".format(
             get_imod_path(), int(ypad_dn), int(virion_size - 1 + ypad_dn), virion_name,
         )
         local_run.run_shell_command(command)
@@ -1034,7 +1034,7 @@ def build_virion_unbinned(
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
-        command = "{0}/bin/newstack -secs {1}-{2} -input {3}_unbinned.rec -output {3}_unbinned.rec~ -blank && mv {3}_unbinned.rec~ {3}_unbinned.rec".format(
+        command = "{0}/bin/newstack -quiet -secs {1}-{2} -input {3}_unbinned.rec -output {3}_unbinned.rec~ -blank && mv {3}_unbinned.rec~ {3}_unbinned.rec".format(
             get_imod_path(), int(ypad_dn)/virion_binning, int(virion_size - 1 + ypad_dn)/virion_binning, virion_name,
         )
         local_run.run_shell_command(command)
@@ -1172,7 +1172,7 @@ def spk_extract_and_process(
 
     # pad volume to have uniform dimensions
     if math.fabs(ypad_dn) > 0 or math.fabs(ypad_up) > 0:
-        command = "{0}/bin/newstack -secs {1}-{2} -input {3}.rec -output {3}.rec~ -blank && mv {3}.rec~ {3}.rec".format(
+        command = "{0}/bin/newstack -quiet -secs {1}-{2} -input {3}.rec -output {3}.rec~ -blank && mv {3}.rec~ {3}.rec".format(
             get_imod_path(), int(ypad_dn), int(spike_size - 1 + ypad_dn), spike_name,
         )
         local_run.run_shell_command(command)
@@ -1846,7 +1846,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         os.chdir("pytom")
         scores_file = name + "_scores.mrc"
         if parameters["tomo_pick_pytom_half_precision"]:
-            command = f"{get_imod_path()}/bin/newstack -mode 2 {scores_file} {scores_file}~; mv {scores_file}~ {scores_file}"
+            command = f"{get_imod_path()}/bin/newstack -quiet -mode 2 {scores_file} {scores_file}~; mv {scores_file}~ {scores_file}"
             local_run.run_shell_command(command)
         scores_webp_file = scores_file.replace(".mrc","_bw_rec.webp")
         plot.tomo_slicer_gif( scores_file, scores_webp_file, flipyz=True, clipping=False )
@@ -1963,7 +1963,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         command = f"{get_imod_path()}/bin/clip flipyz {name}_seg.rec {name}_vir0000_binned_nad_seg.mrc~"
         local_run.run_shell_command(command)
 
-        command = f"{get_imod_path()}/bin/newstack -mode 2 {name}_vir0000_binned_nad_seg.mrc~ {name}_vir0000_binned_nad_seg.mrc; rm -f {name}_vir0000_binned_nad_seg.mrc~"
+        command = f"{get_imod_path()}/bin/newstack -quiet -mode 2 {name}_vir0000_binned_nad_seg.mrc~ {name}_vir0000_binned_nad_seg.mrc; rm -f {name}_vir0000_binned_nad_seg.mrc~"
         local_run.run_shell_command(command)
         
         _, _, virion_size = get_image_dimensions(name + "_vir0000.rec")
@@ -2176,7 +2176,7 @@ EOF
 
         # invert volume contrast for eman particles
         if not parameters["data_invert"] and parameters["tomo_ext_fmt"].lower() == "eman":
-            command = "{0}/bin/newstack {1}.ali {1}.ali~ -multadd -1,0 && mv {1}.ali~ {1}.ali".format(
+            command = "{0}/bin/newstack -quiet {1}.ali {1}.ali~ -multadd -1,0 && mv {1}.ali~ {1}.ali".format(
                 get_imod_path(), name
             )
             local_run.run_shell_command(command)
@@ -2485,7 +2485,7 @@ def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth, z_dim
         virion_volume = "{0}_binned_nad_seg.mrc".format(virion_name)
 
         if mrc.readHeaderFromFile(virion_volume)['mode'] != 2:
-            command = "{0}/bin/newstack {1} {1}~ -mode 2 && mv {1}~ {1}".format(
+            command = "{0}/bin/newstack -quiet {1} {1}~ -mode 2 && mv {1}~ {1}".format(
                 get_imod_path(), virion_volume
             )
             local_run.run_shell_command(command)

@@ -1565,7 +1565,7 @@ _rlnOriginZAngst #3
                                 if not os.path.exists(os.path.join(output_path,'relion','stacks',image_name)):
                                     # create image stack for current particle
                                     stack = os.path.join(output_path,'relion','stacks', micrograph+"_stack.mrcs")
-                                    command = f"{get_imod_path()}/bin/newstack -fromone -secs {particle_counter}-{particle_counter+len(tomo_visible_frames_indexes)-1} {stack} {os.path.join(os.environ['PYP_SCRATCH'],image_name)}"
+                                    command = f"{get_imod_path()}/bin/newstack -quiet -fromone -secs {particle_counter}-{particle_counter+len(tomo_visible_frames_indexes)-1} {stack} {os.path.join(os.environ['PYP_SCRATCH'],image_name)}"
                                     run_shell_command(command)
 
                                     # create new empty particle stack with all tilts since relion needs this

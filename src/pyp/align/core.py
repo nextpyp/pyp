@@ -98,7 +98,7 @@ def align_frame_to_reference(name, frame, input, tiltxcorr_options, frames, resu
     frame_name = "%06d" % frame
 
     # extract frame from movie
-    com = "{0}/bin/newstack {1}.{4} {1}_{2}.mrc -secs {3}; rm -f {1}_{2}.mrc~".format(
+    com = "{0}/bin/newstack -quiet {1}.{4} {1}_{2}.mrc -secs {3}; rm -f {1}_{2}.mrc~".format(
         get_imod_path(), name, frame_name, frame, input
     )
     run_shell_command(com)
@@ -110,7 +110,7 @@ def align_frame_to_reference(name, frame, input, tiltxcorr_options, frames, resu
     mrc.write(cavg, "{0}_{1}.avg".format(name, frame_name))
 
     # use current average as reference
-    com = "{0}/bin/newstack {1}_{2}.avg {1}_{2}.mrc {1}_{2}_tiltxcorr.mrc; rm -f {1}_{2}_tiltxcorr.mrc~".format(
+    com = "{0}/bin/newstack -quiet {1}_{2}.avg {1}_{2}.mrc {1}_{2}_tiltxcorr.mrc; rm -f {1}_{2}_tiltxcorr.mrc~".format(
         get_imod_path(), name, frame_name
     )
     run_shell_command(com,log_level=logging.TRACE)
@@ -1728,7 +1728,7 @@ def align_stack(name, parameters, interpolation="-linear"):
 
         # generate aligned stack with latest alignment parameters
         fill_option = f"-fill {get_image_mean(name + '.mrc')}"
-        command = "{0}/bin/newstack -nearest {2} -xform {1}_actual.xf {1}.mrc {1}.ali; rm -f {1}.ali~".format(
+        command = "{0}/bin/newstack -quiet -nearest {2} -xform {1}_actual.xf {1}.mrc {1}.ali; rm -f {1}.ali~".format(
             get_imod_path(), name, fill_option
         )
         run_shell_command(command)
@@ -1749,7 +1749,7 @@ def align_stack(name, parameters, interpolation="-linear"):
 
             # use binned stack
             run_shell_command(
-                "{0}/bin/newstack {3} {1}.mrc {1}.bin -bin {2} -mode 2; rm -f {1}.bin~".format(
+                "{0}/bin/newstack -quiet {3} {1}.mrc {1}.bin -bin {2} -mode 2; rm -f {1}.bin~".format(
                     get_imod_path(), name, movie_binning, interpolation
                 )
             )
@@ -1801,7 +1801,7 @@ def align_stack(name, parameters, interpolation="-linear"):
             # generate aligned stack
             fill_option = f"-fill {get_image_mean(name+'.bin')}"
             run_shell_command(
-                "{0}/bin/newstack {2} {3} -xform {1}_first.prexg {1}.bin {1}.ali -mode 2 -multadd 1,0".format(
+                "{0}/bin/newstack -quiet {2} {3} -xform {1}_first.prexg {1}.bin {1}.ali -mode 2 -multadd 1,0".format(
                     get_imod_path(), name, interpolation, fill_option
                 ), log_level=logging.TRACE
             )
@@ -1854,7 +1854,7 @@ def align_stack(name, parameters, interpolation="-linear"):
 
                 # generate aligned stack with latest alignment parameters
                 run_shell_command(
-                    "{0}/bin/newstack {2} {3} -xform {1}.prexg {1}.bin {1}.ali".format(
+                    "{0}/bin/newstack -quiet {2} {3} -xform {1}.prexg {1}.bin {1}.ali".format(
                         get_imod_path(), name, interpolation, fill_option
                     ), log_level=logging.TRACE
                 )
@@ -1891,7 +1891,7 @@ def align_stack(name, parameters, interpolation="-linear"):
                 t[:, -2:] *= movie_binning
                 np.savetxt("%s.xf" % name, t, fmt="%13.7f")
                 run_shell_command(
-                    "{0}/bin/newstack -nearest {2} -xform {1}.xf {1}.mrc {1}.ali".format(
+                    "{0}/bin/newstack -quiet -nearest {2} -xform {1}.xf {1}.mrc {1}.ali".format(
                         get_imod_path(), name, fill_option
                     )
                 )
@@ -2013,11 +2013,11 @@ def apply_alignments_and_average(input_name, name, parameters, method="imod"):
     env = "export OMP_NUM_THREADS={0}; export NCPUS={0}; IMOD_FORCE_OMP_THREADS={0}; ".format(threads)
     
     if input_name == name + ".mrc":
-        command = env + "{0}/bin/newstack -mode 2 {1} {2}.mrc~ && mv {2}.mrc~ {2}.mrc".format(
+        command = env + "{0}/bin/newstack -quiet -mode 2 {1} {2}.mrc~ && mv {2}.mrc~ {2}.mrc".format(
             get_imod_path(), input_name, name
         )
     else:
-        command = env + "{0}/bin/newstack -mode 2 {1} {2}.mrc && rm -f {1}~".format(
+        command = env + "{0}/bin/newstack -quiet -mode 2 {1} {2}.mrc && rm -f {1}~".format(
             get_imod_path(), input_name, name
         )
     run_shell_command(command)
@@ -2026,13 +2026,13 @@ def apply_alignments_and_average(input_name, name, parameters, method="imod"):
     
     if method == "imod" and not parameters["movie_weights"]:
 
-        command = env + "{0}/bin/newstack -nearest {2} -xform {1}.xf {1}.mrc {1}.ali; rm -f {1}.ali~".format(
+        command = env + "{0}/bin/newstack -quiet -nearest {2} -xform {1}.xf {1}.mrc {1}.ali; rm -f {1}.ali~".format(
             get_imod_path(), name, fill_option
         )
         run_shell_command(command)
 
         if parameters["data_bin"] > 1:
-            command = env + "{0}/bin/newstack -ftreduce {3} {2}.ali {2}.ali~ && mv {2}.ali~ {2}.ali".format(
+            command = env + "{0}/bin/newstack -quiet -ftreduce {3} {2}.ali {2}.ali~ && mv {2}.ali~ {2}.ali".format(
                 get_imod_path(), input_name, name, parameters["data_bin"]
             )
             run_shell_command(command)
@@ -2246,7 +2246,7 @@ def align_stack_super(
 
                 # compose decimated movie
                 run_shell_command(
-                    "{0}/bin/newstack {1}_????.avg {1}.bin".format(
+                    "{0}/bin/newstack -quiet {1}_????.avg {1}.bin".format(
                         get_imod_path(), name
                     )
                 )
@@ -2552,7 +2552,7 @@ EOF
                             t = np.loadtxt("%s.xf" % name, ndmin=2)
                             t[:, -2:] /= movie_binning
                             np.savetxt("%s.xf" % name, t, fmt="%13.7f")
-                            com = "{0}/bin/newstack {2} -xform {1}.xf -mode 2 {3} -multadd 1,0 {1}.bin {1}.ali".format(
+                            com = "{0}/bin/newstack -quiet {2} -xform {1}.xf -mode 2 {3} -multadd 1,0 {1}.bin {1}.ali".format(
                                 get_imod_path(), name, interpolation, fill_option
                             )
                             run_shell_command(com)
@@ -2642,7 +2642,7 @@ EOF
                         np.savetxt(name + ".prexg", shifts)
 
                     # generate aligned stack with latest alignment parameters
-                    com = "{0}/bin/newstack {2} -xform {1}.prexg {3} -mode 2 -multadd 1,0 {1}.bin {1}.ali".format(
+                    com = "{0}/bin/newstack -quiet {2} -xform {1}.prexg {3} -mode 2 -multadd 1,0 {1}.bin {1}.ali".format(
                         get_imod_path(), name, interpolation, fill_option
                     )
                     run_shell_command(com, log_level=logging.TRACE)
@@ -3285,7 +3285,7 @@ EOF
                                 name + "_unbinned.xf", unbinned_shifts, fmt="%13.7f"
                             )
                             fill_option = f"-fill {get_image_mean(name + '_unbinned.mrc')}"
-                            com = "{0}/bin/newstack {1}_unbinned.mrc {1}_unbinned.ali -linear {2} -xform {1}_unbinned.xf".format(
+                            com = "{0}/bin/newstack -quiet {1}_unbinned.mrc {1}_unbinned.ali -linear {2} -xform {1}_unbinned.xf".format(
                                 get_imod_path(), name, fill_option
                             )
                             run_shell_command(com)
@@ -4626,7 +4626,7 @@ EOF
             _, _, total_frames = get_image_dimensions(f"{name}_aligned_frames.mrc")
             for i in [1,2]:
                 list = np.arange(i-1, total_frames, 2)
-                run_shell_command(f"{get_imod_path()}/bin/newstack {name}_aligned_frames.mrc -secs {','.join(map(str, list))} {name}_half{i}.mrc")
+                run_shell_command(f"{get_imod_path()}/bin/newstack -quiet {name}_aligned_frames.mrc -secs {','.join(map(str, list))} {name}_half{i}.mrc")
                 avgstack(f"{name}_half{i}.mrc",f"../{name}_half{i}.avg")
             # cleanup
             [ os.remove(f) for f in [ f"{name}_aligned_frames.mrc", f"{name}_half1.mrc", f"{name}_half2.mrc" ] ]
@@ -4649,7 +4649,7 @@ EOF
                 
             for i in [1,2]:
                 list = np.arange(i-1, total_frames, 2)
-                run_shell_command(f"{get_imod_path()}/bin/newstack ../{movie_file} -secs {','.join(map(str, list))} {name}_half{i}.mrc")
+                run_shell_command(f"{get_imod_path()}/bin/newstack -quiet ../{movie_file} -secs {','.join(map(str, list))} {name}_half{i}.mrc")
                 # run_shell_command(f"{get_imod_path()}/bin/newstack ../{movie_file} {' '.join([f'-secs {i}' for i in map(str, list)])} {name}_half{i}.mrc")
                 avgstack(f"{name}_half{i}.mrc",f"../{name}_half{i}.avg")
                 os.remove(f"{name}_half{i}.mrc")
@@ -4764,7 +4764,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
     logger.info(f"Using binning factor of {binning} for tilt-series alignment")
 
     if binning > 1:
-        command = "{0}/bin/newstack {1}.st {1}_bin.st -bin {2}".format(
+        command = "{0}/bin/newstack -quiet {1}.st {1}_bin.st -bin {2}".format(
             get_imod_path(), name, binning
         )
         run_shell_command(command)
@@ -4780,7 +4780,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
     
     if len(excluded_views) > 0:
         # exclude views from binned tilt-series
-        command = "{0}/bin/newstack {1}.st {1}_bin.st -bin {2} -fromone {3}".format(
+        command = "{0}/bin/newstack -quiet {1}.st {1}_bin.st -bin {2} -fromone {3}".format(
             get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
         )
         run_shell_command(command)
@@ -4788,7 +4788,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         if binning > 1:
             os.symlink( name + "_bin.st", name + "_aretomo.mrc")
         else:
-            command = "{0}/bin/newstack {1}.mrc {1}_aretomo.mrc -fromone {3}".format(
+            command = "{0}/bin/newstack -quiet {1}.mrc {1}_aretomo.mrc -fromone {3}".format(
                 get_imod_path(), name, binning, excluded_views.replace("-EXCLUDELIST2","-exclude")
             )
             run_shell_command(command)
@@ -4872,7 +4872,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
         fill_option = f"-fill {get_image_mean(name + '_bin.st')}"
         
         # generate aligned stack
-        command = "{0}/bin/newstack -linear {3} -xform {1}_first.prexg {1}_bin.st {1}_bin.preali -mode 1 -multadd 1,0 {2}".format(
+        command = "{0}/bin/newstack -quiet -linear {3} -xform {1}_first.prexg {1}_bin.st {1}_bin.preali -mode 1 -multadd 1,0 {2}".format(
             get_imod_path(), name, tapper_edge, fill_option
         )
         run_shell_command(command)
@@ -4904,7 +4904,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             # generate aligned stack with latest alignment parameters
             run_shell_command(
-                "{0}/bin/newstack -linear {3} -xform {1}.prexg {1}_bin.st {1}_bin.preali -scale 0,32767 -mode 1 {2}".format(
+                "{0}/bin/newstack -quiet -linear {3} -xform {1}.prexg {1}_bin.st {1}_bin.preali -scale 0,32767 -mode 1 {2}".format(
                     get_imod_path(), name, tapper_edge, fill_option
                 )
             )

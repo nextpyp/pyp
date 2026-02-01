@@ -147,7 +147,7 @@ def pick_particles(
                 auto_binning = 8
             else:
                 auto_binning = 4
-            com = "{0}/bin/newstack {1}.mrc grabber/{1}.mrc -bin {2}".format(
+            com = "{0}/bin/newstack -quiet {1}.mrc grabber/{1}.mrc -bin {2}".format(
                 get_imod_path(), name, binning
             )
             local_run.run_shell_command(com)
@@ -223,7 +223,7 @@ def pick_particles(
 
             # shutil.copy('{}.mrc'.format(name), 'jasper')
 
-            com = "{0}/bin/newstack {1}.avg jasper/{1}.mrc -bin {2}".format(
+            com = "{0}/bin/newstack -quiet {1}.avg jasper/{1}.mrc -bin {2}".format(
                 get_imod_path(), name, auto_binning
             )
             local_run.run_shell_command(com)
@@ -361,7 +361,7 @@ def pick_particles(
             auto_binning = 6
             # if ctf[6] > 6096:
             #     auto_binning *= 2
-            com = "{0}/bin/newstack {1}.avg frealign/{1}.mrc -bin {2}".format(
+            com = "{0}/bin/newstack -quiet {1}.avg frealign/{1}.mrc -bin {2}".format(
                 get_imod_path(), name, auto_binning
             )
             local_run.run_shell_command(com)

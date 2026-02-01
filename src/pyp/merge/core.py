@@ -260,7 +260,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 size_x -= size_x % 2
                 size_y = round(y / binning)
                 size_y -= size_y % 2
-                command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
+                command = "{0}/bin/newstack -quiet -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
                     get_imod_path(), name, imod_binning_option, size_x, size_y
                 )
                 run_shell_command(command)
@@ -326,7 +326,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     if binning > 1 and ( not os.path.exists(f"{name}_bin.mrc") or parameters["tomo_rec_erase_fiducials"] ):
         # create binned raw stack
-        command = "{0}/bin/newstack -input {1}.st -output {1}_bin.mrc -shrink {2} -size {3},{4}".format(
+        command = "{0}/bin/newstack -quiet -input {1}.st -output {1}_bin.mrc -shrink {2} -size {3},{4}".format(
             get_imod_path(), name, binning, size_x, size_y
         )
         run_shell_command(command)
@@ -336,7 +336,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
     if parameters["tomo_ali_force"] or not os.path.exists(f"{name}_bin.ali") or parameters["tomo_rec_erase_fiducials"]:
         imod_binning_option = f"-shrink {binning}" if binning > 1 else ""
         # create binned aligned stack
-        command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
+        command = "{0}/bin/newstack -quiet -input {1}.ali -output {1}_bin.ali -mode 2 -origin -linear {2} -size {3},{4}".format(
             get_imod_path(), name, imod_binning_option, size_x, size_y
         )
         run_shell_command(command)
@@ -401,7 +401,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
                 
                 # aligned tilt series must have mrc extension
                 # we also add a small constant to each image to trick AreTomo3's mass normalization because it fails when there are blank images
-                command = f"{get_imod_path()}/bin/newstack {name}.ali {name}_aligned.mrc -multadd 1,1"
+                command = f"{get_imod_path()}/bin/newstack -quiet {name}.ali {name}_aligned.mrc -multadd 1,1"
                 run_shell_command(command)
                 
                 """ Usage: AreTomo3 Tags
@@ -752,7 +752,7 @@ def reconstruct_tomo_halves_from_frames( name, parameters, project_path):
         if ".tif" in raw_image[0].lower():
             commands = [] 
             for f in raw_image:
-                com = "{0}/bin/newstack -mode 2 {1} {2}; rm -f {1}".format(
+                com = "{0}/bin/newstack -quiet -mode 2 {1} {2}; rm -f {1}".format(
                     get_imod_path(), f, Path(f).stem + ".mrc"
                 )
                 commands.append(com)
@@ -775,7 +775,7 @@ def reconstruct_tomo_halves_from_frames( name, parameters, project_path):
             for half in [1, 2]:
                 subset = np.arange(half-1, z_slices + 1, 2)
                 if not os.path.exists(f"{Path(f).stem}_half{half}.mrc"):
-                    command = f"{get_imod_path()}/bin/newstack -input {f} -secs {','.join(map(str, subset))} -output {Path(f).stem}_half{half}.mrc"
+                    command = f"{get_imod_path()}/bin/newstack -quiet -input {f} -secs {','.join(map(str, subset))} -output {Path(f).stem}_half{half}.mrc"
                     arguments.append(command)
                     with open(Path(f).stem+f"_half{half}.xf",'w') as output_half_xf:
                         for index in subset:
@@ -860,7 +860,7 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
     arguments = []
     for half in [1, 2]:
         subset = np.arange(half-1, dims[2], 2)
-        command = f"{get_imod_path()}/bin/newstack -input {raw_tilt_series} -secs {','.join(map(str, subset))} -output {name}_half{half}.mrc"
+        command = f"{get_imod_path()}/bin/newstack -quiet -input {raw_tilt_series} -secs {','.join(map(str, subset))} -output {name}_half{half}.mrc"
         arguments.append(command)
         with open(name+f"_half{half}.tlt",'w') as output_half_tlt:
             for index in subset:
@@ -946,7 +946,7 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
 
             if not os.path.exists(newname + "_bin.ali"):
                 if binning > 1:
-                    command = "{0}/bin/newstack -input {1}.ali -output {1}_bin.ali -shrink {2}".format(
+                    command = "{0}/bin/newstack -quiet -input {1}.ali -output {1}_bin.ali -shrink {2}".format(
                         get_imod_path(), newname, binning
                     )
                     run_shell_command(command)

@@ -205,7 +205,7 @@ def extract_particles_old(
             name = "".join(random.choice(string.ascii_letters) for i in range(20))
             if len(tofile) == 0:
                 mrc.write(particles, name + "_unbinned.mrc")
-                command = "{0}/bin/newstack -bin {1} -antialias 6 {2}_unbinned.mrc {2}_binned.mrc".format(
+                command = "{0}/bin/newstack -quiet -bin {1} -antialias 6 {2}_unbinned.mrc {2}_binned.mrc".format(
                     get_imod_path(), int(binning), name
                 )
                 run_shell_command(command)
@@ -213,7 +213,7 @@ def extract_particles_old(
                 os.remove(name + "_binned.mrc")
                 os.remove(name + "_unbinned.mrc")
             else:
-                command = "{0}/bin/newstack -bin {1} -antialias 6 {2} {3}_binned.mrc".format(
+                command = "{0}/bin/newstack -quiet -bin {1} -antialias 6 {2} {3}_binned.mrc".format(
                     get_imod_path(), int(binning), tofile, name
                 )
                 run_shell_command(command)
@@ -426,7 +426,7 @@ def extract_particles_non_mpi(
         # convert to 32-bits, if necessary
         if get_image_mode(input) == 12:
             tmp_image_name = Path(input_image_name).name
-            command = f"{get_imod_path()}/bin/newstack -mode 2 {input_image_name} {tmp_image_name}"
+            command = f"{get_imod_path()}/bin/newstack -quiet -mode 2 {input_image_name} {tmp_image_name}"
             run_shell_command(command)
         else:
             tmp_image_name = input_image_name
@@ -570,7 +570,7 @@ def extract_particles_mpi(
         commands = [] 
         for f in input:
             if ".tif" in f:
-                com = "{0}/bin/newstack -mode 2 {1} {2}".format(
+                com = "{0}/bin/newstack -quiet -mode 2 {1} {2}".format(
                     get_imod_path(), f, f.replace(".tiff", ".mrc").replace(".tif", ".mrc")
                 )
                 commands.append(com)
@@ -756,7 +756,7 @@ def extract_stacks_particle_cspt(
                             split_sections += " -secs " + ",".join(chunk)
 
                     # newstack command
-                    command = "{0}/bin/newstack {1} {2} {3}".format(
+                    command = "{0}/bin/newstack -quiet {1} {2} {3}".format(
                         get_imod_path(), main_stackfile, split_sections, name
                     )
 

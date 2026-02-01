@@ -74,7 +74,7 @@ def downsample_stack(input, output, binning, method):
     if "imod" in method.lower():
 
         os.environ["IMOD_DIR"] = get_imod_path()
-        command = "{0}/bin/newstack -ftreduce {1} '{2}' {3}".format(
+        command = "{0}/bin/newstack -quiet -ftreduce {1} '{2}' {3}".format(
             get_imod_path(), binning, input, output
         )
 
@@ -194,7 +194,7 @@ def bin_stack(input, output, binning, method, threads = 1):
                 option = "-antialias 6"
             else:
                 option = ""
-            command = env + "{0}/bin/newstack -shrink {1} {4} {2} {3}".format(
+            command = env + "{0}/bin/newstack -quiet -shrink {1} {4} {2} {3}".format(
                 get_imod_path(), binning, input, output, option
             )
             run_shell_command(command)
@@ -445,7 +445,7 @@ def fix_empty_particles(scratch_stackfile, actual_number_of_particles, temp_stac
             frame -= frame.mean()
             frame /= np.std(frame)
             mrc.write(frame, temp_stack)
-            command = "{0}/bin/newstack {1} {2} -replace {3}".format(
+            command = "{0}/bin/newstack -quiet {1} {2} -replace {3}".format(
                 get_imod_path(), temp_stack, scratch_stackfile, i
             )
             run_shell_command(command)

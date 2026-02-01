@@ -325,7 +325,7 @@ def convert_and_transfer_tomograms(train_name,project_dir, parameters):
     for rec in train_name:
         absolute_rec = os.path.join(project_dir, "mrc", rec + ".rec")
         if parameters.get("tomo_rec_depth"):
-            command = "{0}/bin/newstack -mode 2 {1} {2}".format(
+            command = "{0}/bin/newstack -quiet -mode 2 {1} {2}".format(
                 get_imod_path(), absolute_rec, rec + ".rec"
             )
         else:

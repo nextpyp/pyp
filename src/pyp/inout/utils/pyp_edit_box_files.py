@@ -1241,7 +1241,7 @@ if __name__ == "__main__":
 
             # create stack with selected classes
             if "2d" in args.parfile.lower():
-                command = "{2}/bin/newstack {0}.mrcs {0}_selected.mrcs -secs {1}".format(
+                command = "{2}/bin/newstack -quiet {0}.mrcs {0}_selected.mrcs -secs {1}".format(
                     args.parfile.replace("data.star", "classes"),
                     ",".join([str(s) for s in selected_classes]),
                     get_imod_path(),
