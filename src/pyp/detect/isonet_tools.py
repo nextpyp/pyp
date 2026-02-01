@@ -1182,7 +1182,7 @@ FLAGS
     booleans = [ "isCTFflipped" ]
 
     # we only pass these if not empty
-    strings = [ "CTF_mode", "prev_tomo_idx", "input_column" ]
+    strings = [ "CTF_mode", "prev_tomo_idx" ]
 
     isonet_refine_parameters = build_command_options( parameters, prefix, values, booleans, strings )
 
@@ -1192,14 +1192,11 @@ FLAGS
 
     if parameters.get(f"{prefix}_batch_size") > 0:
         isonet_refine_parameters += f" --batch_size {parameters.get(f'{prefix}_batch_size')}"
-    """
-    if parameters["tomo_denoise_isonet2_mask_preprocessing"] == "deconv":
-        isonet_refine_parameters += " --input_column rlnDeconvTomoName"
-    elif parameters["tomo_denoise_isonet2_mask_preprocessing"] == "denoise":
-        isonet_refine_parameters += " --input_column rlnDenoisedTomoName"
+
+    if not parameters["tomo_denoise_isonet2_mask"] and parameters.get("tomo_denoise_isonet2_refine_method") == "isonet2":
+        isonet_refine_parameters += " --input_column rlnTomoName"
     else:
-        isonet_refine_parameters += " --input_column rlnCorrectedTomoName"
-    """
+        isonet_refine_parameters += f" --input_column {parameters.get('tomo_denoise_isonet2_refine_input_column')}"
     output_dir = "isonet_maps"
     
     command = get_isonet2_path() + f"""isonet.py refine {input_star} --output_dir {output_dir} {isonet_refine_parameters} --gpuID {get_gpu_ids(parameters)} --ncpus {parameters['slurm_tasks']}"""

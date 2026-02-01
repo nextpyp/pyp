@@ -3507,6 +3507,14 @@ enum = { isonet2-n2n="isonet2-n2n (even/odd halves)", isonet2="isonet2 (single-m
 default = "isonet2-n2n"
 condition = { arg="method_train", value="isonet2" }
 
+[tabs.tomo_denoise.isonet2_refine_input_column]
+name = "Input column"
+description = "Column name in STAR file to use as input tomograms"
+type = "str"
+default = "rlnDeconvTomoName"
+condition = { arg = "isonet2_refine_method", value = "isonet2-n2n" }
+advanced = true
+
 [tabs.tomo_denoise.isonet2_refine_arch]
 name = "Network architecture"
 description = "Determines model capacity and VRAM requirements"
@@ -3543,14 +3551,6 @@ description = "Number of training epochs"
 type = "int"
 default = 50
 condition = { arg="method_train", value="isonet2" }
-
-[tabs.tomo_denoise.isonet2_refine_input_column]
-name = "Input column"
-description = "Column name in STAR file to use as input tomograms"
-type = "str"
-default = "rlnDeconvTomoName"
-condition = { arg = "method_train", value = "isonet2" }
-advanced = true
 
 [tabs.tomo_denoise.isonet2_refine_batch_size]
 name = "Batch size"
