@@ -547,7 +547,7 @@ def parse_loss(output, max_points=500):
     y0   = int(xy[0].split("/")[1])
 
     epoch_id = np.r_[0, np.cumsum(x[1:] < x[:-1])].astype("i")
-    steps = epoch_id * y0 + (x - 1)
+    steps = epoch_id * y0 + x
 
     epoch_mean = np.bincount(epoch_id, loss) / np.bincount(epoch_id)
     epoch_mean_per_step = epoch_mean[epoch_id]
