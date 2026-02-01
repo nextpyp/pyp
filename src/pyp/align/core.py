@@ -5992,7 +5992,7 @@ EOF
         )
         output, error = run_shell_command(command)
         if "ERROR: TILTALIGN" in output:
-            logger.error(output)
+            logger.warning(output)
 
             rot = vtk.rotation_matrix(np.radians(rotation), [0, 0, 1])
             rot2D = np.array(
