@@ -6029,12 +6029,14 @@ if __name__ == "__main__":
                     halves_needed = "n2n" in str(parameters.get("tomo_denoise_isonet2_refine_method")) or mask_mode == "denoise"
                     original_needed = "n2n" not in str(parameters.get("tomo_denoise_isonet2_refine_method")) or mask_mode == "deconv"
 
+                    commands = []
+
                     # copy/generate tomograms and half-tomograms to scratch folder
                     for name in micrograph_list:
                         if original_needed:
                             tomogram = os.path.join(project_dir,"mrc",name+".rec")
                             command = f"{get_imod_path()}/bin/clip flipyz {tomogram} {Path(tomogram).name}"
-                            local_run.run_shell_command(command)
+                            commands.append(command)
 
                         if halves_needed:
                             first_half = os.path.join(project_dir,"mrc",name+"_half1.rec")
@@ -6044,7 +6046,10 @@ if __name__ == "__main__":
                                 assert os.path.exists(half_map), f"Half-map {half_map} not found, please generate half-tomograms in the pre-processing block first"
                                 # flip yz coordinates to match isonet2 convention
                                 command = f"{get_imod_path()}/bin/clip flipyz {half_map} {Path(half_map).name}"
-                                local_run.run_shell_command(command)
+                                commands.append(command)
+
+                    if len(commands) > 0:
+                        mpi.submit_jobs_to_workers(commands)
 
                     isonet_tools.isonet2_train(project_dir, parameters=parameters)
                     logger.info("nextPYP (isonet2 train) finished successfully")

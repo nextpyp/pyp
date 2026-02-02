@@ -697,6 +697,8 @@ def isonet2_train( project_dir, parameters):
         shutil.copy2( f, os.path.join( project_dir, "train" ) )
 
     if debug:
+        commands = []
+
         os.makedirs(save_dir, exist_ok=True)
 
         extensions = [".mrc", ".rec"]
@@ -713,12 +715,15 @@ def isonet2_train( project_dir, parameters):
                     dst = os.path.join(d, f)
                     if Path(f).suffix.lower() in extensions:
                         cmd = f'"{get_imod_path()}/bin/clip" flipyz "{src}" "{dst}"'
-                        local_run.run_shell_command(cmd)
+                        commands.append(cmd)
                     else:
                         shutil.copy2(src, dst)
 
             elif Path(s).suffix == ".star":
                 shutil.copy2(s, d)
+
+        if len(commands) > 0:
+            mpi.submit_jobs_to_workers(commands)
     
     for name in train_name:
         # convert metadata to files
