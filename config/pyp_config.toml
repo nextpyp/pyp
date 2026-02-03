@@ -3716,6 +3716,12 @@ hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 _name = "Tomogram segmentation"
 _description = "Parameters for tomogram segmentation"
 
+[tabs.tomo_mem.use_denoised]
+name = "Use denoised"
+description = "Use denoised tomograms if available"
+type = "bool"
+default = true
+
 [tabs.tomo_mem.method]
 name = "Method"
 description = "Segmentation method"

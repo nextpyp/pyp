@@ -4268,18 +4268,23 @@ def tomoswarm_prologue(convert_to_32 = True):
     # read pyp parameters
     parameters = project_params.load_pyp_parameters(project_path)
 
+    if parameters.get("tomo_mem_method") == "membrain" and parameters.get("tomo_mem_use_denoised") and os.path.exists(os.path.join(project_path, "mrc", name + "_den.rec")):
+        suffix = "_den"
+    else:
+        suffix = ""
+
     working_path = Path(os.environ["PYP_SCRATCH"]) / name
     os.makedirs( working_path, exist_ok=True)
 
     # move to working directory
     os.chdir(working_path)
     
-    rec = os.path.join(project_path, "mrc", name + ".rec")
+    rec = os.path.join(project_path, "mrc", name + suffix + ".rec")
     if os.path.exists(rec):
         if parameters.get("tomo_rec_depth") and get_image_mode(rec) != 2 and convert_to_32:
             logger.info("Converting tomogram to 32-bits")
             command = "{0}/bin/newstack -quiet -mode 2 {1} {2}".format(
-                get_imod_path(), rec, name + ".rec"
+                get_imod_path(), rec, name + suffix + ".rec"
             )
             local_run.run_shell_command(command)
         else:

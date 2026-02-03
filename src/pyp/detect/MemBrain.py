@@ -207,7 +207,12 @@ def run_membrain(project_dir, name, parameters ):
         tomogram_source = project_dir
         logger.info("Using current project tomograms for segmentation")
 
-    local_input = f"./{name}.rec"
+    if parameters.get("tomo_mem_use_denoised") and os.path.exists(name + "_den.rec"):
+        suffix = "_den"
+    else:
+        suffix = ""
+
+    local_input = f"./{name}{suffix}.rec"
 
     # copy the input tomogram to scratch space
     assert os.path.exists(local_input), f"{local_input} does not exist, please run preprocessing first"
@@ -225,7 +230,7 @@ def run_membrain(project_dir, name, parameters ):
     
     if rescaled:
         rescale_input = glob.glob(f"./{local_output}/*.mrc")[0]
-        command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}.rec --output-path {output}"
+        command = f"{get_membrane_path()}tomo_preprocessing match_seg_to_tomo --seg-path {rescale_input} --orig-tomo-path ./{name}{suffix}.rec --output-path {output}"
 
         local_run.stream_shell_command(command)
     else:
