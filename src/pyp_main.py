@@ -343,6 +343,10 @@ def parse_arguments(block):
                     parameters["tomo_ali_force"] = parameters_existing.get("tomo_ali_force")
                 if "tomo_rec_force" in parameters_existing:
                     parameters["tomo_rec_force"] = parameters_existing.get("tomo_rec_force") 
+                if "tomo_mem_force" in parameters_existing:
+                    parameters["tomo_mem_force"] = parameters_existing.get("tomo_mem_force") 
+                if "tomo_denoise_force" in parameters_existing:
+                    parameters["tomo_denoise_force"] = parameters_existing.get("tomo_denoise_force") 
                 if "tomo_vir_force" in parameters_existing:
                     parameters["tomo_vir_force"] = parameters_existing.get("tomo_vir_force")
                 if "tomo_srf_force" in parameters_existing:
@@ -1858,6 +1862,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if "preprocessing" in parameters.get("micromon_block") and not np.array_equal(np.sort(previous_manual_angles), np.sort(new_angles)):
             logger.warning(f"Manually excluded tilts changed from: {previous_manual_angles} to: {new_angles}. Tilt-series will be re-aligned!")
             parameters["tomo_rec_force"] = True
+            parameters["tomo_mem_force"] = True
+            parameters["tomo_denoise_force"] = True
             parameters["tomo_ali_force"] = True
             parameters["ctf_force"] = True
             if "ali" in metadata.keys():
@@ -2186,7 +2192,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 pass
         os.chdir(working_path)
         if os.path.exists(output):
-            tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise = True )
+            tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise = True, cleanup = False )
 
         if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
             new_reconstruction = ""
@@ -2200,7 +2206,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                     new_reconstruction = Tardis.run_tardis( name, parameters )
             os.chdir(working_path)
             if os.path.exists(new_reconstruction):
-                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True, cleanup = False )
         
         # if in sessions, set information for particle extraction according to current 2D classification settings
         if parameters.get("micromon_block") == "": 
@@ -4292,7 +4298,7 @@ def tomoswarm_prologue(convert_to_32 = True):
     
     return args, name, project_path, working_path, parameters
     
-def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=False, segmentation=False ):
+def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=False, segmentation=False, cleanup = True ):
     """ Save resulting tomogram and update corresponding images and metadata
 
     Parameters
@@ -4357,7 +4363,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
 
     # read metadata from pickle file
     pkl_file = os.path.join( project_path, "pkl", f"{name}.pkl" )
-    if os.path.exists(pkl_file):
+    if os.path.exists(pkl_file) and cleanup:
         metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
     
         # dump files to local scratch
@@ -4884,7 +4890,7 @@ if __name__ == "__main__":
                     parameters = project_params.load_pyp_parameters()
                     tomo_merge(parameters)
                     # reset all flags for re-calculation
-                    parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
+                    parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["tomo_mem_force"] = parameters["tomo_denoise_force"] = parameters["data_import"] = False
                     project_params.save_pyp_parameters(parameters)
                     logger.info("nextPYP (tomomerge) finished successfully")
                 except:

@@ -391,6 +391,8 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -Align 0 \
 -Gpu {get_gpu_ids(parameters,separator=' ')}"
                 run_shell_command(command)
+
+                assert os.path.exists(name+".rec"), "AreTomo2 failed"
                 
             elif "aretomo3" == parameters["tomo_rec_method"].lower():
 

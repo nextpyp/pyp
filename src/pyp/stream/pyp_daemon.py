@@ -299,7 +299,9 @@ def pyp_daemon(args):
                 parameters["detect_force"] or
                 parameters["tomo_rec_force"] or
                 parameters["tomo_vir_force"] or
-                parameters["tomo_ali_force"]
+                parameters["tomo_ali_force"] or
+                parameters["tomo_denoise_force"] or
+                parameters["tomo_mem_force"]
             ):
                 # create a flag for fyp restart
                 Path(os.path.join(session_dir, "fypd.restart")).touch()
@@ -748,7 +750,7 @@ def clean_pkl_items(parameters, namelist, current_path):
                         [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mrc",name+"_vir????_binned_nad.*") ) ]
                         [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
 
-                    if "detect_force" in parameters and parameters["detect_force"] or parameters["tomo_spk_method"] != "none":
+                    if "detect_force" in parameters and parameters["detect_force"] or parameters["tomo_spk_method"] == "none":
                         if first:
                             logger.info(
                                 f"Particle parameters will be re-computed"
