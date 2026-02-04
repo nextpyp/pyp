@@ -1250,7 +1250,7 @@ _rlnMicrographName #18"""
             tomo = os.path.join(os.getcwd(), name + ".rec")
             pixel_size = parameters["scope_pixel"] * parameters["data_bin"] * parameters["tomo_rec_binning"]
 
-            pkl_file = f"{project_dir}/pkl/{name}.pkl"
+            pkl_file = f"{name}.pkl" if os.path.exists(f"{name}.pkl") else f"{project_dir}/pkl/{name}.pkl"
             assert os.path.exists(pkl_file), f"There is no meta data for this tomogram, please check the input name: {pkl_file}."
             metadata = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
             ctf = metadata.data["global_ctf"].to_numpy()
