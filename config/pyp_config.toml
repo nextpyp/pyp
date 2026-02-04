@@ -1622,14 +1622,6 @@ default = false
 condition = { arg="use_masking", value="true" }
 hidden = ["stream_tomo"]
 
-[tabs.detect_nn3d.directional_filtering]
-name = "Enable directional filtering"
-description = "Removes coordinates whose surface-normal direction does not match the majority normal direction"
-type = "bool"
-default = false
-condition = { arg="use_masking", value="true" }
-hidden = ["tomo_particles_train", "stream_tomo"]
-
 [tabs.detect_nn3d.patch_size]
 name = "Patch size"
 description = "Size of patches used for training, must be multiple for 4"
@@ -1806,7 +1798,7 @@ hidden = ["stream_spr", "stream_tomo"]
 name = "Blend ratio"
 description = "Mixing ratio to use for 3D visualization (0=less color, 1=more color)"
 type = "float"
-default = 0.2
+default = 0.8
 hidden = [ "tomo_milo_train" ]
 
 [tabs.detect_milo.visualization_sphere]
@@ -1904,13 +1896,6 @@ type = "bool"
 default = true
 condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
-
-[tabs.detect_milo.directional_filtering]
-name = "Enable directional filtering"
-description = "Removes coordinates whose surface-normal direction does not match the majority normal direction"
-type = "bool"
-default = false
-condition = { arg="surface", value="true" }
 
 [tabs.detect_milo.use_iterative]
 name = "Iterate"
