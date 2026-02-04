@@ -2192,7 +2192,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 pass
         os.chdir(working_path)
         if os.path.exists(output):
-            tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise = True )
+            tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise = True, cleanup = False )
 
         if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
             new_reconstruction = ""
@@ -2206,7 +2206,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                     new_reconstruction = Tardis.run_tardis( name, parameters )
             os.chdir(working_path)
             if os.path.exists(new_reconstruction):
-                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True )
+                tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True, cleanup = False )
         
         # if in sessions, set information for particle extraction according to current 2D classification settings
         if parameters.get("micromon_block") == "": 
@@ -4293,7 +4293,7 @@ def tomoswarm_prologue(convert_to_32 = True):
     
     return args, name, project_path, working_path, parameters
     
-def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=False, segmentation=False ):
+def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, denoise=False, segmentation=False, cleanup = True ):
     """ Save resulting tomogram and update corresponding images and metadata
 
     Parameters
@@ -4358,7 +4358,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
 
     # read metadata from pickle file
     pkl_file = os.path.join( project_path, "pkl", f"{name}.pkl" )
-    if os.path.exists(pkl_file):
+    if os.path.exists(pkl_file) and cleanup:
         metadata_object = pyp_metadata.LocalMetadata( os.path.join(project_path,"pkl", f"{name}.pkl"), is_spr=False)
     
         # dump files to local scratch
