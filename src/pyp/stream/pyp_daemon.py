@@ -299,7 +299,9 @@ def pyp_daemon(args):
                 parameters["detect_force"] or
                 parameters["tomo_rec_force"] or
                 parameters["tomo_vir_force"] or
-                parameters["tomo_ali_force"]
+                parameters["tomo_ali_force"] or
+                parameters["tomo_denoise_force"] or
+                parameters["tomo_mem_force"]
             ):
                 # create a flag for fyp restart
                 Path(os.path.join(session_dir, "fypd.restart")).touch()

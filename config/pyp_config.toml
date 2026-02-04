@@ -2587,6 +2587,13 @@ hidden = [ "tomo_import_star" ]
 _name = "Tomogram denoising"
 _description = "Parameters for tomograms denoising"
 
+[tabs.tomo_denoise.force]
+name = "Recalculate denoising"
+description = "If true, denoise tomograms"
+type = "bool"
+default = false
+hidden = true
+
 [tabs.tomo_denoise.method]
 name = "Method"
 description = "Denoise tomograms with selected method"
@@ -3715,6 +3722,13 @@ hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 [tabs.tomo_mem]
 _name = "Tomogram segmentation"
 _description = "Parameters for tomogram segmentation"
+
+[tabs.tomo_mem.force]
+name = "Recalculate segmentation"
+description = "If true, segment tomograms"
+type = "bool"
+default = false
+hidden = true
 
 [tabs.tomo_mem.method]
 name = "Method"

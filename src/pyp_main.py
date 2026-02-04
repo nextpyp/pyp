@@ -343,6 +343,10 @@ def parse_arguments(block):
                     parameters["tomo_ali_force"] = parameters_existing.get("tomo_ali_force")
                 if "tomo_rec_force" in parameters_existing:
                     parameters["tomo_rec_force"] = parameters_existing.get("tomo_rec_force") 
+                if "tomo_mem_force" in parameters_existing:
+                    parameters["tomo_mem_force"] = parameters_existing.get("tomo_mem_force") 
+                if "tomo_denoise_force" in parameters_existing:
+                    parameters["tomo_denoise_force"] = parameters_existing.get("tomo_denoise_force") 
                 if "tomo_vir_force" in parameters_existing:
                     parameters["tomo_vir_force"] = parameters_existing.get("tomo_vir_force")
                 if "tomo_srf_force" in parameters_existing:
@@ -1858,6 +1862,8 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         if "preprocessing" in parameters.get("micromon_block") and not np.array_equal(np.sort(previous_manual_angles), np.sort(new_angles)):
             logger.warning(f"Manually excluded tilts changed from: {previous_manual_angles} to: {new_angles}. Tilt-series will be re-aligned!")
             parameters["tomo_rec_force"] = True
+            parameters["tomo_mem_force"] = True
+            parameters["tomo_denoise_force"] = True
             parameters["tomo_ali_force"] = True
             parameters["ctf_force"] = True
             if "ali" in metadata.keys():
@@ -4879,7 +4885,7 @@ if __name__ == "__main__":
                     parameters = project_params.load_pyp_parameters()
                     tomo_merge(parameters)
                     # reset all flags for re-calculation
-                    parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["data_import"] = False
+                    parameters["movie_force"] = parameters["ctf_force"] = parameters["detect_force"] = parameters["tomo_vir_force"] = parameters["tomo_ali_force"] = parameters["tomo_rec_force"] = parameters["tomo_mem_force"] = parameters["tomo_denoise_force"] = parameters["data_import"] = False
                     project_params.save_pyp_parameters(parameters)
                     logger.info("nextPYP (tomomerge) finished successfully")
                 except:

@@ -887,6 +887,8 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
             new_parameters["tomo_ali_force"] = False
             new_parameters["tomo_vir_force"] = False
             new_parameters["tomo_rec_force"] = False
+            new_parameters["tomo_mem_force"] = False
+            new_parameters["tomo_denoise_force"] = False
 
     if len(differences) > 0 and new_parameters.get("micromon_block") != "tomo-particles-train":
 
@@ -930,6 +932,8 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                         new_parameters["tomo_ali_force"] = True
                         new_parameters["tomo_vir_force"] = True
                         new_parameters["tomo_rec_force"] = True
+                        new_parameters["tomo_mem_force"] = True
+                        new_parameters["tomo_denoise_force"] = True
                         clean_tomo_vir_particles(project_dir)
 
             # specific ones
@@ -968,6 +972,8 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                         )
                         new_parameters["tomo_ali_force"] = True
                         new_parameters["tomo_rec_force"] = True
+                        new_parameters["tomo_mem_force"] = True
+                        new_parameters["tomo_denoise_force"] = True
                         new_parameters["tomo_vir_force"] = True
                         clean_tomo_vir_particles(project_dir)
                         new_parameters["detect_force"] = True
@@ -979,6 +985,8 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                             f"Tomograms will be re-computed to reflect change in parameter {k}"
                         )
                         new_parameters["tomo_rec_force"] = True
+                        new_parameters["tomo_mem_force"] = True
+                        new_parameters["tomo_denoise_force"] = True
                         if not "tomo_rec_erase_fiducials" in k:
                             new_parameters["tomo_vir_force"] = True
                             clean_tomo_vir_particles(project_dir)
@@ -1021,15 +1029,21 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                 new_parameters["tomo_ali_force"] = True
                 new_parameters["tomo_vir_force"] = True
                 new_parameters["tomo_rec_force"] = True
+                new_parameters["tomo_mem_force"] = True
+                new_parameters["tomo_denoise_force"] = True
                 clean_tomo_vir_particles(project_dir)
 
         elif "tomo" in previous_parameters["data_mode"] and len(glob.glob("mrc/*rec")) == 0:
             new_parameters["tomo_vir_force"] = True
             new_parameters["tomo_rec_force"] = True
+            new_parameters["tomo_mem_force"] = True
+            new_parameters["tomo_denoise_force"] = True
             clean_tomo_vir_particles(project_dir)
             
     if "tomo" in previous_parameters["data_mode"] and os.path.exists(micrographs) and need_tomo_rec_force(inputlist, project_dir, new_parameters):
         new_parameters["tomo_rec_force"] = True
+        new_parameters["tomo_mem_force"] = True
+        new_parameters["tomo_denoise_force"] = True
 
     return new_parameters
 
