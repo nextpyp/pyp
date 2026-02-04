@@ -1139,7 +1139,7 @@ def miloeval(args):
 
         # TODO: generate 3D tomogram visualization plots
         color_file = os.path.join(output_folder,'all_colors.npy')
-        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam {Path(output_file).parent} --rec_dir {rec_folder} --visualization_sphere \"{args['detect_milo_visualization_sphere']}\" 2>&1 | tee {scratch_train + '_plot3d.log'}"
+        command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam {Path(output_file).parent} --rec_dir {rec_folder} --visualization_sphere \"{args['detect_milo_visualization_sphere']}\" --image_txt {imgs_file} 2>&1 | tee {scratch_train + '_plot3d.log'}"
         local_run.run_shell_command(command)
 
         rec_files = glob.glob(str(Path(output_file).parent / '*_rec3d.npy'))
