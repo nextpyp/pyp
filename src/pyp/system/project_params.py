@@ -1013,6 +1013,18 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                         thresholds_file = os.path.join( project_dir, "next", "virion_thresholds.next")
                         if os.path.exists(thresholds_file):
                             os.remove(thresholds_file)
+                            
+                    elif k.startswith("tomo_mem_") and new_parameters.get("micromon_block") == "":
+                        logger.info(
+                            f"Tomogram segmentation will be re-computed to reflect change in parameter {k}"
+                        )
+                        new_parameters["tomo_mem_force"] = True
+
+                    elif k.startswith("tomo_denoise_") and new_parameters.get("micromon_block") == "":
+                        logger.info(
+                            f"Tomogram denoising will be re-computed to reflect change in parameter {k}"
+                        )
+                        new_parameters["tomo_denoise_force"] = True
 
     else:
         # rerun a failed job without changing parameters 
