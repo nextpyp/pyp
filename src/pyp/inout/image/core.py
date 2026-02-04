@@ -1509,6 +1509,10 @@ def generate_aligned_tiltseries(name, parameters, x, y):
 
     from pyp.system import mpi
     mpi.submit_jobs_to_workers(commands)
+    
+    # fail if outputs are missing
+    for tilt in range(sec):
+        assert os.path.exists("{0}_{1:04d}.ali".format(name,tilt)), "{0}_{1:04d}.ali not found!".format(name,tilt)
 
     command = "{0}/bin/newstack -quiet {2} {1}.ali".format(
         get_imod_path(), name, " ".join(aligned_images)

@@ -5169,6 +5169,8 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 
             stream_shell_command(command, observer=obs)
 
+            assert os.path.exists(name+"_aretomo.rec"), "AreTomo2 failed"
+            
             # detect removed images and add them to excluded views
             formatted_tilt_angles = np.array(["%.2f" % x for x in original_tilt_angles])
             tilt_offset = 0.0
