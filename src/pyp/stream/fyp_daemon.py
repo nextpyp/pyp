@@ -922,7 +922,10 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     force_preprocessing,
                     ]
                 ):
-                    logger.warning("Main parameters changed, will re-extract particles and restart refinement")
+                    if mparameters.get("data_mode") == "spr":
+                        logger.warning("Main parameters changed, will re-extract particles and restart refinement")
+                    else:
+                        logger.warning("Main parameters changed, will restart 2D classification from scratch")
                     # re-extract particles
                     # remove stacks
                     [ os.remove(f) for f in glob.glob( os.path.join(local_scratch_dir,"*stack*.mrc") ) ]
