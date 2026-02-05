@@ -1986,6 +1986,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] ) or \
         parameters["tomo_vir_force"] or \
         parameters["tomo_rec_force"] or \
+        ( not os.path.exists(os.path.join(project_path,"sva",name+"_stack.mrc")) and parameters.get("class2d_enable") ) or \
         tomo_subvolume_extract_is_required(parameters) or \
         detect.tomo_vir_is_required(parameters) or \
         not ctf_mod.is_done(metadata, parameters, name=name, project_dir=current_path):

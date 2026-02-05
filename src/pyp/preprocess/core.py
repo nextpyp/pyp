@@ -735,6 +735,8 @@ def read_tilt_series(
         or ( parameters["tomo_vir_method"] != "none" and parameters["detect_force"] )
         or parameters["tomo_vir_force"] 
         or parameters["tomo_rec_force"]
+        # if we are in sessions, with classification enabled, and no extracted particles exist
+        or ( parameters.get("micromon_block") == "" and parameters.get("class2d_enable") and not os.path.exists(os.path.join(project_path,"sva",f"{name}_stack.mrc")) )
         or tomo_subvolume_extract_is_required(parameters)
         or tomo_vir_is_required(parameters)
         or not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path) ):
