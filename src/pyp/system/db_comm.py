@@ -435,6 +435,7 @@ def load_tomo_results(name, parameters, project_path, working_path):
     if not ( parameters.get('movie_force') or parameters.get('tomo_rec_force') or parameters.get('tomo_ali_force') ):
         initial_files.append("mrc/{0}.rec")
         initial_files.append("mrc/{0}_seg.rec")
+        initial_files.append("mrc/{0}_den.rec")
         initial_files.append("mrc/{0}_half1.rec")
         initial_files.append("mrc/{0}_half2.rec")
         initial_files.append("webp/{0}.webp")

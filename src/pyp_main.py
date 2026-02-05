@@ -2157,45 +2157,46 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         local_metadata = pyp_metadata.LocalMetadata(f"{name}.pkl", is_spr=False)
         local_metadata.loadFiles()
 
-        match parameters.get("tomo_denoise_method"):
-            case "isonet":
-                if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet_model"))):
-                    output = isonet_tools.isonet_predict( name, project_path, parameters)
-                else:
-                    logger.info("IsoNet model not found, skipping denoising")
-            case "isonet2":
-                if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet2_predict_model"))):
-                    output = isonet_tools.isonet2_predict( name, project_path, parameters)
-                else:
-                    logger.info("IsoNet2 model not found, skipping denoising")
-            case "topaz":
-                topaz_temp = working_path / "topaz_temp"
-                os.makedirs( topaz_temp, exist_ok=True)
-                output = topaz.topaz_tomo_denoise(name, parameters, raw_rec_location=Path.cwd(), working_path=topaz_temp)
-            case "cryocare":
-                if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_cryocare_model"))):
-                    output = cryocare.cryocare_predict( working_path, project_path, name, parameters)
-                else:
-                    logger.info("cryoCARE model not found, skipping denoising")
-            case "noise2map":
-                first_half = name + "_half1.rec"
-                second_half = first_half.replace("_half1.rec","_half2.rec")
+        if not os.path.exists(name+"_den.rec"):
+            match parameters.get("tomo_denoise_method"):
+                case "isonet":
+                    if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet_model"))):
+                        output = isonet_tools.isonet_predict( name, project_path, parameters)
+                    else:
+                        logger.info("IsoNet model not found, skipping denoising")
+                case "isonet2":
+                    if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_isonet2_predict_model"))):
+                        output = isonet_tools.isonet2_predict( name, project_path, parameters)
+                    else:
+                        logger.info("IsoNet2 model not found, skipping denoising")
+                case "topaz":
+                    topaz_temp = working_path / "topaz_temp"
+                    os.makedirs( topaz_temp, exist_ok=True)
+                    output = topaz.topaz_tomo_denoise(name, parameters, raw_rec_location=Path.cwd(), working_path=topaz_temp)
+                case "cryocare":
+                    if os.path.exists(project_params.resolve_path(parameters.get("tomo_denoise_cryocare_model"))):
+                        output = cryocare.cryocare_predict( working_path, project_path, name, parameters)
+                    else:
+                        logger.info("cryoCARE model not found, skipping denoising")
+                case "noise2map":
+                    first_half = name + "_half1.rec"
+                    second_half = first_half.replace("_half1.rec","_half2.rec")
 
-                for half_map in [first_half, second_half]:
-                    if not os.path.exists(half_map):
-                        parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
-                        assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running Noise2Map"
+                    for half_map in [first_half, second_half]:
+                        if not os.path.exists(half_map):
+                            parent_mrc_location = Path(project_params.resolve_path(parameters.get("data_parent"))) / "mrc" / Path(half_map).name
+                            assert parent_mrc_location.exists(), f"Half-map {Path(parent_mrc_location).name} not found in upstream block, please generate half-tomograms before running Noise2Map"
 
-                        # link half tomogram to mrc/ directory
-                        symlink_relative( parent_mrc_location, half_map )
-                output = warptools_noise2map(first_half, parameters, tomogram=True)
-            case _:
-                pass
-        os.chdir(working_path)
-        if os.path.exists(output):
-            tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise = True, cleanup = False )
+                            # link half tomogram to mrc/ directory
+                            symlink_relative( parent_mrc_location, half_map )
+                    output = warptools_noise2map(first_half, parameters, tomogram=True)
+                case _:
+                    pass
+            os.chdir(working_path)
+            if os.path.exists(output):
+                tomoswarm_epilogue( output, name, project_path, working_path, parameters, denoise = True, cleanup = False )
 
-        if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))):
+        if os.path.exists(project_params.resolve_path(parameters.get("tomo_mem_model"))) and not os.path.exists(name+"_seg.rec"):
             new_reconstruction = ""
             match parameters.get("tomo_mem_method"):
                 case "membrain":

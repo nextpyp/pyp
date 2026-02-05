@@ -1019,12 +1019,14 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                             f"Tomogram segmentation will be re-computed to reflect change in parameter {k}"
                         )
                         new_parameters["tomo_mem_force"] = True
+                        clean_segmentation_files(project_dir)
 
                     elif k.startswith("tomo_denoise_") and new_parameters.get("micromon_block") == "":
                         logger.info(
                             f"Tomogram denoising will be re-computed to reflect change in parameter {k}"
                         )
                         new_parameters["tomo_denoise_force"] = True
+                        clean_denosing_files(project_dir)
 
     else:
         # rerun a failed job without changing parameters 
@@ -1066,6 +1068,16 @@ def clean_ctf_files(project_dir):
         os.remove(f)
         for f in glob.glob( os.path.join(project_dir, "ctf" "*.ctf") ) + glob.glob( os.path.join(project_dir, "ctf" "*.def") )
     ]
+
+
+def clean_denosing_files(project_dir):
+    if os.path.exists(os.path.join(project_dir, "mrc")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_den.rec") )]
+
+
+def clean_segmentation_files(project_dir):
+    if os.path.exists(os.path.join(project_dir, "mrc")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*_seg.rec") )]
 
 
 def clean_picking_files(project_dir):
