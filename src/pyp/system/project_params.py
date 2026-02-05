@@ -980,7 +980,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                         clean_picking_files(project_dir)
                         new_parameters["ctf_force"] = True
 
-                    elif "tomo_rec" in k and 'generate_halves' not in k or k in ("class2d_box","class2d_bin"):
+                    elif "tomo_rec" in k and 'generate_halves' not in k:
                         logger.info(
                             f"Tomograms will be re-computed to reflect change in parameter {k}"
                         )
@@ -993,6 +993,12 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                             new_parameters["detect_force"] = True
                             clean_picking_files(project_dir)
 
+                    elif k in ("class2d_box","class2d_bin") and new_parameters.get("micromon_block") == "":
+                        stack_files = glob.glob( os.path.join(project_dir, "sva", "*_stack.mrc") )
+                        logger.info(f"Particles will be re-extracted to reflect change in parameter {k}")
+                        if len(stack_files) > 0:
+                            [ os.remove(stack) for stack in stack_files ]
+                        
                     elif (
                         ( "tomo_vir_" in k 
                         and "tomo_vir_rad" not in k 

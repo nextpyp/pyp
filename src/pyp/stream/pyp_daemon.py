@@ -301,7 +301,8 @@ def pyp_daemon(args):
                 parameters["tomo_vir_force"] or
                 parameters["tomo_ali_force"] or
                 parameters["tomo_denoise_force"] or
-                parameters["tomo_mem_force"]
+                parameters["tomo_mem_force"] or
+                parameters.get("micromon_block") == "" and parameters.get("class2d_enable") and len(glob.glob(os.path.join(session_dir, "sva", "*_stack.mrc"))) == 0
             ):
                 # create a flag for fyp restart
                 Path(os.path.join(session_dir, "fypd.restart")).touch()

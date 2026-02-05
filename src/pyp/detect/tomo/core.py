@@ -1219,7 +1219,7 @@ def spk_extract_and_process(
         command = "{0}/bin/xyzproj -input '{1}.rec' -axis Y -angles 0,0,0 -output '{1}_proj.mrc'; rm '{1}.rec'".format(get_imod_path(), spike_name)
         local_run.run_shell_command(command)
 
-def detect_and_extract_particles( name, parameters, current_path, binning, x, y, zfact, tilt_angles, tilt_options, exclude_virions ):
+def detect_and_extract_particles( name, parameters, current_path, project_path, binning, x, y, zfact, tilt_angles, tilt_options, exclude_virions ):
 
     surface_mode = parameters.get("tomo_srf_detect_method") != "none" and parameters.get("micromon_block") == "tomo-picking-open"
     
@@ -1250,7 +1250,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
     unbinned_spike_radius = parameters["tomo_spk_rad"] / parameters["scope_pixel"] / parameters['data_bin']
     binned_spike_radius = int(unbinned_spike_radius / binning)
 
-    if parameters.get("micromon_block") == "tomo-import" and os.path.exists(f"{name}.spk"):
+    if parameters.get("micromon_block") in ("tomo-import","") and os.path.exists(f"{name}.spk"):
         coordinates = imod.coordinates_from_mod_file(f"{name}.spk").astype('float')
         if coordinates.size > 0:
             coordinates *= binning
@@ -2048,7 +2048,7 @@ def detect_and_extract_particles( name, parameters, current_path, binning, x, y,
         os.path.isfile("%s.spk" % name)
         or os.path.isfile("%s.txt" % name)
         or os.path.isfile("%s.openmod" % name)
-    ) and parameters["tomo_ext_size"] > 0 and parameters.get("micromon_block") != "tomo-picking-closed" and parameters.get("micromon_block") != "tomo-picking-open":
+    ) and parameters["tomo_ext_size"] > 0 and parameters.get("micromon_block") != "tomo-picking-closed" and parameters.get("micromon_block") != "tomo-picking-open" and not ( parameters.get("micromon_block") == "" and parameters.get("class2d_enable") and os.path.exists(os.path.join(project_path,"sva",f"{name}_stack.mrc")) ):
         t = timer.Timer(text="Sub-volume extraction took: {}", logger=logger.info)
         t.start()
         extract_spk_direct(

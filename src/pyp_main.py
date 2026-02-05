@@ -2221,6 +2221,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         name,
         parameters,
         current_path,
+        project_path,
         binning,
         x, y,
         zfact,
