@@ -1743,7 +1743,7 @@ hidden = ["stream_spr", "stream_tomo"]
 name = "Z Threshold"
 description = "The Z-score threshold for the unassigned cluster (class 0). Decrease to reject and increase to retain more patches."
 type = "float"
-default = 1
+default = 2
 hidden = [ "tomo_milo_train" ]
 
 [tabs.detect_milo.lr]
