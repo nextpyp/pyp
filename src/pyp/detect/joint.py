@@ -1122,7 +1122,7 @@ def miloeval(args):
         calculate_metrics = "--calculate_metrics " if args['detect_milo_calculate_metrics'] else ""
         command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/plot_2d.py --input {output_file} --n_cluster {args['detect_milo_num_clusters']} --num_neighbor 40 --mode umap --path {output_folder} --min_dist_vis 1.3e-3 --imgs_per_label {args['detect_milo_imgs_per_label']} --z_thresh {args['detect_milo_z_thresh']} {use_2d}{calculate_metrics}2>&1 | tee {scratch_train +  '_plot2d.log'}"
 
-        local_run.run_shell_command(command)             
+        local_run.stream_shell_command(command)
 
         # copy results to project folder
         for file in [ 'interactive_info_parquet.gzip', "2d_visualization_labels.webp", "2d_visualization_out.webp", "2d_visualization_labels_matrix.webp" ]:
@@ -1140,7 +1140,7 @@ def miloeval(args):
         # TODO: generate 3D tomogram visualization plots
         color_file = os.path.join(output_folder,'all_colors.npy')
         command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/visualize_3dhm.py --input {output_file} --color {color_file} --dir_simsiam {Path(output_file).parent} --rec_dir {rec_folder} --visualization_sphere \"{args['detect_milo_visualization_sphere']}\" --image_txt {imgs_file} 2>&1 | tee {scratch_train + '_plot3d.log'}"
-        local_run.run_shell_command(command)
+        local_run.stream_shell_command(command)
 
         rec_files = glob.glob(str(Path(output_file).parent / '*_rec3d.npy'))
 
