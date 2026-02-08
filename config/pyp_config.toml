@@ -86,12 +86,12 @@ tabs = [ "data", "gain", "scope", "slurm", "micromon" ]
 [blocks.tomo_import]
 name = "TOMO import"
 description = "CLI Import for TOMO"
-tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "data", "movie", "tomo_ali", "ctf", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
 [blocks.tomo_import_pure]
 name = "TOMO import"
 description = "CLI Import for TOMO"
-tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+tabs = [ "data", "movie", "tomo_ali", "ctf", "tomo_rec", "slurm" ]
 
 [blocks.tomo_import_star]
 name = "TOMO Star Import"
@@ -101,24 +101,24 @@ tabs = [ "import", "data", "gain", "scope", "tomo_rec", "slurm" ]
 [blocks.tomo_session]
 name = "TOMO Session Import"
 description = "Star data import for TOMO"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "movie", "tomo_ali", "ctf", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
 [blocks.tomo_pre_process]
 name = "TOMO Pre-processing (legacy)"
 description = "Frame/tilt-series alignment, CTF, and particle picking"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_denoise", "tomo_mem", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "movie", "tomo_ali", "ctf", "tomo_rec", "tomo_denoise", "tomo_mem", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "gain" ]
 
 [blocks.tomo_pure_preprocess]
 name = "TOMO Pre-processing"
 description = "Alignment, reconstruction, and CTF"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+tabs = [ "movie", "tomo_ali", "ctf", "tomo_rec", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_warp_preprocess]
 name = "Warptools Pre-processing"
 description = "Alignment, reconstruction, and CTF (warp)"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+tabs = [ "movie", "tomo_ali", "ctf", "tomo_rec", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_segment_open]
