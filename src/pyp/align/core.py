@@ -3978,6 +3978,13 @@ def sum_gain_correct_frames(movie, average, parameters):
         output, error = avgstack(
             movie, average, f"{first_frame},{last_frame}"
         )
+        if parameters.get("data_bin", 1) > 1:
+            # if we are binning, also bin the average
+            command = f"{get_imod_path()}/bin/newstack -quiet -bin {parameters['data_bin']} {average} {average}~ && mv {average}~ {average}"
+            output, error = run_shell_command(command)
+            if "error" in output.lower():
+                logger.error(output)
+                raise Exception("Failed to bin average")
 
     # are we using a gain reference?
     if "gain_reference" in parameters.keys() and parameters["gain_reference"] and os.path.exists(
