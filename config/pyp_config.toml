@@ -704,7 +704,7 @@ description = "Binning factor in Fourier space (use values >= 1)"
 type = "float"
 condition = { arg="ali", value="motioncor" }
 default = 1.0
-hidden = ["spr_import_star","tomo_import_star"]
+hidden = true
 
 [tabs.movie.motioncor_bfactor_global]
 name = "Global B-factor"

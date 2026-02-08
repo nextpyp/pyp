@@ -4426,7 +4426,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
         command = f"{get_motioncor3_path()} \
 {input} \
 -OutMrc {name}.mrc \
--FtBin {parameters.get('movie_motioncor_bin')} \
+-FtBin {binning} \
 {gain} \
 -OutAln {os.getcwd()} \
 {frame_options} \
