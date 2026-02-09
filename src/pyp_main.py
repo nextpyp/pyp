@@ -6292,10 +6292,13 @@ if __name__ == "__main__":
                             logger.info("Previewing randomly selected file: " + image_file)
 
                             x, y, z = get_image_dimensions(image_file)
-                            logger.info(f"Image dimensions are {x:,} x {y:,} ({z:,} frames/tilts)")
+                            logger.info(f"Original image dimensions: {x:,} x {y:,} ({z:,} frames/tilts)")
 
                             output_file = "gain_corrected_image.mrc"
                             align.sum_gain_correct_frames(image_file, output_file, parameters)
+
+                            if parameters.get("data_bin",1) > 1:
+                                logger.info(f"Image dimensions after binning: {x//parameters['data_bin']:,} x {y//parameters['data_bin']:,} ({z:,} frames/tilts)")
 
                             x, y, z = get_image_dimensions(output_file)
                             binning = int(math.floor(x / 768))
