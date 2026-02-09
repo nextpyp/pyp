@@ -4528,7 +4528,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
             eer_frames_perimage = int(parameters["movie_eer_frames"])
             eer_superres_factor = int(parameters["movie_eer_reduce"])
             eer = "\n%d\n%d" % (eer_frames_perimage, eer_superres_factor)
-            actual_pixel /= eer_superres_factor
+            pixel /= eer_superres_factor
         else:
             eer = ""
 
@@ -4594,7 +4594,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
 ../{movie_file}
 ../{aligned_average}
 ../{name}_shifts.txt
-{actual_pixel}
+{pixel}
 {binning}
 {weighted}
 yes
@@ -4671,19 +4671,9 @@ EOF
     xfshifts = np.zeros((shifts.shape[0], 6))
     xfshifts[:, 0] = 1
     xfshifts[:, 3] = 1
-    xfshifts[:, 4] = shifts[:, 0] / actual_pixel
-    xfshifts[:, 5] = shifts[:, 1] / actual_pixel
+    xfshifts[:, 4] = shifts[:, 0] / pixel
+    xfshifts[:, 5] = shifts[:, 1] / pixel
     np.savetxt(name + ".xf", xfshifts, fmt="%13.7f")
-
-    # maximum displacement
-    error = np.hypot(xfshifts[:, -2], xfshifts[:, -1]).max()
-
-    # save .xf file without binning
-    binning = int(parameters["data_bin"])
-    if binning > 1:
-        t = np.loadtxt("%s.xf" % name, ndmin=2)
-        t[:, -2:] *= binning
-        np.savetxt("%s.xf" % name, t, fmt="%13.7f")
 
     # average aligned stack and save
     aligned_average = mrc.read(name + ".avg")

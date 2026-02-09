@@ -493,10 +493,10 @@ hidden = true
 
 [tabs.data.bin]
 name = "Binning"
-description = "Factor to downsample data before processing"
+description = "Factor to downsample super-resolution data (1=keep super-resolution precision, 2=reduce to physical pixel size)"
 type = "int"
 default = 1
-hidden = true
+advanced = true
 
 [tabs.data.invert] 
 name = "Invert contrast"
@@ -688,7 +688,7 @@ description = "Binning factor to use during frame alignment"
 type = "int"
 default = 2
 condition = { arg="ali", value="unblur" }
-hidden = ["spr_import_star","tomo_import_star"]
+hidden = true
 
 [tabs.movie.bfactor]
 name = "B-factor for alignment"
