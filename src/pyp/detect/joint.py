@@ -383,65 +383,71 @@ def tomotrain(args):
     if args['detect_nn3d_val_interval'] > args['detect_nn3d_num_epochs']:
         logger.warning(f"Evaluation interval ({args['detect_nn3d_val_interval']}) is larger than number of epochs ({args['detect_nn3d_num_epochs']})!")
 
+    def generate_montage_from_pngs(epoch_number,series,ext,args,train_folder):
+        """Generate web montage from list of png files. Remove pngs afterwards.
+        """
+        # sorting the pngs and create a loop by appending a reverse list
+        rawPngList = [
+            str(png)
+            for png in Path(os.getcwd()).rglob(f'{epoch_number}_*.png')
+            if series + ext in str(png) and str(png).endswith(".png")
+        ]
+
+        numericList = [ int( Path(png).stem.split(ext)[-1] ) for png in rawPngList ]
+        ordered_indexes = np.argsort( numericList )
+        pngList = [ rawPngList[i] for i in ordered_indexes ]
+
+        if not args['detect_nn3d_compress']:
+            pngList = pngList[::2]
+
+        output = os.path.join( train_folder, f"{series}_{ext}.webp" )
+
+        # generate a GIF using these pngs
+        dimensions = 384
+        tiles = int(math.ceil(math.sqrt(len(pngList))))
+        command = "/usr/bin/montage -resize {0}x{0} -flip -geometry +0+0 -tile {1}x {2} {3}".format(
+            dimensions, tiles, " ".join(pngList), os.path.join( os.getcwd(), output )
+        )
+        local_run.stream_shell_command(command)
+
+        # clean up pngs
+        [os.remove(png) for png in pngList]
+
+        # convert metadata to files
+        pkl_file = f"{os.path.join(project_folder,'pkl',series)}.pkl"
+
+        metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
+        metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_folder,"raw/"))
+        os.remove(f'{series}_avgrot.txt')
+
+        import pandas as pd
+        tilt_metadata = pd.read_pickle(pkl_file)
+        save_tiltseries_to_website(series, tilt_metadata['web'])
+
     def obs(line):
         epoch_number = epoch[-1]
         # This is the output we need to parse:
         # ################################val: [1][0/2]
         if '#val:' in line and args['detect_nn3d_val_interval'] <= args['detect_nn3d_num_epochs']:
-            current_epoch = int(line.split('][')[0].split('[')[-1])
 
-            import pandas as pd
+            remaining_names = image_names.tolist().copy()
 
-            for series in image_names:
-                for ext in [ "pred_hm"]: # "gt_out", "gt_hm", "pred_out"
+            ext = "pred_hm"
+            
+            while len(remaining_names) > 0:
 
-                    # make sure all pngs are written before continuing
-                    while len(list(Path(os.getcwd()).rglob(f'{epoch_number}_{series}{ext}*.png'))) < number_of_slices:
-                        time.sleep(10)
+                series_ready = [ series for series in remaining_names if len(list(Path(os.getcwd()).rglob(f'{epoch_number}_{series}{ext}*.png'))) == number_of_slices ]
+                
+                # wait to give the filesystem time to catch up
+                time.sleep(10)
 
-                    # wait some more to give the filesystem time to catch up
-                    time.sleep(10)
-
-                    # sorting the pngs and create a loop by appending a reverse list
-                    rawPngList = [
-                        str(png)
-                        for png in Path(os.getcwd()).rglob(f'{epoch_number}_*.png')
-                        if series + ext in str(png) and str(png).endswith(".png")
-                    ]
-
-                    if len(rawPngList) == 0:
-                        continue
-
-                    numericList = [ int( Path(png).stem.split(ext)[-1] ) for png in rawPngList ]
-                    ordered_indexes = np.argsort( numericList )
-                    pngList = [ rawPngList[i] for i in ordered_indexes ]
-
-                    if not args['detect_nn3d_compress']:
-                        pngList = pngList[::2]
-
-                    output = os.path.join( train_folder, f"{series}_{ext}.webp" )
-
-                    # generate a GIF using these pngs
-                    dimensions = 384
-                    tiles = int(math.ceil(math.sqrt(len(pngList))))
-                    command = "/usr/bin/montage -resize {0}x{0} -flip -geometry +0+0 -tile {1}x {2} {3}".format(
-                        dimensions, tiles, " ".join(pngList), os.path.join( os.getcwd(), output )
-                    )
-                    local_run.stream_shell_command(command)
-
-                    # clean up pngs
-                    [os.remove(png) for png in pngList]
-
-                if os.path.exists(os.path.join( train_folder, f"{series}_pred_hm.webp")):
-                    # convert metadata to files
-                    pkl_file = f"{os.path.join(project_folder,'pkl',series)}.pkl"
-
-                    metadata_object = pyp_metadata.LocalMetadata(pkl_file, is_spr=False)
-                    metadata_object.meta2PYP(path=os.getcwd(),data_path=os.path.join(project_folder,"raw/"))
-                    os.remove(f'{series}_avgrot.txt')
-
-                    tilt_metadata = pd.read_pickle(pkl_file)
-                    save_tiltseries_to_website(series, tilt_metadata['web'])
+                if len(series_ready) > 0:
+                    arguments = []
+                    for series in series_ready:                    
+                        arguments.append((epoch_number,series,ext,args,train_folder))
+                        remaining_names.remove(series)
+                    
+                    mpi.submit_function_to_workers(generate_montage_from_pngs, arguments)
 
             # increment epoch counter
             epoch.append(epoch_number + args['detect_nn3d_val_interval'])
