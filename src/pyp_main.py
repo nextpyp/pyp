@@ -1000,9 +1000,14 @@ def generate_list_of_all_subvolumes(parameters):
         # combine projections into one stack if they exist
         proj_stack = []
 
+        if parameters.get("micromon_block") == "tomo-particles-eval":
+            randomize_from_block = parameters.get("detect_nn3d_rand")
+        else:
+            randomize_from_block = parameters.get("tomo_pick_rand")
+
         randomize_in_plane_rotations = ( parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
                                         or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
-                                        or parameters["tomo_pick_rad"] > 0 and parameters.get("tomo_pick_rand")
+                                        or parameters["tomo_pick_rad"] > 0 and randomize_from_block
                                         ) and not parameters.get("tomo_pick_method") == "pytom"
         if randomize_in_plane_rotations:
             logger.info(f"Randomizing in-plane rotations")

@@ -2391,7 +2391,7 @@ EOF
                 m = np.dot(np.dot(mpsi, np.dot(mtilt, mrot)),rotate)
                 normZ = normY = normX = 0
                 
-            elif parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"] or parameters["tomo_pick_rad"] > 0 and parameters.get("tomo_pick_normals") == "random":
+            elif parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"] or parameters["tomo_pick_rad"] > 0 and ( parameters.get("micromon_block") == "tomo-particles-eval" and parameters.get("detect_nn3d_normals") == "random" or parameters.get("micromon_block") != "tomo-particles-eval" and parameters.get("tomo_pick_normals") == "random" ):
                 # random normx normz, normy will be changed during merge
                 normX = 360 * (random.random() - 0.5)
                 normZ = 360 * (random.random() - 0.5)
@@ -2451,9 +2451,17 @@ EOF
                 logger.warning("No spikes to extract")
 
     # extract normals from segmentation, if needed
-    if calculate_normals and parameters.get('tomo_pick_normals') == "surface":
-
+    surface_normals = True
+    if parameters.get("micromon_block") == "tomo-particles-eval" and parameters.get('detect_nn3d_normals') == "surface":
+        segmentation_dir = project_params.resolve_path(parameters.get('detect_nn3d_segmentation_path'))
+        use_vector_normal = parameters.get("detect_nn3d_use_vector_normals")
+    elif parameters.get("micromon_block") != "tomo-particles-eval" and parameters.get('tomo_pick_normals') == "surface":
         segmentation_dir = project_params.resolve_path(parameters.get('tomo_pick_segmentation_path'))
+        use_vector_normal = parameters.get("tomo_pick_use_vector_normals")
+    else:
+        surface_normals = False
+    
+    if calculate_normals and surface_normals:
         segmentation_file = os.path.join(segmentation_dir,name+"_seg.rec")
         assert os.path.exists(segmentation_dir), f"Path to segmentation must be specified"
         assert os.path.exists(segmentation_file), f"File not found: {segmentation_file}"
@@ -2470,7 +2478,7 @@ EOF
         df = pd.read_csv(alignments_file, sep='\t', names=cols)
 
         # calculate normals from segmentations        
-        normals = get_normals(name, segmentation_dir = segmentation_dir, coords = spikes[:,:3], use_vector_normal = parameters.get("tomo_pick_use_vector_normals"), vector_normal_threshold = 5)
+        normals = get_normals(name, segmentation_dir = segmentation_dir, coords = spikes[:,:3], use_vector_normal = use_vector_normal, vector_normal_threshold = 5)
         df[["normalX", "normalY", "normalZ"]] = normals.round(decimals=2)
 
         # save new alignments
