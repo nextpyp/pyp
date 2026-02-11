@@ -247,7 +247,12 @@ def tomotrain(args):
                     with open(train_images, 'w') as f:
                         f.write("image_name\trec_path\n")
                         for name in image_names:
-                            rec_path = os.path.join( os.getcwd(), "mrc", name+".rec" )
+                            if args.get("detect_nn3d_use_denoised") and os.path.exists(os.path.join(os.getcwd(), "mrc", name + "_den.rec")):
+                                suffix = "_den"
+                            else:
+                                suffix = ""
+
+                            rec_path = os.path.join( os.getcwd(), "mrc", name+suffix+".rec" )
                             f.write(name + "\t" + rec_path + "\n")
 
                 number_of_coordinates = np.loadtxt(train_coords, comments='image_name', ndmin=2, dtype='str').shape[0]
@@ -270,7 +275,11 @@ def tomotrain(args):
                         with open(train_images, 'w') as f:
                             f.write("image_name\trec_path\n")
                             for name in image_names:
-                                rec_path = os.path.join( os.getcwd(), "mrc", name+".rec" )
+                                if args.get("detect_nn3d_use_denoised") and os.path.exists(os.path.join(os.getcwd(), "mrc", name + "_den.rec")):
+                                    suffix = "_den"
+                                else:
+                                    suffix = ""
+                                rec_path = os.path.join( os.getcwd(), "mrc", name+suffix+".rec" )
                                 f.write(name + "\t" + rec_path + "\n")
                     else:
                         raise Exception("Converted coordinates file is empty, please check the input parquet file")
@@ -511,7 +520,12 @@ def tomoeval(args,name):
     imgs_file = "images.txt"
     with open( imgs_file, 'w' ) as f:
         f.write("image_name\trec_path\n")
-        f.write( name + "\t" + os.path.join( project_folder, 'mrc', name + ".rec") + "\n" )
+        if args.get("detect_nn3d_use_denoised") and os.path.exists(os.path.join(project_folder, "mrc", name + "_den.rec")):
+            suffix = "_den"
+        else:
+            suffix = ""
+        print(suffix, os.path.join( project_folder, 'mrc', name + suffix + ".rec"))
+        f.write( name + "\t" + os.path.join( project_folder, 'mrc', name + suffix + ".rec") + "\n" )
 
     test_file = "testing.txt"
     with open( test_file, 'w' ) as f:
