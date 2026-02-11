@@ -1679,6 +1679,37 @@ default = false
 advanced = true
 hidden = ["tomo_particles_train", "stream_tomo"]
 
+[tabs.detect_nn3d.normals]
+name = "Initial particle orientation(s)"
+description = "Strategy to use for assigning particle orientations"
+type = "enum"
+enum = { none="parallel to z-axis", random="random", surface="from segmentation(s)" }
+default = "none"
+hidden = ["tomo_particles_train", "stream_tomo"]
+
+[tabs.detect_nn3d.segmentation_path]
+name = "Path to segmentation(s)"
+description = "Path to *_seg.mrc files containing 3D segmentations (must have same dimensions as tomograms)"
+type = "path"
+path = { type="folders" }
+condition = { arg="normals", value="surface" }
+hidden = ["tomo_particles_train", "stream_tomo"]
+
+[tabs.detect_nn3d.use_vector_normals]
+name = "Use surface normals"
+description = "Use surface normals instead of direction to closest point on surface"
+type = "bool"
+default = false
+condition = { arg="normals", value="surface" }
+hidden = ["tomo_particles_train", "stream_tomo"]
+
+[tabs.detect_nn3d.rand]
+name = "Randomize in-plane rotations"
+description = "Randomize in-plane particle orientations to reduce mising wegde effects"
+type = "bool"
+default = true
+hidden = ["tomo_particles_train", "stream_tomo"]
+
 #feature detect with milo
 [tabs.detect_milo]
 _name = "Pattern mining"
