@@ -1718,6 +1718,15 @@ description = "Average consecutive slices in Z (2x binning)"
 type = "bool"
 default = true
 
+[tabs.detect_milo.backbone]
+name = "Backbone"
+description = "ResNet version to use"
+type = "enum"
+enum = { 18="ResNet18", 34="ResNet34", 50="ResNet50", 101="ResNet101", 152="ResNet152" }
+default = "18"
+advanced = true
+hidden = [ "tomo_milo_eval" ]
+
 [tabs.detect_milo.num_epochs]
 name = "Epochs"
 description = "Number of passes through the entire dataset"
@@ -1750,7 +1759,7 @@ hidden = [ "tomo_milo_train" ]
 name = "Learning rate"
 description = "Smaller values for slower and stable training. Larger values for faster and potentially unstable training"
 type = "float"
-default = 0.001
+default = 0.00001
 hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.batch_size]
