@@ -358,7 +358,7 @@ def pick_particles(
                 pass
 
             # micrograph binning for performing search
-            auto_binning = 6
+            auto_binning = int(6 / data_bin)
             # if ctf[6] > 6096:
             #     auto_binning *= 2
             com = "{0}/bin/newstack -quiet {1}.avg frealign/{1}.mrc -bin {2}".format(

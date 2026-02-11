@@ -700,7 +700,7 @@ def ctffind4_quad(name, aligned_average, parameters, save_ctf=False, movie=0):
             x,
             y,
             z,
-            float(parameters["scope_pixel"]),
+            float(parameters["scope_pixel"]*parameters["data_bin"]),
             float(parameters["scope_voltage"]),
             float(parameters["scope_mag"]),
             cccc,

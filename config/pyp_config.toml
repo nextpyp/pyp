@@ -493,7 +493,7 @@ hidden = true
 
 [tabs.data.bin]
 name = "Binning"
-description = "Factor to downsample super-resolution data (1=keep super-resolution precision, 2=reduce to physical pixel size)"
+description = "Downsample non-EER super-resolution data (1=keep original precision, 2=reduce to physical pixel size)"
 type = "int"
 default = 1
 advanced = true
