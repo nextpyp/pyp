@@ -326,8 +326,8 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 
     if binning > 1 and ( not os.path.exists(f"{name}_bin.mrc") or parameters["tomo_rec_erase_fiducials"] ):
         # create binned raw stack
-        command = "{0}/bin/newstack -quiet -input {1}.st -output {1}_bin.mrc -shrink {2} -size {3},{4}".format(
-            get_imod_path(), name, binning, size_x, size_y
+        command = "{0}/bin/newstack -quiet -input {1}.st -output {1}_bin.mrc -shrink {2}".format(
+            get_imod_path(), name, binning
         )
         run_shell_command(command)
     else:

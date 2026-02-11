@@ -3995,11 +3995,56 @@ def sum_gain_correct_frames(movie, average, parameters):
     else:
         gain_reference_file = None
 
+    if Path(movie).suffix.lower() != ".eer" and parameters.get("data_bin", 1) > 1:
+        
+        gain_x, gain_y, _ = get_image_dimensions(gain_reference_file)
+        if gain_reference_file is not None and (gain_x, gain_y) == (x, y):
+            # gain reference first
+            com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}~" && mv {average}~ {average}'
+            output, _ = run_shell_command(com)
 
-    # apply gain reference if we are using one
-    if gain_reference_file != None:
+            if "error" in output.lower():
+                logger.error(output)
+                if "sizes must be equal" in output.lower():
+                    logger.error("Did you apply the correct transformation to the gain reference?")
+                    x, y, z = get_image_dimensions(average)
+                    logger.info(f"{average} dimensions are {x} x {y}")
+                    x, y, z = get_image_dimensions(gain_reference_file)
+                    logger.info(f"{gain_reference_file} dimensions are {x} x {y}")
+                raise Exception("Failed to apply gain reference")
+            
+            # binning after
+            command = f"{get_imod_path()}/bin/newstack -quiet -bin {parameters['data_bin']} {average} {average}~ && mv {average}~ {average}"
+            output, _ = run_shell_command(command)
+            if "error" in output.lower():
+                logger.error(output)
+                raise Exception("Failed to bin average")
+        else:
+            # binning first
+            command = f"{get_imod_path()}/bin/newstack -quiet -bin {parameters['data_bin']} {average} {average}~ && mv {average}~ {average}"
+            output, _ = run_shell_command(command)
+            if "error" in output.lower():
+                logger.error(output)
+                raise Exception("Failed to bin average")
+
+            # gain reference after
+            com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}~" && mv {average}~ {average}'
+            output, _ = run_shell_command(com)
+
+            if "error" in output.lower():
+                logger.error(output)
+                if "sizes must be equal" in output.lower():
+                    logger.error("Did you apply the correct transformation to the gain reference?")
+                    x, y, z = get_image_dimensions(average)
+                    logger.info(f"{average} dimensions are {x} x {y}")
+                    x, y, z = get_image_dimensions(gain_reference_file)
+                    logger.info(f"{gain_reference_file} dimensions are {x} x {y}")
+                raise Exception("Failed to apply gain reference")
+    
+    elif gain_reference_file != None:
+        
         com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}~" && mv {average}~ {average}'
-        output, error = run_shell_command(com)
+        output, _ = run_shell_command(com)
 
         if "error" in output.lower():
             logger.error(output)
@@ -4419,7 +4464,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
         command = f"{get_motioncor3_path()} \
 {input} \
 -OutMrc {name}.mrc \
--FtBin {parameters.get('movie_motioncor_bin')} \
+-FtBin {binning} \
 {gain} \
 -OutAln {os.getcwd()} \
 {frame_options} \
@@ -4521,7 +4566,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
             eer_frames_perimage = int(parameters["movie_eer_frames"])
             eer_superres_factor = int(parameters["movie_eer_reduce"])
             eer = "\n%d\n%d" % (eer_frames_perimage, eer_superres_factor)
-            actual_pixel /= eer_superres_factor
+            pixel /= eer_superres_factor
         else:
             eer = ""
 
@@ -4587,7 +4632,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
 ../{movie_file}
 ../{aligned_average}
 ../{name}_shifts.txt
-{actual_pixel}
+{pixel}
 {binning}
 {weighted}
 yes
@@ -4664,19 +4709,9 @@ EOF
     xfshifts = np.zeros((shifts.shape[0], 6))
     xfshifts[:, 0] = 1
     xfshifts[:, 3] = 1
-    xfshifts[:, 4] = shifts[:, 0] / actual_pixel
-    xfshifts[:, 5] = shifts[:, 1] / actual_pixel
+    xfshifts[:, 4] = shifts[:, 0] / pixel
+    xfshifts[:, 5] = shifts[:, 1] / pixel
     np.savetxt(name + ".xf", xfshifts, fmt="%13.7f")
-
-    # maximum displacement
-    error = np.hypot(xfshifts[:, -2], xfshifts[:, -1]).max()
-
-    # save .xf file without binning
-    binning = int(parameters["data_bin"])
-    if binning > 1:
-        t = np.loadtxt("%s.xf" % name, ndmin=2)
-        t[:, -2:] *= binning
-        np.savetxt("%s.xf" % name, t, fmt="%13.7f")
 
     # average aligned stack and save
     aligned_average = mrc.read(name + ".avg")

@@ -741,7 +741,7 @@ def read_tilt_series(
         or tomo_vir_is_required(parameters)
         or not ctf_mod.is_done(metadata,parameters, name=name, project_dir=project_path) ):
 
-        imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning)
+        imageio.tiltseries_to_squares(name, parameters, aligned_tilts, z, square, binning=1)
 
     if parameters["tomo_ali_square"]:
         x, y = square, square

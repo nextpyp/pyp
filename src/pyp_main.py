@@ -1000,9 +1000,14 @@ def generate_list_of_all_subvolumes(parameters):
         # combine projections into one stack if they exist
         proj_stack = []
 
+        if parameters.get("micromon_block") == "tomo-particles-eval":
+            randomize_from_block = parameters.get("detect_nn3d_rand")
+        else:
+            randomize_from_block = parameters.get("tomo_pick_rand")
+
         randomize_in_plane_rotations = ( parameters["tomo_vir_rad"] > 0 and parameters["tomo_vir_detect_rand"] 
                                         or parameters["tomo_spk_rad"] > 0 and parameters["tomo_spk_rand"]
-                                        or parameters["tomo_pick_rad"] > 0 and parameters.get("tomo_pick_rand")
+                                        or parameters["tomo_pick_rad"] > 0 and randomize_from_block
                                         ) and not parameters.get("tomo_pick_method") == "pytom"
         if randomize_in_plane_rotations:
             logger.info(f"Randomizing in-plane rotations")
@@ -1937,7 +1942,7 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
     # determine excluded views from user input
     exclude_views = merge.do_exclude_views(name)
     if len(exclude_views) > 0:
-        logger.warning(f"The following manually selectefd tilts will be excluded: {exclude_views.split(' ')[-1]}")
+        logger.warning(f"The following manually selected tilts will be excluded: {exclude_views.split(' ')[-1]}")
 
     # tilt-series alignment
     if project_params.tiltseries_align_is_done(metadata):
@@ -6292,10 +6297,13 @@ if __name__ == "__main__":
                             logger.info("Previewing randomly selected file: " + image_file)
 
                             x, y, z = get_image_dimensions(image_file)
-                            logger.info(f"Image dimensions are {x:,} x {y:,} ({z:,} frames/tilts)")
+                            logger.info(f"Original image dimensions: {x:,} x {y:,} ({z:,} frames/tilts)")
 
                             output_file = "gain_corrected_image.mrc"
                             align.sum_gain_correct_frames(image_file, output_file, parameters)
+
+                            if parameters.get("data_bin",1) > 1:
+                                logger.info(f"Image dimensions after binning: {x//parameters['data_bin']:,} x {y//parameters['data_bin']:,} ({z:,} frames/tilts)")
 
                             x, y, z = get_image_dimensions(output_file)
                             binning = int(math.floor(x / 768))

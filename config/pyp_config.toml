@@ -86,12 +86,12 @@ tabs = [ "data", "gain", "scope", "slurm", "micromon" ]
 [blocks.tomo_import]
 name = "TOMO import"
 description = "CLI Import for TOMO"
-tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "data", "movie", "tomo_ali", "ctf", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
 [blocks.tomo_import_pure]
 name = "TOMO import"
 description = "CLI Import for TOMO"
-tabs = [ "data", "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+tabs = [ "data", "movie", "tomo_ali", "ctf", "tomo_rec", "slurm" ]
 
 [blocks.tomo_import_star]
 name = "TOMO Star Import"
@@ -101,24 +101,24 @@ tabs = [ "import", "data", "gain", "scope", "tomo_rec", "slurm" ]
 [blocks.tomo_session]
 name = "TOMO Session Import"
 description = "Star data import for TOMO"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "movie", "tomo_ali", "ctf", "tomo_rec", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 
 [blocks.tomo_pre_process]
 name = "TOMO Pre-processing (legacy)"
 description = "Frame/tilt-series alignment, CTF, and particle picking"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "tomo_denoise", "tomo_mem", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
+tabs = [ "movie", "tomo_ali", "ctf", "tomo_rec", "tomo_denoise", "tomo_mem", "tomo_vir", "tomo_spk", "detect_nn3d", "tomo_ext", "slurm" ]
 forwarded_tabs = [ "data", "scope", "gain" ]
 
 [blocks.tomo_pure_preprocess]
 name = "TOMO Pre-processing"
 description = "Alignment, reconstruction, and CTF"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+tabs = [ "movie", "tomo_ali", "ctf", "tomo_rec", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_warp_preprocess]
 name = "Warptools Pre-processing"
 description = "Alignment, reconstruction, and CTF (warp)"
-tabs = [ "movie", "ctf", "tomo_ali", "tomo_rec", "slurm" ]
+tabs = [ "movie", "tomo_ali", "ctf", "tomo_rec", "slurm" ]
 forwarded_tabs = [ "data", "scope" ]
 
 [blocks.tomo_segment_open]
@@ -493,10 +493,10 @@ hidden = true
 
 [tabs.data.bin]
 name = "Binning"
-description = "Factor to downsample data before processing"
+description = "Downsample non-EER super-resolution data (1=keep original precision, 2=reduce to physical pixel size)"
 type = "int"
 default = 1
-hidden = true
+advanced = true
 
 [tabs.data.invert] 
 name = "Invert contrast"
@@ -688,7 +688,7 @@ description = "Binning factor to use during frame alignment"
 type = "int"
 default = 2
 condition = { arg="ali", value="unblur" }
-hidden = ["spr_import_star","tomo_import_star"]
+hidden = true
 
 [tabs.movie.bfactor]
 name = "B-factor for alignment"
@@ -704,7 +704,7 @@ description = "Binning factor in Fourier space (use values >= 1)"
 type = "float"
 condition = { arg="ali", value="motioncor" }
 default = 1.0
-hidden = ["spr_import_star","tomo_import_star"]
+hidden = true
 
 [tabs.movie.motioncor_bfactor_global]
 name = "Global B-factor"
@@ -1679,6 +1679,37 @@ default = false
 advanced = true
 hidden = ["tomo_particles_train", "stream_tomo"]
 
+[tabs.detect_nn3d.normals]
+name = "Initial particle orientation(s)"
+description = "Strategy to use for assigning particle orientations"
+type = "enum"
+enum = { none="parallel to z-axis", random="random", surface="from segmentation(s)" }
+default = "none"
+hidden = ["tomo_particles_train", "stream_tomo"]
+
+[tabs.detect_nn3d.segmentation_path]
+name = "Path to segmentation(s)"
+description = "Path to *_seg.mrc files containing 3D segmentations (must have same dimensions as tomograms)"
+type = "path"
+path = { type="folders" }
+condition = { arg="normals", value="surface" }
+hidden = ["tomo_particles_train", "stream_tomo"]
+
+[tabs.detect_nn3d.use_vector_normals]
+name = "Use surface normals"
+description = "Use surface normals instead of direction to closest point on surface"
+type = "bool"
+default = false
+condition = { arg="normals", value="surface" }
+hidden = ["tomo_particles_train", "stream_tomo"]
+
+[tabs.detect_nn3d.rand]
+name = "Randomize in-plane rotations"
+description = "Randomize in-plane particle orientations to reduce mising wegde effects"
+type = "bool"
+default = true
+hidden = ["tomo_particles_train", "stream_tomo"]
+
 #feature detect with milo
 [tabs.detect_milo]
 _name = "Pattern mining"
@@ -1925,6 +1956,7 @@ name = "Patch coordinate location"
 description = "Path to the parquet file containing patch coordinates for iterative exploration"
 type = "path"
 path = { type="files" }
+input = { type="milopypEvalCoordinates" }
 condition = { arg="use_iterative", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
