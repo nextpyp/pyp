@@ -3978,13 +3978,6 @@ def sum_gain_correct_frames(movie, average, parameters):
         output, error = avgstack(
             movie, average, f"{first_frame},{last_frame}"
         )
-        if parameters.get("data_bin", 1) > 1:
-            # if we are binning, also bin the average
-            command = f"{get_imod_path()}/bin/newstack -quiet -bin {parameters['data_bin']} {average} {average}~ && mv {average}~ {average}"
-            output, error = run_shell_command(command)
-            if "error" in output.lower():
-                logger.error(output)
-                raise Exception("Failed to bin average")
 
     # are we using a gain reference?
     if "gain_reference" in parameters.keys() and parameters["gain_reference"] and os.path.exists(
@@ -4002,11 +3995,56 @@ def sum_gain_correct_frames(movie, average, parameters):
     else:
         gain_reference_file = None
 
+    if Path(movie).suffix.lower() != ".eer" and parameters.get("data_bin", 1) > 1:
+        
+        gain_x, gain_y, _ = get_image_dimensions(gain_reference_file)
+        if gain_reference_file is not None and (gain_x, gain_y) == (x, y):
+            # gain reference first
+            com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}~" && mv {average}~ {average}'
+            output, _ = run_shell_command(com)
 
-    # apply gain reference if we are using one
-    if gain_reference_file != None:
+            if "error" in output.lower():
+                logger.error(output)
+                if "sizes must be equal" in output.lower():
+                    logger.error("Did you apply the correct transformation to the gain reference?")
+                    x, y, z = get_image_dimensions(average)
+                    logger.info(f"{average} dimensions are {x} x {y}")
+                    x, y, z = get_image_dimensions(gain_reference_file)
+                    logger.info(f"{gain_reference_file} dimensions are {x} x {y}")
+                raise Exception("Failed to apply gain reference")
+            
+            # binning after
+            command = f"{get_imod_path()}/bin/newstack -quiet -bin {parameters['data_bin']} {average} {average}~ && mv {average}~ {average}"
+            output, _ = run_shell_command(command)
+            if "error" in output.lower():
+                logger.error(output)
+                raise Exception("Failed to bin average")
+        else:
+            # binning first
+            command = f"{get_imod_path()}/bin/newstack -quiet -bin {parameters['data_bin']} {average} {average}~ && mv {average}~ {average}"
+            output, _ = run_shell_command(command)
+            if "error" in output.lower():
+                logger.error(output)
+                raise Exception("Failed to bin average")
+
+            # gain reference after
+            com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}~" && mv {average}~ {average}'
+            output, _ = run_shell_command(com)
+
+            if "error" in output.lower():
+                logger.error(output)
+                if "sizes must be equal" in output.lower():
+                    logger.error("Did you apply the correct transformation to the gain reference?")
+                    x, y, z = get_image_dimensions(average)
+                    logger.info(f"{average} dimensions are {x} x {y}")
+                    x, y, z = get_image_dimensions(gain_reference_file)
+                    logger.info(f"{gain_reference_file} dimensions are {x} x {y}")
+                raise Exception("Failed to apply gain reference")
+    
+    elif gain_reference_file != None:
+        
         com = f'{get_imod_path()}/bin/clip multiply "{average}" "{gain_reference_file}" "{average}~" && mv {average}~ {average}'
-        output, error = run_shell_command(com)
+        output, _ = run_shell_command(com)
 
         if "error" in output.lower():
             logger.error(output)
