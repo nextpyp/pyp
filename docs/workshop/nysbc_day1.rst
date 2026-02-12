@@ -327,7 +327,7 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Go to the **Particle scoring function** tab
 
-    - Set ``Last exposure for refinement`` to 4 
+    - Set ``Last tilt for refinement`` to 4 
 
     - Set ``Max resolution (A)`` to 3.5
 
