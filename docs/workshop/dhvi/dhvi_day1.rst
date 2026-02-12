@@ -1,6 +1,6 @@
-#############################
-DHVI nextPYP tutorial (day 1)
-#############################
+###################
+DHVI course (day 1)
+###################
 
 Data import and pre-processing of tilt-series
 =============================================
@@ -20,11 +20,6 @@ Dataset 1: Immature Gag protein from HIV-1 Virus-Like Particles (`EMPIAR-10164 <
   * Select the new project from the **Dashboard** and click :bdg-primary:`Open`
 
   * The newly created project will be empty and a **Jobs** panel will appear on the right
-
-.. note::
-
-  The number of projects you can create is limited to 1 to control the computational resources used by each user. On an actual production instance of nextPYP, you can create as many projects as you want.
-
 
 .. nextpyp:: Step 2: Import raw tilt-series
   :collapsible: open
@@ -87,7 +82,7 @@ Dataset 1: Immature Gag protein from HIV-1 Virus-Like Particles (`EMPIAR-10164 <
   * When the block finishes running, examine the **Tilt-series**, **Plots**, **Table**, and **Gallery** tabs. We will measure our virions in this block as well.  
 
 
-Dataset 2: Spike preotein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_)
+Dataset 2: Spike protein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_)
 -------------------------------------------------------------------------------------------------------------
 
 We will use a subset of 10 tilt-series (049, 050, 071, 121, 162, 244, 271, 288, 291, and 297). The data were acquired using a Titan Krios with a K2 detector in counting mode. The pixel size is 1.329 Å and the tilt range is from -60° to +60° with a 3° increment.
@@ -99,7 +94,7 @@ We will use a subset of 10 tilt-series (049, 050, 071, 121, 162, 244, 271, 288, 
 
   * On the **Raw data** tab:
 
-    - Set the ``Location`` by clicking on the :fa:`search` icon and browsing to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/``
+    - Set the ``Location`` by clicking on the :fa:`search` icon and browsing to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/``
 
     - Type ``*.mrc`` into the filter box (lower right) and click the :fa:`filter` icon
 
@@ -237,7 +232,7 @@ Day 1 summary
 .. nextpyp:: What we learned today
   :collapsible: open
 
-  In this session we learned some of the things we are capable of doing in ``nextPYP``:
+  In this session, we learned about the following topics:
   
   * Raw data import
 

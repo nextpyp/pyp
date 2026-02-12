@@ -1,9 +1,9 @@
-#############################
-DHVI nextPYP tutorial (day 4)
-#############################
+###################
+DHVI course (day 4)
+###################
 
-Part 1: Map post-processing and visuzalization
-==============================================
+Part 1: Map post-processing and visualization
+=============================================
 
 .. nextpyp:: Step 1: Post-processing
   :collapsible: open
@@ -24,7 +24,7 @@ Part 1: Map post-processing and visuzalization
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Map and model assessment in ChimeraX
+.. nextpyp:: Step 2: Map and model assessment in ChimeraX
   :collapsible: open
   
   * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
@@ -51,16 +51,7 @@ Part 2: On-the-fly pre-processing
 
 Starting from **raw data** obtained at the microscope, we'll build an **automatic pipeline** that can perform all **pre-processing** tasks up to and including particle picking.
 
-Dataset
-=======
-
-For this session we will use the `EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_ dataset of HIV-1 purified VLPs.
-
-
-Creating/starting new sessions
-------------------------------
-
-.. nextpyp:: Sessions allow pre-processing of tilt-series on-the-fly
+.. nextpyp:: Step 1: Creating/starting new sessions
   :collapsible: open
 
   * On your Dashboard, select the :bdg-primary:`Go to Sessions` button.
@@ -133,10 +124,7 @@ Creating/starting new sessions
 
   * Click :bdg-primary:`Start` to launch the session.
 
-Restarting sessions
--------------------
-
-.. nextpyp:: Use the ``Restart`` option to make changes to ongoing Sessions
+.. nextpyp:: Step 2: Make changes and ``Restart`` ongoing sessions
   :collapsible: open
 
   *  :bdg-primary:`Restart` is a "smart" method of re-running only what is necessary after changing pre-processing parameters.
@@ -159,31 +147,22 @@ Restarting sessions
 
     * Check the **Tilt Series** tab to see that fewer particles have been picked.
 
-.. nextpyp:: Using the ``Clear`` option
+.. nextpyp:: Step 3: Using the ``Clear`` option
   :collapsible: open
 
   * :bdg-primary:`Clear` will start pre-processing procedure from scratch
 
   * This is helpful if you want to start fresh making sure any previous pre-processing results are ignored.
 
-Copying/deleting sessions
--------------------------
 
-.. nextpyp:: Quickly create a session by copying an existing one
+.. nextpyp:: Step 4: Copying/deleting sessions
   :collapsible: open
 
   * Sessions can be **copied** or **deleted**.
 
   * Click the icon :fa:`location-arrow` to find the session's file storage location.
 
-.. warning::
-
-  Deleting a session whose mode of file transfer was set to ``Move`` will **delete all files (including the raw data)!**.
-
-Importing/exporting sessions
-----------------------------
-
-.. nextpyp:: Exporting a session in ``.star`` format
+.. nextpyp:: Step 5: Importing/exporting sessions
   :collapsible: open
 
   Sessions can be exported in ``.star`` format for downstream processing and refinement in other software.
@@ -194,7 +173,7 @@ Importing/exporting sessions
 
   * Click :bdg-primary:`Export` to launch the export job. The job's log will indicate the location of the exported ``.star`` file.
 
-.. nextpyp:: Importing a session into a project
+.. nextpyp:: Step 6: Importing sessions into a projects
   :collapsible: open
 
   Since Sessions also perform pre-processing, we can import a finished Session into a project to kick-start the process of structure determination.
@@ -215,7 +194,7 @@ Day 4 summary
 .. nextpyp:: What we learned today
   :collapsible: open
 
-  In this session we learned how to run on-the-fly pre-processing in ``nextPYP``:
+  In this session, we learned how to run on-the-fly pre-processing in ``nextPYP``:
   
   * Continuously monitor raw data folder for incoming tilt-series
 
@@ -229,4 +208,4 @@ Day 4 summary
 
   * Import and export sessions
 
-  Feel free to explore other options and functionality available in ``nextPYP`` as described in the :doc:`User Guide<../guide/overview>`.
+  Feel free to explore other options and functionality available in ``nextPYP`` as described in the :doc:`User Guide<../../guide/overview>`.

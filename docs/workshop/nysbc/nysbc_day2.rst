@@ -186,4 +186,4 @@ Day 2 summary
 
   * Import and export sessions
 
-  Feel free to revisit :doc:`day 1<nysbc_day1>` or explore other options available in ``nextPYP`` as described in the :doc:`User Guide<../guide/overview>`.
+  Feel free to revisit :doc:`day 1<nysbc_day1>` or explore other options available in ``nextPYP`` as described in the :doc:`User Guide<../../guide/overview>`.

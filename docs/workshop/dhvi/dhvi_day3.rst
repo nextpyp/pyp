@@ -1,6 +1,6 @@
-#############################
-DHVI nextPYP tutorial (day 3)
-#############################
+###################
+DHVI course (day 3)
+###################
 
 Part 1: Sub-volume averaging and classification
 ===============================================
@@ -34,10 +34,6 @@ For all modes, you can configure masking and filtering settings:
 
   #. To access sub-volumes for averaging, generate them via the :bdg-secondary:`Particle picking` block. In the **Particle extraction** tab, set the ``Sub-volume export format`` to `3davg`, and define the desired ``Sub-tomogram size (voxels)`` and ``Sub-tomogram binning``.
   #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-
-  .. note::
-
-      To manage computational resources effectively, we recommend a sub-volume size of 64 voxels and calculating the binning accordingly. For instance, if particles are ~100 Å in diameter and the pixel size is 1 Å, using a 64-voxel box with a binning factor of 4 ensures the box is about 2.5x the particle diameter. Larger box sizes are allowed but will significantly increase computation time.
 
 .. nextpyp:: Step 2: Global average and centering
   :collapsible: open
@@ -74,44 +70,26 @@ For all modes, you can configure masking and filtering settings:
   #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
   #. Review aligned classes in the **Classes (aligned)** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
 
-  .. note::
+.. nextpyp:: Step 5: Alignment of sub-tomograms to reference
+  :collapsible: open
 
-      Steps 1-3 benefit from multithreading. Be sure to configure ``Launch, Threads`` in the **Resources** tab accordingly.
+  To align all sub-volumes to the generated reference (Mode 3):
 
-Step 5. Alignment of sub-tomograms to reference
------------------------------------------------
+  #. Return to the project page and select ``Edit`` from the block menu.
+  #. Choose `mode 3 - alignment to reference` as the ``Refinement mode``.
+  #. Set the parameters for rotational and translational search, along with masking and filtering options.
+  #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
 
-To align all sub-volumes to the generated reference (Mode 3):
+.. nextpyp:: Step 6: Iterative refinement
+  :collapsible: open
 
-#. Return to the project page and select ``Edit`` from the block menu.
-#. Choose `mode 3 - alignment to reference` as the ``Refinement mode``.
-#. Set the parameters for rotational and translational search, along with masking and filtering options.
-#. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-
-.. note::
-
-    This is the most computationally intensive step. If available, the workload can be distributed across multiple nodes using a SLURM cluster.
-
-Step 6. Iterative refinement
-----------------------------
-
-#. Return to the project page and select ``Edit`` from the block menu.
-#. Increase the ``Iteration number`` to 2 and repeat steps 2-4 (in that order) to iteratively refine your model. 
-
-A typical workflow might look like:
-
-- **Iteration 1**:
-    - Steps 1-4 (modes 0-3)
-- **Iteration 2**:
-    - Steps 2-4 (modes 1-3)
-- **Iteration 3**:
-    - Steps 2-4 (modes 1-3)
-- *...continue as needed*
+  #. Return to the project page and select ``Edit`` from the block menu.
+  #. Increase the ``Iteration number`` to 2 and repeat steps 2-4 (in that order) to iteratively refine your model.
 
 Part 2: Constrained single-particle tomography (CSPT)
 =====================================================
 
-In this session we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. At a high level, we will be performing reference-based refinement, filtering particles, performing region-based refinement and tilt-geometry refinement, refining movie frames, and completing post-processing. Then we will demonstrate using ChimeraX to visualize our results. 
+Now, we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. At a high level, we will be performing reference-based refinement, filtering particles, performing region-based refinement and tilt-geometry refinement. 
 
 .. nextpyp:: Step 1: Import particles
   :collapsible: open
@@ -157,19 +135,11 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Go to the **Resources** tab
 
-    .. md-tab-set::
-
-      .. md-tab-item:: I'm a core course participant
-
-        - Set ``Split, Threads`` to 124
-
-      .. md-tab-item:: I'm an additional TA
-
-        - Set ``Split, Threads`` to 70
+    - Set ``Split, Threads`` to 124
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    .. figure:: ../images/workshop/cspt.webp
+    .. figure:: ../../images/workshop/cspt.webp
       
       Constrained single-particle tomography (CSPT)
 
@@ -229,56 +199,52 @@ In this session we will import 19,972 HIV-Gag protein particles, import initial 
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    .. figure:: ../images/workshop/regionbased.webp
+    .. figure:: ../../images/workshop/regionbased.webp
       
       Region-based refinement
 
-.. nextpyp:: Step 4: Visualization of results in ArtiaX/ChimeraX
+
+Part 3: Visualization of results in ArtiaX/ChimeraX
+===================================================
+
+.. nextpyp:: Step 1: Download all the necessary files
   :collapsible: open
+
+  - Select a tomogram you wish to visualize the particles in. I will be using ``TS_43``. 
   
-.. nextpyp:: 3D Visualization of alignments in ArtiaX
+  - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
+  
+  - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type ``TS_43`` into the search bar and click **Search**. Click the .star file to download particle alignments. 
+  
+  - Go to the **Reconstruction** tab and download the **Cropped Map**. 
+    
+.. nextpyp:: Step 2: Display in ChimeraX
   :collapsible: open
 
-  * For reference, these instructions are also available on the :doc:`User Guide<../guide/chimerax_artiax>`.
+  - Open ChimeraX (again, we assume ArtiaX is installed)
   
-  * We assume the user already has the ArtiaX plugin, if not a simple google search will bring you to their docs for installation. 
+  - Open the tomogram ``TS_43.rec``
   
-  * Download files
+  - Run the following commands in the ChimeraX shell:
 
-    - Select a tomogram you wish to visualize the particles in. I will be using ``TS_43``. 
-    
-    - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
-    
-    - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type ``TS_43`` into the search bar and click **Search**. Click the .star file to download particle alignments. 
-    
-    - Go to the **Reconstruction** tab and download the **Cropped Map**. 
-    
-  * Display in ChimeraX
+  .. code-block:: bash
 
-    - Open ChimeraX (again, we assume ArtiaX is installed)
-    
-    - Open the tomogram ``TS_43.rec``
-    
-    - Run the following commands in the ChimeraX shell:
+    volume permuteAxes #1 xzy
+    volume flip #2 axis z
+      
+  - Go to the **ArtiaX** tab and click **Launch** to start the plugin. 
   
-    .. code-block:: bash
-
-      volume permuteAxes #1 xzy
-      volume flip #2 axis z
-        
-    - Go to the **ArtiaX** tab and click **Launch** to start the plugin. 
-    
-    - In the **Tomograms** section on the left, select model #3 (permuted z flip) from the **Add Model** dropdown menu and click **Add!**
-    
-    - Go to the ArtiaX options panel on the right, and set the **Pixel Size** for the **Current Tomogram** to 10.8 (The current binned pixel size) 
-    
-    - On the left panel, under the **Particles List** section, select **Open List ...** and open the .star file. 
-    
-    - Return to the panel on the right and select the **Select/Manipulate** tab. Set the **Origin** to 1.35 (the unbinned pixel size)
-    
-    - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
-    
-    - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations.
+  - In the **Tomograms** section on the left, select model #3 (permuted z flip) from the **Add Model** dropdown menu and click **Add!**
+  
+  - Go to the ArtiaX options panel on the right, and set the **Pixel Size** for the **Current Tomogram** to 10.8 (The current binned pixel size) 
+  
+  - On the left panel, under the **Particles List** section, select **Open List ...** and open the .star file. 
+  
+  - Return to the panel on the right and select the **Select/Manipulate** tab. Set the **Origin** to 1.35 (the unbinned pixel size)
+  
+  - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
+  
+  - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations.
 
 
 Day 3 summary
@@ -287,7 +253,7 @@ Day 3 summary
 .. nextpyp:: What we learned today
   :collapsible: open
 
-  In this session we learned how to run 3D refinement in ``nextPYP``:
+  In this session, we learned about the following topics in 3D refinement:
   
   * Sub-volume averaging and classification
 

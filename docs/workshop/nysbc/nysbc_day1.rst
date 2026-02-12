@@ -354,7 +354,7 @@ While the :bdg-secondary:`Movie refinement` block is running, we will demonstrat
 .. nextpyp:: 3D Visualization of alignments in ArtiaX
   :collapsible: open
 
-  * For reference, these instructions are also available on the :doc:`User Guide<../guide/chimerax_artiax>`.
+  * For reference, these instructions are also available on the :doc:`User Guide<../../guide/chimerax_artiax>`.
   
   * We assume the user already has the ArtiaX plugin, if not a simple google search will bring you to their docs for installation. 
   
@@ -449,15 +449,15 @@ Day 1 summary
 
   * Tomogram reconstruction (WBP, fakeSIRT, SART)
 
-    - ``nextPYP`` also supports :doc:`tomogram denoising<../guide/denoising>` using cryoCARE, IsoNet and Topaz Denoise
+    - ``nextPYP`` also supports :doc:`tomogram denoising<../../guide/denoising>` using cryoCARE, IsoNet and Topaz Denoise
 
   * Segmentation (closed surfaces)
 
-    - ``nextPYP`` also supports :doc:`open surface segmentation<../guide/segmentation>` which uses membrain-seg
+    - ``nextPYP`` also supports :doc:`open surface segmentation<../../guide/segmentation>` which uses membrain-seg
 
   * Particle picking (geometrically constrained, size-based, nn-based, manual)
 
-    - ``nextPYP`` also supports :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
+    - ``nextPYP`` also supports :doc:`template-search<../../guide/picking3d>` and :doc:`molecular pattern mining<../../guide/milopyp>`
 
   * Particle refinement (constrained single particle tomography, particle filtering, exposure weighting, region-based refinement, movie frame refinement, and post-processing)
 
