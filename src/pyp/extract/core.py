@@ -492,7 +492,7 @@ def extract_particles_non_mpi(
             else:
                 logger.warning(
                     "Particle falls completely outside bounds: " +
-                    box[0] / coordinate_binning,
+                    str(box[0] / coordinate_binning),
                 )
                 raw = np.zeros([boxsize, boxsize])
 
