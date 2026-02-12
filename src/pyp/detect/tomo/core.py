@@ -104,12 +104,16 @@ def detect_particles_from_surface( parameters, virion_name, autopick_template, t
             not os.path.exists(virion_name + "_cut.txt")
         ):
             if "template" in parameters["tomo_vir_detect_method"]:
+                if parameters["micromon_block"] == "tomo-picking-open":
+                    additional_binning = parameters["tomo_rec_binning"]
+                else:
+                    additional_binning = 1
                 # pick and extract particles
                 lower_slice = int(
-                    virion_size / 2 / virion_binning - band_width / virion_binning
+                    virion_size / 2 / virion_binning - band_width / virion_binning / additional_binning
                 )
                 upper_slice = int(
-                    virion_size / 2 / virion_binning + band_width / virion_binning
+                    virion_size / 2 / virion_binning + band_width / virion_binning / additional_binning
                 )
 
                 # if using standard template, rescale template volume to match data pixel size
@@ -123,6 +127,7 @@ def detect_particles_from_surface( parameters, virion_name, autopick_template, t
                     if size % 2 > 0:
                         size += 1
 
+                    from pyp.preprocess import resample_and_resize
                     resample_and_resize(
                         input=parameters["tomo_vir_detect_ref"],
                         output=autopick_template,
@@ -190,13 +195,14 @@ def detect_particles_from_surface( parameters, virion_name, autopick_template, t
             # Using uniform coordinates from virion surface
             elif "tomo_vir_detect_method" in parameters and parameters["tomo_vir_detect_method"] == "mesh":
                 fresh_template_match = True
-                bandwidth = band_width / virion_binning
                 distance = parameters["tomo_vir_detect_dist"]
                 # scale_factor = virion_binning * spk_pick_binning
                 if parameters["micromon_block"] == "tomo-picking-open":
                     z_dim = 0
+                    bandwidth = band_width / parameters["tomo_rec_binning"] / spk_pick_binning
                 else:
                     z_dim = 2
+                    bandwidth = band_width / virion_binning / spk_pick_binning
                 mesh_coordinate_generator(virion_name, threshold, distance, bandwidth, z_dim=z_dim)
 
             # flipx cmm coordinates
@@ -1967,7 +1973,7 @@ def detect_and_extract_particles( name, parameters, current_path, project_path, 
         local_run.run_shell_command(command)
         
         _, _, virion_size = get_image_dimensions(name + "_vir0000.rec")
-        band_width = parameters["tomo_vir_detect_band"]
+        band_width = parameters["tomo_vir_detect_band"] / parameters["scope_pixel"]
         
         detect_particles_from_surface(
             parameters=parameters,
@@ -2520,9 +2526,9 @@ def mesh_coordinate_generator(virion_name, threshold, distance, bandwidth, z_dim
 
         z = volume.shape[z_dim]
 
-        if bandwidth > 0 and bandwidth < z / 2:
-            inner_band = z/2 - bandwidth
-            outer_band = z/2 + bandwidth
+        if bandwidth > 0 and bandwidth/2 < z / 2:
+            inner_band = z/2 - bandwidth/2
+            outer_band = z/2 + bandwidth/2
             keep_mask = np.logical_and(clean_vts[:, 0] >= inner_band, clean_vts[:, 0] <= outer_band)
             clean_vts = clean_vts[keep_mask]
             clean_norms = clean_norms[keep_mask]
