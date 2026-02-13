@@ -987,11 +987,11 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                         new_parameters["tomo_rec_force"] = True
                         new_parameters["tomo_mem_force"] = True
                         new_parameters["tomo_denoise_force"] = True
-                        if not "tomo_rec_erase_fiducials" in k:
-                            new_parameters["tomo_vir_force"] = True
-                            clean_tomo_vir_particles(project_dir)
-                            new_parameters["detect_force"] = True
-                            clean_picking_files(project_dir)
+                        clean_reconstruction_files(project_dir)
+                        new_parameters["tomo_vir_force"] = True
+                        clean_tomo_vir_particles(project_dir)
+                        new_parameters["detect_force"] = True
+                        clean_picking_files(project_dir)
 
                     elif k in ("class2d_box","class2d_bin") and new_parameters.get("micromon_block") == "":
                         stack_files = glob.glob( os.path.join(project_dir, "sva", "*_stack.mrc") )
@@ -1092,6 +1092,9 @@ def clean_picking_files(project_dir):
     if os.path.exists(os.path.join(project_dir, "sva")):
         [os.remove(f) for f in glob.glob( os.path.join(project_dir, "sva", "*.*") )]
 
+def clean_reconstruction_files(project_dir):
+    if os.path.exists(os.path.join(project_dir, "mrc")):
+        [os.remove(f) for f in glob.glob( os.path.join(project_dir, "mrc", "*.rec") )]
 
 def clean_tomo_vir_particles(project_dir):
 
