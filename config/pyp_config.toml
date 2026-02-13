@@ -1696,8 +1696,8 @@ condition = { arg="normals", value="surface" }
 hidden = ["tomo_particles_train", "stream_tomo"]
 
 [tabs.detect_nn3d.use_vector_normals]
-name = "Use surface normals"
-description = "Use surface normals instead of direction to closest point on surface"
+name = "Use vector normals"
+description = "Use the difference vector from the closest segmentation vertex rather than the surface normal"
 type = "bool"
 default = false
 condition = { arg="normals", value="surface" }
@@ -4487,8 +4487,8 @@ path = { type="folders" }
 condition = { arg="normals", value="surface" }
 
 [tabs.tomo_pick.use_vector_normals]
-name = "Use surface normals"
-description = "Use surface normals instead of direction to closest point on surface"
+name = "Use vector normals"
+description = "Use the difference vector from the closest segmentation vertex rather than the surface normal"
 type = "bool"
 default = false
 condition = { arg="normals", value="surface" }
