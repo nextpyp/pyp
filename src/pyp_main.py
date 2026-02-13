@@ -3035,14 +3035,32 @@ def sva_swarm(filename, parameters, iteration):
             mode="3"
             )
 
+        # convert current averages to webp
+        maps_to_webp = [ f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0.mrc", f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0_filtered.mrc" ]
+        arguments = []
+        for map in maps_to_webp:
+            assert os.path.exists(map), f"File {map} is missing, likely because 3DAVG refinement failed"
+            arguments.append((map, 0, map.replace(Path(map).suffix,'.webp')))
+
+        if len(arguments) > 0:
+            from pyp.refine.heterogeneity.tomoDRGN import generate_map_thumbnail
+            mpi.submit_function_to_workers(generate_map_thumbnail, arguments=arguments)
+
         # save results to project folder        
         files_to_save = []
         if len(files) > 0 and files[0] == filename:
             files_to_save.append(f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0.mrc")
+            files_to_save.append(f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0.webp")
             files_to_save.append(f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0_filtered.mrc")
-        for f in files_to_save:
-            assert os.path.exists(f), f"File {f} is missing, likely because 3DAVG refinement failed"
-            shutil.copy2( f, Path(project_dir) / '3DAVG' / f)
+            files_to_save.append(f"{dataset}_iteration_{iteration:03d}_refined_selected_average_0_filtered.webp")
+
+            arguments = []
+            for f in files_to_save:
+                assert os.path.exists(f), f"File {f} is missing, likely because 3DAVG refinement failed"
+                arguments.append((f, Path(project_dir) / '3DAVG' / f))
+            if len(arguments) > 0:
+                mpi.submit_function_to_workers(shutil.copy2, arguments)
+        
         shutil.copy2( f"{dataset}_iteration_{iteration:03d}_alignments_to_reference_0.txt", Path(project_dir) / '3DAVG' / f"{filename}_iteration_{iteration:03d}_alignments_to_reference_0.txt" )
 
     else:
