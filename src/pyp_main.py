@@ -2012,6 +2012,13 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         logger.info("Excluded virions list from mod file:")
         logger.info(exclude_virions)
 
+    # transfer over sub-tomogram extraction settings to tomo_rec
+    if parameters.get("micromon_block") in ("tomo-picking", "tomo-particles-eval", "tomo-picking-open", "tomo-picking-closed") and not parameters.get("tomo_ext_default"):
+        keys = sorted([ k for k in parameters.keys() if k.startswith("tomo_ext") and k.replace("tomo_ext","tomo_rec") in parameters.keys() ])
+        for k in keys:
+            logger.debug(f"Setting parameter {k.replace('tomo_ext','tomo_rec')} to {parameters[k]}")
+            parameters[k.replace("tomo_ext","tomo_ext")] = parameters[k]
+
     # Reconstruction options # -RADIAL 0.125,0.15, -RADIAL 0.25,0.15 (autoem2), 0.35,0.05 (less stringent)
     tilt_options = merge.get_tilt_options(parameters,exclude_views)
 

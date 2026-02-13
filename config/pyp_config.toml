@@ -4786,6 +4786,134 @@ type = "int"
 default = 1
 condition = { arg="fmt", value=["eman","3DAVG"] }
 
+# sub-omogram reconstruction settings
+
+[tabs.tomo_ext.default]
+name = "Use existing reconstruction settings"
+description = "Use settings from pre-processing block upstream to reconstruct sub-tomograms"
+type = "bool"
+default = true
+condition = { arg="fmt", value=["eman","3DAVG"] }
+
+[tabs.tomo_ext.2d_filtering_method]
+name = "2D filtering"
+description = "Filter to apply to tilt-series prior to reconstruction"
+type = "enum"
+enum = { lowpass="lowpass", doseweighting="dose weighting", none="none" }
+default = "lowpass"
+condition = { arg="default", value=false }
+
+[tabs.tomo_ext.mtfilter_cutoff]
+name = "Frequency cutoff"
+description = "Cutoff frequency for lowpass filter"
+type = "float"
+default = 0.15
+condition = { arg="2d_filtering_method", value="lowpass" }
+
+[tabs.tomo_ext.mtfilter_falloff]
+name = "Frequency falloff"
+description = "Falloff frequency (sigma) for lowpass filter"
+type = "float"
+default = 0.05
+condition = { arg="2d_filtering_method", value="lowpass" }
+
+[tabs.tomo_ext.erase_fiducials]
+name = "Erase fiducials"
+description = "Erase fiducials from aligned tilt-series prior to reconstruction"
+type = "bool"
+default = false
+condition = { arg="default", value=false }
+
+[tabs.tomo_ext.erase_detect_max]
+name = "Maximum number of beads"
+description = "Only this number of peaks will be retained and used for finding the histogram dip"
+type = "int"
+default = 500
+condition = { arg="erase_fiducials", value="true" }
+advanced = true
+
+[tabs.tomo_ext.erase_detect_threshold]
+name = "Threshold for averaging"
+description = "Relative peak strength or number of beads for averaging (https://bio3d.colorado.edu/imod/doc/man/findbeads3d.html)"
+type = "float"
+default = 0.1
+condition = { arg="erase_fiducials", value="true" }
+advanced = true
+
+[tabs.tomo_ext.erase_detect_store]
+name = "Detection threshold"
+description = "Threshold relative peak strength for storing peaks in model (https://bio3d.colorado.edu/imod/doc/man/findbeads3d.html)"
+type = "float"
+default = 0.5
+condition = { arg="erase_fiducials", value="true" }
+advanced = true
+
+[tabs.tomo_ext.erase_factor]
+name = "Fiducial radius factor"
+description = "Multiple of fiducial radius used to erase gold"
+type = "float"
+default = 1.0
+condition = { arg="erase_fiducials", value="true" }
+
+[tabs.tomo_ext.erase_order]
+name = "Pixel filling"
+description = "Strategy to substitute gold pixels with"
+type = "enum"
+enum = { noise="random noise", mean="mean of surrounding points", first="order 1 (plane)", second="order 2 (quadratic)", third="order 3 (cubic)" }
+default = "noise"
+condition = { arg="erase_fiducials", value="true" }
+
+[tabs.tomo_ext.erase_iterations]
+name = "Grow iterations"
+description = "Iterations to grow circular areas"
+type = "int"
+default = 5
+condition = { arg="erase_fiducials", value="true" }
+
+[tabs.tomo_ext.filter_form]
+name = "Radial filtering"
+description = "Form of radial filtering used during reconstruction"
+type = "enum"
+enum = { rampfunction="ramp function", fakesirt="fakeSIRT (mimic SIRT reconstruction)" }
+default = "rampfunction"
+condition = { arg="default", value=false }
+
+[tabs.tomo_ext.fake_sirt_iterations]
+name = "Number of iterations"
+description = "Filter equivalent to this number of iterations"
+type = "int"
+default = 10
+condition = { arg="filter_form", value="fakesirt" }
+
+[tabs.tomo_ext.filtering_method]
+name = "High-frequency filtering"
+description = "Filtering method to use during reconstruction"
+type = "enum"
+enum = { gaussian="gaussian", hamming="hamming (as in tomo3d)" }
+default = "gaussian"
+condition = { arg="default", value=false }
+
+[tabs.tomo_ext.lpradial_cutoff]
+name = "Frequency cutoff"
+description = "Lowpass cutoff for radial weighting function (use 0.35 for less filtering)"
+type = "float"
+default = 0.25
+condition = { arg="filtering_method", value="gaussian" }
+
+[tabs.tomo_ext.lpradial_falloff]
+name = "Frequency falloff"
+description = "Lowpass falloff (sigma) for radial weighting function (use 0.05 for less filtering)"
+type = "float"
+default = 0.15
+condition = { arg="filtering_method", value="gaussian" }
+
+[tabs.tomo_ext.hamming]
+name = "Starting frequency"
+description = "Frequency at which to start multiplying by Hamming window"
+type = "float"
+default = 0.05
+condition = { arg="filtering_method", value="hamming" }
+
 [tabs.tomo_ext.coords]
 name = "Export coordinates"
 description = "Export particle coordinates in IMOD format (sva/*.spk)"
