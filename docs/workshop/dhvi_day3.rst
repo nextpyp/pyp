@@ -5,44 +5,34 @@ DHVI course (day 3)
 Session 1: Sub-tomogram averaging
 ==================================
 
-Traditional sub-tomogram alignment-through-classification is a powerful strategy for *de novo* structure determination. It involves iterative 3D classification, alignment, and averaging of sub-volumes as described in  `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_. Initially, homogeneous particle groups are identified through 3D classification and subsequently averaged in 3D. The resulting class averages are then aligned to one another and combined into high signal-to-noise (SNR) references, which can be used to align individual sub-volumes. The resulting 3D models can then serve as references for high-resolution refinements using 2D projections.
+Traditional sub-tomogram alignment-through-classification is a powerful strategy for *de novo* structure determination. It involves iterative 3D classification, alignment, and averaging of sub-volumes. Initially, homogeneous particle groups are identified through 3D classification and subsequently averaged in 3D. The resulting class averages are then aligned to one another and combined into high signal-to-noise (SNR) references, which can be used to align individual sub-volumes. The resulting 3D models can then serve as references for high-resolution refinements using 2D projections.
 
-  * **Second block (for particle picking):**
-
-    Use the same parameters as the previous block except:
-
-    * On the **Tomogram reconstruction** tab:
-
-      - Set ``Radial filtering`` to *"fakeSIRT (mimic SIRT reconstruction)"*
-
-
-Modes of operation
-------------------
-
-The sub-tomogram averaging functionality in ``nextPYP`` is provided by the :bdg-secondary:`Sub-tomogram averaging` block, which supports four primary modes of operation:
-
-#. **Mode 0 - Global averaging and iterative centering**. Computes a global average of all sub-volumes, which can then be used (optionally) as a reference to iteratively center all sub-volumes using translation-only alignment. To enhance accuracy and reduce model bias, a radially symmetrized global average can be used as the reference.
-
-#. **Mode 1 - 3D classification**. Based on the most recent set of alignments from the previous mode, sub-volumes are clustered into discrete classes, and class averages are computed.
-
-#. **Mode 2 - Class average alignment**. Class averages are aligned to each other using a user-specified reference class. The user also selects which classes to retain. After alignment, the selected classes are averaged to produce a new reference volume.
-
-#. **Mode 3 - Sub-volume alignment to reference**. Individual sub-tomograms are aligned to the reference generated in the previous step. Rotational alignment can either be global (searching the entire SO(3) space) or restricted to in-plane rotations around a pre-determined normal direction. When possible, restricting the rotation space often results in more accurate alignments.
-
-Masks and filters for alignment and classification
---------------------------------------------------
-
-For all modes, you can configure masking and filtering settings:
-
-- **Masking**: Specify a radius in the x, y, and z directions and the apodization width, all in binned pixels.
-
-- **Filtering**: Set low-pass and high-pass filter cutoffs and decay parameters, expressed as fractions of the Nyquist frequency. For example, ``0.05,0.01`` sets the cutoff to ``0.05``and the decay to ``0.01`` (0 being the DC-component and 1 being Nyquist).
 
 .. nextpyp:: Step 1: Sub-volume generation
   :collapsible: open
 
-  #. To access sub-volumes for averaging, generate them via the :bdg-secondary:`Particle picking` block. In the **Particle extraction** tab, set the ``Sub-volume export format`` to `3davg`, and define the desired ``Sub-tomogram size (voxels)`` and ``Sub-tomogram binning``.
+  #. To access sub-volumes for averaging, generate them via the :bdg-secondary:`Particle picking` block. 
+  
+  * On the **Particle extraction** tab: 
+  
+    - Set ``Sub-volume export format`` to *"3davg"*
+    
+    - Set ``Sub-tomogram size (voxels)`` to 64
+    
+    - Set ``Sub-tomogram binning`` to 2
+
+    - Disable ``Use existing reconstruction settings``
+
+    - Set ``2D filtering`` to *"none"*
+
+    - Enable ``Erase fiducials``
+
+    - Set ``Radial filtering`` to *"fakeSIRT (mimic SIRT reconstruction)"*
+
+    - Set ``Number of iterations`` to 5
+
   #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+
 
 .. nextpyp:: Step 2: Global average and centering
   :collapsible: open
@@ -105,11 +95,11 @@ Now, we will import 19,972 HIV-Gag protein particles, import initial reference-b
   
   * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle-Picking`
 
-  * Set ``Detection method`` to import
+  * Set ``Detection method`` to *"import"*
 
   * Set ``Particle radius (A)`` to 50 
 
-  * Click :fa:`search` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/particles``. Select :bdg-primary:`Choose Folder`
+  * Click :fa:`search` and browse to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/particles``. Select :bdg-primary:`Choose Folder`
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -136,7 +126,7 @@ Now, we will import 19,972 HIV-Gag protein particles, import initial reference-b
 
     - From the ``Import from`` dropdown menu, select ``nextPYP (*.bz2)``
 
-    - Click the :fa:`search` icon next to ``Input parameter file (*.bz2)`` and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/tomo-coarse-refinement-fg2v2MJLSY4Ui908_r01_02.bz2``  Click :bdg-primary:`Choose File`
+    - Click the :fa:`search` icon next to ``Input parameter file (*.bz2)`` and browse to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/tomo-coarse-refinement-fg2v2MJLSY4Ui908_r01_02.bz2``  Click :bdg-primary:`Choose File`
 
   * Go to the **Reconstruction** tab
 
@@ -148,7 +138,7 @@ Now, we will import 19,972 HIV-Gag protein particles, import initial reference-b
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    .. figure:: ../../images/workshop/cspt.webp
+    .. figure:: ../images/workshop/cspt.webp
       
       Constrained single-particle tomography (CSPT)
 
@@ -208,7 +198,7 @@ Now, we will import 19,972 HIV-Gag protein particles, import initial reference-b
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-    .. figure:: ../../images/workshop/regionbased.webp
+    .. figure:: ../images/workshop/regionbased.webp
       
       Region-based refinement
 
