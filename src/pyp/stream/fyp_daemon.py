@@ -462,13 +462,15 @@ def run_refinement(  # rename to daemon2D after testing
         )
 
     else:
-        with open(new_par_filename, 'r') as f:
-            particle_num = len(f.readlines())
+        particle_num = np.loadtxt(new_par_filename,comments='C').shape[0]
 
     high_res_initial = parameters['class2d_rhini']
 
     if particle_num >= max_capacity:
         class_fraction = round(max_capacity / particle_num, 2)
+    elif particle_num <= 1:
+        logger.warning(f"Parameter file {new_par_filename} is empty")
+        os.remove(new_par_filename)
     else:
         class_fraction = 1.0
 
@@ -839,8 +841,8 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
             except:
                 type, value, traceback = sys.exc_info()
                 sys.__excepthook__(type, value, traceback)
-                logger.warning("Inconsistencies detected during processing, waiting 30 seconds before resuming")
-                time.sleep(30)
+                logger.warning("Inconsistencies detected during processing or all classes are empty.Clear the 2D classification daemon to continue")
+                time.sleep(10)
                 pass
         try:
             if os.path.exists(restart_flag):
@@ -1174,8 +1176,8 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
         except:
             type, value, traceback = sys.exc_info()
             sys.__excepthook__(type, value, traceback)
-            logger.warning("Inconsistencies detected during processing, waiting 30 seconds before retrying")
-            time.sleep(30)
+            logger.warning("Inconsistencies detected during processing or all classes are empty. Clear the 2D classification daemon to continue")
+            time.sleep(10)
             pass
 
     if os.path.exists(stop_flag):

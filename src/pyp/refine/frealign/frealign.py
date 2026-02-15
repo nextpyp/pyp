@@ -4131,7 +4131,9 @@ Output dump filename for intermediate arrays
 [dump_file.dat]                                    :
     """
 
-    local_run.run_shell_command(command,log_level=logging.TRACE)
+    output, error = local_run.run_shell_command(command,log_level=logging.TRACE)
+    if "Segmentation fault (core dumped)" in output:
+        logger.warning(output)
 
     plot_refine2d_reconstructions(output_reconstruction, new_name, pngfile, parameters)
     
@@ -4267,6 +4269,13 @@ def refine2d_mpi(
 
     assert len(commands) > 0, f"{input_frealign_par} does not have particles"
     mpi.submit_jobs_to_workers(commands,log_level=logging.NOTSET)
+
+    logfiles = glob.glob("*_refine2d.log")
+    if len(logfiles) > 0:
+        with open(logfiles[0]) as log:
+            output = log.read()
+            if "Segmentation fault (core dumped)" in output:
+                logger.warning(output)
 
     return splitted_parfiles, dumpfiles
 

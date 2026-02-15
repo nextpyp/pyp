@@ -805,7 +805,6 @@ class Parameters:
             try:
                 films_df = pd.read_csv(parfile + '.tmp', header=None, sep=r'\s+', usecols=[film_col])
             except:
-                logger.warning(f"{parfile}.tmp exists? {os.path.exists(f'{parfile}.tmp')} but is empty?")
                 raise
 
             num_rows = films_df.shape[0]
