@@ -1,12 +1,11 @@
-###################
-DHVI course (day 3)
-###################
+#####################
+DHVI workshop (day 3)
+#####################
 
 Session 1: Sub-tomogram averaging
 ==================================
 
-Traditional sub-tomogram alignment-through-classification is a powerful strategy for *de novo* structure determination. It involves iterative 3D classification, alignment, and averaging of sub-volumes. Initially, homogeneous particle groups are identified through 3D classification and subsequently averaged in 3D. The resulting class averages are then aligned to one another and combined into high signal-to-noise (SNR) references, which can be used to align individual sub-volumes. The resulting 3D models can then serve as references for high-resolution refinements using 2D projections.
-
+Traditional sub-tomogram averaging is a powerful strategy for *de novo* structure determination. It involves doing iterative 3D classification, alignment, and averaging of sub-tomograms, and the results can be used as starting points for high-resolution refinement using constrained single-particle tomography.
 
 .. nextpyp:: Step 1: Sub-volume generation
   :collapsible: open
@@ -39,12 +38,12 @@ Traditional sub-tomogram alignment-through-classification is a powerful strategy
 
   After generating the sub-volumes, crate and configure the :bdg-secondary:`Sub-tomogram averaging` block to run Mode 0:
 
-  #. Click on ``Particles`` (output of the :bdg-secondary:`Particle picking` block), then choose :bdg-primary:`Sub-tomogram averaging`. This will create a new block and show the form to enter parameters.
+  #. Click on ``Particles`` (output of the :bdg-secondary:`Particle picking` block), then choose :bdg-primary:`Sub-tomogram averaging`. This will create a new block and show a form to enter parameters.
   #. Under ``Alignments from sub-volume averaging (*.txt)``, navigate to the ``frealign`` directory from the upstream block and select the ``*_original_volumes.txt`` file.
   #. Choose `mode 0 - global average and centering` as the ``Refinement mode``.
   #. To use a radially symmetrized average for centering, enable ``Rotational symmetry``, set the number of centering iterations, and adjust any masking or filtering settings.
   #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-  #. Review results in the **Global averages** tab within the :bdg-secondary:`Sub-tomogram averaging` block.
+  #. Review results in the **Centering** tab within the :bdg-secondary:`Sub-tomogram averaging` block.
 
 .. nextpyp:: Step 3: 3D classification
   :collapsible: open
@@ -55,7 +54,7 @@ Traditional sub-tomogram alignment-through-classification is a powerful strategy
   #. Choose `mode 1 - classification` as the ``Refinement mode``.
   #. Set the number of desired classes and configure masking or filtering as needed.
   #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-  #. View results in the **Classes** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
+  #. View results in the **Classification** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
 
 .. nextpyp:: Step 4: Selection and alignment of class averages
   :collapsible: open
@@ -67,7 +66,7 @@ Traditional sub-tomogram alignment-through-classification is a powerful strategy
   #. Specify the class selection, listing the reference class first (e.g., `5,1,3,4` aligns classes 1, 3, and 4 to class 5).
   #. Set masking and filtering options as needed.
   #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-  #. Review aligned classes in the **Classes (aligned)** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
+  #. Review aligned classes in the **Aligned classes** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
 
 .. nextpyp:: Step 5: Alignment of sub-tomograms to reference
   :collapsible: open
@@ -78,6 +77,7 @@ Traditional sub-tomogram alignment-through-classification is a powerful strategy
   #. Choose `mode 3 - alignment to reference` as the ``Refinement mode``.
   #. Set the parameters for rotational and translational search, along with masking and filtering options.
   #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+  #. Review the results in the **References** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
 
 .. nextpyp:: Step 6: Iterative refinement
   :collapsible: open
@@ -88,7 +88,9 @@ Traditional sub-tomogram alignment-through-classification is a powerful strategy
 Session 2: Constrained single-particle tomography
 =================================================
 
-Now, we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. At a high level, we will be performing reference-based refinement, filtering particles, performing region-based refinement and tilt-geometry refinement. 
+In this session, we will use 2D projections extracted from the raw tilt-series data to reconstruct and refine structures to high-resolution.
+
+Since this is a time consuming step that cannot be execute within the duration of the session, we will use pre-calculated results to speed-up the process. To ensure that we are all using the same particles, we will first import a set of 19,972 particles and their corresponding alingments to produce a low-resolution reconstruction. After that, we will be performing additional refinement, filtering particles, and doing region-based refinement and tilt-geometry refinement to improve the map resolution. 
 
 .. nextpyp:: Step 1: Import particles
   :collapsible: open
@@ -209,19 +211,13 @@ Day 3 summary
 
 .. nextpyp:: What we learned today
   :collapsible: open
-
-  In this session, we learned about the following topics in 3D refinement:
   
-  * Sub-volume averaging and classification
+  * How to persorm sub-volume averaging for ab-initio structure determination
 
-  * Import particle coordinates and alignments
+  * How to import particle coordinates and alignments
 
-  * Constrained single-particle tomography (CSPT)
+  * How to improve map resolution using constrained single-particle tomography
 
-  * Map post-processing
-
-  * Visualization of results in ChimeraX and ArtiaX
-
-  ``nextPYP`` also supports particle-based CTF refinement, building shape masks, ab-initio refinement, and 3D classification
+  ``nextPYP`` also supports many other refinement-related tasks inclduing building shape masks, as well as routines for per-particle CTF refinement and 3D classification that directly use raw 2D particle projections to achieve improved accuracy.
 
   :doc:`On day 4<dhvi_day4>` we will demonstrate ``nextPYP``'s functionality for post-processing and on-the-fly data processing.

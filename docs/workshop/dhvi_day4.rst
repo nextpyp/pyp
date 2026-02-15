@@ -1,12 +1,12 @@
-###################
-DHVI course (day 4)
-###################
+#####################
+DHVI workshop (day 4)
+#####################
 
 Session 1: Map post-processing and visualization
 ================================================
 
-Part 1 - Map post-processing
-----------------------------
+Map post-processing
+-------------------
 
 .. nextpyp:: Step 1: Post-processing
   :collapsible: open
@@ -49,8 +49,8 @@ Part 1 - Map post-processing
     - You can now view the model fit to your map interactively in ChimeraX
 
 
-Part 2: Visualization of results in ArtiaX/ChimeraX
----------------------------------------------------
+Visualization of results in ArtiaX/ChimeraX
+-------------------------------------------
 
 .. nextpyp:: Step 1: Download all the necessary files
   :collapsible: open
@@ -177,21 +177,23 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * Workflow: Change a parameter → :bdg-primary:`Save` settings changes → :bdg-primary:`Restart` pre-processing daemon.
 
-  * Example: Changing the minimum distance between spikes
+  * Example: Adding on-the-fly tomogram denoising using IsoNet2
 
-    * Go to the **Virion detection** tab
+    * Go to the **Tomogram denoising** tab
 
-    * Increase **Minimum distance between spikes (voxels)** to 50
+    * Set ``Method`` to *"isonet2"*
+
+    * Set the location of the ``Trained model`` to  
 
     * Click :bdg-primary:`Save`
 
-    * Navigate to :bdg-primary:`Operations` tab
+    * Navigate to :bdg-primary:`Operation` tab
 
-    * Click :bdg-primary:`Restart` on pre-processing daemon
+    * Click :bdg-primary:`Restart` on the Data pre-processing daemon section
 
     * Open :bdg-primary:`Logs` to check that the restart flag has been detected and new pre-processing jobs will be launched in response to this change.
 
-    * Check the **Tilt Series** tab to see that fewer particles have been picked.
+    * Check the ``Denoised`` tab, within the **Tilt Series** tab  to see the denoised tomograms.
 
 .. nextpyp:: Step 3: Using the ``Clear`` option
   :collapsible: open
@@ -240,16 +242,16 @@ Day 4 summary
 .. nextpyp:: What we learned today
   :collapsible: open
   
-  * Continuously monitor raw data folder for incoming tilt-series
+  * How to continuously monitor raw data folder for incoming tilt-series
 
-  * Raw data transfer (copy, link, move)
+  * How to set the transfer of raw data (copy, link, move)
 
-  * Pre-processing (frame alignment, tilt-series alignment, CTF estimation, and tomogram reconstruction)
+  * How to pre-process tilt-series on-the-fly (frame alignment, tilt-series alignment, CTF estimation, and tomogram reconstruction)
 
-  * Particle picking (geometry-based, size-based, etc.)
+  * How to pick and segment virions, and pick particles during data collection
 
-  * Restart, clear, copy or delete sessions
+  * How to Restart, Clear, Copy or Delete sessions
 
-  * Import and export sessions
+  * How to import and export sessions
 
-  Feel free to explore other options and functionality available in ``nextPYP`` as described in the :doc:`User Guide<../guide/overview>`.
+  This concludes the tutorial. The topcis we covered this week are a few key aspects of tomography data processing. Additional tools and topics are described in the :doc:`User Guide<../guide/overview>`.

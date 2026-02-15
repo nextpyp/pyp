@@ -1,6 +1,6 @@
-###################
-DHVI course (day 2)
-###################
+#####################
+DHVI workshop (day 2)
+#####################
 
 Session 1: Geometry-based picking (HIV-1 Gag)
 =============================================
@@ -47,10 +47,12 @@ This will produce aproximately 20k particles that can be used for 3D refinement.
 Session 2: Molecular pattern mining
 ===================================
 
-Part 1: MiLoPYP exploration
----------------------------
+In this session, we will demonstrate how to use MiLoPYP-2, a new membrane-aware framework designed to facilitate particle picking from irregular and more challenging samples. The basic workflow is composed of two stages: 1) an exploration phase to identify particles of interest, and 2) a refinement phase to accurately pick all instances of the identified target.
 
-In the exploration phase, we use the segmentations to automatically filter out the candidate particle locations that are too close or too distant to any surface. We also orient the patches so that they are normal to the surface, making all the spike proteins aligned.
+Part 1: MiLoPYP-2 exploration
+-----------------------------
+
+In the exploration phase, we use the segmentations we calculated yesterday to automatically filter out the candidate particle locations that are too close or too distant to any surface. We also orient the patches so that they are normal to the surface, making all the spike proteins aligned.
 
 We also use a feature called **iterative exploration**, which is one of the main strengths of this pipeline. Even after the initial filtering, it can still initially be difficult to cluster all the good patches we want since their numbers are usually quite low compared to bad patches. Luckily, it is usually much easier to cluster bad patches. We use this to our advantage by doing multiple iterations of exploration, where each iteration removes clusters with bad patches rather than trying to find clusters with only good patches.
 
@@ -134,8 +136,8 @@ We also use a feature called **iterative exploration**, which is one of the main
 
 We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. If the refinement phase is going to be used, then it is less problematic to delete some amount of true positives or keep small amount of false positives. If not, then it is likely better to be more careful during the iterations, and possibly change the parameters such as ``min/max distance`` or ``DoG sizes`` to start with more candidate locations.
 
-Part 2: MiLoPYP refinement
---------------------------
+Part 2: MiLoPYP-2 refinement
+----------------------------
 
 Refinement phase also uses the segmentations to constrain particle picking to surfaces. This is done by creating a binary mask based on the distance from the segmentation. This binary mask is then used to filter input and output coordinates, in the loss function, or to modify the input tomograms to directly remove any signal outside the mask.
 
@@ -197,6 +199,6 @@ Day 2 summary
 
     - ``nextPYP`` also supports :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
 
-  * Molecular pattern mining using MiLoPYP to pick proteins from membranes
+  * Molecular pattern mining using MiLoPYP-2 to pick spike proteins from SARS-CoV-2 virions
 
   :doc:`On day 3<dhvi_day3>` we will demonstrate ``nextPYP``'s functionality for 3D refinement.

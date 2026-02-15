@@ -2,13 +2,14 @@
 DHVI workshop (day 1)
 #####################
 
+On this session, we will import raw data from two datasets from the EMPIAR database:
+#. Immature Gag protein from HIV-1 VLPs (`EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_)
+#. Spike protein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_)
+
 Session 1 - Data import and pre-processing
 ==========================================
 
-In this session, we will import raw data from two datasets from the EMPIAR database and perform movie-frame alignment, tilt-series alignment, tilted CTF estimation, and tomogram reconstruction.
-
-Immature Gag protein from HIV-1 VLPs (`EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_)
----------------------------------------------------------------------------------------------------
+For this session, we will use the HIV-1 dataset that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector at 1.35A per pixel. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. Each tilt image was collected as a sequence of 8-10 frames.
 
 .. nextpyp:: Step 1: Create a project
   :collapsible: open
@@ -80,11 +81,13 @@ Immature Gag protein from HIV-1 VLPs (`EMPIAR-10164 <https://www.ebi.ac.uk/empia
   * When the block finishes running, examine the **Tilt-series**, **Plots**, **Table**, and **Gallery** tabs.  
 
 
-Session 2 - Full-tomogram analysis
-==================================
+Session 2 - Tomogram denoising and segmentation
+===============================================
 
-Spike protein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_)
-----------------------------------------------------------------------------------------------------
+For this session, we will use the SARC-VoV-2 dataset that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector at 1.329A per pixel. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. No frames are available for this dataset.
+
+Import data and pre-processing
+------------------------------
 
 .. nextpyp:: Step 1: Import raw tilt-series
   :collapsible: open
@@ -142,6 +145,11 @@ Spike protein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empi
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
+Tomogram segmentation
+---------------------
+
+For segmenting tomograms, we will use pre-trained `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ models that can be directly applied to tomograms produced by the pre-processing block. In addition, we will clean up the segmentaion results using different geometric criteria.
+
 .. nextpyp:: Step 3: Segmentation
   :collapsible: open
 
@@ -169,6 +177,12 @@ Spike protein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empi
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
+nextPYP can also use the `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_ package for tomogram segmentation. The workflow for running TARDIS is identical to MemBrain-Seg's, with the exception that some of the parameters are different.
+
+Tomogram denoising
+------------------
+
+For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet2>`_. Unlike segmentation models that can generalize well to different type os data, denoising models typically require re-training to achieve the best performance.
 
 .. nextpyp:: Step 4: Denoising (training)
   :collapsible: open
@@ -207,8 +221,6 @@ Spike protein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empi
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-nextPYP supports other algorithms for denoising, including Topaz-Denoise, IsoNet1, Map2Noise, and CryoCARE. The workflow for these algorithms is similar to IsoNet2.
-
 .. nextpyp:: Step 5: Denoising (evaluation)
   :collapsible: open
 
@@ -218,10 +230,11 @@ nextPYP supports other algorithms for denoising, including Topaz-Denoise, IsoNet
 
     - Set ``Method`` to *"isonet2"*
 
-    - Set ``Trained model`` to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/models/isonet_network_isonet2-n2n_unet-medium_96_epoch30_full.pt``
+    - Set ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/models/isonet_network_isonet2-n2n_unet-medium_96_epoch30_full.pt"*
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
+nextPYP also supports other algorithms for denoising, including `Topaz-Denoise <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `Noise2Map <https://warpem.github.io/warp/reference/noise2map/noise2map/?h=noise>`_, and `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_. The workflow for these algorithms uses the same sequence of steps we saw here.
 
 Day 1 summary
 =============
