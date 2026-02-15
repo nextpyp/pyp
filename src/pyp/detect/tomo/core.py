@@ -337,6 +337,7 @@ def detect_particles_from_surface( parameters, virion_name, autopick_template, t
 
             if spike_binning != 1:
                 spikesize //= int(spike_binning)
+                spikesize += spikesize % 2
                 logger.info(
                     "Bin spike with binning factor {0} after virion bin {1}".format(
                         spike_binning, virion_binning
