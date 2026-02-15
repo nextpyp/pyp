@@ -2,8 +2,11 @@
 DHVI course (day 4)
 ###################
 
-Part 1: Map post-processing and visualization
-=============================================
+Session 1: Map post-processing and visualization
+================================================
+
+Part 1 - Map post-processing
+----------------------------
 
 .. nextpyp:: Step 1: Post-processing
   :collapsible: open
@@ -46,8 +49,51 @@ Part 1: Map post-processing and visualization
     - You can now view the model fit to your map interactively in ChimeraX
 
 
-Part 2: On-the-fly pre-processing
-=================================
+Part 2: Visualization of results in ArtiaX/ChimeraX
+---------------------------------------------------
+
+.. nextpyp:: Step 1: Download all the necessary files
+  :collapsible: open
+
+  - Select a tomogram you wish to visualize the particles in. I will be using ``TS_43``. 
+  
+  - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
+  
+  - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type ``TS_43`` into the search bar and click **Search**. Click the .star file to download particle alignments. 
+  
+  - Go to the **Reconstruction** tab and download the **Cropped Map**. 
+    
+.. nextpyp:: Step 2: Display in ChimeraX
+  :collapsible: open
+
+  - Open ChimeraX (again, we assume ArtiaX is installed)
+  
+  - Open the tomogram ``TS_43.rec``
+  
+  - Run the following commands in the ChimeraX shell:
+
+  .. code-block:: bash
+
+    volume permuteAxes #1 xzy
+    volume flip #2 axis z
+      
+  - Go to the **ArtiaX** tab and click **Launch** to start the plugin. 
+  
+  - In the **Tomograms** section on the left, select model #3 (permuted z flip) from the **Add Model** dropdown menu and click **Add!**
+  
+  - Go to the ArtiaX options panel on the right, and set the **Pixel Size** for the **Current Tomogram** to 10.8 (The current binned pixel size) 
+  
+  - On the left panel, under the **Particles List** section, select **Open List ...** and open the .star file. 
+  
+  - Return to the panel on the right and select the **Select/Manipulate** tab. Set the **Origin** to 1.35 (the unbinned pixel size)
+  
+  - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
+  
+  - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations.
+
+
+Session 2: On-the-fly pre-processing
+====================================
 
 Starting from **raw data** obtained at the microscope, we'll build an **automatic pipeline** that can perform all **pre-processing** tasks up to and including particle picking.
 
@@ -193,8 +239,6 @@ Day 4 summary
 
 .. nextpyp:: What we learned today
   :collapsible: open
-
-  In this session, we learned how to run on-the-fly pre-processing in ``nextPYP``:
   
   * Continuously monitor raw data folder for incoming tilt-series
 

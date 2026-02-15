@@ -2,10 +2,19 @@
 DHVI course (day 3)
 ###################
 
-Part 1: Sub-volume averaging and classification
-===============================================
+Session 1: Sub-tomogram averaging
+==================================
 
 Traditional sub-tomogram alignment-through-classification is a powerful strategy for *de novo* structure determination. It involves iterative 3D classification, alignment, and averaging of sub-volumes as described in  `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_. Initially, homogeneous particle groups are identified through 3D classification and subsequently averaged in 3D. The resulting class averages are then aligned to one another and combined into high signal-to-noise (SNR) references, which can be used to align individual sub-volumes. The resulting 3D models can then serve as references for high-resolution refinements using 2D projections.
+
+  * **Second block (for particle picking):**
+
+    Use the same parameters as the previous block except:
+
+    * On the **Tomogram reconstruction** tab:
+
+      - Set ``Radial filtering`` to *"fakeSIRT (mimic SIRT reconstruction)"*
+
 
 Modes of operation
 ------------------
@@ -86,8 +95,8 @@ For all modes, you can configure masking and filtering settings:
   #. Return to the project page and select ``Edit`` from the block menu.
   #. Increase the ``Iteration number`` to 2 and repeat steps 2-4 (in that order) to iteratively refine your model.
 
-Part 2: Constrained single-particle tomography (CSPT)
-=====================================================
+Session 2: Constrained single-particle tomography
+=================================================
 
 Now, we will import 19,972 HIV-Gag protein particles, import initial reference-based alignments, then go through a condensed version of the 3D Refinement pipeline to attain an ~4Å resolution structure from 5,000 filtered particles. At a high level, we will be performing reference-based refinement, filtering particles, performing region-based refinement and tilt-geometry refinement. 
 
@@ -203,48 +212,6 @@ Now, we will import 19,972 HIV-Gag protein particles, import initial reference-b
       
       Region-based refinement
 
-
-Part 3: Visualization of results in ArtiaX/ChimeraX
-===================================================
-
-.. nextpyp:: Step 1: Download all the necessary files
-  :collapsible: open
-
-  - Select a tomogram you wish to visualize the particles in. I will be using ``TS_43``. 
-  
-  - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
-  
-  - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type ``TS_43`` into the search bar and click **Search**. Click the .star file to download particle alignments. 
-  
-  - Go to the **Reconstruction** tab and download the **Cropped Map**. 
-    
-.. nextpyp:: Step 2: Display in ChimeraX
-  :collapsible: open
-
-  - Open ChimeraX (again, we assume ArtiaX is installed)
-  
-  - Open the tomogram ``TS_43.rec``
-  
-  - Run the following commands in the ChimeraX shell:
-
-  .. code-block:: bash
-
-    volume permuteAxes #1 xzy
-    volume flip #2 axis z
-      
-  - Go to the **ArtiaX** tab and click **Launch** to start the plugin. 
-  
-  - In the **Tomograms** section on the left, select model #3 (permuted z flip) from the **Add Model** dropdown menu and click **Add!**
-  
-  - Go to the ArtiaX options panel on the right, and set the **Pixel Size** for the **Current Tomogram** to 10.8 (The current binned pixel size) 
-  
-  - On the left panel, under the **Particles List** section, select **Open List ...** and open the .star file. 
-  
-  - Return to the panel on the right and select the **Select/Manipulate** tab. Set the **Origin** to 1.35 (the unbinned pixel size)
-  
-  - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
-  
-  - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations.
 
 
 Day 3 summary
