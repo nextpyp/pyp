@@ -195,7 +195,7 @@ Day 2 summary
   
   * Geometry-based picking of Gag protein from HIV-1 virions
 
-    - ``nextPYP`` also supports :doc:`template-search<../../guide/picking3d>` and :doc:`molecular pattern mining<../../guide/milopyp>`
+    - ``nextPYP`` also supports :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
 
   * Molecular pattern mining using MiLoPYP to pick proteins from membranes
 

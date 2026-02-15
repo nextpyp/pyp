@@ -252,4 +252,4 @@ Day 4 summary
 
   * Import and export sessions
 
-  Feel free to explore other options and functionality available in ``nextPYP`` as described in the :doc:`User Guide<../../guide/overview>`.
+  Feel free to explore other options and functionality available in ``nextPYP`` as described in the :doc:`User Guide<../guide/overview>`.

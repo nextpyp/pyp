@@ -29,8 +29,8 @@
    Single-particle session<tutorials/stream_spr>
    Tomography session<tutorials/stream_tomo>
 
-   2025 NYSBC course <workshop/nysbc/nysbc_day1>
-   2026 DHVI course <workshop/dhvi/dhvi_day1>
+   2025 NYSBC workshop <workshop/nysbc_day1>
+   2026 DHVI workshop <workshop/dhvi_day1>
 
 .. toctree::
    :caption: User Guide
