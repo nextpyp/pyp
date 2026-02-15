@@ -783,6 +783,8 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
     mparameters["extract_box"] = mparameters["class2d_box"]
     mparameters["extract_bin"] = mparameters["class2d_bin"]
 
+    assert mparameters.get("class2d_box") % 2 == 0, f"Box size {mparameters.get('class2d_box')} must be even!"
+
     # set particle radius
     if mparameters.get("data_mode") == "tomo":
         mparameters['detect_rad'] = mparameters['tomo_spk_rad']
@@ -856,6 +858,8 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     logger.warning("Empty restart flag, will read the configure file instead")
                     new_parameters = project_params.load_parameters(path=stream_session_dir)
                     reload_default = False
+
+                assert new_parameters.get("class2d_box") % 2 == 0, f"Box size {new_parameters.get('class2d_box')} must be even!"
 
                 if reload_default:
                     # read specification file to get missing defaut parameters
