@@ -676,8 +676,10 @@ def parse_arguments(block):
 
             # create relative symlinks in raw/ folder
             raw_path = Path(project_params.resolve_path(parameters['data_path']))
-            raw_path_suffix = raw_path.suffix
-            for ext in [ raw_path.name, raw_path.name.replace(raw_path_suffix,'.order'), raw_path.name.replace(raw_path_suffix,'.rawtlt'), raw_path.name.replace(raw_path_suffix,'.xml') ]: 
+            # handle edge cases where suffix separator is missing, e.g., "*mrc"
+            raw_path_suffix = raw_path.suffix if raw_path.suffix != "" else Path(raw_path).name.split("*")[-1]
+            raw_path_suffix_separator = "." if "." in raw_path_suffix else ""
+            for ext in [ raw_path.name, raw_path.name.replace(raw_path_suffix,raw_path_suffix_separator+'order'), raw_path.name.replace(raw_path_suffix,raw_path_suffix_separator+'rawtlt'), raw_path.name.replace(raw_path_suffix,raw_path_suffix_separator+'xml') ]: 
                 path = os.path.join(raw_path.parent,ext)
                 number_of_files = len(glob.glob(path))
                 if number_of_files:
