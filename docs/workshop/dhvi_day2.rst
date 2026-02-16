@@ -48,15 +48,15 @@ Before we start, we will measure the diameter of the virions using the measure t
 
 This will produce a total of approximately 12k particles.
 
-``nextPYP`` supports many other methods for 3D :doc:`particle picking<../guide/picking3d>`, including size-based, 3D template-matching, etc.
+``nextPYP`` supports many other methods for :doc:`3D particle picking<../guide/picking3d>`, including size-based, 3D template-matching, etc.
 
 Session 2: Molecular pattern mining
 ===================================
 
 In this session, we will demonstrate how to use MiLoPYP-2, a new membrane-aware framework designed to facilitate particle picking from irregular and more challenging samples. The basic workflow is composed of two stages: 
 
-1) an exploration phase to identify particles of interest
-2) a refinement phase to accurately pick all instances of the identified target
+1) an **exploration phase** to identify particles of interest
+2) a **refinement phase** to accurately pick all instances of the identified target
 
 Part 1: MiLoPYP-2 exploration
 -----------------------------
@@ -72,7 +72,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
     .. md-tab-item:: Training
 
-      * Click on ``Tomograms`` (output of the **second** :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`MiLoPYP (train)`
+      * Click on ``Tomograms`` (output of the :bdg-secondary:`Denoising (eval)` block) and select :bdg-primary:`MiLoPYP (train)`
 
       * On the **Pattern Mining** tab:
 
@@ -82,8 +82,6 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Bounding box (binned voxels)`` to 72
 
-        - Set ``Learning rate`` to 0.00001
-
         - Set ``Interval to perform validation`` to 5
 
         - Enable ``Surface constrained``
@@ -92,21 +90,15 @@ We also use a feature called **iterative exploration**, which is one of the main
 
           - Set ``Use DoG`` to *DoG*
 
-          - Set ``Min distance`` to 5
-
-          - Set ``Max distance`` to 25
-
-          - Enable ``Remove segmentation``
-
-        - Enable ``Enable Compilation``
+            - Set ``Min distance`` to 5
 
     .. md-tab-item:: Evaluation
 
-      * Click on ``MiLoPYP Model`` (output of the **first** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
+      * Click on ``MiLoPYP model`` (output of the **first** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
 
       * On the **Pattern mining** tab:
 
-        - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate
+        - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_50.pth``where ``YYYYMMDD_HHMMSS`` is the date and time of training.
 
         - Set ``Clusters`` to 30
 
@@ -119,13 +111,19 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       * Click on ``MiLoPYP particles`` (output of the **first** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`MiLoPYP (train)`
 
-      Use the same parameters as the previous block except:
-
       * On the **Pattern mining** tab:
 
         - Set ``Epochs`` to 100
 
         - Set ``Interval to perform validation`` to 10
+
+        - Enable ``Surface constrained``
+
+          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
+
+          - Set ``Use DoG`` to *DoG*
+
+            - Set ``Min distance`` to 5
 
         - Enable ``Iterate``
 

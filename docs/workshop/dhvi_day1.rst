@@ -188,35 +188,6 @@ For segmenting tomograms, we will use a pre-trained `MemBrain-Seg <https://githu
     
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-.. nextpyp:: Step 3: Filter segmentations
-  :collapsible: open
-
-  * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Segmentation (membrain/tardis)`
-
-  * On the  **Tomogram segmentation** tab:
-
-    - Enable ``Pre-process tomograms``
-
-      - Set ``Pixel size rescaling`` to 11
-
-      - Enable ``Deconvolution filter``
-
-    - Set ``Pre-trained model (*.ckpt)`` to */nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt*
-
-    - Set ``Filter connected components`` to *by number*
-
-      - Set ``Components to keep`` to 16
-
-    - Set ``Thickness of slab to keep (unbinned voxels)`` to 1228
-
-    - Set ``Sliding window size`` to 96
-
-  * On the  **Resources** tab (make sure *Show advanced options* is enabled):
-
-    - Set ``Split, Bundle size`` to 10
-    
-  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
-
 nextPYP can also use the `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_ package for tomogram segmentation. The workflow is similar, with the exception that some of the parameters are different.
 
 Tomogram denoising
@@ -231,7 +202,7 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
     .. nextpyp:: Step 1: Evaluation
       :collapsible: open
 
-      * Click on ``Denoising model`` (output of the :bdg-secondary:`Denoising (train)` block) and select :bdg-primary:`Denoising (eval)`
+      * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Denoising (eval)`
 
       * On the  **Tomogram denoising** tab:
 
@@ -262,19 +233,11 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
           - Set ``Loss function`` to *Huber*
 
-          - Set ``Learning rate`` to 0.0003
-
-          - Set ``Minimum learning rate`` to 0.0003
-
           - Set ``B-factor`` to 200
 
         - Set ``Epochs for training`` to 30
 
         - Set ``Loss function`` to *Huber*
-
-        - Set ``Learning rate`` to 0.0003
-
-        - Set ``Minimum learning rate`` to 0.0003
 
         - Set ``Missing wedge weight in loss`` to 100
 
