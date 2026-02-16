@@ -30,7 +30,7 @@ For this session, we will use the **HIV-1 dataset** that was collected on a 300k
 
   * On the **Raw data** tab:
 
-    - Set the ``Location`` of the raw data by clicking on the :fa:`search` icon and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/``
+    - Set the ``Location`` of the raw data by clicking on the :fa:`search` icon and browse to */nfs/bartesaghilab/nextpyp/workshop/10164/*
     
     - Type ``*.tif`` into the filter box (lower right) and click the :fa:`filter` icon. You should see 123 matches.
 
@@ -89,7 +89,7 @@ For this session, we will use the **HIV-1 dataset** that was collected on a 300k
 Session 2 - Tomogram denoising and segmentation
 ===============================================
 
-For this session, we will use the **SARS-VoV-2 dataset** that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. We won't use movie frames in this case.
+For this session, we will use the **SARS-CoV-2 dataset** that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. We won't use movie frames in this case.
 
 Import data and pre-processing
 ------------------------------
@@ -101,7 +101,7 @@ Import data and pre-processing
 
   * On the **Raw data** tab:
 
-    - Set the ``Location`` by clicking on the :fa:`search` icon and browsing to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/``
+    - Set the ``Location`` by clicking on the :fa:`search` icon and browsing to */nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/*
 
     - Type ``*.mrc`` into the filter box (lower right) and click the :fa:`filter` icon. You should see 10 matches.
 
@@ -170,7 +170,7 @@ For segmenting tomograms, we will use a pre-trained `MemBrain-Seg <https://githu
 
       - Enable ``Deconvolution filter``
 
-    - Set ``Pre-trained model (*.ckpt)`` to ``/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt``
+    - Set ``Pre-trained model (*.ckpt)`` to */nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt*
 
     - Set ``Filter connected components`` to *by number*
 
@@ -201,7 +201,7 @@ For segmenting tomograms, we will use a pre-trained `MemBrain-Seg <https://githu
 
       - Enable ``Deconvolution filter``
 
-    - Set ``Pre-trained model (*.ckpt)`` to ``/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt``
+    - Set ``Pre-trained model (*.ckpt)`` to */nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt*
 
     - Set ``Filter connected components`` to *by number*
 
@@ -226,7 +226,7 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
 .. md-tab-set::
 
-  .. md-tab-item:: Use a pre-trained model
+  .. md-tab-item:: Using a pre-trained model
 
     .. nextpyp:: Step 1: Evaluation
       :collapsible: open
@@ -245,7 +245,7 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
       * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-  .. md-tab-item:: Perform training and evaluation
+  .. md-tab-item:: Training a new model
 
     .. nextpyp:: Step 1: Training
       :collapsible: open
@@ -291,7 +291,7 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
         - Set ``Method`` to *isonet2*
 
-        - Set ``Trained model`` to */nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/isonet_network_isonet2-n2n_unet-medium_96_full.pt*
+        - Set ``Trained model`` to *isonet2/isonet_network_isonet2-n2n_unet-medium_96_full.pt*
 
       * On the  **Resources** tab:
 

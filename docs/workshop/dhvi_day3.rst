@@ -294,7 +294,7 @@ Because this step is time-consuming and cannot be completed within a single sess
 
     .. figure:: ../images/workshop/regionbased.webp
       
-      Region-based refinement splits the tomograms into grid patches that are refined independently
+      Region-based refinement splits tomograms into patches and refines them independently
 
 
 
