@@ -62,7 +62,7 @@ The sub-volume averaging pipeline in ``nextPYP`` consists of an iterative proced
         #. Set ``Low-pass filter (cutoff, decay)`` to 0.2,0.05
         #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
       
-    * Review results in the **Centering** tab within the :bdg-secondary:`Sub-tomogram averaging` block.
+      * Review results in the **Centering** tab within the :bdg-secondary:`Sub-tomogram averaging` block.
 
     .. md-tab-item:: Mode 1
 
