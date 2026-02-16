@@ -5,20 +5,22 @@ DHVI workshop (day 3)
 Session 1: Sub-tomogram averaging
 ==================================
 
-Traditional sub-tomogram averaging is a powerful strategy for *de novo* structure determination. It involves doing iterative 3D classification, alignment, and averaging of sub-tomograms, and the results can be used as starting points for high-resolution refinement using constrained single-particle tomography.
+Traditional sub-tomogram averaging is a powerful strategy for *de novo* structure determination that involves doing iterative 3D classification, alignment, and averaging of sub-tomograms. The results can be used as a starting point for high-resolution refinement using constrained single-particle tomography.
+
+For this session, we will use the particles we obtained yesterday for the **SARS-CoV-2** dataset.
 
 .. nextpyp:: Step 1: Sub-volume generation
   :collapsible: open
 
-  #. To access sub-volumes for averaging, generate them via the :bdg-secondary:`Particle picking` block. 
+  * We first need to generate the sub-tomograms via the :bdg-secondary:`Particle picking (eval)` block. 
   
-  * On the **Particle extraction** tab: 
+  * On the **Particle extraction** tab of the :bdg-secondary:`Particle picking (eval)` block
   
     - Set ``Sub-volume export format`` to *"3davg"*
     
     - Set ``Sub-tomogram size (voxels)`` to 64
     
-    - Set ``Sub-tomogram binning`` to 2
+    - Set ``Sub-tomogram binning`` to 4
 
     - Disable ``Use existing reconstruction settings``
 
@@ -28,69 +30,148 @@ Traditional sub-tomogram averaging is a powerful strategy for *de novo* structur
 
     - Set ``Radial filtering`` to *"fakeSIRT (mimic SIRT reconstruction)"*
 
-    - Set ``Number of iterations`` to 5
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
 
-  #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+After generating the sub-volumes, we will create and configure the :bdg-secondary:`Sub-tomogram averaging` block
 
+  * Click on ``Particles`` (output of the :bdg-secondary:`Particle picking (eval)` block), then choose :bdg-primary:`Sub-tomogram averaging`
 
-.. nextpyp:: Step 2: Global average and centering
+The sub-volume averaging pipeline in ``nextPYP`` consists of an iterative procedure that alternates between four runnning modes:
+
+#. **Mode 0 - Global averaging and iterative centering**. Calculates global average and aligns all sub-volumes to it.
+
+#. **Mode 1 - 3D classification**. Sub-volumes are clustered and averaged into a discrete number of classes.
+
+#. **Mode 2 - Class average alignment**. Class averages are aligned to each other using a user-specified reference class.
+
+#. **Mode 3 - Sub-volume alignment to reference**. Raw sub-tomograms are aligned to the reference generated in the previous step.
+
+.. nextpyp:: Iteration 1
   :collapsible: open
 
-  After generating the sub-volumes, crate and configure the :bdg-secondary:`Sub-tomogram averaging` block to run Mode 0:
+  .. md-tab-set::
 
-  #. Click on ``Particles`` (output of the :bdg-secondary:`Particle picking` block), then choose :bdg-primary:`Sub-tomogram averaging`. This will create a new block and show a form to enter parameters.
-  #. Under ``Alignments from sub-volume averaging (*.txt)``, navigate to the ``frealign`` directory from the upstream block and select the ``*_original_volumes.txt`` file.
-  #. Choose `mode 0 - global average and centering` as the ``Refinement mode``.
-  #. To use a radially symmetrized average for centering, enable ``Rotational symmetry``, set the number of centering iterations, and adjust any masking or filtering settings.
-  #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-  #. Review results in the **Centering** tab within the :bdg-secondary:`Sub-tomogram averaging` block.
+    .. md-tab-item:: Mode 0
 
-.. nextpyp:: Step 3: 3D classification
-  :collapsible: open
+      #. Set ``Alignments from sub-volume averaging (*.txt)`` by navigating to the ``frealign`` directory from the upstream block and selecting the file ``*_original_volumes.txt``
+      #. Set ``Refinement mode`` to *"mode 0 - global average and centering"*
+      #. Set ``Centering iterations`` to 1
+      #. Set ``Translation tolerance (binned voxels)`` to 20
+      #. Set ``Mask radius (binned voxels)`` to 24,24,26
+      #. Set ``Low-pass filter (cutoff, decay)`` to 0.2,0.05
+      #. Set ``Mask apodization (binned voxels)`` to 0
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+      
+      Review results in the **Centering** tab within the :bdg-secondary:`Sub-tomogram averaging` block.
 
-  To perform 3D classification (Mode 1):
+    .. md-tab-item:: Mode 1
 
-  #. Return to the project page and select ``Edit`` from the block menu.
-  #. Choose `mode 1 - classification` as the ``Refinement mode``.
-  #. Set the number of desired classes and configure masking or filtering as needed.
-  #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-  #. View results in the **Classification** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
+      #. Set ``Refinement mode`` to *"mode 1 - classification"*
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+      #. View results in the **Classification** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
 
-.. nextpyp:: Step 4: Selection and alignment of class averages
-  :collapsible: open
+    .. md-tab-item:: Mode 2
 
-  To align selected class averages to a reference (Mode 2):
+      #. Set ``Refinement mode`` to *"mode 2 - alignment of averages"*
+      #. Set ``Class selection`` to a comma separated list of good classes, listing the reference class first (e.g., `5,1,3,4` aligns classes 1, 3, and 4 to class 5).
+      #. Set ``C symmetry order`` to 12
+      #. Set ``Out-of-plane rotation tolerance (degrees)`` to 30
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+      
+      Review aligned classes in the **Aligned classes** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
 
-  #. Return to the project page and select ``Edit`` from the block menu.
-  #. Choose `mode 2 - alignment of averages` as the ``Refinement mode``.
-  #. Specify the class selection, listing the reference class first (e.g., `5,1,3,4` aligns classes 1, 3, and 4 to class 5).
-  #. Set masking and filtering options as needed.
-  #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-  #. Review aligned classes in the **Aligned classes** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
+    .. md-tab-item:: Mode 3
 
-.. nextpyp:: Step 5: Alignment of sub-tomograms to reference
-  :collapsible: open
+      #. Set ``Refinement mode`` to *"mode 3 - alignment to reference"*
+      #. Set ``C symmetry order`` to 1
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+      
+      Review the results in the **References** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
 
-  To align all sub-volumes to the generated reference (Mode 3):
+.. nextpyp:: Iteration 2
+  :collapsible: closed
 
-  #. Return to the project page and select ``Edit`` from the block menu.
-  #. Choose `mode 3 - alignment to reference` as the ``Refinement mode``.
-  #. Set the parameters for rotational and translational search, along with masking and filtering options.
-  #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-  #. Review the results in the **References** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
+  * Set ``Iteration number`` to 2
 
-.. nextpyp:: Step 6: Iterative refinement
-  :collapsible: open
+  .. md-tab-set::
 
-  #. Return to the project page and select ``Edit`` from the block menu.
-  #. Increase the ``Iteration number`` to 2 and repeat steps 2-4 (in that order) to iteratively refine your model.
+    .. md-tab-item:: Mode 1
 
-Session 2: Constrained single-particle tomography
-=================================================
+      #. Set ``Refinement mode`` to *"mode 1 - classification"*
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-In this session, we will use 2D projections extracted from the raw tilt-series data to reconstruct and refine structures to high-resolution.
+    .. md-tab-item:: Mode 2
 
-Since this is a time consuming step that cannot be execute within the duration of the session, we will use pre-calculated results to speed-up the process. To ensure that we are all using the same particles, we will first import a set of 19,972 particles and their corresponding alingments to produce a low-resolution reconstruction. After that, we will be performing additional refinement, filtering particles, and doing region-based refinement and tilt-geometry refinement to improve the map resolution. 
+      #. Set ``Refinement mode`` to *"mode 2 - alignment of averages"*
+      #. Set ``Class selection`` to a comma separated list of good classes, listing the reference class first
+      #. Set ``C symmetry order`` to 1
+      #. Set ``Out-of-plane rotation tolerance (degrees)`` to 10
+      #. Set ``Translation tolerance (binned voxels)`` to 10
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+      
+    .. md-tab-item:: Mode 3
+
+      #. Set ``Refinement mode`` to *"mode 3 - alignment to reference"*
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.      
+
+.. nextpyp:: Iteration 3
+  :collapsible: closed
+
+  * Set ``Iteration number`` to 3
+
+  .. md-tab-set::
+
+    .. md-tab-item:: Mode 1
+
+      #. Set ``Refinement mode`` to *"mode 1 - classification"*
+      #. Set ``Mask radius (binned voxels)`` to 22,22,26
+      #. Set ``Low-pass filter (cutoff, decay)`` to 0.25,0.05
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+
+    .. md-tab-item:: Mode 2
+
+      #. Set ``Refinement mode`` to *"mode 2 - alignment of averages"*
+      #. Set ``Class selection`` to a comma separated list of good classes, listing the reference class first
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+
+    .. md-tab-item:: Mode 3
+
+      #. Set ``Refinement mode`` to *"mode 3 - alignment to reference"*
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+
+.. nextpyp:: Iteration 4
+  :collapsible: closed
+
+  * Set ``Iteration number`` to 4
+
+  .. md-tab-set::
+
+    .. md-tab-item:: Mode 1
+
+      #. Set ``Refinement mode`` to *"mode 1 - classification"*
+      #. Set ``Mask radius (binned voxels)`` to 22,22,26
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+
+    .. md-tab-item:: Mode 2
+
+      #. Set ``C symmetry order`` to 3
+      #. Set ``Refinement mode`` to *"mode 2 - alignment of averages"*
+      #. Set ``Class selection`` to a comma separated list of good classes, listing the reference class first
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+      
+    .. md-tab-item:: Mode 3
+
+      #. Set ``Refinement mode`` to *"mode 3 - alignment to reference"*
+      #. Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
+
+At this point, you should have a good low-resolution model of the SARS-CoV-2 spike.
+
+Session 2: Constrained single-particle tomography (CSPT)
+========================================================
+
+In this session, we will use 2D projections extracted from the **HIV-1 Gag dataset** to reconstruct and refine its structures to high-resolution.
+
+Because this step is time-consuming and cannot be completed within a single session, we will use pre-calculated results to accelerate the workflow. To ensure consistency, we will begin by importing a dataset of 19,972 particles along with their corresponding alignments to generate an initial low-resolution reconstruction. We will then proceed with further refinement steps, including particle filtering, region-based refinement, and tilt-geometry refinement, to improve map resolution.
 
 .. nextpyp:: Step 1: Import particles
   :collapsible: open
@@ -105,12 +186,14 @@ Since this is a time consuming step that cannot be execute within the duration o
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
+  Open the particle picking block and verify that the particles are in the correct location.
+
 .. nextpyp:: Step 2: Import alignments
   :collapsible: open
   
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Pickng` block) and select :bdg-primary:`Calculate reconstruction`
 
-  * Go to the **Sample** tab 
+  * On the **Sample** tab 
     
     - Set ``Molecular weight (kDa)`` to 300 
 
@@ -118,21 +201,21 @@ Since this is a time consuming step that cannot be execute within the duration o
 
     - Set ``Symmetry`` to C6
 
-  * Go to the **Extraction** tab
+  * On the **Extraction** tab
 
     - Set ``Box size (pixels/voxels)`` to 128 
 
     - Set ``Image binning`` to 2
 
-  * Go to the **Alignments** tab
+  * On the **Alignments** tab
 
     - From the ``Import from`` dropdown menu, select ``nextPYP (*.bz2)``
 
-    - Click the :fa:`search` icon next to ``Input parameter file (*.bz2)`` and browse to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/tomo-coarse-refinement-fg2v2MJLSY4Ui908_r01_02.bz2``  Click :bdg-primary:`Choose File`
+    Set ``Input parameter file (*.bz2)`` to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/tomo-coarse-refinement-fg2v2MJLSY4Ui908_r01_02.bz2``
 
-  * Go to the **Reconstruction** tab
+  * On the **Reconstruction** tab
 
-    - Select ``Apply dose weighting`` by checking the box 
+    - Enable ``Apply dose weighting``
 
   * Go to the **Resources** tab
 
@@ -149,15 +232,15 @@ Since this is a time consuming step that cannot be execute within the duration o
   
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle refinement` block) and select :bdg-primary:`Particle filtering`
 
-  * Go to the **Particle filtering** tab
+  * On the **Particle filtering** tab
 
     - Set ``Score threshold`` to 3.5
 
     - Set ``Min distance between particles (unbinned pixels)`` to 54
 
-    - Click the :fa:`search` icon next to ``Input parameter file(*.bz2)`` and select the ``*.bz2`` file that appears (this is from the parent directory). Click :bdg-primary:`Choose File`
+    - Set ``Input parameter file(*.bz2)`` to the ``*.bz2`` file that appears in the parent directory
 
-    - Check the box next to ``Permanently remove particles``
+    - Enable ``Permanently remove particles``
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -166,13 +249,13 @@ Since this is a time consuming step that cannot be execute within the duration o
   
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle filtering` block) and select :bdg-primary:`3D refinement`
 
-  * Go to the **Extraction** tab
+  * On the **Extraction** tab
 
     - Set ``Box size (pixels/voxels)`` to 256
 
     - Set ``Image binning`` to 1
 
-  * Go to the **Particle scoring function** tab
+  * On the **Particle scoring function** tab
 
     - Set ``Last tilt for refinement`` to 8 
 
@@ -182,7 +265,7 @@ Since this is a time consuming step that cannot be execute within the duration o
 
     - Click the :fa:`search` icon to select the ``Shape mask (*.mrc)``, browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc``, and click :bdg-primary:`Choose File`
 
-  * Go to the **Refinement** tab
+  * On the **Refinement** tab
 
     - Next to ``Input parameter file (*.bz2)`` click the :fa:`search` icon. Select the ``_r01_02_clean.bz2`` file and click :bdg-primary:`Choose File`
 
@@ -194,9 +277,9 @@ Since this is a time consuming step that cannot be execute within the duration o
 
     - Set ``Number of regions`` to 8,8,2 
 
-  * Go to the **Reconstruction** tab
+  * On the **Reconstruction** tab
 
-    - Check ``Apply dose weighting`` (It may already be checked)
+    - Check ``Apply dose weighting`` (it may already be checked)
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -212,12 +295,12 @@ Day 3 summary
 .. nextpyp:: What we learned today
   :collapsible: open
   
-  * How to persorm sub-volume averaging for ab-initio structure determination
+  * How to perform sub-volume averaging for ab-initio structure determination
 
-  * How to import particle coordinates and alignments
+  * How to import particle coordinates and alignments into ``nextPYP``
 
-  * How to improve map resolution using constrained single-particle tomography
+  * How to improve map resolution using the CSPT refinement framework
 
-  ``nextPYP`` also supports many other refinement-related tasks inclduing building shape masks, as well as routines for per-particle CTF refinement and 3D classification that directly use raw 2D particle projections to achieve improved accuracy.
+  ``nextPYP`` supports many other refinement-related tasks including building shape masks, per-particle CTF refinement, 3D classification, etc.
 
   :doc:`On day 4<dhvi_day4>` we will demonstrate ``nextPYP``'s functionality for post-processing and on-the-fly data processing.

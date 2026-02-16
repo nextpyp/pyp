@@ -183,13 +183,13 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     * Set ``Method`` to *"isonet2"*
 
-    * Set the location of the ``Trained model`` to  
+    * Set the location of the ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt"*
 
     * Click :bdg-primary:`Save`
 
-    * Navigate to :bdg-primary:`Operation` tab
+    * Navigate to the :bdg-primary:`Operation` tab
 
-    * Click :bdg-primary:`Restart` on the Data pre-processing daemon section
+    * Click :bdg-primary:`Restart` on the ``Data pre-processing`` daemon section
 
     * Open :bdg-primary:`Logs` to check that the restart flag has been detected and new pre-processing jobs will be launched in response to this change.
 
@@ -244,14 +244,12 @@ Day 4 summary
   
   * How to continuously monitor raw data folder for incoming tilt-series
 
-  * How to set the transfer of raw data (copy, link, move)
-
   * How to pre-process tilt-series on-the-fly (frame alignment, tilt-series alignment, CTF estimation, and tomogram reconstruction)
 
   * How to pick and segment virions, and pick particles during data collection
 
   * How to Restart, Clear, Copy or Delete sessions
 
-  * How to import and export sessions
+  * How to Export and Import sessions as projects
 
-  This concludes the tutorial. The topcis we covered this week are a few key aspects of tomography data processing. Additional tools and topics are described in the :doc:`User Guide<../guide/overview>`.
+  This concludes the tutorial. The topics we covered this week represent a few key aspects of tomography data processing. Additional tools and functionality is described in the :doc:`User Guide<../guide/overview>`.

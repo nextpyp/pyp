@@ -25,12 +25,14 @@ We will be utilizing three separate blocks to perform geometrically constrained 
 
   * Click on ``Particles`` (output of the :bdg-secondary:`Particle-Picking` block) and select :bdg-primary:`Segmentation (closed surfaces)`
 
+  * We will leave all default settings here
+
   * Click :bdg-primary:`Save`
 
 .. nextpyp:: Step 3: Gag protein detection
   :collapsible: open
 
-  * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
+  * Click on ``Segmentation (closed surfaces)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
   
   * Go to the **Particle detection** tab:
     
@@ -42,12 +44,17 @@ We will be utilizing three separate blocks to perform geometrically constrained 
     
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 3 blocks`. Follow the status of the run in the **Jobs** panel
 
-This will produce aproximately 20k particles that can be used for 3D refinement.
+This will produce a total of aproximately 20k particles.
+
+``nextPYP`` supports many other methods for 3D :doc:`particle picking<../guide/picking3d>`, including size-based, 3D template-matching, etc.
 
 Session 2: Molecular pattern mining
 ===================================
 
-In this session, we will demonstrate how to use MiLoPYP-2, a new membrane-aware framework designed to facilitate particle picking from irregular and more challenging samples. The basic workflow is composed of two stages: 1) an exploration phase to identify particles of interest, and 2) a refinement phase to accurately pick all instances of the identified target.
+In this session, we will demonstrate how to use MiLoPYP-2, a new membrane-aware framework designed to facilitate particle picking from irregular and more challenging samples. The basic workflow is composed of two stages: 
+
+1) an exploration phase to identify particles of interest
+2) a refinement phase to accurately pick all instances of the identified target
 
 Part 1: MiLoPYP-2 exploration
 -----------------------------
@@ -79,7 +86,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Surface constrained``
 
-          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the **filtered** segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
+          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
 
           - Set ``Use DoG`` to *"DoG"*
 
@@ -122,7 +129,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Patch coordinate location`` to the location of the ``/train/interactive_info_parquet.gzip`` file in the **first** **evaluation** block.
 
-        - Set ``Class labels`` to ``2, 4, 5, 6, 8, 9, 11, 12, 13, 14, 19, 23, 27, 28``
+        - Set ``Class labels`` to a comma separated list of classes that contain spike protein
 
     .. md-tab-item:: Evaluation
 
@@ -134,7 +141,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Clusters`` to 40
 
-We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. If the refinement phase is going to be used, then it is less problematic to delete some amount of true positives or keep small amount of false positives. If not, then it is likely better to be more careful during the iterations, and possibly change the parameters such as ``min/max distance`` or ``DoG sizes`` to start with more candidate locations.
+We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. In some cases, it may ne necesary to change the parameters ``min/max distance`` or ``DoG sizes`` to start with more candidate locations.
 
 Part 2: MiLoPYP-2 refinement
 ----------------------------
@@ -154,7 +161,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
         - Set ``Coordinates for training`` to *"class labels from MiLoPYP"*
 
-          - Set ``Class IDs`` to ``0,1,2,3,4,5,8,9,10,11,12,13,14,16,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59``
+          - Set ``Class IDs`` to a comma separated list of classes that contain spike protein
 
         - Set ``Epochs`` to 25
 
@@ -166,7 +173,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
         - Enable ``Use masking``
 
-          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the **filtered** segmentation block (or **unfiltered** if your filters eliminate too many good components, you do not have many false positives from exploration phase, or you simply do not want to filter too much)
+          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
 
           - Set ``Mask radius`` to 25
 
@@ -193,12 +200,10 @@ Day 2 summary
 .. nextpyp:: What we learned today
   :collapsible: open
 
-  * Particle picking methods available in nextPYP
+  * How to apply geometry-based picking to detect Gag protein from HIV-1 virions
+
+  * Other particle picking methods available in ``nextPYP``
   
-  * Geometry-based picking of Gag protein from HIV-1 virions
-
-    - ``nextPYP`` also supports :doc:`template-search<../guide/picking3d>` and :doc:`molecular pattern mining<../guide/milopyp>`
-
-  * Molecular pattern mining using MiLoPYP-2 to pick spike proteins from SARS-CoV-2 virions
+  * How to use MiLoPYP-2 to pick spike proteins from SARS-CoV-2 virions
 
   :doc:`On day 3<dhvi_day3>` we will demonstrate ``nextPYP``'s functionality for 3D refinement.

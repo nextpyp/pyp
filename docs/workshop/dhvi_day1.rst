@@ -3,8 +3,9 @@ DHVI workshop (day 1)
 #####################
 
 On this session, we will import raw data from two datasets from the EMPIAR database:
-#. Immature Gag protein from HIV-1 VLPs (`EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_)
-#. Spike protein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_)
+
+- Immature Gag protein from HIV-1 VLPs (`EMPIAR-10164 <https://www.ebi.ac.uk/empiar/EMPIAR-10164/>`_)
+- Spike protein from SARS-CoV-2 virions (`EMPIAR-10453 <https://www.ebi.ac.uk/empiar/EMPIAR-10453/>`_)
 
 Session 1 - Data import and pre-processing
 ==========================================
@@ -84,7 +85,7 @@ For this session, we will use the HIV-1 dataset that was collected on a 300kV Ti
 Session 2 - Tomogram denoising and segmentation
 ===============================================
 
-For this session, we will use the SARC-VoV-2 dataset that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector at 1.329A per pixel. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. No frames are available for this dataset.
+For this session, we will use the SARC-VoV-2 dataset that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector at 1.329A per pixel. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. No frames were recorded for this dataset.
 
 Import data and pre-processing
 ------------------------------
@@ -163,11 +164,11 @@ For segmenting tomograms, we will use pre-trained `MemBrain-Seg <https://github.
 
     - Enable ``Deconvolution filter``
 
-    - Set ``Pre-trained model (*.ckpt)`` to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/models/MemBrain_seg_v10_alpha.ckpt``
+    - Set ``Pre-trained model (*.ckpt)`` to ``/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt``
 
     - Set ``Filter connected components`` to *"by number"*
 
-    - Set ``Components to keep`` to 10
+    - Set ``Components to keep`` to 16
 
     - Set ``Thickness of slab to keep (unbinned voxels)`` to 1228
 
@@ -175,6 +176,10 @@ For segmenting tomograms, we will use pre-trained `MemBrain-Seg <https://github.
 
     - Set ``Sliding window size`` to 96
 
+  * On the  **Resources** tab:
+
+    - Set ``Split, Bundle size`` to 10
+    
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
 nextPYP can also use the `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_ package for tomogram segmentation. The workflow for running TARDIS is identical to MemBrain-Seg's, with the exception that some of the parameters are different.
@@ -182,7 +187,7 @@ nextPYP can also use the `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_ packag
 Tomogram denoising
 ------------------
 
-For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet2>`_. Unlike segmentation models that can generalize well to different type os data, denoising models typically require re-training to achieve the best performance.
+For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet2>`_. Unlike segmentation models that can generalize well to different types of data, denoising models typically require re-training to achieve the best performance.
 
 .. nextpyp:: Step 4: Denoising (training)
   :collapsible: open
@@ -199,9 +204,9 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
       - Set ``Loss function`` to *"Huber"*
 
-      - Set ``Learning rate`` to 0.0001
+      - Set ``Learning rate`` to 0.0003
 
-      - Set ``Minimum learning rate`` to 0.0001
+      - Set ``Minimum learning rate`` to 0.0003
 
       - Set ``B-factor`` to 200
 
@@ -209,13 +214,11 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
     - Set ``Loss function`` to *"Huber"*
 
-    - Set ``Learning rate`` to 0.0001
+    - Set ``Learning rate`` to 0.0003
 
-    - Set ``Minimum learning rate`` to 0.0001
+    - Set ``Minimum learning rate`` to 0.0003
 
     - Set ``Missing wedge weight in loss`` to 100
-
-    - Set ``CTF mode`` to *"network"*
 
     - Set ``B-factor`` to 200
 
@@ -230,11 +233,15 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
     - Set ``Method`` to *"isonet2"*
 
-    - Set ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/models/isonet_network_isonet2-n2n_unet-medium_96_epoch30_full.pt"*
+    - Set ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/isonet_network_isonet2-n2n_unet-medium_96_full.pt"*
+
+  * On the  **Resources** tab:
+
+    - Set ``Split, Bundle size`` to 10
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-nextPYP also supports other algorithms for denoising, including `Topaz-Denoise <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `Noise2Map <https://warpem.github.io/warp/reference/noise2map/noise2map/?h=noise>`_, and `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_. The workflow for these algorithms uses the same sequence of steps we saw here.
+nextPYP also supports other denoising algorithms, including `Topaz-Denoise <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `Noise2Map <https://warpem.github.io/warp/reference/noise2map/noise2map/?h=noise>`_, and `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_. The workflow for these algorithms follows a similar sequence of steps to the ones we saw here.
 
 Day 1 summary
 =============
@@ -246,10 +253,10 @@ Day 1 summary
 
   * How to pre-process tilt-series (frame alignment, tilt-series alignment, tilted CTF estimation)
 
-  * How to reconstruct tomograms (set binning and thickness, erase fiducials)
+  * How to reconstruct tomograms (choice of binning and thickness, erasing of fiducials)
 
   * How to segment tomograms using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_
 
-  * How to train and evaluate `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet>`_ models to denoise tomograms
+  * How to train and evaluate `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet>`_ models for tomogram denoising
 
-  :doc:`On day 2<dhvi_day2>` we will demonstrate ``nextPYP``'s functionality for particle picking.
+  :doc:`On day 2<dhvi_day2>` we will demonstrate the use of particle picking tools in ``nextPYP``.
