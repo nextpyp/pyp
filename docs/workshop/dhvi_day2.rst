@@ -2,10 +2,12 @@
 DHVI workshop (day 2)
 #####################
 
-Session 1: Geometry-based picking (HIV-1 Gag)
-=============================================
+Session 1: Geometry-based picking
+=================================
 
-We will be utilizing three separate blocks to perform geometrically constrained particle picking. This will allow us to automate the picking of Gag proteins from the surface of virions and extract normal orientations to facilitate 3D refinement. 
+In this session, we will show how to automate the picking of **HIV-1 Gag** from the surface of immature virions. We will also extract the normal orientation at the location of each particle to facilitate 3D refinement. 
+
+Before we start, we will measure the diameter of the virions using the measure tool in the :bdg-secondary:`Pre-processing` block.
   
 .. nextpyp:: Step 1: Virion selection
   :collapsible: open
@@ -14,7 +16,7 @@ We will be utilizing three separate blocks to perform geometrically constrained 
 
   * Go to the **Particle detection** tab:
     
-    - Set ``Detection method`` to virions
+    - Set ``Detection method`` to *virions*
 
     - Set ``Virion radius (A)`` to 500 (value obtained using measure tool)
     
@@ -32,19 +34,19 @@ We will be utilizing three separate blocks to perform geometrically constrained 
 .. nextpyp:: Step 3: Gag protein detection
   :collapsible: open
 
-  * Click on ``Segmentation (closed surfaces)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
+  * Click on ``Segmentation (closed)`` (output of the :bdg-secondary:`Segmentation (closed surfaces)` block) and select :bdg-primary:`Particle-Picking (closed surfaces)`
   
   * Go to the **Particle detection** tab:
     
-    - Set ``Detection method`` to uniform
-
     - Set ``Particle radius (A)`` to 50
+
+    - Set ``Detection method`` to *uniform*
 
     - Set ``Size of equatorial band to restrict spike picking (A)`` to 800
     
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 3 blocks`. Follow the status of the run in the **Jobs** panel
 
-This will produce a total of aproximately 20k particles.
+This will produce a total of approximately 12k particles.
 
 ``nextPYP`` supports many other methods for 3D :doc:`particle picking<../guide/picking3d>`, including size-based, 3D template-matching, etc.
 
@@ -74,7 +76,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       * On the **Pattern Mining** tab:
 
-        - Set ``Input type`` to *"3D only"*
+        - Set ``Input type`` to *3D only*
 
         - Set ``Epochs`` to 50
 
@@ -88,7 +90,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
           - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
 
-          - Set ``Use DoG`` to *"DoG"*
+          - Set ``Use DoG`` to *DoG*
 
           - Set ``Min distance`` to 5
 
@@ -159,7 +161,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
       * On the **Training/Evaluation** tab:
 
-        - Set ``Coordinates for training`` to *"class labels from MiLoPYP"*
+        - Set ``Coordinates for training`` to *class labels from MiLoPYP*
 
           - Set ``Class IDs`` to a comma separated list of classes that contain spike protein
 
@@ -179,7 +181,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
         - Enable ``Enable compilation``
 
-          - Set ``Compile mode`` to *"max autotune"*
+          - Set ``Compile mode`` to *max autotune*
 
     .. md-tab-item:: Evaluation
 

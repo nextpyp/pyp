@@ -10,7 +10,7 @@ On this session, we will import raw data from two datasets from the EMPIAR datab
 Session 1 - Data import and pre-processing
 ==========================================
 
-For this session, we will use the HIV-1 dataset that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector at 1.35A per pixel. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. Each tilt image was collected as a sequence of 8-10 frames.
+For this session, we will use the **HIV-1 dataset** that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector at 1.35A per pixel. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. Each tilt image was collected as a sequence of 8-10 frames.
 
 .. nextpyp:: Step 1: Create a project
   :collapsible: open
@@ -28,13 +28,15 @@ For this session, we will use the HIV-1 dataset that was collected on a 300kV Ti
 
   * Go to :bdg-primary:`Import Data` and select :bdg-primary:`Tomography (from Raw Data)`  
 
-  * Go to the **Raw data** tab:
+  * On the **Raw data** tab:
 
-    - Set the ``Location`` of the raw data by clicking on the :fa:`search` icon and browse to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/``
+    - Set the ``Location`` of the raw data by clicking on the :fa:`search` icon and browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/``
     
-    - Type ``*.tif`` into the filter box (lower right) and click the :fa:`filter` icon
+    - Type ``*.tif`` into the filter box (lower right) and click the :fa:`filter` icon. You should see 123 matches.
+
+    - Click :bdg-primary:`Choose File Pattern` to save your selection
        
-  * Go the the **Microscope Parameters** tab: 
+  * On the **Microscope Parameters** tab: 
 
     - Set ``Pixel size (A)`` to 1.35
 
@@ -44,48 +46,50 @@ For this session, we will use the HIV-1 dataset that was collected on a 300kV Ti
 
   * Click :bdg-primary:`Save` and the new block will appear on the project page. The block is in the modified state (indicated by the :fa:`asterisk` sign) and is ready to be executed
 
-  * Clicking the :bdg-primary:`Run` button will show another dialog where you can select which blocks to run:
+  * Clicking the :bdg-primary:`Run` button will show another dialog where you can select which blocks to run
 
-  * Click :bdg-primary:`Start Run for 1 block`. This will launch a process that reads one tilt at random and displays the resulting image inside the block
-
-  * Click on the thumbnail inside the block to see a larger version of the result
+  * Click :bdg-primary:`Start Run for 1 block` to launch the job
+  
+  You can follow its progress by clicking on the blue icon to the right of the *Split (cpu)* line in the **Jobs** panel.
+  
+  Once the job finishes, click on the image inside the block to see a larger version of the result.
 
 .. nextpyp:: Step 3: Pre-processing
   :collapsible: open
   
   * Click on ``Tilt-series`` (output of the :bdg-secondary:`Tomography (from Raw Data)` block) and select :bdg-primary:`Pre-processing`
 
-  * Go to the **Frame alignment** tab:
+  * On the **Frame alignment** tab:
 
     - ``nextPYP`` uses the ``Frame pattern`` to extract metadata form the file names. EMPIAR-10164 follows the default file naming scheme and ``.tif`` extension, so we will leave the default setting. 
 
-    - We will use ``unblur`` for frame alignment. 
+    - We will use ``unblur`` for frame alignment which is also the default.
 
-  * Go to the **Tilt-series alignment** tab
+  * On the **Tilt-series alignment** tab
 
-    - Our ``Alignment method`` will be IMOD fiducial-based which is the default so make no changes.
+    - Our ``Alignment method`` will be *IMOD (fiducials)* which is the default so make no changes.
   
-  * Go to the **CTF determination** tab
+  * On the **CTF determination** tab
 
-    - Set ``Max resolution`` to 5 
+    - Set ``Max resolution`` to 5
 
-  * Go to the **Tomogram reconstruction** tab
+  * On the **Tomogram reconstruction** tab
   
     - Our ``Reconstruction method`` will be IMOD, this is the default so make no changes. 
 
-  * Go to the **Resources** tab
+  * On the **Resources** tab
 
     - Set ``Split, Threads`` to 11
   
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-  * When the block finishes running, examine the **Tilt-series**, **Plots**, **Table**, and **Gallery** tabs.  
+  * When the block finishes running, examine the **Tilt-series**, **Plots**, **Table**, and **Gallery** tabs inside the block.
 
 
 Session 2 - Tomogram denoising and segmentation
 ===============================================
 
-For this session, we will use the SARC-VoV-2 dataset that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector at 1.329A per pixel. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. No frames were recorded for this dataset.
+For this session, we will use the **SARS-VoV-2 dataset** that was collected on a 300kV Titan Krios TEM using a Gatan K2 detector. Each tilt-series has 41 images recorded between -60 and 60 degrees with a spacing of 3 degrees. We won't use movie frames in this case.
 
 Import data and pre-processing
 ------------------------------
@@ -99,7 +103,9 @@ Import data and pre-processing
 
     - Set the ``Location`` by clicking on the :fa:`search` icon and browsing to ``/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/``
 
-    - Type ``*.mrc`` into the filter box (lower right) and click the :fa:`filter` icon
+    - Type ``*.mrc`` into the filter box (lower right) and click the :fa:`filter` icon. You should see 10 matches.
+
+    - Click :bdg-primary:`Choose File Pattern` to save your selection
 
   * On the **Microscope parameters** tab:
 
@@ -126,19 +132,19 @@ Import data and pre-processing
 
   * On the  **CTF determination** tab:
 
-    - Set ``Max resolution (A)`` to 10
+    - Set ``Max resolution (A)`` to 5
 
   * On the **Tomogram reconstruction** tab:
 
     - Set ``Tomogram thickness (unbinned voxels)`` to 1536
 
-    - Set ``2D filtering`` to *"none"*
+    - Set ``2D filtering`` to *none*
 
     - Enable ``Erase fiducials``
 
-    - Enable ``Generate half-tomograms``
+    - Set ``High-frequency filtering`` to *hamming (as in tomo3d)*
 
-    - Set ``High-frequency filtering`` to *"hamming (as in tomo3d)"*
+    - Enable ``Generate half-tomograms``
 
   * On the **Resources** tab
 
@@ -149,7 +155,7 @@ Import data and pre-processing
 Tomogram segmentation
 ---------------------
 
-For segmenting tomograms, we will use pre-trained `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ models that can be directly applied to tomograms produced by the pre-processing block. In addition, we will clean up the segmentaion results using different geometric criteria.
+For segmenting tomograms, we will use a pre-trained `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ model that can be directly applied to tomograms produced by the pre-processing block. In addition, we will clean up the segmentaion results using geometric criteria.
 
 .. nextpyp:: Step 3: Segmentation
   :collapsible: open
@@ -160,15 +166,15 @@ For segmenting tomograms, we will use pre-trained `MemBrain-Seg <https://github.
 
     - Enable ``Pre-process tomograms``
 
-    - Set ``Pixel size rescaling`` to 11
+      - Set ``Pixel size rescaling`` to 11
 
-    - Enable ``Deconvolution filter``
+      - Enable ``Deconvolution filter``
 
     - Set ``Pre-trained model (*.ckpt)`` to ``/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt``
 
-    - Set ``Filter connected components`` to *"by number"*
+    - Set ``Filter connected components`` to *by number*
 
-    - Set ``Components to keep`` to 16
+      - Set ``Components to keep`` to 16
 
     - Set ``Thickness of slab to keep (unbinned voxels)`` to 1228
 
@@ -176,70 +182,122 @@ For segmenting tomograms, we will use pre-trained `MemBrain-Seg <https://github.
 
     - Set ``Sliding window size`` to 96
 
-  * On the  **Resources** tab:
+  * On the  **Resources** tab (make sure *Show advanced options* is enabled):
 
     - Set ``Split, Bundle size`` to 10
     
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-nextPYP can also use the `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_ package for tomogram segmentation. The workflow for running TARDIS is identical to MemBrain-Seg's, with the exception that some of the parameters are different.
+.. nextpyp:: Step 3: Filter segmentations
+  :collapsible: open
+
+  * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Segmentation (membrain/tardis)`
+
+  * On the  **Tomogram segmentation** tab:
+
+    - Enable ``Pre-process tomograms``
+
+      - Set ``Pixel size rescaling`` to 11
+
+      - Enable ``Deconvolution filter``
+
+    - Set ``Pre-trained model (*.ckpt)`` to ``/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt``
+
+    - Set ``Filter connected components`` to *by number*
+
+      - Set ``Components to keep`` to 16
+
+    - Set ``Thickness of slab to keep (unbinned voxels)`` to 1228
+
+    - Set ``Sliding window size`` to 96
+
+  * On the  **Resources** tab (make sure *Show advanced options* is enabled):
+
+    - Set ``Split, Bundle size`` to 10
+    
+  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
+
+nextPYP can also use the `TARDIS <https://github.com/SMLC-NYSBC/TARDIS>`_ package for tomogram segmentation. The workflow is similar, with the exception that some of the parameters are different.
 
 Tomogram denoising
 ------------------
 
 For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet2>`_. Unlike segmentation models that can generalize well to different types of data, denoising models typically require re-training to achieve the best performance.
 
-.. nextpyp:: Step 4: Denoising (training)
-  :collapsible: open
+.. md-tab-set::
 
-  * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Denoising (train)`
+  .. md-tab-item:: Use a pre-trained model
 
-  * On the  **Tomogram denoising** tab:
+    .. nextpyp:: Step 1: Evaluation
+      :collapsible: open
 
-    - Set ``Method`` to *"isonet2"*
+      * Click on ``Denoising model`` (output of the :bdg-secondary:`Denoising (train)` block) and select :bdg-primary:`Denoising (eval)`
 
-    - Enable ``Use masking``
+      * On the  **Tomogram denoising** tab:
 
-      - Set ``Epochs for training`` to 30
+        - Set ``Method`` to *isonet2*
 
-      - Set ``Loss function`` to *"Huber"*
+        - Set ``Trained model`` to */nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/isonet_network_isonet2-n2n_unet-medium_96_full.pt*
 
-      - Set ``Learning rate`` to 0.0003
+      * On the  **Resources** tab:
 
-      - Set ``Minimum learning rate`` to 0.0003
+        - Set ``Split, Bundle size`` to 10
 
-      - Set ``B-factor`` to 200
+      * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
-    - Set ``Epochs for training`` to 30
+  .. md-tab-item:: Perform training and evaluation
 
-    - Set ``Loss function`` to *"Huber"*
+    .. nextpyp:: Step 1: Training
+      :collapsible: open
 
-    - Set ``Learning rate`` to 0.0003
+      * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Denoising (train)`
 
-    - Set ``Minimum learning rate`` to 0.0003
+      * On the  **Tomogram denoising** tab:
 
-    - Set ``Missing wedge weight in loss`` to 100
+        - Set ``Method`` to *isonet2*
 
-    - Set ``B-factor`` to 200
+        - Enable ``Use masking``
 
-  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
+          - Set ``Epochs for training`` to 30
 
-.. nextpyp:: Step 5: Denoising (evaluation)
-  :collapsible: open
+          - Set ``Loss function`` to *Huber*
 
-  * Click on ``Denoising model`` (output of the :bdg-secondary:`Denoising (train)` block) and select :bdg-primary:`Denoising (eval)`
+          - Set ``Learning rate`` to 0.0003
 
-  * On the  **Tomogram denoising** tab:
+          - Set ``Minimum learning rate`` to 0.0003
 
-    - Set ``Method`` to *"isonet2"*
+          - Set ``B-factor`` to 200
 
-    - Set ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/isonet_network_isonet2-n2n_unet-medium_96_full.pt"*
+        - Set ``Epochs for training`` to 30
 
-  * On the  **Resources** tab:
+        - Set ``Loss function`` to *Huber*
 
-    - Set ``Split, Bundle size`` to 10
+        - Set ``Learning rate`` to 0.0003
 
-  * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
+        - Set ``Minimum learning rate`` to 0.0003
+
+        - Set ``Missing wedge weight in loss`` to 100
+
+        - Set ``B-factor`` to 200
+
+      * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
+
+    .. nextpyp:: Step 2: Evaluation
+      :collapsible: open
+
+      * Click on ``Denoising model`` (output of the :bdg-secondary:`Denoising (train)` block) and select :bdg-primary:`Denoising (eval)`
+
+      * On the  **Tomogram denoising** tab:
+
+        - Set ``Method`` to *isonet2*
+
+        - Set ``Trained model`` to */nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/isonet_network_isonet2-n2n_unet-medium_96_full.pt*
+
+      * On the  **Resources** tab:
+
+        - Set ``Split, Bundle size`` to 10
+
+      * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`. Follow the status of the run in the **Jobs** panel
 
 nextPYP also supports other denoising algorithms, including `Topaz-Denoise <https://github.com/tbepler/topaz>`_, `IsoNet <https://github.com/IsoNet-cryoET/IsoNet>`_, `Noise2Map <https://warpem.github.io/warp/reference/noise2map/noise2map/?h=noise>`_, and `cryoCARE <https://github.com/juglab/cryoCARE_pip>`_. The workflow for these algorithms follows a similar sequence of steps to the ones we saw here.
 
@@ -249,14 +307,14 @@ Day 1 summary
 .. nextpyp:: What we learned today
   :collapsible: open
 
-  * How to import raw data
+  * How to import raw tilt-series data into ``nextPYP``
 
   * How to pre-process tilt-series (frame alignment, tilt-series alignment, tilted CTF estimation)
 
-  * How to reconstruct tomograms (choice of binning and thickness, erasing of fiducials)
+  * How to reconstruct tomograms (adjust thickness, erase fiducials, increase contrast)
 
   * How to segment tomograms using `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_
 
-  * How to train and evaluate `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet>`_ models for tomogram denoising
+  * How to denoise tomograms using `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet>`_
 
   :doc:`On day 2<dhvi_day2>` we will demonstrate the use of particle picking tools in ``nextPYP``.

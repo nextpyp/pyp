@@ -181,9 +181,9 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     * Go to the **Tomogram denoising** tab
 
-    * Set ``Method`` to *"isonet2"*
+    * Set ``Method`` to *isonet2*
 
-    * Set the location of the ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt"*
+    * Set the location of the ``Trained model`` to */nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt*
 
     * Click :bdg-primary:`Save`
 
