@@ -1988,7 +1988,6 @@ description = "Path to previously saved patches. Parameters related to patch ext
 type = "path"
 path = { type="files" }
 input = { type="milopypPatches" }
-path = { type="files" }
 
 [tabs.detect_milo.compile]
 name = "Enable Compilation"
