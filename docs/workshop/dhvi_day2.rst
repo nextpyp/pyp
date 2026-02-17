@@ -84,6 +84,16 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Interval to perform validation`` to 5
 
+        - Set ``Gaussian filter`` to 0
+
+        - Set ``DoG sizes`` to 2,5
+
+        - Set ``DoG cutoff (std multiplier)`` to 2
+
+        - Set ``DoG diameter (binned voxels)`` to 20
+
+        - Set ``DoG boundary margin (binned voxels)`` to 0
+
         - Enable ``Surface constrained``
 
           - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
@@ -91,6 +101,8 @@ We also use a feature called **iterative exploration**, which is one of the main
           - Set ``Use DoG`` to *DoG*
 
             - Set ``Min distance`` to 5
+
+        - Enable ``Save patches``
 
     .. md-tab-item:: Evaluation
 
@@ -101,6 +113,8 @@ We also use a feature called **iterative exploration**, which is one of the main
         - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_50.pth``where ``YYYYMMDD_HHMMSS`` is the date and time of training.
 
         - Set ``Clusters`` to 30
+
+        - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the first training block.
 
 .. nextpyp:: Iteration 2
   :collapsible: open
@@ -115,6 +129,8 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Epochs`` to 100
 
+        - Set ``Bounding box (binned voxels)`` to 36
+
         - Set ``Interval to perform validation`` to 10
 
         - Enable ``Surface constrained``
@@ -125,11 +141,15 @@ We also use a feature called **iterative exploration**, which is one of the main
 
             - Set ``Min distance`` to 5
 
+        - Disable ``Remove segmentation``
+
         - Enable ``Iterate``
 
         - Set ``Patch coordinate location`` to the location of the ``/train/interactive_info_parquet.gzip`` file in the **first** **evaluation** block.
 
         - Set ``Class labels`` to a comma separated list of classes that contain spike protein
+
+        - Enable ``Save patches``
 
     .. md-tab-item:: Evaluation
 
@@ -140,6 +160,8 @@ We also use a feature called **iterative exploration**, which is one of the main
         - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate
 
         - Set ``Clusters`` to 40
+
+        - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the second training block.
 
 We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. In some cases, it may ne necesary to change the parameters ``min/max distance`` or ``DoG sizes`` to start with more candidate locations.
 
@@ -163,17 +185,19 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
           - Set ``Class IDs`` to a comma separated list of classes that contain spike protein
 
-        - Set ``Epochs`` to 25
+        - Set ``Epochs`` to 20
 
-        - Set ``Max number of particles`` to 300
+        - Set ``Max number of particles`` to 600
 
-        - Set ``Learning rate`` to 0.001
+        - Set ``Learning rate`` to 0.0005
 
-        - Set ``Validation interval (epochs)`` to 3
+        - Set ``Validation interval (epochs)`` to 10
 
         - Enable ``Use masking``
 
           - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
+
+        - Set ``Patch size downscaling`` to 3
 
         - Enable ``Enable compilation``
 
