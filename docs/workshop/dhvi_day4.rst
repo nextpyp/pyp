@@ -15,15 +15,19 @@ Map post-processing
 
   * Go to the **Post-processing** tab
 
-    - Next to ``First half map (*_half1.mrc)`` click the :fa:`search` icon. Select the ``*_half1.mrc`` file and click :bdg-primary:`Choose File`
+    - Set the location of the ``First half map (*_half1.mrc)`` by selecting the file **_half1.mrc* and clicking :bdg-primary:`Choose File`
 
     - Set ``Masking method`` to from file usign the dropdown menu
 
-    - Next to ``Mask file (*.mrc)`` click the :fa:`search` icon. Browse to ``/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc`` and click :bdg-primary:`Choose File`
+    - Set ``Mask file (*.mrc)`` to */nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc* and click :bdg-primary:`Choose File`
 
-    - Set the ``B-factor method`` to adhoc using the dropdown menu
+    - Set ``B-factor method`` to adhoc using the dropdown menu
 
-    - Set the ``Adhoc value (A^2)`` to -25 
+    - Set ``Adhoc value (A^2)`` to -25 
+
+    - Set ``Min resolution (A)`` to 3
+
+    - Set ``Max resolution (A)`` to 7
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -34,11 +38,11 @@ Map post-processing
 
   * Download files
 
-    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the Full-Size Map. Your browser will download the post processed map as an MRC file. 
+    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the **Full-Size Map** and the **Local Resolution Map**. You will download the files in MRC format. 
 
     - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
   
-    - Open the downloaded MRC file in Chimera. Visualize your beautiful map. To get a better look at your map/model fitting, open an atomic model in Chimera. Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
+    - Open both downloaded MRC files in Chimera. In the *Tools* menu, navigate to *Volume Data*, then *Surface Color*. In the *Surface Color* dialog, select to **color by** *volume data value*, and select the ``_resmap.mrc`` file in the **using map** field. Adjust the color values and press **Color**. Open an atomic model in Chimera. Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
 
     .. code-block:: bash 
 
@@ -140,6 +144,24 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Set ``Max resolution`` to 5
   
+  * Click on the **Tomogram reconstruction** tab
+
+    - Select the option ``Erase fiducials``
+
+    - Select the option ``Generate half tomograms`` (you'll see why later...)
+
+  * Click on the **Tomogram segmentation** tab
+
+     - Select the option ``Pre-process tomograms``
+
+     - Set ``Pixel size rescaling`` to 11
+
+     - Set ``Pre-trained model (*.ckpt)`` to */nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt*
+
+     - Set ``Filter connected components`` to *by number*
+
+     - Set ``Components to keep`` to 16
+
   * Click on the **Virion detection** tab.
 
     - Set ``Virion radius`` to 500
@@ -156,15 +178,21 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Set ``Detection radius`` to 50
 
+  * Click on the **2D classification** tab.
+
+    - Check the box for ``Run 2D classification``
+
+    - Set ``Mask radius (A)`` to 300
+    
+    - Set ``Starting high-resolution`` to 80
+
+    - Set ``Max resolution (A)`` to 12 (Nyquist resolution plus some wiggle room)
+
   * Click on the **Resources** tab.
   
-    - Set ``Split, Threads`` to 41
+    - Set ``Split, Threads`` to 11
 
-    * General advice for setting resource limits:
-      
-      - The ``Split, Threads`` should match the number of tilts in your tilt series, if you have the computational resources to do so.
-
-      - In general, the more threads you use, the more tilts that can be processed at the same time, and the faster you see pre-processing results.
+    - Set ``2D classification, Threads`` to 124 (we suggest using a number that matches the maximum allowed by your environment to see results more quickly)
 
   * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
 
@@ -247,6 +275,8 @@ Day 4 summary
   * How to pre-process tilt-series on-the-fly (frame alignment, tilt-series alignment, CTF estimation, and tomogram reconstruction)
 
   * How to pick and segment virions, and pick particles during data collection
+
+  * How to perform 2D projection classification to understand sample quality during data collection
 
   * How to Restart, Clear, Copy or Delete sessions
 

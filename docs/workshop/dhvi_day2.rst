@@ -155,7 +155,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
     .. md-tab-item:: Training
 
-      * Click on ``MiLoPYP particles`` (output of the **fourth** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (train)`
+      * Click on ``MiLoPYP particles`` (output of the **last** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (train)`
 
       * On the **Training/Evaluation** tab:
 
@@ -175,8 +175,6 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
           - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
 
-          - Set ``Mask radius`` to 25
-
         - Enable ``Enable compilation``
 
           - Set ``Compile mode`` to *max autotune*
@@ -184,15 +182,11 @@ Refinement phase also uses the segmentations to constrain particle picking to su
     .. md-tab-item:: Evaluation
 
       * Click on ``Particles model`` (output of the :bdg-secondary:`Particle picking (train)` block) and select :bdg-primary:`Particle picking (eval)`
-      Use the same parameters as the previous block except:
-
       * On the **Training/Evaluation** tab:
 
-        - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate
+        - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_25.pth``where ``YYYYMMDD_HHMMSS`` is the date and time of training.
 
         - Set ``Particle radius (A)`` to 80
-
-        - Set ``Threshold for soft/hard positives`` 0.85
 
 Day 2 summary
 =============
