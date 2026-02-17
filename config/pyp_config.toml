@@ -3459,7 +3459,7 @@ hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]
 name = "CTF mode"
 description = "CTF handling mode"
 type = "enum"
-enum = { none='None', phase_only='phase_only', network='network', wiener='wiener'} 
+enum = { none='none', phase_only='phase_only', network='network', wiener='wiener'} 
 default = "network"
 condition = { arg = "isonet2_mask_preprocessing", value = "denoise" }
 hidden = [ "tomo_denoise_eval", "stream_tomo", "tomo_pre_process" ]

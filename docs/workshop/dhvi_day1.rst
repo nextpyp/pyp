@@ -231,6 +231,8 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
           - Set ``Loss function`` to *Huber*
 
+          - Set ``CTF mode`` to *"None"*
+
           - Set ``B-factor`` to 200
 
         - Set ``Epochs for training`` to 30
