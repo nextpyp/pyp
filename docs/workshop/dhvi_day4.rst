@@ -183,6 +183,8 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
     - Check the box for ``Run 2D classification``
 
     - Set ``Mask radius (A)`` to 300
+
+    - Set ``Fraction of particles to use`` to 1
     
     - Set ``Starting high-resolution`` to 80
 
