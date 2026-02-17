@@ -116,11 +116,11 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     * Select the ``Workshop`` group.
 
-  * Click on the **Raw data** tab.
+  * On the **Raw data** tab.
 
-    * Set ``Path to raw data`` to ``/nfs/bartesaghilab/nextpyp/workshop/10164/TS_*.tif``
+    * Set ``Path to raw data`` to *"/nfs/bartesaghilab/nextpyp/workshop/10164/TS_*.tif"*
   
-  * Click on the **Microscope parameters** tab.
+  * On the **Microscope parameters** tab.
 
     - Set ``Pixel size (A)`` to 1.35
 
@@ -128,7 +128,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Set ``Tilt-axis angle (degrees)`` to 85.3
   
-  * Click on the **Session settings** tab.
+  * On the **Session settings** tab.
 
     - Set ``Number of tilts`` to 41
 
@@ -140,45 +140,45 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
       
       - ``Copy``: Make a copy of the data in the microscope to your Session folder. The data will now exist at both the microscope *and* your Session folder.
 
-  * Click on the **CTF Determination** tab.
+  * On the **CTF Determination** tab.
 
     - Set ``Max resolution`` to 5
   
-  * Click on the **Tomogram reconstruction** tab
+  * On the **Tomogram reconstruction** tab
 
     - Select the option ``Erase fiducials``
 
     - Select the option ``Generate half tomograms`` (you'll see why later...)
 
-  * Click on the **Tomogram segmentation** tab
+  * On the **Tomogram segmentation** tab
 
-     - Select the option ``Pre-process tomograms``
+    - Select the option ``Pre-process tomograms``
 
-     - Set ``Pixel size rescaling`` to 11
+    - Set ``Pixel size rescaling`` to 11
 
-     - Set ``Pre-trained model (*.ckpt)`` to */nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt*
+    - Set ``Pre-trained model (*.ckpt)`` to *"/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt"*
 
-     - Set ``Filter connected components`` to *by number*
+    - Set ``Filter connected components`` to *"by number"*
 
-     - Set ``Components to keep`` to 16
+    - Set ``Components to keep`` to 16
 
-  * Click on the **Virion detection** tab.
+  * On the **Virion detection** tab.
 
     - Set ``Virion radius`` to 500
 
-    - Set ``Virion detection method`` to auto
+    - Set ``Virion detection method`` to *"auto"*
 
-    - Set ``Spike detection method`` to uniform
+    - Set ``Spike detection method`` to *"uniform"*
 
     - Set ``Size of equatorial band to restrict spike picking`` to 800
   
-  * Click on the **Particle detection** tab.
+  * On the **Particle detection** tab.
   
     - Set ``Detection method`` to none
 
     - Set ``Detection radius`` to 50
 
-  * Click on the **2D classification** tab.
+  * On the **2D classification** tab.
 
     - Check the box for ``Run 2D classification``
 
@@ -190,7 +190,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Set ``Max resolution (A)`` to 12 (Nyquist resolution plus some wiggle room)
 
-  * Click on the **Resources** tab.
+  * On the **Resources** tab.
   
     - Set ``Split, Threads`` to 11
 
@@ -209,11 +209,11 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * Example: Adding on-the-fly tomogram denoising using IsoNet2
 
-    * Go to the **Tomogram denoising** tab
+    * On the **Tomogram denoising** tab
 
     * Set ``Method`` to *isonet2*
 
-    * Set the location of the ``Trained model`` to */nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt*
+    * Set the location of the ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt"*
 
     * Click :bdg-primary:`Save`
 

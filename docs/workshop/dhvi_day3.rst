@@ -239,7 +239,7 @@ Because this step is time-consuming and cannot be completed within a single sess
     
     * Notice that the **FSC near Nyquist is positive** indicating the presence of duplicate particles
     
-    * The histogram of *Per-Particle Scores* shows a bimodal distribution that will allow to filter out bad particles
+    * The histogram of *Per-Particle Scores* shows a bimodal distribution that will allow us to filter out bad particles
 
 .. nextpyp:: Step 3: Particle filtering
   :collapsible: open
