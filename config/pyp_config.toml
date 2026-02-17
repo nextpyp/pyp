@@ -1987,6 +1987,8 @@ name = "Read patches"
 description = "Path to previously saved patches. Parameters related to patch extraction should be the same as used in that extraction"
 type = "path"
 path = { type="files" }
+input = { type="milopypPatches" }
+path = { type="files" }
 
 [tabs.detect_milo.compile]
 name = "Enable Compilation"
