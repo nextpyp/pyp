@@ -142,8 +142,6 @@ Import data and pre-processing
 
     - Enable ``Erase fiducials``
 
-    - Set ``High-frequency filtering`` to *hamming (as in tomo3d)*
-
     - Enable ``Generate half-tomograms``
 
   * On the **Resources** tab
@@ -239,7 +237,7 @@ For denoising tomograms, we will demonstrate the use of `IsoNet2 <https://github
 
         - Set ``Loss function`` to *Huber*
 
-        - Set ``Missing wedge weight in loss`` to 100
+        - Set ``Missing wedge weight in loss`` to 200
 
         - Set ``B-factor`` to 200
 

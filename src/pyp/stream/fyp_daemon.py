@@ -841,7 +841,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
             except:
                 type, value, traceback = sys.exc_info()
                 sys.__excepthook__(type, value, traceback)
-                logger.warning("Inconsistencies detected during processing or all classes are empty.Clear the 2D classification daemon to continue")
+                logger.warning("Inconsistencies detected during processing or all classes are empty. Clear the 2D classification daemon to continue")
                 time.sleep(10)
                 pass
         try:
