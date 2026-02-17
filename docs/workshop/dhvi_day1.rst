@@ -155,7 +155,7 @@ Import data and pre-processing
 Tomogram segmentation
 ---------------------
 
-For segmenting tomograms, we will use a pre-trained `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ model that can be directly applied to tomograms produced by the pre-processing block. In addition, we will clean up the segmentaion results using geometric criteria.
+For segmenting tomograms, we will use a pre-trained `MemBrain-Seg <https://github.com/teamtomo/membrain-seg>`_ model that can be directly applied to tomograms produced by the pre-processing block. In addition, we will clean up the segmentation results using geometric criteria.
 
 .. nextpyp:: Step 3: Segmentation
   :collapsible: open
