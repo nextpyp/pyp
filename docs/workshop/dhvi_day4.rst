@@ -192,7 +192,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * On the **Resources** tab.
   
-    - Set ``Split, Threads`` to 11
+    - Set ``Split, Threads`` to 124
 
     - Set ``2D classification, Threads`` to 124 (we suggest using a number that matches the maximum allowed by your environment to see results more quickly)
 
