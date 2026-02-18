@@ -114,7 +114,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Clusters`` to 30
 
-        - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the first training block.
+        - Set ``Read patches`` to the location of the ``train/3d_patch_info_train.npz`` file in the first training block.
 
 .. nextpyp:: Iteration 2
   :collapsible: open
@@ -145,7 +145,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Iterate``
 
-        - Set ``Patch coordinate location`` to the location of the ``/train/interactive_info_parquet.gzip`` file in the **first** **evaluation** block.
+        - Set ``Patch coordinate location`` to the location of the ``train/interactive_info_parquet.gzip`` file in the **first** **evaluation** block.
 
         - Set ``Class labels`` to a comma separated list of classes that contain spike protein
 
@@ -163,7 +163,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Clusters`` to 30
 
-        - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the second training block.
+        - Set ``Read patches`` to the location of the ``train/3d_patch_info_train.npz`` file in the second training block.
 
 We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. In some cases, it may be necessary to change parameters such as ``min/max distance``, ``DoG sizes``, or ``DoG cutoff`` to start with more candidate locations.
 
