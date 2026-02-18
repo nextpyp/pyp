@@ -103,6 +103,8 @@ We also use a feature called **iterative exploration**, which is one of the main
             - Set ``Min distance`` to 5
 
         - Enable ``Save patches``
+      
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
     .. md-tab-item:: Evaluation
 
@@ -115,6 +117,8 @@ We also use a feature called **iterative exploration**, which is one of the main
         - Set ``Clusters`` to 30
 
         - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the first training block.
+
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
 .. nextpyp:: Iteration 2
   :collapsible: open
@@ -152,6 +156,8 @@ We also use a feature called **iterative exploration**, which is one of the main
         - Enable ``Save patches``
 
         - Clear ``Read patches``
+      
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
     .. md-tab-item:: Evaluation
 
@@ -164,6 +170,8 @@ We also use a feature called **iterative exploration**, which is one of the main
         - Set ``Clusters`` to 30
 
         - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the second training block.
+      
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
 We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. In some cases, it may be necessary to change parameters such as ``min/max distance``, ``DoG sizes``, or ``DoG cutoff`` to start with more candidate locations.
 
@@ -197,6 +205,8 @@ Refinement phase also uses the segmentations to constrain particle picking to su
         - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
 
       - Set ``Patch size downscaling`` to 3
+    
+    * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
     Step 2: Evaluation
 
@@ -217,6 +227,8 @@ Refinement phase also uses the segmentations to constrain particle picking to su
       - Set ``Trained model (*.pth)`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/model_20.pth"*
 
       - Set ``Particle radius (A)`` to 80
+    
+    * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
 Day 2 summary
 =============
