@@ -172,10 +172,9 @@ Part 2: MiLoPYP-2 refinement
 
 Refinement phase also uses the segmentations to constrain particle picking to surfaces. This is done by creating a binary mask based on the distance from the segmentation. This binary mask is then used to filter input and output coordinates, in the loss function, or to modify the input tomograms to directly remove any signal outside the mask.
 
-.. nextpyp:: Refinement
-  :collapsible: open
+.. md-tab-set::
 
-  .. md-tab-set::
+  .. md-tab-item:: Training a new model
 
     .. md-tab-item:: Training
 
@@ -207,6 +206,16 @@ Refinement phase also uses the segmentations to constrain particle picking to su
         - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_25.pth``where ``YYYYMMDD_HHMMSS`` is the date and time of training.
 
         - Set ``Particle radius (A)`` to 80
+
+  .. md-tab-item:: Using a pre-trained model
+
+    * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle picking (eval)`
+
+    * On the **Training/Evaluation** tab:
+
+      - Set ``Trained model (*.pth)`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/model_20.pth"*
+
+      - Set ``Particle radius (A)`` to 80
 
 Day 2 summary
 =============

@@ -15,13 +15,13 @@ Map post-processing
 
   * Go to the **Post-processing** tab
 
-    - Set the location of the ``First half map (*_half1.mrc)`` by selecting the file **_half1.mrc* and clicking :bdg-primary:`Choose File`
+    - Set the location of the ``First half map (*_half1.mrc)`` by selecting the file *"*_half1.mrc"*, then click :bdg-primary:`Choose File`
 
-    - Set ``Masking method`` to from file usign the dropdown menu
+    - Set ``Masking method`` to "*from file*""
 
-    - Set ``Mask file (*.mrc)`` to */nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc* and click :bdg-primary:`Choose File`
+    - Set ``Mask file (*.mrc)`` to *"/nfs/bartesaghilab/nextpyp/workshop/10164/EMPIAR-10164_shape_mask.mrc"*, then click :bdg-primary:`Choose File`
 
-    - Set ``B-factor method`` to adhoc using the dropdown menu
+    - Set ``B-factor method`` to *"adhoc"*
 
     - Set ``Adhoc value (A^2)`` to -25 
 
@@ -34,11 +34,11 @@ Map post-processing
 .. nextpyp:: Step 2: Map and model assessment in ChimeraX
   :collapsible: open
   
-  * I will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize their final map aligned to a model in Chimera. 
+  * We will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize the final map aligned to a model in Chimera. 
 
   * Download files
 
-    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the **Full-Size Map** and the **Local Resolution Map**. You will download the files in MRC format. 
+    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the **Full-Size Map** and the **Local Resolution Map**. You will download these files in MRC format. 
 
     - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
   
@@ -61,7 +61,7 @@ Visualization of results in ArtiaX/ChimeraX
 
   - Select a tomogram you wish to visualize the particles in. I will be using ``TS_43``. 
   
-  - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for TS_43. Click the green button immediately above the tomogram display. This will download the tomogram in .rec format. 
+  - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for ``TS_43``. Click the green button immediately above the tomogram display. This will download the tomogram in mrc format with the ``*.rec`` extension.
   
   - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type ``TS_43`` into the search bar and click **Search**. Click the .star file to download particle alignments. 
   
@@ -94,6 +94,11 @@ Visualization of results in ArtiaX/ChimeraX
   - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
   
   - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations.
+
+  .. figure:: ../images/guide_artiax_10164.webp
+    :alt: ArtiaX visualization of HIV1-Gag
+
+    Tomogram from immature HIV-1 virions from EMPIAR-10164 showing with a high-resolution model of Gag mapped back into the tomogram.
 
 
 Session 2: On-the-fly pre-processing
