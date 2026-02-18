@@ -103,6 +103,8 @@ We also use a feature called **iterative exploration**, which is one of the main
             - Set ``Min distance`` to 5
 
         - Enable ``Save patches``
+      
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
     .. md-tab-item:: Evaluation
 
@@ -115,6 +117,8 @@ We also use a feature called **iterative exploration**, which is one of the main
         - Set ``Clusters`` to 30
 
         - Set ``Read patches`` to the location of the ``train/3d_patch_info_train.npz`` file in the first training block.
+
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
 .. nextpyp:: Iteration 2
   :collapsible: open
@@ -152,6 +156,8 @@ We also use a feature called **iterative exploration**, which is one of the main
         - Enable ``Save patches``
 
         - Clear ``Read patches``
+      
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
     .. md-tab-item:: Evaluation
 
@@ -197,6 +203,8 @@ Refinement phase also uses the segmentations to constrain particle picking to su
         - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block
 
       - Set ``Patch size downscaling`` to 3
+    
+    * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
     Step 2: Evaluation
 
@@ -217,6 +225,8 @@ Refinement phase also uses the segmentations to constrain particle picking to su
       - Set ``Trained model (*.pth)`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/model_20.pth"*
 
       - Set ``Particle radius (A)`` to 80
+    
+    * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
 Day 2 summary
 =============
