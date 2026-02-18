@@ -178,55 +178,60 @@ Part 2: MiLoPYP-2 refinement
 
 Refinement phase also uses the segmentations to constrain particle picking to surfaces. This is done by creating a binary mask based on the distance from the segmentation. This binary mask is then used to filter input and output coordinates, in the loss function, or to modify the input tomograms to directly remove any signal outside the mask.
 
-.. md-tab-set::
+.. nextpyp:: Refinement
+  :collapsible: open
 
-  .. md-tab-item:: Training a new model
+  .. md-tab-set::
 
-    Step 1: Training
+    .. md-tab-item:: Training a new model
 
-    * Click on ``MiLoPYP particles`` (output of the **last** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (train)`
+      Step 1: Training
 
-    * On the **Training/Evaluation** tab:
+      * Click on ``MiLoPYP particles`` (output of the **last** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (train)`
 
-      - Set ``Coordinates for training`` to *class labels from MiLoPYP*
+      * On the **Training/Evaluation** tab:
 
-        - Set ``Class IDs`` to a comma separated list of classes that contain spike protein
+        - Set ``Coordinates for training`` to *class labels from MiLoPYP*
 
-      - Set ``Epochs`` to 10
+          - Set ``Class IDs`` to a comma separated list of classes that contain spike protein
 
-      - Set ``Max number of particles`` to 600
+        - Set ``Epochs`` to 10
 
-      - Set ``Validation interval (epochs)`` to 10
+        - Set ``Max number of particles`` to 600
 
-      - Enable ``Use masking``
+        - Set ``Validation interval (epochs)`` to 10
 
-        - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block
+        - Enable ``Use masking``
 
-      - Set ``Patch size downscaling`` to 3
-    
-    * Click :bdg-primary:`Save`and :bdg-primary:`Run`
+          - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block
 
-    Step 2: Evaluation
+        - Set ``Patch size downscaling`` to 3
 
-    * Click on ``Particles model`` (output of the :bdg-secondary:`Particle picking (train)` block) and select :bdg-primary:`Particle picking (eval)`
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
-    * On the **Training/Evaluation** tab:
+      Step 2: Evaluation
 
-      - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_25.pth`` where ``YYYYMMDD_HHMMSS`` is the date and time of training.
+      * Click on ``Particles model`` (output of the :bdg-secondary:`Particle picking (train)` block) and select :bdg-primary:`Particle picking (eval)`
 
-      - Set ``Particle radius (A)`` to 80
+      * On the **Training/Evaluation** tab:
 
-  .. md-tab-item:: Using a pre-trained model
+        - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_25.pth`` where ``YYYYMMDD_HHMMSS`` is the date and time of training.
 
-    * Click on ``Tomograms`` (output of the :bdg-secondary:`Pre-processing` block) and select :bdg-primary:`Particle picking (eval)`
+        - Set ``Particle radius (A)`` to 80
 
-    * On the **Training/Evaluation** tab:
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
-      - Set ``Trained model (*.pth)`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/model_20.pth"*
+    .. md-tab-item:: Using a pre-trained model
 
-      - Set ``Particle radius (A)`` to 80
-    
-    * Click :bdg-primary:`Save`and :bdg-primary:`Run`
+      * Click on ``MiLoPYP particles`` (output of the :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (eval)`
+
+      * On the **Training/Evaluation** tab:
+
+        - Set ``Trained model (*.pth)`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10453/model_20.pth"*
+
+        - Set ``Particle radius (A)`` to 80
+      
+      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
 Day 2 summary
 =============
