@@ -112,7 +112,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
       * On the **Pattern mining** tab:
 
-        - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_50.pth``where ``YYYYMMDD_HHMMSS`` is the date and time of training.
+        - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_50.pth`` where ``YYYYMMDD_HHMMSS`` is the date and time of training.
 
         - Set ``Clusters`` to 30
 
@@ -223,7 +223,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
     .. md-tab-item:: Using a pre-trained model
 
-      * Click on ``MiLoPYP particles`` (output of the :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (eval)`
+      * Click on ``Particles model`` (output of the :bdg-secondary:`Particle picking (train)` block) and select :bdg-primary:`Particle picking (eval)`
 
       * On the **Training/Evaluation** tab:
 
