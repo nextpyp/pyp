@@ -96,7 +96,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Surface constrained``
 
-          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
+          - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
 
           - Set ``Use DoG`` to *DoG*
 
@@ -135,7 +135,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Surface constrained``
 
-          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
+          - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
 
           - Set ``Use DoG`` to *DoG*
 
@@ -194,7 +194,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
       - Enable ``Use masking``
 
-        - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
+        - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block
 
       - Set ``Patch size downscaling`` to 3
 
