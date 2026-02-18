@@ -96,7 +96,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Surface constrained``
 
-          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
+          - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
 
           - Set ``Use DoG`` to *DoG*
 
@@ -116,7 +116,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Clusters`` to 30
 
-        - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the first training block.
+        - Set ``Read patches`` to the location of the ``train/3d_patch_info_train.npz`` file in the first training block.
 
       * Click :bdg-primary:`Save`and :bdg-primary:`Run`
 
@@ -139,7 +139,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Surface constrained``
 
-          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
+          - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block. You can get the path to the segmentation block by clicking ``Show filesystem location`` from the block menu
 
           - Set ``Use DoG`` to *DoG*
 
@@ -149,7 +149,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Iterate``
 
-        - Set ``Patch coordinate location`` to the location of the ``/train/interactive_info_parquet.gzip`` file in the **first** **evaluation** block.
+        - Set ``Patch coordinate location`` to the location of the ``train/interactive_info_parquet.gzip`` file in the **first** **evaluation** block.
 
         - Set ``Class labels`` to a comma separated list of classes that contain spike protein
 
@@ -169,9 +169,7 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Clusters`` to 30
 
-        - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the second training block.
-      
-      * Click :bdg-primary:`Save`and :bdg-primary:`Run`
+        - Set ``Read patches`` to the location of the ``train/3d_patch_info_train.npz`` file in the second training block.
 
 We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. In some cases, it may be necessary to change parameters such as ``min/max distance``, ``DoG sizes``, or ``DoG cutoff`` to start with more candidate locations.
 
@@ -202,7 +200,7 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
       - Enable ``Use masking``
 
-        - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
+        - Set ``Segmentation directory`` to the location of the ``mrc`` folder in the segmentation block
 
       - Set ``Patch size downscaling`` to 3
     
