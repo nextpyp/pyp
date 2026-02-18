@@ -151,6 +151,8 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Enable ``Save patches``
 
+        - Clear ``Read patches``
+
     .. md-tab-item:: Evaluation
 
       * Click on ``MiLoPYP Model`` (output of the **second** :bdg-secondary:`MiLoPYP (train)` block) and select :bdg-primary:`MiLoPYP (eval)`
@@ -159,11 +161,11 @@ We also use a feature called **iterative exploration**, which is one of the main
 
         - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate
 
-        - Set ``Clusters`` to 40
+        - Set ``Clusters`` to 30
 
         - Set ``Read patches`` to the location of the ``/train/3d_patch_info_train.npz`` file in the second training block.
 
-We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. In some cases, it may ne necesary to change the parameters ``min/max distance`` or ``DoG sizes`` to start with more candidate locations.
+We did 2 iterations for the exploration phase in this tutorial. However, the strategy can be changed depending on the preferred trade off between time and accuracy. In some cases, it may be necessary to change parameters such as ``min/max distance``, ``DoG sizes``, or ``DoG cutoff`` to start with more candidate locations.
 
 Part 2: MiLoPYP-2 refinement
 ----------------------------
@@ -185,11 +187,9 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
           - Set ``Class IDs`` to a comma separated list of classes that contain spike protein
 
-        - Set ``Epochs`` to 20
+        - Set ``Epochs`` to 10
 
         - Set ``Max number of particles`` to 600
-
-        - Set ``Learning rate`` to 0.0005
 
         - Set ``Validation interval (epochs)`` to 10
 
@@ -198,10 +198,6 @@ Refinement phase also uses the segmentations to constrain particle picking to su
           - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
 
         - Set ``Patch size downscaling`` to 3
-
-        - Enable ``Enable compilation``
-
-          - Set ``Compile mode`` to *max autotune*
 
     .. md-tab-item:: Evaluation
 
