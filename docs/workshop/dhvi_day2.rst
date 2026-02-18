@@ -176,36 +176,37 @@ Refinement phase also uses the segmentations to constrain particle picking to su
 
   .. md-tab-item:: Training a new model
 
-    .. md-tab-item:: Training
+    **Training**
 
-      * Click on ``MiLoPYP particles`` (output of the **last** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (train)`
+    * Click on ``MiLoPYP particles`` (output of the **last** :bdg-secondary:`MiLoPYP (eval)` block) and select :bdg-primary:`Particle picking (train)`
 
-      * On the **Training/Evaluation** tab:
+    * On the **Training/Evaluation** tab:
 
-        - Set ``Coordinates for training`` to *class labels from MiLoPYP*
+      - Set ``Coordinates for training`` to *class labels from MiLoPYP*
 
-          - Set ``Class IDs`` to a comma separated list of classes that contain spike protein
+        - Set ``Class IDs`` to a comma separated list of classes that contain spike protein
 
-        - Set ``Epochs`` to 10
+      - Set ``Epochs`` to 10
 
-        - Set ``Max number of particles`` to 600
+      - Set ``Max number of particles`` to 600
 
-        - Set ``Validation interval (epochs)`` to 10
+      - Set ``Validation interval (epochs)`` to 10
 
-        - Enable ``Use masking``
+      - Enable ``Use masking``
 
-          - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
+        - Set ``Segmentation directory`` to the location of the ``/mrc`` folder in the segmentation block
 
-        - Set ``Patch size downscaling`` to 3
+      - Set ``Patch size downscaling`` to 3
 
-    .. md-tab-item:: Evaluation
+    **Evaluation**
 
-      * Click on ``Particles model`` (output of the :bdg-secondary:`Particle picking (train)` block) and select :bdg-primary:`Particle picking (eval)`
-      * On the **Training/Evaluation** tab:
+    * Click on ``Particles model`` (output of the :bdg-secondary:`Particle picking (train)` block) and select :bdg-primary:`Particle picking (eval)`
 
-        - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_25.pth``where ``YYYYMMDD_HHMMSS`` is the date and time of training.
+    * On the **Training/Evaluation** tab:
 
-        - Set ``Particle radius (A)`` to 80
+      - Set ``Trained model (*.pth)`` to the location of the model you want to evaluate, for example, ``YYYYMMDD_HHMMSS/model_25.pth``where ``YYYYMMDD_HHMMSS`` is the date and time of training.
+
+      - Set ``Particle radius (A)`` to 80
 
   .. md-tab-item:: Using a pre-trained model
 
