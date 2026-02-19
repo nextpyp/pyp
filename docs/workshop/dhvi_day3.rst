@@ -12,7 +12,13 @@ For this session, we will use the particles we obtained yesterday for the **SARS
 .. nextpyp:: Step 1: Sub-volume extraction
   :collapsible: open
 
-  * We first need to generate the sub-tomograms via the :bdg-secondary:`Particle picking (eval)` block. 
+  * We first need to generate the sub-tomograms via the :bdg-secondary:`Particle picking (eval)` block.
+
+  * On the **Training/Evaluation** tab:
+
+    - Set ``Initial particle orientation(s)`` to *from segmentations(s)*
+
+      - Set ``Path to segmentation(s)`` to the location of the ``mrc`` folder in the segmentation block
   
   * On the **Particle extraction** tab:
   
@@ -59,6 +65,10 @@ The sub-volume averaging pipeline in ``nextPYP`` consists of an iterative proced
         * Set ``Mask radius (binned voxels)`` to 24,24,26
         * Set ``Mask apodization (binned voxels)`` to 0
         * Set ``Low-pass filter (cutoff, decay)`` to 0.2,0.05
+
+      * On the **Resources** tab
+        - Set ``Split, Threads`` to 124
+
         * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
       
       * Review results in the **Centering** tab within the :bdg-secondary:`Sub-tomogram averaging` block.
@@ -91,10 +101,6 @@ The sub-volume averaging pipeline in ``nextPYP`` consists of an iterative proced
         * Set ``C symmetry order`` to 1
         * Set ``Refinement mode`` to *mode 3 - alignment to reference*
         * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`.
-        
-      * On the **Resources** tab
-
-        - Set ``Split, Threads`` to 124
 
       * Review the results in the **References** tab of the :bdg-secondary:`Sub-tomogram averaging` block.
 
