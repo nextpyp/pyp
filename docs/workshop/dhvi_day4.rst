@@ -185,7 +185,11 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * On the **2D classification** tab.
 
+    - Check the box for ``Show advanced options``
+
     - Check the box for ``Run 2D classification``
+
+    - Set ``Incremental number of particles`` to 2000
 
     - Set ``Mask radius (A)`` to 300
 
