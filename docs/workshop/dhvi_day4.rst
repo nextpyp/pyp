@@ -137,7 +137,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Set ``Number of tilts`` to 41
 
-    - Set ``Raw data transfer`` to link
+    - Set ``Raw data transfer`` to link (default)
 
       - ``Link``: Create a symlink between the data on the microscope and the Session folder. The data still *only* exists at the microscope.
       
@@ -159,13 +159,23 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Select the option ``Pre-process tomograms``
 
-    - Set ``Pixel size rescaling`` to 11
+      - Set ``Pixel size rescaling`` to 11
+
+      - Enable ``Deconvolution filter``
 
     - Set ``Pre-trained model (*.ckpt)`` to *"/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt"*
 
     - Set ``Filter connected components`` to *"by number"*
 
-    - Set ``Components to keep`` to 16
+      - Set ``Largest components to ignore`` to 1
+
+      - Set ``Components to keep`` to 16
+    
+    - Set ``Thickness of slab to keep (unbinned voxels)`` to 2048
+    
+    - Enable ``Test time augmentation``
+
+    - Set ``Sliding window size`` to 96
 
   * On the **Virion detection** tab.
 
@@ -175,7 +185,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Set ``Spike detection method`` to *"uniform"*
 
-    - Set ``Size of equatorial band to restrict spike picking`` to 800
+      - Set ``Size of equatorial band to restrict spike picking`` to 800
   
   * On the **Particle detection** tab.
   
@@ -201,9 +211,11 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * On the **Resources** tab.
   
-    - Set ``Split, Threads`` to 124
+    - Set ``Split, Threads`` to 11
 
     - Set ``2D classification, Threads`` to 124 (we suggest using a number that matches the maximum allowed by your environment to see results more quickly)
+
+    - Set ``Cluster Template`` to *NVIDIA A6000 Ada* (since membrain-seg needs GPUs to run)
 
   * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
 
@@ -220,9 +232,9 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     * On the **Tomogram denoising** tab
 
-    * Set ``Method`` to *isonet2*
+      - Set ``Method`` to *isonet2*
 
-    * Set the location of the ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt"*
+      - Set the location of the ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt"*
 
     * Click :bdg-primary:`Save`
 
@@ -241,6 +253,21 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * This is helpful if you want to start fresh making sure any previous pre-processing results are ignored.
 
+  * Example: Changing the number of classes for 2D classification
+
+    * In the **2D Classification** tab.
+
+      - Set ``Number of classes`` to 10
+
+    * Click :bdg-primary:`Save`
+      
+    * Navigate to the :bdg-primary:`Operation` tab
+
+    * Click :bdg-primary:`Clear` on the ``2D classification`` daemon section
+
+    * Open :bdg-primary:`Logs` to check that the clear flag has been detected and new 2D classification jobs will be launched in response to this change.
+
+    * Check the **2D Classes** tab  to see your 10 new classes
 
 .. nextpyp:: Step 4: Copying/deleting sessions
   :collapsible: open
