@@ -153,29 +153,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Select the option ``Erase fiducials``
 
-    - Select the option ``Generate half tomograms`` (you'll see why later...)
-
-  * On the **Tomogram segmentation** tab
-
-    - Select the option ``Pre-process tomograms``
-
-      - Set ``Pixel size rescaling`` to 11
-
-      - Enable ``Deconvolution filter``
-
-    - Set ``Pre-trained model (*.ckpt)`` to *"/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt"*
-
-    - Set ``Filter connected components`` to *"by number"*
-
-      - Set ``Largest components to ignore`` to 1
-
-      - Set ``Components to keep`` to 16
-    
-    - Set ``Thickness of slab to keep (unbinned voxels)`` to 2048
-    
-    - Enable ``Test time augmentation``
-
-    - Set ``Sliding window size`` to 96
+    - Select the option ``Generate half tomograms``
 
   * On the **Virion detection** tab.
 
@@ -211,11 +189,9 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * On the **Resources** tab.
   
-    - Set ``Split, Threads`` to 11
+    - Set ``Split, Threads`` to 124
 
     - Set ``2D classification, Threads`` to 124 (we suggest using a number that matches the maximum allowed by your environment to see results more quickly)
-
-    - Set ``Cluster Template`` to *NVIDIA A6000 Ada* (since membrain-seg needs GPUs to run)
 
   * Click :bdg-primary:`Save`, which will automatically take you to the :bdg-primary:`Operations` page.
 
@@ -235,6 +211,10 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
       - Set ``Method`` to *isonet2*
 
       - Set the location of the ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt"*
+    
+    * On the **Resources** tab
+      
+      - Set ``Split, Threads`` to 11 (to account for using the GPUs)
 
     * Click :bdg-primary:`Save`
 
@@ -255,7 +235,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * Example: Changing the number of classes for 2D classification
 
-    * In the **2D Classification** tab.
+    * In the **2D Classification** tab
 
       - Set ``Number of classes`` to 10
 
