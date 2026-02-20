@@ -23,11 +23,9 @@ Map post-processing
 
     - Set ``B-factor method`` to *"adhoc"*
 
-    - Set ``Adhoc value (A^2)`` to -25 
+    - Set ``Adhoc value (A^2)`` to -75 
 
-    - Set ``Min resolution (A)`` to 7
-
-    - Set ``Max resolution (A)`` to 3
+    - Disable ``Estimate local resolution``
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
@@ -47,19 +45,19 @@ Map post-processing
 .. nextpyp:: Step 3: Fit coordiantes into map
   :collapsible: open
   
-    - Download the `pre-aligned, pre-cropped pdb file <https://nextpyp.app/files/data/5l93_aligned_helix.pdb>`_ derived from `PDB ID 5L93 <https://www.rcsb.org/structure/5L93>`_.   
-    
-    - Open the coordinates in ChimeraX.
-    
-    - Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
+  - Download the `pre-aligned, pre-cropped pdb file <https://nextpyp.app/files/data/5l93_aligned_helix.pdb>`_ derived from `PDB ID 5L93 <https://www.rcsb.org/structure/5L93>`_.   
+  
+  - Open the coordinates in ChimeraX.
+  
+  - Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
 
-    .. code-block:: bash 
+  .. code-block:: bash 
 
-      volume zone #2 nearAtoms #1 range 2.4
+    volume zone #2 nearAtoms #1 range 2.4
 
-    - Select the model, go to **Actions**, **Atoms/Bonds**, and **Show Sidechain/Base**
-    
-    - You can now view the model fit to your map interactively in ChimeraX
+  - Select the model, go to **Actions**, **Atoms/Bonds**, and **Show Sidechain/Base**
+  
+  - You can now view the model fit to your map interactively in ChimeraX
 
 
 Mapping HIV-1 Gag structure back to tomograms
