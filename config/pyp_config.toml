@@ -1486,6 +1486,13 @@ type = "float"
 default = 0.85
 hidden = ["stream_spr", "stream_tomo", "tomo_particles_train"]
 
+[tabs.detect_nn3d.pred_diameter]
+name = "Filtering diameter"
+description = "Sphere diameter used for prediction coordinate filtering (binned voxels). -1 for no filtering"
+type = "int"
+default = -1
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_train"]
+
 [tabs.detect_nn3d.cr_weight]
 name = "Contrastive regularization"
 description = "Weight for contrastive regularization term"
@@ -1919,12 +1926,19 @@ default = true
 condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
+[tabs.detect_milo.remove_segmentation]
+name = "Remove segmentation"
+description = "Remove the segmentation from the tomograms to increase the signal from the surfaces"
+type = "bool"
+default = true
+condition = { arg="surface", value="true" }
+hidden = [ "tomo_milo_eval" ]
+
 [tabs.detect_milo.boundary_factor]
 name = "Boundary factor"
 description = "Patch size scaling factor for out of bounds filtering. A patch is filtered out if any part of it is outside the tomogram"
 type = "float"
 default = 1
-condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.interp_order]
@@ -1933,15 +1947,6 @@ description = "The order of the interpolation used for patch extraction, needs t
 type = "enum"
 enum = { 0="nearest-neighbor", 1="linear", 2="quadratic", 3="cubic", 4="quartic", 5="quintic" }
 default = "1"
-condition = { arg="surface", value="true" }
-hidden = [ "tomo_milo_eval" ]
-
-[tabs.detect_milo.remove_segmentation]
-name = "Remove segmentation"
-description = "Remove the segmentation from the tomograms to increase the signal from the surfaces"
-type = "bool"
-default = true
-condition = { arg="surface", value="true" }
 hidden = [ "tomo_milo_eval" ]
 
 [tabs.detect_milo.use_iterative]
