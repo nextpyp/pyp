@@ -115,7 +115,7 @@ Mapping HIV-1 Gag structure back to tomograms
 Session 2: On-the-fly pre-processing
 ====================================
 
-Starting from **raw data** obtained at the microscope, we'll build an **automatic pipeline** that can perform all **pre-processing** tasks up to and including particle picking.
+Starting from **raw data** obtained at the microscope, we'll build an **automatic pipeline** that can perform all **pre-processing** tasks up to and including 2D classification.
 
 .. nextpyp:: Step 1: Creating/starting new sessions
   :collapsible: open
