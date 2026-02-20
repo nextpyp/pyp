@@ -25,24 +25,33 @@ Map post-processing
 
     - Set ``Adhoc value (A^2)`` to -25 
 
-    - Set ``Min resolution (A)`` to 3
+    - Set ``Min resolution (A)`` to 7
 
-    - Set ``Max resolution (A)`` to 7
+    - Set ``Max resolution (A)`` to 3
 
   * Click :bdg-primary:`Save`, :bdg-primary:`Run`, and :bdg-primary:`Start Run for 1 block`
 
-.. nextpyp:: Step 2: Map and model assessment in ChimeraX
+.. nextpyp:: Step 2: Orientation distribution plots
   :collapsible: open
   
-  * We will be using a prealigned pdb file and files downloaded from nextPYP to demonstrate how one can visualize the final map aligned to a model in Chimera. 
-
   * Download files
 
-    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the **Full-Size Map** and the **Local Resolution Map**. You will download these files in MRC format. 
+    - In the :bdg-secondary:`Post-processing` block, go to the **Reconstruction** tab. Click on the drop down menu **Select an MRC file to download**. Select the **Full-Size Map**. You will download the map in MRC format. 
 
-    - We are using a pre-aligned, pre-cropped pdb file (5L93) so do not need to download this. For your experiments, you would download whatever model required. 
+    - In the :bdg-secondary:`Movie refinement` block, go to the **Reconstruction** tab and click on the gray and green badge in the **Orientation/Defocus Distribution** panel to download the ``.bild`` file containing the assigned particle orientations. 
+
+  * Visualize results
+
+    - Open the map and the .bild files in ChimeraX
+
+.. nextpyp:: Step 3: Fit coordiantes into map
+  :collapsible: open
   
-    - Open both downloaded MRC files in Chimera. In the *Tools* menu, navigate to *Volume Data*, then *Surface Color*. In the *Surface Color* dialog, select to **color by** *volume data value*, and select the ``_resmap.mrc`` file in the **using map** field. Adjust the color values and press **Color**. Open an atomic model in Chimera. Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
+    - Download the `pre-aligned, pre-cropped pdb file <https://nextpyp.app/files/data/5l93_aligned_helix.pdb>`_ derived from `PDB ID 5L93 <https://www.rcsb.org/structure/5L93>`_.   
+    
+    - Open the coordinates in ChimeraX.
+    
+    - Under the **Map** tab, Click **Zone**. Note we are left with a slightly larger zone than we would like so we will copy the zone command from the output to the terminal line, and edit the range. This leaves us with: 
 
     .. code-block:: bash 
 
@@ -53,8 +62,8 @@ Map post-processing
     - You can now view the model fit to your map interactively in ChimeraX
 
 
-Visualization of results in ArtiaX/ChimeraX
--------------------------------------------
+Mapping HIV-1 Gag structure back to tomograms
+---------------------------------------------
 
 .. nextpyp:: Step 1: Download all the necessary files
   :collapsible: open
@@ -63,9 +72,9 @@ Visualization of results in ArtiaX/ChimeraX
   
   - Click into the :bdg-secondary:`Pre-processing` block, go to **Tilt Series** tab and **Tomogram** sub tab. On this page, click the search icon, search for ``TS_43``. Click the green button immediately above the tomogram display. This will download the tomogram in mrc format with the ``*.rec`` extension.
   
-  - Click into the :bdg-secondary:`Particle refinement` block, go to the **Metadata** tab. On this page, type ``TS_43`` into the search bar and click **Search**. Click the .star file to download particle alignments. 
+  - Click into the :bdg-secondary:`Calculate reconstruction` block, go to the **Metadata** tab. On this page, type ``TS_43`` into the search bar and click **Search**. Click the .star file to download particle alignments. 
   
-  - Go to the **Reconstruction** tab and download the **Cropped Map**. 
+  - Go to the **Reconstruction** tab and download the **Cropped Map**.
     
 .. nextpyp:: Step 2: Display in ChimeraX
   :collapsible: open
@@ -85,15 +94,19 @@ Visualization of results in ArtiaX/ChimeraX
   
   - In the **Tomograms** section on the left, select model #3 (permuted z flip) from the **Add Model** dropdown menu and click **Add!**
   
-  - Go to the ArtiaX options panel on the right, and set the **Pixel Size** for the **Current Tomogram** to 10.8 (The current binned pixel size) 
-  
+  - In the **Volume Viewer** tab, change the visualization from *"tilted slab"* to *"plane*" (this will make the session more responsive).
+
   - On the left panel, under the **Particles List** section, select **Open List ...** and open the .star file. 
   
   - Return to the panel on the right and select the **Select/Manipulate** tab. Set the **Origin** to 1.35 (the unbinned pixel size)
   
-  - From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
-  
   - Play with the **Marker Radius** and **Axes Size** sliders to visualize the particle locations, cross correlation scores, and orientations.
+
+  - Go to the **Visualiztion** tab in the ArtiaX Options menu. From the **Color Settings** section, select **Colormap** and then **rlnLogLikelihoodContribution** from the dropdown menu. 
+  
+  - Open the cropped map
+
+  - Go to the **Add new surface** panel and select the file *"_crop.mrc"* from the **Use Model** drop-down menu, click **Attach Model**
 
   .. figure:: ../images/guide_artiax_10164.webp
     :alt: ArtiaX visualization of HIV1-Gag
