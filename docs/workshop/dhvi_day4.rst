@@ -137,7 +137,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Set ``Number of tilts`` to 41
 
-    - Set ``Raw data transfer`` to link
+    - Set ``Raw data transfer`` to link (default)
 
       - ``Link``: Create a symlink between the data on the microscope and the Session folder. The data still *only* exists at the microscope.
       
@@ -153,19 +153,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Select the option ``Erase fiducials``
 
-    - Select the option ``Generate half tomograms`` (you'll see why later...)
-
-  * On the **Tomogram segmentation** tab
-
-    - Select the option ``Pre-process tomograms``
-
-    - Set ``Pixel size rescaling`` to 11
-
-    - Set ``Pre-trained model (*.ckpt)`` to *"/nfs/bartesaghilab/membrain-seg-models/MemBrain_seg_v10_alpha.ckpt"*
-
-    - Set ``Filter connected components`` to *"by number"*
-
-    - Set ``Components to keep`` to 16
+    - Select the option ``Generate half tomograms``
 
   * On the **Virion detection** tab.
 
@@ -175,7 +163,7 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     - Set ``Spike detection method`` to *"uniform"*
 
-    - Set ``Size of equatorial band to restrict spike picking`` to 800
+      - Set ``Size of equatorial band to restrict spike picking`` to 800
   
   * On the **Particle detection** tab.
   
@@ -185,7 +173,11 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * On the **2D classification** tab.
 
+    - Check the box for ``Show advanced options``
+
     - Check the box for ``Run 2D classification``
+
+    - Set ``Incremental number of particles`` to 2000
 
     - Set ``Mask radius (A)`` to 300
 
@@ -216,9 +208,13 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
     * On the **Tomogram denoising** tab
 
-    * Set ``Method`` to *isonet2*
+      - Set ``Method`` to *isonet2*
 
-    * Set the location of the ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt"*
+      - Set the location of the ``Trained model`` to *"/nfs/bartesaghilab/nextpyp/workshop_dhvi/10164/isonet2-n2n_unet-medium_128_full_10A.pt"*
+    
+    * On the **Resources** tab
+      
+      - Set ``Split, Threads`` to 11 (to account for using the GPUs)
 
     * Click :bdg-primary:`Save`
 
@@ -237,6 +233,21 @@ Starting from **raw data** obtained at the microscope, we'll build an **automati
 
   * This is helpful if you want to start fresh making sure any previous pre-processing results are ignored.
 
+  * Example: Changing the number of classes for 2D classification
+
+    * In the **2D Classification** tab
+
+      - Set ``Number of classes`` to 10
+
+    * Click :bdg-primary:`Save`
+      
+    * Navigate to the :bdg-primary:`Operation` tab
+
+    * Click :bdg-primary:`Clear` on the ``2D classification`` daemon section
+
+    * Open :bdg-primary:`Logs` to check that the clear flag has been detected and new 2D classification jobs will be launched in response to this change.
+
+    * Check the **2D Classes** tab  to see your 10 new classes
 
 .. nextpyp:: Step 4: Copying/deleting sessions
   :collapsible: open
