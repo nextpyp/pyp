@@ -2451,7 +2451,8 @@ EOF
                 # merge all projections into one stack
                 proj_stack = []
                 from pathlib import Path
-                proj_stack = [ str(f) for f in sorted(list(Path(os.getcwd()).rglob("*_spk????_proj.mrc")))]
+                extraction_size = parameters.get('tomo_ext_size')
+                proj_stack = [ str(f) for f in sorted(list(Path(os.getcwd()).rglob("*_spk????_proj.mrc"))) if get_image_dimensions(str(f))[0:2] == [extraction_size,extraction_size] ]
                 if len(proj_stack) > 0:
                     mrc.merge_fast(proj_stack, "%s_stack.mrc" % (name), remove=True)
             else:
