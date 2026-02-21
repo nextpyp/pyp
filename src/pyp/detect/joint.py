@@ -232,7 +232,9 @@ def tomotrain(args):
             else:
 
                 # extract specific classes
-                command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {args.get('detect_nn3d_milo_classes').replace(' ','')}"
+                import re
+                class_list_sanitized = ','.join(sorted(dict.fromkeys([f for f in re.findall(r'\d+', args.get("detect_nn3d_milo_classes")) if int(f) >= 0 and int(f) < args.get("detect_milo_num_clusters")])))
+                command = f"{NN_INIT_COMMANDS_3D} python -u {os.environ['PYP_DIR']}/external/cet_pick/cet_pick/select_sublabels.py --input {project_params.resolve_path(args.get('data_parent'))}/train/interactive_info_parquet.gzip --out_path {scratch_folder} {if_double} --use_classes {class_list_sanitized}"
                 [ output, error ] = local_run.run_shell_command(command)
                 
                 # extract coordinates
