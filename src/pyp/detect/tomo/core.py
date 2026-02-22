@@ -1223,8 +1223,19 @@ def spk_extract_and_process(
 
     # make projection for cleaning particles by 2D classification
     if calculate_projections:
-        command = "{0}/bin/xyzproj -input '{1}.rec' -axis Y -angles 0,0,0 -output '{1}_proj.mrc'; rm '{1}.rec'".format(get_imod_path(), spike_name)
+        spike_file_name = f"{spike_name}.rec"
+        spike_projection_file_name = f"{spike_name}_proj.mrc"
+        # calculate projection
+        command = "{0}/bin/xyzproj -input '{1}' -axis Y -angles 0,0,0 -output '{2}'; rm '{1}'".format(get_imod_path(), spike_file_name, spike_projection_file_name)
         local_run.run_shell_command(command)
+        # check for empty projections and normalize
+        projection = mrc.read(spike_projection_file_name)
+        min = np.min(projection)
+        max = np.max(projection)
+        if max > min:
+            mrc.write((projection - min)/(max-min),spike_projection_file_name)
+        else:
+            os.remove(spike_projection_file_name)
 
 def detect_and_extract_particles( name, parameters, current_path, project_path, binning, x, y, zfact, tilt_angles, tilt_options, exclude_virions ):
 
