@@ -2473,9 +2473,11 @@ EOF
     surface_normals = True
     if parameters.get("micromon_block") == "tomo-particles-eval" and parameters.get('detect_nn3d_normals') == "surface":
         segmentation_dir = project_params.resolve_path(parameters.get('detect_nn3d_segmentation_path'))
+        assert len(glob.glob(os.path.join(segmentation_dir,"*_seg.rec"))) > 0, f"No segmentation files (*_seg.rec) found in {segmentation_dir}!"
         use_vector_normal = parameters.get("detect_nn3d_use_vector_normals")
     elif parameters.get("micromon_block") != "tomo-particles-eval" and parameters.get('tomo_pick_normals') == "surface":
         segmentation_dir = project_params.resolve_path(parameters.get('tomo_pick_segmentation_path'))
+        assert len(glob.glob(os.path.join(segmentation_dir,"*_seg.rec"))) > 0, f"No segmentation files (*_seg.rec) found in {segmentation_dir}!"
         use_vector_normal = parameters.get("tomo_pick_use_vector_normals")
     else:
         surface_normals = False
