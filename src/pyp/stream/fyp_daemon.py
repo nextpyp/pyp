@@ -95,7 +95,8 @@ def get_positions_and_new_particle_count_from_box_files(
     threshold_type: str,
     meta_dir: PosixPath,
     parameters: dict,
-    allparxs_dir: PosixPath
+    allparxs_dir: PosixPath,
+    particles_over_current_threshold: int
 ) -> int:
 
     new_particles = 0
@@ -105,8 +106,9 @@ def get_positions_and_new_particle_count_from_box_files(
     mrc_dir = project_directory / "mrc"
     os.makedirs( mrc_dir, exist_ok=True)
     flag = {}
-    # Loop until we have enough particles
-    while new_particles < parameters[threshold_type]:
+
+    # Loop until we have enough particles, or a flag is raised
+    while particles_over_current_threshold + new_particles < parameters[threshold_type]:
 
         number_of_particles_changed = False
 
@@ -122,7 +124,7 @@ def get_positions_and_new_particle_count_from_box_files(
             pkl_files = [
                 pkl_file
                 for pkl_file in get_pkl_files(meta_dir=meta_dir)
-                if pkl_file.stem not in boxes_lists and pkl_file.stem in check_list
+                if pkl_file.stem not in boxes_lists and pkl_file.stem in check_list and os.path.exists(os.path.join(project_directory,'sva',pkl_file.stem+"_stack.mrc"))
             ]
 
         if len(pkl_files) > 0:
@@ -206,7 +208,11 @@ def get_positions_and_new_particle_count_from_box_files(
 
         time.sleep(30)
 
-    return new_particles, flag
+    if particles_over_current_threshold > 0:
+        flag = detect_flags(existing_unique_name=prev_name, project_directory=project_directory, existing_boxes_lists=old_boxes_lists)
+        logger.info(f"{particles_over_current_threshold:,} particles exceeding current threshold of {parameters[threshold_type]:,} will be counted towards the next stage")
+        
+    return particles_over_current_threshold + new_particles, flag
 
 
 def load_ctf_data_into_parameters(ctf_file: str, parameters: dict) -> dict:
@@ -419,21 +425,23 @@ def run_refinement(  # rename to daemon2D after testing
     new_films = sorted(list(boxes_lists.keys()))
 
     classification_type: str
-    
-    if "ab-initio" in classification_status.keys() and classification_status["ab-initio"] <= parameters['class2d_iters_init']:
+    logger.trace(f"Current classification status is: {classification_status}")
+    if "ab-initio" in classification_status.keys() and classification_status["ab-initio"] < parameters['class2d_iters_init']:
         classification_type = "ab initio"
         start_iteration = classification_status["ab-initio"]
         max_capacity = parameters['class2d_max_ab_initio']
-    elif "seeded_startup" in classification_status.keys() and classification_status["seeded_startup"] <= parameters['class2d_iters_seed']:
+    elif "seeded_startup" in classification_status.keys() and classification_status["seeded_startup"] < parameters['class2d_iters_seed']:
         classification_type = "seeded-startup"
         start_iteration = classification_status["seeded_startup"]
         max_capacity = parameters['class2d_max_seeded']
-    elif "refinement" in classification_status.keys() and classification_status["refinement"] <= parameters["class2d_iters_refine"]:
+    elif "refinement" in classification_status.keys() and classification_status["refinement"] < parameters["class2d_iters_refine"]:
         classification_type = "refinement"
         start_iteration = classification_status["refinement"]
         max_capacity = parameters['class2d_max_refinement']
+    else:
+        raise Exception("2D classification mode must be one of: ab initio mode, seeded startup or refinement mode")
 
-    logger.info(f"Initial threshold reached, beginning {classification_type} classification")
+    logger.info(f"Initial threshold reached, beginning classification stage: {classification_type}")
 
     if classification_type == "ab initio":
         previous_name = None
@@ -466,15 +474,14 @@ def run_refinement(  # rename to daemon2D after testing
 
     high_res_initial = parameters['class2d_rhini']
 
+    class_fraction = 1.0
     if particle_num >= max_capacity:
         class_fraction = round(max_capacity / particle_num, 2)
     elif particle_num <= 1:
         logger.warning(f"Parameter file {new_par_filename} is empty")
         os.remove(new_par_filename)
-    else:
-        class_fraction = 1.0
 
-    # detect flag before run anything, skip the extraction is for safty with simple restart
+    # detect flag before run anything, skip the extraction is for safety with simple restart
     flag = detect_flags(existing_unique_name=new_name, project_directory=current_directory.parent, existing_boxes_lists=boxes_lists)
     if not "None" in flag.values(): return flag, classification_status
 
@@ -498,7 +505,7 @@ def run_refinement(  # rename to daemon2D after testing
         )
 
         resolution_cycle_count = max(parameters['class2d_iters_init'], 2)
-        for cycle_number in range(start_iteration, resolution_cycle_count+ITER):  # Move "if" blocks for modes inside here
+        for cycle_number in range(start_iteration, resolution_cycle_count):  # Move "if" blocks for modes inside here
             high_res_limit = (
                 high_res_initial - (
                     (
@@ -520,9 +527,9 @@ def run_refinement(  # rename to daemon2D after testing
 
             if cycle_number == 0:
                 # print table header
-                logger.info(f"Ab-initio mode\tIteration\tResolution limit (A)\tParticles used (percentage)")
+                logger.info(f"Ab-initio mode\tIteration\tResolution limit (A)\tParticles used (%)")
             # print data for current iteration
-            logger.info(f"\t\t{cycle_number+1:11}/{resolution_cycle_count+ITER:2}\t\t\t{high_res_limit:4.1f}\t{round(100.0*class_fraction):20}")
+            logger.info(f"\t\t{cycle_number+1:11}/{resolution_cycle_count:3}\t\t\t{high_res_limit:4.1f}\t{100.0*class_fraction:19.1f}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -547,10 +554,11 @@ def run_refinement(  # rename to daemon2D after testing
                                  0,
                                  class_fraction,
                                  parameters['class2d_rlref'],
-                                 high_res_limit
+                                 high_res_limit,
+                                 log_level = logging.NOTSET if high_res_limit > 16 else logging.INFO
                                  )
 
-            if cycle_number == resolution_cycle_count+ITER-1:
+            if cycle_number == resolution_cycle_count-1:
                 shutil.copy2(output_reconstruction, "my_initial_classes.mrc")
                 shutil.copy2(output_parfile, output_par_filename)
                 [os.remove(f) for f in os.listdir(".") if f.startswith("cycle")]
@@ -561,7 +569,7 @@ def run_refinement(  # rename to daemon2D after testing
 
     elif classification_type == "seeded-startup":
         resolution_cycle_count = max(parameters['class2d_iters_seed'], 2)
-        for cycle_number in range(start_iteration, resolution_cycle_count+ITER):
+        for cycle_number in range(start_iteration, resolution_cycle_count):
             high_res_limit = (
                 high_res_initial - (
                     (
@@ -582,9 +590,9 @@ def run_refinement(  # rename to daemon2D after testing
 
             if cycle_number == 0:
                 # print table header
-                logger.info(f"Seeded startup\tIteration\tResolution limit (A)\tParticles used (percentage)")
+                logger.info(f"Seeded startup\tIteration\tResolution limit (A)\tParticles used (%)")
             # print data for current iteration
-            logger.info(f"\t\t{cycle_number+1:11}/{resolution_cycle_count+ITER:2}\t\t\t{high_res_limit:4.1f}\t{round(100.0*class_fraction):20}")
+            logger.info(f"\t\t{cycle_number+1:11}/{resolution_cycle_count:3}\t\t\t{high_res_limit:4.1f}\t{100.0*class_fraction:19.1f}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -595,9 +603,7 @@ def run_refinement(  # rename to daemon2D after testing
 
             output_reconstruction = f"cycle_{cycle_number+1}.mrc"
             output_parfile = f"cycle_{cycle_number+1}.par"
-            output_png = Path(frealign_directory, f"{new_name}_{cycle_number+1}_classes.png") \
-                        if cycle_number == resolution_cycle_count+ITER-1 \
-                        else None
+            output_png = Path(frealign_directory, f"{new_name}_{cycle_number+1}_classes.png")
 
             refine2d_and_merge2d(new_name,
                                  str(stack_dir / f"{new_name}_stack.mrc"),
@@ -612,10 +618,11 @@ def run_refinement(  # rename to daemon2D after testing
                                  0,
                                  class_fraction,
                                  parameters['class2d_rlref'],
-                                 high_res_limit
+                                 high_res_limit,
+                                 log_level = logging.NOTSET if high_res_limit > 16 else logging.INFO
                                  )
 
-            if cycle_number == resolution_cycle_count+ITER-1:
+            if cycle_number == resolution_cycle_count-1:
                 shutil.copy2(output_reconstruction, "my_initial_classes.mrc")
                 shutil.copy2(output_parfile, output_par_filename)
                 [os.remove(f) for f in os.listdir(".") if f.startswith("cycle")]
@@ -643,9 +650,9 @@ def run_refinement(  # rename to daemon2D after testing
 
             if cycle_number == 0:
                 # print table header
-                logger.info(f"Refinement mode\tIteration\tResolution limit (A)\tParticles used (percentage)")
+                logger.info(f"Refinement mode\tIteration\tResolution limit (A)\tParticles used (%)")
             # print data for current iteration
-            logger.info(f"\t\t{cycle_number+ITER:11}/{refinement_cycle_count:2}\t\t\t{high_res_limit:4.1f}\t{round(100.0*class_fraction):20}")
+            logger.info(f"\t\t{cycle_number+1:11}/{refinement_cycle_count:3}\t\t\t{high_res_limit:4.1f}\t{100.0*class_fraction:19.1f}")
 
             # use either reconstruction from previous iteration or the one generated using random seeding
             reconstruction_iter = Path(f"cycle_{cycle_number}.mrc")
@@ -673,7 +680,8 @@ def run_refinement(  # rename to daemon2D after testing
                         0,
                         class_fraction,
                         parameters['class2d_rlref'],
-                        high_res_limit
+                        high_res_limit,
+                        log_level = logging.NOTSET if high_res_limit > 16 else logging.INFO
                         )
 
             if cycle_number == refinement_cycle_count-1:
@@ -682,8 +690,8 @@ def run_refinement(  # rename to daemon2D after testing
                 [os.remove(f) for f in os.listdir(".") if f.startswith("cycle")]
                 # reset refinement status for new comming particles
                 classification_status["refinement"] = 0
-
-            classification_status["refinement"] += 1
+            else:
+                classification_status["refinement"] += 1
 
     os.chdir(current_directory)
 
@@ -703,7 +711,8 @@ def refine2d_and_merge2d(name: str,
                          classes: int,
                          class_fraction: float,
                          low_res_limit: float,
-                         high_res_limit: float):
+                         high_res_limit: float,
+                         log_level = logging.NOTSET):
 
     # split refine2d into several processes and run via MPI
     splitted_parfiles, dumpfiles = frealign.refine2d_mpi(
@@ -716,6 +725,7 @@ def refine2d_and_merge2d(name: str,
                                     class_fraction,
                                     low_res_limit,
                                     high_res_limit,
+                                    log_level=log_level
                                     )
 
     # merge parfiles (using MPI as well) (looks like class2D use film column to assign classes)
@@ -809,6 +819,8 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
     # after it, every time it reach the threshold -> refinement
     # seeded_startup = True
 
+    particles_over_current_threshold = 0
+    
     while not os.path.exists(stop_flag):
 
         if global_start:
@@ -823,34 +835,39 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                         threshold_type="class2d_min",
                         meta_dir=meta_dir,
                         parameters=mparameters,
-                        allparxs_dir=local_scratch_dir
-                    )
-                if "stop" in flag.values(): return flag
-
-            try:
-                # Run initial 2D classification
-                new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
-                flag, new_status = run_refinement(
-                        classification_status=status,
-                        previous_name=None,
-                        boxes_lists=boxes_lists,
-                        parameters=mparameters,
-                        new_name=new_name,
                         allparxs_dir=local_scratch_dir,
-                        ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
-                        stack_dir=local_scratch_dir
-                        )
-                logger.info(f"Class2D status is {new_status}")
-                if "stop" in flag.values(): return flag
+                        particles_over_current_threshold=particles_over_current_threshold
+                    )
+                
+                if flag.get("type") not in ("clear","restart"):
 
-                global_start = False
-                new_status["seeded_startup"] = 0
-            except:
-                type, value, traceback = sys.exc_info()
-                sys.__excepthook__(type, value, traceback)
-                logger.warning("Inconsistencies detected during processing or all classes are empty. Clear the 2D classification daemon to continue")
-                time.sleep(10)
-                pass
+                    particles_over_current_threshold = new_particles - mparameters["class2d_min"] if new_particles > mparameters["class2d_min"] else 0
+                    if "stop" in flag.values(): return flag
+
+                    try:
+                        # Run initial 2D classification
+                        new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
+                        flag, new_status = run_refinement(
+                                classification_status=status,
+                                previous_name=None,
+                                boxes_lists=boxes_lists,
+                                parameters=mparameters,
+                                new_name=new_name,
+                                allparxs_dir=local_scratch_dir,
+                                ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
+                                stack_dir=local_scratch_dir
+                                )
+
+                        if "stop" in flag.values(): return flag
+
+                        global_start = False
+                        new_status["seeded_startup"] = 0
+                    except:
+                        type, value, traceback = sys.exc_info()
+                        sys.__excepthook__(type, value, traceback)
+                        logger.warning("Inconsistencies detected during processing or all classes are empty. Clear the 2D classification daemon to continue")
+                        time.sleep(10)
+                        pass
         try:
             if os.path.exists(restart_flag):
                 logger.info("Restart flag detected")
@@ -968,28 +985,33 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                             threshold_type="class2d_min",
                             meta_dir=meta_dir,
                             parameters=mparameters,
-                            allparxs_dir=local_scratch_dir
-                        )
-
-                    if "stop" in flag.values():
-                        break
-
-                    new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
-                    flag, new_status= run_refinement(
-                            classification_status=new_status,
-                            previous_name=None,
-                            boxes_lists=boxes_lists,
-                            parameters=mparameters,
-                            new_name=new_name,
                             allparxs_dir=local_scratch_dir,
-                            ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
-                            stack_dir=local_scratch_dir
-                            )
-                    logger.info(f"Class2D status is {new_status}")
-                    if "stop" in flag.values():
-                        break
+                            particles_over_current_threshold=particles_over_current_threshold
+                        )
+                    
+                    if not flag.get("type") in ("clear","restart"):
+                        
+                        particles_over_current_threshold = new_particles - mparameters["class2d_min"] if new_particles > mparameters["class2d_min"] else 0
 
-                    new_status["seeded_startup"] = 0
+                        if "stop" in flag.values():
+                            break
+
+                        new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
+                        flag, new_status= run_refinement(
+                                classification_status=new_status,
+                                previous_name=None,
+                                boxes_lists=boxes_lists,
+                                parameters=mparameters,
+                                new_name=new_name,
+                                allparxs_dir=local_scratch_dir,
+                                ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
+                                stack_dir=local_scratch_dir
+                                )
+                        logger.info(f"Class2D status is {new_status}")
+                        if "stop" in flag.values():
+                            break
+
+                        new_status["seeded_startup"] = 0
 
                 else:
                     logger.warning("Simple restart, will use most recent set of classes as references for alignment")
@@ -1006,35 +1028,41 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                             threshold_type="class2d_inc",
                             meta_dir=meta_dir,
                             parameters=mparameters,
-                            allparxs_dir=local_scratch_dir
-                        )
-                    if "stop" in flag.values():
-                        break
-
-                    new_boxes_lists = get_new_boxes(boxes_lists_before, boxes_lists)
-                    # only run refinement mode if we get additional particles
-                    logger.info(f"{new_particles:,} new particles detected, exceeds {incremental_threshold_2D:,} threshold")
-
-                    previous_name = new_name
-                    new_name = generate_unique_name(mparameters)
-
-                    flag, new_status = run_refinement(
-                            classification_status=new_status,
-                            new_name=new_name,
-                            previous_name=previous_name,
-                            boxes_lists=new_boxes_lists,
-                            ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
                             allparxs_dir=local_scratch_dir,
-                            stack_dir=local_scratch_dir,
-                            parameters=mparameters
+                            particles_over_current_threshold=particles_over_current_threshold
                         )
-                    logger.info(f"Class2D status is {new_status}")
-                    if "stop" in flag.values():
-                        break
+
+                    if not flag.get("type") in ("clear","restart"):
+
+                        particles_over_current_threshold = new_particles - mparameters["class2d_inc"] if new_particles > mparameters["class2d_inc"] else 0
+                        
+                        if "stop" in flag.values():
+                            break
+
+                        new_boxes_lists = get_new_boxes(boxes_lists_before, boxes_lists)
+                        # only run refinement mode if we get additional particles
+                        logger.info(f"{new_particles:,} new particles detected, exceeds {incremental_threshold_2D:,} threshold")
+
+                        previous_name = new_name
+                        if particles_over_current_threshold == 0:
+                            new_name = generate_unique_name(mparameters)
+
+                        flag, new_status = run_refinement(
+                                classification_status=new_status,
+                                new_name=new_name,
+                                previous_name=previous_name,
+                                boxes_lists=new_boxes_lists,
+                                ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
+                                allparxs_dir=local_scratch_dir,
+                                stack_dir=local_scratch_dir,
+                                parameters=mparameters
+                            )
+                        logger.info(f"Class2D status is {new_status}")
+                        if "stop" in flag.values():
+                            break
 
             if os.path.exists(clear_flag):
-                logger.info("Clear flag detected")
-                logger.warning("Will do a deep clean of previous refinement results")
+                logger.info("Clear flag detected, will do a deep clean of previous 2D classification results")
 
                 # remove existing parfile and webp files
                 [os.remove(f) for f in glob.glob( os.path.join(frealign_dir, "*.webp") )]
@@ -1087,6 +1115,12 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                 for key in different_values:
                     mparameters[key] = new_parameters[key]
 
+                # if in tomo session, restart data-processing daemon if extraction parameters changed
+                if mparameters.get("data_mode") == "tomo" and ( "class2d_box" in different_values or "class2d_bin" in different_values ) and mparameters.get("class2d_enable"):
+                    logger.warning(f"Re-starting data processing daemon to reflect changes in particle extraction parameters")
+                    Path(stream_session_dir, "pypd.restart").touch()
+                    [os.remove(f) for f in glob.glob( os.path.join(stream_session_dir, "sva", "*_stack.mrc" ) )]
+
                 # clear everything related
                 [os.remove(f) for f in glob.glob( os.path.join(frealign_dir, "scratch", "*" ) )]
                 [os.remove(f) for f in glob.glob( os.path.join(frealign_dir, "maps", "*" ) ) if Path(f).suffix != ".webp"]
@@ -1111,6 +1145,7 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                 # get boxes again
                 boxes_lists_before = boxes_lists.copy()
 
+                new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
                 new_particles, flag = \
                     get_positions_and_new_particle_count_from_box_files(
                         prev_name=new_name,
@@ -1118,28 +1153,32 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                         threshold_type="class2d_min",
                         meta_dir=meta_dir,
                         parameters=mparameters,
-                        allparxs_dir=local_scratch_dir
-                    )
-
-                if "stop" in flag.values():
-                    break
-
-                new_name = generate_unique_name(mparameters) if existing_unique_name is None else existing_unique_name
-                flag, new_status= run_refinement(
-                        classification_status=new_status,
-                        previous_name=None,
-                        boxes_lists=boxes_lists,
-                        parameters=mparameters,
-                        new_name=new_name,
                         allparxs_dir=local_scratch_dir,
-                        ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
-                        stack_dir=local_scratch_dir
-                        )
-                logger.info(f"Class2D status is {new_status}")
-                if "stop" in flag.values():
-                    break
+                        particles_over_current_threshold=0
+                    )
+  
+                if flag.get("type") not in ("clear","restart"):
+                
+                    particles_over_current_threshold = new_particles - mparameters["class2d_min"] if new_particles > mparameters["class2d_min"] else 0
 
-                new_status["seeded_startup"] = 0
+                    if "stop" in flag.values():
+                        break
+
+                    flag, new_status= run_refinement(
+                            classification_status=new_status,
+                            previous_name=None,
+                            boxes_lists=boxes_lists,
+                            parameters=mparameters,
+                            new_name=new_name,
+                            allparxs_dir=local_scratch_dir,
+                            ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
+                            stack_dir=local_scratch_dir
+                            )
+                    logger.info(f"Class2D status is {new_status}")
+                    if "stop" in flag.values():
+                        break
+
+                    new_status["seeded_startup"] = 0
 
             os.chdir(frealign_dir)
             # count number of new particles (there's an while loop inside until getting enough particles)
@@ -1151,34 +1190,38 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
                     threshold_type="class2d_inc",
                     meta_dir=meta_dir,
                     parameters=mparameters,
-                    allparxs_dir=local_scratch_dir
-                )
-            if "stop" in flag.values():
-                break
-            elif not "None" in flag.values():
-                continue
-
-            new_boxes_lists = get_new_boxes(boxes_lists_before, boxes_lists)
-
-            # only run refinement mode if we get additional particles
-            logger.info(f"Incremental threshold of {incremental_threshold_2D:,} particles reached")
-
-            previous_name = new_name
-            new_name = generate_unique_name(mparameters)
-
-            flag, new_status = run_refinement(
-                    classification_status=new_status,
-                    new_name=new_name,
-                    previous_name=previous_name,
-                    boxes_lists=new_boxes_lists,
-                    ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
                     allparxs_dir=local_scratch_dir,
-                    stack_dir=local_scratch_dir,
-                    parameters=mparameters
+                    particles_over_current_threshold=particles_over_current_threshold
                 )
-            logger.info(f"Class2D status is {new_status}")
-            if "stop" in flag.values():
-                break
+ 
+            if not flag.get("type") in ("clear","restart"):
+
+                particles_over_current_threshold = new_particles - mparameters["class2d_inc"] if new_particles > mparameters["class2d_inc"] else 0
+
+                if "stop" in flag.values():
+                    break
+                elif not "None" in flag.values():
+                    continue
+
+                new_boxes_lists = get_new_boxes(boxes_lists_before, boxes_lists)
+
+                previous_name = new_name
+                if particles_over_current_threshold == 0:
+                    new_name = generate_unique_name(mparameters)
+
+                flag, new_status = run_refinement(
+                        classification_status=new_status,
+                        new_name=new_name,
+                        previous_name=previous_name,
+                        boxes_lists=new_boxes_lists,
+                        ali_dir=ali_dir if mparameters.get("data_mode") == "spr" else particles_dir,
+                        allparxs_dir=local_scratch_dir,
+                        stack_dir=local_scratch_dir,
+                        parameters=mparameters
+                    )
+                logger.info(f"Class2D status is {new_status}")
+                if "stop" in flag.values():
+                    break
 
         except:
             type, value, traceback = sys.exc_info()
