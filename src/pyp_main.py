@@ -2225,10 +2225,14 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
                 tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, parameters, segmentation = True, cleanup = False )
         
         # if in sessions, set information for particle extraction according to current 2D classification settings
-        if parameters.get("micromon_block") == "": 
+        if parameters.get("micromon_block") == "" and parameters.get("class2d_enable"): 
             parameters["tomo_ext_fmt"] = "3DAVG"
             parameters["tomo_ext_box"] = parameters["class2d_box"]
             parameters["tomo_ext_bin"] = parameters["class2d_bin"]
+        else:
+            parameters["tomo_ext_fmt"] = "none"
+            parameters["tomo_ext_box"] = 0
+            parameters["tomo_ext_bin"] = 1
  
     # particle detection and extraction
     virion_coordinates, spike_coordinates, virion_mode, spike_mode, surface_mode = detect_tomo.detect_and_extract_particles( 

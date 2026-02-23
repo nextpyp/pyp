@@ -782,8 +782,15 @@ def fyp_daemon(existing_unique_name=None, existing_boxes_lists=dict()):
 
     # Set up parameters for the steps that follow
     mparameters = project_params.load_parameters("..")
-    mparameters["extract_box"] = mparameters["class2d_box"]
-    mparameters["extract_bin"] = mparameters["class2d_bin"]
+    
+    # transfer parameter values from the 2d classification tab to particle extraction
+    if mparameters.get("class2d_enable"):
+        mparameters["extract_box"] = mparameters["class2d_box"]
+        mparameters["extract_bin"] = mparameters["class2d_bin"]
+    else:
+        mparameters["extract_box"] = 0
+        mparameters["extract_bin"] = 1
+        
 
     assert mparameters.get("class2d_box") % 2 == 0, f"Box size {mparameters.get('class2d_box')} must be even!"
 
