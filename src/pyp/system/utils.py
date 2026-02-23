@@ -90,17 +90,21 @@ def get_gpu_id():
 
 def get_gpu_ids(parameters,separator=","):
     # return list of GPU devices based on gres variable
-    gres = parameters["slurm_gres"]
-    if "gpu" in gres:
-        for g in gres.split(","):
-            if "gpu" in g:
-                for i in g.split(":"):
-                    if i.isdigit():
-                        gpus = int(i)
-                        break
-        return separator.join(str(x) for x in range(gpus))
+    if "SLURM_STEP_GPUS" in os.environ:
+        return os.environ["SLURM_STEP_GPUS"]
+    elif "CUDA_VISIBLE_DEVICES" in os.environ:
+        return os.environ["CUDA_VISIBLE_DEVICES"]
     else:
-        return 0
+        if "slurm_gres" in parameters and "gpu" in parameters["slurm_gres"]:
+            for g in parameters["slurm_gres"].split(","):
+                if "gpu" in g:
+                    for i in g.split(":"):
+                        if i.isdigit():
+                            gpus = int(i)
+                            break
+            return separator.join(str(x) for x in range(gpus))
+        else:
+            return 0
 
 def get_gpu_file():
     return os.path.join(os.environ["PYP_SCRATCH"],"gpu_device.id")
