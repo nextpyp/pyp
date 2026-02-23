@@ -78,6 +78,8 @@ def cryocare_train(project_dir, output, parameters):
     train_config["unet_n_first"] = parameters["tomo_denoise_cryocare_nfirst"]
     train_config["learning_rate"] = parameters["tomo_denoise_cryocare_lr"]
     
+    logger.debug(f"Config = {train_config}")
+    
     train_config_file = "train_config.json"
     with open(train_config_file, 'w') as file:
         json.dump(train_config, file, indent=4)
@@ -215,6 +217,8 @@ def cryocare(working_path, project_path, name, parameters):
     train_config["unet_n_depth"] = parameters["tomo_denoise_cryocare_depth"]
     train_config["unet_n_first"] = parameters["tomo_denoise_cryocare_nfirst"]
     train_config["learning_rate"] = parameters["tomo_denoise_cryocare_lr"]
+    
+    logger.debug(f"Config = {train_config}")
     
     train_config_file = "train_config.json"
     with open(train_config_file, 'w') as file:
