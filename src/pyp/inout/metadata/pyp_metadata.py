@@ -670,7 +670,9 @@ class LocalMetadata:
         # clean metadata entries based on parameters from pyp
         meta_update = False
         # remove entries that need to be re-calculated
-        if "ctf_force" in parameters and parameters["ctf_force"]:
+        pre_processing = parameters.get("micromon_block") in ("tomo-preprocessing","tomo-pure-processing","","tomo-session","tomo-import","tomo-import-pure")
+ 
+        if "ctf_force" in parameters and parameters["ctf_force"] and pre_processing:
             logger.info(
                 f"CTF parameters will be re-computed"
             )
@@ -687,7 +689,7 @@ class LocalMetadata:
                 del self.data["ctf_tilt"]
                 meta_update = True
 
-        if "movie_force" in parameters and parameters["movie_force"] and not ( parameters["data_mode"] == "tomo" and parameters["movie_no_frames"] ) and "drift" in self.data:
+        if "movie_force" in parameters and parameters["movie_force"] and not ( parameters["data_mode"] == "tomo" and parameters["movie_no_frames"] ) and "drift" in self.data and pre_processing:
             logger.info(
                 f"Movie drift parameters will be re-computed"
             )
@@ -708,7 +710,7 @@ class LocalMetadata:
                     del self.data["box"]
                     meta_update = True
 
-            if "tomo_ali_force" in parameters and parameters["tomo_ali_force"] and parameters.get("tomo_ali_method") != "import" and "ali" in self.data:
+            if "tomo_ali_force" in parameters and parameters["tomo_ali_force"] and parameters.get("tomo_ali_method") != "import" and "ali" in self.data and pre_processing:
                 logger.info(
                     f"Tilt-series alignments will be re-computed"
                 )
