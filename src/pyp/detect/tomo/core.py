@@ -1934,7 +1934,7 @@ def detect_and_extract_particles( name, parameters, current_path, project_path, 
             or parameters["micromon_block"] == "tomo-picking-closed"
             or parameters["micromon_block"] == "tomo-segmentation-closed"
             or parameters["micromon_block"] == "tomo-preprocessing"
-            or parameters["micromon_block"] == "" # sessioms have no block name defined
+            or parameters["micromon_block"] == "" and not os.path.exists(f"{name}.spk") # sessioms have no block name defined
         ):
             # Performs virion detection and/or spike detection
             process_virions(
