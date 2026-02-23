@@ -751,7 +751,7 @@ def clean_pkl_items(parameters, namelist, current_path):
                         [ os.remove(f) for f in glob.glob( os.path.join(current_path,"mrc",name+"_vir????_binned_nad.*") ) ]
                         [ os.remove(f) for f in glob.glob( os.path.join(current_path,"sva",name+"_vir*.*") ) ]
 
-                    if "detect_force" in parameters and parameters["detect_force"] or parameters["tomo_spk_method"] == "none":
+                    if "detect_force" in parameters and parameters["detect_force"] or ( parameters["tomo_spk_method"] == "none" and parameters["tomo_vir_detect_method"] == "none" ):
                         if first:
                             logger.info(
                                 f"Particle parameters will be re-computed"
