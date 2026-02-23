@@ -5583,7 +5583,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -VolZ {thickness} \
 -TiltAxis {rotation} \
 {patches} \
--Gpu {get_gpu_ids(parameters,separator=' ')} \
+-Gpu {get_gpu_ids(parameters,base_zero=True,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']} 2>&1 | tee {logfile}"
 
             output = []
@@ -5642,7 +5642,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -VolZ {thickness} \
 -TiltAxis {rotation} \
 {patches} \
--Gpu {get_gpu_ids(parameters,separator=' ')} \
+-Gpu {get_gpu_ids(parameters,base_zero=True,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
 
             stream_shell_command(command)

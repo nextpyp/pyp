@@ -88,12 +88,20 @@ def get_motioncor3_path():
 def get_gpu_id():
     return 0
 
-def get_gpu_ids(parameters,separator=","):
+def get_gpu_ids(parameters,base_zero=False,separator=","):
     # return list of GPU devices based on gres variable
     if "SLURM_STEP_GPUS" in os.environ:
-        return os.environ["SLURM_STEP_GPUS"]
+        gpu_list = os.environ["SLURM_STEP_GPUS"].split(',')
+        if base_zero:
+            return separator.join(str(x) for x in range(len(gpu_list)))
+        else:
+            return separator.join(str(x) for x in gpu_list)
     elif "CUDA_VISIBLE_DEVICES" in os.environ:
-        return os.environ["CUDA_VISIBLE_DEVICES"]
+        gpu_list = os.environ["CUDA_VISIBLE_DEVICES"].split(',')
+        if base_zero:
+            return separator.join(str(x) for x in range(len(gpu_list)))
+        else:
+            return separator.join(str(x) for x in gpu_list)
     else:
         if "slurm_gres" in parameters and "gpu" in parameters["slurm_gres"]:
             for g in parameters["slurm_gres"].split(","):

@@ -682,7 +682,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 {reconstruct_option} \
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 -VolZ {int(1.0 * thickness)} \
--Gpu {get_gpu_ids(parameters,separator=' ')} \
+-Gpu {get_gpu_ids(parameters,base_zero=True,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
                 run_shell_command(command)
                 
