@@ -1274,7 +1274,7 @@ def spa_extract_coordinates(
     cistem_parameters = []
 
     if not box.size > 0:
-        logger.warning("You have empty partilce coordinates, return empty parfile")
+        logger.warning("No particles found on this micrograph, returning empty parfile")
         return allboxes, allparxs
 
     scores = False
