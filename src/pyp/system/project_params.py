@@ -858,9 +858,9 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
     Returns:
         dict: parameters with updated force keys
     """
-    all_differences = {k for k in previous_parameters.keys() & new_parameters.keys() if previous_parameters[k] != new_parameters[k] and not k.endswith("_force")}
+    all_differences = {k for k in previous_parameters.keys() | new_parameters.keys() if previous_parameters.get(k) != new_parameters.get(k) and not k.endswith("_force")}
 
-    differences = {d for d in all_differences if not ( ( isinstance(previous_parameters[d],PosixPath) or isinstance(previous_parameters[d],str) ) and project_params.resolve_path(previous_parameters[d]) == project_params.resolve_path(new_parameters[d]) ) }
+    differences = {d for d in all_differences if not ( ( isinstance(previous_parameters.get(d),PosixPath) or isinstance(previous_parameters.get(d),str) ) and project_params.resolve_path(previous_parameters.get(d)) == project_params.resolve_path(new_parameters.get(d)) ) }
 
     if len(differences):
         logger.trace(f"Parameters changed: {differences}")
