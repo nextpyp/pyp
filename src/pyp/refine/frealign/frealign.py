@@ -4086,7 +4086,7 @@ def refine2d(
         "0\n"
         "1\n"
         "2\n"
-        "No\n"
+        "Yes\n"
         "No\n"
         "Yes\n"
         "Yes\n"
@@ -4174,7 +4174,8 @@ def refine2d_mpi(
     classes: int = 0, 
     class_fraction: float = 1.0,
     low_res_limit: int = 300,
-    high_res_limit: int = 40, 
+    high_res_limit: int = 40,
+    log_level=logging.NOTSET
 ):
 
     # get the number of particles 
@@ -4218,7 +4219,7 @@ def refine2d_mpi(
             "0\n"
             "1\n"
             "2\n"
-            "No\n"
+            "Yes\n"
             "No\n"
             "Yes\n"
             "Yes\n"
@@ -4268,7 +4269,7 @@ def refine2d_mpi(
         """
 
     assert len(commands) > 0, f"{input_frealign_par} does not have particles"
-    mpi.submit_jobs_to_workers(commands,log_level=logging.NOTSET)
+    mpi.submit_jobs_to_workers(commands,log_level=log_level)
 
     logfiles = glob.glob("*_refine2d.log")
     if len(logfiles) > 0:
