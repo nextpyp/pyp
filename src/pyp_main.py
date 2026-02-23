@@ -2793,7 +2793,7 @@ def csp_extract_frames(
                     raw_image,
                     stackfile,
                     allparxs,
-                    parameters["particle_rad"] * float(parameters["data_bin"]),
+                    parameters["particle_rad"],
                     parameters["extract_box"],
                     parameters["extract_bin"],
                     actual_pixel,

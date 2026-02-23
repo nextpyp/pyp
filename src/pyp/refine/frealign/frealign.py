@@ -2525,7 +2525,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
 
     # RELION postprocessing plots
     # get current pixel size
-    pixel_size = float(mp["scope_pixel"]) * float(mp["extract_bin"])
+    pixel_size = float(mp["scope_pixel"]) * float(mp["extract_bin"]) * float(mp["data_bin"])
 
     # keep track of two half maps
     # if int(project_params.param(fp["class_num"], i)) < 2:

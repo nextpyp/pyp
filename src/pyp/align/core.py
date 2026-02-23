@@ -1617,7 +1617,7 @@ def csp_refinement(
         # class_parxfile = parxfile.replace("_r01_", "_r%02d_" % current_class)
 
         # Everything that modifies parameter files falls here
-        allparxs[class_index].update_pixel_size(mp["scope_pixel"] * mp["extract_bin"]) # data_bin?
+        allparxs[class_index].update_pixel_size(mp["scope_pixel"] * mp["extract_bin"] * mp["data_bin"]) # data_bin?
         parameter_file = Path().cwd() / "frealign" / "maps" / f"{new_name}.cistem"
 
         # execute refinement

@@ -1377,8 +1377,6 @@ def spa_extract_coordinates(
         tilt_angle = 0
         tilt_axis = 0
 
-        actual_pixel = float(parameters["scope_pixel"]) * float(parameters["data_bin"])
-
         # for frame in range(xf.shape[0]):
         last = parameters["movie_last"]
         z = xf.shape[0]
@@ -1541,7 +1539,7 @@ def spa_extract_coordinates(
                             logp, 
                             sigma, 
                             score, 
-                            actual_pixel, 
+                            pixel, 
                             voltage, 
                             cs, 
                             wgh, 
