@@ -1273,6 +1273,8 @@ def detect_and_extract_particles( name, parameters, current_path, project_path, 
         if coordinates.size > 0:
             coordinates *= binning
             coordinates = np.hstack( ( coordinates.copy(), unbinned_spike_radius * np.ones((coordinates.shape[0],1)) ) )
+            if not surface_mode and not spike_mode and not virion_mode:
+                spike_mode = True
         else:
             logger.warning("No particles were detected")
 
