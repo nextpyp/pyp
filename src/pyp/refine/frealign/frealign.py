@@ -2476,7 +2476,7 @@ def mreconstruct_post(mp, fp, i, ref, scratch, reclogfile):
             shutil.copy2(volume + "_denoised.mrc", volume + ".mrc")
         except:
             logger.error("Denoising failed")
-            pass
+            raise
 
     # copy reconstruction to maps directory
     if same_ref:
