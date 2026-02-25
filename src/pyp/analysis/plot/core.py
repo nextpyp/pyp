@@ -1848,9 +1848,13 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, sav
         fig, axs =  plt.subplots(1, 1, tight_layout=True)
         axs.set_xlim([-0.5, max(max(scores)+1, threshold)])
         if len(good_scores) > 0 and good_bins > 0:
-            axs.hist(good_scores, bins=good_bins, color="royalblue", alpha=1.0)
+            y_good, _, _ = axs.hist(good_scores, bins=good_bins, color="royalblue", alpha=1.0)
+        else:
+            y_good = np.array([0])
         if len(bad_scores) > 0 and bad_bins > 0:
-            axs.hist(bad_scores, bins=bad_bins, color="royalblue", alpha=0.5)
+            y_bad, _, _ = axs.hist(bad_scores, bins=bad_bins, color="royalblue", alpha=0.5)
+        else:
+            y_bad = np.array([0])
 
         axs.set_xlabel('Mean score', fontsize=12, labelpad=10)
         axs.set_ylabel('Population', fontsize=12, labelpad=10)
@@ -1860,7 +1864,7 @@ def histogram_particle_tomo(scores: list, threshold: float, tiltseries: str, sav
         axs.spines["left"].set_linewidth(1)
         axs.tick_params(axis='both', which='major', labelsize=10)
 
-        plt.axvline(x=threshold, linestyle="dashed", linewidth=2.0, color='black')
+        plt.axvline(x=threshold, ymin=0, ymax=max(y_good.max(),y_bad.max()), linestyle="dashed", linewidth=2.0, color='black')
         plt.savefig(f"{save_path}/{tiltseries}_scores.svgz")
         plt.close()
     else:
