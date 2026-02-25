@@ -6415,6 +6415,8 @@ if __name__ == "__main__":
                         reference = parfile.replace(".bz2",".mrc")
                         if os.path.exists(reference):
                             shutil.copy2(reference, Path("frealign", "maps", f"{filename_init}.mrc"))
+                        elif os.path.exists(parfile.replace("_clean.bz2",".mrc")):
+                            shutil.copy2(parfile.replace("_clean.bz2",".mrc"), Path("frealign", "maps", f"{filename_init}.mrc"))
                         else:
                             raise Exception(f"Cannot find reference file {reference}")
 
