@@ -59,8 +59,14 @@ def cryocare_train(project_dir, output, parameters):
     with open(data_config, 'w') as file:
         json.dump(config, file, indent=4)
 
+    with open(data_config) as file:
+        logger.debug(file.read())
+
     command = get_cryocare_path() + f"cryoCARE_extract_train_data.py --conf {data_config}"
     local_run.stream_shell_command(command)
+
+    assert os.path.exists(os.path.join("train_data","train_data.npz")), "cryoCARE_extract_train_data.py did not produce the expected output. This can be caused by the number of Sub-tomograms for statistics being too large"
+    assert os.path.exists(os.path.join("train_data","val_data.npz")), "cryoCARE_extract_train_data.py did not produce the expected output. This can be caused by the number of Sub-tomograms for statistics being too large"
 
     # train.json
     train_config = {
@@ -83,6 +89,9 @@ def cryocare_train(project_dir, output, parameters):
     train_config_file = "train_config.json"
     with open(train_config_file, 'w') as file:
         json.dump(train_config, file, indent=4)
+
+    with open(train_config_file) as file:
+        logger.debug(file.read())
 
     output = []
     def obs(line):
@@ -199,8 +208,14 @@ def cryocare(working_path, project_path, name, parameters):
     with open(data_config, 'w') as file:
         json.dump(config, file, indent=4)
 
+    with open(data_config) as file:
+        logger.debug(file.read())
+
     command = get_cryocare_path() + f"cryoCARE_extract_train_data.py --conf {data_config}"
     local_run.stream_shell_command(command)
+
+    assert os.path.exists(os.path.join("train_data","train_data.npz")), "cryoCARE_extract_train_data.py did not produce the expected output. This can be caused by the number of Sub-tomograms for statistics being too large"
+    assert os.path.exists(os.path.join("train_data","val_data.npz")), "cryoCARE_extract_train_data.py did not produce the expected output. This can be caused by the number of Sub-tomograms for statistics being too large"
 
     # train.json
     train_config = {
@@ -223,6 +238,9 @@ def cryocare(working_path, project_path, name, parameters):
     train_config_file = "train_config.json"
     with open(train_config_file, 'w') as file:
         json.dump(train_config, file, indent=4)
+
+    with open(train_config_file) as file:
+        logger.debug(file.read())
 
     command = f"{get_cryocare_path()}cryoCARE_train.py --conf {train_config_file}"
     local_run.stream_shell_command(command)
