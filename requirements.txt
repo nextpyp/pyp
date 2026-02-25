@@ -1,6 +1,5 @@
 bm4d==4.2.5
 click==8.3.0
-colorlog==6.10.1
 healpy==1.18.1
 joblib==1.5.2
 jsonrpcclient==4.0.3
