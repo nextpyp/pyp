@@ -9,7 +9,7 @@ from pathlib import Path
 from pyp.system import local_run, project_params, utils, mpi
 from pyp.detect import joint
 from pyp.utils import cuda_info
-
+from pyp.system.utils import get_gpu_ids
 from pyp.system.logging import logger
 
 def sprtrain(args):
@@ -231,8 +231,13 @@ def topaz_tomo_denoise(name,parameters,raw_rec_location,working_path):
     """
 
     # compute device/s to use (default: -2, multi gpu), set to >= 0 for single gpu, set to -1 for cpu
+    
     if cuda_info.is_gpu_available():
-        devices = 0
+        gpus_requested = get_gpu_ids(parameters).split(",")
+        if len(gpus_requested) > 1:
+            devices = -2
+        else:
+            devices = 0
     else:
         devices = -1
 
