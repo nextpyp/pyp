@@ -389,7 +389,7 @@ def reconstruct_tomo(parameters, name, x, y, binning, zfact, tilt_options, force
 -DarkTol {parameters['tomo_ali_aretomo_dark_tol']} \
 {reconstruct_option} \
 -Align 0 \
--Gpu {get_gpu_ids(parameters,separator=' ')}"
+-Gpu {get_gpu_ids(parameters,base_zero=True,separator=' ')}"
                 run_shell_command(command)
 
                 assert os.path.exists(name+".rec"), "AreTomo2 failed"
