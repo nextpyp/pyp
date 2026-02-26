@@ -45,7 +45,7 @@ IncludeCmd: no
 	rm -rf /opt/pyp/.git
 	# install packages required by ETTK
 	apt-get -y update
-	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file wget git
+	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file wget git xvfb
 
 	# relion specific requirements
 	apt-get install -y cmake build-essential mpi-default-bin mpi-default-dev libpng-dev ghostscript libxft-dev
