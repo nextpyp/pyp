@@ -796,17 +796,16 @@ def generate_plots(
     # particle score plot for tomo
     try:
         if is_tomo:
-            used_mask = np.logical_and(
-                input[:, occ_col] > 50, 
-                np.logical_and(
-                    np.abs(input[:, tind_col]) <= tilt_max, 
-                    np.abs(input[:, tind_col]) >= tilt_min
-                    )
+            mean_score = []
+            for tilt_series_index in set(input[:,film_id].tolist()):
+                used_mask = np.logical_and(
+                    input[:, film_id] == tilt_series_index,
+                    input[:, occ_col] > 50
                 )
-            
-            used_sub_data = pd.DataFrame(input[used_mask], columns=cistem_star_file.Parameters.HEADER_STRS)
-            
-            mean_score = used_sub_data.groupby(["IMAGE_IS_ACTIVE","PIND"])["SCORE"].mean()
+                if np.count_nonzero(used_mask) > 0:
+                    used_sub_data = pd.DataFrame(input[used_mask], columns=cistem_star_file.Parameters.HEADER_STRS)
+                    current_mean_score = used_sub_data.groupby(["IMAGE_IS_ACTIVE","PIND"])["SCORE"].mean().to_list()
+                    mean_score += current_mean_score
 
             histogram_particle_tomo(mean_score, threshold=0, tiltseries=output_name, save_path="../maps")
     except:

@@ -1188,6 +1188,7 @@ def particle_cleaning(parameters: dict):
 def deep_clean_particles(parameter_file: str, clean_parameter_folder: Path):
 
     alignment_parameters = cistem_star_file.Parameters.from_file(input_file=parameter_file)
+    # set occupancies for particle projections based on particle occupancies
     alignment_parameters.sync_particle_occ()
 
     data = alignment_parameters.get_data()
@@ -1204,6 +1205,7 @@ def deep_clean_particles(parameter_file: str, clean_parameter_folder: Path):
     if data.shape[0] == 0:
         return 
     
+    # re-number projections using contiguous one-based index
     data[:, alignment_parameters.get_index_of_column(cistem_star_file.POSITION_IN_STACK)] = np.array(
         [(_ + 1) for _ in range(data.shape[0])]
     )
