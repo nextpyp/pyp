@@ -19,6 +19,7 @@ IncludeCmd: no
 	external/ /opt/pyp
 	/nfs/bartesaghilab/ab690/nextpyp/models /opt/pyp/external
 	/nfs/bartesaghilab/ab690/nextpyp/pyp/external/tomodrgn /opt/pyp/external
+	../ResMap/ /opt/pyp/external
 	../AreTomo2/ /opt/pyp/external
 	../MotionCor3/ /opt/pyp/external
 	../AreTomo3/ /opt/pyp/external
