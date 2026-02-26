@@ -939,6 +939,10 @@ _rlnGroupName #21"""
         use_tiltang: bool = len(tiltang_range) > 0
         assert (use_tind or use_tiltang), "To compute particle score, you need to either provide range for TIND or TILT_ANGLE"
 
+        if use_tiltang:
+            min_angle, max_angle = tiltang_range[0], tiltang_range[1]
+            assert (min_angle <= max_angle), f"Min angle ({min_angle}) should be smaller than max angle ({max_angle})."
+
         particle_parameters = self.get_extended_data().get_particles()
         tilt_parameters = self.get_extended_data().get_tilts()
         data = self.get_data()
@@ -964,8 +968,6 @@ _rlnGroupName #21"""
                 if not ((tind < min_tind) or ((tind > max_tind) and (max_tind != -1))):
                     particle_scores[pind].append(score)
             elif use_tiltang:
-                min_angle, max_angle = tiltang_range[0], tiltang_range[1]
-                assert (min_angle <= max_angle), f"Min angle ({min_angle}) should be smaller than max angle ({max_angle})."
                 tilt_angle = tilt_parameters[tind][rind].angle
                 if min_angle <= tilt_angle and tilt_angle <= max_angle:
                     particle_scores[pind].append(score)
