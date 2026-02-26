@@ -5869,6 +5869,7 @@ description = "Minimum occupancy to use during reconstruction"
 type = "int"
 default = 50
 advanced = true
+hidden = [ "tomo_coarse_refine", "tomo_new_coarse_refine", "tomo_new_coarse_classification", "tomo_flexible_refine", "tomo_flexible_refine_after" ]
 
 [tabs.reconstruct.ffilt]
 name = "Apply Wiener filter"
