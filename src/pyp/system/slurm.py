@@ -540,7 +540,7 @@ def submit_jobs(
         assert id is not None, "Error submitting job"
         logger.info(f"Submitting {procs:,} job(s) ({id.strip()})")
 
-    return id if jobtype != "cspswarm" and jobtype != "classmerge" else (id, procs)
+    return id if jobtype != "cspswarm" and "classmerge" not in jobtype else (id, procs)
 
 def transfer_stack_to_scratch(dataset):
     stack = "%s_stack.mrc" % dataset
@@ -667,10 +667,15 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
         swarm_classmerge_file = create_csp_classmerge_file(
             iteration, parameters, "csp_class_merge.swarm"
         )
-            
-        jobtype = "classmerge"
-        jobname = "Iteration %d (classmerge)" % parameters["refine_iter"] if Web.exists else "classmerge"
         
+        # use a GPU if running noise2map
+        use_gpu = parameters.get("reconstruct_denoise_enable") and parameters.get("reconstruct_denoise_method") == "noise2map"
+        if use_gpu:
+            jobtype = "classmerge, gpu"
+        else:
+            jobtype = "classmerge"
+        jobname = "Iteration %d (%s)" % ( parameters["refine_iter"], jobtype ) if Web.exists else "classmerge"
+
         (id, procs) = submit_jobs(
             ".",
             swarm_classmerge_file,
@@ -684,14 +689,15 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
             walltime=parameters["slurm_merge_walltime"],
             tasks_per_arr=1, # one class per array job
             csp_no_stacks=parameters["csp_no_stacks"],
-            dependencies=id
+            dependencies=id,
+            use_gpu=use_gpu
         )
 
     jobtype = "cspmerge"
     jobname = "Iteration %d (merge)" % parameters["refine_iter"] if Web.exists else "cspmerge"
 
     # use a GPU if running noise2map
-    if parameters.get("reconstruct_denoise_method") == "noise2map" or parameters.get("tomo_denoise_method") == "noise2map":
+    if ( parameters.get("reconstruct_denoise_enable") and ( parameters.get("refine_iter") == 2 or parameters.get("class_num") == 1 ) ) and parameters.get("reconstruct_denoise_method") == "noise2map" or parameters.get("tomo_denoise_method") == "noise2map" and parameters.get("micromon_block") in ("", "tomo-denoising-eval"):
         gpu = True
         jobname = jobname.replace("merge)","merge, gpu)")
     else:
