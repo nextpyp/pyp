@@ -676,12 +676,12 @@ def launch_csp(micrograph_list: list, parameters: dict, swarm_folder: Path):
             swarm_classmerge_file,
             jobtype,
             jobname,
-            queue=parameters["slurm_queue"] if "slurm_queue" in parameters else "",
-            threads=parameters["slurm_tasks"],
-            memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
-            gres=parameters["slurm_gres"],
-            account=parameters.get("slurm_account"),
-            walltime=parameters["slurm_walltime"],
+            queue=parameters["slurm_merge_queue"] if "slurm_merge_queue" in parameters else "",
+            threads=parameters["slurm_merge_tasks"],
+            memory=parameters["slurm_merge_tasks"]*parameters["slurm_merge_memory_per_task"],
+            gres=parameters["slurm_merge_gres"],
+            account=parameters.get("slurm_merge_account"),
+            walltime=parameters["slurm_merge_walltime"],
             tasks_per_arr=1, # one class per array job
             csp_no_stacks=parameters["csp_no_stacks"],
             dependencies=id
