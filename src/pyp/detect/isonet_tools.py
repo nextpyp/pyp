@@ -15,13 +15,17 @@ from pyp.system.db_comm import save_tiltseries_to_website
 from pyp.system.logging import logger
 
 def get_isonet_path():
-    command_base = f"export PATH=/opt/conda/envs/isonet/bin:$PATH; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/isonet/lib:/opt/conda/envs/isonet/lib/python3.9/site-packages/tensorrt_libs; export PYTHONPATH=/opt/pyp/external:/opt/conda/envs/isonet/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n isonet /opt/pyp/external/IsoNet/bin/"
+    isonet_path = "/opt/pixi/IsoNet"
+    isonet_env = f"{isonet_path}/.pixi/envs/default"
+    command_base = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{isonet_env}/lib:{isonet_env}/lib/python3.9/site-packages/tensorrt; export PYTHONPATH={isonet_env}/lib/python3.9/site-packages:/opt/pixi:$PYTHONPATH; export PATH={isonet_env}/bin:{isonet_path}/bin:$PATH; "
     return command_base
 
 isonet_command = get_isonet_path()
 
 def get_isonet2_path():
-    command_base = f"export PATH=/opt/conda/envs/isonet2/bin:$PATH; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/isonet2/lib; export PYTHONPATH=/opt/pyp/external/IsoNet2:/opt/conda/envs/isonet2/lib/python3.10/site-packages:$PYTHONPATH; micromamba run -n isonet2 /opt/pyp/external/IsoNet2/IsoNet/bin/"
+    isonet2_path = "/opt/pixi/IsoNet2"
+    isonet2_env = f"{isonet2_path}/.pixi/envs/default"
+    command_base = f"export PATH={isonet2_env}/bin:$PATH; export LD_LIBRARY_PATH={isonet2_env}/lib:$LD_LIBRARY_PATH; export PYTHONPATH=/opt/pixi:{isonet2_env}/lib/python3.10/site-packages:$PYTHONPATH; "
     return command_base
 
 def isonet_generate_star(project_dir, outputname, parameters, name_list):

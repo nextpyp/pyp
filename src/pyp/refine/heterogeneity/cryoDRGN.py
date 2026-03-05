@@ -12,7 +12,8 @@ from pyp.system.logging import get_verbose_level
 from pyp.system.logging import logger
 
 def get_cryodrgn_path():
-    command_base = f"export PYTHONPATH=/opt/conda/envs/cryodrgn/lib/python3.9/site-packages:$PYTHONPATH; micromamba run -n cryodrgn /opt/conda/envs/cryodrgn/bin/cryodrgn"
+    cryodrgn_path = '/opt/pixi/cryodrgn/.pixi/envs/default'
+    command_base = f"export LD_LIBRARY_PATH={cryodrgn_path}/lib:$LD_LIBRARY_PATH; export PYTHONPATH={cryodrgn_path}/lib/python3.9/site-packages:$PYTHONPATH; export PATH={cryodrgn_path}/bin:$PATH; "
     return command_base
 
 def cryodrgn_preprocess(alignment_star, particle_stack_list, output, boxsize, downsample_size, threads=1):

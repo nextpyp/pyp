@@ -16,7 +16,9 @@ from pyp.system.utils import get_imod_path
 from pyp.system.logging import logger
 
 def get_tomodrgn_path():
-    command_base = f"micromamba run -n tomodrgn /opt/conda/envs/tomodrgn/bin/tomodrgn"
+    tomodrgn_path = '/opt/pyp/external/tomodrgn'
+    tomodrgn_env = f'{tomodrgn_path}/.pixi/envs/default'
+    command_base = f"export LD_LIBRARY_PATH={tomodrgn_env}/lib:$LD_LIBRARY_PATH; export PYTHONPATH={tomodrgn_env}/lib/python3.10/site-packages:{tomodrgn_path}:$PYTHONPATH; export PATH={tomodrgn_env}/bin:$PATH; tomodrgn"
     return command_base
 
 

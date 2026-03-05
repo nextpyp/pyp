@@ -59,7 +59,8 @@ def cuda_path_prefix(command):
     return command
 
 def get_pytom_path():
-    command_base = f"micromamba run -n pytom"
+    pytom_path = '/opt/pixi/pytom/.pixi/envs/default'
+    command_base = f"export PATH={pytom_path}/bin:$PATH; "
     return command_base
 
 def get_aretomo_path():
@@ -216,7 +217,8 @@ def get_bsoft_path():
     return "{0}/external/bsoft".format(os.environ["PYP_DIR"])
 
 def get_topaz_path():
-    return f"export LD_LIBRARY_PATH=/opt/conda/envs/topaz/lib:/.singularity.d/libs; micromamba run -n topaz /opt/conda/envs/topaz/bin"
+    topaz_path = '/opt/pixi/topaz/.pixi/envs/default'
+    return f"export LD_LIBRARY_PATH={topaz_path}/lib:/.singularity.d/libs; export PYTHONPATH={topaz_path}/lib/python3.12/site-packages; export PATH={topaz_path}/bin:$PATH; "
 
 def get_embfactor_path():
     return "{0}/external/embfactor".format(os.environ["PYP_DIR"])

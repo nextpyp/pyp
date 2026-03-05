@@ -10,8 +10,8 @@ from pyp.system import project_params
 from pyp.system.utils import get_imod_path
 
 def get_warptools_path():
-    warptools_path = '/opt/conda/envs/warp'
-    return f"export LD_LIBRARY_PATH=/opt/conda/envs/warp/lib:$LD_LIBRARY_PATH; micromamba run -n warp {warptools_path}/bin/"
+    warptools_path = '/opt/pixi/warp/.pixi/envs/default'
+    return f"export LD_LIBRARY_PATH={warptools_path}/lib:$LD_LIBRARY_PATH; export PATH={warptools_path}/bin:$PATH; "
 
 def warptools_noise2map(half1, parameters, tomogram=False):
     """

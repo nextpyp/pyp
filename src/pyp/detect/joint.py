@@ -21,8 +21,9 @@ from skimage.color import rgb2hsv, hsv2rgb
 
 NN_INIT_COMMANDS = "export LD_LIBRARY_PATH=/opt/conda/envs/milopyp/lib/python3.12/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python"
 
-NN_INIT_COMMANDS_2D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; export TERM=xterm; micromamba run -n milopyp"
-NN_INIT_COMMANDS_3D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; micromamba run -n milopyp"
+milopyp_path = '/opt/pixi/milopyp/.pixi/envs/default'
+NN_INIT_COMMANDS_2D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; export TERM=xterm; export PATH={milopyp_path}/bin:$PATH; "
+NN_INIT_COMMANDS_3D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; export PATH={milopyp_path}/bin:$PATH; "
 
 def bin_image( input, output, binning):
     if binning > 1:

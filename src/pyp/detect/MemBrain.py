@@ -10,7 +10,8 @@ from pyp.system import local_run, project_params
 from pyp.system.logging import logger
 
 def get_membrane_path():
-    command_base = 'export LD_LIBRARY_PATH=/opt/conda/envs/membrain/lib/python3.9/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PYTHONPATH=/opt/conda/envs/membrain/lib/python3.11/site-packages:$PYTHONPATH; micromamba run -n membrain /opt/conda/envs/membrain/bin/'
+    membrain_path = '/opt/pixi/membrain/.pixi/envs/default'
+    command_base = f'export LD_LIBRARY_PATH={membrain_path}/lib/python3.9/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH; export PYTHONPATH={membrain_path}/lib/python3.9/site-packages:$PYTHONPATH; export PATH={membrain_path}/bin:$PATH; '
     return command_base
 
 def membrain_preprocessing(parameters, input, project_dir, name):

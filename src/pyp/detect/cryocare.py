@@ -16,8 +16,8 @@ from pyp.system.db_comm import load_tomo_results, load_config_files
 from pyp.system.logging import logger
 
 def get_cryocare_path():
-    cryocare_path = '/opt/conda/envs/cryocare'
-    return f"export LD_LIBRARY_PATH={cryocare_path}/lib:/opt/conda/envs/isonet/lib:$LD_LIBRARY_PATH; micromamba run -n cryocare {cryocare_path}/bin/"
+    cryocare_path = '/opt/pixi/cryocare/.pixi/envs/default'
+    return f"export LD_LIBRARY_PATH={cryocare_path}/lib:$LD_LIBRARY_PATH; export PATH={cryocare_path}/bin:$PATH; "
 
 def get_gpu_ids_cryocare(parameters):
     gpus = get_gpu_ids(parameters)

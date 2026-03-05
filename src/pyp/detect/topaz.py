@@ -244,7 +244,7 @@ def topaz_tomo_denoise(name,parameters,raw_rec_location,working_path):
     time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S")
 
     logger.info("Denoising tomogram using: Topaz")
-    command = f"{utils.get_topaz_path()}/topaz denoise3d \
+    command = f"{utils.get_topaz_path()} topaz denoise3d \
 {raw_rec_location / name}.rec \
 --model {parameters['tomo_denoise_topaz_model']} \
 --device {devices} \
