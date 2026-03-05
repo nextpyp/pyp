@@ -8,22 +8,17 @@ import os
 import copy
 import shutil
 import time
-from ast import Or
 from pathlib import Path
-from re import L, T
-from xml.sax import make_parser
-from tqdm import tqdm
 
 import numpy as np
 import pickle
 
 from pyp.analysis import plot, statistics
-from pyp.analysis.geometry import divide2regions, findSpecimenBounds, get_tomo_binning
-from pyp.analysis.geometry.pyp_convert_coord import read_3dbox
+from pyp.analysis.geometry import divide2regions, findSpecimenBounds
 from pyp.analysis.occupancies import occupancy_extended
 from pyp.analysis.plot import pyp_frealign_plot_weights
 from pyp.inout.image import mrc, img2webp
-from pyp.inout.metadata import frealign_parfile, isfrealignx, pyp_metadata, generate_ministar
+from pyp.inout.metadata import frealign_parfile, pyp_metadata, generate_ministar
 from pyp.inout.metadata.cistem_star_file import *
 from pyp.refine.frealign import frealign
 from pyp.streampyp.web import Web
