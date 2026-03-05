@@ -799,6 +799,7 @@ def reconstruct_tomo_halves_from_frames( name, parameters, project_path):
         shutil.copy2(f"{name}.xf", newname + ".xf")
         shutil.copy2(f"{name}.tlt", newname + ".tlt")
         shutil.copy2(f"{name}.order", newname + ".order")
+        shutil.copy2(f"{name}_exclude_views.mod", newname + "_exclude_views.mod")
 
         # generate averages using existing xf
         preprocess.regenerate_average_quick(
@@ -847,6 +848,13 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
     
     # split tilt-series into even/odd stacks
 
+    # retrieve ignored views, if any
+    exclude_views = do_exclude_views(name)
+    if len(exclude_views) > 0:
+
+        # get excluded indexes from string containing -EXCLUDELIST2 option
+        exclude_views = sorted(list(map(int,exclude_views.split(" ")[1].split(','))))        
+
     # get dimensions of raw tilt-series
     raw_tilt_series = name + ".mrc"
     dims = get_image_dimensions(raw_tilt_series)
@@ -861,6 +869,7 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
     # create half tilt-series and half tilt-angle, alignment, and order files
     arguments = []
     for half in [1, 2]:
+        newname = name + f"_half{half}"
         subset = np.arange(half-1, dims[2], 2)
         command = f"{get_imod_path()}/bin/newstack -quiet -input {raw_tilt_series} -secs {','.join(map(str, subset))} -output {name}_half{half}.mrc"
         arguments.append(command)
@@ -873,6 +882,22 @@ def reconstruct_tomo_halves_from_odd_even_tilts( name, parameters):
         with open(name+f"_half{half}.order",'w') as output_half_order:
             for index in subset:
                 output_half_order.write(f"{orders[index]}\n")
+
+        # re-format indexes into 2D matrix (same format as one used by the website)
+        if len(exclude_views) > 0:
+            excluded_view_subset = [ (x+half-1)/2 for x in exclude_views if x in subset ]
+
+            if len(excluded_view_subset) > 0:
+                exclude_views_coordinates = np.zeros((len(excluded_view_subset),3),dtype=int)
+                
+                # indexes start at 0, so we substract 1
+                exclude_views_coordinates[:,-1] = np.array(excluded_view_subset)
+                
+                # save matrix into temporary file so we can convert indexes to .imod model
+                np.savetxt(newname+"_exclude_views.next", exclude_views_coordinates)
+                com = f"{get_imod_path()}/bin/point2model {newname}_exclude_views.next {newname}_exclude_views.mod -scat"
+                run_shell_command(com)
+                os.remove(newname+"_exclude_views.next") 
             
     if len(arguments) > 0:
         mpi.submit_jobs_to_workers(arguments)

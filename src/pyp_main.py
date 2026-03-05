@@ -2271,6 +2271,15 @@ def tomo_swarm(project_path, filename, debug = False, keep = False, skip = False
         mpi_funcs.append(plot.tomo_slicer_gif)
         mpi_args.append( [(f"{name}.rec", f"{name}_rec.webp", True)] )
 
+    if parameters["tomo_rec_generate_halves"]:
+        if not os.path.exists(f"{name}_half1.webp"):
+            mpi_funcs.append(plot.tomo_slicer_gif)
+            mpi_args.append( [(f"{name}_half1.rec", f"{name}_half1.webp", True)] )
+
+        if not os.path.exists(f"{name}_half2.webp"):
+            mpi_funcs.append(plot.tomo_slicer_gif)
+            mpi_args.append( [(f"{name}_half2.rec", f"{name}_half2.webp", True)] )
+
     if os.path.exists(f"{name}_bin.mrc") and not os.path.exists(name + "_raw.webp"):
         mpi_funcs.append(plot.tomo_montage)
         mpi_args.append( [(name + '_bin.mrc', name + "_raw.webp")] )
@@ -4392,7 +4401,7 @@ def tomoswarm_epilogue( new_reconstruction, name, project_path, working_path, pa
                     os.remove(target)
                 shutil.copy2( name + pattern, target )
     else:
-        extensions = [ "_rec.webp", "_sides.webp", ".webp" ]
+        extensions = [ "_rec.webp", "_sides.webp", ".webp", "_half1.webp", "_half1_sides.webp", "_half2.webp", "_half2_sides.webp" ]
         for pattern in extensions:
             if os.path.exists(name + pattern):
                 target = os.path.join( project_path, 'webp', name + pattern )

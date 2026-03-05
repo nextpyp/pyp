@@ -442,6 +442,11 @@ def load_tomo_results(name, parameters, project_path, working_path):
         initial_files.append("webp/{0}_rec.webp")
         initial_files.append("webp/{0}_rec.png")
         initial_files.append("webp/{0}_sides.webp")
+        initial_files.append("webp/{0}_half1_rec.webp")
+        initial_files.append("webp/{0}_half1_sides.webp")
+        initial_files.append("webp/{0}_half2_rec.webp")
+        initial_files.append("webp/{0}_half2_sides.webp")
+
     
     # transfer aligned tilt-series files if not re-doing alignment
     if not ( parameters.get('movie_force') or parameters.get('tomo_ali_force') ):
@@ -532,7 +537,7 @@ def save_tomo_results(name, parameters, current_path):
         files["mrc"].append('.mrc')
     files[
         "webp"
-    ] = [ '_view.webp', '_?D_ctftilt.webp', '_raw.webp', '_ali.webp', '_sides.webp', '_rec.webp', '_vir????_binned_nad.webp' ]
+    ] = [ '_view.webp', '_?D_ctftilt.webp', '_raw.webp', '_ali.webp', '_sides.webp', '_rec.webp', '_half1_rec.webp', '_half1_sides.webp', '_half2_rec.webp', '_half2_sides.webp', '_vir????_binned_nad.webp' ]
 
     files[
         "sva"
@@ -565,7 +570,7 @@ def save_tomo_results_lean(name, parameters, current_path):
 
     files[
         "webp"
-    ] = [ '.webp', '_?D_ctftilt.webp', '_raw.webp', '_ali.webp', '_sides.webp', '_rec.webp', '_score.webp', '_rec.png', '_vir????_binned_nad.webp' ]
+    ] = [ '.webp', '_?D_ctftilt.webp', '_raw.webp', '_ali.webp', '_sides.webp', '_rec.webp', '_half1_rec.webp', '_half1_sides.webp', '_half2_rec.webp', '_half2_sides.webp', '_score.webp', '_rec.png', '_vir????_binned_nad.webp' ]
     
     # do not save virions and spikes during sessions
     if not Web.exists or len(parameters.get("micromon_block")) > 0:
