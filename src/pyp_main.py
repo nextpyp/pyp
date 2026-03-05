@@ -1571,10 +1571,17 @@ def spr_swarm(project_path, filename, debug = False, keep = False, skip = False 
             # check raw image is movie or not
             frame_num = get_image_dimensions(raw_name)[-1]
             if frame_num == 1:
-                logger.info("Linking raw image %s to %s" % (name + extension, os.getcwd() + "/" + name + ".avg"))
-                os.symlink(name + extension, name + ".avg")
+                # convert frame average to 32-bits
+                if get_image_mode(raw_name) == 12:
+                    command = "{0}/bin/newstack -quiet -mode 2 '{1}' '{2}'".format(
+                        get_imod_path(), name + extension, name + ".avg"
+                    )
+                    local_run.run_shell_command(command)
+                else:
+                    logger.info("Linking raw image %s to %s" % (name + extension, os.getcwd() + "/" + name + ".avg"))
+                    os.symlink(name + extension, name + ".avg")
                 # assuming gain corrected for single frame image
-                aligned_average = mrc.read(raw_name) 
+                aligned_average = mrc.read(name + ".avg")
                 # saving a xf file with 0 shifts for x, y
                 xfshifts = np.zeros((1, 6))
                 xfshifts[:, 0] = 1
