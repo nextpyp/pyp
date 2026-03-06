@@ -799,7 +799,8 @@ def reconstruct_tomo_halves_from_frames( name, parameters, project_path):
         shutil.copy2(f"{name}.xf", newname + ".xf")
         shutil.copy2(f"{name}.tlt", newname + ".tlt")
         shutil.copy2(f"{name}.order", newname + ".order")
-        shutil.copy2(f"{name}_exclude_views.mod", newname + "_exclude_views.mod")
+        if os.path.exists(f"{name}_exclude_views.mod"):
+            shutil.copy2(f"{name}_exclude_views.mod", newname + "_exclude_views.mod")
 
         # generate averages using existing xf
         preprocess.regenerate_average_quick(
