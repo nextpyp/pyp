@@ -41,14 +41,20 @@ IncludeCmd: no
 	export XDG_CACHE_HOME=/tmp
 
 %post
+	
 	# remove pyp's .git directory to save space
 	rm -rf /opt/pyp/.git
+
 	# install packages required by ETTK
 	apt-get -y update
 	apt-get install -y make g++ libghc-bzlib-dev libfftw3-dev vim nano imagemagick libtiff-dev file wget git xvfb
 
 	# relion specific requirements
 	apt-get install -y cmake build-essential mpi-default-bin mpi-default-dev libpng-dev ghostscript libxft-dev
+
+    # remove anything we don't need
+    apt clean
+    apt autoremove --yes
 
 	# trick IMOD into believing we have version 5 of libtiff
 	ln -s /usr/lib/x86_64-linux-gnu/libtiff.so.6 /usr/lib/x86_64-linux-gnu/libtiff.so.5
