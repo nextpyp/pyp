@@ -40,6 +40,13 @@ IncludeCmd: no
 	export PATH=$PATH:/opt/potrace-1.16.linux-x86_64
 	export XDG_CACHE_HOME=/tmp
 
+%setup
+
+    # make mount points for binds
+    mkdir -p "$APPTAINER_ROOTFS/src/cryoluge"
+    mkdir -p "$APPTAINER_ROOTFS/src/csp2"
+    mkdir -p "$APPTAINER_ROOTFS/src/mojit"
+
 %post
 	
 	# remove pyp's .git directory to save space
@@ -132,6 +139,120 @@ IncludeCmd: no
     rm -rf "$PIXI_CACHE_DIR"
     rm -rf "$RATTLER_CACHE_DIR"
     rm -rf "/usr/bin/pixi"
+
+    # get the build arguments
+    git_cryoluge="{{ git_cryoluge }}"
+    git_csp2="{{ git_csp2 }}"
+    git_mojit="{{ git_mojit }}"
+
+    # turn off command echo, to get a clean log
+    { set +x; } 2>/dev/null
+
+    # check the arguments, just in case
+    if [ -z "$git_cryoluge" ]; then
+        echo "ERROR: missing or empty build-arg: git_cryoluge"
+        exit 1
+    fi
+    if [ -z "$git_csp2" ]; then
+        echo "ERROR: missing or empty build-arg: git_csp2"
+        exit 1
+    fi
+    if [ -z "$git_mojit" ]; then
+        echo "ERROR: missing or empty build-arg: git_mojit"
+        exit 1
+    fi
+
+    # restore the usual command echo
+    set -x
+
+    # make an installation folder
+    install_dir=/opt/csp2
+    mkdir -p "$install_dir"
+
+    # next, build the mojo projects
+    # NOTE: Don't use `pixi build` here, so we can force the projects
+    #       to build with the same mojo compiler from the global environment.
+
+    # build cryoluge
+    mkdir -p "/build/cryoluge"
+    if [ -d "$git_cryoluge" ]; then
+        git config --global --add safe.directory "$git_cryoluge/.git"
+    fi
+    git clone "$git_cryoluge" "/build/cryoluge"
+    mojo package \
+        -o "$install_dir/cryoluge.mojopkg" \
+        "/build/cryoluge/src/cryoluge"
+
+    # build csp2
+    mkdir -p "/build/csp2"
+    if [ -d "$git_csp2" ]; then
+        git config --global --add safe.directory "$git_csp2/.git"
+    fi
+    git clone "$git_csp2" "/build/csp2"
+    mojo package \
+        -I "$install_dir" \
+        -o "$install_dir/csp2.mojopkg" \
+        "/build/csp2/src/mojo/csp2"
+
+    # install csp2 JIT sources
+    mv "/build/csp2/src/mojo/ext.mojo" "$install_dir/"
+
+    # ask python where it loads site packages
+    # the last entry in `sys.path` usually looks like:
+    #   /opt/pixi/envs/nextpyp/lib/python3.13/site-packages
+    packages_dir="$(python -c "import sys; print(sys.path[-1])")"
+
+    # install the csp2 python package
+    mv "/build/csp2/src/python/csp2" "$packages_dir/"
+
+    # install mojit
+    mkdir -p "/build/mojit"
+    if [ -d "$git_mojit" ]; then
+        git config --global --add safe.directory "$git_mojit/.git"
+    fi
+    git clone "$git_mojit" "/build/mojit"
+    mv "/build/mojit/src/mojit" "$packages_dir/"
+
+    # customize the Python site
+    tee "$packages_dir/sitecustomize.py" > /dev/null << EOF
+
+from pathlib import Path
+
+import mojit
+
+# configure mojit for csp2
+mojit.Config(
+    name = "csp2ext",
+    src_path = Path("$install_dir/ext.mojo"),
+    hash_path = Path("$install_dir/hash"),
+    lib_dirs = [Path("$install_dir")]
+).apply()
+
+EOF
+
+    # turn off command echo, or the hahes computed below will be unreadable
+    { set +x; } 2>/dev/null
+
+    # hash the files, for the JIT build cache
+    hash() {
+        sha256sum | cut -f 1 -d ' '
+    }
+    echo "Hashing JIT build sources ..."
+    hash_cryoluge=$(cat "$install_dir/cryoluge.mojopkg" | hash)
+    echo "  cryoluge: $hash_cryoluge"
+    hash_csp2=$(cat "$install_dir/csp2.mojopkg" | hash)
+    echo "      csp2: $hash_csp2"
+    hash_ext=$(cat "$install_dir/ext.mojo" | hash)
+    echo "       ext: $hash_ext"
+    hash_combined=$(echo "$hash_cryoluge $hash_csp2 $hash_ext" | hash)
+    echo "  combined: $hash_combined"
+    echo "$hash_combined" > /opt/csp2/hash
+    
+    # turn the usual command echo behavior back on
+    set -x
+
+    # cleanup all the build files
+    rm -rf /build
 
 	# remove nvidia artifacts to save space
 	rm -rf /opt/nvidia
