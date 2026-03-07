@@ -1521,6 +1521,13 @@ type = "int"
 default = 5
 hidden = ["stream_spr", "stream_tomo", "tomo_particles_eval"]
 
+[tabs.detect_nn3d.val_debug_interval]
+name = "Validation debug interval (epochs)"
+description = "Run validation with debug every this number of epochs"
+type = "int"
+default = 10
+hidden = ["stream_spr", "stream_tomo", "tomo_particles_eval"]
+
 [tabs.detect_nn3d.temp]
 name = "inforNCE temperature"
 description = "Tune the concentration of samples in feature space. Lower values create more uniform distributions"
