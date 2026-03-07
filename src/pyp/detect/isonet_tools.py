@@ -25,7 +25,7 @@ isonet_command = get_isonet_path()
 def get_isonet2_path():
     isonet2_path = "/opt/pixi/IsoNet2"
     isonet2_env = f"{isonet2_path}/.pixi/envs/default"
-    command_base = f"export PATH={isonet2_env}/bin:$PATH; export LD_LIBRARY_PATH={isonet2_env}/lib:$LD_LIBRARY_PATH; export PYTHONPATH=/opt/pixi:{isonet2_env}/lib/python3.10/site-packages:$PYTHONPATH; "
+    command_base = f"export PATH={isonet2_env}/bin:$PATH; export LD_LIBRARY_PATH={isonet2_env}/lib:$LD_LIBRARY_PATH; export PYTHONPATH=/opt/pixi/IsoNet2:{isonet2_env}/lib/python3.10/site-packages:$PYTHONPATH; "
     return command_base
 
 def isonet_generate_star(project_dir, outputname, parameters, name_list):
