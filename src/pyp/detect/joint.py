@@ -19,11 +19,11 @@ from pyp.system.logging import logger
 
 from skimage.color import rgb2hsv, hsv2rgb
 
-NN_INIT_COMMANDS = "export LD_LIBRARY_PATH=/opt/pixi/milopyp/.pixi/envs/default/lib:/opt/pixi/milopyp/.pixi/envs/default/lib/python3.11/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH"
-
 milopyp_path = '/opt/pixi/milopyp/.pixi/envs/default'
-NN_INIT_COMMANDS_2D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/spr_pick; export TERM=xterm; export PATH={milopyp_path}/bin:$PATH; "
-NN_INIT_COMMANDS_3D = f"{NN_INIT_COMMANDS}; export PYTHONPATH=$PYTHONPATH:$PYP_DIR/external/cet_pick; export PATH={milopyp_path}/bin:$PATH; "
+NN_INIT_COMMANDS = f"export LD_LIBRARY_PATH={milopyp_path}/lib:{milopyp_path}/lib/python3.11/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH"
+
+NN_INIT_COMMANDS_2D = f"{NN_INIT_COMMANDS}; export PYTHONPATH={milopyp_path}/lib/python3.11/site-packages:$PYP_DIR/external/spr_pick:$PYTHONPATH; export TERM=xterm; export PATH={milopyp_path}/bin:$PATH; "
+NN_INIT_COMMANDS_3D = f"{NN_INIT_COMMANDS}; export PYTHONPATH={milopyp_path}/lib/python3.11/site-packages:$PYP_DIR/external/cet_pick:$PYTHONPATH; export PATH={milopyp_path}/bin:$PATH; "
 
 def bin_image( input, output, binning):
     if binning > 1:
