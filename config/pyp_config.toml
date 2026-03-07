@@ -1416,7 +1416,7 @@ default = "none"
 hidden = [ "tomo_import", "tomo_import_pure", "tomo_pre_process", "tomo_particles_eval", "stream_tomo" ]
 
 [tabs.detect_nn3d.milo_parquet]
-name = "Parquet file"
+name = "Parquet file (.parquet)"
 description = "Path to parquet file produced by Phoenix"
 type = "path"
 path = { type="files" }
