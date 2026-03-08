@@ -14,7 +14,7 @@ from pyp.system import local_run, project_params
 from pyp.system import local_run, mpi
 from pyp.system.utils import get_imod_path
 from pyp.system.db_comm import save_tiltseries_to_website
-
+from pyp.system.utils import get_gpu_ids
 from pyp.system.logging import logger
 
 from skimage.color import rgb2hsv, hsv2rgb
@@ -366,7 +366,7 @@ def tomotrain(args):
 
     if args.get('detect_nn3d_use_gpu_train'):
         # TODO: Support multiple GPUs
-        gpu = "--gpus 0"
+        gpu = f"--gpus {get_gpu_ids(parameters=args)}"
     else:
         gpu = "--gpus -1"
 
@@ -565,7 +565,7 @@ def tomoeval(args,name):
 
         if args.get('detect_nn3d_use_gpu_eval'):
             # TODO: Support multiple GPUs
-            gpu = "--gpus 0"
+            gpu = f"--gpus {get_gpu_ids(parameters=args)}"
         else:
             gpu = "--gpus -1"
 
@@ -716,7 +716,7 @@ def milotrain(args):
 
     if args.get('detect_milo_use_gpu'):
         # TODO: Support multiple GPUs
-        gpu = "--gpus 0"
+        gpu = f"--gpus {get_gpu_ids(parameters=args)}"
     else:
         gpu = "--gpus -1"
 
@@ -1082,7 +1082,7 @@ def miloeval(args):
 
         if args.get('detect_milo_use_gpu'):
             # TODO: Support multiple GPUs
-            gpu = "--gpus 0"
+            gpu = f"--gpus {get_gpu_ids(parameters=args)}"
         else:
             gpu = "--gpus -1"
 
