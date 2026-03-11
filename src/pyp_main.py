@@ -5460,6 +5460,21 @@ if __name__ == "__main__":
                             # turn off frame refinement
                             parameters['csp_frame_refinement'] = False
                             
+                        elif parameters.get("micromon_block") == "sp-coarse-refinement" and parameters.get("prism_enable"):
+                                                     
+                            # parse prismppyp selection
+                            real_classes = np.array([])
+                            real_classes_file = f"{dataset}.real.classes"
+                            if os.path.exists(real_classes_file):
+                                real_classes = np.loadtxt(real_classes_file)
+                            fft_classes = np.array([])
+                            fft_classes_file = f"{dataset}.fft.classes"
+                            if os.path.exists(fft_classes_file):
+                                fft_classes = np.loadtxt(fft_classes_file)
+                                
+                            if real_classes.size > 0 or fft_classes.size > 0:
+                                preprocess.prism.intersect(parameters,real_classes.tolist(),fft_classes.tolist())
+                            
                         # check if relion stacks exist
                         relion_stacks_exist = len(glob.glob("relion/stacks/*.mrcs")) > 0
 
