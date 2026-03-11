@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 
 from pyp.system.singularity import get_mpirun_command, run_pyp
-from pyp.utils import get_relative_path, timer
+from pyp.utils import timer
 
 from pyp.system.logging import logger
 
