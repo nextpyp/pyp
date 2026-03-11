@@ -20,6 +20,19 @@ pixi add --pypi \
 # install dependencies from requirements.txt (ignoring commented out lines)
 pixi add --pypi $(awk 'NF && $1 !~ /^#/{print $1}' /opt/pyp/external/cet_pick/requirements.txt | paste -sd' ' -)
 
+# install prismpyp
+PRISMPYP=/opt/pixi/prismpyp
+mkdir -p $PRISMPYP
+cd $PRISMPYP
+pixi init --format pyproject
+pixi add python=3.11.14 cuda=12.8.1
+pixi add --pypi \
+	torch==2.9.0 \
+	torchvision==0.24.0
+# install dependencies from requirements.txt (ignoring commented out lines)
+pixi add --pypi $(awk 'NF && $1 !~ /^#/{print $1}' /opt/pyp/external/prismpyp/requirements.txt | paste -sd' ' -)
+rm -rf .git/
+
 # Install topaz from source
 cd /opt/pixi
 git clone --depth=1 https://github.com/tbepler/topaz.git
