@@ -10,3 +10,7 @@ from .core import (
     regenerate_average_quick,
     erase_gold_beads,
 )
+
+from .prism import (
+    run,
+)

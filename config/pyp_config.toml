@@ -31,7 +31,7 @@ tabs = [ "movie", "ctf", "detect", "detect_nn2d", "slurm" ]
 [blocks.spr_pre_process]
 name = "SPA pre-processing (legacy)"
 description = "Frame alignment, CTF, and particle picking"
-tabs = [ "movie", "ctf", "detect", "detect_nn2d", "detect_topaz2d", "slurm" ]
+tabs = [ "movie", "ctf", "detect", "detect_nn2d", "detect_topaz2d", "prism", "slurm" ]
 forwarded_tabs = [ "data", "scope", "gain" ]
 
 [blocks.spr_pure_preprocess]
@@ -10866,6 +10866,273 @@ input = { type="starfile" }
 hidden = [ "spr_import_star" ]
 condition = { arg="tomo_star_version", value="version5" }
 required = false
+
+#####################
+# prismpyp parameters
+#####################
+
+[tabs.prism]
+_name = "prismPYP"
+_description = "Parameters to control prismPYP"
+
+[tabs.prism.enable]
+name = "Sort using prismPYP"
+description = "Whether prismPYP should be executed or not"
+type = "bool"
+default = false
+
+# --- prismpyp train — SimSiam training parameters for prismpyp train ---
+# See: https://nextpyp.app/prismpyp/ref_train/
+
+[tabs.prism.preprocessing_ice_thickness]
+name = "Relative ice thickness (.cs)"
+description = "Import relative ice thickness values from cryoSPARC"
+type = "path"
+path = { type="files" }
+input = { type="csfile" }
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_epochs]
+name = "Epochs"
+description = "Number of total epochs to run"
+type = "int"
+default = 100
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_batch_size]
+name = "Batch size"
+description = "Mini-batch size (total across GPUs)"
+type = "int"
+default = 512
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_lr]
+name = "Learning rate"
+description = "Initial (base) learning rate"
+type = "float"
+default = 0.05
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_resume]
+name = "Resume from trained model (*.pth.tar)"
+description = "Path to latest checkpoint to resume from"
+type = "path"
+path = { type="files" }
+input = { type="pthtarfile" }
+condition = {arg="enable", value="true"}
+
+# --- Less commonly changed (advanced) ---
+
+[tabs.prism.train_workers]
+name = "Workers"
+description = "Number of data loading workers"
+type = "int"
+default = 1
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_momentum]
+name = "Momentum"
+description = "Momentum of SGD solver"
+type = "float"
+default = 0.9
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_weight_decay]
+name = "Weight decay"
+description = "Weight decay"
+type = "float"
+default = 0.0001
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_print_freq]
+name = "Print frequency"
+description = "Print frequency"
+type = "int"
+default = 10
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_feature_extractor_weights]
+name = "Feature extractor weights"
+description = "Path to pre-trained feature extractor weights"
+type = "path"
+path = { type = "files" }
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_classifier_weights]
+name = "Classifier weights"
+description = "Path to pre-trained classifier weights"
+type = "path"
+path = { type = "files" }
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_world_size]
+name = "World size"
+description = "Number of nodes for distributed training"
+type = "int"
+default = 1
+advanced = true
+hidden = true
+
+[tabs.prism.train_rank]
+name = "Rank"
+description = "Node rank for distributed training"
+type = "int"
+default = 0
+advanced = true
+hidden = true
+
+[tabs.prism.train_dist_backend]
+name = "Distributed backend"
+description = "Distributed backend"
+type = "str"
+default = "nccl"
+advanced = true
+hidden = true
+
+[tabs.prism.train_seed]
+name = "Random seed"
+description = "Random seed"
+type = "int"
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_multiprocessing_distributed]
+name = "Multiprocessing distributed"
+description = "Use multi-processing distributed training"
+type = "bool"
+default = true
+advanced = true
+hidden = true
+
+[tabs.prism.train_dim]
+name = "Feature dimension"
+description = "Feature dimension"
+type = "int"
+default = 2048
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_pred_dim]
+name = "Predictor dimension"
+description = "Hidden dimension of the predictor"
+type = "int"
+default = 512
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_fix_pred_lr]
+name = "Fix predictor LR"
+description = "Fix learning rate for predictor"
+type = "bool"
+default = true
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_real]
+name = "Use real space images"
+description = "Train model using images as input"
+type = "bool"
+default = true
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_fft]
+name = "Use power spectra"
+description = "Train model using FFT of images as input"
+type = "bool"
+default = true
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_downsample]
+name = "Downsample"
+description = "Downsample the image"
+type = "int"
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_size]
+name = "Size"
+description = "Size of the image in pixels (before downsampling)"
+type = "int"
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_conf_thresh]
+name = "Confidence threshold"
+description = "Confidence threshold for filtering"
+type = "float"
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_add_datetime]
+name = "Add datetime"
+description = "Append datetime to output directory name"
+type = "bool"
+advanced = true
+hidden = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_evaluate]
+name = "Evaluate"
+description = "Evaluate model on validation set"
+type = "bool"
+default = true
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_n_clusters]
+name = "KMeans clusters"
+description = "Number of clusters for KMeans"
+type = "int"
+default = 10
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_num_neighbors]
+name = "UMAP neighbors"
+description = "Number of neighbors for UMAP"
+type = "int"
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_min_dist_umap]
+name = "UMAP min distance"
+description = "Minimum distance for UMAP"
+type = "float"
+default = 0.0
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_n_components]
+name = "UMAP components"
+description = "Number of UMAP components"
+type = "int"
+advanced = true
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_matrix_num_references]
+name = "Number of images to show nearest neighbors"
+description = "How many sample images to use for showing nearest neighbors"
+type = "int"
+advanced = true
+default = 5
+condition = {arg="enable", value="true"}
+
+[tabs.prism.train_matrix_num_neighbors]
+name = "Number of nearest neighbors"
+description = "How many nearest neighbors to show for each reference image"
+type = "int"
+advanced = true
+default = 9
+condition = {arg="enable", value="true"}
 
 ##################
 # Slurm parameters

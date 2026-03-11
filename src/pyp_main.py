@@ -975,6 +975,11 @@ def spr_merge(parameters, check_for_missing_files=True):
             if tasks_per_arr > 1 and "t" in parameters["csp_no_stacks"].lower():
                 path = os.path.join(os.getcwd(), "frealign", "scratch")
                 particle_cspt.run_merge(path)
+                
+    # run prismpyp, if needed
+    if parameters.get("prism_enable"):
+
+        preprocess.prism.run(parameters)
 
 def generate_list_of_all_subvolumes(parameters):
     """Generate list of sub-volumes for sub-volume averaging
@@ -1252,6 +1257,7 @@ def split(parameters):
                 pass
 
         spr_train = parameters["data_mode"] == "spr" and "train" in parameters["detect_method"]
+        prism_train = parameters["data_mode"] == "spr" and parameters.get("prism_enable")
         tomo_train = parameters["data_mode"] == "tomo" and ( parameters["micromon_block"] == "tomo-particles-train" or parameters["tomo_vir_method"] == "pyp-train" or parameters["tomo_spk_method"] == "pyp-train" and parameters["tomo_vir_method"] == "none" )
         milo_train = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo-train"
         milo_eval = parameters["data_mode"] == "tomo" and parameters["micromon_block"] == "tomo-milo"
@@ -1373,7 +1379,7 @@ def split(parameters):
                 "swarm",
                 run_pyp(command="pyp", script=True),
                 jobtype=parameters["data_mode"] + "merge",
-                jobname="Merge",
+                jobname="Merge" if not prism_train else "Merge (gpu)",
                 queue=parameters["slurm_queue"],
                 scratch=0,
                 threads=parameters["slurm_merge_tasks"],
@@ -1382,7 +1388,8 @@ def split(parameters):
                 memory=parameters["slurm_merge_tasks"]*parameters["slurm_merge_memory_per_task"],
                 walltime=parameters["slurm_merge_walltime"],
                 dependencies=id,
-                csp_no_stacks=parameters["csp_no_stacks"]
+                csp_no_stacks=parameters["csp_no_stacks"],
+                use_gpu=prism_train
             )
 
     else:
