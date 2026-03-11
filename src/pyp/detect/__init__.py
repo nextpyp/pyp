@@ -8,3 +8,7 @@ from .core import (
     tomo_vir_is_required,
     tomo_subvolume_extract_is_required,
 )
+
+from .isonet_tools import (
+    build_command_options,
+)

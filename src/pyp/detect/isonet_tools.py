@@ -1352,23 +1352,23 @@ def isonet2_ctf_deconvolve(tomo_star, parameters, output = './deconv'):
     local_run.stream_shell_command(command)
 
 
-def build_command_options( parameters, prefix, values, booleans, strings):
+def build_command_options( parameters, prefix, values, booleans, strings, style="_"):
     
     isonet_parameters = "" 
            
     # we always pass these parameters
     for key in values:
-        isonet_parameters += f" --{key} {parameters.get(prefix + '_' + key)}"
+        isonet_parameters += f" --{key.replace("_",style)} {parameters.get(prefix + '_' + key)}"
 
     # we only pass these if True
     for key in booleans:
         if parameters.get(prefix + '_' + key):
-            isonet_parameters += f" --{key}"
+            isonet_parameters += f" --{key.replace("_",style)}"
     
     # we only pass these if not empty
     for key in strings:
         parameter = parameters.get(prefix + '_' + key)
         if parameter is not None and len(str(parameter)) > 0:
-            isonet_parameters += f" --{key} {parameter}"
+            isonet_parameters += f" --{key.replace("_",style)} {parameter}"
 
     return isonet_parameters
