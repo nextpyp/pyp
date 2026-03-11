@@ -997,7 +997,7 @@ def parameter_force_check(previous_parameters, new_parameters, project_dir="."):
                         stack_files = glob.glob( os.path.join(project_dir, "sva", "*_stack.mrc") )
                         logger.info(f"Particles will be re-extracted to reflect change in parameter {k}")
                         if len(stack_files) > 0:
-                            [ os.remove(stack) for stack in stack_files ]
+                            [ os.remove(stack) for stack in stack_files if os.path.exists(stack) ]
                         
                     elif (
                         ( "tomo_vir_" in k 
