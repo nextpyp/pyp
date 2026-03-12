@@ -137,11 +137,21 @@ def eval2d(args,real_domain=True):
     command = f"{PRISM_INIT_COMMAND} eval2d --evaluate --feature-extractor-weights {os.path.join(os.getcwd(),'train',output,'checkpoints','model_last.pth.tar')} --metadata-path {os.path.join(os.getcwd(),"train")} --output-path {os.path.join(os.getcwd(),"train",output)} {prism_eval2d_parameters} --svgz 2>&1 | tee '{log_file}'"
     local_run.stream_shell_command(command)
     
-    for f in glob.glob(os.path.join(os.getcwd(),"train",output,"inference","*")):
+    list_of_useful_files = [ "scatter_plot_UMAP.svgz", "nearest_neighbors_matrix.svgz", "data_for_export.parquet" ]
+    if real_domain:
+        list_of_useful_files.append("thumbnail_plot_umap_mg.svgz")
+    else:
+        list_of_useful_files.append("thumbnail_plot_umap_ps.svgz")
+    for f in list_of_useful_files:
+        source = os.path.join(os.getcwd(),"train",output,"inference",f)
         target = os.path.join(os.getcwd(),"train",output,Path(f).name)
         if os.path.exists(target):
             os.remove(target)
-        shutil.move(f,os.path.join(os.getcwd(),"train",output))
+        if os.path.exists(source):
+            shutil.move(source,target)
+    
+    shutil.rmtree(os.path.join(os.getcwd(),"train",output,"inference"))
+    shutil.rmtree(os.path.join(os.getcwd(),"train",output,"runs"))
     
     if real_domain:
         source = os.path.join(os.getcwd(),"train",output,"thumbnail_plot_umap_mg.svgz")
