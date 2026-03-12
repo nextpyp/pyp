@@ -1,16 +1,16 @@
 ============
 Introduction
 ============
-.. |python-badge| image:: https://img.shields.io/badge/Python-3.12-3776AB.svg?style=flat&logo=python&logoColor=white
+.. |python-badge| image:: https://img.shields.io/badge/Python-3.13-blue
    :target: https://www.python.org
-   :alt: Python 3.12
+   :alt: Python 3.13
    :height: 20
 
 .. |version-badge| image:: https://img.shields.io/badge/version-0.7.3-red
    :alt: version 0.7.3
    :height: 20
 
-.. |license-badge| image:: https://img.shields.io/badge/License-BSD_3--Clause-yellow.svg
+.. |license-badge| image:: https://img.shields.io/badge/License-BSD_3--Clause-lime.svg
    :target: https://github.com/nextpyp/pyp/blob/main/LICENSE
    :alt: BSD 3-Clause License
    :height: 20
@@ -24,4 +24,4 @@ The software is developed and maintained by the `Bartesaghi Lab <http://cryoem.c
 Documentation
 =============
 
-The `documentation <https://nextpyp.app/files/pyp/latest/docs/reference/cli.html>`_ contains installation instructions and tutorials for Single-Particle and Tomography.
+The `documentation <https://nextpyp.app/files/pyp/latest/docs/index.html>`_ contains installation instructions and tutorials for Single-Particle and Tomography.
