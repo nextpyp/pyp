@@ -40,6 +40,16 @@ def run(args):
     else:
         logger.info(f"Skipping training using power spectra")
 
+    # pack images and metadata into a single file
+    output_folder = os.path.join(os.getcwd(),"train")
+    file_list = [ 'zipped_thumbnail_images.tar.gz', 'real/data_for_export.parquet', 'fft/data_for_export.parquet'  ]
+    for f in ( 'real', 'fft'): 
+        parquet = os.path.join(f,'data_for_export.parquet')
+        if os.path.exists(parquet):
+            file_list.append(parquet)
+    command = f"cd {output_folder}; tar cvfz prismpyp_interactive.tbz {' '.join([ f for f in file_list if os.path.exists(f)])}"
+    local_run.run_shell_command(command)
+
 def preprocessing(args):
 
     cs_path = args.get("prism_ice_thicknkess")
@@ -203,6 +213,8 @@ def eval3d(args,real_domain=True):
 
     output = 'real' if real_domain else 'fft'
     
+    zipped_images = os.path.join(os.getcwd(),"train",output,"zipped_thumbnail_images.tar.gz")
+    
     logger.info(f"Evaluating prism model in 3D")
     log_file = os.path.join('train','prismpyp_eval3d.log')
     command = f"{PRISM_INIT_COMMAND} eval3d --evaluate --feature-extractor-weights {os.path.join(os.getcwd(),'train',output,'checkpoints','model_last.pth.tar')} --metadata-path {os.path.join(os.getcwd(),"train")} --output-path {os.path.join(os.getcwd(),"train",output)} {prism_eval3d_parameters} --svgz"
@@ -210,6 +222,9 @@ def eval3d(args,real_domain=True):
         command += " --zip-images"
     command += f" 2>&1 | tee '{log_file}'"
     local_run.stream_shell_command(command)
+    
+    if os.path.exists(zipped_images):
+        shutil.move(zipped_images,os.path.join(os.getcwd(),"train"))
     
     for f in glob.glob(os.path.join(os.getcwd(),"train",output,"inference","*")):
         target = os.path.join(os.getcwd(),"train",output,Path(f).name)
