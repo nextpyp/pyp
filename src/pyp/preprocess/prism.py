@@ -83,13 +83,13 @@ def train(args,real_domain=True):
     prefix = "prism_train"
 
     # we always pass these parameters
-    values = [ "epochs", "batch_size", "lr", "workers", "momentum", "num_neighbors", "weight_decay", "print_freq", "dim", "pred_dim", "min_dist_umap" ]
+    values = [ "epochs", "batch_size", "lr", "workers", "momentum", "num_neighbors", "weight_decay", "print_freq", "dim", "pred_dim", "min_dist_umap", "n_components", "n_clusters" ]
     
     # we only pass these if True
     booleans = [ "use_fft", "add_datetime", "zip_images", "fix_pred_lr" ]
 
     # we only pass these if not empty
-    strings = [ "resume", "feature_extractor_weights", "seed", "scope_pixel", "n_components", "n_clusters" ]
+    strings = [ "resume", "feature_extractor_weights", "seed", "scope_pixel" ]
 
     prism_train_parameters = build_command_options( args, prefix, values, booleans, strings, style="-" )
 
@@ -129,13 +129,13 @@ def eval2d(args,real_domain=True):
     prefix = "prism_train"
 
     # we always pass these parameters
-    values = [ "pred_dim", "min_dist_umap", "matrix_num_references", "matrix_num_neighbors", "num_neighbors" ]
+    values = [ "pred_dim", "min_dist_umap", "matrix_num_references", "matrix_num_neighbors", "num_neighbors", "n_components", "n_clusters" ]
     
     # we only pass these if True
     booleans = [ "use_fft", "fix_pred_lr" ]
 
     # we only pass these if not empty
-    strings = [ "embedding_path", "feature_extractor_weights", "n_components", "dim", "n_clusters" ]
+    strings = [ "embedding_path", "feature_extractor_weights", "dim" ]
 
     prism_eval2d_parameters = build_command_options( args, prefix, values, booleans, strings, style="-" )
 
@@ -200,13 +200,13 @@ def eval3d(args,real_domain=True):
     prefix = "prism_train"
 
     # we always pass these parameters
-    values = [ "dim", "pred_dim", "min_dist_umap", "num_neighbors" ]
+    values = [ "dim", "pred_dim", "min_dist_umap", "num_neighbors", "n_components", "n_clusters" ]
     
     # we only pass these if True
-    booleans = [ "use_fft", "evaluate", "n_components", "fix_pred_lr" ]
+    booleans = [ "evaluate", "fix_pred_lr" ]
 
     # we only pass these if not empty
-    strings = [ "embedding_path", "feature_extractor_weights", "n_clusters" ]
+    strings = [ "embedding_path", "feature_extractor_weights" ]
 
     prism_eval3d_parameters = build_command_options( args, prefix, values, booleans, strings, style="-" )
 
