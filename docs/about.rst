@@ -21,6 +21,45 @@ Developers
       :height: 16
       :alt: ORCID profile for 0000-0002-9773-3256
 
+* | Laura He |laura.he| |0009-0001-2518-3160| 
+
+   .. |laura.he| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/laura.he
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from yez
+
+   .. |0009-0001-2518-3160| image:: _static/orcid.svg
+      :target: https://orcid.org/0009-0001-2518-3160
+      :width: 16
+      :height: 16
+      :alt: ORCID profile for 0009-0001-2518-3160
+
+* | Alperen Tupurtu |at483|
+
+   .. |at483| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/at483
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from at483
+
+* | Alberto Bartesaghi |alberto| |0000-0002-7360-1523|
+
+   .. |alberto| image:: _static/gitlab.svg
+      :target: https://gitlab.cs.duke.edu/alberto
+      :width: 16
+      :height: 16
+      :alt: GitLab commits from alberto
+
+   .. |0000-0002-7360-1523| image:: _static/orcid.svg
+      :target: https://orcid.org/0000-0002-7360-1523
+      :width: 16
+      :height: 16
+      :alt: ORCID profile for 0000-0002-7360-1523
+
+Past Contributors
+-----------------
+
 * | Ye Zhou |yez| |0000-0002-0489-3614| 
 
    .. |yez| image:: _static/gitlab.svg
@@ -77,21 +116,6 @@ Developers
       :width: 16
       :height: 16
       :alt: ORCID profile for 0000-0002-7082-5257
-
-* | Alberto Bartesaghi |alberto| |0000-0002-7360-1523|
-
-   .. |alberto| image:: _static/gitlab.svg
-      :target: https://gitlab.cs.duke.edu/alberto
-      :width: 16
-      :height: 16
-      :alt: GitLab commits from alberto
-
-   .. |0000-0002-7360-1523| image:: _static/orcid.svg
-      :target: https://orcid.org/0000-0002-7360-1523
-      :width: 16
-      :height: 16
-      :alt: ORCID profile for 0000-0002-7360-1523
-
 
 Funding
 -------
