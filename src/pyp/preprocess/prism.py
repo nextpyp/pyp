@@ -224,7 +224,7 @@ def eval3d(args,real_domain=True):
     local_run.stream_shell_command(command)
     
     if os.path.exists(zipped_images):
-        shutil.move(zipped_images,os.path.join(os.getcwd(),"train"))
+        shutil.move(zipped_images,os.path.join(os.getcwd(),"train",Path(zipped_images).name))
     
     for f in glob.glob(os.path.join(os.getcwd(),"train",output,"inference","*")):
         target = os.path.join(os.getcwd(),"train",output,Path(f).name)
