@@ -77,7 +77,7 @@ def train(args,real_domain=True):
     values = [ "epochs", "batch_size", "lr", "workers", "momentum", "weight_decay", "print_freq", "dim", "pred_dim", "min_dist_umap" ]
     
     # we only pass these if True
-    booleans = [ "use_fft", "add_datetime", "evaluate", "zip_images", "num_neighbors", "fix_pred_lr" ]
+    booleans = [ "use_fft", "add_datetime", "zip_images", "num_neighbors", "fix_pred_lr" ]
 
     # we only pass these if not empty
     strings = [ "resume", "feature_extractor_weights", "classifier_weights", "seed", "downsample", "scope_pixel", "size", "conf_thresh", "n_components", "n_clusters" ]
@@ -123,7 +123,7 @@ def eval2d(args,real_domain=True):
     values = [ "pred_dim", "min_dist_umap", "matrix_num_references", "matrix_num_neighbors" ]
     
     # we only pass these if True
-    booleans = [ "use_fft", "evaluate", "fix_pred_lr" ]
+    booleans = [ "use_fft", "fix_pred_lr" ]
 
     # we only pass these if not empty
     strings = [ "embedding_path", "feature_extractor_weights", "num_neighbors", "n_components", "dim", "n_clusters" ]
@@ -184,7 +184,7 @@ def eval3d(args,real_domain=True):
     values = [ "dim", "pred_dim", "min_dist_umap" ]
     
     # we only pass these if True
-    booleans = [ "use_fft", "evaluate", "zip_images", "num_neighbors", "n_components", "fix_pred_lr" ]
+    booleans = [ "use_fft", "evaluate", "num_neighbors", "n_components", "fix_pred_lr" ]
 
     # we only pass these if not empty
     strings = [ "embedding_path", "feature_extractor_weights", "n_clusters" ]
