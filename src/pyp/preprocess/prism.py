@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pyp.detect.isonet_tools import build_command_options
 from pyp.utils import symlink_force
-from pyp.system import local_run
+from pyp.system import local_run, project_params
 from pyp.system.logging import logger
 
 milopyp_path = '/opt/pixi/prismpyp/.pixi/envs/default'
@@ -207,7 +207,7 @@ def eval3d(args,real_domain=True):
             os.remove(target)
         shutil.move(f,os.path.join(os.getcwd(),"train",output))
 
-def intersect(args):
+def intersect(args,good_real_classes,good_fft_classes):
     
     # intersection
 
@@ -219,19 +219,34 @@ def intersect(args):
         --data-path example_data/webp
     """
 
-    prefix = "prism_intersect"
+    prism_intersect_parameters = f"--output-folder {os.getcwd()} --link-type soft"
 
-    # we always pass these parameters
-    values = [ "backbone", "dim", "pred_dim", "n_clusters", "num_neighbors", "min_dist_umap", "n_components" ]
+    parent_block_path = project_params.resolve_path(args.get("data_parent"))
+
+    real_parquet_file = os.path.join( parent_block_path, "train", "real", "data_for_export.parquet")
+    fft_parquet_file = os.path.join( parent_block_path, "train", "fft", "data_for_export.parquet")
+    prism_intersect_parameters += f" --real-parquet-file {real_parquet_file} --fft-parquet-file {fft_parquet_file}"
     
-    # we only pass these if True
-    booleans = [ "use_fft", "evaluate", "zip_images", "fix_pred_lr" ]
+    bypass_filtering = False
+    if len(good_real_classes) + len(good_fft_classes) > 0:
+        if len(good_real_classes) > 0:
+            prism_intersect_parameters += f" --good-real-classes {' '.join(good_real_classes)}"
 
-    # we only pass these if not empty
-    strings = [ "embedding_path", "feature_extractor_weights" ]
-
-    prism_intersect_parameters = build_command_options( args, prefix, values, booleans, strings, style="-" )
-
-    logger.info(f"Intersecting prism results")
-    command = f"{PRISM_INIT_COMMAND} intersect {prism_intersect_parameters}"
-    local_run.stream_shell_command(command)
+        if len(good_fft_classes) > 0:
+            prism_intersect_parameters += f" --good-fft-classes {' '.join(good_fft_classes)}"
+    elif os.path.exists(good_real_parquet) or os.path.exists(good_fft_parquet):
+        good_real_parquet = os.path.join( parent_block_path, "train", "real", "micrographs.parquet" )
+        good_fft_parquet = os.path.join( parent_block_path, "train", "fft", "micrographs.parquet" )
+        if os.path.exists(good_real_parquet):
+            prism_intersect_parameters += f" --real-parquet-file {good_real_parquet}"
+        if os.path.exists(good_fft_parquet):
+            prism_intersect_parameters += f" --fft-parquet-file {good_fft_parquet}"
+    else:
+        bypass_filtering = True
+        logger.warning('No selection specified for prismPYP!')
+        
+    if not bypass_filtering:
+        logger.info(f"Intersecting prismPYP results")
+        log_file = os.path.join('train','prismpyp_intersect.log')
+        command = f"{PRISM_INIT_COMMAND} intersect {prism_intersect_parameters} 2>&1 | tee '{log_file}'"
+        local_run.stream_shell_command(command)

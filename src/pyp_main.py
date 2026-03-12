@@ -5464,16 +5464,22 @@ if __name__ == "__main__":
                                                      
                             # parse prismppyp selection
                             real_classes = np.array([])
-                            real_classes_file = f"{dataset}.real.classes"
+                            real_classes_file = f"{parameters.get('data_set')}.real.classes"
                             if os.path.exists(real_classes_file):
-                                real_classes = np.loadtxt(real_classes_file)
+                                real_classes = np.loadtxt(real_classes_file, dtype=int) - 1
+                                os.remove(real_classes_file)
                             fft_classes = np.array([])
-                            fft_classes_file = f"{dataset}.fft.classes"
+                            fft_classes_file = f"{parameters.get('data_set')}.fft.classes"
                             if os.path.exists(fft_classes_file):
-                                fft_classes = np.loadtxt(fft_classes_file)
+                                fft_classes = np.loadtxt(fft_classes_file, dtype=int) - 1
+                                os.remove(fft_classes_file)
                                 
                             if real_classes.size > 0 or fft_classes.size > 0:
-                                preprocess.prism.intersect(parameters,real_classes.tolist(),fft_classes.tolist())
+                                preprocess.prism.intersect(parameters,real_classes.astype(str).tolist(),fft_classes.astype(str).tolist())
+                                
+                            output_file = "files_in_common.txt"
+                            assert os.path.exists(output_file), "No images left after prismPYP filtering!"
+                            shutil.move( output_file, f"{parameters.get("data_set")}.micrographs")                           
                             
                         # check if relion stacks exist
                         relion_stacks_exist = len(glob.glob("relion/stacks/*.mrcs")) > 0
