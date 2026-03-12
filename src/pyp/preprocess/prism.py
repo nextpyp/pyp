@@ -246,32 +246,49 @@ def intersect(args,good_real_classes,good_fft_classes):
 
     prism_intersect_parameters = f"--output-folder {os.getcwd()} --link-type soft"
 
-    parent_block_path = project_params.resolve_path(args.get("data_parent"))
+    parent_block_train_path = os.path.join( project_params.resolve_path(args.get("data_parent")), "train" )
 
-    real_parquet_file = os.path.join( parent_block_path, "train", "real", "data_for_export.parquet")
-    fft_parquet_file = os.path.join( parent_block_path, "train", "fft", "data_for_export.parquet")
-    prism_intersect_parameters += f" --real-parquet-file {real_parquet_file} --fft-parquet-file {fft_parquet_file}"
-    
+    real_selected_parquet_file = os.path.join( parent_block_train_path, "real", "micrographs.parquet")
+    real_parquet_file = os.path.join( parent_block_train_path, "real", "data_for_export.parquet")
+    fft_selected_parquet_file = os.path.join( parent_block_train_path, "fft", "micrographs.parquet")
+    fft_parquet_file = os.path.join( parent_block_train_path, "fft", "data_for_export.parquet")
+
     bypass_filtering = False
     if len(good_real_classes) + len(good_fft_classes) > 0:
+    
         if len(good_real_classes) > 0:
             prism_intersect_parameters += f" --good-real-classes {' '.join(good_real_classes)}"
 
         if len(good_fft_classes) > 0:
             prism_intersect_parameters += f" --good-fft-classes {' '.join(good_fft_classes)}"
-    elif os.path.exists(good_real_parquet) or os.path.exists(good_fft_parquet):
-        good_real_parquet = os.path.join( parent_block_path, "train", "real", "micrographs.parquet" )
-        good_fft_parquet = os.path.join( parent_block_path, "train", "fft", "micrographs.parquet" )
-        if os.path.exists(good_real_parquet):
-            prism_intersect_parameters += f" --real-parquet-file {good_real_parquet}"
-        if os.path.exists(good_fft_parquet):
-            prism_intersect_parameters += f" --fft-parquet-file {good_fft_parquet}"
+            
+        if os.path.exists(real_parquet_file):
+            prism_intersect_parameters += f" --real-parquet-file {real_parquet_file}"
+        if os.path.exists(fft_parquet_file):
+            prism_intersect_parameters += f" --fft-parquet-file {fft_parquet_file}"
+    
+    elif os.path.exists(real_selected_parquet_file) or os.path.exists(fft_selected_parquet_file):
+    
+        if os.path.exists(real_selected_parquet_file):
+            prism_intersect_parameters += f" --real-parquet-file {real_selected_parquet_file}"
+        if os.path.exists(fft_selected_parquet_file):
+            prism_intersect_parameters += f" --fft-parquet-file {fft_selected_parquet_file}"
+    
     else:
+    
         bypass_filtering = True
         logger.warning('No selection specified for prismPYP!')
-        
+    
+    prism_intersect_parameters += f" --webp-path {os.path.join(project_params.resolve_path(args.get('data_parent')),'webp')}"
+    
     if not bypass_filtering:
         logger.info(f"Intersecting prismPYP results")
-        log_file = os.path.join('train','prismpyp_intersect.log')
+        log_file = os.path.join('log','prismpyp_intersect.log')
         command = f"{PRISM_INIT_COMMAND} intersect {prism_intersect_parameters} 2>&1 | tee '{log_file}'"
         local_run.stream_shell_command(command)
+        
+        # get rid of unnecesary files/folders
+        shutil.rmtree("files")        
+        intersection_file = 'intersection.parquet'
+        if os.path.exists(intersection_file):
+            os.remove(intersection_file)

@@ -103,7 +103,7 @@ from pyp.system.singularity import (
 )
 from pyp.system.utils import get_imod_path, get_topaz_path, get_multirun_path, get_parameter_files_path, get_gpu_queue, parse_logger_level
 from pyp.postprocess import warptools
-from pyp.utils import timer, symlink_relative, symlink_relative_pattern, cuda_info
+from pyp.utils import timer, symlink_relative, symlink_relative_pattern, cuda_info, symlink_force
 from pyp.postprocess.warptools import warptools_noise2map
 
 from pyp.refine.tomo_avg import sub_tomo_avg as sub_tomo_avg
@@ -977,7 +977,7 @@ def spr_merge(parameters, check_for_missing_files=True):
                 particle_cspt.run_merge(path)
                 
     # run prismpyp, if needed
-    if parameters.get("prism_enable"):
+    if parameters.get("prism_enable") and parameters.get("micromon_block") == "sp-preprocessing":
 
         preprocess.prism.run(parameters)
 
@@ -5473,13 +5473,32 @@ if __name__ == "__main__":
                             if os.path.exists(fft_classes_file):
                                 fft_classes = np.loadtxt(fft_classes_file, dtype=int) - 1
                                 os.remove(fft_classes_file)
-                                
-                            if real_classes.size > 0 or fft_classes.size > 0:
-                                preprocess.prism.intersect(parameters,real_classes.astype(str).tolist(),fft_classes.astype(str).tolist())
+                            
+                            preprocess.prism.intersect(parameters,real_classes.astype(str).tolist(),fft_classes.astype(str).tolist())
                                 
                             output_file = "files_in_common.txt"
                             assert os.path.exists(output_file), "No images left after prismPYP filtering!"
-                            shutil.move( output_file, f"{parameters.get("data_set")}.micrographs")                           
+                            
+                            left_after_prismpyp = np.loadtxt(output_file,dtype='str').tolist()
+                            
+                            # read micrograph list in case table filters were used
+                            micrograph_file = "{}.micrographs".format(parameters.get("data_set"))
+                            films_file = "{}.films".format(parameters.get("data_set"))
+                            assert os.path.exists(micrograph_file), f"No .micrographs file found in {os.getcwd()}"
+                            
+                            micrograph_list = [line.strip() for line in open(micrograph_file, "r") if line.strip()]
+
+                            clean_micrographs = [f.strip('.webp') for f in left_after_prismpyp if f.strip('.webp') in micrograph_list]                            
+                            assert len(clean_micrographs) > 0, "No micrographs left after filtering!"
+
+                            logger.info(f"{len(clean_micrographs):,} micrographs left after table and prismpyp filtering")
+                            os.remove(micrograph_file)
+                            with open(micrograph_file,'w') as f:
+                                for m in clean_micrographs:
+                                    f.write(m+'\n')
+                            
+                            # also update .films file
+                            symlink_force(micrograph_file,films_file)    
                             
                         # check if relion stacks exist
                         relion_stacks_exist = len(glob.glob("relion/stacks/*.mrcs")) > 0
