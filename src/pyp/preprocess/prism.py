@@ -45,7 +45,8 @@ def preprocessing(args):
     cs_path = args.get("prism_ice_thicknkess")
     ice_thickness = f"--cryosparc-path {cs_path}" if cs_path and os.path.exists(cs_path) else ""
     
-    command = f"{PRISM_INIT_COMMAND} metadata_nextpyp --pkl-path {os.path.join(os.getcwd(),"pkl")} --output-dir={os.path.join(os.getcwd(),"train")} {ice_thickness}"
+    log_file = os.path.join('train','prismpyp_preprocesing.log')
+    command = f"{PRISM_INIT_COMMAND} metadata_nextpyp --pkl-path {os.path.join(os.getcwd(),"pkl")} --output-dir={os.path.join(os.getcwd(),"train")} {ice_thickness} 2>&1 | tee '{log_file}'"
     local_run.stream_shell_command(command)    
 
 def train(args,real_domain=True):
@@ -86,7 +87,9 @@ def train(args,real_domain=True):
     output = 'real' if real_domain else 'fft'
      
     logger.info(f"Training prism model")
-    command = f"{PRISM_INIT_COMMAND} train --metadata-path {os.path.join(os.getcwd(),"train")} --output-path {os.path.join(os.getcwd(),"train",output)} {prism_train_parameters} --svgz"
+
+    log_file = os.path.join('train','prismpyp_training.log')
+    command = f"{PRISM_INIT_COMMAND} train --metadata-path {os.path.join(os.getcwd(),"train")} --output-path {os.path.join(os.getcwd(),"train",output)} {prism_train_parameters} --svgz 2>&1 | tee '{log_file}'"
     local_run.stream_shell_command(command)
     
 def eval2d(args,real_domain=True):
@@ -130,7 +133,8 @@ def eval2d(args,real_domain=True):
     output = 'real' if real_domain else 'fft'
 
     logger.info(f"Evaluating prism model in 2D")
-    command = f"{PRISM_INIT_COMMAND} eval2d --evaluate --feature-extractor-weights {os.path.join(os.getcwd(),'train',output,'checkpoints','model_last.pth.tar')} --metadata-path {os.path.join(os.getcwd(),"train")} --output-path {os.path.join(os.getcwd(),"train",output)} {prism_eval2d_parameters} --svgz"
+    log_file = os.path.join('train','prismpyp_eval2d.log')
+    command = f"{PRISM_INIT_COMMAND} eval2d --evaluate --feature-extractor-weights {os.path.join(os.getcwd(),'train',output,'checkpoints','model_last.pth.tar')} --metadata-path {os.path.join(os.getcwd(),"train")} --output-path {os.path.join(os.getcwd(),"train",output)} {prism_eval2d_parameters} --svgz 2>&1 | tee '{log_file}'"
     local_run.stream_shell_command(command)
     
     for f in glob.glob(os.path.join(os.getcwd(),"train",output,"inference","*")):
@@ -190,9 +194,11 @@ def eval3d(args,real_domain=True):
     output = 'real' if real_domain else 'fft'
     
     logger.info(f"Evaluating prism model in 3D")
+    log_file = os.path.join('train','prismpyp_eval3d.log')
     command = f"{PRISM_INIT_COMMAND} eval3d --evaluate --feature-extractor-weights {os.path.join(os.getcwd(),'train',output,'checkpoints','model_last.pth.tar')} --metadata-path {os.path.join(os.getcwd(),"train")} --output-path {os.path.join(os.getcwd(),"train",output)} {prism_eval3d_parameters} --svgz"
-    if not os.path.exists(os.path.join(os.getcwd(),"train",output,"zipped_thumbnail_images.tar.gz")):
+    if not os.path.exists(zipped_images):
         command += " --zip-images"
+    command += f" 2>&1 | tee '{log_file}'"
     local_run.stream_shell_command(command)
     
     for f in glob.glob(os.path.join(os.getcwd(),"train",output,"inference","*")):
