@@ -297,7 +297,8 @@ def intersect(args,good_real_classes,good_fft_classes):
         local_run.stream_shell_command(command)
         
         # get rid of unnecesary files/folders
-        shutil.rmtree("files")        
+        if os.path.exists("files"):
+            shutil.rmtree("files")        
         intersection_file = 'intersection.parquet'
         if os.path.exists(intersection_file):
             os.remove(intersection_file)
