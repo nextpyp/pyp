@@ -232,14 +232,14 @@ def eval3d(args,real_domain=True):
     command += f" 2>&1 | tee '{log_file}'"
     local_run.stream_shell_command(command)
     
-    if os.path.exists(source_zipped_images):
-        shutil.move(source_zipped_images,target_zipped_images)
-    
     for f in glob.glob(os.path.join(os.getcwd(),"train",output,"inference","*")):
         target = os.path.join(os.getcwd(),"train",output,Path(f).name)
         if os.path.exists(target):
             os.remove(target)
         shutil.move(f,os.path.join(os.getcwd(),"train",output))
+
+    if os.path.exists(source_zipped_images):
+        shutil.move(source_zipped_images,target_zipped_images)
 
 def intersect(args,good_real_classes,good_fft_classes):
     
