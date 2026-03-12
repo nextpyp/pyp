@@ -10964,14 +10964,6 @@ path = { type = "files" }
 advanced = true
 condition = {arg="enable", value="true"}
 
-[tabs.prism.train_classifier_weights]
-name = "Classifier weights"
-description = "Path to pre-trained classifier weights"
-type = "path"
-path = { type = "files" }
-advanced = true
-condition = {arg="enable", value="true"}
-
 [tabs.prism.train_world_size]
 name = "World size"
 description = "Number of nodes for distributed training"
@@ -11040,7 +11032,6 @@ name = "Use real space images"
 description = "Train model using images as input"
 type = "bool"
 default = true
-advanced = true
 condition = {arg="enable", value="true"}
 
 [tabs.prism.train_fft]
@@ -11048,28 +11039,6 @@ name = "Use power spectra"
 description = "Train model using FFT of images as input"
 type = "bool"
 default = true
-advanced = true
-condition = {arg="enable", value="true"}
-
-[tabs.prism.train_downsample]
-name = "Downsample"
-description = "Downsample the image"
-type = "int"
-advanced = true
-condition = {arg="enable", value="true"}
-
-[tabs.prism.train_size]
-name = "Size"
-description = "Size of the image in pixels (before downsampling)"
-type = "int"
-advanced = true
-condition = {arg="enable", value="true"}
-
-[tabs.prism.train_conf_thresh]
-name = "Confidence threshold"
-description = "Confidence threshold for filtering"
-type = "float"
-advanced = true
 condition = {arg="enable", value="true"}
 
 [tabs.prism.train_add_datetime]
@@ -11093,14 +11062,13 @@ name = "KMeans clusters"
 description = "Number of clusters for KMeans"
 type = "int"
 default = 10
-advanced = true
 condition = {arg="enable", value="true"}
 
 [tabs.prism.train_num_neighbors]
 name = "UMAP neighbors"
 description = "Number of neighbors for UMAP"
 type = "int"
-advanced = true
+default = 10
 condition = {arg="enable", value="true"}
 
 [tabs.prism.train_min_dist_umap]
@@ -11108,21 +11076,19 @@ name = "UMAP min distance"
 description = "Minimum distance for UMAP"
 type = "float"
 default = 0.0
-advanced = true
 condition = {arg="enable", value="true"}
 
 [tabs.prism.train_n_components]
 name = "UMAP components"
 description = "Number of UMAP components"
 type = "int"
-advanced = true
+default = 2
 condition = {arg="enable", value="true"}
 
 [tabs.prism.train_matrix_num_references]
 name = "Number of images to show nearest neighbors"
 description = "How many sample images to use for showing nearest neighbors"
 type = "int"
-advanced = true
 default = 5
 condition = {arg="enable", value="true"}
 
@@ -11130,7 +11096,6 @@ condition = {arg="enable", value="true"}
 name = "Number of nearest neighbors"
 description = "How many nearest neighbors to show for each reference image"
 type = "int"
-advanced = true
 default = 9
 condition = {arg="enable", value="true"}
 

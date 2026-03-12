@@ -89,7 +89,7 @@ def train(args,real_domain=True):
     booleans = [ "use_fft", "add_datetime", "zip_images", "num_neighbors", "fix_pred_lr" ]
 
     # we only pass these if not empty
-    strings = [ "resume", "feature_extractor_weights", "classifier_weights", "seed", "downsample", "scope_pixel", "size", "conf_thresh", "n_components", "n_clusters" ]
+    strings = [ "resume", "feature_extractor_weights", "seed", "scope_pixel", "n_components", "n_clusters" ]
 
     prism_train_parameters = build_command_options( args, prefix, values, booleans, strings, style="-" )
 
