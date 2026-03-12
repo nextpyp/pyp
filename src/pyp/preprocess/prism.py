@@ -86,12 +86,15 @@ def train(args,real_domain=True):
     values = [ "epochs", "batch_size", "lr", "workers", "momentum", "num_neighbors", "weight_decay", "print_freq", "dim", "pred_dim", "min_dist_umap", "n_components", "n_clusters" ]
     
     # we only pass these if True
-    booleans = [ "use_fft", "add_datetime", "zip_images", "fix_pred_lr" ]
+    booleans = [ "add_datetime", "zip_images", "fix_pred_lr" ]
 
     # we only pass these if not empty
     strings = [ "resume", "feature_extractor_weights", "seed", "scope_pixel" ]
 
     prism_train_parameters = build_command_options( args, prefix, values, booleans, strings, style="-" )
+    
+    if not real_domain:
+        prism_train_parameters += " --use-fft"
 
     output = 'real' if real_domain else 'fft'
      
@@ -132,12 +135,15 @@ def eval2d(args,real_domain=True):
     values = [ "pred_dim", "min_dist_umap", "matrix_num_references", "matrix_num_neighbors", "num_neighbors", "n_components", "n_clusters" ]
     
     # we only pass these if True
-    booleans = [ "use_fft", "fix_pred_lr" ]
+    booleans = [ "fix_pred_lr" ]
 
     # we only pass these if not empty
     strings = [ "embedding_path", "feature_extractor_weights", "dim" ]
 
     prism_eval2d_parameters = build_command_options( args, prefix, values, booleans, strings, style="-" )
+
+    if not real_domain:
+        prism_eval2d_parameters += " --use-fft"
 
     output = 'real' if real_domain else 'fft'
 
@@ -209,6 +215,9 @@ def eval3d(args,real_domain=True):
     strings = [ "embedding_path", "feature_extractor_weights" ]
 
     prism_eval3d_parameters = build_command_options( args, prefix, values, booleans, strings, style="-" )
+
+    if not real_domain:
+        prism_eval3d_parameters += " --use-fft"
 
     output = 'real' if real_domain else 'fft'
     
