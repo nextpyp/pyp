@@ -51,6 +51,7 @@
    guide/chimerax_artiax
    guide/workflows
    Import/export<guide/import_export>
+   prismPYP image filtering<guide/prismpyp>
 
 .. toctree::
    :caption: Configuration
