@@ -12,7 +12,9 @@ Primary
 Method-specific
 ---------------
 
-- Liu, HF., Zhou, Y., Huang, Q., Martin, J., Bartesaghi, A. (2025), `In situ structure determination of conformationally flexible targets using nextPYP <https://www.nature.com/articles/s41596-025-01218-9>`_, Nature Protocols, in press.
+- He, L., Bartesaghi, A. (2026), `In situ structure determination of conformationally flexible targets using nextPYP <https://www.cell.com/structure/fulltext/S0969-2126(26)00057-2>`_, Structure, in press.
+
+- Liu, HF., Zhou, Y., Huang, Q., Martin, J., Bartesaghi, A. (2025), `In situ structure determination of conformationally flexible targets using nextPYP <https://www.nature.com/articles/s41596-025-01218-9>`_, Nature Protocols, 21:851–871.
 
 - Huang, Q., Zhou, Y., Bartesaghi, A. (2024), `MiLoPYP: self-supervised molecular pattern mining and particle localization in situ <https://www.nature.com/articles/s41592-024-02403-6>`_, Nature Methods, 21:1863–1872.
 

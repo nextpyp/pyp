@@ -2,7 +2,7 @@
 Self-Supervised Micrograph Quality Assessment (prismPYP)
 ========================================================
 
-`prismPYP <https://nextpyp.app/prismpyp/>`_ is a label-free pipeline for classifying cryo-EM micrographs using both real-space and Fourier-space features, as described in `He and Bartesaghi (2026) <tbd>`_.
+`prismPYP <https://nextpyp.app/prismpyp/>`_ is a label-free pipeline for classifying cryo-EM micrographs using both real-space and Fourier-space features, as described in `He and Bartesaghi (2026) <https://www.cell.com/structure/fulltext/S0969-2126(26)00057-2>`_.
 
 The ``prismPYP`` workflow in ``nextPYP`` operates on real domain and Fourier domain images as two independent branches that can be run in parallel. In each branch, we perform dataset-specific feature learning and use the trained model to produce visualization results in both 2D and 3D. 
 
