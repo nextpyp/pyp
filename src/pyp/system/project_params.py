@@ -271,7 +271,18 @@ def create_micrographs_list(parameters):
                     ]
                     files = [m.group(1) for m in match_files if m != None]
                 elif parameters["movie_source"] == "mdoc" and len(mdocs) > 0:
-                    files = [str(f.name).replace(".mdoc", "").replace(".mrc", "") for f in mdocs]
+
+                    files = []
+                    for file in mdocs:
+                        tilt_series_name = None
+                        with open(file, 'r') as f:
+                            for line in f.readlines():
+                                if line.startswith("ImageFile"):
+                                    tilt_series_name = str(Path(line.split("=")[-1]).stem).strip()
+                                    break
+                        if tilt_series_name == None:
+                            tilt_series_name = str(Path(Path(file).stem).stem)
+                        files.append(tilt_series_name)
                     logger.info("Create micrograph list using mdocs files")
                     # NOTE: one mdoc for one tilt-series (rather than one tilt)
             else:
