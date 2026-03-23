@@ -6,7 +6,7 @@ MILOPYP=/opt/pixi/milopyp
 mkdir -p $MILOPYP
 cd $MILOPYP
 pixi init --format pyproject
-pixi add python=3.11.14 cuda=12.8.1
+pixi add python=3.11.14 cuda-version=12.8
 pixi add \
 	colored-traceback==0.3.0 \
 	overrides==7.7.0 \
@@ -25,7 +25,7 @@ PRISMPYP=/opt/pixi/prismpyp
 mkdir -p $PRISMPYP
 cd $PRISMPYP
 pixi init --format pyproject
-pixi add python=3.11.14 cuda=12.8.1
+pixi add python=3.11.14 cuda-version=12.8
 pixi add --pypi \
 	torch==2.9.0 \
 	torchvision==0.24.0
@@ -41,7 +41,7 @@ git checkout v0.3.18
 sed -i 's/"dependencies",\? *//g' pyproject.toml
 pixi init --format pyproject
 pixi install
-pixi add python=3.12.12 cuda=12.8.1
+pixi add python=3.12.12 cuda-version=12.8
 pixi add --pypi \
 	h5py==3.15.1 \
 	tqdm==4.67.3 \
