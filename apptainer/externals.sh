@@ -85,11 +85,11 @@ current=`pwd`
 cd /opt
 git clone https://github.com/3dem/relion.git
 cd relion
-git checkout ver5.0
+git checkout ver5.1
 git pull
 mkdir build
 cd build
-cmake -DGUI=OFF ..
+cmake ..
 make -j 4
 make install
 rm -rf /opt/relion
