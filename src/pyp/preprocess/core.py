@@ -191,12 +191,12 @@ def read_tilt_series(
     if mdoc_path is not None:
         mdoc_pattern = Path(resolve_path(parameters["data_path_mdoc"])).name
         mdocs = list(mdoc_path.glob(str(mdoc_pattern)))
-        mdocs = [str(file) for file in mdocs if str(file.name).replace(".mrc", "").replace(".mdoc", "") == name]
+        mdocs = [str(file) for file in mdocs if str(file.name).startswith(name) ]
 
     if len(mdocs) == 0:
         # get the mdoc files from the path of raw data if it couldn't find them in mdoc path
         mdocs = list(data_path.glob(mdoc_pattern))
-        mdocs = [str(file) for file in mdocs if str(file.name).replace(".mrc", "").replace(".mdoc", "") == name]
+        mdocs = [str(file) for file in mdocs if str(file.name).startswith(name)]
 
     # escape special character in case it contains [
     filename = glob.escape(filename)
