@@ -4471,7 +4471,7 @@ def align_movie_frames(parameters, name, suffix, isfirst = False):
 {patches} \
 {dose_weighting_options} \
 {mag_correction_options} \
--Gpu {get_gpu_ids(parameters,base_zero=True,separator=' ')}"
+-Gpu {get_gpu_ids(parameters,separator=' ')}"
         [ output, error ] = run_shell_command(command)
 
         if "Segmentation fault" in error or "Killed" in error:
@@ -5196,7 +5196,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 {reconstruct_option} \
 -TiltCor {tilt_offset_option} \
 -OutImod 2 {patches} \
--Gpu {get_gpu_ids(parameters,base_zero=True,separator=' ')} 2>&1 | tee {logfile}"
+-Gpu {get_gpu_ids(parameters,separator=' ')} 2>&1 | tee {logfile}"
 
             output = []
             def obs(line):
@@ -5583,7 +5583,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -VolZ {thickness} \
 -TiltAxis {rotation} \
 {patches} \
--Gpu {get_gpu_ids(parameters,base_zero=True,separator=' ')} \
+-Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']} 2>&1 | tee {logfile}"
 
             output = []
@@ -5642,7 +5642,7 @@ def align_tilt_series(name, parameters, rotation=0, excluded_views=""):
 -VolZ {thickness} \
 -TiltAxis {rotation} \
 {patches} \
--Gpu {get_gpu_ids(parameters,base_zero=True,separator=' ')} \
+-Gpu {get_gpu_ids(parameters,separator=' ')} \
 -TmpDir {os.environ['PYP_SCRATCH']}"
 
             stream_shell_command(command)
