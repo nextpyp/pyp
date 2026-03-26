@@ -149,7 +149,7 @@ def needs_gpu(parameters):
             ):
                 gpu_for_denoising = True
         case "":
-            if not (
+            if parameters.get("data_mode") == "tomo" and not (
                 parameters.get("tomo_denoise_method") == "topaz"
                 and not parameters.get("tomo_denoise_topaz_use_gpu")
                 or parameters.get("tomo_denoise_method") == "isonet"
