@@ -10,6 +10,8 @@ v0.7.3
    
    :fa:`star` **New features**
    
+   - prismPYP: power-spectrum and image domain learning for self-supervised micrograph evaluation, as described in `He et al., 2026` <https://www.cell.com/structure/fulltext/S0969-2126(26)00057-2>`_.
+
    - New block for running traditional sub-volume averaging. This block can be used for ab-initio alignment through classification, as described in `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_.
 
    - New logger allows users to select one of three levels of verbosity for greater control over program output.
@@ -23,6 +25,12 @@ v0.7.3
    - Tomogram denoising using `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet2>`_.
 
    :fa:`plus-square` **Improvements**
+
+   - Add multi-GPU and Blackwell support for Topaz denoise.
+
+   - Show half-tomograms in GUI, when available.
+
+   - Add support for reading mrc files in 12-bit format during single-particle processing.
 
    - Improve pre-processing efficiency by skipping gold fiducial detection when they won't be erased during reconstruction.
 
@@ -71,7 +79,11 @@ v0.7.3
    - Allow non-integer binning factors during tomogram reconstruction.
 
    :fa:`bug` **Bug fixes**
-   
+
+   - Correctly handle missing and/or removed tilts when generating half-tomograms.
+
+   - Fix bug when parsing *.mdoc files for tilt-series produced by PACEtomo.
+
    - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
 
    - Fix bug when parsing input parameters during particle filtering.
