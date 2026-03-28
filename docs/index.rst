@@ -29,11 +29,6 @@
    Single-particle session<tutorials/stream_spr>
    Tomography session<tutorials/stream_tomo>
 
-   DHVI workshop day 1 <workshop/dhvi_day1>
-   DHVI workshop day 2 <workshop/dhvi_day2>
-   DHVI workshop day 3 <workshop/dhvi_day3>
-   DHVI workshop day 4 <workshop/dhvi_day4>
-
 .. toctree::
    :caption: User Guide
    :hidden:
@@ -41,6 +36,7 @@
 
    guide/overview
    guide/filters
+   prismPYP image filtering<guide/prismpyp>
    guide/picking2d
    guide/picking3d
    guide/milopyp
@@ -51,7 +47,6 @@
    guide/chimerax_artiax
    guide/workflows
    Import/export<guide/import_export>
-   prismPYP image filtering<guide/prismpyp>
 
 .. toctree::
    :caption: Configuration

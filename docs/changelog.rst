@@ -5,14 +5,14 @@ Changelog
 v0.7.3
 ------
 
-.. nextpyp:: Released TBA
+.. nextpyp:: Released 3/30/2026
    :collapsible: open
    
    :fa:`star` **New features**
    
-   - prismPYP: power-spectrum and image domain learning for self-supervised micrograph evaluation, as described in `He et al., 2026` <https://www.cell.com/structure/fulltext/S0969-2126(26)00057-2>`_.
+   - :doc:`prismPYP<guide/prismpyp>`: power-spectrum and image domain learning for self-supervised micrograph evaluation, as described in `He et al., 2026 <https://www.cell.com/structure/fulltext/S0969-2126(26)00057-2>`_.
 
-   - New block for running traditional sub-volume averaging. This block can be used for ab-initio alignment through classification, as described in `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_.
+   - New block for running traditional :doc:`sub-volume averaging<guide/subtomogramaveraging>`. This block can be used for ab-initio alignment through classification, as described in `Bartesaghi et al., 2008 <https://doi.org/10.1016/j.jsb.2008.02.008>`_.
 
    - New logger allows users to select one of three levels of verbosity for greater control over program output.
    
@@ -24,11 +24,13 @@ v0.7.3
 
    - Tomogram denoising using `IsoNet2 <https://github.com/IsoNet-cryoET/IsoNet2>`_.
 
+   - New graphical layouts for projects featuring Graph, List and Gallery views to facilitate navigation.
+
    :fa:`plus-square` **Improvements**
 
    - Add multi-GPU and Blackwell support for Topaz denoise.
 
-   - Show half-tomograms in GUI, when available.
+   - Show half-tomograms when generating them for deep learning-based denoisng.
 
    - Add support for reading mrc files in 12-bit format during single-particle processing.
 
@@ -38,7 +40,7 @@ v0.7.3
 
    - Improve efficiency during tomography refinement by avoiding unnecessary linking of subtomogram files.
 
-   - Visualization of 3D correlation volume and diagnostic plots when running template matching using pytom-match-pick.
+   - Visualization of 3D correlation volume and diagnostic plots when running template matching using `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_.
 
    - Add progress bar when merging particle stacks to improve reponsiveness.
 
@@ -58,7 +60,7 @@ v0.7.3
 
    - Better support for wildcard characters when specifying input file patterns in data import blocks.
 
-   - Add support to import tilt-series with *.mrcs extentions.
+   - Add support to import tilt-series with *.mrcs extensions.
 
    - Updated AreTomo3 version to 2.2.2.
 
@@ -70,13 +72,19 @@ v0.7.3
 
    - Expose filtering parameters to control tomogram deconvolution when running membrain-seg.
 
-   - Expose option to control top-hat filtering during 3D template matching using pytom-match-pick.
+   - Expose option to control top-hat filtering during 3D template matching using `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_.
 
    - Add visualization of heat maps during deep learning-based particle picking in tomography pipeline.
 
    - Add visualization of contamination masks during size-based particle picking in tomography pipeline.
 
    - Allow non-integer binning factors during tomogram reconstruction.
+
+   - Add option to negate the Exclude column in Table view of the pre-processing block.
+
+   - Enable hiding of the Jobs panel.
+
+   - Show number of particles for each micrograph/tilt-series in Galery view.
 
    :fa:`bug` **Bug fixes**
 
@@ -115,6 +123,8 @@ v0.7.3
    - Fix bug when plotting motion trajectories after reference-based movie-frame refinement.
 
    - Fix bug during parsing of tomogram thickness when running AreTomo2/3.
+
+   - Various other bug fixes and improvements.
 
 v0.7.2
 ------
