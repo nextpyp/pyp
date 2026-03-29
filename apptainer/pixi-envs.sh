@@ -35,9 +35,8 @@ rm -rf .git/
 
 # Install topaz from source
 cd /opt/pixi
-git clone --depth=1 https://github.com/tbepler/topaz.git
+git clone --branch v0.3.18 https://github.com/tbepler/topaz.git
 cd topaz
-git checkout v0.3.18
 sed -i 's/"dependencies",\? *//g' pyproject.toml
 pixi init --format pyproject
 pixi install
