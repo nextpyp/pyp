@@ -1356,23 +1356,27 @@ def split(parameters):
             id_train = ""
 
             # submit swarm jobs
-            id = slurm.submit_jobs(
-                "swarm",
-                swarm_file,
-                jobtype=job_type,
-                jobname=job_name,
-                queue=partition_name,
-                scratch=0,
-                threads=parameters["slurm_tasks"],
-                memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
-                gres=parameters["slurm_gres"],
-                account=parameters.get("slurm_account"),
-                walltime=parameters["slurm_walltime"],
-                tasks_per_arr=parameters["slurm_bundle_size"],
-                dependencies=id_train,
-                csp_no_stacks=parameters["csp_no_stacks"],
-                use_gpu=gpu
-            ).strip()
+            if not parameters.get("slurm_merge_only"):
+                id = slurm.submit_jobs(
+                    "swarm",
+                    swarm_file,
+                    jobtype=job_type,
+                    jobname=job_name,
+                    queue=partition_name,
+                    scratch=0,
+                    threads=parameters["slurm_tasks"],
+                    memory=parameters["slurm_tasks"]*parameters["slurm_memory_per_task"],
+                    gres=parameters["slurm_gres"],
+                    account=parameters.get("slurm_account"),
+                    walltime=parameters["slurm_walltime"],
+                    tasks_per_arr=parameters["slurm_bundle_size"],
+                    dependencies=id_train,
+                    csp_no_stacks=parameters["csp_no_stacks"],
+                    use_gpu=gpu
+                ).strip()
+            else:
+                parameters["slurm_merge_only"] = False
+                id = ""
             
             # submit merge job dependent on swarm jobs
             slurm.submit_jobs(
