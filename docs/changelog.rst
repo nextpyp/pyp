@@ -42,7 +42,7 @@ v0.7.3
 
    - Visualization of 3D correlation volume and diagnostic plots when running template matching using `pytom-match-pick <https://sbc-utrecht.github.io/pytom-match-pick/>`_.
 
-   - Add progress bar when merging particle stacks to improve reponsiveness.
+   - Add progress bar when merging particle stacks to improve reponsiveness of UI.
 
    - Upgrade PYP codebase to Python 3.12 and CUDA 12.8, and jsonrpcclient to version 4.0.
 
@@ -54,7 +54,7 @@ v0.7.3
 
    - Better error reporting when runing tomoCARE training on tomograms with narrow size in Z.
 
-   - Ability to turn off 16-bit mrc file saving during single-particle pre-processing.
+   - Add ability to turn off 16-bit mrc file saving during single-particle pre-processing.
 
    - Rebuild binaries for AreTomo2, AreTomo3, and MotionCor2 to improve compatibility with latest NVIDIA Blackwell cards.
 
@@ -82,9 +82,9 @@ v0.7.3
 
    - Add option to negate the Exclude column in Table view of the pre-processing block.
 
-   - Enable hiding of the Jobs panel.
+   - Enable hiding of the Jobs panel to improve workspace utilization.
 
-   - Show number of particles for each micrograph/tilt-series in Galery view.
+   - Show number of particles for each micrograph/tilt-series in Gallery view.
 
    :fa:`bug` **Bug fixes**
 
@@ -92,7 +92,7 @@ v0.7.3
 
    - Fix bug when parsing *.mdoc files for tilt-series produced by PACEtomo.
 
-   - Fix bug with mismatching dimensions when applying gain reference to average of eer frames.
+   - Fix bug with mismatching dimensions when applying gain reference to average of EER frames.
 
    - Fix bug when parsing input parameters during particle filtering.
 
